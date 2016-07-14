@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Str, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable

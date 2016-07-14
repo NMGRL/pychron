@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Tuple, Bool, on_trait_change
-from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
+from enable.api import Pointer
+from traits.api import Tuple, Bool, on_trait_change
+
 # =============standard library imports ========================
 from numpy import hstack
 # =============local library imports  ==========================

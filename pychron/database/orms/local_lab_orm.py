@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, DateTime, String, Float, BLOB
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import func
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin

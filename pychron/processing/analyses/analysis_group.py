@@ -22,7 +22,7 @@ from traits.api import HasTraits, List, Property, cached_property, Str, Bool, In
 # ============= standard library imports ========================
 from numpy import array, nan
 # ============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
@@ -31,6 +31,7 @@ from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, val
 
 def AGProperty(*depends):
     d = 'dirty,analyses:[status,temp_status]'
+    # d = 'dirty'  # ,analyses:[status,temp_status]'
     if depends:
         d = '{},{}'.format(','.join(depends), d)
 
@@ -49,7 +50,7 @@ class AnalysisGroup(HasTraits):
 
     weighted_age = AGProperty()
     # weighted_age_error_kind = Enum(*ERROR_TYPES)
-    weighted_age_error_kind = Str  #Enum(*ERROR_TYPES)
+    weighted_age_error_kind = Str  # Enum(*ERROR_TYPES)
 
     weighted_kca = AGProperty()
     arith_kca = AGProperty()
@@ -59,8 +60,14 @@ class AnalysisGroup(HasTraits):
     isochron_age = AGProperty()
     isochron_age_error_kind = Str
     identifier = Property
+
+    repository_identifier = Property(depends_on='_repository_identifier')
+    _repository_identifier = Str
+
+    irradiation = Property
     sample = Property
     aliquot = Property
+    material = Property
 
     _sample = Str
     age_scalar = Property
@@ -88,9 +95,9 @@ class AnalysisGroup(HasTraits):
     def _get_mswd(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage_wo_j_err'
+            attr = 'uage'
             if self.include_j_error_in_individual_analyses:
-                attr = 'uage'
+                attr = 'uage_w_j_err'
 
         return self._calculate_mswd(attr)
 
@@ -125,6 +132,24 @@ class AnalysisGroup(HasTraits):
         return self.analyses[0].labnumber
 
     @cached_property
+    def _get_repository_identifier(self):
+        if self._repository_identifier:
+            return self._repository_identifier
+        else:
+            return self.analyses[0].repository_identifier
+
+    def _set_repository_identifier(self, v):
+        self._repository_identifier = v
+
+    @cached_property
+    def _get_irradiation(self):
+        return self.analyses[0].irradiation
+
+    @cached_property
+    def _get_material(self):
+        return self.analyses[0].material
+
+    @cached_property
     def _get_sample(self):
         sam = self._sample
         if not sam:
@@ -138,8 +163,8 @@ class AnalysisGroup(HasTraits):
     def _get_weighted_age(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage' if self.include_j_error_in_individual_analyses else 'uage_wo_j_err'
-        #     if self.include_j_error_in_individual_analyses:
+            attr = 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
+        # if self.include_j_error_in_individual_analyses:
         #         v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
         #     else:
         #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
@@ -147,7 +172,7 @@ class AnalysisGroup(HasTraits):
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
-            return ufloat(v, e)
+            return ufloat(v, max(0, e))
         except AttributeError:
             return ufloat(0, 0)
 
@@ -157,16 +182,17 @@ class AnalysisGroup(HasTraits):
             mswd = self.mswd
 
         if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-            e = e * (mswd ** 0.5 if mswd > 1 else 1)
+            e *= mswd ** 0.5 if mswd > 1 else 1
 
-        if include_j_error is None:
-            include_j_error = self.include_j_error_in_mean
+        if 'age' in self.attribute:
+            if include_j_error is None:
+                include_j_error = self.include_j_error_in_mean
 
-        if include_j_error:
-            try:
-                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-            except ZeroDivisionError:
-                return nan
+            if include_j_error:
+                try:
+                    e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+                except ZeroDivisionError:
+                    return nan
         return e
 
     # @cached_property
@@ -228,10 +254,10 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        return calculate_isochron(list(self.clean_analyses()))
+        return calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
 
     def _calculate_isochron_age(self):
-        args = calculate_isochron(list(self.clean_analyses()))
+        args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
         if args:
             age = args[0]
             reg = args[1]
@@ -280,39 +306,43 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         except ZeroDivisionError:
             return nan
 
-    def _get_steps(self):
-
-        # for ai in self.analyses:
-        #     print ai.record_id, ai.age, ai.uage_wo_j_err
-        d = [(ai.age,
-              ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
-              ai.get_computed_value('k39').nominal_value)
-             # ai.get_interference_corrected_value('Ar39').nominal_value)
-             for ai in self.clean_analyses()]
-
-        return zip(*d)
+    # def _get_steps(self):
+    #     d = [(ai.age,
+    #           ai.age_err,
+    #           nominal_value(ai.get_computed_value('k39')))
+    #          for ai in self.clean_analyses()]
+    #
+    #     return zip(*d)
 
     # @cached_property
     def _get_plateau_age(self):
-        ages, errors, k39 = self._get_steps()
+        # ages, errors, k39 = self._get_steps()
+
+        ages = [ai.age for ai in self.analyses]
+        errors = [ai.age_err for ai in self.analyses]
+        k39 = [nominal_value(ai.get_computed_value('k39')) for ai in self.analyses]
 
         options = {'nsteps': self.pc_nsteps,
                    'gas_fraction': self.pc_gas_fraction,
                    'force_steps': self.calculate_fixed_plateau_steps}
 
-        args = calculate_plateau_age(ages, errors, k39, options=options)
+        excludes = [i for i in enumerate(self.analyses) if ai.is_omitted()]
+        args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
         if args:
             v, e, pidx = args
-            if pidx[0]==pidx[1]:
+            if pidx[0] == pidx[1]:
                 return
 
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
-            self.nsteps = (pidx[1] - pidx[0]) + 1
-            # print pidx
-            pages, perrs = zip(*[(ages[i], errors[i]) for i in range(pidx[0], pidx[1])])
+            step_idxs = [i for i in xrange(pidx[0], pidx[1] + 1) if not self.analyses[i].is_omitted()]
+            self.nsteps = len(step_idxs)
+
+            pages = [ages[i] for i in step_idxs]
+            perrs = [errors[i] for i in step_idxs]
+
             mswd = calculate_mswd(pages, perrs)
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
             self.plateau_mswd = mswd
@@ -327,7 +357,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             return ufloat(v, max(0, e))
 
 
-class InterpretedAge(StepHeatAnalysisGroup):
+class InterpretedAgeGroup(StepHeatAnalysisGroup):
     all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')
@@ -341,9 +371,10 @@ class InterpretedAge(StepHeatAnalysisGroup):
     preferred_age_kind = Str('Weighted Mean')
     preferred_kca_kind = Str('Weighted Mean')
 
-    preferred_age_error_kind = Str  #('SD')
+    preferred_age_error_kind = Str  # ('SD')
     preferred_ages = Property(depends_on='analyses')
 
+    name = Str
     use = Bool
 
     def _preferred_age_error_kind_changed(self, new):
@@ -437,7 +468,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 
 # ============= EOF =============================================
 
-#class AnalysisRatioMean(AnalysisGroup):
+# class AnalysisRatioMean(AnalysisGroup):
 #    Ar40_39 = Property
 #    Ar37_39 = Property
 #    Ar36_39 = Property
@@ -465,7 +496,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
 #    def _get_kcl(self):
 #        return self._calculate_weighted_mean('kcl')
 #
-#class AnalysisIntensityMean(AnalysisGroup):
+# class AnalysisIntensityMean(AnalysisGroup):
 #    Ar40 = Property
 #    Ar39 = Property
 #    Ar38 = Property
@@ -486,4 +517,3 @@ class InterpretedAge(StepHeatAnalysisGroup):
 #
 #    def _get_Ar36(self):
 #        return self._calculate_weighted_mean('Ar36')
-

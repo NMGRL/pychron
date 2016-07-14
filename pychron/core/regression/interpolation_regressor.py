@@ -21,6 +21,8 @@ from pychron.core.regression.base_regressor import BaseRegressor
 
 # ============= standard library imports ========================
 from numpy import where, polyval, polyfit
+
+
 # ============= local library imports  ==========================
 
 
@@ -41,13 +43,15 @@ class InterpolationRegressor(BaseRegressor):
         func = getattr(self, '{}_predictors'.format(kind))
         if not hasattr(xs, '__iter__'):
             xs = (xs,)
-        xs = (func(xi, attr) for xi in xs)
 
-        #filter out None values. None values will occur if integrity checks on xs,ys and yserr fail
-        #if preceding and no value found use the first following value e.g index 0
+        exc = self.get_excluded()
+        xs = (func(xi, exc, attr) for xi in xs)
+
+        # filter out None values. None values will occur if integrity checks on xs,ys and yserr fail
+        # if preceding and no value found use the first following value e.g index 0
         return [xi for xi in xs if xi is not None]
 
-    def preceding_predictors(self, timestamp, attr='value'):
+    def preceding_predictors(self, timestamp, exc, attr='value'):
         xs = self.xs
         ys = self.ys
         es = self.yserr
@@ -57,6 +61,9 @@ class InterpolationRegressor(BaseRegressor):
                 ti = where(xs <= timestamp)[0][-1]
             except IndexError:
                 ti = 0
+
+            while ti in exc and ti > 0:
+                ti -= 1
 
             if attr == 'value':
                 return ys[ti]

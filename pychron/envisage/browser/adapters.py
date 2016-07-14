@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int
+from traits.api import Int, Property, Str
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.envisage.resources import icon
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -30,6 +31,8 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
         # name='_'.join(name.split('_')[:-1])
+        item = getattr(obj, trait)[row]
+
         return '{}= {}'.format(name, getattr(self.item, name))
 
 
@@ -82,63 +85,104 @@ class LabnumberAdapter(BrowserAdapter):
     material_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
-        from pychron.processing.tasks.figures.figure_task import FigureTask
-
         if obj.selected_samples:
-            psenabled = obj.current_task_name in ('Ideogram','Spectrum')
+            # psenabled = obj.current_task_name in ('Ideogram', 'Spectrum')
             # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
-                               Action(name='Chronological View', action='on_chrono_view'),
-                               Action(name='Configure', action='configure_sample_table'),
-                               Action(name='Plot Selected (Grouped)',
-                                      enabled=psenabled,
-                                      action='plot_selected_grouped'),
-                               Action(name='Plot Selected',
-                                      enabled=psenabled,
-                                      action='plot_selected'))
+                               # Action(name='Chronological View', action='on_chrono_view'),
+                               Action(name='Configure', action='configure_sample_table'), )
+            # Action(name='Plot Selected (Grouped)',
+            #        enabled=psenabled,
+            #        action='plot_selected_grouped'),
+            # Action(name='Plot Selected',
+            #        enabled=psenabled,
+            #        action='plot_selected'))
+
+
+REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
+                       'Intermediate': icon('orange_ball'),
+                       'All': icon('green_ball')}
 
 
 class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Run ID', 'record_id'),
+    all_columns = [('Review Status', 'review_status'),
+                   ('Run ID', 'record_id'),
                    ('Tag', 'tag'),
-                   ('RunDate','rundate'),
-                   ('Iso Fits', 'iso_fit_status'),
-                   ('Blank', 'blank_fit_status'),
-                   ('IC', 'ic_fit_status'),
-                   ('Flux', 'flux_fit_status'),
+                   ('RunDate', 'rundate'),
+                   ('Dt', 'delta_time'),
+                   # ('Iso Fits', 'iso_fit_status'),
+                   # ('Blank', 'blank_fit_status'),
+                   # ('IC', 'ic_fit_status'),
+                   # ('Flux', 'flux_fit_status'),
                    ('Spec.', 'mass_spectrometer'),
                    ('Meas.', 'meas_script_name'),
                    ('Ext.', 'extract_script_name'),
                    ('EVal.', 'extract_value'),
                    ('Cleanup', 'cleanup'),
                    ('Dur', 'duration'),
-                   ('Device', 'extract_device')]
+                   ('Device', 'extract_device'),
+                   ('Comment', 'comment')]
 
     columns = [('Run ID', 'record_id'),
-               ('Tag', 'tag')]
+               ('Tag', 'tag'),
+               ('Dt', 'delta_time')]
 
+    review_status_image = Property
+    review_status_text = Str('')
     rundate_width = Int(120)
-    record_id_width = Int(100)
+    delta_time_width = Int(65)
+    delta_time_text = Property
+    record_id_width = Int(70)
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
+
+    def _get_review_status_image(self):
+        s = self.item.review_status
+        return REVIEW_STATUS_ICONS.get(s)
+
+    def _get_delta_time_text(self):
+        dt = self.item.delta_time
+        if dt > 60:
+            units = '(h)'
+            dt /= 60.
+            if dt > 24:
+                units = '(d)'
+                dt /= 24.
+        else:
+            units = ''
+        return '{:0.1f} {}'.format(dt, units)
 
     def get_menu(self, obj, trait, row, column):
         e = obj.append_replace_enabled
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
-                   Action(name='Replace', action='replace_items', enabled=e),
-                   Action(name='Append', action='append_items', enabled=e),
+                   # Action(name='Replace', action='replace_items', enabled=e),
+                   # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Open Copy', action='recall_copies'),
-                   Action(name='Find References', action='find_refs')]
+                   Action(name='Review Status Details', action='review_status_details')
+                   # Action(name='Open Copy', action='recall_copies'),
+                   # Action(name='Find References', action='find_refs')
+                   ]
 
         return MenuManager(*actions)
 
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
-        if self.item.is_plateau_step:
-            color = 'lightgreen'
+        item = getattr(obj, trait)[row]
+
+        if item.delta_time > 1440:  # 24 hours
+            color = '#76C1E2'
 
         return color
+
+
+class InterpretedAgeAdapter(TabularAdapter):
+    columns = [('Identifier', 'identifier'),
+               ('Name', 'name')]
+
+    font = 'arial 10'
+    name_width = 100
+    identifier_width = 100
+
 # ============= EOF =============================================

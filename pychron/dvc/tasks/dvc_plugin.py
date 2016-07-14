@@ -23,21 +23,28 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.tasks.actions import PullAnalysesAction
-from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
+from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
+    DVCDBConnectionPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.git.hosts import IGitHost
 
 
 class DVCPlugin(BaseTaskPlugin):
+    name = 'DVC'
     _fetched = False
 
     def start(self):
         super(DVCPlugin, self).start()
 
         dvc = self.application.get_service(DVC)
-        # if not self._fetched:
-        #     dvc.meta_repo.smart_pull()
+        if not self._fetched:
+            dvc.initialize()
+
+        service = self.application.get_service(IGitHost)
+        if not service:
+            self.information_dialog('No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)')
 
     # def stop(self):
     #     dvc = self.application.get_service(DVC)
@@ -45,29 +52,39 @@ class DVCPlugin(BaseTaskPlugin):
     #     prog.change_message('Pushing changes to meta repository')
     #     dvc.meta_repo.cmd('push', '-u','origin','master')
 
-    def test_dvc_fetch_meta(self):
+    def test_database(self):
+        ret, err = True, ''
         dvc = self.application.get_service(DVC)
-        # dvc.fetch_meta()
-        dvc.meta_repo.smart_pull()
-        self._fetched = True
+        db = dvc.db
+        connected = db.connect(warn=False)
+        if not connected:
+            ret = False
+            err = db.connection_error
+        return ret, err
+
+    def test_dvc_fetch_meta(self):
+        ret, err = False, ''
+        dvc = self.application.get_service(DVC)
+        dvc.open_meta_repo()
+        dvc.meta_pull()
+        ret = self._fetched = True
+
+        return ret, err
 
     def _service_offers_default(self):
-        p = {'dvc': self.dvc_factory()}
-        self.debug('DDDDD {}'.format(p))
+        # p = {'dvc': self.dvc_factory()}
+        # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
-                                        properties=p,
-                                        )
-        # so1 = self.service_offer_factory(protocol=DVCDatabase,
-        # factory=DVCDatabase)
-        # so2 = self.service_offer_factory(protocol=MetaRepo,
-        # factory=MetaRepo)
+                                        properties={'dvc': self.dvc_factory()})
+
         so2 = self.service_offer_factory(protocol=DVC,
                                          factory=self.dvc_factory)
+
         return [so, so2]
 
     def dvc_factory(self):
-        d = DVC()
+        d = DVC(application=self.application)
         # d.initialize()
 
         return d
@@ -105,9 +122,11 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.commit('added {}'.format(db.path))
 
     def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(factory=PullAnalysesAction,
-                                                      path='MenuBar/data.menu')]), ]
+        actions = [SchemaAddition(factory=WorkOfflineAction,
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=UseOfflineDatabase,
+                                  path='MenuBar/tools.menu')]
+
+        return [TaskExtension(actions=actions), ]
+
 # ============= EOF =============================================
-
-
-

@@ -47,7 +47,7 @@ class DumperScene(ExtractionLineScene):
                     c = (204, 204, 204)
 
                 klass = KLASS_MAP.get(key, RoundedRectangle)
-                rect = self._new_rectangle(b, c, bw=5, origin=origin, klass=klass, type_tag=key)
+                rect = self._new_rectangle(cp, b, c, bw=5, origin=origin, klass=klass, type_tag=key)
                 self._load_states(rect, b)
 
     def _load_states(self, item, elem):

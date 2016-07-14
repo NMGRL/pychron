@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-
-from pyface.tasks.task_layout import TaskLayout
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
-from pyface.directory_dialog import DirectoryDialog
-from pyface.timer.do_later import do_later, do_after
-from pyface.tasks.task import Task
-from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
-from pyface.action.api import ActionItem, Group
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
-from pyface.file_dialog import FileDialog
-from pyface.constant import OK, CANCEL, YES
+from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
-
-
-
+from pyface.constant import OK, CANCEL, YES
+from pyface.directory_dialog import DirectoryDialog
+from pyface.file_dialog import FileDialog
+from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
+from pyface.tasks.task import Task
+from pyface.tasks.task_layout import TaskLayout
+from pyface.timer.do_later import do_later, do_after
+from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
 # ============= standard library imports ========================
+import os
+from itertools import groupby
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -43,6 +40,7 @@ from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsActio
     NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
     ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 class WindowGroup(Group):
@@ -136,6 +134,20 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     application = DelegatesTo('window')
 
     _full_window = False
+
+    def _activate_task(self, tid):
+        if self.window:
+            for task in self.window.tasks:
+                if task.id == tid:
+                    print 'found task'
+                    break
+            else:
+                print 'add task'
+                task = self.application.create_task(tid)
+                self.window.add_task(task)
+
+            self.window.activate_task(task)
+            return task
 
     def toggle_full_window(self):
         if self._full_window:
@@ -232,10 +244,14 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             # DemoAction(),
             id='help.menu',
             name='Help')
+
+        grps = self._view_groups()
+        view_menu = SMenu(*grps, id='view.menu', name='&View')
+
         mb = SMenuBar(
             file_menu,
             edit_menu,
-            self._view_menu(),
+            view_menu,
             tools_menu,
             window_menu,
             help_menu)
@@ -277,6 +293,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
                 action = myTaskWindowLaunchAction(task_id=factory.id,
                                                   checked=checked)
+                # if hasattr(factory, 'size'):
+                # action.size = factory.size
 
                 if hasattr(factory, 'accelerator'):
                     action.accelerator = factory.accelerator
@@ -296,18 +314,18 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         # groups.append(DockPaneToggleGroup())
         return groups
 
-    def _view_menu(self):
-        grps = self._view_groups()
-        view_menu = SMenu(
-            *grps,
-            id='view.menu', name='&View')
-        return view_menu
-
-    def _confirmation(self, message=''):
+    def _confirmation(self, message='', title='Save Changes?'):
         dialog = ConfirmationDialog(parent=self.window.control,
                                     message=message, cancel=True,
-                                    default=CANCEL, title='Save Changes?')
+                                    default=CANCEL, title=title)
         return dialog.open()
+
+    @on_trait_change('window:opened')
+    def _on_open(self, event):
+        self._opened_hook()
+
+    def _opened_hook(self):
+        pass
 
     @on_trait_change('window:closing')
     def _on_close(self, event):
@@ -317,8 +335,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         close = self._prompt_for_save()
         event.veto = not close
 
-    def _handle_prompt_for_save(self, message):
-        result = self._confirmation(message)
+    def _handle_prompt_for_save(self, message, title='Save Changes?'):
+        result = self._confirmation(message, title)
         if result == CANCEL:
             return False
         elif result == YES:
@@ -417,9 +435,17 @@ class BaseExtractionLineTask(BaseManagerTask):
     canvas_pane = Instance('pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane')
 
     def _get_el_manager(self):
-        app = self.application
+        app = self.window.application
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
+
+    # def activated(self):
+    #     super(BaseExtractionLineTask, self).activated()
+    #
+    #     app = self.window.application
+    #     man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+    #     if man:
+    #         man.start_status_monitor()
 
     def prepare_destroy(self):
         man = self._get_el_manager()
@@ -427,18 +453,20 @@ class BaseExtractionLineTask(BaseManagerTask):
             man.deactivate()
 
     def _add_canvas_pane(self, panes):
-        app = self.window.application
-        man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        # app = self.window.application
+        # man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        man = self._get_el_manager()
         if man:
             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-
-            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas())
+            config = os.path.join(paths.canvas2D_dir, 'alt_config.xml')
+            self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(config=config))
             panes.append(self.canvas_pane)
 
         return panes
 
     @on_trait_change('window:opened')
     def _window_opened(self):
+        self.debug('window opened')
         man = self._get_el_manager()
         if man:
             do_after(1000, man.activate)

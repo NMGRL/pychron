@@ -19,7 +19,6 @@ from traits.api import Bool, Instance, Enum, Range, on_trait_change, Any
 from traitsui.api import HGroup, Group, Item, spring , VGroup
 
 from pychron.database.records.sqlite_record import SQLiteRecord
-
 # ============= standard library imports ========================
 # import os
 import csv

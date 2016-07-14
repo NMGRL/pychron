@@ -50,6 +50,9 @@ class BaseEditorTask(BaseManagerTask):
     def get_editor_names(self):
         return [e.name for e in self.editor_area.editors]
 
+    def iter_editors(self, klass):
+        return (e for e in self.editor_area.editors if isinstance(e, klass))
+
     def has_active_editor(self, klass=None):
         if not self.active_editor:
             self.information_dialog('No active tab. Please open a tab')
@@ -65,7 +68,6 @@ class BaseEditorTask(BaseManagerTask):
         return (ei for ei in self.editor_area.editors if isinstance(ei, klass))
 
     def close_editor(self, editor):
-        print 'close editor', editor
         self.editor_area.remove_editor(editor)
 
     def activate_editor(self, editor):
@@ -99,8 +101,11 @@ class BaseEditorTask(BaseManagerTask):
         """
         if self.active_editor:
             if not path:
-                if self.active_editor.path:
-                    path = self.active_editor.path
+                if hasattr(self.active_editor, 'path'):
+                    if self.active_editor.path:
+                        path = self.active_editor.path
+                else:
+                    return
 
             if not path:
                 path = self.save_file_dialog()
@@ -118,14 +123,22 @@ class BaseEditorTask(BaseManagerTask):
         df = self._generate_default_filename()
         if df:
             kw['default_filename'] = df
-        path = self.save_file_dialog(**kw)
+
+        path = self._get_save_path(**kw)
         if path:
             if self._save_file(path):
                 self.active_editor.path = path
                 self.active_editor.dirty = False
                 return True
 
+    def close_all(self):
+        for e in self.editor_area.editors:
+            self.close_editor(e)
+
     # private
+    def _get_save_path(self, **kw):
+        return self.save_file_dialog(**kw)
+
     def _generate_default_filename(self):
         return
 
@@ -143,9 +156,10 @@ class BaseEditorTask(BaseManagerTask):
 
     def _open_editor(self, editor, activate=True, **kw):
         if self.editor_area:
-            self.editor_area.add_editor(editor)
-            if activate:
-                self.editor_area.activate_editor(editor)
+            if editor not in self.editor_area.editors:
+                self.editor_area.add_editor(editor)
+                if activate:
+                    self.editor_area.activate_editor(editor)
 
     def _get_active_editor(self):
         if self.editor_area is not None:
@@ -160,7 +174,7 @@ class BaseEditorTask(BaseManagerTask):
         dirty_editors = dict([(editor.name, editor)
                               for editor in self.editor_area.editors
                               if editor.dirty])
-        if not dirty_editors.keys():
+        if not dirty_editors:
             return True
 
         message = 'You have unsaved files. Would you like to save them?'

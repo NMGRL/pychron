@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 import random
 
-from traits.api import List, Tuple, HasTraits, Password
-from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
@@ -28,6 +26,8 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Tuple, HasTraits, Password
+from traitsui.api import View, Item
 
 # ============= standard library imports ========================
 import hashlib
@@ -37,7 +37,7 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
-from pychron.envisage.tasks.preferences import GeneralPreferencesPane
+from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
 from pychron.globals import globalv
 
 # logger = new_logger('PychronTasksPlugin')
@@ -57,30 +57,17 @@ class PychronTasksPlugin(BasePlugin):
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 
-    def _application_changed(self):
-        # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
-        defaults = (('show_random_tip', True),)
-        try:
-            self._set_preference_defaults(defaults, 'pychron.general')
-        except AttributeError, e:
-            print 'exception', e
+    # def _application_changed(self):
+    #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+    #     defaults = (('show_random_tip', True),)
+    #     try:
+    #         self._set_preference_defaults(defaults, 'pychron.general')
+    #     except AttributeError, e:
+    #         print 'exception', e
 
     def start(self):
         self.info('Writing plugin file defaults')
-        for p, d, o in self.file_defaults:
-            try:
-                mod = __import__('pychron.file_defaults', fromlist=[d])
-                d = getattr(mod, d)
-            except BaseException, e:
-                print p, e
-                pass
-            try:
-                p = getattr(paths, p)
-            except AttributeError:
-                pass
-
-            if paths.write_default_file(p, d, o):
-                self.info('Wrote default file {} (overwrite: {})'.format(p, o))
+        paths.write_file_defaults(self.file_defaults)
 
         self._random_tip()
 
@@ -99,7 +86,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
 
     def _preferences_panes_default(self):
-        return [GeneralPreferencesPane]
+        return [GeneralPreferencesPane, BrowserPreferencesPane]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=EditInitializationAction,

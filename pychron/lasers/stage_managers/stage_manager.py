@@ -127,7 +127,7 @@ class StageManager(BaseStageManager):
         self.canvas.change_grid_visibility()
 
         bind_preference(self.canvas, 'show_laser_position', '{}.show_laser_position'.format(pref_id))
-        bind_preference(self.canvas, 'show_desired_position', '{}.show_laser_position'.format(pref_id))
+        bind_preference(self.canvas, 'show_desired_position', '{}.show_desired_position'.format(pref_id))
         bind_preference(self.canvas, 'desired_position_color', '{}.desired_position_color'.format(pref_id),
                         factory=ColorPreferenceBinding)
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
@@ -275,15 +275,18 @@ class StageManager(BaseStageManager):
 
     def moving(self, force_query=False, **kw):
         moving = False
-        if self.stage_controller.timer is not None:
-            moving = self.stage_controller.timer.isActive()
-        elif force_query:
+        if force_query:
             moving = self.stage_controller.moving(**kw)
+        elif self.stage_controller.timer is not None:
+            moving = self.stage_controller.timer.isActive()
 
         return moving
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         return 0
+
+    def get_scores(self, **kw):
+        return 0, 0
 
     def define_home(self, **kw):
         self.stage_controller.define_home(**kw)

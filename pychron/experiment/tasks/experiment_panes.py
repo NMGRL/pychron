@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -27,8 +27,10 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.stylesheets import load_stylesheet
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
@@ -40,6 +42,8 @@ from pychron.experiment.plot_panel import PlotPanel
 # ===============================================================================
 # editing
 # ===============================================================================
+
+
 def spacer(w):
     return Spring(width=w, springy=False)
 
@@ -66,27 +70,9 @@ class ExperimentFactoryPane(TraitsDockPane):
     info_label = Property(depends_on='model.run_factory.info_label')
 
     def _get_info_label(self):
-        return '<font size="12" color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
+        return '<font color="green"><b>{}</b></font>'.format(self.model.run_factory.info_label)
 
     def traits_view(self):
-        ss = '''
-QLineEdit {font-size: 14px}
-QGroupBox {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #E0E0E0, stop: 1 #FFFFFF);
-           border: 2px solid gray;
-           border-radius: 5px;
-           margin-top: 1ex; /* leave space at the top for the title */
-           font-size: 14px;
-           font-weight: bold;}
-QGroupBox::title {subcontrol-origin: margin;
-                  subcontrol-position: top left; /* position at the top center */
-                  padding: 2 3px;}
-QComboBox {font-size: 14px}
-QLabel {font-size: 14px}
-QToolBox::tab {font-size: 15px}
-QToolTip {font-size: 14px}
-'''
-
         add_button = icon_button_editor('add_button', 'add',
                                         # enabled_when='ok_add',
                                         tooltip='Add run')
@@ -120,21 +106,24 @@ QToolTip {font-size: 14px}
                           icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                           show_border=True,
                           label='User')
+        lgrp = HGroup(queue_factory_item('load_name',
+                                         width=150,
+                                         label='Load',
+                                         editor=ComboboxEditor(name=queue_factory_name('load_names'))),
+                      icon_button_editor('generate_queue_button', 'brick-go',
+                                         tooltip='Generate a experiment queue from the selected load',
+                                         enabled_when='load_name'),
+                      icon_button_editor('edit_queue_config_button', 'cog',
+                                         tooltip='Configure experiment queue generation'))
+
         ms_ed_grp = VGroup(HGroup(queue_factory_item('mass_spectrometer',
                                                      show_label=False,
                                                      editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
                                   queue_factory_item('extract_device',
                                                      show_label=False,
-                                                     editor=EnumEditor(name=queue_factory_name('extract_devices'))),
-                                  queue_factory_item('load_name',
-                                                     width=150,
-                                                     label='Load',
-                                                     editor=ComboboxEditor(name=queue_factory_name('load_names'))),
-                                  icon_button_editor('generate_queue_button', 'brick-go',
-                                                     tooltip='Generate a experiment queue from the selected load',
-                                                     enabled_when='load_name'),
-                                  icon_button_editor('edit_queue_config_button', 'cog',
-                                                     tooltip='Configure experiment queue generation')),
+                                                     editor=EnumEditor(name=queue_factory_name('extract_devices')))),
+                           lgrp,
+
                            HGroup(queue_factory_item('queue_conditionals_name',
                                                      label='Queue Conditionals',
                                                      editor=EnumEditor(
@@ -170,9 +159,7 @@ QToolTip {font-size: 14px}
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
                         edit_grp,
-
-                        # lower_button_bar,
-                        style_sheet=ss),
+                        style_sheet=load_stylesheet('experiment_factory')),
                  kind='live',
                  width=225)
         return v
@@ -209,16 +196,18 @@ QToolTip {font-size: 14px}
                     HGroup(run_factory_item('labnumber',
                                             tooltip='Enter a Labnumber',
                                             width=100,
+                                            enabled_when='object.run_factory.special_labnumber == "Special Labnumber"',
                                             editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),
                            spring),
-                    # HGroup(run_factory_item('experiment_identifier',
-                    #                         label='Experiment ID',
-                    #
-                    #                         editor=ComboboxEditor(name=run_factory_name('experiment_identifiers'))),
-                    #        icon_button_editor(run_factory_name('add_experiment_identifier'), 'add'),
-                    #        enabled_when='0'),
+                    HGroup(run_factory_item('repository_identifier',
+                                            label='Repository ID',
+                                            editor=EnumEditor(name=run_factory_name('repository_identifiers'))),
+                           icon_button_editor(run_factory_name('add_repository_identifier'), 'add',
+                                              tooltip='Add a new repository'),
+                           icon_button_editor(run_factory_name('set_repository_identifier_button'), 'arrow_left',
+                                              tooltip='Set select runs repository_identifier to current value')),
                     HGroup(run_factory_item('weight',
                                             label='Weight (mg)',
                                             tooltip='(Optional) Enter the weight of the sample in mg. '
@@ -525,6 +514,25 @@ class LoggerPane(TraitsDockPane):
                                          selected='selected'),
                        style='custom'))
 
+        return v
+
+
+class ExperimentFurnacePane(TraitsDockPane):
+    name = 'Furnace'
+    id = 'pychron.experiment.furnace'
+    disable_button = Button
+
+    def _disable_button_fired(self):
+        self.model.setpoint = 0
+
+    def traits_view(self):
+        c_grp = VGroup(HGroup(Item('setpoint'),
+                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
+                              spring, icon_button_editor('pane.disable_button', 'cancel')),
+                       VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),
+                       label='Controller', show_border=True)
+
+        v = View(c_grp)
         return v
 
 # ============= EOF =============================================

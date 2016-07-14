@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
+from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import HasTraits, Str, List, Event, Instance, Dict, Button
-from pyface.confirmation_dialog import confirm
-from pyface.action.menu_manager import MenuManager
-from traitsui.menu import Action
 from traitsui.api import View, UItem, Handler, VGroup, HGroup, EnumEditor, Item
+from traitsui.menu import Action
 from traitsui.tree_node import TreeNode
+
 # ============= standard library imports ========================
 import os
 import pickle

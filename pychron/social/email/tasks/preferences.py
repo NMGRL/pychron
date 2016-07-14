@@ -22,7 +22,6 @@ from traitsui.api import View, Item, Group, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.database.tasks.connection_preferences import ConnectionMixin
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 

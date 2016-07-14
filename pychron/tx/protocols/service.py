@@ -21,19 +21,17 @@ import json
 import os
 import re
 import traceback
-
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
-
-
-# ============= local library imports  ==========================
 from twisted.logger import Logger, jsonFileLogObserver
+# ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
 
 
 def default_err(failure):
+    print failure.getTraceback()
     failure.trap(BaseException)
     return failure
 
@@ -167,4 +165,3 @@ class ServiceProtocol(Protocol):
 # d = defer.Deferred()
 #     reactor.callLater(secs, d.callback, None)
 #     return d
-

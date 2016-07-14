@@ -171,11 +171,10 @@ class DataCollector(Consoleable):
         return time.time() - self.starttime
 
     def _get_data(self, dets=None):
-        data = self.data_generator.next()
+        data = next(self.data_generator)
         if data:
             if dets:
-                data = zip(*[(k, s) for k, s in zip(*data)
-                             if k in dets])
+                data = zip(*[d for d in zip(*data) if d[0] in dets])
             self._data = data
             return data
 
@@ -219,7 +218,7 @@ class DataCollector(Consoleable):
         try:
             return signals[keys.index(det)]
         except ValueError:
-            if not det in self._warned_no_det:
+            if det not in self._warned_no_det:
                 self.warning('Detector {} is not available'.format(det))
                 self._warned_no_det.append(det)
                 self.canceled = True
@@ -316,6 +315,14 @@ class DataCollector(Consoleable):
     # ===============================================================================
     # checks
     # ===============================================================================
+    # def _check_modification_conditionals(self, cnt):
+    #     tripped = self._check_conditionals(self.modification_conditionals, cnt)
+    #     if tripped:
+    #         queue = self.automated_run.experiment_executor.experiment_queue
+    #         tripped.do_modifications(queue, self.automated_run)
+    #         if tripped.use_truncation:
+    #             return self._set_run_truncated()
+
     def _check_conditionals(self, conditionals, cnt):
         self.err_message = ''
         for ti in conditionals:
@@ -337,6 +344,7 @@ class DataCollector(Consoleable):
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
         original_counts = self.ncounts
         count_args = (j, original_counts)
+
         # self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
         #                                                                          script_counts,
         #                                                                          original_counts))
@@ -344,7 +352,7 @@ class DataCollector(Consoleable):
         def set_truncated():
             self.state = 'truncated'
             self.automated_run.truncated = True
-            self.automated_run.state = 'truncated'
+            self.automated_run.spec.state = 'truncated'
             return 'break'
 
         if not self._alive:
@@ -371,49 +379,40 @@ class DataCollector(Consoleable):
             return set_truncated()
 
         if self.check_conditionals:
-            truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
-            if truncation_conditional:
-                self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
-                        truncation_conditional.message, j, original_counts), color='red')
+            def modification_func(tr):
+                queue = self.automated_run.experiment_executor.experiment_queue
+                tr.do_modifications(queue, self.automated_run)
 
-                self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
-                self.automated_run.show_conditionals(tripped=truncation_conditional)
-                #                self.condition_truncated = True
+                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+                if tr.use_truncation:
+                    return set_truncated()
+                elif tr.use_termination:
+                    return 'terminate'
+
+            def truncation_func(tr):
+                self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
                 return set_truncated()
 
-            action_conditional = self._check_conditionals(self.action_conditionals, i)
-            if action_conditional:
-                self.info(
-                        'action conditional {}. measurement iteration executed {}/{} counts'.format(
-                                action_conditional.message,
-                                j, original_counts), color='red')
-                self.automated_run.show_conditionals(tripped=action_conditional)
-                action_conditional.perform(self.measurement_script)
-                if not action_conditional.resume:
+            def action_func(tr):
+                tr.perform(self.measurement_script)
+                if not tr.resume:
                     return 'break'
 
-            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
-            if termination_conditional:
-                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
-                        termination_conditional.message, j, original_counts), color='red')
+            for tag, func, conditionals in (('modification', modification_func, self.modification_conditionals),
+                                            ('truncation', truncation_func, self.truncation_conditionals),
+                                            ('action', action_func, self.action_conditionals),
+                                            ('termination', lambda x: 'terminate', self.termination_conditionals),
+                                            ('cancelation', lambda x: 'cancel', self.cancelation_conditionals)):
 
-                self.automated_run.show_conditionals(tripped=termination_conditional)
-                return 'terminate'
-
-                # key = repr(termination_conditional)
-                # n = termination_conditional.nfails
-                # if check_conditional_results(key, n):
-                #     return 'cancel'
-                # else:
-                #     return 'terminated'
-
-            cancelation_conditional = self._check_conditionals(self.cancelation_conditionals, i)
-            if cancelation_conditional:
-                self.info('cancelation conditional {}. measurement iteration executed {}/{} counts'.format(
-                        cancelation_conditional.message, j, original_counts), color='red')
-                self.automated_run.show_conditionals(tripped=cancelation_conditional)
-
-                return 'cancel'
+                tripped = self._check_conditionals(conditionals, i)
+                if tripped:
+                    self.info('{} conditional {}. measurement iteration executed {}/{} counts'.format(tag,
+                                                                                                      tripped.message,
+                                                                                                      j,
+                                                                                                      original_counts),
+                              color='red')
+                    self.automated_run.show_conditionals(tripped=tripped)
+                    return func(tripped)
 
     @property
     def isotope_group(self):
@@ -424,6 +423,11 @@ class DataCollector(Consoleable):
     def plot_panel(self):
         if self.automated_run:
             return self.automated_run.plot_panel
+
+    @property
+    def modification_conditionals(self):
+        if self.automated_run:
+            return self.automated_run.modification_conditionals
 
     @property
     def truncation_conditionals(self):

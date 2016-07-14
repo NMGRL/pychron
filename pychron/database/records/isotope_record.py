@@ -25,35 +25,35 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import ALPHAS
 
 
-class GraphicalRecordView(object):
-    __slots__ = ['uuid', 'rundate', 'timestamp', 'record_id', 'analysis_type',
-                 'tag', 'project', 'sample', 'is_plateau_step', 'mass_spectrometer']
-
-    def __init__(self, dbrecord):
-        self.uuid = dbrecord.uuid
-        ln = dbrecord.labnumber
-        labnumber = str(ln.identifier)
-        aliquot = dbrecord.aliquot
-        step = dbrecord.step
-        self.record_id = make_runid(labnumber, aliquot, step)
-
-        self.rundate = dbrecord.analysis_timestamp
-        self.timestamp = time.mktime(self.rundate.timetuple())
-        self.tag = dbrecord.tag or ''
-        self.is_plateau_step = False
-
-        meas = dbrecord.measurement
-        if meas is not None:
-            if meas.analysis_type:
-                self.analysis_type = meas.analysis_type.name
-            if meas.mass_spectrometer:
-                self.mass_spectrometer = meas.mass_spectrometer.name
-
-        sam = ln.sample
-        if sam:
-            self.sample = sam.name
-            if sam.project:
-                self.project = sam.project.name.lower()
+# class GraphicalRecordView(object):
+# __slots__ = ['uuid', 'rundate', 'timestamp', 'record_id', 'analysis_type',
+#                  'tag', 'project', 'sample', 'is_plateau_step', 'mass_spectrometer']
+#
+#     def __init__(self, dbrecord):
+#         self.uuid = dbrecord.uuid
+#         ln = dbrecord.labnumber
+#         labnumber = str(ln.identifier)
+#         aliquot = dbrecord.aliquot
+#         step = dbrecord.step
+#         self.record_id = make_runid(labnumber, aliquot, step)
+#
+#         self.rundate = dbrecord.analysis_timestamp
+#         self.timestamp = time.mktime(self.rundate.timetuple())
+#         self.tag = dbrecord.tag or ''
+#         self.is_plateau_step = False
+#
+#         meas = dbrecord.measurement
+#         if meas is not None:
+#             if meas.analysis_type:
+#                 self.analysis_type = meas.analysis_type.name
+#             if meas.mass_spectrometer:
+#                 self.mass_spectrometer = meas.mass_spectrometer.name
+#
+#         sam = ln.sample
+#         if sam:
+#             self.sample = sam.name
+#             if sam.project:
+#                 self.project = sam.project.name.lower()
 
 
 def get_flux_fit_status(item):
@@ -66,23 +66,100 @@ def get_selected_history_item(sh, key):
     return ('X' if getattr(sh, key) else '') if sh else ''
 
 
+class DVCIsotopeRecordView:
+    # __slots__ = ('is_plateau_step', 'extract_script_name',
+    #              'meas_script_name', 'analysis_type', 'group_id', 'graph_id', 'identifier', 'labnumber', 'aliquot',
+    #              'increment', 'step', 'tag', 'uuid', 'repository_identifier', 'use_repository_suffix', 'rundate',
+    #              'timestampf',
+    #              'delta_time', 'record_id', 'sample', 'project', 'irradiation_info', 'irradiation', 'irradiation_level',
+    #              'irradiation_position_position', 'mass_spectrometer', 'extract_device', 'comment', 'review_status',
+    #              'extract_value', 'cleanup', 'duration')
+    #
+    def __init__(self, dbrecord, *args, **kw):
+        self._dbrecord = dbrecord
+        self.is_plateau_step = False
+        #     self.extract_script_name = ''
+        #     self.meas_script_name = ''
+        #     self.analysis_type = ''
+        #     self.group_id = 0
+        #     self.graph_id = 0
+        #
+        #     self.identifier = ''
+        #     self.labnumber = ''
+        #     self.aliquot = 0
+        #     self.increment = -1
+        self.step = ''
+        self.tag = ''
+        #     self.uuid = ''
+        #     self.repository_identifier = ''
+        #     self.use_repository_suffix = False
+        #     self.rundate = ''
+        #     self.timestampf = 0
+        #     self.delta_time = 0
+        self.record_id = ''
+        #     self.sample = ''
+        #     self.project = ''
+        #     self.irradiation_info = ''
+        #     self.irradiation = ''
+        #     self.irradiation_level = ''
+        #     self.irradiation_position_position = ''
+        #     self.mass_spectrometer = ''
+        #     self.extract_device = ''
+        #     self.comment = ''
+        #
+        self.review_status = 0
+
+    #
+    #     self.extract_value = 0
+    #     self.cleanup = 0
+    #     self.duration = 0
+
+    def __getattr__(self, item):
+        return getattr(self._dbrecord, item)
+
+    def init(self):
+        if self.increment >= 0:
+            self.step = ALPHAS[self.increment]
+        else:
+            self.step = ''
+
+        rid = make_runid(self.identifier, self.aliquot, self.step)
+        if self.use_repository_suffix:
+            rid = '{}-{}'.format(rid, self.repository_identifier)
+        self.record_id = rid
+
+    def set_tag(self, tag):
+        self.tag = tag
+
+    def _clean_script_name(self, name):
+        n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+        n = os.path.basename(n)
+        n, t = os.path.splitext(n)
+        return n
+
+        # def to_string(self):
+        #     return '{} {} {} {}'.format(self.identifier, self.aliquot, self.timestamp, self.uuid)
+
+
 class IsotopeRecordView(object):
-    pass
+    # __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
+    #              '_increment',
+    #              'uuid', 'rundate',
+    #              'timestampf', 'tag',
+    #              'delta_time',
+    #              'tag_dict',
+    #              'irradiation_position_position',
+    #              'irradiation', 'irradiation_level',
+    #              'irradiation_info', 'mass_spectrometer', 'analysis_type',
+    #              'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
+    #              'extract_value', 'cleanup', 'duration',
+    #              'blank_fit_status',
+    #              'ic_fit_status',
+    #              'experiment_identifier',
+    #              'experiment_ids',
+    #              'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
 
-
-#
-class IsotopeRecordView(object):
-    __slots__ = ('sample', 'project', 'labnumber', 'identifier', 'aliquot', 'step',
-                 '_increment',
-                 'uuid', 'rundate',
-                 'timestamp', 'tag', 'irradiation_info', 'mass_spectrometer', 'analysis_type',
-                 'meas_script_name', 'extract_script_name', 'extract_device', 'flux_fit_status',
-                 'extract_value', 'cleanup', 'duration',
-                 'blank_fit_status',
-                 'ic_fit_status',
-                 'iso_fit_status', 'is_plateau_step', 'group_id', 'graph_id')
-
-    def __init__(self, dbrecord=None, *args, **kw):
+    def __init__(self, *args, **kw):
         self.is_plateau_step = False
         self.extract_script_name = ''
         self.meas_script_name = ''
@@ -93,23 +170,32 @@ class IsotopeRecordView(object):
         self.identifier = ''
         self.labnumber = ''
         self.aliquot = 0
-        self._increment = -1
+        self.increment = -1
         self.step = ''
         self.tag = ''
         self.uuid = ''
+        self.repository_identifier = ''
+        self.repository_ids = None
         self.rundate = ''
-        self.timestamp = ''
+        self.timestampf = 0
+        self.delta_time = 0
         # self.record_id = ''
         self.sample = ''
         self.project = ''
         self.irradiation_info = ''
+        self.irradiation = ''
+        self.irradiation_level = ''
+        self.irradiation_position_position = ''
         self.mass_spectrometer = ''
         self.extract_device = ''
+        self.comment = ''
 
-        self.flux_fit_status = ''
-        self.blank_fit_status = ''
-        self.ic_fit_status = ''
-        self.iso_fit_status = ''
+        # self.flux_fit_status = ''
+        # self.blank_fit_status = ''
+        # self.ic_fit_status = ''
+        # self.iso_fit_status = ''
+
+        self.review_status = 0
 
         self.extract_value = 0
         self.cleanup = 0
@@ -117,11 +203,8 @@ class IsotopeRecordView(object):
 
         # super(IsotopeRecordView, self).__init__(*args, **kw)
 
-        if dbrecord:
-            self.create(dbrecord, **kw)
-
     def set_tag(self, tag):
-        self.tag = tag.name
+        self.tag = tag
 
     def create(self, dbrecord, fast_load=False):
         # print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
@@ -146,9 +229,10 @@ class IsotopeRecordView(object):
             # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
 
             self.uuid = dbrecord.uuid
+            # print dbrecord, dbrecord.tag
             self.tag = dbrecord.tag or ''
             self.rundate = dbrecord.analysis_timestamp
-
+            self.comment = dbrecord.comment
             sam = ln.sample
             if sam:
                 self.sample = sam.name
@@ -211,12 +295,11 @@ class IsotopeRecordView(object):
                 else:
                     print 'extraction is None'
 
-                self.flux_fit_status = get_flux_fit_status(dbrecord)
-
-                sh = dbrecord.selected_histories
-                self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
-                self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
-                self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
+                    # self.flux_fit_status = get_flux_fit_status(dbrecord)
+                    # sh = dbrecord.selected_histories
+                    # self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
+                    # self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
+                    # self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
 
             return True
         except Exception, e:

@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 from PySide.QtCore import Qt, QThread
-
+from PySide.QtGui import QColor, \
+    QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
-from PySide.QtGui import QColor, \
-    QWidget, QPainter, QPainterPath
 
 
 # ============= standard library imports ========================

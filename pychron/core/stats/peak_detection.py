@@ -22,7 +22,7 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit, vstack, argsort
+from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
@@ -151,10 +151,13 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
 
 
 class PeakCenterError(BaseException):
-    pass
+    def __init__(self, *args, **kw):
+        super(PeakCenterError, self).__init__(*args)
+        self.low_pos_error = kw.get('low_pos_error')
+        self.high_pos_error = kw.get('high_pos_error')
 
 
-def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
+def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80):
     """
         returns: (low_x, center_c, high_x), (low_y, center_y, high_y), max_y, min_y
 
@@ -166,7 +169,7 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     x = array(x)
     y = array(y)
 
-    xy = vstack((x,y)).T
+    xy = vstack((x, y)).T
     x, y = xy[argsort(xy[:, 0])].T
 
     ma = max(y)
@@ -174,32 +177,35 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
     if ma < min_peak_height:
         raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
 
+    if max_i == 0:
+        max_i = len(x)/2
+
     mx = x[max_i]
     my = ma
 
     # look backward for point that is peak_percent% of max
-    for i in xrange(max_i, max_i - 50, -1):
+    for i in xrange(max_i, 0, -1):
         # this prevent looping around to the end of the list
         if i < 1:
-            raise PeakCenterError('PeakCenterError: could not find a low pos')
+            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
 
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a low pos')
+            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
 
     xstep = (x[i] - x[i - 1]) / 2.
     lx = x[i] - xstep
     ly = y[i] - (y[i] - y[i - 1]) / 2.
 
     # look forward for point that is 80% of max
-    for i in xrange(max_i, max_i + 50, 1):
+    for i in xrange(max_i, x.shape[0], 1):
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a high pos')
+            raise PeakCenterError('PeakCenterError: could not find a high pos', high_pos_error=True)
 
     try:
         hx = x[i + 1] - xstep
@@ -212,84 +218,86 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
     cx = (hx + lx) / 2.0
     cy = ma
+    if test_peak_flat:
+        # find index in x closest to cx
+        ccx = abs(x - cx).argmin()
+        # check to see if were on a plateau
+        yppts = y[ccx - 2:ccx + 2]
 
-    # find index in x closest to cx
-    ccx = abs(x - cx).argmin()
-    # check to see if were on a plateau
-    yppts = y[ccx - 2:ccx + 2]
+        slope, _ = polyfit(range(len(yppts)), yppts, 1)
+        std = yppts.std()
 
-    slope, _ = polyfit(range(len(yppts)), yppts, 1)
-    std = yppts.std()
-
-    if std > 5 and abs(slope) < 1:
-        raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
-        #        else:
-    #            self.info('peak plateau std = {} slope = {}'.format(std, slope)
+        if std > 5 and abs(slope) < 1:
+            raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
 
     return [lx, cx, hx], [ly, cy, hy], mx, my
 
-# def find_peaks(v, delta, x=None):
-#    '''
-#     Eli Billauer, 3.4.05 (Explicitly not copyrighted).
-#
-#     This function is released to the public domain; Any use is allowed.
-#    '''
-#    if x is None:
-#        x = arange(len(v))
-#
-#    v = asarray(v)
-#
-#    mn, mx = Inf, -Inf
-#    mnpos, mxpos = NaN, NaN
-#    lookformax = True
-#    maxs = []
-#    mins = []
-#    for vi, xi in zip(v, x):
-#        if vi > mx:
-#            mx = vi
-#            mxpos = xi
-#        elif vi < mn:
-#            mn = vi
-#            mnpos = xi
-#
-#        if lookformax:
-#            if vi < mx - delta:
-#                maxs.append((mxpos, mx))
-#                mn = vi
-#                mnpos = xi
-#                lookformax = False
-#        else:
-#            if vi > mn + delta:
-#                mins.append((mnpos, mn))
-#                mx = vi
-#                mxpos = xi
-#                lookformax = False
-#    return array(maxs), array(mins)
+
+def fast_find_peaks(ys, xs, **kw):
+    try:
+        from peakutils import indexes
+    except ImportError:
+        from pyface.message_dialog import warning
+        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
+                      'Please install PeakUtils. From commandline use "pip install peakutils"')
+        return [], []
+
+    ys, xs = asarray(ys), asarray(xs)
+    indexes = indexes(ys, **kw)
+    peaks_x = interpolate(xs, ys, ind=indexes)
+    return peaks_x, ys[indexes]
 
 
+def interpolate(x, y, ind=None, width=10, func=None):
+    """
+    modified from peakutils to handle edge peaks
 
-#
-# if __name__ == '__main__':
-#     from pylab import *
-#
-#     def multi_peak_generator(values):
-#         for v in values:
-#             m = 0.5
-#             if 5.4 <= v <= 5.8:
-#                 m = 3
-#             elif 6.1 <= v <= 7:
-#                 m = 6
-#
-#             yield m + random() / 10.
-#
-#     xs = linspace(3, 10, 101)
-#     ys = list(multi_peak_generator(xs))
-#     print ys
-#     mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
-#
-#     plot(xs, ys)
-#     for i, v in mxp:
-#         print i, v, xs[i]
-#         axvline(xs[i])
-#     show()
+    Tries to enhance the resolution of the peak detection by using
+    Gaussian fitting, centroid computation or an arbitrary function on the
+    neighborhood of each previously detected peak index.
+
+    Parameters
+    ----------
+    x : ndarray
+        Data on the x dimension.
+    y : ndarray
+        Data on the y dimension.
+    ind : ndarray
+        Indexes of the previously detected peaks. If None, indexes() will be
+        called with the default parameters.
+    width : int
+        Number of points (before and after) each peak index to pass to *func*
+        in order to encrease the resolution in *x*.
+    func : function(x,y)
+        Function that will be called to detect an unique peak in the x,y data.
+
+    Returns
+    -------
+    ndarray :
+        Array with the adjusted peak positions (in *x*)
+    """
+
+    out = []
+    try:
+        if func is None:
+            from peakutils import gaussian_fit
+            func = gaussian_fit
+
+        if ind is None:
+            from peakutils import indexes
+            ind = indexes(y)
+
+        for slice_ in (slice(max(0, i - width), min(i + width, y.shape[0])) for i in ind):
+            try:
+                fit = func(x[slice_], y[slice_])
+                out.append(fit)
+            except Exception:
+                pass
+    except ImportError:
+        from pyface.message_dialog import warning
+        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
+                      'Please install PeakUtils. From commandline use "pip install peakutils"')
+
+    return array(out)
+
 # ============= EOF =============================================

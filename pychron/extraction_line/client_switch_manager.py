@@ -19,6 +19,7 @@
 from socket import gethostbyname, gethostname
 # ============= local library imports  ==========================
 from pychron.extraction_line.switch_manager import SwitchManager
+from pychron.globals import globalv
 
 
 class ClientSwitchManager(SwitchManager):
@@ -26,11 +27,11 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_checksum(vkeys)
-            # self.debug('Get Checksum: {}'.format(word))
+            self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
             except BaseException:
-                pass
+                self.warning('invalid checksum "{}"'.format(word))
 
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')
@@ -59,9 +60,12 @@ class ClientSwitchManager(SwitchManager):
             self.refresh_canvas_needed = True
             # elm.refresh_canvas()
 
-    def load_valve_lock_states(self, refresh=True):
+    def load_valve_lock_states(self, refresh=True, force=False):
         # elm = self.extraction_line_manager
         word = self.get_lock_word()
+        # if globalv.valve_debug:
+        #     self.debug('valve lock word={}'.format(word))
+        self.debug('valve lock word={}'.format(word))
 
         changed = False
         if word is not None:
@@ -69,7 +73,7 @@ class ClientSwitchManager(SwitchManager):
                 if k in word:
                     v = self.get_switch_by_name(k)
                     s = word[k]
-                    if v.software_lock != s:
+                    if v.software_lock != s or force:
                         changed = True
 
                         v.software_lock = s
@@ -112,13 +116,12 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             try:
-
                 word = actuator.get_state_word()
                 if self._validate_checksum(word):
                     d = self._parse_word(word[:-4])
-
-                    # self.debug('Get State Word: {}'.format(word.strip()))
-                    # self.debug('Parsed State Word: {}'.format(d))
+                    if globalv.valve_debug:
+                        self.debug('Get State Word: {}'.format(word.strip()))
+                        self.debug('Parsed State Word: {}'.format(d))
             except BaseException:
                 pass
 
@@ -129,11 +132,12 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_lock_word()
+            # self.debug('Read Lock word={}'.format(word))
             if self._validate_checksum(word):
                 d = self._parse_word(word[:-4])
-
-                # self.debug('Get Lock Word: {}'.format(word))
-                # self.debug('Parsed Lock Word: {}'.format(d))
+                if globalv.valve_debug:
+                    self.debug('Get Lock Word: {}'.format(word))
+                    self.debug('Parsed Lock Word: {}'.format(d))
 
         return d
 

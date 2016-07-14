@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import binascii
-
-from traits.api import Any, Dict, List, Bool, Event
-
+from traits.api import Any, Dict, List, Bool, Event, Str
 # =============standard library imports ========================
+import binascii
 from pickle import PickleError
 from itertools import groupby
 import os
 import pickle
 import time
 # =============local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
@@ -76,6 +75,8 @@ class SwitchManager(Manager):
     console_message = Event
     mode = None
 
+    setup_name = Str('valves')
+
     _prev_keys = None
 
     def actuate_children(self, name, action, mode):
@@ -104,7 +105,10 @@ class SwitchManager(Manager):
     def create_device(self, name, *args, **kw):
         """
         """
+
         dev = super(SwitchManager, self).create_device(name, *args, **kw)
+        dev.configuration_dir_name = self.configuration_dir_name
+
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
                 self.actuators.append(dev)
@@ -120,7 +124,7 @@ class SwitchManager(Manager):
                 self.info('comm. device = {} '.format(a.com_device_name))
 
         # open config file
-        setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
         self._load_valves_from_file(setup_file)
 
         if globalv.load_valve_states:
@@ -149,7 +153,7 @@ class SwitchManager(Manager):
         return self.switches.keys()
 
     def refresh_network(self):
-
+        self.debug('refresh network')
         for k, v in self.switches.iteritems():
             self.refresh_state = (k, v.state)
 
@@ -223,6 +227,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
             state = '{}{}'.format(k, int(self._get_state_by(v)))
+
             states.append(state)
             if time.time() - st > timeout:
                 self.debug('get states timeout')
@@ -233,7 +238,6 @@ class SwitchManager(Manager):
 
         if clear_prev_keys:
             keys = None
-
         self._prev_keys = keys
         return ','.join(states)
 
@@ -252,6 +256,9 @@ class SwitchManager(Manager):
         """
         if n in self.switches:
             return self.switches[n]
+        elif globalv.valve_debug:
+            self.debug('Invalid switch name {}'.format(n))
+            self.debug(','.join(self.switches.keys()))
 
     def get_name_by_address(self, k):
         """
@@ -316,15 +323,15 @@ class SwitchManager(Manager):
     def close_switch(self, *args, **kw):
         return self.close_by_name(*args, **kw)
 
-    def open_by_name(self, name, mode='normal'):
+    def open_by_name(self, name, mode='normal', force=False):
         """
         """
-        return self._open_(name, mode)
+        return self._open_(name, mode, force=force)
 
-    def close_by_name(self, name, mode='normal'):
+    def close_by_name(self, name, mode='normal', force=False):
         """
         """
-        return self._close_(name, mode)
+        return self._close_(name, mode, force=force)
 
     def sample(self, name, period):
         v = self.get_switch_by_name(name)
@@ -345,6 +352,8 @@ class SwitchManager(Manager):
             v.lock()
             if save:
                 self._save_soft_lock_states()
+        else:
+            self.debug('unable to lock {}'.format(name))
 
     def unlock(self, name, save=True):
         """
@@ -354,6 +363,8 @@ class SwitchManager(Manager):
             v.unlock()
             if save:
                 self._save_soft_lock_states()
+        else:
+            self.debug('unable to unlock {}'.format(name))
 
     def set_valve_owner(self, name, owner):
         v = self.get_switch_by_name(name)
@@ -467,17 +478,28 @@ class SwitchManager(Manager):
         return d
 
     def load_hardware_states(self):
+        self.debug('load hardware states')
         for k, v in self.switches.iteritems():
             if v.query_state:
-                s = v.get_hardware_state(verbose=False)
+                s = v.get_hardware_indicator_state(verbose=False)
                 if v.state != s:
                     self.refresh_state = (k, s, False)
 
         self.refresh_canvas_needed = True
 
+    def load_indicator_states(self):
+        self.debug('load indicator states')
+        for k, v in self.switches.iteritems():
+            s = v.get_hardware_indicator_state()
+            self.refresh_state = (k, s, False)
+
+        self.refresh_canvas_needed = True
+
     def _load_states(self):
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         for k, v in self.switches.iteritems():
             s = v.get_hardware_state()
+            self.debug('hardware state {},{},{}'.format(k,v,s))
             if v.state != s:
                 self.refresh_state = (k, s, False)
 
@@ -532,7 +554,7 @@ class SwitchManager(Manager):
 
             pickle.dump(obj, f)
 
-    def _open_(self, name, mode):
+    def _open_(self, name, mode, force):
         """
         """
         action = 'set_open'
@@ -551,7 +573,7 @@ class SwitchManager(Manager):
             self.warning(msg)
             return False, False
 
-        r, c = self._actuate_(name, action, mode)
+        r, c = self._actuate_(name, action, mode, force=force)
         if r and c:
             for pip in self.pipette_trackers:
                 '''
@@ -562,7 +584,7 @@ class SwitchManager(Manager):
 
         return r, c
 
-    def _close_(self, name, mode):
+    def _close_(self, name, mode, force):
         action = 'set_closed'
         interlocked_valve = self._check_soft_interlocks(name)
         if interlocked_valve:
@@ -571,9 +593,9 @@ class SwitchManager(Manager):
             self.warning(msg)
             return False, False
 
-        return self._actuate_(name, action, mode)
+        return self._actuate_(name, action, mode, force=force)
 
-    def _actuate_(self, name, action, mode, address=None):
+    def _actuate_(self, name, action, mode, address=None, force=None):
         changed = False
         if address is None:
             v = self.get_switch_by_name(name)
@@ -590,7 +612,7 @@ class SwitchManager(Manager):
                 self.warning_dialog(msg)
             else:
                 act = getattr(v, action)
-                result, changed = act(mode='{}-{}'.format(self.mode, mode))
+                result, changed = act(mode='{}-{}'.format(self.mode, mode), force=force)
                 if isinstance(v, ManualSwitch):
                     self._save_manual_states()
         else:
@@ -663,6 +685,8 @@ class SwitchManager(Manager):
         interlocks = [i.text.strip() for i in v_elem.findall('interlock')]
         if description is not None:
             description = description.text.strip()
+        else:
+            description = ''
 
         actname = act_elem.text.strip() if act_elem is not None else 'switch_controller'
         actuator = self.get_actuator_by_name(actname)

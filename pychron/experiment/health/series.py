@@ -47,7 +47,6 @@ class SystemHealthSeries(Loggable):
     """
     _limit = 100
     _values = None
-    _bin_hours = 6
 
     def __init__(self, *args, **kw):
         super(SystemHealthSeries, self).__init__(*args, **kw)
@@ -165,22 +164,21 @@ class SystemHealthSeries(Loggable):
         dd = ds > tolerance_seconds
         bounds = where(dd)[0]
         itemidx = bounds[-1] if bounds else 0
-        series = series[itemidx:]
-
-        series = [si[attr] for si in series if si.has_key(attr)]
 
         if atypes:
-            x = [si for si in series if si['analysis_type'] in atypes]
+            series = [si for si in series if si['analysis_type'] in atypes]
+
+        series_v = [si[attr] for si in series[itemidx:] if attr in si]
 
         if func == 'value':
-            if x[-1] != x[-2]:
+            if series_v[-1] != series_v[-2]:
                 ret = action
         else:
             minx = cond.get('min_n', 10)
             if len(series) <= minx:
                 return
 
-            x = array(x)
+            x = array(series_v)
             if func == 'std':
                 x = x.std()
             elif func == 'mean':
@@ -199,13 +197,15 @@ class SystemHealthSeries(Loggable):
         :return:
         """
         p = os.path.join(paths.setup_dir, 'system_health.yaml')
-        with open(p, 'r') as rfile:
-            config = yaml.load(rfile)
-            self._values = config['values']
-            self._conditionals = config['conditionals']
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                config = yaml.load(rfile)
+                if config:
+                    self._values = config['values']
+                    self._conditionals = config['conditionals']
 
-            general = config['general']
-            self._limit = general['limit']
+                    general = config['general']
+                    self._limit = general['limit']
 
     def _make_analysis_dict(self, an):
         """

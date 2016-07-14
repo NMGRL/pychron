@@ -16,14 +16,15 @@
 
 # ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
-from pyface.dialog import Dialog
-from traits.api import List, Instance
 from envisage.ui.tasks.tasks_application import TasksApplication
+from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
+from traits.api import List, Instance
+
 # ============= standard library imports ========================
-import weakref
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
+from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -42,7 +43,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
         st = self.startup_tester
         if st.results:
             v = ResultsView(model=st)
-            self.open_view(v)
+            open_view(v)
 
         if globalv.use_testbot:
             from pychron.testbot.testbot import TestBot
@@ -103,7 +104,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
                         win.activate()
                     break
         else:
-            win = self.create_window(TaskWindowLayout(tid))
+            w = TaskWindowLayout(tid)
+            win = self.create_window(w)
             if activate:
                 win.open()
 
@@ -112,29 +114,25 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
             return win.active_task
 
-    def open_task(self, tid):
-        return self.get_task(tid, True)
+    def open_task(self, tid, **kw):
+        return self.get_task(tid, True, **kw)
 
-    def add_view(self, ui):
-        self.uis.append(weakref.ref(ui)())
+        # def add_view(self, ui):
+        #     self.uis.append(weakref.ref(ui)())
 
-    def open_view(self, obj, **kw):
-        info = obj.edit_traits(**kw)
-        self.add_view(info)
-        return info
+        # def open_view(self, obj, **kw):
+        # open_view(obj, **kw)
+        # info = obj.edit_traits(**kw)
+        # self.add_view(info)
+        # return info
 
     def exit(self, **kw):
+        report_view_stats()
+        close_views()
+
         self._cleanup_services()
 
-        uis = self.uis
-        # uis = copy.copy(self.uis)
-        for ui in uis:
-            try:
-                ui.dispose(abort=True)
-            except AttributeError:
-                pass
-
-        super(BaseTasksApplication, self).exit(force=True)
+        super(BaseTasksApplication, self).exit()
 
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):

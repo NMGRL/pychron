@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Any
 from traitsui.api import View, Item
-from enable.component_editor import ComponentEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from canvas.canvas3D.extraction_line_canvas3D import ExtractionLineCanvas3D

@@ -17,11 +17,11 @@
 # ============= enthought library imports =======================
 from traits.api import on_trait_change, Any, Instance
 
-from pychron.envisage.tasks.base_task import BaseTask
-from pychron.logger.tasks.logger_panes import DisplayPane
-from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.base_task import BaseTask
+from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay
+from pychron.logger.tasks.logger_panes import DisplayPane
 
 
 class LoggerTask(BaseTask):
@@ -30,7 +30,6 @@ class LoggerTask(BaseTask):
 
     display_pane = Instance(DisplayPane)
     warning_display = Any
-    # info_display = Any
 
     @on_trait_change('warning_display:text_added')
     def _handle_warning(self, obj, name, old, new):
@@ -38,8 +37,6 @@ class LoggerTask(BaseTask):
 
     def create_central_pane(self):
         self.warning_display = gWarningDisplay
-        # self.info_display = gLoggerDisplay
-
         self.display_pane = DisplayPane(loggers=[gLoggerDisplay,
                                                  gWarningDisplay])
         return self.display_pane

@@ -52,7 +52,8 @@ class UserEntry(BaseEntry):
         :param name:
         :return:
         """
-        db = self.db
+
+        db = self.get_database()
         with db.session_ctx():
             dbuser = db.get_user(name)
             if dbuser:

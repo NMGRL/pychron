@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Float, Enum
 from traitsui.api import View, Item, VGroup, HGroup
-from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper

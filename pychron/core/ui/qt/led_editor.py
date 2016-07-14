@@ -15,13 +15,14 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Int, Callable, Any
-from traitsui.qt4.editor import Editor
+from traits.api import HasTraits, Property, Int, Callable, Any, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
+
 # ============= standard library imports ========================
-from PySide.QtGui import QColor
+from PySide.QtGui import QColor, QFont, QWidget, QLabel
+
 # ============= local library imports  ==========================
 # ============= views ===================================
 COLORS = ['red', 'yellow', 'green', 'black']
@@ -214,7 +215,7 @@ def change_intensity(color, fac):
 #         self._set_image(color1, color2)
 
 from PySide.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
-    QPen, QRadialGradient
+    QPen, QRadialGradient, QVBoxLayout
 from PySide.QtCore import Qt
 
 
@@ -249,16 +250,21 @@ class _LEDEditor(Editor):
             rad = 20
 
         if self.control is None:
-            self.control = qtLED()
+
+            ctrl = qtLED()
+            layout = QVBoxLayout()
+
+            layout.addWidget(ctrl)
+
             scene = QGraphicsScene()
-            #             self.control.setStyleSheet("qtLED { border-style: none; }");
-            #             self.control.setAutoFillBackground(True)
+            #             ctrl.setStyleSheet("qtLED { border-style: none; }");
+            #             ctrl.setAutoFillBackground(True)
 
             # system background color
             scene.setBackgroundBrush(QBrush(QColor(237, 237, 237)))
-            self.control.setStyleSheet("border: 0px")
-            self.control.setMaximumWidth(rad+15)
-            self.control.setMaximumHeight(rad+15)
+            ctrl.setStyleSheet("border: 0px")
+            ctrl.setMaximumWidth(rad + 15)
+            ctrl.setMaximumHeight(rad + 15)
 
             x, y = 10, 10
             cx = x + rad / 1.75
@@ -269,12 +275,23 @@ class _LEDEditor(Editor):
             pen.setWidth(0)
             self.led = scene.addEllipse(x, y, rad, rad,
                                         pen=pen,
-                                        brush=brush
-                                        )
+                                        brush=brush)
 
-            self.control.setScene(scene)
+            if self.factory.label:
+                txt = QLabel(self.factory.label)
+                layout.addWidget(txt)
+                layout.setAlignment(txt, Qt.AlignHCenter)
+                # txt = scene.addText(self.factory.label, QFont('arial 6'))
+                # txt.setPos(cx, 10)
+
+            ctrl.setScene(scene)
+
+            layout.setAlignment(ctrl, Qt.AlignHCenter)
 
             self.value.on_trait_change(self.update_object, 'state')
+
+            self.control = QWidget()
+            self.control.setLayout(layout)
 
     def update_object(self, obj, name, new):
         """
@@ -316,5 +333,6 @@ class LEDEditor(BasicEditorFactory):
     """
     klass = _LEDEditor
     radius = Int(20)
+    label = Str
 
 # ============= EOF ====================================

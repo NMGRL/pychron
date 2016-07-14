@@ -14,15 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import sys
+
 from envisage.core_plugin import CorePlugin
-from envisage.api import Plugin
 from pyface.message_dialog import warning
+
 # ============= standard library imports ========================
-import os
 import logging
 # ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.key_bindings import update_key_bindings
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.envisage.initialization.initialization_parser import InitializationParser
@@ -31,7 +33,7 @@ from pychron.user.tasks.plugin import UsersPlugin
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
-    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
     DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
@@ -41,17 +43,18 @@ PACKAGE_DICT = dict(
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
     ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin',
+    # GeoPlugin='pychron.geo.tasks.geo_plugin',
     VideoPlugin='pychron.image.tasks.video_plugin',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
-    LoadingPlugin='pychron.loading.loading_plugin',
+        LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+    PipelinePlugin='pychron.pipeline.tasks.plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
 
     # spectrometers
@@ -60,13 +63,21 @@ PACKAGE_DICT = dict(
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
 
     EmailPlugin='pychron.social.email.tasks.plugin',
+    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
+    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DVCPlugin='pychron.dvc.tasks.dvc_plugin',
-    WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
+    GitHubPlugin='pychron.git.tasks.github_plugin',
+    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin')
+    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
+    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
+)
 
 
 def get_module_name(klass):
@@ -125,7 +136,7 @@ def get_plugin(pname):
 
     if klass is not None:
         plugin = klass()
-        if isinstance(plugin, Plugin):
+        if isinstance(plugin, BasePlugin):
             check = plugin.check()
             if check is True:
                 return plugin
@@ -211,9 +222,17 @@ def launch(klass, user):
     app = app_factory(klass, user)
 
     try:
+
+        # root = os.path.dirname(__file__)
+        # r = QtGui.QApplication.instance()
+        # p = os.path.join(root, 'stylesheets', 'qdark.css')
+        # with open(p) as rfile:
+        #     r.setStyleSheet(rfile.read())
+
         app.run()
-        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
+
     except Exception:
+        logger.info('Quitting {}'.format(app.name), extra={'threadName_': 'Launcher'})
         logger.exception('Launching error')
         import traceback
 
@@ -222,9 +241,6 @@ def launch(klass, user):
         gTraceDisplay.edit_traits(kind='livemodal')
 
     finally:
-        app.exit()
-        os._exit(0)
-
-    return
+        sys.exit(0)
 
 # ============= EOF ====================================

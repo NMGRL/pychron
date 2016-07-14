@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, Bool
-from traitsui.api import View, Item, VGroup, HGroup, HSplit, InstanceEditor, spring
-from chaco.tools.zoom_tool import ZoomTool
-from chaco.tools.scatter_inspector import ScatterInspector
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import DataLabel
+from chaco.tools.scatter_inspector import ScatterInspector
+from chaco.tools.zoom_tool import ZoomTool
 from kiva.fonttools import Font
+from traits.api import Instance, List, Bool
+from traitsui.api import View, Item, VGroup, HGroup, HSplit, InstanceEditor, spring
+
 # ============= standard library imports ========================
 import numpy as np
 

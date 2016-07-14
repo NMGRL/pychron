@@ -15,9 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Property
-from traitsui.api import View, Item, UItem, HGroup, spring, VGroup, TabularEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

@@ -21,6 +21,10 @@
 FITS = ['linear', 'parabolic', 'cubic']
 
 
+def fit_to_degree(f):
+    return FITS.index(f.lower()) + 1
+
+
 def natural_name_fit(f):
     if isinstance(f, (str, unicode)):
         return f
@@ -54,7 +58,7 @@ def convert_fit(f):
         #     f = 'weighted mean'
         #     if not err:
         #         err = 'SEM' if 'sem' in f else 'SD'
-        elif f in ('average','weighted mean'):
+        elif f in ('average', 'weighted mean'):
             if not err:
                 err = 'SEM' if 'sem' in f else 'SD'
         else:
@@ -62,6 +66,4 @@ def convert_fit(f):
 
     return f, err
 
-
 # ============= EOF =============================================
-

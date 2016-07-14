@@ -16,15 +16,14 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import HasTraits, Instance
+from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.analyses.view.main_view import MainView
-from pychron.pychron_constants import ARGON_KEYS
 
 
 class BaseRecordView(object):

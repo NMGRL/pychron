@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import time
+
 from traits.api import Str, Event
 # ============= standard library imports ========================
 from threading import Thread

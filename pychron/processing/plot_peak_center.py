@@ -17,14 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import csv
-from datetime import datetime, timedelta
+import os
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
-
-
+import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime, timedelta
 
 # ============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -124,9 +122,9 @@ def write_analyses_to_csv(p, ms):
     man = IsotopeDatabaseManager(bind=False, connect=False)
     man.db.trait_set(name='pychrondata',
                      kind='mysql',
-                     host='129.138.12.160',
+                     host=os.environ.get('HOST'),
                      username='root',
-                     password='DBArgon')
+                     password=os.environ.get('DB_PWD'))
 
     man.connect()
     db = man.db
@@ -140,34 +138,37 @@ def write_analyses_to_csv(p, ms):
             writer = csv.writer(wfile)
             n = len(ans)
             for i, ai in enumerate(ans):
-                if not (i + 1) % 10:
-                    print '{}/{}'.format(i + 1, n)
+                # if not (i + 1) % 10:
+                #     print '{}/{}'.format(i + 1, n)
                 try:
                     t = ai.timestamp
+                    # print ai.id
                     pc = ai.peak_center.center
-                    # print ai.analysis_timestamp, t, pc
+
+                    print ai.analysis_timestamp, ai.record_id, t, pc
                     writer.writerow([t, pc])
-                except AttributeError:
-                    pass
+                except AttributeError, e:
+                    print e
 
 
 def main():
-    ms = 'obama'
-    ms2 = 'jan'
+    ms = 'felix'
+    # ms = 'jan'
+    # ms2 = 'jan'
     # ms = 'jan'
 
     p = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms)
-    p2 = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms2)
+    # p2 = '/Users/ross/Sandbox/peak_centers_{}.csv'.format(ms2)
 
-    # o = '/Users/ross/Sandbox/peak_centers_{}.png'.format(ms)
-    o = '/Users/ross/Sandbox/peak_centers_both.png'
+    o = '/Users/ross/Sandbox/peak_centers_{}.png'.format(ms)
+    # o = '/Users/ross/Sandbox/peak_centers_both.png'
 
-    # write_analyses_to_csv(p, ms)
+    write_analyses_to_csv(p, ms)
 
-    x, y = extract_data_csv(p)
-    x2, y2 = extract_data_csv(p2)
+    # x, y = extract_data_csv(p)
+    # x2, y2 = extract_data_csv(p2)
     # plot(x, y, o, ms)
-    plot2(x[-30:], y[-30:], x2[-30:], y2[-30:], o, ms, ms2)
+    # plot2(x[-30:], y[-30:], x2[-30:], y2[-30:], o, ms, ms2)
 
 
 if __name__ == '__main__':

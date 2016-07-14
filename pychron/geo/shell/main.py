@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from collections import namedtuple
 import csv
 import os
+from collections import namedtuple
 
 import pyproj
 
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui import set_qt
-
 
 set_qt()
 # ============= enthought library imports =======================

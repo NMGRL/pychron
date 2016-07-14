@@ -33,6 +33,7 @@ def view_image(im, auto_close=True):
         if auto_close:
             minutes = 2
             t = Timer(60 * minutes, im.close_ui)
+            t.setDaemon(True)
             t.start()
 
     invoke_in_main_thread(_func)
@@ -51,7 +52,7 @@ class MachineVisionManager(Loggable):
 
     def new_image_frame(self):
         if self.video:
-            src = self.video.get_frame()
+            src = self.video.get_cached_frame()
             return src
 
     def new_image(self, frame=None, title='AutoCenter',
@@ -70,6 +71,8 @@ class MachineVisionManager(Loggable):
         return im
 
     def close_open_images(self):
+        self.debug('close open images')
+
         import time
         for i in self.open_images:
             i.close_ui()

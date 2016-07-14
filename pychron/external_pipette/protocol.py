@@ -34,7 +34,7 @@ class IPipetteManager(Interface):
     def load(self, *args, **kw):
         pass
 
-    def set_extract_state(self, state):
+    def set_extract_state(self, state, *args, **kw):
         pass
 
 # ============= EOF =============================================

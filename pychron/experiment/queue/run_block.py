@@ -36,6 +36,7 @@ from pychron.paths import paths
 class RunBlock(Loggable):
     extract_device = String
     mass_spectrometer = String
+    repository_identifier = String
 
     def _add_queue_meta(self, params):
         pass
@@ -80,6 +81,8 @@ class RunBlock(Loggable):
                 self._add_queue_meta(params)
                 params['skip'] = skip
                 params['mass_spectrometer'] = self.mass_spectrometer
+                if not params.get('repository_identifier'):
+                    params['repository_identifier'] = self.repository_identifier
 
                 klass = AutomatedRunSpec
                 if self.extract_device == 'Fusions UV':

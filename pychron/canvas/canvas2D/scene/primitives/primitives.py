@@ -50,7 +50,7 @@ class Point(QPrimitive):
         if self.canvas:
             self.canvas.request_redraw()
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         gc.arc(x, y, self.radius, 0, 360)
         gc.fill_path()
@@ -69,7 +69,7 @@ class Rectangle(QPrimitive):
     fill = True
     use_border = True
 
-    def _render_(self, gc):
+    def _render(self, gc):
 
         x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
@@ -148,7 +148,7 @@ class Line(QPrimitive):
             else:
                 self.primitives.append(self.start_point)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         gc.set_line_width(self.width)
         if self.start_point and self.end_point:
             x, y = self.start_point.get_xy()
@@ -189,7 +189,7 @@ class Triangle(QPrimitive):
         super(Triangle, self).__init__(0, 0, **kw)
         self.points = []
 
-    def _render_(self, gc):
+    def _render(self, gc):
         points = self.points
         func = self.canvas.map_screen
         if points:
@@ -206,8 +206,7 @@ class Triangle(QPrimitive):
                 gc.close_path()
                 gc.stroke_path()
             else:
-                f = color_map_name_dict['hot'](
-                    DataRange1D(low_setting=0, high_setting=300))
+                f = color_map_name_dict['hot'](DataRange1D(low_setting=0, high_setting=300))
                 for x, y, v in points:
                     x, y = func((x, y))
                     gc.set_fill_color(f.map_screen(array([v]))[0])
@@ -231,7 +230,7 @@ class Circle(QPrimitive):
         super(Circle, self).__init__(x, y, *args, **kw)
         self.radius = radius
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         r = self.radius
         if self.space == 'data':
@@ -240,6 +239,7 @@ class Circle(QPrimitive):
         gc.arc(x, y, r, 0, 360)
         gc.stroke_path()
 
+        # print self.fill, self.fill_color
         if self.fill:
             if self.fill_color:
                 gc.set_fill_color(self._convert_color(self.fill_color))
@@ -267,7 +267,7 @@ class Span(Line):
     continued_line = False
     fill = None  # (0.78,0.78, 0.78,1)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.start_point.get_xy()
         x1, y1 = self.end_point.get_xy()
         hd = self.map_dimension(self.hole_dim)
@@ -370,10 +370,9 @@ class LoadIndicator(Circle):
         self.primitives.append(lb)
         return lb
 
-    def _render_(self, gc):
+    def _render(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(
-                self.fill_color.toTuple()[:3]) < 1.5:
+        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
@@ -385,8 +384,8 @@ class LoadIndicator(Circle):
         if self.space == 'data':
             r = self.map_dimension(r)
 
-        self.name_offsetx = r - 2
-        self.name_offsety = r - 2
+        self.name_offsetx = r
+        self.name_offsety = r
 
         if self.state:
             with gc:
@@ -397,7 +396,7 @@ class LoadIndicator(Circle):
 
         nr = r * 0.25
 
-        super(LoadIndicator, self)._render_(gc)
+        super(LoadIndicator, self)._render(gc)
         if self.degas_indicator:
             gc.set_fill_color(self._convert_color(self.degas_color))
             gc.arc(x, y + 2 * nr, nr, 0, 360)
@@ -486,7 +485,7 @@ class Label(QPrimitive):
     def _get_text(self):
         return self.text
 
-    def _render_(self, gc):
+    def _render(self, gc):
         ox, oy = self.get_xy()
         loffset = 3
         x, y = ox + loffset, oy + loffset
@@ -556,7 +555,7 @@ class Indicator(QPrimitive):
         self.vline = Line(Point(x, y - h, **kw),
                           Point(x, y + h, **kw), **kw)
 
-    def _render_(self, gc, *args, **kw):
+    def _render(self, gc, *args, **kw):
         with gc:
             if self.spot_color:
                 sc = self._convert_color(self.spot_color)
@@ -616,8 +615,8 @@ class PointIndicator(Indicator):
         super(PointIndicator, self).adjust(dx, dy)
         self.label.adjust(dx, dy)
 
-    def _render_(self, gc, *args, **kw):
-        super(PointIndicator, self)._render_(gc)
+    def _render(self, gc, *args, **kw):
+        super(PointIndicator, self)._render(gc)
 
         if not self.use_simple_render:
 
@@ -643,7 +642,7 @@ class PointIndicator(Indicator):
 class Dot(QPrimitive):
     radius = 5
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         gc.arc(x, y, self.radius, 0, 360)
         gc.fill_path()
@@ -677,7 +676,7 @@ class PolyLine(QPrimitive):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         for pi in self.primitives:
             pi.render(gc)
 
@@ -688,7 +687,7 @@ class BorderLine(Line, Bordered):
     clear_vorientation = False
     clear_horientation = False
 
-    def _render_(self, gc):
+    def _render(self, gc):
         gc.save_state()
         with gc:
             gc.set_line_width(self.width + self.border_width)
@@ -702,7 +701,7 @@ class BorderLine(Line, Bordered):
             gc.line_to(x1, y1)
             gc.draw_path()
 
-        super(BorderLine, self)._render_(gc)
+        super(BorderLine, self)._render(gc)
 
 
 class Polygon(QPrimitive):
@@ -741,7 +740,7 @@ class Polygon(QPrimitive):
         self.points.append(pt)
         self.primitives.append(pt)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         with gc:
             self.indicator.render(gc)
 
@@ -780,7 +779,7 @@ class Image(QPrimitive):
     _image_cache_valid = False
     scale = None
 
-    def _render_(self, gc):
+    def _render(self, gc):
         if not self._image_cache_valid:
             self._compute_cached_image()
 
@@ -790,8 +789,7 @@ class Image(QPrimitive):
             if self.scale:
                 gc.scale_ctm(*self.scale)
 
-            gc.draw_image(self._cached_image,
-                          rect=(0, 0, self.canvas.width, self.canvas.height))
+            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height))
 
     def _compute_cached_image(self):
         pic = PImage.open(self.path)
@@ -804,8 +802,7 @@ class Image(QPrimitive):
         elif data.shape[2] == 4:
             kiva_depth = 'rgba32'
         else:
-            raise RuntimeError(
-                'Unknown colormap depth value: {}'.format(data.value_depth))
+            raise RuntimeError('Unknown colormap depth value: {}'.format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
@@ -839,7 +836,8 @@ class Animation(object):
             self.cnt -= self.cnt_tol
 
     def refresh_required(self):
-        if not self._last_refresh or time.time() - self._last_refresh > self.tol:
+        if not self._last_refresh or \
+                                time.time() - self._last_refresh > self.tol:
             self._last_refresh = time.time()
             return True
 

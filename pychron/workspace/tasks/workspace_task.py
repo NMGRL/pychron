@@ -25,7 +25,7 @@ from traits.api import Instance
 import yaml
 from pychron.core.progress import progress_iterator
 from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
-from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
     AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction, CommitChangesAction
 from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane

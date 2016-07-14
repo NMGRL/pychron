@@ -22,6 +22,7 @@ from traitsui.api import View, VGroup, Item, RangeEditor
 import os
 import time
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -48,7 +49,7 @@ class TargetPositionError(BaseException):
         dx = self._x - self._tx
         dy = self._y - self._ty
         return 'PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}'.format(dx, dy, self._x, self._y,
-                                                                               self._tx, self._ty)
+                                                                                         self._tx, self._ty)
 
 
 class ZeroDisplacementException(BaseException):
@@ -102,6 +103,7 @@ class MotionController(CoreDevice):
         self.parent.canvas.set_stage_position(self._x_position,
                                               self._y_position)
 
+    @caller
     def timer_factory(self, func=None, period=150):
         """
 
@@ -411,19 +413,19 @@ class MotionController(CoreDevice):
 
         mi = ax.negative_limit
         ma = ax.positive_limit
-        self.debug('validate {} {} {}'.format(v, key, cur))
+        self.debug('validate axis={} value={} current={}'.format(key, v, cur))
         try:
             v = float(v)
             if not mi <= v <= ma:
+                self.debug('value not between {}, {}'.format(mi, ma))
                 v = None
-
-            if v is not None:
-                if abs(v - cur) <= 0.001:
-                    v = None
+            #
+            # if v is not None:
+            #     if abs(v - cur) <= 0.001:
+            #         v = None
         except ValueError:
             v = None
 
-        self.debug('validate return {}'.format(v))
         return v
 
     def _get_xaxes_max(self):

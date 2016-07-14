@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, CInt
 from apptools.preferences.preference_binding import bind_preference
+from traits.api import HasTraits, Str, CInt
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import subprocess

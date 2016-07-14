@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, Group
+from traits.api import HasTraits, Str, Int, Any, Property, List
+from traitsui.api import View, UItem, VGroup, TabularEditor, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.pychron_constants import QTEGRA_SOURCE_NAMES, QTEGRA_SOURCE_KEYS, NULL_STR
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -35,21 +37,41 @@ class DictTabularAdapter(TabularAdapter):
             return 'Not Recorded'
 
 
-class Value(HasTraits):
-    name = Str
+class DValue(HasTraits):
+    key = Str
     value = Any
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 
 class SpectrometerView(HasTraits):
-    model = Any
+    # model = Any
     name = 'Spectrometer'
+    source_parameters = List
+    deflections = List
+    gains = List
 
     def __init__(self, an, *args, **kw):
         super(SpectrometerView, self).__init__(*args, **kw)
-        self.model = an
 
-    def trait_context(self):
-        return {'object': self.model}
+        # source
+        sp = an.source_parameters
+        sd = [DValue(n, sp.get(k, NULL_STR)) for n, k in zip(QTEGRA_SOURCE_NAMES,
+                                                             QTEGRA_SOURCE_KEYS)]
+        self.source_parameters = sd
+
+        # deflections
+        defls = an.deflections
+        names = sort_detectors(defls.keys())
+        ds = [DValue(ni, defls.get(ni, NULL_STR)) for ni in names]
+        self.deflections = ds
+
+        # gains
+        gains = an.gains
+        gs = [DValue(ni, gains.get(ni, NULL_STR)) for ni in names]
+        self.gains = gs
 
     def traits_view(self):
         g1 = Group(UItem('source_parameters',
@@ -63,11 +85,13 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Deflections')
-        v = View(VGroup(g1, g2))
+
+        g3 = Group(UItem('gains',
+                         editor=TabularEditor(adapter=DictTabularAdapter(),
+                                              editable=False)),
+                   show_border=True,
+                   label='Gains')
+        v = View(VGroup(g1, g2, g3))
         return v
 
-
 # ============= EOF =============================================
-
-
-

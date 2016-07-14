@@ -7,7 +7,6 @@ from pychron.processing.export.destinations import MassSpecDestination
 from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.processing.export.exporter import Exporter
 
-
 __author__ = 'ross'
 
 

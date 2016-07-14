@@ -16,17 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition
 
-from pyface.action.group import Group
-
-from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
-from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.laser_actions import PowerMapAction, \
-    PowerCalibrationAction, ExecutePatternAction
-
-
-
+    PowerCalibrationAction, ExecutePatternAction, ExecuteAndLasePatternAction
+from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
+from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
 
 # ============= standard library imports ========================
@@ -49,21 +45,23 @@ class FusionsCO2Plugin(FusionsPlugin):
     def _preferences_panes_default(self):
         return [FusionsCO2PreferencesPane]
 
-    def _task_extensions_default(self):
-        exts = super(FusionsCO2Plugin, self)._task_extensions_default()
-
-        ext1 = TaskExtension(task_id='pychron.fusions.co2',
-                             actions=[SchemaAddition(id='calibration',
-                                                     factory=lambda: Group(PowerMapAction(),
-                                                                           PowerCalibrationAction()),
-                                                     path='MenuBar/Laser'),
-                                      SchemaAddition(
-                                          factory=lambda: ExecutePatternAction(self._get_manager()),
-                                          path='MenuBar/Laser'),
-                                      # SchemaAddition(factory=TestDegasAction,
-                                      #                path='MenuBar/Laser')
-                                      ])
-
-        return exts + [ext1]
+    # def _task_extensions_default(self):
+    #     exts = super(FusionsCO2Plugin, self)._task_extensions_default()
+    #
+    #     ext1 = TaskExtension(task_id='pychron.fusions.co2',
+    #                          actions=[SchemaAddition(id='calibration',
+    #                                                  factory=lambda: Group(PowerMapAction(),
+    #                                                                        PowerCalibrationAction()),
+    #                                                  path='MenuBar/Laser'),
+    #                                   SchemaAddition(
+    #                                       factory=lambda: ExecuteAndLasePatternAction(self._get_manager()),
+    #                                       path='MenuBar/Laser'),
+    #                                   SchemaAddition(
+    #                                       factory=lambda: ExecutePatternAction(self._get_manager()),
+    #                                       path='MenuBar/Laser'),
+    #                                   # SchemaAddition(factory=TestDegasAction,
+    #                                   #                path='MenuBar/Laser')
+    #                                   ])
+    #     return exts + [ext1]
 
 # ============= EOF =============================================

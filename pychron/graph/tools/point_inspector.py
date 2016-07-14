@@ -17,24 +17,34 @@
 # ============= enthought library imports =======================
 from traits.api import Callable
 # ============= standard library imports ========================
-from numpy import where, vstack, zeros_like
+from numpy import where, vstack
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay, intersperse
+from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
+from pychron.pychron_constants import PLUSMINUS
 
 
 class PointInspector(InfoInspector):
     convert_index = Callable
+    additional_info = Callable
 
-    def get_selected_index(self):
-        xxyy = self.component.hittest(self.current_position)
+    single_point = True
 
-        if xxyy:
-            d = self.component.index.get_data()
-            d = vstack((d, zeros_like(d))).T
+    def get_selected_index(self, threshold=5):
+        if self.single_point:
+            idx = self.component.map_index(self.current_position, threshold=threshold)
+            if idx is not None:
+                return [idx]
+        else:
+            xs = self.component.index.get_data()
+            ys = self.component.value.get_data()
+
+            d = vstack((xs, ys)).T
             spts = self.component.map_screen(d)
-            tol = 2
-            return where(abs(spts[:,0] - xxyy[0]) < tol)[0]
+
+            cx, cy = self.current_position
+            distances = ((spts[:, 0] - cx) ** 2 + (spts[:, 1] - cy) ** 2) ** 0.5
+            return where(distances <= threshold * 2)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'
@@ -53,18 +63,18 @@ class PointInspector(InfoInspector):
             inds = self.get_selected_index()
             lines = []
             convert_index = self.convert_index
-            if inds is not None:
+            if inds is not None and len(inds):
                 he = hasattr(self.component, 'yerror')
-
                 ys = comp.value.get_data()[inds]
                 xs = comp.index.get_data()[inds]
+
                 for i, x, y in zip(inds, xs, ys):
                     if he:
                         ye = comp.yerror.get_data()[i]
                         pe = self.percent_error(y, ye)
 
                         ye = floatfmt(ye, n=6, s=3)
-                        sy = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
+                        sy = u'{} {}{} ({})'.format(y, PLUSMINUS, ye, pe)
                     else:
                         sy = floatfmt(y, n=6, s=3)
 
@@ -73,13 +83,21 @@ class PointInspector(InfoInspector):
                     else:
                         x = '{:0.5f}'.format(x)
 
-                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i+1, x, sy)])
+                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i + 1, x, sy)])
                     if hasattr(comp, 'display_index'):
                         x = comp.display_index.get_data()[i]
-                        lines.append(u'{}'.format(x))
+                        lines.append('{}'.format(x))
 
-            delim_n = max([len(li) for li in lines])
-            return intersperse(lines, '-' * delim_n)
+                    if self.additional_info is not None:
+                        ad = self.additional_info(i)
+                        if isinstance(ad, (list, tuple)):
+                            lines.extend(ad)
+                        else:
+                            lines.append(ad)
+
+            return lines
+            # delim_n = max([len(li) for li in lines])
+            # return intersperse(lines, '-' * delim_n)
         else:
             return []
 
@@ -87,5 +105,5 @@ class PointInspector(InfoInspector):
 class PointInspectorOverlay(InfoOverlay):
     pass
 
-#            print comp
+# print comp
 # ============= EOF =============================================

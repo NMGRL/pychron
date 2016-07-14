@@ -19,7 +19,6 @@ from traits.api import Instance, Button, Str
 from traitsui.api import View, Item
 
 from pychron.hardware.kerr.kerr_motor import KerrMotor
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable

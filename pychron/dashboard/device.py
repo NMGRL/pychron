@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import random
 
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
 # ============= standard library imports ========================
+import random
 import struct
 import time
 import yaml

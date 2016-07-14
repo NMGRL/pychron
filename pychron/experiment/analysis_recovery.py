@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 from numpy import array
 # ============= local library imports  ==========================
@@ -57,7 +55,7 @@ class AnalysisRecoverer(Loggable):
             per_spec = self._make_per_spec(lt)
             persister.per_spec = per_spec
 
-        persister.post_extraction_save('','',[])
+        persister.post_extraction_save()
         persister.post_measurement_save(save_local=False)
 
     def _make_per_spec(self, lt):

@@ -17,14 +17,18 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import os
+import re
 
 import yaml
-
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
 
+IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
+SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
+
+ANALYSIS_MAPPING_UNDERSCORE_KEY = dict()  # blank_air: ba
 ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
 NON_EXTRACTABLE = dict()  # ba: 'Blank Air'
 ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
@@ -32,11 +36,11 @@ SPECIAL_MAPPING = dict()  # blank_air: ba
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 # AGE_TESTABLE = []
-p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
-if os.path.isfile(p):
+try:
+    p = os.path.join(paths.hidden_dir, 'identifiers.yaml')
     with open(p, 'r') as rfile:
         yd = yaml.load(rfile)
-else:
+except BaseException:
     yd = yaml.load(IDENTIFIERS_DEFAULT)
 
 for i, idn_d in enumerate(yd):
@@ -47,6 +51,8 @@ for i, idn_d in enumerate(yd):
     underscore_name = value.lower().replace(' ', '_')
 
     ANALYSIS_MAPPING_INTS[underscore_name] = i
+    ANALYSIS_MAPPING_UNDERSCORE_KEY[underscore_name] = key
+
     if not idn_d['extractable']:
         NON_EXTRACTABLE[key] = value
         # if idn_d['ageable']:
@@ -370,7 +376,7 @@ def pretty_extract_device(ident):
             n = '{} {}'.format(n, args[-1].upper())
         else:
             n = ' '.join(map(str.capitalize, args))
-            #n=ident.replace(' ', '_')
+            # n=ident.replace(' ', '_')
     return n
 
 # ============= EOF =============================================

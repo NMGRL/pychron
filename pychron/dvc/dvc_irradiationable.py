@@ -15,14 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Property, cached_property, Instance, Event
+from traits.api import Str, Property, cached_property, Instance, Event, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
-class DVCIrradiationable(Loggable):
+class DVCAble(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
+    iso_db_man = Any
+
+    def get_database(self):
+        if self.dvc:
+            db = self.dvc.db
+        else:
+            db = self.iso_db_man.db
+        return db
+    9
+
+
+class DVCIrradiationable(DVCAble):
 
     level = Str
     levels = Property(depends_on='irradiation, updated')
@@ -30,9 +42,17 @@ class DVCIrradiationable(Loggable):
     irradiations = Property(depends_on='updated')
 
     updated = Event
+    _suppress_auto_select_irradiation = False
 
     def verify_database_connection(self, inform=True):
-        return self.dvc.db.connect(warn=inform)
+        # return self.dvc.initialize(inform)
+        self.debug('Verify database connection')
+
+        ret = self.dvc.initialize(inform)
+        if ret:
+            # trigger reload of irradiations, and levels
+            self.updated = True
+        return ret
 
     def load(self):
         pass
@@ -42,9 +62,10 @@ class DVCIrradiationable(Loggable):
 
     @cached_property
     def _get_irradiations(self):
-        if self.dvc.connect():
-            with self.dvc.db.session_ctx():
-                irs = self.dvc.db.get_irradiations()
+        db = self.get_database()
+        if db.connect():
+            with db.session_ctx():
+                irs = db.get_irradiations()
                 names = [i.name for i in irs]
                 if names:
                     self.irradiation = names[0]
@@ -52,11 +73,12 @@ class DVCIrradiationable(Loggable):
 
     @cached_property
     def _get_levels(self):
-        if self.dvc.connect():
-            with self.dvc.db.session_ctx():
-                irrad = self.dvc.db.get_irradiation(self.irradiation)
+        db = self.get_database()
+        if db.connect():
+            with db.session_ctx():
+                irrad = db.get_irradiation(self.irradiation)
                 if irrad:
-                    names = [li.name for li in irrad.levels]
+                    names = sorted([li.name for li in irrad.levels])
                     if names:
                         self.level = names[0]
                     return names
@@ -64,6 +86,3 @@ class DVCIrradiationable(Loggable):
                     return []
 
 # ============= EOF =============================================
-
-
-

@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 import time
 from threading import Thread
@@ -43,7 +44,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     """
     canvas = Instance(ExtractionLineCanvas)
-    _canvases = List
+    canvases = List
+
+    plugin_canvases = List
 
     explanation = Instance(ExtractionLineExplanation, ())
     monitor = Instance(SystemMonitor)
@@ -88,8 +91,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def set_extract_state(self, *args, **kw):
         pass
-    
+
     def activate(self):
+        self._load_additional_canvases()
 
         self._active = True
 
@@ -99,26 +103,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
         self._activate_hook()
 
-    def _activate_hook(self):
-        self.monitor = SystemMonitor(manager=self, name='system_monitor')
-        self.monitor.monitor()
-
-        if self.gauge_manager:
-            self.info('start gauge scans')
-            self.gauge_manager.start_scans()
-
-        if self.use_hardware_update and self.switch_manager:
-            do_after(self.hardware_update_period * 1000, self._update_states)
-
-    def _update_states(self):
-        self.switch_manager.load_hardware_states()
-        do_after(self.hardware_update_period * 1000, self._update_states)
-
-    def _refresh_canvas(self):
-        self.refresh_canvas()
-        if self._active:
-            do_after(200, self._refresh_canvas)
-
     def deactivate(self):
         if self.gauge_manager:
             self.gauge_manager.stop_scans()
@@ -127,9 +111,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self.monitor.stop()
         self._active = False
         self._deactivate_hook()
-
-    def _deactivate_hook(self):
-        pass
 
     def bind_preferences(self):
 
@@ -155,16 +136,13 @@ class ExtractionLineManager(Manager, Consoleable):
         # bind_preference(self, 'use_network',
         # '{}.use_network'.format(prefid))
 
-        bind_preference(self.network, 'inherit_state',
-                        '{}.inherit_state'.format(prefid))
+        bind_preference(self.network, 'inherit_state', '{}.inherit_state'.format(prefid))
 
         self.console_bind_preferences('{}.console'.format(prefid))
 
         if self.gauge_manager:
-            bind_preference(self.gauge_manager, 'update_period',
-                            '{}.gauge_update_period'.format(prefid))
-            bind_preference(self.gauge_manager, 'use_update',
-                            '{}.use_gauge_update'.format(prefid))
+            bind_preference(self.gauge_manager, 'update_period', '{}.gauge_update_period'.format(prefid))
+            bind_preference(self.gauge_manager, 'use_update', '{}.use_gauge_update'.format(prefid))
 
         if self.canvas:
             bind_preference(self.canvas.canvas2D, 'display_volume', '{}.display_volume'.format(prefid))
@@ -232,30 +210,35 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_gauge_communication(self):
+        self.info('test gauge communication')
+        ret, err = True, ''
         if self.gauge_manager:
             if self.gauge_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
-                return self.gauge_manager.test_connection()
+                ret = self.gauge_manager.test_connection()
+        return ret, err
 
     def test_connection(self):
+        self.info('test connection')
         return self.test_valve_communication()
 
     def test_valve_communication(self):
-        # if self.simulation:
-        # return globalv.communication_simulation
-        # else:
+        self.info('test valve communication')
+
+        ret, err = True, ''
         if self.switch_manager:
             if self.switch_manager.simulation:
-                return globalv.communication_simulation
+                ret = globalv.communication_simulation
             else:
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)
-                return bool(state)
+                ret = bool(state)
+        return ret, err
 
     def refresh_canvas(self):
-        for ci in self._canvases:
+        for ci in self.canvases:
             ci.refresh()
 
     def finish_loading(self):
@@ -284,33 +267,33 @@ class ExtractionLineManager(Manager, Consoleable):
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
 
-        for c in self._canvases:
-            if c is not None:
-                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
-                # c.load_canvas_file(c.config_name)
+        c = self.canvas
+        c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+        # c.load_canvas_file(c.config_name)
 
-                if self.switch_manager:
-                    for k, v in self.switch_manager.switches.iteritems():
-                        vc = c.get_object(k)
-                        if vc:
-                            vc.soft_lock = v.software_lock
-                            vc.state = v.state
+        if self.switch_manager:
+            for k, v in self.switch_manager.switches.iteritems():
+                vc = c.get_object(k)
+                if vc:
+                    vc.soft_lock = v.software_lock
+                    vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
+        self.debug('update switch state {} {}'.format(name, state))
         if self.use_network:
             self.network.set_valve_state(name, state)
-            for c in self._canvases:
+            for c in self.canvases:
                 self.network.set_canvas_states(c, name)
 
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_state(name, state, *args, **kw)
 
     def update_switch_lock_state(self, *args, **kw):
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_lock_state(*args, **kw)
 
     def update_switch_owned_state(self, *args, **kw):
-        for c in self._canvases:
+        for c in self.canvases:
             c.update_switch_owned_state(*args, **kw)
 
     def set_valve_owner(self, name, owner):
@@ -446,11 +429,18 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.explanation.selected = selected
 
-    def new_canvas(self):
-        c = ExtractionLineCanvas(manager=self)
-        self._canvases.append(c)
+    def new_canvas(self, config=None):
+        c = ExtractionLineCanvas(manager=self,
+                                 display_name='Extraction Line')
+        c.load_canvas_file(canvas_config_path=config)
+        self.canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
+        if self.switch_manager:
+            self.switch_manager.load_valve_states()
+            self.switch_manager.load_valve_lock_states(force=True)
+            self.switch_manager.load_valve_owners()
+            c.refresh()
 
         return c
 
@@ -463,6 +453,39 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _load_additional_canvases(self):
+        for ci in self.plugin_canvases:
+            c = ExtractionLineCanvas(manager=self,
+                                     display_name=ci['display_name'], )
+            c.load_canvas_file(ci['canvas_path'], ci['config_path'], ci['valve_path'])
+            self.canvases.append(c)
+
+    def _activate_hook(self):
+        self.monitor = SystemMonitor(manager=self, name='system_monitor')
+        self.monitor.monitor()
+
+        if self.gauge_manager:
+            self.info('start gauge scans')
+            self.gauge_manager.start_scans()
+
+        self._trigger_update()
+
+    def _trigger_update(self):
+        if self.use_hardware_update and self.switch_manager:
+            do_after(self.hardware_update_period * 1000, self._update_states)
+
+    def _update_states(self):
+        self.switch_manager.load_hardware_states()
+        self._trigger_update()
+
+    def _refresh_canvas(self):
+        self.refresh_canvas()
+        if self._active:
+            do_after(200, self._refresh_canvas)
+
+    def _deactivate_hook(self):
+        pass
+
     def _reload_canvas_hook(self):
         pass
 
@@ -559,12 +582,12 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
-    def _change_switch_state(self, name, mode, action, sender_address=None):
+    def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
-            ret = func(name, mode=mode)
-
+            ret = func(name, mode=mode, **kw)
+            self.debug('change switch state {}'.format(ret))
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
@@ -598,7 +621,7 @@ class ExtractionLineManager(Manager, Consoleable):
         return ret
 
     def _set_pipette_counts(self, name, value):
-        for c in self._canvases:
+        for c in self.canvases:
             scene = c.canvas2D.scene
             obj = scene.get_item('vlabel_{}Pipette'.format(name))
             if obj is not None:
@@ -651,6 +674,11 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    @on_trait_change('use_hardware_update')
+    def _update_use_hardware_update(self):
+        if self.use_hardware_update:
+            self._trigger_update()
+
     @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
@@ -660,7 +688,7 @@ class ExtractionLineManager(Manager, Consoleable):
         from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
         if not self.use_network:
-            for c in self._canvases:
+            for c in self.canvases:
                 scene = c.canvas2D.scene
                 for item in scene.get_items():
                     if not isinstance(item, Valve):
@@ -676,19 +704,22 @@ class ExtractionLineManager(Manager, Consoleable):
 
     @on_trait_change('display_volume,volume_key')
     def _update_canvas_inspector(self, name, new):
-        for c in self._canvases:
+        for c in self.canvases:
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
+        self.debug('handle state {}'.format(new))
         self.update_switch_state(*new)
 
     def _handle_lock_state(self, new):
+        self.debug('refresh_lock_state fired. {}'.format(new))
         self.update_switch_lock_state(*new)
 
     def _handle_owned_state(self, new):
         self.update_switch_owned_state(*new)
 
     def _handle_refresh_canvas(self, new):
+        self.debug('refresh_canvas_needed fired')
         self.refresh_canvas()
 
     def _handle_console_message(self, new):
@@ -724,7 +755,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _get_switch_manager_klass(self):
         from pychron.extraction_line.switch_manager import SwitchManager
-
         return SwitchManager
 
     def _explanation_default(self):

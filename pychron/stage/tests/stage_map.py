@@ -32,7 +32,7 @@ class StageMapTestCase(unittest.TestCase):
         h5.x_cor = 4
         h5.y_cor = 8
 
-        sm.generate_row_interpolated_corrections()
+        sm.generate_row_interpolated_corrections(dump_corrections=False)
 
         h2 = sm.get_hole('2')
         h4 = sm.get_hole('4')
@@ -53,7 +53,7 @@ class StageMapTestCase(unittest.TestCase):
         h5.x_cor = 4
         h5.y_cor = 8
 
-        sm.generate_row_interpolated_corrections()
+        sm.generate_row_interpolated_corrections(dump_corrections=False)
 
         h2 = sm.get_hole('2')
         h4 = sm.get_hole('4')
@@ -74,7 +74,7 @@ class StageMapTestCase(unittest.TestCase):
         h3.x_cor = 2
         h3.y_cor = 4
 
-        sm.generate_row_interpolated_corrections()
+        sm.generate_row_interpolated_corrections(dump_corrections=False)
 
         h2 = sm.get_hole('2')
         h4 = sm.get_hole('4')
@@ -95,7 +95,7 @@ class StageMapTestCase(unittest.TestCase):
         h5.x_cor = 4
         h5.y_cor = 8
 
-        sm.generate_row_interpolated_corrections()
+        sm.generate_row_interpolated_corrections(dump_corrections=False)
 
         h2 = sm.get_hole('2')
         h4 = sm.get_hole('4')
@@ -106,7 +106,7 @@ class StageMapTestCase(unittest.TestCase):
     def test_generate_interpolation_no_points(self):
         sm = self.sm
 
-        sm.generate_row_interpolated_corrections()
+        sm.generate_row_interpolated_corrections(dump_corrections=False)
 
         h2 = sm.get_hole('2')
         h4 = sm.get_hole('4')

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Float, Event, Any, Instance, List, Str
+from traits.api import HasTraits, Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
 from scipy import optimize
@@ -56,6 +56,9 @@ class BaseMagnet(HasTraits):
     use_deflection_correction = True
 
     _suppress_mass_update = False
+
+    def reload_mftable(self):
+        self.mftable.load_mftable()
 
     def set_dac(self, *args, **kw):
         raise NotImplementedError
@@ -122,8 +125,6 @@ class BaseMagnet(HasTraits):
             return mass
 
         except ValueError, e:
-            import traceback
-            traceback.print_exc()
             self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
 
     def map_mass_to_dac(self, mass, detname):

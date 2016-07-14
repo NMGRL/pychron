@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Enum, Bool, Float, on_trait_change
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
+from traits.api import Enum, Bool, Float, on_trait_change
+
 # ============= standard library imports ========================
 from numpy import column_stack
 # ============= local library imports  ==========================
@@ -31,20 +32,21 @@ class ErrorBarOverlay(AbstractOverlay):
     use_end_caps = Bool(True)
     line_width = Float(1)
     _cached_points = None
+    _cache_valid = False
 
     def _get_cached_points(self):
+        # print 'laa', self.layout_needed, self._layout_needed, self._cache_valid
         pts = self._cached_points
-        if pts is None or self.layout_needed:
+        if pts is None or not self._cache_valid:
             comp = self.component
             x = comp.index.get_data()
             y = comp.value.get_data()
-
             if self.orientation == 'x':
                 y = comp.value_mapper.map_screen(y)
                 err = comp.xerror.get_data()
 
-                err *= self.nsigma
-                xlow, xhigh = x - err, x + err
+                scaled_err = err * self.nsigma
+                xlow, xhigh = x - scaled_err, x + scaled_err
                 xlow = comp.index_mapper.map_screen(xlow)
                 xhigh = comp.index_mapper.map_screen(xhigh)
 
@@ -56,8 +58,8 @@ class ErrorBarOverlay(AbstractOverlay):
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
                 # print 'fff', len(x), len(err), comp.color
-                err = err * self.nsigma
-                ylow, yhigh = y - err, y + err
+                scaled_err = err * self.nsigma
+                ylow, yhigh = y - scaled_err, y + scaled_err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
                 # idx = arange(len(x))
@@ -67,6 +69,7 @@ class ErrorBarOverlay(AbstractOverlay):
 
             pts = start, end, lstart, lend, ustart, uend
             self._cached_points = pts
+            self._cache_valid = True
 
         return pts
 
@@ -93,9 +96,11 @@ class ErrorBarOverlay(AbstractOverlay):
 
             gc.draw_path()
 
-    @on_trait_change('component.+')
-    def _handle_component_change(self, name, new):
-        self._layout_needed = True
-        self.request_redraw()
+    @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
+    def _handle_component_change(self, obj, name, new):
+        self.invalidate()
 
+    def invalidate(self):
+        self._cache_valid = False
+        self.invalidate_and_redraw()
 # ============= EOF =====================================

@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 from PySide.QtCore import Qt
-from PySide.QtGui import QPainter, QWidget, QLabel
-from PySide.QtGui import QVBoxLayout
 from PySide.QtGui import QPlainTextEdit
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from PySide.QtGui import QVBoxLayout
+from PySide.QtGui import QWidget, QLabel
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

@@ -82,10 +82,11 @@ class RunParser(Loggable):
                      'comment',
                      'syn_extraction',
                      'overlap',
-                     'experiment_identifier',
+                     'repository_identifier',
                      ('conditionals', 'truncate'),
                      ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
+            # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 

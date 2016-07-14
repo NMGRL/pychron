@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, CInt, Str, Bool
-from traitsui.api import View, Item
+from traits.api import CInt, Str, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator

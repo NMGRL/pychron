@@ -1,9 +1,9 @@
-from datetime import datetime
 import os
+
+from datetime import datetime
 
 from pychron.core.helpers.filetools import unique_date_path
 from pychron.core.test_helpers import get_data_dir as mget_data_dir
-
 
 __author__ = 'ross'
 

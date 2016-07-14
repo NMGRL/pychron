@@ -39,8 +39,7 @@ before_install:
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - conda install --yes statsmodels PyYAML traits pyface traitsui enable
-  chaco xlrd xlwt lxml sqlalchemy apptools
+  - conda install --yes statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
   - pip install uncertainties pint
 
 script: python setup.py test

@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, Item, VGroup, \
     HGroup, spring, UItem, ButtonEditor, Group
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, AxesPane, SupplementalPane
-from pychron.core.ui.led_editor import LEDEditor
-
 
 
 # ============= standard library imports ========================

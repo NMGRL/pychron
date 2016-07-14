@@ -15,14 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool
 from pyface.tasks.traits_editor import TraitsEditor
-
-from pychron.loggable import Loggable
-
+from traits.api import Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.loggable import Loggable
+
+
+def grouped_name(names, delimiter='-'):
+    s = names[0]
+    e = names[-1]
+    if s != e:
+        if all([delimiter in x for x in names]):
+            prev = None
+            for x in names:
+                nx = x.split(delimiter)
+                h, t = delimiter.join(nx[:-1]), nx[-1]
+
+                if prev and prev != h:
+                    break
+                prev = h
+            else:
+                s = names[0]
+                e = names[-1].split(delimiter)[-1]
+
+        s = '{} - {}'.format(s, e)
+
+    return s
 
 
 class BaseTraitsEditor(TraitsEditor, Loggable):

@@ -18,10 +18,8 @@
 
 # ============= standard library imports ========================
 import os
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.schema import MetaData, Table, Column
-from sqlalchemy.types import Integer, DateTime, String, Float
 
+from sqlalchemy.orm.exc import NoResultFound
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.database.core.database_adapter import DatabaseAdapter

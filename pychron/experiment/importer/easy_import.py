@@ -18,8 +18,9 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.easy_parser import EasyParser
+
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.tasks.importer import ImporterModel
 from pychron.experiment.importer.import_mapper import MinnaBluffMapper
 

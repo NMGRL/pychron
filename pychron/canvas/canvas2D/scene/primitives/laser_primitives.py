@@ -163,8 +163,8 @@ class Transect(PolyLine):
         for pt in self.step_points:
             pt.set_canvas(canvas)
 
-    def _render_(self, gc):
-        super(Transect, self)._render_(gc)
+    def _render(self, gc):
+        super(Transect, self)._render(gc)
         for si in self.step_points:
             si.render(gc)
 

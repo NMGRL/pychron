@@ -35,6 +35,8 @@ from pychron.core.pdf.options import BasePDFOptions
 
 
 class NumberedCanvas(canvas.Canvas):
+    page_number_format = None
+
     def __init__(self, *args, **kwargs):
         canvas.Canvas.__init__(self, *args, **kwargs)
         self._saved_page_states = []
@@ -53,9 +55,14 @@ class NumberedCanvas(canvas.Canvas):
         canvas.Canvas.save(self)
 
     def draw_page_number(self, page_count):
-        self.setFont("Helvetica", 7)
-        self.drawRightString(200 * mm, 20 * mm,
-                             "Page %d of %d" % (self._pageNumber, page_count))
+        self.setFont("Helvetica", 10)
+
+        fmt = self.page_number_format
+        try:
+            s = fmt.format(page=self._pageNumber, total=page_count)
+        except BaseException:
+            s = "Page %d of %d" % (self._pageNumber, page_count)
+        self.drawRightString(200 * mm, 20 * mm, s)
 
 
 class BasePDFWriter(Loggable):
@@ -65,7 +72,9 @@ class BasePDFWriter(Loggable):
     _options_klass = BasePDFOptions
 
     def _options_default(self):
-        return self._options_klass()
+        opt = self._options_klass()
+        opt.load()
+        return opt
 
     def _new_base_doc_template(self, path):
         pagesize = letter
@@ -82,7 +91,6 @@ class BasePDFWriter(Loggable):
             topMargin = opt.top_margin * inch
             bottomMargin = opt.bottom_margin * inch
 
-        print leftMargin, rightMargin, topMargin, bottomMargin
         doc = BaseDocTemplate(path,
                               leftMargin=leftMargin,
                               rightMargin=rightMargin,
@@ -105,6 +113,8 @@ class BasePDFWriter(Loggable):
             doc.addPageTemplates(ti)
 
         if self.options.show_page_numbers:
+            NumberedCanvas.page_number_format = self.options.page_number_format
+
             doc.build(flowables, canvasmaker=NumberedCanvas)
         else:
             doc.build(flowables)
@@ -117,12 +127,15 @@ class BasePDFWriter(Loggable):
         """
         raise NotImplementedError
 
-    def _new_paragraph(self, t, s='Normal', **skw):
+    def _new_paragraph(self, t, s='Normal', klass=None, **skw):
+        if klass is None:
+            klass = Paragraph
+
         style = getSampleStyleSheet()[s]
         for k, v in skw.iteritems():
             setattr(style, k, v)
 
-        p = Paragraph(t, style)
+        p = klass(t, style)
         return p
 
     def _page_break(self):
@@ -178,6 +191,5 @@ class BasePDFWriter(Loggable):
 
     def _value(self, **kw):
         return lambda x: self._fmt_attr(x, key='nominal_value', **kw)
-
 
 # ============= EOF =============================================

@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 import threading
 
+import traits.trait_notifiers
+from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
-import traits.trait_notifiers
-from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import keyring
 import base64
 import json
 import requests
@@ -34,6 +33,7 @@ import os
 import pickle
 # ============= local library imports  ==========================
 from pychron.github import GITHUB_API_URL
+from pychron.globals import globalv
 from pychron.paths import paths
 
 LABELS = ['Bug',
@@ -132,10 +132,24 @@ class ExceptionModel(HasTraits):
     description = Str
     labels = List
     exctext = Str
-
+    branch = Str
     helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was a Pychron error<br/>
 Please consider submitting a bug report to the developer</b></font><br/>
 Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
+
+    @property
+    def active_branch(self):
+        return globalv.active_branch
+
+    @property
+    def active_analyses(self):
+        ret = ''
+        if globalv.active_analyses:
+            try:
+                ret = ','.join([ai.record_id for ai in globalv.active_analyses])
+            except AttributeError, e:
+                ret = '{}\n\n{}'.format(e, str(globalv.active_analyses))
+        return ret
 
 
 class ExceptionHandler(Controller):
@@ -172,22 +186,25 @@ class ExceptionHandler(Controller):
 
     def _make_body(self):
         m = self.model
-        return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
+        return 'active branch={}\n\nactive analyses={}\n\n{}\n\n```\n{}\n```'.format(m.active_branch,
+                                                                                     m.active_analyses,
+                                                                                     m.description, m.exctext)
 
     def traits_view(self):
-        v = View(VGroup(
-                UItem('helpstr',
-                      style='readonly'),
-                Item('title'),
-                HGroup(
-                        VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                               show_border=True, label='Labels (optional)'),
-                        VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
-                UItem('exctext',
-                      style='custom',
-                      editor=TextEditor(read_only=True))),
-                title='Exception',
-                buttons=[SubmitAction, 'Cancel'])
+        v = View(VGroup(UItem('helpstr',
+                              style='readonly'),
+                        Item('title'),
+                        HGroup(VGroup(UItem('labels', style='custom',
+                                            editor=CheckListEditor(values=LABELS, cols=2)),
+                                      show_border=True, label='Labels (optional)',
+                                      scrollable=True),
+                               VGroup(UItem('description', style='custom'), show_border=True,
+                                      label='Description (optional)')),
+                        UItem('exctext',
+                              style='custom',
+                              editor=TextEditor(read_only=True))),
+                 title='Exception',
+                 buttons=[SubmitAction, 'Cancel'])
 
         return v
 

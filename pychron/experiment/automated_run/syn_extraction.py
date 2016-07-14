@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 import os
-from threading import Thread
 import time
 import uuid
+from threading import Thread
 
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -190,7 +188,7 @@ class SynExtractionCollector(Loggable):
         else:
             runid=make_runid(identifier, last_aq+1)
             self.arun.info('Starting SynExtraction run {}'.format(runid))
-            self.arun.persister.trait_set(use_secondary_database=False,
+            self.arun.persister.trait_set(use_massspec_database=False,
                                           runid=runid,
                                           uuid=str(uuid.uuid4()))
 

@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
-from traitsui.api import View, UItem, InstanceEditor
-from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Any
+from traitsui.api import View, UItem, InstanceEditor, ListEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -28,7 +30,15 @@ class CanvasPane(TraitsTaskPane):
     name = 'Extraction Line'
 
     def traits_view(self):
-        v = View(UItem('canvas', style='custom'))
+        v = View(UItem('canvas',
+                       defined_when='not plugin_canvases',
+                       editor=InstanceEditor(),
+                       style='custom'),
+                 UItem('canvases',
+                       defined_when='plugin_canvases',
+                       editor=ListEditor(page_name='.display_name',
+                                         use_notebook=True),
+                       style='custom'))
         return v
 
 

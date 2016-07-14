@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 import os
+
 from traits.api import Str, Int, Bool, List
-from traitsui.api import View, VGroup, UItem, Item, EnumEditor, HGroup
+from traitsui.api import View, VGroup, Item, EnumEditor, HGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.paths import paths

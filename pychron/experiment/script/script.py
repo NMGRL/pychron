@@ -189,7 +189,7 @@ class Script(Loggable):
         if ms:
             # msn = '{}_'.format(self.mass_spectrometer.lower())
             # if self.kind=='Measurement':
-                # print self,self.name_prefix, self.mass_spectrometer, ms
+            # print self,self.name_prefix, self.mass_spectrometer, ms
             names.extend([self._clean_script_name(ei) for ei in ms
                           if self.name_prefix and ei.startswith(self.name_prefix)])
         # print names

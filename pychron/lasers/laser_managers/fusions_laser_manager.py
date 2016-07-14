@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
-from apptools.preferences.preference_binding import bind_preference
+
 # =============standard library imports ========================
 # from threading import Thread, Timer as DoLaterTimer, Lock
 # import os
@@ -122,8 +123,8 @@ class FusionsLaserManager(LaserManager):
             # ===============================================================================
 
     def extract(self, power, **kw):
-        self.enable_laser()
-        self.set_laser_power(power, **kw)
+        if self.enable_laser():
+            self.set_laser_power(power, **kw)
 
     def end_extract(self):
         self.disable_laser()
@@ -273,11 +274,11 @@ class FusionsLaserManager(LaserManager):
             else:
                 func()
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         if self.use_video:
-            return self.stage_manager.get_brightness()
+            return self.stage_manager.get_brightness(**kw)
         else:
-            return super(FusionsLaserManager, self).get_brightness()
+            return super(FusionsLaserManager, self).get_brightness(**kw)
 
     def is_degassing(self):
         if self._degas_thread:
@@ -478,6 +479,7 @@ class FusionsLaserManager(LaserManager):
         """
         """
         return FiberLight(name='fiber_light')
+
 
 # def _optics_view_default(self):
 #        return OpticsView(laser_controller=self.laser_controller)

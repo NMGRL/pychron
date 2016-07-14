@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import unittest
 
-from pychron.loading.load_task import LoadingTask
-from test.database import isotope_manager_factory
 from pychron.loading.loading_manager import LoadingManager
+from pychron.loading.tasks.load_task import LoadingTask
+from test.database import isotope_manager_factory
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -39,6 +39,6 @@ class LoadingTest(unittest.TestCase):
         c = lm.make_canvas('1401')
 
         self.t.canvas = c
-        self.t.save_loading()
+        self.t.save_loading_pdf()
 
 # ============= EOF =============================================

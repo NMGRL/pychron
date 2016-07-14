@@ -18,14 +18,11 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pyface.action.action import Action
-
 from pyface.tasks.action.task_action import TaskAction
 
+from pychron.envisage.view_util import open_view
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
-
-
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -44,8 +41,7 @@ class BaseLaserAction(Action):
                 app = event.task.window.application
 
             manager = app.get_service(ILaserManager,
-                                      'name=="{}"'.format(self.manager_name),
-            )
+                                      'name=="{}"'.format(self.manager_name))
         return manager
 
 
@@ -64,10 +60,20 @@ class LocalLaserAction(BaseLaserAction):
 
 class ExecutePatternAction(LocalLaserAction):
     name = 'Execute Pattern'
+
     def perform(self, event):
         manager = self._get_manager(event)
         if manager is not None:
             manager.execute_pattern()
+
+
+class ExecuteAndLasePatternAction(LocalLaserAction):
+    name = 'Execute Pattern and Lase'
+
+    def perform(self, event):
+        manager = self._get_manager(event)
+        if manager is not None:
+            manager.execute_pattern(lase=True)
 
 
 class OpenScannerAction(LocalLaserAction):
@@ -83,6 +89,7 @@ class OpenScannerAction(LocalLaserAction):
 class OpenAutoTunerAction(LocalLaserAction):
     name = 'Open AutoTuner...'
     # accelerator = 'Ctrl+T'
+
     def perform(self, event):
         manager = self._get_manager(event)
         if manager is not None:
@@ -120,9 +127,9 @@ class LaserTaskAction(TaskAction):
                 self._enabled = False
 
     def _enabled_update(self):
-        '''
+        """
              reimplement ListeningAction's _enabled_update
-        '''
+        """
         if self.enabled_name:
             if self.object:
                 self.enabled = bool(self._get_attr(self.object,
@@ -146,7 +153,7 @@ class OpenPatternAction(Action):
     def perform(self, event=None):
         pm = PatternMakerView()
         if pm.load_pattern():
-            event.task.window.application.open_view(pm)
+            open_view(pm)
 
 
 class NewPatternAction(Action):
@@ -155,7 +162,7 @@ class NewPatternAction(Action):
 
     def perform(self, event=None):
         pm = PatternMakerView()
-        event.task.window.application.open_view(pm)
+        open_view(pm)
 
 
 class LaserCalibrationAction(Action):

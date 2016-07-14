@@ -7,7 +7,6 @@ from traitsui.view import View
 
 from pychron.core.helpers.formatting import floatfmt
 
-
 __author__ = 'ross'
 
 
@@ -56,8 +55,8 @@ class InterpretedAge(HasTraits):
 
         return a
 
-    def traits_view(self):
-        return View(HGroup(Item('age_kind',
+
+interpreted_age_view = View(HGroup(Item('age_kind',
                                 style='readonly', show_label=False),
                            Item('display_age', format_func=lambda x: floatfmt(x, 3),
                                 label='Age',

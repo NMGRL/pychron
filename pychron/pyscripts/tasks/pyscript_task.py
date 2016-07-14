@@ -16,10 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
 from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed, VSplitter
 from traitsui.api import View, UItem, EnumEditor
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -27,7 +28,7 @@ from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
-from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, PyScriptEditor
+from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
 from pychron.paths import paths

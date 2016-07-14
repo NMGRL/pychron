@@ -23,6 +23,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from envisage.extension_point import ExtensionPoint
 # from pychron.managers.hardware_manager import HardwareManager
 # from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+from pychron.envisage.view_util import open_view
 from pychron.hardware.flag_manager import FlagManager
 # from apptools.preferences.preference_binding import bind_preference
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -36,6 +37,8 @@ from pychron.hardware.tasks.hardware_preferences import HardwarePreferencesPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class Preference(HasTraits):
     pass
 
@@ -59,7 +62,7 @@ class OpenFlagManagerAction(Action):
         app = event.task.window.application
         man = app.get_service('pychron.hardware.flag_manager.FlagManager')
 
-        app.open_view(man)
+        open_view(man)
 
 
 class HardwarePlugin(BaseTaskPlugin):
@@ -104,7 +107,8 @@ class HardwarePlugin(BaseTaskPlugin):
         # create the hardware proxy server
         ehs = to_bool(self.application.preferences.get('pychron.hardware.enable_hardware_server'))
         if ehs:
-            use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted'))
+            # use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted', True))
+            use_tx = True
             if use_tx:
                 from pychron.tx.server import TxServer
                 rhm = TxServer()

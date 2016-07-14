@@ -19,16 +19,24 @@
 import xlwt
 # ============= local library imports  ==========================
 
-IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder')
+IRRADIATION_COLUMNS = ('Name', 'Level', 'PR', 'Holder', 'Z', 'Note')
 CHRONOLOGY_COLUMNS = ('Name', 'Start', 'End', 'Power')
-POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Sample', 'Project', 'Material', 'Weight', 'Note')
+POSITION_COLUMNS = ('Irradiation', 'Level', 'Position', 'Identifier',
+                    'Sample', 'PrincipalInvestigator', 'Project', 'Material',
+                    'Weight',
+                    'Note')
 CONFIG_COLUMNS = ('Name', 'Value', 'Description')
-CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
-                ('base_irradiation_offset', 100,
-                 'Increment labnumbers by irradiation offset for each irradiation added'),
-                ('base_level_offset', 0, 'Increment labnumbers by level offset for each level added'),
-                ('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
-                                   'just do it'))
+# CONFIG_ATTRS = (('autogenerate_labnumber', 'False', 'Automatically generate labnumbers'),
+#                 ('base_irradiation_offset', 100,
+#                  'Increment labnumbers by irradiation offset for each irradiation added'),
+#                 ('base_level_offset', 0, 'Increment labnumbers by level offset for each level added'),
+#                 ('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
+#                                    'just do it'))
+
+CONFIG_ATTRS = (('quiet', 'False', 'If true do not ask for confirmation if project, material, sample does not exist, '
+                                   'just do it'),
+                ('principal_investigator', 'NMGRL', 'Principal investigator to associate with added Irradiation '
+                                                    'repositories'))
 
 
 class IrradiationTemplate(object):

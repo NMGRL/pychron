@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 from pyface.tasks.task_layout import TaskLayout, PaneItem
+from traits.api import Any
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.media_server.tasks.media_server_panes import ViewPane, TreePane
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

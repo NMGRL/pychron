@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import struct
 import os
 import traceback
 
-from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
+from pychron.canvas.utils import make_geom
 from pychron.paths import paths
+from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 
 
 def iterdir(d, exclude=None):
@@ -110,8 +110,12 @@ def _load_tray_map(db, p, name):
     sm = LaserStageMap(file_path=p)
 
     r = sm.g_dimension
-    blob = ''.join([struct.pack('>fff', si.x, si.y, r)
-                    for si in sm.sample_holes])
+    # blob = ''.join([struct.pack('>fff', si.x, si.y, r)
+    #                 for si in sm.sample_holes])
+    # from pychron.canvas.utils import make_geom
+
+    blob = make_geom(((si.x, si.y, r) for si in sm.sample_holes))
+
     db.add_load_holder(name, geometry=blob)
 
 
@@ -147,7 +151,8 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
     holes = parse_irradiation_tray_map(p)
     if holes is not None:
         try:
-            blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            # blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            blob = make_geom(holes)
             name, _ = os.path.splitext(name)
 
             h = db.add_irradiation_holder(name)

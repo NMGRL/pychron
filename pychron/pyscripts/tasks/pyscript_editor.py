@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime
-
 from pyface.file_dialog import FileDialog
+from pyface.tasks.api import Editor
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
-from pyface.tasks.api import Editor
 
 # ============= standard library imports ========================
 import os

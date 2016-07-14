@@ -23,7 +23,7 @@ from traitsui.api import View, Item, UItem, TabularEditor, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.pychron_constants import PLUSMINUS_SIGMA, PLUSMINUS_PERCENT
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_PERCENT
 
 MAPPING = {'k4039': ('(Ar40/Ar39)K'),
            'k3839': ('(Ar38/Ar39)K'),
@@ -42,7 +42,7 @@ class Interference(HasTraits):
 
 class InterferenceAdapter(TabularAdapter):
     columns = [('Correction', 'name'),
-               ('Value', 'value'), (PLUSMINUS_SIGMA, 'error'),
+               ('Value', 'value'), (PLUSMINUS_ONE_SIGMA, 'error'),
                (PLUSMINUS_PERCENT, 'percent_error')]
 
     value_text = Property
@@ -51,10 +51,10 @@ class InterferenceAdapter(TabularAdapter):
     font = '10'
 
     def _get_value_text(self):
-        return floatfmt(self.item.value)
+        return floatfmt(self.item.value, n=5)
 
     def _get_error_text(self):
-        return floatfmt(self.item.error)
+        return floatfmt(self.item.error, n=5)
 
     def _get_percent_error_text(self):
         return format_percent_error(self.item.value, self.item.error)

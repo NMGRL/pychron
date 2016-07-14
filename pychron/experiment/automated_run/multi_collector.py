@@ -31,9 +31,8 @@ class MultiCollector(DataCollector):
     """
 
     def _iter_hook(self, i):
-        if i % 50 == 0:
+        if i % 25 == 0:
             self.info('collecting point {}'.format(i))
-            #                mem_log('point {}'.format(i), verbose=True)
 
         # get the data
         try:
@@ -52,5 +51,4 @@ class MultiCollector(DataCollector):
         self.plot_data(i, x, *data)
 
         return True
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

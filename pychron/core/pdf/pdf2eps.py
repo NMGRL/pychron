@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import subprocess
 import os
+import subprocess
+
+
 # ============= local library imports  ==========================
 
 def convert_pdf_eps(p):

@@ -21,14 +21,19 @@ from traitsui.qt4.editor import Editor
 from PySide.QtGui import QTextEdit, QPalette, QTextCursor, QTextTableFormat, QTextFrameFormat, \
     QTextTableCellFormat, QColor, QFont, QPlainTextEdit, QTextCharFormat
 from traitsui.basic_editor_factory import BasicEditorFactory
+
+
 # ============= local library imports  ==========================
-class edit_block(object):
+class EditBlock:
     def __init__(self, cursor):
         self._cursor = cursor
+
     def __enter__(self, *args, **kw):
         self._cursor.beginEditBlock()
+
     def __exit__(self, *args, **kw):
         self._cursor.endEditBlock()
+
 
 class _TextTableEditor(Editor):
     _pv = None
@@ -36,10 +41,11 @@ class _TextTableEditor(Editor):
     clear = Event
     refresh = Event
     control_klass = QTextEdit
-    def init(self, parent):
-        '''
 
-        '''
+    def init(self, parent):
+        """
+
+        """
         if self.control is None:
             self.control = self.control_klass()
 
@@ -49,7 +55,7 @@ class _TextTableEditor(Editor):
                 self.control.setPalette(p)
             self.control.setReadOnly(True)
 
-#        self.object.on_trait_change(self._on_clear, self.factory.clear)
+        # self.object.on_trait_change(self._on_clear, self.factory.clear)
 
         self.sync_value(self.factory.refresh, 'refresh', mode='from')
 
@@ -57,8 +63,8 @@ class _TextTableEditor(Editor):
         self.update_editor()
 
     def update_editor(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         self.control.clear()
         adapter = self.factory.adapter
         tables = adapter.make_tables(self.value)
@@ -68,7 +74,7 @@ class _TextTableEditor(Editor):
         for i, ti in enumerate(tables):
 
             self._add_table(ti, cursor)
-#             timethis(self._add_table, args=(ti, cursor), msg='add_table')
+            #             timethis(self._add_table, args=(ti, cursor), msg='add_table')
             if i < n - 1:
                 self._add_table_hook(cursor)
 
@@ -90,7 +96,7 @@ class _TextTableEditor(Editor):
         cursor.insertTable(tab.rows(), tab.cols(), tab_fmt)
         table = cursor.currentTable()
 
-        with edit_block(cursor):
+        with EditBlock(cursor):
             bc = QColor(self.factory.bg_color) if self.factory.bg_color else None
             ec, oc, hc = bc, bc, bc
             if self.factory.even_color:
@@ -151,14 +157,15 @@ class _TextTableEditor(Editor):
 
 
 class _FastTextTableEditor(_TextTableEditor):
-    '''
+    """
         Uses a QPlainTextEdit instead of QTextEdit.
-        
-        doesn't use QTextTable. 
-        uses static column widths defined by the adapter 
-    '''
+
+        doesn't use QTextTable.
+        uses static column widths defined by the adapter
+    """
 
     control_klass = QPlainTextEdit
+
     def _add_table_hook(self, cursor):
         cursor.insertText('\n')
 
@@ -175,7 +182,7 @@ class _FastTextTableEditor(_TextTableEditor):
         if self.factory.header_color:
             hc = QColor(self.factory.header_color)
 
-        with edit_block(cursor):
+        with EditBlock(cursor):
             for i, row in enumerate(tab.items):
                 cell = row.cells[0]
                 if cell.bold:
@@ -194,8 +201,8 @@ class _FastTextTableEditor(_TextTableEditor):
                     fmt.setBackground(c)
 
                 txt = ''.join([u'{{:<{}s}}'.format(cell.width).format(cell.text)
-                              for cell in row.cells
-                              ])
+                               for cell in row.cells
+                               ])
                 cursor.insertText(txt + '\n', fmt)
 
 
@@ -211,10 +218,12 @@ class TextTableEditor(BasicEditorFactory):
     font_size = Int(12)
     font_name = Str('courier')
 
+
 class FastTextTableEditor(TextTableEditor):
     '''    
     fast text table editor may no longer be necessary
     texttableeditor sped up significantly using beginEditBlock/endEditBlock
     '''
     klass = _FastTextTableEditor  # _TextTableEditor
+
 # ============= EOF =============================================

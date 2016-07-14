@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.types import Integer, String, Float
-from sqlalchemy.ext.declarative import declarative_base
 
 # ============= enthought library imports =======================
 

@@ -52,7 +52,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         corner_radius = self.corner_radius
         with gc:
             width, height = self.get_wh()
@@ -97,18 +97,23 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                                 if p1.y < p2.y:
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - 5, y+height)
-                                    gc.line_to(p1x + 5, y+height)
+                                    gc.move_to(p1x - 5, y + height)
+                                    gc.line_to(p1x + 5, y + height)
 
                                 else:
+                                    if c.corner == 'll':
+                                        p1x, p1y = p1.get_xy()
+                                        gc.move_to(p1x - 5, p1y)
+                                        gc.line_to(p1x + 5, p1y)
 
-                                    p2x, p2y = p2.get_xy()
-                                    xx = x
+                                    else:
+                                        p2x, p2y = p2.get_xy()
+                                        xx = x
 
-                                    if p1.x >= self.x:
-                                        xx = x + width
-                                    gc.move_to(xx, p2y - 5)
-                                    gc.line_to(xx, p2y + 5)
+                                        if p1.x >= self.x:
+                                            xx = x + width
+                                        gc.move_to(xx, p2y - 5)
+                                        gc.line_to(xx, p2y + 5)
 
                             elif isinstance(c, BorderLine):
                                 p1, p2 = c.start_point, c.end_point

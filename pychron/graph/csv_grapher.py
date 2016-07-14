@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
+from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Instance, Button, Bool, List, Str, Property, Any, \
     Enum, File, Int
 from traitsui.api import View, Item, EnumEditor, HGroup, ListEditor, InstanceEditor, Label, Spring, \
     VGroup, spring
-from pyface.constant import OK
-from pyface.file_dialog import FileDialog
-from pyface.timer.do_later import do_later
+
 # ============= standard library imports ========================
 import numpy as np
 import csv

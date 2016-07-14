@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 
@@ -24,8 +25,13 @@ class CancelLoadingError(BaseException):
     pass
 
 
-def open_progress(n, close_at_end=True, **kw):
-    pd = myProgressDialog(max=n - 1,
+def open_progress(n, close_at_end=True, busy=False, **kw):
+    if busy:
+        mi, ma = 0, 0
+    else:
+        mi, ma = 0, n - 1
+
+    pd = myProgressDialog(min=mi, max=ma,
                           close_at_end=close_at_end,
                           can_cancel=True,
                           can_ok=True, **kw)
@@ -33,7 +39,9 @@ def open_progress(n, close_at_end=True, **kw):
     return pd
 
 
-def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False):
+def progress_loader(xs, func, threshold=50, progress=None,
+                    use_progress=True,
+                    reraise_cancel=False, n=None, busy=False, step=1):
     """
         xs: list or tuple
         func: callable with signature func(xi, prog, i, n)
@@ -49,21 +57,28 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
         if user clicks "Accept" during iteration a partial list is returned
 
     """
-
-    def gen(prog):
+    if n is None:
         n = len(xs)
-        if n > threshold or prog:
-            if not prog:
-                prog = open_progress(n)
+
+    n /= step
+
+    if not progress and use_progress:
+        progress = open_progress(n, busy=busy)
+
+    def gen():
+        if use_progress and (n > threshold or progress):
 
             for i, x in enumerate(xs):
-                if prog.canceled:
+                if progress.canceled:
                     raise CancelLoadingError
-                elif prog.accepted:
+                elif progress.accepted:
                     break
+
+                prog = None if i % step else progress
+
                 r = func(x, prog, i, n)
                 if r:
-                    if isinstance(r, (list,tuple)):
+                    if hasattr(r, '__iter__'):
                         for ri in r:
                             yield ri
                     else:
@@ -72,18 +87,28 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
             for x in xs:
                 r = func(x, None, 0, 0)
                 if r:
-                    if isinstance(r, (list,tuple)):
+                    if hasattr(r, '__iter__'):
                         for ri in r:
                             yield ri
                     else:
                         yield r
 
     try:
-        return list(gen(progress))
+        items = list(gen())
+        if progress:
+            progress.close()
+
+        return items
     except CancelLoadingError:
         if reraise_cancel:
+            if progress:
+                progress.close()
+
             raise CancelLoadingError
         else:
+            if progress:
+                progress.close()
+
             return []
 
 
@@ -106,9 +131,11 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
                 elif prog.accepted:
                     break
                 func(x, prog, i, n)
+            if prog:
+                prog.close()
         else:
-            for x in xs:
-                func(x, None, 0, 0)
+            for i, x in enumerate(xs):
+                func(x, None, i, n)
 
     try:
         gen(progress)
@@ -117,6 +144,3 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
             raise CancelLoadingError
 
 # ============= EOF =============================================
-
-
-

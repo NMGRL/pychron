@@ -15,10 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
 import math
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+import time
 
 
 # ============= standard library imports ========================

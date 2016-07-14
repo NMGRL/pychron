@@ -17,10 +17,12 @@
 # ============= enthought library imports =======================
 import ConfigParser
 import os
+
 from traits.api import HasTraits, Button, Instance, List, Str, \
-    Any, Enum, CStr, Int, Float
-from traits.trait_types import Bool, String
+    Enum, Int, Float
+from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

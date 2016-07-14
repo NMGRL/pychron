@@ -3,14 +3,14 @@ import os
 import unittest
 
 from pychron.core.test_helpers import isotope_db_factory, massspec_db_factory, get_data_dir as mget_data_dir
-from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
-from pychron.database.adapters.massspec_database_adapter import PR_KEYS
 from pychron.entry.export.mass_spec_irradiation_exporter import MassSpecIrradiationExporter, \
     generate_production_ratios_id
 
+# from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
+from pychron.mass_spec.database.massspec_database_adapter import PR_KEYS
 
 DEBUGGING = True
-LOGGING =True
+LOGGING = True
 # automatically disable debugging if running on a travis ci linux box.
 import sys
 
@@ -24,8 +24,7 @@ SRC_NAME = 'pychrondata.db'
 if LOGGING:
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('irrad_loader')
-
+    logging_setup('irrad_loader', use_archiver=False, use_file=False)
 
 
 def get_data_dir():
@@ -122,7 +121,7 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
 
         self.assertTupleEqual(names, self.levels[name])
 
-    # @unittest.skipIf(DEBUGGING, 'Debugging')
+    @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_positions(self):
         self.exporter.do_export(self.irradnames)
         dest = self.exporter.destination

@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.core.ui import set_qt
+
 set_qt()
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
@@ -71,7 +72,7 @@ class LaunchItem(HasTraits):
 class ELHHandler(Handler):
     def object_dclicked_changed(self, info):
         if info.initialized:
-           do_later(info.ui.dispose,True)
+            do_later(info.ui.dispose, True)
 
 
 class ExperimentLaunchHistory(HasTraits):

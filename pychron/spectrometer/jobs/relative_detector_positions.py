@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 import ConfigParser
+import os
 
 from traits.api import Any
 from traitsui.api import View, Item, ButtonEditor
 
-from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 from pychron.paths import paths
+from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
