@@ -43,8 +43,8 @@ def principal_investigator_filter(q, principal_investigator):
     if ',' in principal_investigator:
         try:
             ln, fi = principal_investigator.split(',')
-            q = q.filter(PrincipalInvestigatorTbl.last_name == ln)
-            q = q.filter(PrincipalInvestigatorTbl.first_initial == fi)
+            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
+            q = q.filter(PrincipalInvestigatorTbl.first_initial == fi.strip())
         except ValueError:
             pass
     else:
@@ -483,6 +483,19 @@ class DVCDatabase(DatabaseAdapter):
         a.interpreted_age = interpreted_age
         a.analysis = analysis
         return self._add_item(a)
+
+    def add_ir(self, pi, contact, **kw):
+        dbpi = self.get_principal_investigator(pi)
+        if dbpi:
+            kw['principal_investigatorID'] = dbpi.id
+
+        dbc = self.get_user(contact)
+        if dbc:
+            kw['lab_contact'] = dbc.name
+
+        a = IRTbl(checkin_date=datetime.now().date(),
+                  **kw)
+        self._add_item(a)
 
     # special getters
     def get_flux_value(self, identifier, attr):
@@ -1185,7 +1198,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_irs(self):
         q = self.session.query(IRTbl)
-        q = q.order_by(IRTbl.checkin_date.desc())
+        q = q.order_by(IRTbl.checkin_date.asc())
         return self._query_all(q, verbose_query=True)
 
     def get_loads(self, names=None, exclude_archived=True, **kw):

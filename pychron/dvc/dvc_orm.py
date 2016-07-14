@@ -473,7 +473,14 @@ class IRTbl(Base, BaseMixin):
     ir = primary_key(klass=String(32))
     principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
     institution = Column(String(140))
-    checkin_date = Column(TIMESTAMP)
+    checkin_date = Column(DATE)
     lab_contact = Column(String(140), ForeignKey('UserTbl.name'))
+    comment = Column(BLOB)
 
+    @property
+    def principal_investigator_name(self):
+        ret = ''
+        if self.principal_investigator:
+            ret = self.principal_investigator.name
+        return ret
 # ============= EOF =============================================

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from traits.api import List, Str, Dict
+from traits.api import List, Str, Dict, Button, Int, String
 
 # ============= local library imports  ==========================
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -32,7 +32,36 @@ class IR(Loggable):
                          'lab_contact': 'Lab Contact'})
     filter_attr = Str
 
+    add_button = Button
+    ir = Str
+    institution = Str
+    comment = String
+    pi = Str
+    lab_contact = Str
+    pis = List
+    lab_contacts = List
+
+    scroll_to_row = Int
+
     def activated(self):
+        self.dvc.create_session()
+        self.oitems = self.dvc.get_irs()
+        self._filter()
+
+        self.pis = self.dvc.get_principal_investigator_names()
+        self.lab_contacts = self.dvc.get_usernames()
+
+    def prepare_destroy(self):
+        self.dvc.close_session()
+
+    # private
+    def _add(self):
+        print 'fff', self.comment
+        self.dvc.add_ir(self.pi, self.lab_contact,
+                        ir=self.ir,
+                        comment=self.comment,
+                        institution=self.institution)
+
         self.oitems = self.dvc.get_irs()
         self._filter()
 
@@ -41,6 +70,7 @@ class IR(Loggable):
             self.items = fuzzyfinder(self.filter_str, self.oitems, self.filter_attr)
         else:
             self.items = self.oitems
+        self.scroll_to_row = len(self.items) - 1
 
     def _filter_str_changed(self):
         self._filter()
@@ -48,7 +78,6 @@ class IR(Loggable):
     def _filter_attr_changed(self):
         self._filter()
 
-    def prepare_destroy(self):
-        pass
-
+    def _add_button_fired(self):
+        self._add()
 # ============= EOF =============================================
