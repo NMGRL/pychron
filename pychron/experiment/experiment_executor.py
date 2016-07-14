@@ -37,7 +37,6 @@ from pychron.core.notification_manager import NotificationManager
 from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.led_editor import LED
-from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
@@ -51,6 +50,7 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
+from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
 from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers, \
     populate_repository_identifiers, get_curtag
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
@@ -2011,33 +2011,17 @@ Use Last "blank_{}"= {}
             dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
         if dbr is None:
-            dbr = self._select_blank(db, ms)
             selected = True
-        else:
-            dbr = dbr.make_record_view(repository)
-
+            selector = ReferenceAnalysisSelector(title='Select Default Blank')
+            info = selector.edit_traits(kind='livemodal')
+            dbs = db.get_blanks(ms)
+            selector.init(dbs)
+            if info.result:
+                dbr = selector.selected
         if dbr:
-            dbr = mainstore.make_analysis(dbr)
+            dbr = mainstore.make_analysis(dbr.make_record_view(repository))
 
         return dbr, selected
-
-    def _select_blank(self, db, ms):
-        # sel = db.selector_factory(style='single')
-        sel = IsotopeAnalysisSelector(db=db)
-
-        sel.set_columns(exclude='irradiation_info',
-                        append=[('Measurement', 'meas_script_name', 120),
-                                ('Extraction', 'extract_script_name', 90)])
-        sel.window_width = 750
-        sel.title = 'Select Default Blank'
-
-        dbs = db.get_blanks(ms)
-
-        sel.load_records(dbs[::-1])
-        sel.selected = sel.records[-1:]
-        info = sel.edit_traits(kind='livemodal')
-        if info.result:
-            return sel.selected[-1]
 
     def _set_message(self, msg, color='black'):
         self.heading(msg)
