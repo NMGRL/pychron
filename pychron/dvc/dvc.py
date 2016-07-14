@@ -519,9 +519,9 @@ class DVC(Loggable):
         make_record = self._make_record
 
         def func(*args):
-            t = time.time()
+            # t = time.time()
             r = make_record(calculate_f_only=calculate_f_only, *args)
-            print 'make time {}'.format(time.time()-t)
+            # print 'make time {}'.format(time.time()-t)
             return r
 
         ret = progress_loader(records, func, threshold=25, step=25)

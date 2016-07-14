@@ -17,12 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import base64
+import datetime
 import os
 import time
 
-import datetime
 from uncertainties import ufloat, std_dev, nominal_value
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
@@ -175,7 +174,6 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         for attr in META_ATTRS:
             v = jd.get(attr)
-            self.debug('{}={}'.format(attr, v))
             if v is not None:
                 setattr(self, attr, v)
 
@@ -333,10 +331,11 @@ class DVCAnalysis(Analysis):
         self.interference_corrections = r.to_dict(INTERFERENCE_KEYS)
 
     def set_chronology(self, chron):
-        self.debug('set chronology')
         analts = self.rundate
 
-        convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
+        def convert_days(x):
+            return x.total_seconds() / (60. * 60 * 24)
+
         doses = chron.get_doses()
         segments = [(pwr, convert_days(en - st), convert_days(analts - st))
                     for pwr, st, en in doses

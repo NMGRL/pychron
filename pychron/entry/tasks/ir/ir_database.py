@@ -56,7 +56,6 @@ class IR(Loggable):
 
     # private
     def _add(self):
-        print 'fff', self.comment
         self.dvc.add_ir(self.pi, self.lab_contact,
                         ir=self.ir,
                         comment=self.comment,

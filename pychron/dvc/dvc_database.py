@@ -251,7 +251,7 @@ class DVCDatabase(DatabaseAdapter):
                                                  exclude_invalid=exclude_invalid)
             refs.update(rs)
 
-        progress_loader(times, func)
+        progress_loader(times, func, threshold=5)
         # print rs
         # print ti, low, high, rs, refs
         # print 'refs', refs
