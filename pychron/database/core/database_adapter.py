@@ -184,14 +184,20 @@ class DatabaseAdapter(Loggable):
     #             sess = self.sess
     #         return SessionCTX(sess, parent=self, commit=commit, rollback=rollback)
 
+    _session_cnt = 0
+
     def create_session(self):
         if self.session_factory:
-            self.session = self.session_factory()
+            if not self.session:
+                self.session = self.session_factory()
+            self._session_cnt += 1
 
     def close_session(self):
         if self.session:
-            self.session.close()
-            self.session = None
+            self._session_cnt -= 1
+            if not self._session_cnt:
+                self.session.close()
+                self.session = None
 
     @property
     def enabled(self):
