@@ -30,7 +30,7 @@ class PointInspector(InfoInspector):
 
     single_point = True
 
-    def get_selected_index(self, threshold=5):
+    def get_selected_index(self, threshold=1):
         if self.single_point:
             idx = self.component.map_index(self.current_position, threshold=threshold)
             if idx is not None:
@@ -44,7 +44,7 @@ class PointInspector(InfoInspector):
 
             cx, cy = self.current_position
             distances = ((spts[:, 0] - cx) ** 2 + (spts[:, 1] - cy) ** 2) ** 0.5
-            return where(distances <= threshold * 2)[0]
+            return where(distances <= threshold)[0]
 
     def percent_error(self, s, e):
         v = '(Inf%)'

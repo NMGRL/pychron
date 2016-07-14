@@ -220,8 +220,7 @@ class SampleBrowserModel(BrowserModel):
         info = v.edit_traits()
         if info.result:
             atypes = m.formatted_analysis_types
-            times = sorted((ai.rundate for ai in self.analysis_table.analyses))
-            refs = self.db.find_references(times, atypes, hours=m.threshold, make_records=False)
+            refs = self.db.find_references(self.analysis_table.analyses, atypes, hours=m.threshold, make_records=False)
             if refs:
                 self.analysis_table.add_analyses(refs)
             else:

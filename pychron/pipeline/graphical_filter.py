@@ -14,10 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from datetime import timedelta
+
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
-from datetime import timedelta
 from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
@@ -157,6 +158,7 @@ class GraphicalFilterModel(HasTraits):
     projects = List
     always_exclude_unknowns = Bool(False)
     threshold = Float(1)
+
     # is_append = True
     # use_all = False
 
@@ -184,7 +186,7 @@ class GraphicalFilterModel(HasTraits):
         # ans = self._filter_analysis_types(ans)
         if ans:
             ans = sorted(ans, key=lambda x: x.timestamp)
-
+            self.analyses = ans
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
             x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
             # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
@@ -196,11 +198,12 @@ class GraphicalFilterModel(HasTraits):
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
         ans = self.analyses
-        # print selection
+        unks = None
         if selection:
-            ans = (ai for i, ai in enumerate(ans) if i not in selection)
+            unks = [ai for i, ai in enumerate(self.analyses) if i not in selection and ai.analysis_type == 'unknown']
+            ans = [ai for i, ai in enumerate(self.analyses) if i not in selection]
 
-        return self._filter_analysis_types(ans)
+        return unks, self._filter_analysis_types(ans)
 
     def search_backward(self):
         def func():
@@ -275,21 +278,21 @@ class GraphicalFilterView(Controller):
 
     def traits_view(self):
         egrp = HGroup(UItem('use_project_exclusion'),
-                                 Item('exclusion_pad',
-                                      enabled_when='use_project_exclusion')),
+                      Item('exclusion_pad',
+                           enabled_when='use_project_exclusion')),
         ctrl_grp = VGroup(HGroup(Item('use_offset_analyses', label='Use Offset')))
-                          #VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
-                          #       UItem('analysis_types',
-                          #             tooltip='Only select these types of analyses',
-                          #             style='custom',
-                          #             editor=CheckListEditor(cols=1,
-                          #                                    name='available_analysis_types')),
-                          #       label='Analysis Types',
-                          #       show_border=True))
+        # VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
+        #       UItem('analysis_types',
+        #             tooltip='Only select these types of analyses',
+        #             style='custom',
+        #             editor=CheckListEditor(cols=1,
+        #                                    name='available_analysis_types')),
+        #       label='Analysis Types',
+        #       show_border=True))
         bgrp = HGroup(spring, UItem('controller.append_button'), UItem('controller.replace_button'))
         tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
         sgrp = HGroup(UItem('controller.search_backward'),
-                               spring,
+                      spring,
                       UItem('controller.search_forward'))
         ggrp = VGroup(sgrp, UItem('graph', style='custom'))
         v = View(VGroup(tgrp,

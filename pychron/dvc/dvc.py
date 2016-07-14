@@ -469,8 +469,8 @@ class DVC(Loggable):
 
         return ias
 
-    def find_references(self, times, atypes, hours, exclude=None, make_records=True, **kw):
-        records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
+    def find_references(self, ans, atypes, hours, exclude=None, make_records=True, **kw):
+        records = self.db.find_references(ans, atypes, hours, exclude=exclude, **kw)
 
         if records:
             if make_records:
@@ -524,7 +524,7 @@ class DVC(Loggable):
             # print 'make time {}'.format(time.time()-t)
             return r
 
-        ret = progress_loader(records, func, threshold=25, step=25)
+        ret = progress_loader(records, func, threshold=5, step=25)
         et = time.time() - st
 
         n = len(records)

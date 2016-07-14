@@ -174,7 +174,7 @@ class FindReferencesNode(FindNode):
                 return
 
     def _run_group(self, state, gid, unknowns):
-        times = sorted((ai.rundate for ai in unknowns))
+        times = sorted((ai.timestamp for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
         refs = self.dvc.find_references(times, atype, hours=self.threshold)
@@ -194,7 +194,7 @@ class FindReferencesNode(FindNode):
             obj = GraphicalFilterView(model=model)
             info = obj.edit_traits(kind='livemodal')
             if info.result:
-                refs = model.get_filtered_selection()
+                unks, refs = model.get_filtered_selection()
                 for ri in refs:
                     ri.group_id = gid
 
@@ -203,6 +203,8 @@ class FindReferencesNode(FindNode):
                 else:
                     state.references = list(refs)
 
+                if unks is not None:
+                    state.unknowns = unks
                 state.has_references = True
             else:
                 state.veto = self

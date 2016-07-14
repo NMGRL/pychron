@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 # ============= standard library imports ========================
+from numpy import ediff1d, where, hstack
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
@@ -233,15 +234,22 @@ class DVCDatabase(DatabaseAdapter):
         change.user = self.save_username
         self.commit()
 
-    def find_references(self, times, atypes, hours=10, exclude=None,
+    def find_references(self, ans, atypes, hours=10, exclude=None,
                         exclude_invalid=True):
+        if not isinstance(ans[0], (float, datetime,)):
+            timestamps = sorted((ai.timestamp for ai in ans))
+        else:
+            timestamps = ans
+
         # delta = 60 * 60 * hours  # seconds
-        delta = timedelta(hours=hours)
+        delta = timedelta(hours=hours).total_seconds()
         refs = OrderedSet()
 
         def func(ti, prog, i, n):
-            low = ti - delta
-            high = ti + delta
+            tl, th = ti
+            low = datetime.fromtimestamp(tl - delta)
+            high = datetime.fromtimestamp(th + delta)
+
             if prog:
                 prog.change_message('Searching {} - {}'.format(low, high))
             rs = self.get_analyses_by_date_range(low, high,
@@ -251,7 +259,16 @@ class DVCDatabase(DatabaseAdapter):
                                                  exclude_invalid=exclude_invalid)
             refs.update(rs)
 
-        progress_loader(times, func, threshold=5)
+        ds = ediff1d(timestamps)
+        w = where(ds > delta)[0]
+        steps = hstack((timestamps[0], timestamps[w], timestamps[-1]))
+        n = steps.shape[0]
+        if n % 2:
+            steps = hstack((steps[:n / 2], steps[n / 2], steps[n / 2:]))
+
+        steps = steps.reshape((steps.shape[0] / 2, 2))
+
+        progress_loader(steps, func, threshold=5)
         # print rs
         # print ti, low, high, rs, refs
         # print 'refs', refs
