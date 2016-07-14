@@ -51,57 +51,56 @@ def populate_isotopes(db):
 
 
 def load_isotopedb_defaults(db):
-    with db.session_ctx() as sess:
-        for name, mass in MOLECULAR_WEIGHTS.iteritems():
-            db.add_molecular_weight(name, mass)
+    for name, mass in MOLECULAR_WEIGHTS.iteritems():
+        db.add_molecular_weight(name, mass)
 
-        populate_isotopes(db)
+    populate_isotopes(db)
 
-        for at in ['blank_air',
-                   'blank_cocktail',
-                   'blank_unknown',
-                   'background', 'air', 'cocktail', 'unknown']:
-            #                           blank', 'air', 'cocktail', 'background', 'unknown']:
-            db.add_analysis_type(at)
+    for at in ['blank_air',
+               'blank_cocktail',
+               'blank_unknown',
+               'background', 'air', 'cocktail', 'unknown']:
+        #                           blank', 'air', 'cocktail', 'background', 'unknown']:
+        db.add_analysis_type(at)
 
-        # for mi in ['obama', 'jan', 'nmgrl map']:
-        #     db.add_mass_spectrometer(mi)
+    # for mi in ['obama', 'jan', 'nmgrl map']:
+    #     db.add_mass_spectrometer(mi)
 
-        project = db.add_project('REFERENCES')
-        # print project
-        for i, di in enumerate(['blank_air',
-                                'blank_cocktail',
-                                'blank_unknown',
-                                'background', 'air', 'cocktail']):
-            samp = db.add_sample(di, project=project)
-            # print samp.id, samp, project.id
-            #            samp.project = project
-            # samp.project_id=project.id
-            # print samp.project_id
-            # db.add_labnumber(i + 1, sample=samp)
-        sess.commit()
+    project = db.add_project('REFERENCES')
+    # print project
+    for i, di in enumerate(['blank_air',
+                            'blank_cocktail',
+                            'blank_unknown',
+                            'background', 'air', 'cocktail']):
+        samp = db.add_sample(di, project=project)
+        # print samp.id, samp, project.id
+        #            samp.project = project
+        # samp.project_id=project.id
+        # print samp.project_id
+        # db.add_labnumber(i + 1, sample=samp)
+    db.commit()
 
-        # for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
-        #                        ('Fusions Diode', '810nm diode', 'photon machines'),
-        #                        ('Fusions UV', '193nm eximer', 'photon machines')]:
-        #     db.add_extraction_device(name=hi,
-        #                              kind=kind,
-        #                              make=make)
+    # for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
+    #                        ('Fusions Diode', '810nm diode', 'photon machines'),
+    #                        ('Fusions UV', '193nm eximer', 'photon machines')]:
+    #     db.add_extraction_device(name=hi,
+    #                              kind=kind,
+    #                              make=make)
 
-        mdir = paths.irradiation_tray_maps_dir
-        for p, name in iterdir(mdir, exclude=('.zip',)):
-            og = False
-            load_irradiation_map(db, p, name, overwrite_geometry=og)
+    mdir = paths.irradiation_tray_maps_dir
+    for p, name in iterdir(mdir, exclude=('.zip',)):
+        og = False
+        load_irradiation_map(db, p, name, overwrite_geometry=og)
 
-        mdir = paths.map_dir
-        for p, name in iterdir(mdir):
-            try:
-                _load_tray_map(db, p, name)
-            except BaseException:
-                print 'failed loading tray map "{}", "{}"'.format(p, name)
+    mdir = paths.map_dir
+    for p, name in iterdir(mdir):
+        try:
+            _load_tray_map(db, p, name)
+        except BaseException:
+            print 'failed loading tray map "{}", "{}"'.format(p, name)
 
-        for t in ('ok', 'invalid'):
-            db.add_tag(t, user='default')
+    for t in ('ok', 'invalid'):
+        db.add_tag(t, user='default')
 
 
 def _load_tray_map(db, p, name):
@@ -160,4 +159,4 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
                 h.geometry = blob
         except Exception, e:
             print 'load irradiation map', p, name, e
-            db.sess.rollback()
+            db.session.rollback()

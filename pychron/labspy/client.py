@@ -40,8 +40,7 @@ def auto_connect(func):
                 obj.connect()
 
             if obj.db.connected:
-                with obj.db.session_ctx():
-                    return func(obj, *args, **kw)
+                return func(obj, *args, **kw)
 
     return wrapper
 

@@ -83,13 +83,12 @@ class RawExporter(IsotopeDatabaseManager):
 
         def gen():
             db = self.db
-            with db.session_ctx():
-                for yi in yd:
-                    args = yi.split('-')
-                    ln, al = '-'.join(args[:-1]), args[-1]
-                    ai = db.get_unique_analysis(ln, al)
-                    print ai, ln, al
-                    yield ai
+            for yi in yd:
+                args = yi.split('-')
+                ln, al = '-'.join(args[:-1]), args[-1]
+                ai = db.get_unique_analysis(ln, al)
+                print ai, ln, al
+                yield ai
 
         return gen()
 

@@ -30,11 +30,10 @@ class BaseIrradiationExporter(Loggable):
         """
         if self.setup():
             db = self.source
-            with db.session_ctx():
-                for irr in irradiations:
-                    dbirr = db.get_irradiation(irr)
-                    self.info('exporting irradiation {}'.format(dbirr.name))
-                    self._export(dbirr)
+            for irr in irradiations:
+                dbirr = db.get_irradiation(irr)
+                self.info('exporting irradiation {}'.format(dbirr.name))
+                self._export(dbirr)
 
     def setup(self):
         return True

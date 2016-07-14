@@ -29,7 +29,7 @@ import os
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.database.defaults import load_irradiation_map, parse_irradiation_tray_map
+from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.production import IrradiationProduction
@@ -145,62 +145,62 @@ class LevelEditor(Loggable):
     def _edit_level(self):
         orignal_name = self.name
         db = self.db
-        with db.session_ctx():
-            level = db.get_irradiation_level(self.irradiation, self.name)
+        level = db.get_irradiation_level(self.irradiation, self.name)
 
-            self.z = level.z or 0
-            pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
-            self.selected_production_name = pname
+        self.z = level.z or 0
+        pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
+        self.selected_production_name = pname
 
-            original_tray = None
-            if level.holder:
-                self.selected_tray = next((t for t in self.trays if t == level.holder), '')
-                original_tray = self.selected_tray
+        original_tray = None
+        if level.holder:
+            self.selected_tray = next((t for t in self.trays if t == level.holder), '')
+            original_tray = self.selected_tray
 
-            if level.note:
-                self.level_note = level.note
+        if level.note:
+            self.level_note = level.note
+        else:
+            self.level_note = ''
+
+        ev = EditView(model=self)
+        info = ev.edit_traits()
+        while 1:
+            if info.result:
+                if self.name != orignal_name:
+                    ret = self.confirmation_dialog('You have changed the name for this level.\n\n'
+                                                   'Would you like to rename "{}" to "{}" (Yes) '
+                                                   'or add a new level named "{}" (No)'.format(orignal_name,
+                                                                                               self.name,
+                                                                                               self.name),
+                                                   cancel=True, return_retval=True)
+                    if ret == YES:
+                        level.name = self.name
+                    elif ret == NO:
+                        self._add_level()
+                    else:
+                        return
+
+                self._save_production()
+
+                level.note = self.level_note
+                level.z = self.z
+
+                # save z to meta repo
+                self.meta_repo.update_level_z(self.irradiation, self.name, self.z)
+
+                if self.selected_production:
+                    pr = db.get_production(self.selected_production.name)
+                    if not pr:
+                        pr = db.add_production(self.selected_production.name)
+                    level.production = pr
+
+                if original_tray != self.selected_tray:
+                    self._save_tray(level, original_tray)
+
+                break
             else:
-                self.level_note = ''
+                break
 
-            ev = EditView(model=self)
-            info = ev.edit_traits()
-            while 1:
-                if info.result:
-                    if self.name != orignal_name:
-                        ret = self.confirmation_dialog('You have changed the name for this level.\n\n'
-                                                       'Would you like to rename "{}" to "{}" (Yes) '
-                                                       'or add a new level named "{}" (No)'.format(orignal_name,
-                                                                                                   self.name,
-                                                                                                   self.name),
-                                                       cancel=True, return_retval=True)
-                        if ret == YES:
-                            level.name = self.name
-                        elif ret == NO:
-                            self._add_level()
-                        else:
-                            return
-
-                    self._save_production()
-
-                    level.note = self.level_note
-                    level.z = self.z
-
-                    # save z to meta repo
-                    self.meta_repo.update_level_z(self.irradiation, self.name, self.z)
-
-                    if self.selected_production:
-                        pr = db.get_production(self.selected_production.name)
-                        if not pr:
-                            pr = db.add_production(self.selected_production.name)
-                        level.production = pr
-
-                    if original_tray != self.selected_tray:
-                        self._save_tray(level, original_tray)
-
-                    break
-                else:
-                    break
-
+        db.commit()
         return self.name
 
     def _save_tray(self, level, original_tray):
@@ -229,51 +229,51 @@ class LevelEditor(Loggable):
     def _add_level(self):
         irrad = self.irradiation
         db = self.db
-        with db.session_ctx():
-            irrad = db.get_irradiation(irrad)
-            nind = 0
-            if irrad.levels:
-                level = irrad.levels[-1]
 
-                self.z = level.z
+        irrad = db.get_irradiation(irrad)
+        nind = 0
+        if irrad.levels:
+            level = irrad.levels[-1]
 
-                if level.holder:
-                    self.selected_tray = next((t for t in self.trays if t == level.holder), '')
+            self.z = level.z
 
-                if level.name in ALPHAS:
-                    nind = ALPHAS.index(level.name) + 1
+            if level.holder:
+                self.selected_tray = next((t for t in self.trays if t == level.holder), '')
 
-            try:
-                self.name = ALPHAS[nind]
-            except IndexError:
-                self.warning_dialog('Too many levels max level={}'.format(ALPHAS[-1]))
-                return
+            if level.name in ALPHAS:
+                nind = ALPHAS.index(level.name) + 1
 
-            av = AddView(model=self)
-            info = av.edit_traits()
-            while 1:
-                if info.result:
-                    for attr, msg in (('name', 'No name enter for this level. Would you like to enter one?'),
-                                      ('selected_production',
-                                       'No Production Ratios selected for this level. Would you like to select one?'),
-                                      ('selected_tray', 'No tray selected for this level. Would like to select one?')):
-                        info = self._check_attr_set(av, attr, msg)
-                        if info == 'break':
-                            break
-                        elif info is not None:
-                            continue
+        try:
+            self.name = ALPHAS[nind]
+        except IndexError:
+            self.warning_dialog('Too many levels max level={}'.format(ALPHAS[-1]))
+            return
 
-                    if not next((li for li in irrad.levels if li.name == self.name), None):
+        av = AddView(model=self)
+        info = av.edit_traits()
+        while 1:
+            if info.result:
+                for attr, msg in (('name', 'No name enter for this level. Would you like to enter one?'),
+                                  ('selected_production',
+                                   'No Production Ratios selected for this level. Would you like to select one?'),
+                                  ('selected_tray', 'No tray selected for this level. Would like to select one?')):
+                    info = self._check_attr_set(av, attr, msg)
+                    if info == 'break':
+                        break
+                    elif info is not None:
+                        continue
 
-                        self._save_level()
+                if not next((li for li in irrad.levels if li.name == self.name), None):
 
-                        return self.name
+                    self._save_level()
 
-                    else:
-                        self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
-                                                                                                self.irradiation))
+                    return self.name
+
                 else:
-                    break
+                    self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
+                                                                                            self.irradiation))
+            else:
+                break
 
     def _check_attr_set(self, av, name, msg):
         if not getattr(self, name):
@@ -306,12 +306,11 @@ class LevelEditor(Loggable):
         prname = self.new_production_name.replace(' ', '_')
         db = self.db
         # add to database
-        with db.session_ctx():
-            db.add_irradiation_level(self.name, self.irradiation,
-                                     self.selected_tray,
-                                     prname,
-                                     float(self.z),
-                                     self.level_note)
+        db.add_irradiation_level(self.name, self.irradiation,
+                                 self.selected_tray,
+                                 prname,
+                                 float(self.z),
+                                 self.level_note)
 
         # add to repository
         self.meta_repo.add_level(self.irradiation, self.name)
@@ -339,10 +338,9 @@ class LevelEditor(Loggable):
             self.new_production_name = new
 
     def _selected_tray_changed(self):
-        with self.db.session_ctx():
-            holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
-            if holes:
-                load_holder_canvas(self.canvas, holes)
+        holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
+        if holes:
+            load_holder_canvas(self.canvas, holes)
 
     def _add_tray_button_fired(self):
         dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
@@ -351,9 +349,8 @@ class LevelEditor(Loggable):
                 # verify this is a valid irradiation map file
                 if parse_irradiation_tray_map(dlg.path) is not None:
                     db = self.db
-                    with db.session_ctx():
-                        load_irradiation_map(db, dlg.path,
-                                             os.path.basename(dlg.path), overwrite_geometry=True)
+                    load_irradiation_map(db, dlg.path,
+                                         os.path.basename(dlg.path), overwrite_geometry=True)
 
 
 if __name__ == '__main__':

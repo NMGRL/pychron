@@ -74,10 +74,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         conn.timestamp = ts
 
     def get_connection(self, appname, devname):
-        with self.session_ctx() as sess:
-            q = sess.query(Connections)
-            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
-            return self._query_first(q, reraise=True)
+        q = self.session.query(Connections)
+        q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+        return self._query_first(q, reraise=True)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
@@ -131,21 +130,19 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     #         return self._query_one(q)
 
     def get_migrate_version(self, **kw):
-        with self.session_ctx() as sess:
-            q = sess.query(Version)
-            q = q.limit(1)
-            mv = q.one()
-            return mv
+        q = self.session.query(Version)
+        q = q.limit(1)
+        mv = q.one()
+        return mv
 
     def get_device(self, name):
         return self._retrieve_item(Device, name, key='name')
 
     def get_process_info(self, dev, name):
-        with self.session_ctx() as sess:
-            q = sess.query(ProcessInfo)
-            q = q.join(Device)
-            q = q.filter(Device.name == dev)
-            q = q.filter(ProcessInfo.name == name)
-            return self._query_one(q)
+        q = self.session.query(ProcessInfo)
+        q = q.join(Device)
+        q = q.filter(Device.name == dev)
+        q = q.filter(ProcessInfo.name == name)
+        return self._query_one(q)
 
 # ============= EOF =============================================

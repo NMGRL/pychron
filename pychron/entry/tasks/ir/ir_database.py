@@ -33,10 +33,8 @@ class IR(Loggable):
     filter_attr = Str
 
     def activated(self):
-        self.dvc.db.expire_on_commit = False
-        with self.dvc.session_ctx():
-            self.oitems = self.dvc.get_irs()
-            self._filter()
+        self.oitems = self.dvc.get_irs()
+        self._filter()
 
     def _filter(self):
         if self.filter_str:

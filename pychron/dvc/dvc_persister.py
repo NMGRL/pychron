@@ -143,9 +143,8 @@ class DVCPersister(BasePersister):
 
         db = self.dvc.db
         load_name = self.per_spec.load_name
-        with db.session_ctx():
-            for p in ps:
-                db.add_measured_position(load=load_name, **p)
+        for p in ps:
+            db.add_measured_position(load=load_name, **p)
 
         obj['positions'] = ps
         hexsha = self.dvc.get_meta_head()
@@ -240,14 +239,13 @@ class DVCPersister(BasePersister):
     def _check_repository_identifier(self):
         repo_id = self.per_spec.run_spec.repository_identifier
         db = self.dvc.db
-        with db.session_ctx():
-            repo = db.get_repository(repo_id)
+        repo = db.get_repository(repo_id)
+        if repo is None:
+            self.warning('No repository named ="{}" changing to NoRepo'.format(repo_id))
+            self.per_spec.run_spec.repository_identifier = 'NoRepo'
+            repo = db.get_repository('NoRepo')
             if repo is None:
-                self.warning('No repository named ="{}" changing to NoRepo'.format(repo_id))
-                self.per_spec.run_spec.repository_identifier = 'NoRepo'
-                repo = db.get_repository('NoRepo')
-                if repo is None:
-                    db.add_repository('NoRepo', self.default_principal_investigator)
+                db.add_repository('NoRepo', self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
         rs = self.per_spec.run_spec
@@ -268,29 +266,29 @@ class DVCPersister(BasePersister):
         d['extractionName'] = self.per_spec.extraction_name
 
         db = self.dvc.db
-        with db.session_ctx():
-            an = db.add_analysis(**d)
+        an = db.add_analysis(**d)
 
-            # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
-            # *** _retroactive_experiment_identifiers is currently disabled ***
+        # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
+        # *** _retroactive_experiment_identifiers is currently disabled ***
 
-            if self.per_spec.use_repository_association:
-                db.add_repository_association(rs.repository_identifier, an)
+        if self.per_spec.use_repository_association:
+            db.add_repository_association(rs.repository_identifier, an)
 
-            self.debug('get identifier "{}"'.format(rs.identifier))
-            pos = db.get_identifier(rs.identifier)
-            self.debug('setting analysis irradiation position={}'.format(pos))
-            an.irradiation_position = pos
+        self.debug('get identifier "{}"'.format(rs.identifier))
+        pos = db.get_identifier(rs.identifier)
+        self.debug('setting analysis irradiation position={}'.format(pos))
+        an.irradiation_position = pos
 
-            t = self.per_spec.tag
+        t = self.per_spec.tag
 
-            db.flush()
+        db.flush()
 
-            change = db.add_analysis_change(tag=t)
-            an.change = change
+        change = db.add_analysis_change(tag=t)
+        an.change = change
 
-            change = db.add_analysis_change(tag=t)
-            an.change = change
+        change = db.add_analysis_change(tag=t)
+        an.change = change
+        db.commit()
 
     def _save_analysis(self, timestamp):
 

@@ -49,17 +49,15 @@ class BaseFindFluxNode(FindNode):
     @cached_property
     def _get_levels(self):
         if self.irradiation:
-            with self.dvc.session_ctx():
-                irrad = self.dvc.get_irradiation(self.irradiation)
-                return sorted([l.name for l in irrad.levels])
+            irrad = self.dvc.get_irradiation(self.irradiation)
+            return sorted([l.name for l in irrad.levels])
         else:
             return []
 
     @cached_property
     def _get_irradiations(self):
-        with self.dvc.session_ctx():
-            irrads = self.dvc.get_irradiations()
-            return [i.name for i in irrads]
+        irrads = self.dvc.get_irradiations()
+        return [i.name for i in irrads]
 
 
 class FindVerticalFluxNode(BaseFindFluxNode):
@@ -103,16 +101,15 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
             dvc = self.dvc
             state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
 
-            with dvc.session_ctx():
-                ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
+            ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
 
-                state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                            ip.identifier, ip.sample.name, ip.position,
-                                                            ip.j, ip.j_err) for ip in ips]
+            state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
+                                                        ip.identifier, ip.sample.name, ip.position,
+                                                        ip.j, ip.j_err) for ip in ips]
 
-                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-                ans = [aii for ai in ans for aii in ai.record_views]
-                monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
+            ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+            ans = [aii for ai in ans for aii in ai.record_views]
+            monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
 
             state.unknowns = monitors
             state.flux_monitors = monitors

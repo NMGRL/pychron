@@ -159,41 +159,40 @@ class DVCImporterModel(Loggable):
         self._progress.change_message('Importing {} {} {}({})'.format(irradname, level.name, p.position, p.identifier))
         dvc = self.dvc
         db = dvc.db
-        with db.session_ctx() as sess:
-            sam = p.sample
+        sam = p.sample
 
-            material = self.mapper.material(sam.material)
-            added = dvc.add_material(material)
-            if added:
-                self._active_import.nmaterials += 1
-            sess.commit()
+        material = self.mapper.material(sam.material)
+        added = dvc.add_material(material)
+        if added:
+            self._active_import.nmaterials += 1
+        db.commit()
 
-            principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
-            added = dvc.add_principal_investigator(principal_investigator)
-            if added:
-                self._active_import.nprincipal_investigators += 1
-            sess.commit()
+        principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
+        added = dvc.add_principal_investigator(principal_investigator)
+        if added:
+            self._active_import.nprincipal_investigators += 1
+        db.commit()
 
-            project = self.mapper.project(sam.project.name)
-            added = dvc.add_project(project, principal_investigator)
-            if added:
-                self._active_import.nprojects += 1
-            sess.commit()
+        project = self.mapper.project(sam.project.name)
+        added = dvc.add_project(project, principal_investigator)
+        if added:
+            self._active_import.nprojects += 1
+        db.commit()
 
-            added = dvc.add_sample(sam.name, project, material)
-            if added:
-                self._active_import.nsamples += 1
-            sess.commit()
-            dbsam = db.get_sample(sam.name, project, material)
+        added = dvc.add_sample(sam.name, project, material)
+        if added:
+            self._active_import.nsamples += 1
+        db.commit()
+        dbsam = db.get_sample(sam.name, project, material)
 
-            added = dvc.add_irradiation_position(irradname, level.name, p.position,
-                                                 identifier=p.identifier,
-                                                 sample=dbsam,
-                                                 note=p.note,
-                                                 weight=p.weight)
-            if added:
-                self._active_import.npositions += 1
-            dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err)
+        added = dvc.add_irradiation_position(irradname, level.name, p.position,
+                                             identifier=p.identifier,
+                                             sample=dbsam,
+                                             note=p.note,
+                                             weight=p.weight)
+        if added:
+            self._active_import.npositions += 1
+        dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err)
 
     def _open_progress(self, specs):
         n = len(specs)

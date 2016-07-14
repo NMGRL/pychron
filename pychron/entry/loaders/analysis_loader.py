@@ -68,14 +68,13 @@ class BaseAnalysisLoader(Loggable):
 
     def _import_analysis(self, spec):
         db = self.db
-        with db.session_ctx():
-            dbprj = db.add_project(spec.project)
-            dbmat = db.add_material(spec.material)
+        dbprj = db.add_project(spec.project)
+        dbmat = db.add_material(spec.material)
 
-            dbsam = db.add_sample(spec.sample, project=dbprj, material=dbmat)
-            dbln = db.add_labnumber(spec.identifier, sample=dbsam)
+        dbsam = db.add_sample(spec.sample, project=dbprj, material=dbmat)
+        dbln = db.add_labnumber(spec.identifier, sample=dbsam)
 
-            self._add_analysis(db, dbln, spec)
+        self._add_analysis(db, dbln, spec)
 
     def _add_analysis(self, db, dbln, spec):
         dban = db.get_unique_analysis(dbln.identifier, spec.aliquot, spec.step)
@@ -111,30 +110,29 @@ class BaseAnalysisLoader(Loggable):
 
     def _add_import(self):
         db = self.db
-        with db.session_ctx():
-            dbim = db.add_import(source=self._path)
-            return int(dbim.id)
+        dbim = db.add_import(source=self._path)
+        return int(dbim.id)
 
     def _delete_analysis(self, i):
         # delete isotope results
         db = self.db
-        with db.session_ctx() as sess:
-            ln = self.get_identifier(i)
-            ai = self.get_aliquot(i)
-            st = self.get_step(i)
+        ln = self.get_identifier(i)
+        ai = self.get_aliquot(i)
+        st = self.get_step(i)
 
-            dban = db.get_unique_analysis(ln, ai, st)
+        dban = db.get_unique_analysis(ln, ai, st)
 
-            sess.delete(dban.measurement)
+        sess = db.session
+        sess.delete(dban.measurement)
 
-            for iso in dban.isotopes:
-                sess.delete(iso)
+        for iso in dban.isotopes:
+            sess.delete(iso)
 
-            for hist in dban.fit_histories:
-                for ri in hist.results:
-                    sess.delete(ri)
-                sess.delete(hist)
-            sess.delete(dban)
+        for hist in dban.fit_histories:
+            for ri in hist.results:
+                sess.delete(ri)
+            sess.delete(hist)
+        sess.delete(dban)
 
 
 class XLSAnalysisLoader(BaseAnalysisLoader):

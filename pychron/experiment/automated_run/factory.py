@@ -962,54 +962,53 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
             d = dict(sample='')
             db = self.get_database()
-            with db.session_ctx():
-                # convert labnumber (a, bg, or 10034 etc)
-                self.debug('load meta for {}'.format(labnumber))
-                ip = db.get_identifier(labnumber)
+            # convert labnumber (a, bg, or 10034 etc)
+            self.debug('load meta for {}'.format(labnumber))
+            ip = db.get_identifier(labnumber)
 
-                if ip:
-                    pos = ip.position
-                    # set sample and irrad info
-                    try:
-                        self.sample = ip.sample.name
-                        d['sample'] = self.sample
+            if ip:
+                pos = ip.position
+                # set sample and irrad info
+                try:
+                    self.sample = ip.sample.name
+                    d['sample'] = self.sample
 
-                        project = ip.sample.project
-                        project_name = project.name
-                        if project_name == 'J-Curve':
-                            irrad = ip.level.irradiation.name
-                            self.repository_identifier = 'Irradiation-{}'.format(irrad)
-                        elif project_name != 'REFERENCES':
-                            repo = camel_case(project_name)
-                            self.repository_identifier = repo
-                            if not db.get_repository(repo):
-                                self.repository_identifier = ''
-                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
-                                                            'like to add it?'):
-                                    # this will set self.repository_identifier
-                                    self._add_repository_identifier_fired()
+                    project = ip.sample.project
+                    project_name = project.name
+                    if project_name == 'J-Curve':
+                        irrad = ip.level.irradiation.name
+                        self.repository_identifier = 'Irradiation-{}'.format(irrad)
+                    elif project_name != 'REFERENCES':
+                        repo = camel_case(project_name)
+                        self.repository_identifier = repo
+                        if not db.get_repository(repo):
+                            self.repository_identifier = ''
+                            if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                        'like to add it?'):
+                                # this will set self.repository_identifier
+                                self._add_repository_identifier_fired()
 
-                    except AttributeError, e:
-                        print e
+                except AttributeError, e:
+                    print e
 
-                    d['repository_identifier'] = self.repository_identifier
+                d['repository_identifier'] = self.repository_identifier
 
-                    self._make_irrad_level(ip)
-                    d['irradiation'] = self.selected_irradiation
-                    d['irradiation_position'] = pos
-                    d['irradiation_level'] = self.selected_level
+                self._make_irrad_level(ip)
+                d['irradiation'] = self.selected_irradiation
+                d['irradiation_position'] = pos
+                d['irradiation_level'] = self.selected_level
 
-                    d['display_irradiation'] = self.display_irradiation
-                    if self.auto_fill_comment:
-                        self._set_auto_comment()
-                    d['comment'] = self.comment
-                    self._meta_cache[labnumber] = d
-                    return True
-                else:
-                    self.warning_dialog('{} does not exist.\n\n'
-                                        'Add using "Entry>>Labnumber"\n'
-                                        'or "Utilities>>Import"\n'
-                                        'or manually'.format(labnumber))
+                d['display_irradiation'] = self.display_irradiation
+                if self.auto_fill_comment:
+                    self._set_auto_comment()
+                d['comment'] = self.comment
+                self._meta_cache[labnumber] = d
+                return True
+            else:
+                self.warning_dialog('{} does not exist.\n\n'
+                                    'Add using "Entry>>Labnumber"\n'
+                                    'or "Utilities>>Import"\n'
+                                    'or manually'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
@@ -1066,11 +1065,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if db is None or not db.connect():
             return []
 
-        with db.session_ctx():
-            if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
-                irrad = db.get_irradiation(self.selected_irradiation)
-                if irrad:
-                    levels = sorted([li.name for li in irrad.levels])
+        if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
+            irrad = db.get_irradiation(self.selected_irradiation)
+            if irrad:
+                levels = sorted([li.name for li in irrad.levels])
         if levels:
             self.selected_level = levels[0] if levels else 'LEVEL'
 

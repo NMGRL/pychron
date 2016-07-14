@@ -373,8 +373,7 @@ class BrowserModel(BaseBrowserModel):
         self.analysis_types = ['Analysis Type', 'None'] + ms
 
     def _load_extraction_devices(self):
-        db = self.db
-        ms = [mi.name for mi in db.get_extraction_devices()]
+        ms = self.db.get_extraction_device_names()
         self.extraction_devices = ['Extraction Device', 'None'] + ms
 
     def _get_analysis_types_visible(self):

@@ -23,6 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
+from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.tasks.ir.actions import IRAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
@@ -59,12 +60,16 @@ class EntryPlugin(BaseTaskPlugin):
             e = MolecularWeightEditor(dvc=dvc)
             return e
 
+        def factory2():
+            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            e = FluxMonitorEditor(dvc=dvc)
+            return e
+
         so1 = self.service_offer_factory(factory=factory,
                                          protocol=MolecularWeightEditor,)
-        # so2 = self.service_offer_factory(factory=FluxMonitorEditor,
-        #                                  protocol=FluxMonitorEditor)
-        # return [so1, so2]
-        return [so1, ]
+        so2 = self.service_offer_factory(factory=factory2,
+                                         protocol=FluxMonitorEditor)
+        return [so1, so2]
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]

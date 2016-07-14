@@ -1603,52 +1603,50 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _check_repository_identifiers(self):
         db = self.datahub.mainstore.db
 
-        with db.session_ctx():
+        cr = ConflictResolver()
+        for ei in self.experiment_queues:
+            identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
+            identifiers = [idn for idn in identifiers if not is_special(idn)]
 
-            cr = ConflictResolver()
-            for ei in self.experiment_queues:
-                identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
-                identifiers = [idn for idn in identifiers if not is_special(idn)]
+            repositories = {}
+            eas = db.get_associated_repositories(identifiers)
+            for idn, exps in groupby(eas, key=lambda x: x[1]):
+                repositories[idn] = [e[0] for e in exps]
 
-                repositories = {}
-                eas = db.get_associated_repositories(identifiers)
-                for idn, exps in groupby(eas, key=lambda x: x[1]):
-                    repositories[idn] = [e[0] for e in exps]
+            conflicts = []
+            for ai in ei.cleaned_automated_runs:
+                identifier = ai.identifier
+                if not is_special(identifier):
+                    try:
+                        es = repositories[identifier]
+                        if ai.repository_identifier not in es:
+                            if ai.sample == self.monitor_name:
+                                ai.repository_identifier = 'Irradiation-{}'.format(ai.irradiation)
 
-                conflicts = []
-                for ai in ei.cleaned_automated_runs:
-                    identifier = ai.identifier
-                    if not is_special(identifier):
-                        try:
-                            es = repositories[identifier]
-                            if ai.repository_identifier not in es:
-                                if ai.sample == self.monitor_name:
-                                    ai.repository_identifier = 'Irradiation-{}'.format(ai.irradiation)
+                            else:
 
-                                else:
+                                self.debug('Experiment association conflict. '
+                                           'experimentID={} '
+                                           'previous_associations={}'.format(ai.repository_identifier,
+                                                                             ','.join(es)))
+                                conflicts.append((ai, es))
+                    except KeyError:
+                        pass
 
-                                    self.debug('Experiment association conflict. '
-                                               'experimentID={} '
-                                               'previous_associations={}'.format(ai.repository_identifier,
-                                                                                 ','.join(es)))
-                                    conflicts.append((ai, es))
-                        except KeyError:
-                            pass
+            if conflicts:
+                self.debug('Experiment association warning')
+                cr.add_conflicts(ei.name, conflicts)
 
-                if conflicts:
-                    self.debug('Experiment association warning')
-                    cr.add_conflicts(ei.name, conflicts)
+        if cr.conflicts:
+            cr.available_ids = db.get_repository_identifiers()
 
-            if cr.conflicts:
-                cr.available_ids = db.get_repository_identifiers()
-
-                info = cr.edit_traits(kind='livemodal')
-                if info.result:
-                    cr.apply()
-                    self.experiment_queue.refresh_table_needed = True
-                    return True
-            else:
+            info = cr.edit_traits(kind='livemodal')
+            if info.result:
+                cr.apply()
+                self.experiment_queue.refresh_table_needed = True
                 return True
+        else:
+            return True
 
     def _sync_repositories(self, prog):
         experiment_ids = {a.repository_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}
@@ -2009,20 +2007,19 @@ Use Last "blank_{}"= {}
         db = mainstore.db
         selected = False
         dbr = None
-        with db.session_ctx():
-            if last:
-                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
+        if last:
+            dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
-            if dbr is None:
-                dbr = self._select_blank(db, ms)
-                selected = True
-            else:
-                dbr = dbr.make_record_view(repository)
+        if dbr is None:
+            dbr = self._select_blank(db, ms)
+            selected = True
+        else:
+            dbr = dbr.make_record_view(repository)
 
-            if dbr:
-                dbr = mainstore.make_analysis(dbr)
+        if dbr:
+            dbr = mainstore.make_analysis(dbr)
 
-            return dbr, selected
+        return dbr, selected
 
     def _select_blank(self, db, ms):
         # sel = db.selector_factory(style='single')
@@ -2034,14 +2031,13 @@ Use Last "blank_{}"= {}
         sel.window_width = 750
         sel.title = 'Select Default Blank'
 
-        with db.session_ctx():
-            dbs = db.get_blanks(ms)
+        dbs = db.get_blanks(ms)
 
-            sel.load_records(dbs[::-1])
-            sel.selected = sel.records[-1:]
-            info = sel.edit_traits(kind='livemodal')
-            if info.result:
-                return sel.selected[-1]
+        sel.load_records(dbs[::-1])
+        sel.selected = sel.records[-1:]
+        info = sel.edit_traits(kind='livemodal')
+        if info.result:
+            return sel.selected[-1]
 
     def _set_message(self, msg, color='black'):
         self.heading(msg)

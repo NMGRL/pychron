@@ -1207,10 +1207,9 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_extraction_device_names(self):
         names = []
-        with self.session_ctx():
-            eds = self.get_extract_devices()
-            if eds:
-                names = [e.name for e in eds]
+        eds = self.get_extract_devices()
+        if eds:
+            names = [e.name for e in eds]
         return names
 
     def get_users(self):

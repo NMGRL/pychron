@@ -54,15 +54,14 @@ class UserEntry(BaseEntry):
         """
 
         db = self.get_database()
-        with db.session_ctx():
-            dbuser = db.get_user(name)
-            if dbuser:
-                self._edit_user(dbuser)
-            else:
-                self.user = name
-                self._add_item(db)
+        dbuser = db.get_user(name)
+        if dbuser:
+            self._edit_user(dbuser)
+        else:
+            self.user = name
+            self._add_item(db)
 
-            return self.user
+        return self.user
 
     def _add_item(self, db):
         name = self.user

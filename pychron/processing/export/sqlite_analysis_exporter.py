@@ -53,8 +53,7 @@ class SQLiteAnalysisExporter(Exporter):
             bridge.init(self.destination.destination, overwrite=True)
 
             progress = self.iso_manager.open_progress(len(self.analyses))
-            with db.session_ctx():
-                bridge.add_analyses(db, self.analyses, progress)
+            bridge.add_analyses(db, self.analyses, progress)
 
             progress.close()
 

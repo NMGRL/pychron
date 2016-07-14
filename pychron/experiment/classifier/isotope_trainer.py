@@ -180,24 +180,23 @@ class IsotopeTrainer(Loggable):
         isos = []
         klasses = []
         uuids = UUIDS
-        with dvc.session_ctx():
-            for uuid in uuids:
-                broke = False
-                dbai = dvc.get_analysis_uuid(uuid)
-                ai = dvc.make_analyses((dbai,))[0]
-                ai.load_raw_data()
-                for iso in ai.isotopes.values():
+        for uuid in uuids:
+            broke = False
+            dbai = dvc.get_analysis_uuid(uuid)
+            ai = dvc.make_analyses((dbai,))[0]
+            ai.load_raw_data()
+            for iso in ai.isotopes.values():
 
-                    klass = self._get_klass(iso)
-                    if klass is not None:
-                        isos.append(iso)
-                        klasses.append(klass)
-                    else:
-                        broke = True
-                        break
-
-                if broke:
+                klass = self._get_klass(iso)
+                if klass is not None:
+                    isos.append(iso)
+                    klasses.append(klass)
+                else:
+                    broke = True
                     break
+
+            if broke:
+                break
 
         if isos:
             clf = IsotopeClassifier()

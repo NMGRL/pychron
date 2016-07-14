@@ -49,16 +49,15 @@ class GainsModel(HasTraits):
         gains = self.spectrometer.set_gains()
         if gains:
             db = self.db
-            with db.session_ctx():
-                hashkey = db.make_gains_hash(gains)
-                hist = db.get_gain_history(hashkey)
-                if not hist:
-                    hist = db.add_gain_history(hashkey, save_type='manual')
-                    for d, v in gains.items():
-                        db.add_gain(d, v, hist)
+            hashkey = db.make_gains_hash(gains)
+            hist = db.get_gain_history(hashkey)
+            if not hist:
+                hist = db.add_gain_history(hashkey, save_type='manual')
+                for d, v in gains.items():
+                    db.add_gain(d, v, hist)
 
-                hist.applied_date = datetime.now()
-
+            hist.applied_date = datetime.now()
+            db.commit()
             gainstr = '\n'.join(['{} {}'.format(*g) for g in gains.items()])
             information(None, 'Gains set\n\n{}'.format(gainstr))
 
@@ -67,31 +66,28 @@ class GainsModel(HasTraits):
             self.spectrometer.set_gains(gains=self.selected.gains,
                                         history=self.selected)
         db = self.db
-        with db.session_ctx():
-            hist = db.get_gain_history(self.selected.hashkey)
-            hist.applied_date = datetime.now()
-
+        hist = db.get_gain_history(self.selected.hashkey)
+        hist.applied_date = datetime.now()
+        db.commit()
         information(None, 'Gains update to {}'.format(self.selected.create_date))
 
     def _selected_changed(self, new):
         if not new.gains:
             db = self.db
-            with db.session_ctx():
-                hist = db.get_gain_history(new.hashkey)
-                self.selected.gains = [Gain(detector=gi.detector.name,
-                                            strvalue=floatfmt(gi.value),
-                                            gain=gi.value)
-                                       for gi in hist.gains]
+            hist = db.get_gain_history(new.hashkey)
+            self.selected.gains = [Gain(detector=gi.detector.name,
+                                        strvalue=floatfmt(gi.value),
+                                        gain=gi.value)
+                                   for gi in hist.gains]
 
     def load_histories(self):
         db = self.db
-        with db.session_ctx():
-            hists = db.get_gain_histories()
-            if hists:
-                self.histories = [GainHistory(create_date=hi.create_date,
-                                              applied_date=hi.applied_date,
-                                              hashkey=hi.hash,
-                                              username=hi.user.name) for hi in hists]
+        hists = db.get_gain_histories()
+        if hists:
+            self.histories = [GainHistory(create_date=hi.create_date,
+                                          applied_date=hi.applied_date,
+                                          hashkey=hi.hash,
+                                          username=hi.user.name) for hi in hists]
 
 
 class GainHistoryAdapter(TabularAdapter):

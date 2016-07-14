@@ -79,9 +79,8 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
     @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_add_irradiation(self):
         self.loader.db.add_irradiation('NM-1000')
-        with self.loader.db.session_ctx():
-            obj = self.loader.db.get_irradiation('NM-1000')
-            self.assertEqual(obj.name, 'NM-1000')
+        obj = self.loader.db.get_irradiation('NM-1000')
+        self.assertEqual(obj.name, 'NM-1000')
 
     # @unittest.skipIf(DEBUGGING, 'Debugging tests')
     # def test_add_level_dry(self):
@@ -95,10 +94,9 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.db.add_irradiation('NM-1000')
         self.loader.db.add_irradiation_level('A', 'NM-1000', '8-Hole', 'TRIGA', 1)
 
-        with self.loader.db.session_ctx():
-            obj = self.loader.db.get_irradiation_level('NM-1000', 'A')
-            self.assertTupleEqual((obj.irradiation.name, obj.name),
-                                  ('NM-1000', 'A'))
+        obj = self.loader.db.get_irradiation_level('NM-1000', 'A')
+        self.assertTupleEqual((obj.irradiation.name, obj.name),
+                              ('NM-1000', 'A'))
 
     def _default_pdict(self, **kw):
         pdict = {'irradiation': 'NM-1000',
@@ -131,10 +129,9 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.db.add_irradiation_level('A', 'NM-1000', '8-Hole', 'TRIGA', 1)
 
         self.loader.db.add_irradiation_position('NM-1000', 'A', 1, identifier='1000')
-        with self.loader.db.session_ctx():
-            obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
-            self.assertTupleEqual((obj.position, obj.level.name, obj.level.irradiation.name, obj.identifier),
-                                  (1, 'A', 'NM-1000', '1000'))
+        obj = self.loader.db.get_irradiation_position('NM-1000', 'A', 1)
+        self.assertTupleEqual((obj.position, obj.level.name, obj.level.irradiation.name, obj.identifier),
+                              (1, 'A', 'NM-1000', '1000'))
 
     @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_generate_labnumber(self):
@@ -322,34 +319,28 @@ class SimilarTestCase(unittest.TestCase):
         cls.db = dvc_db_factory(os.path.join(get_data_dir(), 'similar.db'), remove=False, echo=False)
 
     def test_similar_pi_lower(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_pi('ferguson')
-            self.assertEqual(obj.name, 'Ferguson')
+        obj = self.db.get_similar_pi('ferguson')
+        self.assertEqual(obj.name, 'Ferguson')
 
     def test_similar_pi_misspell(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_pi('fergsuon')
-            self.assertEqual(obj.name, 'Ferguson')
+        obj = self.db.get_similar_pi('fergsuon')
+        self.assertEqual(obj.name, 'Ferguson')
 
     def test_similar_material_lower(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_material('sanidine')
-            self.assertEqual(obj.name, 'Sanidine')
+        obj = self.db.get_similar_material('sanidine')
+        self.assertEqual(obj.name, 'Sanidine')
 
     def test_similar_material_misspell(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_material('sandine')
-            self.assertEqual(obj.name, 'Sanidine')
+        obj = self.db.get_similar_material('sandine')
+        self.assertEqual(obj.name, 'Sanidine')
 
     def test_similar_project_lower(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_project('nmdetrital', 'Finn')
-            self.assertEqual(obj.name, 'NMDetrital')
+        obj = self.db.get_similar_project('nmdetrital', 'Finn')
+        self.assertEqual(obj.name, 'NMDetrital')
 
     def test_similar_project_misspell(self):
-        with self.db.session_ctx():
-            obj = self.db.get_similar_project('nmdetirtal', 'Finn')
-            self.assertEqual(obj.name, 'NMDetrital')
+        obj = self.db.get_similar_project('nmdetirtal', 'Finn')
+        self.assertEqual(obj.name, 'NMDetrital')
 
 
 if __name__ == '__main__':

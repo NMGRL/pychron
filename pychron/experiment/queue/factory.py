@@ -23,7 +23,6 @@ from ConfigParser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.dvc.dvc_irradiationable import DVCAble
-from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.globals import globalv
@@ -129,12 +128,11 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         if db is None or not db.connect():
             return []
 
-        with db.session_ctx():
-            names = []
-            ts = db.get_loads()
-            if ts:
-                names = ts
-            return names
+        names = []
+        ts = db.get_loads()
+        if ts:
+            names = ts
+        return names
 
     @cached_property
     def _get_ok_make(self):
@@ -151,12 +149,11 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         if db is None or not db.connect():
             return []
-        with db.session_ctx():
-            dbus = db.get_users()
-            us = [ui.name for ui in dbus]
-            self._emails = {ui.name: ui.email or '' for ui in dbus}
+        dbus = db.get_users()
+        us = [ui.name for ui in dbus]
+        self._emails = {ui.name: ui.email or '' for ui in dbus}
 
-            return [''] + us
+        return [''] + us
 
     @cached_property
     def _get_extract_devices(self):

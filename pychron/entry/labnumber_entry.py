@@ -30,7 +30,7 @@ from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.progress import open_progress
-from pychron.database.defaults import load_irradiation_map
+from pychron.database.core.defaults import load_irradiation_map
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas
@@ -186,8 +186,7 @@ class LabnumberEntry(DVCIrradiationable):
                                 'Check Preferences>Database')
 
     def save_tray_to_db(self, p, name):
-        with self.dvc.db.session_ctx():
-            load_irradiation_map(self.dvc.db, p, name, overwrite_geometry=True)
+        load_irradiation_map(self.dvc.db, p, name, overwrite_geometry=True)
         self._inform_save()
 
     def estimate_j(self):
@@ -237,37 +236,35 @@ class LabnumberEntry(DVCIrradiationable):
         """
 
         db = self.dvc.db
-        with db.session_ctx():
-            irrads = db.get_irradiations(order_func='asc')
-            irrads = [irrad.name for irrad in irrads]
-            table = IrradiationTableView(irradiations=irrads)
-            info = table.edit_traits()
-            if info.result:
-                if table.selected:
-                    w = LabbookPDFWriter()
-                    info = w.options.edit_traits()
-                    if info.result:
-                        irrads = db.get_irradiations(names=table.selected,
-                                                     order_func='asc')
+        irrads = db.get_irradiations(order_func='asc')
+        irrads = [irrad.name for irrad in irrads]
+        table = IrradiationTableView(irradiations=irrads)
+        info = table.edit_traits()
+        if info.result:
+            if table.selected:
+                w = LabbookPDFWriter()
+                info = w.options.edit_traits()
+                if info.result:
+                    irrads = db.get_irradiations(names=table.selected,
+                                                 order_func='asc')
 
-                        n = sum([len(irrad.levels) for irrad in irrads])
-                        prog = open_progress(n=n)
+                    n = sum([len(irrad.levels) for irrad in irrads])
+                    prog = open_progress(n=n)
 
-                        w.build(out, irrads, progress=prog)
-                        prog.close()
+                    w.build(out, irrads, progress=prog)
+                    prog.close()
 
     def save_pdf(self, out):
         db = self.dvc.db
-        with db.session_ctx():
-            name = self.irradiation
-            irrad = db.get_irradiation(name)
-            if irrad:
-                w = IrradiationPDFWriter()
-                info = w.options.edit_traits(kind='livemodal')
-                if info.result:
-                    w.options.dump()
-                    w.build(out, irrad)
-                    return True
+        name = self.irradiation
+        irrad = db.get_irradiation(name)
+        if irrad:
+            w = IrradiationPDFWriter()
+            info = w.options.edit_traits(kind='livemodal')
+            if info.result:
+                w.options.dump()
+                w.build(out, irrad)
+                return True
 
     def save(self):
         if self._validate_save():
@@ -398,58 +395,56 @@ class LabnumberEntry(DVCIrradiationable):
         if not self.dvc.meta_repo.smart_pull():
             return
 
-        with db.session_ctx():
-            n = len(self.irradiated_positions)
-            prog = open_progress(n)
+        n = len(self.irradiated_positions)
+        prog = open_progress(n)
 
-            for ir in self.irradiated_positions:
-                sam = ir.sample
+        for ir in self.irradiated_positions:
+            sam = ir.sample
 
-                if not sam:
-                    self.dvc.remove_irradiation_position(self.irradiation, self.level, ir.hole)
-                    continue
+            if not sam:
+                self.dvc.remove_irradiation_position(self.irradiation, self.level, ir.hole)
+                continue
 
-                ln = ir.identifier
+            ln = ir.identifier
 
-                dbpos = db.get_irradiation_position(self.irradiation, self.level, ir.hole)
-                if not dbpos:
-                    dbpos = db.add_irradiation_position(self.irradiation, self.level, ir.hole)
+            dbpos = db.get_irradiation_position(self.irradiation, self.level, ir.hole)
+            if not dbpos:
+                dbpos = db.add_irradiation_position(self.irradiation, self.level, ir.hole)
 
-                if ln:
-                    dbpos2 = db.get_identifier(ln)
-                    if dbpos2:
-                        irradname = dbpos2.level.irradiation.name
-                        if irradname != self.irradiation:
-                            self.warning_dialog('Labnumber {} already exists '
-                                                'in Irradiation {}'.format(ln, irradname))
-                            return
-                    else:
-                        dbpos.identifier = ln
+            if ln:
+                dbpos2 = db.get_identifier(ln)
+                if dbpos2:
+                    irradname = dbpos2.level.irradiation.name
+                    if irradname != self.irradiation:
+                        self.warning_dialog('Labnumber {} already exists '
+                                            'in Irradiation {}'.format(ln, irradname))
+                        return
+                else:
+                    dbpos.identifier = ln
 
-                # dbpos.j = irs.j
-                # dbpos.j_err = irs.j_err
-                self.dvc.meta_repo.update_flux(self.irradiation, self.level,
-                                               ir.hole, ir.identifier, ir.j, ir.j_err)
+            self.dvc.meta_repo.update_flux(self.irradiation, self.level,
+                                           ir.hole, ir.identifier, ir.j, ir.j_err)
 
-                dbpos.weight = float(ir.weight or 0)
-                dbpos.note = ir.note
+            dbpos.weight = float(ir.weight or 0)
+            dbpos.note = ir.note
 
-                proj = ir.project
-                mat = ir.material
-                if proj:
-                    proj = db.add_project(proj)
+            proj = ir.project
+            mat = ir.material
+            if proj:
+                proj = db.add_project(proj)
 
-                if mat:
-                    mat = db.add_material(mat)
+            if mat:
+                mat = db.add_material(mat)
 
-                if sam:
-                    sam = db.add_sample(sam,
-                                        project=proj,
-                                        material=mat)
-                    dbpos.sample = sam
+            if sam:
+                sam = db.add_sample(sam,
+                                    project=proj,
+                                    material=mat)
+                dbpos.sample = sam
 
-                prog.change_message('Saving {}{}{} identifier={}'.format(self.irradiation, self.level,
-                                                                         ir.hole, ln))
+            prog.change_message('Saving {}{}{} identifier={}'.format(self.irradiation, self.level, ir.hole, ln))
+            db.commit()
+
         self.dirty = False
         self._level_changed(self.level)
         if self.dvc.meta_repo.has_staged():
@@ -521,19 +516,18 @@ THIS CHANGE CANNOT BE UNDONE')
             lastname = '0'
 
         # try to auto increment the irrad
-        if self.irradiation_prefix:
-            db = self.dvc.db
-            with db.session_ctx():
-                def f(table):
-                    return (table.name.startswith(self.irradiation_prefix),)
+        db = self.dvc.db
 
-                dbirrad = db.get_irradiations(names=f,
-                                              order_func='desc',
-                                              limit=1)
-                if dbirrad:
-                    lastname = dbirrad[0].name
-                    # try to increment lastname
-                    lastname = self._increment(lastname)
+        def f(table):
+            return (table.name.startswith(self.irradiation_prefix),)
+
+        dbirrad = db.get_irradiations(names=f,
+                                      order_func='desc',
+                                      limit=1)
+        if dbirrad:
+            lastname = dbirrad[0].name
+            # try to increment lastname
+            lastname = self._increment(lastname)
 
         return lastname
 

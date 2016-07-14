@@ -347,11 +347,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
             if self.selected_projects:
                 names = [ni.name for ni in self.selected_projects]
 
-        db = self.db
-        with db.session_ctx():
-            # load associated samples
-            sams = db.get_samples(project=names)
-            sams = [SampleRecordView(si) for si in sams]
+        # load associated samples
+        sams = self.db.get_samples(project=names)
+        sams = [SampleRecordView(si) for si in sams]
 
         self.samples = sams
         self.osamples = sams

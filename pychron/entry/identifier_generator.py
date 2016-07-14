@@ -108,9 +108,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         self.generate_identifiers()
 
     def generate_identifiers(self, *args, **kw):
-        db = self.db
-        with db.session_ctx(commit=True):
-            self._generate_labnumbers(*args)
+        self._generate_labnumbers(*args)
 
         if not self.is_preview:
             self.dvc.meta_commit('Generate identifiers')

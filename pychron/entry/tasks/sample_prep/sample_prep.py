@@ -210,10 +210,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _load_session_samples(self):
         if self.worker and self.session:
-            with self.dvc.session_ctx():
-                ss = self.dvc.get_sample_prep_samples(self.worker, self.session)
-                self.session_samples = [self._sample_record_factory(i) for i in ss]
-                self.osession_samples = self.session_samples
+            ss = self.dvc.get_sample_prep_samples(self.worker, self.session)
+            self.session_samples = [self._sample_record_factory(i) for i in ss]
+            self.osession_samples = self.session_samples
 
     def _load_workers(self):
         self.workers = self.dvc.get_sample_prep_worker_names()
@@ -231,24 +230,23 @@ class SamplePrep(DVCAble, PersistenceMixin):
         return r
 
     def _load_steps_for_sample(self, asample):
-        with self.dvc.session_ctx():
-            def factory(s):
-                pstep = PrepStepRecord(id=s.id,
-                                       crush=s.crush or '',
-                                       sieve=s.sieve or '',
-                                       wash=s.wash or '',
-                                       acid=s.acid or '',
-                                       frantz=s.frantz or '',
-                                       pick=s.pick or '',
-                                       heavy_liquid=s.heavy_liquid or '',
-                                       timestamp=s.timestamp)
-                return pstep
+        def factory(s):
+            pstep = PrepStepRecord(id=s.id,
+                                   crush=s.crush or '',
+                                   sieve=s.sieve or '',
+                                   wash=s.wash or '',
+                                   acid=s.acid or '',
+                                   frantz=s.frantz or '',
+                                   pick=s.pick or '',
+                                   heavy_liquid=s.heavy_liquid or '',
+                                   timestamp=s.timestamp)
+            return pstep
 
-            asample.steps = [factory(i) for i in self.dvc.get_sample_prep_steps(asample.worker, asample.session,
-                                                                                asample.name,
-                                                                                asample.project,
-                                                                                asample.material,
-                                                                                asample.grainsize)]
+        asample.steps = [factory(i) for i in self.dvc.get_sample_prep_steps(asample.worker, asample.session,
+                                                                            asample.name,
+                                                                            asample.project,
+                                                                            asample.material,
+                                                                            asample.grainsize)]
 
     def _make_step(self):
         attrs = ('crush', 'wash', 'sieve', 'acid', 'frantz',
@@ -303,10 +301,10 @@ class SamplePrep(DVCAble, PersistenceMixin):
         oname = self.session
         from pychron.entry.tasks.sample_prep.adder import AddSession
         s = AddSession(title='Edit Selected Session')
-        with self.dvc.session_ctx():
-            obj = self.dvc.get_sample_prep_session(self.session, self.worker)
-            s.name = obj.name
-            s.comment = obj.comment
+        obj = self.dvc.get_sample_prep_session(self.session, self.worker)
+        s.name = obj.name
+        s.comment = obj.comment
+        self.dvc.db.commit()
 
         info = s.edit_traits()
         if info.result:
@@ -389,17 +387,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
     @cached_property
     def _get_samples(self):
         if self.project:
-            with self.dvc.session_ctx():
-                ss = self.dvc.get_samples(project=self.project)
-                return [self._sample_record_factory(si) for si in ss]
+            ss = self.dvc.get_samples(project=self.project)
+            return [self._sample_record_factory(si) for si in ss]
         else:
             return []
 
     @cached_property
     def _get_projects(self):
-        with self.dvc.session_ctx():
-            ps = self.dvc.get_projects(principal_investigator=self.principal_investigator,
-                                       order='asc')
-            return [p.name for p in ps]
+        ps = self.dvc.get_projects(principal_investigator=self.principal_investigator,
+                                   order='asc')
+        return [p.name for p in ps]
 
 # ============= EOF =============================================

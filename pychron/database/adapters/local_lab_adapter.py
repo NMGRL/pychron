@@ -36,8 +36,7 @@ class LocalLabAdapter(DatabaseAdapter):
     def build_database(self):
         self.connect(test=False)
         if not os.path.isfile(self.path):
-            with self.session_ctx() as sess:
-                Base.metadata.tables['LabTable'].create(bind=sess.bind)
+            Base.metadata.tables['LabTable'].create(bind=self.session.bind)
 
     def add_analysis(self, **kw):
         l = LabTable(**kw)
@@ -45,14 +44,13 @@ class LocalLabAdapter(DatabaseAdapter):
         return l
 
     def get_last_analysis(self):
-        with self.session_ctx() as sess:
-            q = sess.query(LabTable)
-            q = q.order_by(LabTable.create_date.desc())
-            q = q.limit(1)
-            try:
-                return q.one()
-            except NoResultFound, e:
-                pass
+        q = self.session.query(LabTable)
+        q = q.order_by(LabTable.create_date.desc())
+        q = q.limit(1)
+        try:
+            return q.one()
+        except NoResultFound, e:
+            pass
 
 
 if __name__ == '__main__':

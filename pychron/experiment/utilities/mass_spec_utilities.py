@@ -33,21 +33,21 @@ db.connect(test=False)
 
 
 def fix_reference_detector(rd, aid):
-    with db.session_ctx() as sess:
-        q = sess.query(AnalysesTable)
-        q = q.filter(AnalysesTable.AnalysisID == aid)
-        record = q.one()
+    q = db.session.query(AnalysesTable)
+    q = q.filter(AnalysesTable.AnalysisID == aid)
+    record = q.one()
 
-        q = sess.query(DetectorTable)
-        q = q.join(IsotopeTable)
-        q = q.join(AnalysesTable)
+    q = db.session.query(DetectorTable)
+    q = q.join(IsotopeTable)
+    q = q.join(AnalysesTable)
 
-        q = q.filter(AnalysesTable.AnalysisID == aid)
+    q = q.filter(AnalysesTable.AnalysisID == aid)
 
-        for r in q.all():
-            if r.Label == rd:
-                print 'setting refid current={}  new={}'.format(record.RefDetID, r.DetectorID)
-                record.RefDetID = r.DetectorID
+    for r in q.all():
+        if r.Label == rd:
+            print 'setting refid current={}  new={}'.format(record.RefDetID, r.DetectorID)
+            record.RefDetID = r.DetectorID
+    db.commit()
 
 
 def fix_reference_detectors(path):

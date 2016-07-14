@@ -27,15 +27,13 @@ class AutoQueue(Loggable):
 
     def generate(self, ):
         def gen():
-            db = self.db
             load_name = self.load_name
-            with db.session_ctx():
-                dbload = self.db.get_loadtable(load_name)
-                for poss in dbload.loaded_positions:
-                    # print poss
-                    ln_id = poss.lab_identifier
-                    dbln = self.db.get_labnumber(ln_id, key='id')
-                    yield dbln.identifier, str(poss.position)
+            dbload = self.db.get_loadtable(load_name)
+            for poss in dbload.loaded_positions:
+                # print poss
+                ln_id = poss.lab_identifier
+                dbln = self.db.get_labnumber(ln_id, key='id')
+                yield dbln.identifier, str(poss.position)
 
         return gen
 

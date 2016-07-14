@@ -36,43 +36,42 @@ class MassSpecRecaller(Loggable):
     def find_analysis(self, labnumber, aliquot, step):
 
         db = self.db
-        with db.session_ctx():
 
-            dbrec = db.get_analysis(labnumber, aliquot, step)
-            if dbrec:
-                # need to handle blanks differently
-                # labnumber in mass spec for blanks is -1
-                if labnumber == -1:
-                    klass = MassSpecBlank
-                else:
-                    klass = MassSpecAnalysis
+        dbrec = db.get_analysis(labnumber, aliquot, step)
+        if dbrec:
+            # need to handle blanks differently
+            # labnumber in mass spec for blanks is -1
+            if labnumber == -1:
+                klass = MassSpecBlank
+            else:
+                klass = MassSpecAnalysis
 
-                rec = klass()
-                rec.sync(dbrec)
-                irradpos = db.get_irradiation_position(dbrec.IrradPosition)
-                r = irradpos.IrradiationLevel
-                n, l = r[:-1], r[-1:]
+            rec = klass()
+            rec.sync(dbrec)
+            irradpos = db.get_irradiation_position(dbrec.IrradPosition)
+            r = irradpos.IrradiationLevel
+            n, l = r[:-1], r[-1:]
 
-                dbirrad = db.get_irradiation_level(n, l)
+            dbirrad = db.get_irradiation_level(n, l)
 
-                rec.sync_irradiation(dbirrad)
-                for iso in dbrec.isotopes:
-                    det = iso.detector
-                    c = db.get_baseline_changeable_item(iso.baseline.BslnID)
-                    rec.sync_baselines(det.detector_type.Label, c.InfoBlob, c.PDPBlob)
+            rec.sync_irradiation(dbirrad)
+            for iso in dbrec.isotopes:
+                det = iso.detector
+                c = db.get_baseline_changeable_item(iso.baseline.BslnID)
+                rec.sync_baselines(det.detector_type.Label, c.InfoBlob, c.PDPBlob)
 
-                    c = db.get_pdp(iso.IsotopeID)
-                    if c:
-                        rec.sync_fn(iso.Label, c.PDPBlob)
+                c = db.get_pdp(iso.IsotopeID)
+                if c:
+                    rec.sync_fn(iso.Label, c.PDPBlob)
 
-                    prefs = db.get_latest_preferences(iso.IsotopeID, iso.Label)
+                prefs = db.get_latest_preferences(iso.IsotopeID, iso.Label)
 
-                    riso = rec.isotopes[iso.Label]
-                    rec.sync_filtering(riso, prefs)
+                riso = rec.isotopes[iso.Label]
+                rec.sync_filtering(riso, prefs)
 
-                    # prefs = db.get_latest_baseline_preferences(iso.baseline.BslnID)
-                    # rec.sync_filtering(riso.baseline, prefs)
+                # prefs = db.get_latest_baseline_preferences(iso.baseline.BslnID)
+                # rec.sync_filtering(riso.baseline, prefs)
 
-                return rec
+            return rec
 
 # ============= EOF =============================================

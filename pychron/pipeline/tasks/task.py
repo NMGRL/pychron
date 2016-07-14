@@ -179,15 +179,14 @@ class PipelineTask(BaseBrowserTask):
 
                 for expid, ans in groupby(sorted(items, key=key), key=key):
                     cs = []
-                    with db.session_ctx():
-                        for it in ans:
-                            self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                            db.set_analysis_tag(it.uuid, tag)
+                    for it in ans:
+                        self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                        db.set_analysis_tag(it.uuid, tag)
 
-                            it.set_tag(tag)
-                            if dvc.update_tag(it):
-                                cs.append(it)
-                                # it.refresh_view()
+                        it.set_tag(tag)
+                        if dvc.update_tag(it):
+                            cs.append(it)
+                            # it.refresh_view()
 
                     if cs:
                         cc = [c.record_id for c in cs]
@@ -405,10 +404,9 @@ class PipelineTask(BaseBrowserTask):
     def _add_interpreted_ages(self, ias):
         dvc = self.dvc
         db = dvc.db
-        with db.session_ctx():
-            for ia in ias:
-                if ia.use:
-                    dvc.add_interpreted_age(ia)
+        for ia in ias:
+            if ia.use:
+                dvc.add_interpreted_age(ia)
 
     def _close_editor(self, editor):
         for e in self.editor_area.editors:
@@ -547,11 +545,7 @@ class PipelineTask(BaseBrowserTask):
 
         tv = AnalysisTagView(model=AnalysisTagModel())
 
-        db = self.dvc.db
-        with db.session_ctx():
-            # tv.model.db = db
-            tv.model.items = items
-            # tv.model.load()
+        tv.model.items = items
 
         info = tv.edit_traits()
         if info.result:

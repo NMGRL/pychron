@@ -28,15 +28,14 @@ TABLES = {'project': ProjectTbl,
 
 class CustomAnalysisQuery(HasTraits):
     def execute_query(self, filters):
-        with self.db.session_ctx() as sess:
-            q = sess.query(AnalysisTbl)
-            q = q.join(IrradiationPositionTbl)
-            q = q.join(SampleTbl)
-            q = q.join(ProjectTbl)
-            for fi in filters:
-                q = q.filter(fi)
-            results = self.db._query_all(q)
-            print len(results)
+        q = self.session.query(AnalysisTbl)
+        q = q.join(IrradiationPositionTbl)
+        q = q.join(SampleTbl)
+        q = q.join(ProjectTbl)
+        for fi in filters:
+            q = q.filter(fi)
+        results = self.db._query_all(q)
+        print len(results)
 
     def load_query(self):
         pass

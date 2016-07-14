@@ -42,20 +42,18 @@ def source_factory():
     p = os.path.join(get_data_dir(), 'irradiation_import.xls')
 
     # add a production ratio
-    with db.session_ctx():
-        db.add_irradiation_production(name='Triga PR', K4039=10)
+    db.add_irradiation_production(name='Triga PR', K4039=10)
 
     loader = XLSIrradiationLoader(db=db)
     loader.open(p)
     loader.load_irradiation(p, dry_run=False)
     db.verbose = False
-    with db.session_ctx():
-        dbirrads = db.get_irradiations(order_func='asc')
-        irrads = [i.name for i in dbirrads]
+    dbirrads = db.get_irradiations(order_func='asc')
+    irrads = [i.name for i in dbirrads]
 
-        levels = {}
-        for di in dbirrads:
-            levels[di.name] = tuple([li.name for li in di.levels])
+    levels = {}
+    for di in dbirrads:
+        levels[di.name] = tuple([li.name for li in di.levels])
 
     return db, irrads, levels
 
@@ -85,17 +83,15 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
         self.exporter.export_chronology(name)
 
         dest = self.exporter.destination
-        with dest.session_ctx():
-            chrons = dest.get_chronology_by_irradname(name)
-            self.assertEqual(len(chrons), 2)
+        chrons = dest.get_chronology_by_irradname(name)
+        self.assertEqual(len(chrons), 2)
 
     @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_export_irrad(self):
         self.exporter.do_export(self.irradnames)
 
         dest = self.exporter.destination
-        with dest.session_ctx():
-            names = tuple(dest.get_irradiation_names())
+        names = tuple(dest.get_irradiation_names())
 
         self.assertTupleEqual(names, ('NM-1000', 'NM-1001'))
 
@@ -105,8 +101,7 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
 
         name = self.irradnames[0]
         dest = self.exporter.destination
-        with dest.session_ctx():
-            names = tuple(dest.get_irradiation_level_names(name))
+        names = tuple(dest.get_irradiation_level_names(name))
 
         self.assertTupleEqual(names, self.levels[name])
 
@@ -116,8 +111,7 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
 
         name = self.irradnames[1]
         dest = self.exporter.destination
-        with dest.session_ctx():
-            names = tuple(dest.get_irradiation_level_names(name))
+        names = tuple(dest.get_irradiation_level_names(name))
 
         self.assertTupleEqual(names, self.levels[name])
 
@@ -125,10 +119,9 @@ class MassSpecIrradExportTestCase(unittest.TestCase):
     def test_positions(self):
         self.exporter.do_export(self.irradnames)
         dest = self.exporter.destination
-        with dest.session_ctx():
-            iname = self.irradnames[0]
-            pos = dest.get_irradiation_positions(iname, self.levels[iname][0])
-            self.assertEqual(len(pos), 3)
+        iname = self.irradnames[0]
+        pos = dest.get_irradiation_positions(iname, self.levels[iname][0])
+        self.assertEqual(len(pos), 3)
 
 
 class ProductionRatiosTestCase(unittest.TestCase):
@@ -138,11 +131,10 @@ class ProductionRatiosTestCase(unittest.TestCase):
     def test_production_id(self):
 
         oidn = -1578996229
-        with self.db.session_ctx():
-            pr = self.db.get_production_ratio_by_id(oidn)
-            vs = [getattr(pr, k) for k in PR_KEYS]
-            idn = generate_production_ratios_id(vs)
-            self.assertEqual(idn, oidn)
+        pr = self.db.get_production_ratio_by_id(oidn)
+        vs = [getattr(pr, k) for k in PR_KEYS]
+        idn = generate_production_ratios_id(vs)
+        self.assertEqual(idn, oidn)
 
 
 if __name__ == '__main__':

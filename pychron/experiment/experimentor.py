@@ -154,32 +154,31 @@ class Experimentor(DVCIrradiationable):
         db = self.get_database()
         aruns = self._get_all_automated_runs()
 
-        with db.session_ctx():
-            for ai in aruns:
-                if ai.skip:
-                    continue
+        for ai in aruns:
+            if ai.skip:
+                continue
 
-                ln = ai.labnumber
-                if ln == 'dg':
-                    continue
+            ln = ai.labnumber
+            if ln == 'dg':
+                continue
 
-                # is run in cache
-                if ln not in cache:
-                    info = self._get_analysis_info(ln)
-                    self.debug('Info for {}={}'.format(ln, info))
-                    if not info:
-                        cache[ln] = dict(identifier_error=True)
-                    else:
-                        project, sample, material, irrad, level, pos = info
+            # is run in cache
+            if ln not in cache:
+                info = self._get_analysis_info(ln)
+                self.debug('Info for {}={}'.format(ln, info))
+                if not info:
+                    cache[ln] = dict(identifier_error=True)
+                else:
+                    project, sample, material, irrad, level, pos = info
 
-                        cache[ln] = dict(project=project or '', sample=sample or '',
-                                         material=material or '',
-                                         irradiation=irrad or '',
-                                         irradiation_level=level or '',
-                                         irradiation_position=pos or '',
-                                         identifier_error=False)
+                    cache[ln] = dict(project=project or '', sample=sample or '',
+                                     material=material or '',
+                                     irradiation=irrad or '',
+                                     irradiation_level=level or '',
+                                     irradiation_position=pos or '',
+                                     identifier_error=False)
 
-                ai.trait_set(**cache[ln])
+            ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
         self.debug('<{}> setup executor'.format(id(self)))

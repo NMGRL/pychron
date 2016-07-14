@@ -167,19 +167,17 @@ class UnknownNode(DataNode):
 
     def set_last_n_analyses(self, n):
         db = self.dvc.db
-        with db.session_ctx():
-            ans = db.get_last_n_analyses(n)
-            # ans = db.get_analyses_by_date_range(mi,ma)
-            records = [ri for ai in ans for ri in ai.record_views]
-            self.unknowns = self.dvc.make_analyses(records)
+        ans = db.get_last_n_analyses(n)
+        # ans = db.get_analyses_by_date_range(mi,ma)
+        records = [ri for ai in ans for ri in ai.record_views]
+        self.unknowns = self.dvc.make_analyses(records)
 
     def set_last_n_hours_analyses(self, n):
         db = self.dvc.db
-        with db.session_ctx():
-            ans = db.get_last_nhours_analyses(n)
-            if ans:
-                records = [ri for ai in ans for ri in ai.record_views]
-                self.unknowns = self.dvc.make_analyses(records)
+        ans = db.get_last_nhours_analyses(n)
+        if ans:
+            records = [ri for ai in ans for ri in ai.record_views]
+            self.unknowns = self.dvc.make_analyses(records)
 
     def run(self, state):
         if not self.unknowns and not state.unknowns:
@@ -333,12 +331,11 @@ class ListenUnknownNode(UnknownNode):
         # low = '2014-10-25 03:30:30'
         # high = '2014-10-25 04:32:25'
         low, high = self._gen.next()
-        with self.dvc.session_ctx():
-            unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       # exclude_uuids=self.exclude_uuids,
-                                                       analysis_type='unknown',
-                                                       mass_spectrometers=self.mass_spectrometer, verbose=True)
-            records = [ri for unk in unks for ri in unk.record_views]
-            return self.dvc.make_analyses(records)
+        unks = self.dvc.get_analyses_by_date_range(low, high,
+                                                   # exclude_uuids=self.exclude_uuids,
+                                                   analysis_type='unknown',
+                                                   mass_spectrometers=self.mass_spectrometer, verbose=True)
+        records = [ri for unk in unks for ri in unk.record_views]
+        return self.dvc.make_analyses(records)
 
 # ============= EOF =============================================

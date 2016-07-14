@@ -63,12 +63,11 @@ class BaseEntry(DVCAble):
             info = self.edit_traits()
             if info.result:
                 db = self.get_database()
-                with db.session_ctx():
-                    ret = self._add_item()
-                    if ret is None:
-                        return False
-                    elif ret:
-                        return True
+                ret = self._add_item()
+                if ret is None:
+                    return False
+                elif ret:
+                    return True
             else:
                 return False
 

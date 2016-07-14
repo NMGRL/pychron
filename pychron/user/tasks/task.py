@@ -57,8 +57,11 @@ class UsersTask(BaseTask):
     def _db_default(self):
         app = self.application
         d = app.get_service('pychron.dvc.dvc.DVC')
+        d.db.create_session()
         return d.db
 
+    def prepare_destroy(self):
+        self.db.close_session()
     # @cached_property
     # def _get_db(self):
     #     app = self.application
@@ -72,13 +75,12 @@ class UsersTask(BaseTask):
             if not db.connect():
                 return
 
-            with db.session_ctx():
-                users = [User(user) for user in db.get_users()]
-                self._sync(users)
-                self._hash = self._generate_hash(users)
+            users = [User(user) for user in db.get_users()]
+            self._sync(users)
+            self._hash = self._generate_hash(users)
 
-                self.users = users
-                self.ousers = self.users[:]
+            self.users = users
+            self.ousers = self.users[:]
 
     def _sync(self, users):
         path = os.path.join(paths.setup_dir, 'users.yaml')
@@ -107,11 +109,11 @@ class UsersTask(BaseTask):
     def _save(self):
         db = self.db
         if db:
-            with db.session_ctx():
-                for user in self.ousers:
-                    dbuser = db.get_user(user)
-                    for k in user.keys:
-                        setattr(dbuser, k, getattr(user, k))
+            for user in self.ousers:
+                dbuser = db.get_user(user)
+                for k in user.keys:
+                    setattr(dbuser, k, getattr(user, k))
+            db.commit()
 
         # dump to users.yaml
         path = os.path.join(paths.setup_dir, 'users.yaml')

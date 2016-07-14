@@ -85,29 +85,28 @@ class SampleEditModel(HasTraits):
 
     def save(self):
         db = self.dvc
-        with db.session_ctx():
-            for si in self.samples:
-                if si.altered:
-                    dbsam = db.get_sample_id(si.id)
-                    dbsam.name = si.name
+        for si in self.samples:
+            if si.altered:
+                dbsam = db.get_sample_id(si.id)
+                dbsam.name = si.name
 
-                    dbproj = db.get_project(*extract_names(si.project))
-                    if dbproj:
-                        dbsam.projectID = dbproj.id
+                dbproj = db.get_project(*extract_names(si.project))
+                if dbproj:
+                    dbsam.projectID = dbproj.id
 
-                    dbmat = db.get_material(*extract_names(si.material))
-                    print dbmat, extract_names(si.material)
-                    if dbmat:
-                        dbsam.materialID = dbmat.id
+                dbmat = db.get_material(*extract_names(si.material))
+                print dbmat, extract_names(si.material)
+                if dbmat:
+                    dbsam.materialID = dbmat.id
+            db.commit()
 
     # handlers
     def _sample_changed(self):
         sams = []
         if len(self.sample) > 2:
-            with self.dvc.session_ctx():
-                sams = self.dvc.get_samples_by_name(self.sample)
-                sams = [SampleEditItem(si, _projects=self._projects,
-                                       _materials=self._materials) for si in sams]
+            sams = self.dvc.get_samples_by_name(self.sample)
+            sams = [SampleEditItem(si, _projects=self._projects,
+                                   _materials=self._materials) for si in sams]
 
         self.samples = sams
 

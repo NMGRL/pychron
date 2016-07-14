@@ -263,10 +263,14 @@ class ExperimentEditorTask(EditorTask):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
+        self.manager.db.create_session()
+
         manager = self.application.get_service(IFurnaceManager)
         if manager:
             manager.start_update()
 
+    def prepare_destory(self):
+        self.manager.db.close_session()
 
     def create_dock_panes(self):
 
@@ -729,9 +733,8 @@ class ExperimentEditorTask(EditorTask):
     def _get_autoplot_analyses(self, new):
         dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
         db = dvc.db
-        with db.session_ctx():
-            ans, _ = db.get_labnumber_analyses(new.identifier)
-            return dvc.make_analyses(ans)
+        ans, _ = db.get_labnumber_analyses(new.identifier)
+        return dvc.make_analyses(ans)
 
     def _new_autoplot_editor(self, new):
         from pychron.pipeline.plot.editors.figure_editor import FigureEditor

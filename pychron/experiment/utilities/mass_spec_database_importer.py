@@ -111,26 +111,23 @@ class MassSpecDatabaseImporter(Loggable):
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
             db = self.db
-            with db.session_ctx() as sess:
-                sl = db.add_sample_loading(ms, tray)
-                sess.flush()
-                self.sample_loading_id = sl.SampleLoadingID
+            sl = db.add_sample_loading(ms, tray)
+            db.flush()
+            self.sample_loading_id = sl.SampleLoadingID
 
     def add_login_session(self, ms):
         self.info('adding new session for {}'.format(ms))
         db = self.db
-        with db.session_ctx() as sess:
-            ls = db.add_login_session(ms)
-            sess.flush()
-            self.login_session_id = ls.LoginSessionID
+        ls = db.add_login_session(ms)
+        db.flush()
+        self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
         if self.data_reduction_session_id is None:
             db = self.db
-            with db.session_ctx() as sess:
-                dr = db.add_data_reduction_session()
-                sess.flush()
-                self.data_reduction_session_id = dr.DataReductionSessionID
+            dr = db.add_data_reduction_session()
+            db.flush()
+            self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
         # add login, sample, dr ids
@@ -177,65 +174,60 @@ class MassSpecDatabaseImporter(Loggable):
         return self.identifier_mapper.map_to_value(identifier, mass_spectrometer, 'MassSpec')
 
     def add_irradiation(self, irrad, level, pid):
-        with self.db.session_ctx():
-            sid = 0
-            self.db.add_irradiation_level(irrad, level, sid, pid)
+        sid = 0
+        self.db.add_irradiation_level(irrad, level, sid, pid)
 
     def add_irradiation_position(self, identifier, levelname, hole, **kw):
-        with self.db.session_ctx():
-            return self.db.add_irradiation_position(identifier, levelname, hole, **kw)
+        return self.db.add_irradiation_position(identifier, levelname, hole, **kw)
 
     def add_irradiation_production(self, name, prdict, ifdict):
-        with self.db.session_ctx():
-            return self.db.add_irradiation_production(name, prdict, ifdict)
+        return self.db.add_irradiation_production(name, prdict, ifdict)
 
     def add_irradiation_chronology(self, irrad, doses):
-
-        with self.db.session_ctx():
-            for pwr, st, et in doses:
-                self.db.add_irradiation_chronology_segment(irrad, st, et)
+        for pwr, st, et in doses:
+            self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
+        db = self.db
         for i in range(3):
-            with self.db.session_ctx(commit=False) as sess:
-                irradpos = spec.irradpos
-                rid = spec.runid
-                trid = rid.lower()
-                identifier = spec.labnumber
+            irradpos = spec.irradpos
+            rid = spec.runid
+            trid = rid.lower()
+            identifier = spec.labnumber
 
-                if trid.startswith('b'):
-                    runtype = 'Blank'
-                    irradpos = -1
-                elif trid.startswith('a'):
-                    runtype = 'Air'
-                    irradpos = -2
-                elif trid.startswith('c'):
-                    runtype = 'Unknown'
-                    identifier = irradpos = self.get_identifier(spec)
+            if trid.startswith('b'):
+                runtype = 'Blank'
+                irradpos = -1
+            elif trid.startswith('a'):
+                runtype = 'Air'
+                irradpos = -2
+            elif trid.startswith('c'):
+                runtype = 'Unknown'
+                identifier = irradpos = self.get_identifier(spec)
+            else:
+                runtype = 'Unknown'
+
+            rid = make_runid(identifier, spec.aliquot, spec.step)
+
+            self._analysis = None
+            db.reraise = True
+            try:
+                ret = self._add_analysis(db.session, spec, irradpos, rid, runtype)
+                db.commit()
+                return ret
+            except Exception, e:
+                import traceback
+                tb = traceback.format_exc()
+                self.debug('Mass Spec save exception. {}\n {}'.format(e, tb))
+                if i == 2:
+                    self.message('Could not save spec.runid={} rid={} '
+                                 'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                 else:
-                    runtype = 'Unknown'
-
-                rid = make_runid(identifier, spec.aliquot, spec.step)
-
-                self._analysis = None
+                    self.debug('retry mass spec save')
+                # if commit:
+                db.rollback()
+            finally:
                 self.db.reraise = True
-                try:
-                    ret = self._add_analysis(sess, spec, irradpos, rid, runtype)
-                    sess.commit()
-                    return ret
-                except Exception, e:
-                    import traceback
-                    tb = traceback.format_exc()
-                    self.debug('Mass Spec save exception. {}\n {}'.format(e, tb))
-                    if i == 2:
-                        self.message('Could not save spec.runid={} rid={} '
-                                     'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
-                    else:
-                        self.debug('retry mass spec save')
-                    # if commit:
-                    sess.rollback()
-                finally:
-                    self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 

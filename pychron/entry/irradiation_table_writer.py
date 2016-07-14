@@ -13,24 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
-import os
-
-from reportlab.lib import colors
 from traits.api import HasTraits, Str, Float
-
-
 # ============= standard library imports ========================
+from reportlab.lib import colors
 # ============= local library imports  ==========================
-import yaml
-from pychron.core.helpers.filetools import view_file
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.paths import paths
 
 
 class Irradiation(HasTraits):
@@ -46,28 +35,6 @@ class Irradiation(HasTraits):
         self.date = dbrecord.chronology.start_date
         self.duration = dbrecord.chronology.duration
         self.reactor = dbrecord.reactor.name.replace('&', '&amp;')
-
-
-class IrradiationTableWriter(IsotopeDatabaseManager):
-    def make(self):
-        root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'irradiations')
-        p = os.path.join(root, 'irradiations.yaml')
-        with open(p, 'r') as rfile:
-            yd = yaml.load(rfile)
-
-        db = self.db
-        irrads = []
-        with db.session_ctx():
-            for yi in yd:
-                dbirrad = db.get_irradiation(yi)
-                irrads.append(Irradiation(dbirrad))
-
-        outpath = os.path.join(root, 'irradiations.pdf')
-        p = PDFWriter()
-        opt = p.options
-        opt.orientation = 'portrait'
-        p.build(outpath, irrads)
-        view_file(outpath)
 
 
 class PDFWriter(BasePDFTableWriter):
@@ -117,14 +84,35 @@ USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pu
         p = self._new_paragraph(t)
         return p
 
+# ============= EOF =============================================
+# class IrradiationTableWriter(IsotopeDatabaseManager):
+#     def make(self):
+#         root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'irradiations')
+#         p = os.path.join(root, 'irradiations.yaml')
+#         with open(p, 'r') as rfile:
+#             yd = yaml.load(rfile)
+#
+#         db = self.db
+#         irrads = []
+#         with db.session_ctx():
+#             for yi in yd:
+#                 dbirrad = db.get_irradiation(yi)
+#                 irrads.append(Irradiation(dbirrad))
+#
+#         outpath = os.path.join(root, 'irradiations.pdf')
+#         p = PDFWriter()
+#         opt = p.options
+#         opt.orientation = 'portrait'
+#         p.build(outpath, irrads)
+#         view_file(outpath)
+#
 
-if __name__ == '__main__':
-    i = IrradiationTableWriter(bind=False, connect=False)
-    i.db.trait_set(name='pychrondata_minnabluff',
-                   kind='mysql',
-                   username='root',
-                   password='Argon')
-    i.connect()
-    i.make()
-
-    # ============= EOF =============================================
+#
+# if __name__ == '__main__':
+#     i = IrradiationTableWriter(bind=False, connect=False)
+#     i.db.trait_set(name='pychrondata_minnabluff',
+#                    kind='mysql',
+#                    username='root',
+#                    password='Argon')
+#     i.connect()
+#     i.make()

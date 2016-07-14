@@ -60,12 +60,12 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
         if self.active_editor and isinstance(self.active_editor, ImageTabEditor):
             if self.active_editor.dirty:
                 db = self.manager.db
-                with db.session_ctx():
-                    dbim = db.get_sample_image(self.active_editor.record_id)
-                    dbim.note = self.active_editor.model.note
-                    dbim.name = self.active_editor.model.name
-                    self.active_editor.model.original_note = dbim.note
-                    self.active_editor.model.original_name = dbim.name
+                dbim = db.get_sample_image(self.active_editor.record_id)
+                dbim.note = self.active_editor.model.note
+                dbim.name = self.active_editor.model.name
+                db.commit()
+                self.active_editor.model.original_note = dbim.note
+                self.active_editor.model.original_name = dbim.name
                 self.active_editor.dirty = False
 
             self._load_associated_images(self.selected_samples)
@@ -105,12 +105,11 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
         if not name:
             # get existing images for this sample
             db = self.manager.db
-            with db.session_ctx():
-                # sample = db.get_sample(sample.name, identifier=sample.identifier)
-                cnt = db.get_sample_image_count(sample.name, project=sample.project,
-                                                material=sample.material,
-                                                identifier=sample.identifier)
-                cnt += 1
+            # sample = db.get_sample(sample.name, identifier=sample.identifier)
+            cnt = db.get_sample_image_count(sample.name, project=sample.project,
+                                            material=sample.material,
+                                            identifier=sample.identifier)
+            cnt += 1
 
             name = '{}{:03d}'.format(sample.name, cnt)
 
@@ -161,21 +160,20 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
         selected = self.selected_image
         if selected:
             db = self.manager.db
-            with db.session_ctx():
-                dbim = db.get_sample_image(selected.record_id)
-                editor = self.get_editor(selected.record_id, key='record_id')
-                if not editor:
-                    model = ImageModel(blob=dbim.image,
-                                       name=dbim.name,
-                                       create_date=dbim.create_date,
-                                       note=dbim.note or '')
+            dbim = db.get_sample_image(selected.record_id)
+            editor = self.get_editor(selected.record_id, key='record_id')
+            if not editor:
+                model = ImageModel(blob=dbim.image,
+                                   name=dbim.name,
+                                   create_date=dbim.create_date,
+                                   note=dbim.note or '')
 
-                    editor = ImageTabEditor(record_id=selected.record_id,
-                                            model=model,
-                                            name=dbim.name)
-                    self._open_editor(editor)
-                else:
-                    self.activate_editor(editor)
+                editor = ImageTabEditor(record_id=selected.record_id,
+                                        model=model,
+                                        name=dbim.name)
+                self._open_editor(editor)
+            else:
+                self.activate_editor(editor)
 
     def _active_editor_changed(self, new):
         if new and isinstance(new.model, ImageModel):
@@ -183,30 +181,28 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
 
     def _load_associated_images(self, sample_records):
         db = self.manager.db
-        with db.session_ctx():
-            images = []
-            for si in sample_records:
-                sample = db.get_sample(si.name, si.project, si.material, si.identifier)
-                images.extend([SampleImageRecordView(i) for i in sample.images])
+        images = []
+        for si in sample_records:
+            sample = db.get_sample(si.name, si.project, si.material, si.identifier)
+            images.extend([SampleImageRecordView(i) for i in sample.images])
 
         self.images = images
 
     def _load_associated_samples(self, names):
         db = self.manager.db
-        with db.session_ctx():
-            samples = db.get_samples(names)
-            self.debug('get samples n={}'.format(len(samples)))
+        samples = db.get_samples(names)
+        self.debug('get samples n={}'.format(len(samples)))
 
-            def func(li, prog, i, n):
-                if prog:
-                    prog.change_message('Loading Sample {}'.format(li.name))
+        def func(li, prog, i, n):
+            if prog:
+                prog.change_message('Loading Sample {}'.format(li.name))
 
-                if li.labnumbers:
-                    return [SampleRecordView(li, identifier=ll.identifier) for ll in li.labnumbers]
-                else:
-                    return SampleRecordView(li)
+            if li.labnumbers:
+                return [SampleRecordView(li, identifier=ll.identifier) for ll in li.labnumbers]
+            else:
+                return SampleRecordView(li)
 
-            samples = progress_loader(samples, func)
+        samples = progress_loader(samples, func)
 
         self.samples = samples
         self.osamples = samples

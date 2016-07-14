@@ -171,8 +171,7 @@ class DatabaseAdapter(Loggable):
         :param metadata: SQLAchemy MetaData object
         """
         # if self.kind == 'sqlite':
-        with self.session_ctx() as sess:
-            metadata.create_all(sess.bind)
+        metadata.create_all(self.session.bind)
 
     # def session_ctx(self, sess=None, commit=True, rollback=True):
     #     """
@@ -284,6 +283,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
     # def initialize_database(self):
     # pass
+
+    def rollback(self):
+        if self.session:
+            self.session.rollback()
 
     def flush(self):
         """
@@ -437,34 +440,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return connected
 
     def test_version(self):
-        with self.session_ctx():
-            ver = getattr(self, self.version_func)()
-            ver = ver.version_num
-            aver = version.__alembic__
-            if ver != aver:
-                return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
-                # @deprecated
-
-    # def _get_query(self, klass, join_table=None, filter_str=None, sess=None,
-    #                     *args, **clause):
-    # #         sess = self.get_session()
-    #         q = sess.query(klass)
-    #
-    #         if join_table is not None:
-    #             q = q.join(join_table)
-    #
-    #         if filter_str:
-    #             q = q.filter(filter_str)
-    #         else:
-    #             q = q.filter_by(**clause)
-    #         return q
-    #
-    #     def _get_tables(self):
-    #         pass
+        ver = getattr(self, self.version_func)()
+        ver = ver.version_num
+        aver = version.__alembic__
+        if ver != aver:
+            return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
 
     def _add_item(self, obj):
-        #         sess = self._session
-        sess = self.get_session()
+        sess = self.session
         if sess:
             sess.add(obj)
             try:
@@ -484,23 +467,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                 sess.rollback()
                 if self.reraise:
                     raise
-
-                    #     def _add_item(self, obj, sess=None):
-
-                    #         def func(s):
-                    #             s.add(obj)
-                    #
-                    #         if sess is None:
-                    #             with session() as sess:
-                    #                 func(sess)
-                    #         else:
-                    #             func(sess)
-
-                    #         with session(sess) as s:
-                    #             s.add(obj)
-                    #         sess = self.get_session()
-                    #         if sess is not None:
-                    #             sess.add(obj)
+        else:
+            self.critical('No session')
 
     def _add_unique(self, item, attr, name):
         nitem = getattr(self, 'get_{}'.format(attr))(name)
@@ -529,21 +497,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return lan - td, han + td
 
     def _delete_item(self, value, name=None):
-        # sess = self.sess
-        # if sess is None:
-        #     if self.session_factory:
-        #         sess = self.session_factory()
+        if name is not None:
+            func = getattr(self, 'get_{}'.format(name))
+            item = func(value)
+        else:
+            item = value
 
-        with self.session_ctx() as sess:
-            if name is not None:
-                func = getattr(self, 'get_{}'.format(name))
-                item = func(value)
-            else:
-                item = value
-
-            if item:
-                self.debug('deleting value={},name={},item={}'.format(value, name, item))
-                sess.delete(item)
+        if item:
+            self.debug('deleting value={},name={},item={}'.format(value, name, item))
+            self.session.delete(item)
 
     def _retrieve_items(self, table,
                         joins=None,
@@ -613,24 +575,17 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         if value is not None:
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
+        q = self.session.query(table)
+        if value is not None:
+            q = q.filter(getattr(table, key) == value)
 
-        # sess = self.sess
-        # if sess is None:
-        #     if self.session_factory:
-        #         sess = self.session_factory()
-
-        with self.session_ctx() as sess:
-            q = sess.query(table)
-            if value is not None:
-                q = q.filter(getattr(table, key) == value)
-
-            try:
-                if order_by is not None:
-                    q = q.order_by(order_by)
-                return q.first()
-            except SQLAlchemyError, e:
-                print 'execption first', e
-                return
+        try:
+            if order_by is not None:
+                q = q.order_by(order_by)
+            return q.first()
+        except SQLAlchemyError, e:
+            print 'execption first', e
+            return
 
     def _query_all(self, q, **kw):
         ret = self._query(q, 'all', **kw)
@@ -827,9 +782,8 @@ class SQLiteDatabaseAdapter(DatabaseAdapter):
     def build_database(self):
         self.connect(test=False)
         if not os.path.isfile(self.path):
-            with self.session_ctx() as sess:
-                meta = MetaData()
-                self._build_database(sess, meta)
+            meta = MetaData()
+            self._build_database(self.session, meta)
 
     def _build_database(self, sess, meta):
         raise NotImplementedError

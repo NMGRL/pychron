@@ -89,19 +89,18 @@ class GainCalibrationEditor(BaseTraitsEditor):
             return
 
         db = self.dvc.db
-        with db.session_ctx():
-            if self.rhs_runid:
-                rhs_an = self._get_analysis(self.rhs_runid)
-                self.rhs_items = make_items(rhs_an.isotopes)
+        if self.rhs_runid:
+            rhs_an = self._get_analysis(self.rhs_runid)
+            self.rhs_items = make_items(rhs_an.isotopes)
 
-            lhs_an = self._get_analysis(self.lhs_runid)
-            self.lhs_items = make_items(lhs_an.isotopes)
+        lhs_an = self._get_analysis(self.lhs_runid)
+        self.lhs_items = make_items(lhs_an.isotopes)
 
-            isotopes = [lhs_an.isotopes[k] for k in lhs_an.isotope_keys if k.startswith(self._isotope_key)]
+        isotopes = [lhs_an.isotopes[k] for k in lhs_an.isotope_keys if k.startswith(self._isotope_key)]
 
-            detcols = get_columns(isotopes)
+        detcols = get_columns(isotopes)
 
-            self.tabular_adapter.columns = [('', 'name'), ('Intensity', 'intensity')] + detcols
+        self.tabular_adapter.columns = [('', 'name'), ('Intensity', 'intensity')] + detcols
         self._make_results()
 
     def _get_current_gains(self, ms):
@@ -159,12 +158,11 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     def _get_runids(self, ms):
         db = self.dvc.db
-        with db.session_ctx():
-            ans = db.get_analyses(analysis_type='detector_ic',
-                                  mass_spectrometer=ms,
-                                  reverse_order=True
-                                  )
-            return [ai.record_id for ai in ans]
+        ans = db.get_analyses(analysis_type='detector_ic',
+                              mass_spectrometer=ms,
+                              reverse_order=True
+                              )
+        return [ai.record_id for ai in ans]
 
     def traits_view(self):
         editor = TabularEditor(adapter=self.tabular_adapter,

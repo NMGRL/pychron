@@ -84,10 +84,8 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         return self.destination.connect()
 
     def export_chronology(self, irradname):
-        with self.destination.session_ctx():
-            with self.source.session_ctx():
-                dbirrad = self.source.get_irradiation(irradname)
-                self._export_chronology(dbirrad)
+        dbirrad = self.source.get_irradiation(irradname)
+        self._export_chronology(dbirrad)
 
     def _export(self, dbirrad):
         # check if irradiation already exists
@@ -95,14 +93,14 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         action = 'Skipping'
 
         irradname = dbirrad.name
-        with dest.session_ctx():
-            if not dest.get_irradiation_exists(irradname):
-                self._export_chronology(dbirrad)
-            else:
-                self.debug('Irradiation="{}" already exists. {}'.format(irradname, action))
+        if not dest.get_irradiation_exists(irradname):
+            self._export_chronology(dbirrad)
+        else:
+            self.debug('Irradiation="{}" already exists. {}'.format(irradname, action))
 
-            for level in dbirrad.levels:
-                self._export_level(irradname, level)
+        for level in dbirrad.levels:
+            self._export_level(irradname, level)
+        dest.commit()
 
     def _export_chronology(self, src_irr):
         self.info('Exporting chronology for "{}"'.format(src_irr.name))
