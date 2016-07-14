@@ -22,7 +22,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
+# from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
 from pychron.entry.tasks.ir.actions import IRAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
@@ -61,9 +61,10 @@ class EntryPlugin(BaseTaskPlugin):
 
         so1 = self.service_offer_factory(factory=factory,
                                          protocol=MolecularWeightEditor,)
-        so2 = self.service_offer_factory(factory=FluxMonitorEditor,
-                                         protocol=FluxMonitorEditor)
-        return [so1, so2]
+        # so2 = self.service_offer_factory(factory=FluxMonitorEditor,
+        #                                  protocol=FluxMonitorEditor)
+        # return [so1, so2]
+        return [so1, ]
 
     def _task_extensions_default(self):
         extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
@@ -150,27 +151,26 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _ir_task_factory(self):
         from pychron.entry.tasks.ir.task import IRTask
-        return IRTask()
+        return IRTask(application=self.application)
 
     def _sample_prep_task_factory(self):
         from pychron.entry.tasks.sample_prep.task import SamplePrepTask
 
-        return SamplePrepTask()
+        return SamplePrepTask(application=self.application)
 
     def _sample_entry_task_factory(self):
         from pychron.entry.tasks.sample.task import SampleEntryTask
 
-        return SampleEntryTask()
+        return SampleEntryTask(application=self.application)
 
     def _labnumber_entry_task_factory(self):
         from pychron.entry.tasks.labnumber.task import LabnumberEntryTask
-
-        return LabnumberEntryTask()
+        return LabnumberEntryTask(application=self.application)
 
     def _sensitivity_entry_task_factory(self):
         from pychron.entry.tasks.sensitivity.task import SensitivityEntryTask
 
-        return SensitivityEntryTask()
+        return SensitivityEntryTask(application=self.application)
 
     def _preferences_panes_default(self):
         return [LabnumberEntryPreferencesPane,

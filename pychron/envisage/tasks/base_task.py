@@ -25,7 +25,7 @@ from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.tasks.task import Task
 from pyface.tasks.task_layout import TaskLayout
 from pyface.timer.do_later import do_later, do_after
-from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo, Instance
+from traits.api import Any, on_trait_change, List, Unicode, Instance
 # ============= standard library imports ========================
 import os
 from itertools import groupby
@@ -131,7 +131,7 @@ class TaskGroup(Group):
 
 
 class BaseTask(Task, Loggable, PreferenceMixin):
-    application = DelegatesTo('window')
+    # application = DelegatesTo('window')
 
     _full_window = False
 

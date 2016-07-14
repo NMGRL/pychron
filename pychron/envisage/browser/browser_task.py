@@ -55,16 +55,7 @@ def unique_list(seq):
 
 
 class BaseBrowserTask(BaseEditorTask):
-    # filter_focus = Bool(True)
-    # use_focus_switching = Bool(True)
-    # filter_label = Property(Str, depends_on='filter_focus')
-    #
-    # irradiation_visible = Property(depends_on='filter_focus')
-    # analysis_types_visible = Property(depends_on='filter_focus')
-    # date_visible = Property(depends_on='filter_focus')
-    # mass_spectrometer_visible = Property(depends_on='filter_focus')
-    # identifier_visible = Property(depends_on='filter_focus')
-    # project_visible = Property(depends_on='filter_focus')
+
     default_task_name = 'Recall'
     browser_model = Instance('pychron.envisage.browser.sample_browser_model.SampleBrowserModel')
     dvc = Instance('pychron.dvc.dvc.DVC')
@@ -73,37 +64,15 @@ class BaseBrowserTask(BaseEditorTask):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     recall_configurer = Instance(RecallTableConfigurer)
 
-    # analysis_filter = String(enter_set=True, auto_set=False)
-
-    # irradiations = List  # Property #DelegatesTo('manager')
-    # irradiation = Str  # Property # DelegatesTo('manager')
-    # irradiation_enabled = Bool
-    # levels = List  # Property #DelegatesTo('manager')
-    # level = Str  # Property #DelegatesTo('manager')
-
-    # auto_select_analysis = Bool(False)
-
     start_date = Date
     start_time = Time
 
     end_date = Date
     end_time = Time
 
-    # datasource_url = String
-
     browser_pane = Any
 
-    # data_selector = Instance(DataSelector)
-
-    # filter_by_button = Button
-    # graphical_filter_button = Button
-    # toggle_view = Button
-    # toggle_focus = Button
-
     _activated = False
-    # update_on_level_change = True
-
-    initialize_workspace = True
     _top_level_filter = None
     _append_replace_analyses_enabled = True
 
@@ -117,30 +86,12 @@ class BaseBrowserTask(BaseEditorTask):
 
             self._destroy_browser_model()
 
-    def activate_workspace(self):
-        if self.initialize_workspace:
-            workspace = self.application.get_service('pychron.workspace.workspace_manager.WorkspaceManager')
-            if workspace:
-                self.browser_model.use_workspace = workspace.active
-                self.workspace = workspace
+        self.dvc.close_session()
 
     def activated(self):
 
-        # model = self._get_browser_model()
-        # self.browser_model = model
-
-        # self._top_level_filter = None
-        # self.activate_workspace()
-
-        # self.browser_model.activated()
-
-        # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
         self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-        # if self.browser_model.sample_view_active:
-
-        # else:
-
-        # self._activate_query_browser()
+        self.dvc.create_session()
 
     def edit_analysis(self):
         self.debug('Edit analysis data')

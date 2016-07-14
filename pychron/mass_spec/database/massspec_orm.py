@@ -28,7 +28,7 @@ from sqlalchemy.orm import relation, relationship
 from sqlalchemy.sql.expression import func
 
 # =============local library imports  ==========================
-from pychron.database.orms.isotope.util import doublecolumn
+from pychron.database.core.util import doublecolumn
 
 Base = declarative_base()
 

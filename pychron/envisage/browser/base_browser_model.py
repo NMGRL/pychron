@@ -255,28 +255,25 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def load_repositories(self):
         db = self.db
-        with db.session_ctx():
-            es = db.get_repositories()
-            if es:
-                es = [e.record_view for e in es]
+        es = db.get_repositories()
+        if es:
+            es = [e.record_view for e in es]
 
-                self.repositories = es
-                self.orepositories = es
+            self.repositories = es
+            self.orepositories = es
 
     def load_projects(self, include_recent=True):
         db = self.db
-        with db.session_ctx():
-            ps = db.get_projects(order='asc')
-            ad = self._make_project_records(ps, include_recent=include_recent)
-            self.projects = ad
-            self.oprojects = ad
+        ps = db.get_projects(order='asc')
+        ad = self._make_project_records(ps, include_recent=include_recent)
+        self.projects = ad
+        self.oprojects = ad
 
     def load_principal_investigators(self):
         db = self.db
-        with db.session_ctx():
-            ps = db.get_principal_investigators(order='asc', verbose_query=True)
-            if ps:
-                self.principal_investigators = [p.name for p in ps]
+        ps = db.get_principal_investigators(order='asc', verbose_query=True)
+        if ps:
+            self.principal_investigators = [p.name for p in ps]
 
     def get_analysis_groups(self, names):
         if not isinstance(names[0], (str, unicode)):
@@ -284,9 +281,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
 
-        with db.session_ctx():
-            gs = db.get_analysis_groups(projects=names)
-            grps = [AnalysisGroupRecordView(gi) for gi in gs]
+        gs = db.get_analysis_groups(projects=names)
+        grps = [AnalysisGroupRecordView(gi) for gi in gs]
         return grps
 
     def do_filter(self):
@@ -482,33 +478,32 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return []
 
         db = self.db
-        with db.session_ctx():
-            if not ms:
-                ms = db.get_mass_spectrometers()
-                if ms:
-                    ms = [mi.name for mi in ms]
-                else:
-                    ms = []
-
-            recents = []
-            if include_recent:
-                recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
-
-            pss = [ProjectRecordView(p) for p in ps]
-
-            if include_recent:
-                # move references project to after Recent
-                p = next((p for p in pss if p.name.lower() == 'references'), None)
-                if p is not None:
-                    rp = pss.pop(pss.index(p))
-                    pss.insert(0, rp)
+        if not ms:
+            ms = db.get_mass_spectrometers()
+            if ms:
+                ms = [mi.name for mi in ms]
             else:
-                pss = [p for p in pss if p.name.lower() != 'references']
+                ms = []
 
-            if include_recent_first:
-                return recents + pss
-            else:
-                return pss + recents
+        recents = []
+        if include_recent:
+            recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
+
+        pss = [ProjectRecordView(p) for p in ps]
+
+        if include_recent:
+            # move references project to after Recent
+            p = next((p for p in pss if p.name.lower() == 'references'), None)
+            if p is not None:
+                rp = pss.pop(pss.index(p))
+                pss.insert(0, rp)
+        else:
+            pss = [p for p in pss if p.name.lower() != 'references']
+
+        if include_recent_first:
+            return recents + pss
+        else:
+            return pss + recents
 
     def _make_records(self, ans):
         def func(xi, prog, i, n):

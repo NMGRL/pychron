@@ -64,25 +64,23 @@ class DVCIrradiationable(DVCAble):
     def _get_irradiations(self):
         db = self.get_database()
         if db.connect():
-            with db.session_ctx():
-                irs = db.get_irradiations()
-                names = [i.name for i in irs]
-                if names:
-                    self.irradiation = names[0]
-                return names
+            irs = db.get_irradiations()
+            names = [i.name for i in irs]
+            if names:
+                self.irradiation = names[0]
+            return names
 
     @cached_property
     def _get_levels(self):
         db = self.get_database()
         if db.connect():
-            with db.session_ctx():
-                irrad = db.get_irradiation(self.irradiation)
-                if irrad:
-                    names = sorted([li.name for li in irrad.levels])
-                    if names:
-                        self.level = names[0]
-                    return names
-                else:
-                    return []
+            irrad = db.get_irradiation(self.irradiation)
+            if irrad:
+                names = sorted([li.name for li in irrad.levels])
+                if names:
+                    self.level = names[0]
+                return names
+            else:
+                return []
 
 # ============= EOF =============================================

@@ -61,12 +61,14 @@ class PipelinePlugin(BaseTaskPlugin):
         model = self.application.get_service(SampleBrowserModel)
         iamodel = self.application.get_service(InterpretedAgeBrowserModel)
         t = PipelineTask(browser_model=model,
-                         interpreted_age_browser_model=iamodel)
+                         interpreted_age_browser_model=iamodel,
+                         application=self.application)
         return t
 
     def _browser_factory(self):
         model = self.application.get_service(SampleBrowserModel)
-        t = BrowserTask(browser_model=model)
+        t = BrowserTask(browser_model=model,
+                        application=self.application)
         return t
 
     def _browser_model_factory(self):

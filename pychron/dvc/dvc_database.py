@@ -1115,21 +1115,17 @@ class DVCDatabase(DatabaseAdapter):
             return self._retrieve_item(ProjectTbl, name)
 
     def get_principal_investigator(self, name):
-        with self.session_ctx() as sess:
-            q = sess.query(PrincipalInvestigatorTbl)
-            q = principal_investigator_filter(q, name)
-            return self._query_one(q)
-
-            # return self._retrieve_item(PrincipalInvestigatorTbl, name, key='last_name')
+        q = self.session.query(PrincipalInvestigatorTbl)
+        q = principal_investigator_filter(q, name)
+        return self._query_one(q)
 
     def get_irradiation_level(self, irrad, name):
-        with self.session_ctx() as sess:
-            irrad = self.get_irradiation(irrad)
-            if irrad:
-                q = sess.query(LevelTbl)
-                q = q.filter(LevelTbl.irradiationID == irrad.id)
-                q = q.filter(LevelTbl.name == name)
-                return self._query_one(q)
+        irrad = self.get_irradiation(irrad)
+        if irrad:
+            q = self.session.query(LevelTbl)
+            q = q.filter(LevelTbl.irradiationID == irrad.id)
+            q = q.filter(LevelTbl.name == name)
+            return self._query_one(q)
 
     def get_irradiation(self, name):
         return self._retrieve_item(IrradiationTbl, name)
@@ -1138,36 +1134,33 @@ class DVCDatabase(DatabaseAdapter):
         if not isinstance(name, str) and not isinstance(name, unicode):
             return name
 
-        with self.session_ctx() as sess:
-            q = sess.query(MaterialTbl)
-            q = q.filter(MaterialTbl.name == name)
-            if grainsize:
-                q = q.filter(MaterialTbl.grainsize == grainsize)
-            return self._query_one(q)
+        q = self.session.query(MaterialTbl)
+        q = q.filter(MaterialTbl.name == name)
+        if grainsize:
+            q = q.filter(MaterialTbl.grainsize == grainsize)
+        return self._query_one(q)
 
     def get_sample(self, name, project, material, grainsize=None):
-        with self.session_ctx() as sess:
-            q = sess.query(SampleTbl)
-            q = q.join(ProjectTbl)
+        q = self.session.query(SampleTbl)
+        q = q.join(ProjectTbl)
 
-            project = self.get_project(project)
-            material = self.get_material(material, grainsize)
+        project = self.get_project(project)
+        material = self.get_material(material, grainsize)
 
-            q = q.filter(SampleTbl.project == project)
-            q = q.filter(SampleTbl.material == material)
-            q = q.filter(SampleTbl.name == name)
+        q = q.filter(SampleTbl.project == project)
+        q = q.filter(SampleTbl.material == material)
+        q = q.filter(SampleTbl.name == name)
 
-            return self._query_one(q, verbose_query=True)
+        return self._query_one(q, verbose_query=True)
 
     def get_last_identifier(self, sample=None):
-        with self.session_ctx() as sess:
-            q = sess.query(IrradiationPositionTbl)
-            if sample:
-                q = q.join(SampleTbl)
-                q = q.filter(SampleTbl.name == sample)
+        q = self.session.query(IrradiationPositionTbl)
+        if sample:
+            q = q.join(SampleTbl)
+            q = q.filter(SampleTbl.name == sample)
 
-            q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
-            return self._query_first(q)
+        q = q.order_by(func.abs(IrradiationPositionTbl.identifier).desc())
+        return self._query_first(q)
 
     def get_latest_load(self):
         return self._retrieve_first(LoadTbl,

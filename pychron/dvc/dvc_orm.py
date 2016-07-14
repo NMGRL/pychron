@@ -363,7 +363,7 @@ class PrincipalInvestigatorTbl(Base, BaseMixin):
 
     @property
     def name(self):
-        return '{},{}'.format(self.last_name, self.first_initial) if self.first_initial else self.last_name
+        return '{}, {}'.format(self.last_name, self.first_initial) if self.first_initial else self.last_name
 
     @property
     def record_view(self):

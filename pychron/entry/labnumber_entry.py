@@ -545,35 +545,32 @@ THIS CHANGE CANNOT BE UNDONE')
 
         self.debug('update level= "{}"'.format(name))
         db = self.dvc.db
-        with db.session_ctx() as sess:
-            level = db.get_irradiation_level(self.irradiation, name)
-            self.debug('retrieved level {}'.format(level))
-            if not level:
-                self.debug('no level for {}'.format(name))
-                return
+        level = db.get_irradiation_level(self.irradiation, name)
+        self.debug('retrieved level {}'.format(level))
+        if not level:
+            self.debug('no level for {}'.format(name))
+            return
 
-            self.level_note = level.note or ''
-            self.level_production_name = level.production.name if level.production else ''
-            if level.holder:
-                self.irradiation_tray = level.holder
-                holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
-                self._load_holder_positions(holes)
-                self._load_holder_canvas(holes)
+        self.level_note = level.note or ''
+        self.level_production_name = level.production.name if level.production else ''
+        if level.holder:
+            self.irradiation_tray = level.holder
+            holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
+            self._load_holder_positions(holes)
+            self._load_holder_canvas(holes)
 
-            try:
-                positions = level.positions
-                n = len(self.irradiated_positions)
-                self.debug('positions in level {}.  \
-    available holder positions {}'.format(n, len(self.irradiated_positions)))
-                if positions:
-                    with dirty_ctx(self):
-                        self._make_positions(n, positions)
-            except BaseException, e:
-                import traceback
-                traceback.print_exc()
-                print 'excep', e
-                self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
-                sess.rollback()
+        try:
+            positions = level.positions
+            n = len(self.irradiated_positions)
+            self.debug('positions in level {}.  \
+available holder positions {}'.format(n, len(self.irradiated_positions)))
+            if positions:
+                with dirty_ctx(self):
+                    self._make_positions(n, positions)
+        except BaseException, e:
+            import traceback
+            traceback.print_exc()
+            self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))
 
     # @simple_timer()
     def _make_positions(self, n, positions):
@@ -613,7 +610,7 @@ THIS CHANGE CANNOT BE UNDONE')
                     ir.project = v = dbpos.sample.project.name
                     set_color(item, v)
                     if dbpos.sample.project.principal_investigator:
-                        ir.principal_investigator = dbpos.sample.project.principal_investigator
+                        ir.principal_investigator = dbpos.sample.project.principal_investigator.name
 
                 ir.identifier = v = dbpos.identifier or ''
                 if v:

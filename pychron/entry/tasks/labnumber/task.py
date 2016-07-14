@@ -108,6 +108,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     include_recent = False
     _suppress_load_labnumbers = True
 
+    def __init__(self, *args, **kw):
+        super(LabnumberEntryTask, self).__init__(*args, **kw)
+        self.db.create_session()
+
+    def prepare_destroy(self):
+        self.db.close_session()
+
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:

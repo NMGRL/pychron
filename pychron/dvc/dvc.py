@@ -158,12 +158,12 @@ class DVC(Loggable):
 
     def load_analysis_backend(self, ln, isotope_group):
         db = self.db
-        with db.session_ctx():
-            ip = db.get_identifier(ln)
-            dblevel = ip.level
-            irrad = dblevel.irradiation.name
-            level = dblevel.name
-            pos = ip.position
+
+        ip = db.get_identifier(ln)
+        dblevel = ip.level
+        irrad = dblevel.irradiation.name
+        level = dblevel.name
+        pos = ip.position
 
         j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
         prodname, prod = self.meta_repo.get_production(irrad, level)
@@ -186,32 +186,31 @@ class DVC(Loggable):
     def repository_db_sync(self, reponame):
         repo = self._get_repository(reponame, as_current=False)
         ps = []
-        with self.db.session_ctx():
-            ans = self.db.repository_analyses(reponame)
-            for ai in ans:
-                p = analysis_path(ai.record_id, reponame)
-                obj = dvc_load(p)
+        ans = self.db.repository_analyses(reponame)
+        for ai in ans:
+            p = analysis_path(ai.record_id, reponame)
+            obj = dvc_load(p)
 
-                sample = None
-                project = None
-                material = None
-                changed = False
-                for attr, v in (('sample', sample),
-                                ('project', project),
-                                ('material', material)):
-                    if obj.get(attr) != v:
-                        obj[attr] = v
-                        changed = True
+            sample = None
+            project = None
+            material = None
+            changed = False
+            for attr, v in (('sample', sample),
+                            ('project', project),
+                            ('material', material)):
+                if obj.get(attr) != v:
+                    obj[attr] = v
+                    changed = True
 
-                if changed:
-                    ps.append(p)
-                    dvc_dump(obj, p)
+            if changed:
+                ps.append(p)
+                dvc_dump(obj, p)
 
-            if ps:
-                repo.pull()
-                repo.add_paths(ps)
-                repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
-                repo.push()
+        if ps:
+            repo.pull()
+            repo.add_paths(ps)
+            repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+            repo.push()
 
     def repository_transfer(self, ans, dest):
         def key(x):
@@ -219,18 +218,17 @@ class DVC(Loggable):
 
         destrepo = self._get_repository(dest, as_current=False)
         for src, ais in groupby(sorted(ans, key=key), key=key):
-            with self.db.session_ctx():
-                repo = self._get_repository(src, as_current=False)
-                for ai in ais:
-                    ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
-                    repo.add_paths(ops)
-                    destrepo.add_paths(nps)
+            repo = self._get_repository(src, as_current=False)
+            for ai in ais:
+                ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
+                repo.add_paths(ops)
+                destrepo.add_paths(nps)
 
-                    # update database
-                    dbai = self.db.get_analysis_uuid(ai.uuid)
-                    for ri in dbai.repository_associations:
-                        if ri.repository == src:
-                            ri.repository = dest
+                # update database
+                dbai = self.db.get_analysis_uuid(ai.uuid)
+                for ri in dbai.repository_associations:
+                    if ri.repository == src:
+                        ri.repository = dest
 
             # commit src changes
             repo.commit('Transferred analyses to {}'.format(dest))
@@ -446,17 +444,17 @@ class DVC(Loggable):
         self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, analyses, add)
 
         db = self.db
-        with db.session_ctx():
-            ip = db.get_identifier(identifier)
-            ip.j = j
-            ip.j_err = e
+        ip = db.get_identifier(identifier)
+        ip.j = j
+        ip.j_err = e
+        db.commit()
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
-        with db.session_ctx() as sess:
-            dbpos = db.get_irradiation_position(irradiation, level, hole)
-            if dbpos:
-                sess.delete(dbpos)
+
+        dbpos = db.get_irradiation_position(irradiation, level, hole)
+        if dbpos:
+            db.delete(dbpos)
 
         self.meta_repo.remove_irradiation_position(irradiation, level, hole)
 
@@ -491,11 +489,9 @@ class DVC(Loggable):
         return progress_loader(ias, func, step=25)
 
     def get_analysis(self, uuid):
-        with self.db.session_ctx():
-            an = self.db.get_analysis_uuid(uuid)
-            if an:
-                # [rii for ri in refs for rii in ri.record_views]
-                return self.make_analyses(an.record_views)
+        an = self.db.get_analysis_uuid(uuid)
+        if an:
+            return self.make_analyses(an.record_views)
 
     def make_analysis(self, record, *args, **kw):
         a = self.make_analyses((record,), *args, **kw)
@@ -679,16 +675,12 @@ class DVC(Loggable):
         return self.meta_repo.get_head()
 
     def get_irradiation_geometry(self, irrad, level):
-        with self.db.session_ctx():
-            dblevel = self.db.get_irradiation_level(irrad, level)
-            return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+        dblevel = self.db.get_irradiation_level(irrad, level)
+        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
 
     def get_irradiation_names(self):
-        with self.db.session_ctx():
-            irrads = self.db.get_irradiations()
-            names = [i.name for i in irrads]
-
-        return names
+        irrads = self.db.get_irradiations()
+        return [i.name for i in irrads]
 
     # add
     def add_interpreted_age(self, ia):
@@ -723,87 +715,79 @@ class DVC(Loggable):
 
     def add_repository_association(self, expid, runspec):
         db = self.db
-        with db.session_ctx():
-            dban = db.get_analysis_uuid(runspec.uuid)
-            if dban:
-                for e in dban.repository_associations:
-                    if e.repository == expid:
-                        break
-                else:
-                    db.add_repository_association(expid, dban)
-
-                src_expid = runspec.repository_identifier
-                if src_expid != expid:
-                    repo = self._get_repository(expid)
-
-                    for m in PATH_MODIFIERS:
-                        src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                        dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
-
-                        shutil.copyfile(src, dest)
-                        repo.add(dest, commit=False)
-                    repo.commit('added repository association')
+        dban = db.get_analysis_uuid(runspec.uuid)
+        if dban:
+            for e in dban.repository_associations:
+                if e.repository == expid:
+                    break
             else:
-                self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
+                db.add_repository_association(expid, dban)
+
+            src_expid = runspec.repository_identifier
+            if src_expid != expid:
+                repo = self._get_repository(expid)
+
+                for m in PATH_MODIFIERS:
+                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
+                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+
+                    shutil.copyfile(src, dest)
+                    repo.add(dest, commit=False)
+                repo.commit('added repository association')
+        else:
+            self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
 
     def add_measured_position(self, *args, **kw):
-        with self.db.session_ctx():
-            self.db.add_measured_position(*args, **kw)
+        self.db.add_measured_position(*args, **kw)
 
     def add_material(self, name, grainsize=None):
         db = self.db
         added = False
-        with db.session_ctx():
-            if not db.get_material(name, grainsize):
-                added = True
-                db.add_material(name, grainsize)
+        if not db.get_material(name, grainsize):
+            added = True
+            db.add_material(name, grainsize)
 
         return added
 
     def add_project(self, name, pi=None):
         added = False
         db = self.db
-        with db.session_ctx():
-            if not db.get_project(name, pi):
-                added = True
-                db.add_project(name, pi)
+        if not db.get_project(name, pi):
+            added = True
+            db.add_project(name, pi)
         return added
 
     def add_sample(self, name, project, material, grainsize=None):
         added = False
         db = self.db
-        with db.session_ctx():
-            if not db.get_sample(name, project, material, grainsize):
-                added = True
-                db.add_sample(name, project, material, grainsize)
+        if not db.get_sample(name, project, material, grainsize):
+            added = True
+            db.add_sample(name, project, material, grainsize)
         return added
 
     def add_principal_investigator(self, name):
         added = False
         db = self.db
-        with db.session_ctx():
-            if not db.get_principal_investigator(name):
-                db.add_principal_investigator(name)
-                added = True
+        if not db.get_principal_investigator(name):
+            db.add_principal_investigator(name)
+            added = True
         return added
 
     def add_irradiation_position(self, irrad, level, pos, identifier=None, **kw):
         db = self.db
         added = False
-        with db.session_ctx():
-            if not db.get_irradiation_position(irrad, level, pos):
-                db.add_irradiation_position(irrad, level, pos, identifier, **kw)
-                self.meta_repo.add_position(irrad, level, pos)
-                added = True
+        if not db.get_irradiation_position(irrad, level, pos):
+            db.add_irradiation_position(irrad, level, pos, identifier, **kw)
+            self.meta_repo.add_position(irrad, level, pos)
+            added = True
         return added
 
     def add_irradiation_level(self, name, irradiation, holder, production_name, **kw):
         added = False
-        with self.db.session_ctx():
-            dblevel = self.get_irradiation_level(irradiation, name)
-            if dblevel is None:
-                added = True
-                self.db.add_irradiation_level(name, irradiation, holder, production_name, **kw)
+        dblevel = self.get_irradiation_level(irradiation, name)
+        if dblevel is None:
+            added = True
+            self.db.add_irradiation_level(name, irradiation, holder, production_name, **kw)
 
         self.meta_repo.add_level(irradiation, name)
         self.meta_repo.update_level_production(irradiation, name, production_name)
@@ -862,12 +846,11 @@ class DVC(Loggable):
                 return ret
 
     def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
-        with self.db.session_ctx():
-            if self.db.get_irradiation(name):
-                self.warning('irradiation {} already exists'.format(name))
-                return
+        if self.db.get_irradiation(name):
+            self.warning('irradiation {} already exists'.format(name))
+            return
 
-            self.db.add_irradiation(name)
+        self.db.add_irradiation(name)
 
         self.meta_repo.add_irradiation(name)
         self.meta_repo.add_chronology(name, doses)
@@ -885,8 +868,7 @@ class DVC(Loggable):
         return True
 
     def add_load_holder(self, name, path_or_txt):
-        with self.db.session_ctx():
-            self.db.add_load_holder(name)
+        self.db.add_load_holder(name)
         self.meta_repo.add_load_holder(name, path_or_txt)
 
     def copy_production(self, pr):
@@ -1028,20 +1010,19 @@ class DVC(Loggable):
     def _defaults(self):
         self.debug('writing defaults')
         # self.db.create_all(Base.metadata)
-        with self.db.session_ctx():
-            self.db.add_save_user()
-            for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
-                              ('productions', self._add_default_irradiation_productions),
-                              ('load holders', self._add_default_load_holders)):
+        self.db.add_save_user()
+        for tag, func in (('irradiation holders', self._add_default_irradiation_holders),
+                          ('productions', self._add_default_irradiation_productions),
+                          ('load holders', self._add_default_load_holders)):
 
-                d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
-                if not os.path.isdir(d):
-                    os.mkdir(d)
+            d = os.path.join(self.meta_repo.path, tag.replace(' ', '_'))
+            if not os.path.isdir(d):
+                os.mkdir(d)
 
-                if self.auto_add:
-                    func()
-                elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
-                    func()
+            if self.auto_add:
+                func()
+            elif self.confirmation_dialog('You have no {}. Would you like to add some defaults?'.format(tag)):
+                func()
 
     def _add_default_irradiation_productions(self):
         ds = (('TRIGA.txt', TRIGA),)
