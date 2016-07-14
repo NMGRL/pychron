@@ -73,7 +73,6 @@ class BrowserModel(BaseBrowserModel):
     irradiation_enabled = Bool
     irradiations = List
     irradiation = Str
-    irradiation_enabled = Bool
     levels = List
     level = Str
 
@@ -99,8 +98,7 @@ class BrowserModel(BaseBrowserModel):
 
             # self._load_associated_labnumbers()
 
-            with db.session_ctx():
-                self._load_mass_spectrometers()
+            self._load_mass_spectrometers()
 
             self.load_browser_selection()
 
@@ -228,11 +226,9 @@ class BrowserModel(BaseBrowserModel):
     def _selected_repositories_changed_hook(self, names):
         self.irradiations = []
         # get all irradiations contained within these experiments
-        db = self.db
-        with db.session_ctx():
-            irrads = db.get_irradiations_by_repositories(names)
-            if irrads:
-                self.irradiations = [i.name for i in irrads]
+        irrads = self.db.get_irradiations_by_repositories(names)
+        if irrads:
+            self.irradiations = [i.name for i in irrads]
 
     # def _selected_projects_change_hook(self, names):
     #
@@ -328,16 +324,15 @@ class BrowserModel(BaseBrowserModel):
 
         if self.irradiation:
             self.debug('load projects for irradiation= {}, level= {}'.format(self.irradiation, self.level))
-            db = self.db
-            with db.session_ctx():
-                ps = db.get_projects(irradiation=self.irradiation,
-                                     level=self.level,
-                                     mass_spectrometers=ms)
 
-                ps = self._make_project_records(ps, include_recent_first=True)
-                old_selection = [p.name for p in self.selected_projects]
-                self.projects = ps
-                self.selected_projects = [p for p in ps if p.name in old_selection]
+            ps = self.db.get_projects(irradiation=self.irradiation,
+                                      level=self.level,
+                                      mass_spectrometers=ms)
+
+            ps = self._make_project_records(ps, include_recent_first=True)
+            old_selection = [p.name for p in self.selected_projects]
+            self.projects = ps
+            self.selected_projects = [p for p in ps if p.name in old_selection]
 
     @caller
     def _load_projects_and_irradiations(self):
@@ -347,24 +342,23 @@ class BrowserModel(BaseBrowserModel):
             ms = self.mass_spectrometer_includes
 
         db = self.db
-        with db.session_ctx():
-            ps = db.get_projects(mass_spectrometers=ms)
-            ps = self._make_project_records(ps,
-                                            ms, include_recent_first=True)
-            self.projects = ps
-            sp = []
-            if self.selected_projects:
-                for si in self.selected_projects:
-                    cp = next((p for p in ps if p.name == si), None)
-                    if cp:
-                        sp.append(cp)
+        ps = db.get_projects(mass_spectrometers=ms)
+        ps = self._make_project_records(ps,
+                                        ms, include_recent_first=True)
+        self.projects = ps
+        sp = []
+        if self.selected_projects:
+            for si in self.selected_projects:
+                cp = next((p for p in ps if p.name == si), None)
+                if cp:
+                    sp.append(cp)
 
-            self.selected_projects = sp
-            irs = db.get_irradiations(mass_spectrometers=ms)
-            if irs:
-                self.irradiations = [i.name for i in irs]
-            else:
-                self.debug('_load_projects_and_irradiations. no irradiations')
+        self.selected_projects = sp
+        irs = db.get_irradiations(mass_spectrometers=ms)
+        if irs:
+            self.irradiations = [i.name for i in irs]
+        else:
+            self.debug('_load_projects_and_irradiations. no irradiations')
 
     def _load_mass_spectrometers(self):
         db = self.db
@@ -380,8 +374,7 @@ class BrowserModel(BaseBrowserModel):
 
     def _load_extraction_devices(self):
         db = self.db
-        with db.session_ctx():
-            ms = [mi.name for mi in db.get_extraction_devices()]
+        ms = [mi.name for mi in db.get_extraction_devices()]
         self.extraction_devices = ['Extraction Device', 'None'] + ms
 
     def _get_analysis_types_visible(self):

@@ -208,28 +208,26 @@ class TimeViewModel(HasTraits):
 
     def _load_available(self):
         db = self.db
-        with db.session_ctx():
-            for attr in ('mass_spectrometer', 'analysis_type', 'extract_device'):
-                func = getattr(db, 'get_{}s'.format(attr))
-                ms = func()
-                ms.sort()
-                setattr(self, 'available_{}s'.format(attr), [''] + [mi.name for mi in ms])
+        for attr in ('mass_spectrometer', 'analysis_type', 'extract_device'):
+            func = getattr(db, 'get_{}s'.format(attr))
+            ms = func()
+            ms.sort()
+            setattr(self, 'available_{}s'.format(attr), [''] + [mi.name for mi in ms])
 
     def _load_analyses(self, mass_spectrometer=None, analysis_type=None, extract_device=None):
         if self._suppress_load_analyses:
             return
 
         db = self.db
-        with db.session_ctx():
-            ma = self.highdate
-            mi = self.lowdate
-            ans = db.get_analyses_by_date_range(mi, ma,
-                                                mass_spectrometers=mass_spectrometer,
-                                                analysis_type=analysis_type,
-                                                extract_device=extract_device,
-                                                limit=self.limit, order='desc')
-            self.oanalyses = self._make_records(ans)
-            self.analyses = self.oanalyses[:]
+        ma = self.highdate
+        mi = self.lowdate
+        ans = db.get_analyses_by_date_range(mi, ma,
+                                            mass_spectrometers=mass_spectrometer,
+                                            analysis_type=analysis_type,
+                                            extract_device=extract_device,
+                                            limit=self.limit, order='desc')
+        self.oanalyses = self._make_records(ans)
+        self.analyses = self.oanalyses[:]
 
     def _make_records(self, ans):
         def func(xi, prog, i, n):

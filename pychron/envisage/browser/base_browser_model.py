@@ -346,17 +346,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
         sams = []
-        with db.session_ctx():
-            self._recent_mass_spectrometers = []
-            warned = False
+        self._recent_mass_spectrometers = []
+        warned = False
 
-            if any((p.name.startswith('RECENT') for p in self.selected_projects)):
-                if not self.search_criteria.recent_hours:
-                    if not warned:
-                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
-                                            '"RECENT (hrs)" is located in the "Browser" category')
+        if any((p.name.startswith('RECENT') for p in self.selected_projects)):
+            if not self.search_criteria.recent_hours:
+                if not warned:
+                    self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
+                                        '"RECENT (hrs)" is located in the "Browser" category')
 
-            sams.extend(self._make_labnumbers())
+        sams.extend(self._make_labnumbers())
 
         self.samples = sams
         self.osamples = sams
@@ -364,35 +363,33 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _retrieve_recent_labnumbers(self, recent_name):
         ms = extract_mass_spectrometer_name(recent_name)
         db = self.db
-        with db.session_ctx():
-            hpost = datetime.now()
-            lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-            self._low_post = lpost
+        hpost = datetime.now()
+        lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+        self._low_post = lpost
 
-            self.use_high_post = False
-            self.use_low_post = True
+        self.use_high_post = False
+        self.use_low_post = True
 
-            self.trait_property_changed('low_post', self._low_post)
-            self._recent_mass_spectrometers.append(ms)
+        self.trait_property_changed('low_post', self._low_post)
+        self._recent_mass_spectrometers.append(ms)
 
-            es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-            ls = db.get_labnumbers(repositories=es, mass_spectrometers=(ms,), low_post=lpost)
+        es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
+        ls = db.get_labnumbers(repositories=es, mass_spectrometers=(ms,), low_post=lpost)
 
-            sams = self._load_sample_record_views(ls)
+        sams = self._load_sample_record_views(ls)
 
         return sams
 
     def _populate_samples(self, lns=None):
         db = self.db
 
-        with db.session_ctx():
-            if not lns:
-                lns = [db.get_labnumber(self.identifier)]
+        if not lns:
+            lns = [db.get_labnumber(self.identifier)]
 
-            n = len(lns)
-            self.debug('_populate_samples n={}'.format(n))
+        n = len(lns)
+        self.debug('_populate_samples n={}'.format(n))
 
-            sams = self._load_sample_record_views(lns)
+        sams = self._load_sample_record_views(lns)
 
         sel = sams[:1] if n == 1 and sams else []
         self.set_samples(sams, sel)
@@ -415,13 +412,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return []
 
         sams = []
-        with db.session_ctx():
-            ls = self._retrieve_labnumbers()
-            if ls:
-                self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
-                sams = self._load_sample_record_views(ls)
-            else:
-                self.debug('No labnumbers')
+        ls = self._retrieve_labnumbers()
+        if ls:
+            self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
+            sams = self._load_sample_record_views(ls)
+        else:
+            self.debug('No labnumbers')
 
         return sams
 
@@ -439,35 +435,34 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            repositories=None,
                            make_records=True):
         db = self.db
-        with db.session_ctx(commit=False) as sess:
-            if samples:
-                lns = [si.labnumber for si in samples]
-                self.debug('retrieving identifiers={}'.format(','.join(lns)))
-                # if low_post is None:
-                # lps = [si.low_post for si in samples if si.low_post is not None]
-                #     low_post = min(lps) if lps else None
-                ans, tc = db.get_labnumber_analyses(lns,
-                                                    order=order,
-                                                    low_post=low_post,
-                                                    high_post=high_post,
-                                                    limit=limit,
-                                                    exclude_identifiers=exclude_identifiers,
-                                                    exclude_uuids=exclude_uuids,
-                                                    include_invalid=include_invalid,
-                                                    mass_spectrometers=mass_spectrometers,
-                                                    repositories=repositories)
-                self.debug('retrieved analyses n={}'.format(tc))
-            else:
-                ans = db.get_analyses_by_date_range(low_post, high_post,
-                                                    order=order,
-                                                    mass_spectrometers=mass_spectrometers,
-                                                    repositories=repositories,
-                                                    limit=limit)
+        if samples:
+            lns = [si.labnumber for si in samples]
+            self.debug('retrieving identifiers={}'.format(','.join(lns)))
+            # if low_post is None:
+            # lps = [si.low_post for si in samples if si.low_post is not None]
+            #     low_post = min(lps) if lps else None
+            ans, tc = db.get_labnumber_analyses(lns,
+                                                order=order,
+                                                low_post=low_post,
+                                                high_post=high_post,
+                                                limit=limit,
+                                                exclude_identifiers=exclude_identifiers,
+                                                exclude_uuids=exclude_uuids,
+                                                include_invalid=include_invalid,
+                                                mass_spectrometers=mass_spectrometers,
+                                                repositories=repositories)
+            self.debug('retrieved analyses n={}'.format(tc))
+        else:
+            ans = db.get_analyses_by_date_range(low_post, high_post,
+                                                order=order,
+                                                mass_spectrometers=mass_spectrometers,
+                                                repositories=repositories,
+                                                limit=limit)
 
-            if make_records:
-                return self._make_records(ans)
-            else:
-                return ans
+        if make_records:
+            return self._make_records(ans)
+        else:
+            return ans
 
     def _retrieve_sample_analyses(self, samples,
                                   **kw):
@@ -547,19 +542,18 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         p_i = self.principal_investigator
         self.debug('load projects for principal investigator= {}'.format(p_i))
         db = self.db
-        with db.session_ctx():
-            ps = db.get_projects(principal_investigator=p_i,
-                                 mass_spectrometers=ms)
+        ps = db.get_projects(principal_investigator=p_i,
+                             mass_spectrometers=ms)
 
-            ps = self._make_project_records(ps, include_recent_first=True,
-                                            include_recent=True and self.include_recent)
-            old_selection = []
-            if self.selected_projects:
-                old_selection = [p.name for p in self.selected_projects]
-            self.projects = ps
+        ps = self._make_project_records(ps, include_recent_first=True,
+                                        include_recent=True and self.include_recent)
+        old_selection = []
+        if self.selected_projects:
+            old_selection = [p.name for p in self.selected_projects]
+        self.projects = ps
 
-            if old_selection:
-                self.selected_projects = [p for p in ps if p.name in old_selection]
+        if old_selection:
+            self.selected_projects = [p for p in ps if p.name in old_selection]
 
     # handlers
     def _principal_investigator_changed(self):
@@ -572,15 +566,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         if new:
             if len(new) > 2:
-                with db.session_ctx():
-                    lns = self._get_identifiers(db, new)
-                    # lns = db.get_labnumbers_startswith(new)
-                    if lns:
-                        self._identifier_change_hook(db, new, lns)
-                        self._populate_samples(lns)
-                    else:
-                        self.set_samples([])
-                        self.projects = self.oprojects[:]
+                lns = self._get_identifiers(db, new)
+                # lns = db.get_labnumbers_startswith(new)
+                if lns:
+                    self._identifier_change_hook(db, new, lns)
+                    self._populate_samples(lns)
+                else:
+                    self.set_samples([])
+                    self.projects = self.oprojects[:]
         else:
             self.projects = self.oprojects[:]
             self.set_samples([])
