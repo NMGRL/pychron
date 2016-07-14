@@ -21,6 +21,7 @@ from traitsui.menu import Action
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
 
+
 class SaveableHandler(ViewableHandler):
     def save(self, info):
         info.object.save()
@@ -30,6 +31,7 @@ class SaveableHandler(ViewableHandler):
 
     def apply(self, info):
         info.object.apply()
+
 
 class Saveable(Viewable):
     handler_klass = SaveableHandler

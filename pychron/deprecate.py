@@ -30,6 +30,7 @@ def deprecated(func):
     as deprecated. It will result in a warning being emmitted
     when the function is used."""
     message = None
+
     def newFunc(*args, **kwargs):
         caller = inspect.getframeinfo(inspect.currentframe().f_back)[2]
         warnings.warn("Call to deprecated function {}. From {}. {}".format(func.__name__,
@@ -37,16 +38,19 @@ def deprecated(func):
                                                                            message),
                       category=DeprecationWarning)
         return func(*args, **kwargs)
+
     newFunc.__name__ = func.__name__
     newFunc.__doc__ = func.__doc__
     newFunc.__dict__.update(func.__dict__)
     return newFunc
+
 
 def deprecated_message(message):
     def decorator(func):
         """This is a decorator which can be used to mark functions
         as deprecated. It will result in a warning being emmitted
         when the function is used."""
+
         def newFunc(*args, **kwargs):
             caller = inspect.getframeinfo(inspect.currentframe().f_back)[2]
             warnings.warn("Call to deprecated function {}. From {}. {}".format(func.__name__,
@@ -54,6 +58,7 @@ def deprecated_message(message):
                                                                                message),
                           category=DeprecationWarning)
             return func(*args, **kwargs)
+
         newFunc.__name__ = func.__name__
         newFunc.__doc__ = func.__doc__
         newFunc.__dict__.update(func.__dict__)
@@ -68,6 +73,7 @@ def deprecate_klass():
             if callable(getattr(cls, attr)):
                 setattr(cls, attr, deprecated(getattr(cls, attr)))
         return cls
+
     return decorate
 
 # ============= EOF =============================================
