@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import os
+import sys
 import traceback
+from datetime import datetime, timedelta
+from threading import Lock
 
-from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-# =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from threading import Lock
-from datetime import datetime, timedelta
-import sys
-import os
-# =============local library imports  ==========================
+from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+
+from pychron import version
+from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-from pychron.database.core.base_orm import AlembicVersionTable
-from pychron import version
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -69,7 +68,7 @@ class SessionCTX(object):
             if self._sess is None:
                 self._sess = self._parent.session_factory()
 
-            # self._parent.sess_stack += 1
+            self._parent.sess_stack += 1
             self._parent.sess = self._sess
 
         return self._sess
@@ -80,10 +79,10 @@ class SessionCTX(object):
             self._parent.warning(exc_val)
             self._parent.warning(traceback.format_tb(exc_tb))
 
-        # if self._parent:
-        #     self._parent.sess_stack -= 1
-            # if not self._parent.sess_stack:
-            #     self._parent.sess = None
+        if self._parent:
+            self._parent.sess_stack -= 1
+            if not self._parent.sess_stack:
+                self._parent.sess = None
 
         if self._close_at_exit:
             try:
@@ -100,9 +99,9 @@ class SessionCTX(object):
                 if self._parent:
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
-            # finally:
-            #     self._sess.expire_on_commit = True
-                # self._sess.close()
+            finally:
+                # self._sess.expire_on_commit = True
+                self._sess.close()
                 # del self._sess
 
 
