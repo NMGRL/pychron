@@ -501,6 +501,7 @@ class AnalysisGroupTbl(Base, BaseMixin):
     name = Column(String(140))
     create_date = Column(TIMESTAMP)
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
+    user = Column(String(140), ForeignKey('UserTbl.name'))
 
     sets = relationship('AnalysisGroupSetTbl', backref='group')
 

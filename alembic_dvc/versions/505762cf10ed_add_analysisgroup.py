@@ -19,7 +19,8 @@ def upgrade():
                     sa.Column('id', sa.Integer, primary_key=True),
                     sa.Column('name', sa.String(140)),
                     sa.Column('create_date', sa.TIMESTAMP),
-                    sa.Column('projectID', sa.Integer, sa.ForeignKey('ProjectTbl.id')))
+                    sa.Column('projectID', sa.Integer, sa.ForeignKey('ProjectTbl.id')),
+                    sa.Column('user', sa.String(140), sa.ForeignKey('UserTbl.name')))
 
     op.create_table('AnalysisGroupSetTbl',
                     sa.Column('id', sa.Integer, primary_key=True),

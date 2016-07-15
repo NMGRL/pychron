@@ -86,12 +86,16 @@ class AnalysisTable(ColumnSorterMixin):
         with open(p, 'w') as wfile:
             json.dump(self._analysis_sets, wfile)
 
-    def add_analysis_set(self):
+    def get_selected_analyses(self):
         if self.analyses:
             ans = self.selected
             if not ans:
                 ans = self.analyses
+            return ans
 
+    def add_analysis_set(self):
+        ans = self.get_selected_analyses()
+        if ans:
             aset = [(a.uuid, a.record_id) for a in ans]
             if aset:
                 if len(aset) > 1:
@@ -166,6 +170,7 @@ class AnalysisTable(ColumnSorterMixin):
         rsd.edit_traits()
 
     # handlers
+
     def _add_analysis_set_button_fired(self):
         name = self.add_analysis_set()
         if name:

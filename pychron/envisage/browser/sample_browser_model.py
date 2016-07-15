@@ -39,6 +39,7 @@ class SampleBrowserModel(BrowserModel):
     find_references_button = Button
     toggle_view = Button
 
+    add_analysis_group_button = Button
     analysis_table = Instance(AnalysisTable)
     time_view_model = Instance(TimeViewModel)
 
@@ -162,6 +163,18 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.add_analysis_set()
 
     # handlers
+    def _add_analysis_group_button_fired(self):
+        ans = self.analysis_table.get_selected_analyses()
+        if ans:
+            from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
+            a = AddAnalysisGroupView(projects=[p.name for p in self.projects])
+            if self.selected_projects:
+                a.project = self.selected_projects[0].name
+
+            info = a.edit_traits(kind='livemodal')
+            if info.result:
+                self.db.add_analysis_group(a.name, a.project, ans)
+
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:
             return

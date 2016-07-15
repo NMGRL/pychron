@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import TaskLayout, PaneItem
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed
 from traits.api import Instance, Bool
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
@@ -180,6 +180,7 @@ class BrowserTask(BaseBrowserTask):
 
     def _default_layout_default(self):
         # return TaskLayout(left=PaneItem('pychron.browser.pane'))
-        return TaskLayout(left=PaneItem('pychron.browser.searcher.pane'))
+        return TaskLayout(left=Tabbed(PaneItem('pychron.browser.pane'),
+                                      PaneItem('pychron.browser.analysis_groups.pane')))
 
 # ============= EOF =============================================

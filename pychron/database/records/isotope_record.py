@@ -76,7 +76,7 @@ class DVCIsotopeRecordView:
     #              'extract_value', 'cleanup', 'duration')
     #
     def __init__(self, dbrecord, *args, **kw):
-        self._dbrecord = dbrecord
+        self.dbrecord = dbrecord
         self.is_plateau_step = False
         #     self.extract_script_name = ''
         #     self.meas_script_name = ''
@@ -115,7 +115,7 @@ class DVCIsotopeRecordView:
     #     self.duration = 0
 
     def __getattr__(self, item):
-        return getattr(self._dbrecord, item)
+        return getattr(self.dbrecord, item)
 
     def init(self):
         if self.increment >= 0:

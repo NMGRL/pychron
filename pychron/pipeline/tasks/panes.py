@@ -18,7 +18,7 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, List, Button
-from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup
+from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup, VSplit
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
@@ -488,16 +488,18 @@ class SearcherPane(TraitsDockPane):
 
 class AnalysisGroupsAdapter(TabularAdapter):
     columns = [('Set', 'name'),
-               ('Date', 'create_date'),
-               ]
+               ('Date', 'create_date')]
+
+    font = 'Arial 10'
 
 
 class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
-    name = 'AnalysisSets'
-    id = 'pychron.browser.analysis_sets.pane'
+    name = 'Analysis Groups'
+    id = 'pychron.browser.analysis_groups.pane'
 
     def traits_view(self):
         tgrp = UItem('object.analysis_table.analyses',
+                     height=400,
                      editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
                                             operations=['move', 'delete'],
                                             column_clicked='object.analysis_table.column_clicked',
@@ -506,10 +508,11 @@ class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
                                             dclicked='object.analysis_table.dclicked'))
 
         pgrp = HGroup(self._get_pi_group(), self._get_project_group())
-        agrp = UItem('object.analysis_groups', editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
-                                                                      multi_select=True,
-                                                                      selected='object.selected_analysis_groups'))
-        v = View(VGroup(pgrp, agrp, tgrp))
+        agrp = UItem('object.analysis_groups',
+                     height=100, editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
+                                                        multi_select=True,
+                                                        selected='object.selected_analysis_groups'))
+        v = View(VSplit(pgrp, agrp, tgrp))
         return v
 
 # ============= EOF =============================================

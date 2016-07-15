@@ -36,7 +36,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl, AnalysisGroupTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl, AnalysisGroupTbl, AnalysisGroupSetTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -514,6 +514,25 @@ class DVCDatabase(DatabaseAdapter):
         a = IRTbl(checkin_date=datetime.now().date(),
                   **kw)
         self._add_item(a)
+
+    def add_analysis_group(self, name, project, ans):
+        a = AnalysisGroupTbl(name=name, create_date=datetime.now())
+        p = self.get_project(project)
+        a.project = p
+
+        user = self.get_user(self.save_username)
+        if not user:
+            self.add_user(self.save_username)
+
+        a.user = self.save_username
+
+        self._add_item(a)
+
+        for ai in ans:
+            aa = AnalysisGroupSetTbl()
+            aa.analysis = ai.dbrecord
+            aa.group = a
+            self._add_item(aa)
 
     # special getters
     def get_flux_value(self, identifier, attr):
@@ -1021,10 +1040,16 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._query_all(q, verbose_query=True)
 
-    def get_analysis_groups(self, projects):
+    def get_analysis_groups(self, projects, user=None):
         q = self.session.query(AnalysisGroupTbl)
         q = q.join(ProjectTbl)
+        if user:
+            q = q.join(UserTbl)
         q = q.filter(ProjectTbl.name.in_(projects))
+
+        if user:
+            q = q.filter(UserTbl.name == user)
+
         return self._query_all(q)
 
     # single getters
