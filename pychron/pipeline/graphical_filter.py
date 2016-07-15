@@ -171,7 +171,8 @@ class GraphicalFilterModel(HasTraits):
         ans = self.analyses
         if set_atypes:
             def ff(at):
-                return ' '.join(map(unicode.capitalize, at.split('_')))
+                # return ' '.join(map(str.capitalize, at.split('_')))
+                return ' '.join((ai.capitalize() for ai in  at.split('_')))
 
             self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
             # if self.always_exclude_unknowns:
@@ -185,10 +186,10 @@ class GraphicalFilterModel(HasTraits):
 
         # ans = self._filter_analysis_types(ans)
         if ans:
-            ans = sorted(ans, key=lambda x: x.timestamp)
+            ans = sorted(ans, key=lambda x: x.timestampf)
             self.analyses = ans
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
-            x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
+            x, y = zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans])
             # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
         else:
             x, y, ans = [], [], []

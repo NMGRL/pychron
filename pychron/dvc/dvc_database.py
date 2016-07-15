@@ -257,7 +257,7 @@ class DVCDatabase(DatabaseAdapter):
                                                  exclude=[r.id for r in refs],
                                                  exclude_uuids=exclude,
                                                  exclude_invalid=exclude_invalid)
-            refs.update(rs)
+            refs.update([rii for ri in rs for rii in ri.record_views])
 
         ds = ediff1d(timestamps)
         w = where(ds > delta)[0]
@@ -267,12 +267,13 @@ class DVCDatabase(DatabaseAdapter):
             steps = hstack((steps[:n / 2], steps[n / 2], steps[n / 2:]))
 
         steps = steps.reshape((steps.shape[0] / 2, 2))
+        progress_loader(steps, func, threshold=1)
 
-        progress_loader(steps, func, threshold=5)
+        return refs
         # print rs
         # print ti, low, high, rs, refs
         # print 'refs', refs
-        return [rii for ri in refs for rii in ri.record_views]
+        # return [rii for ri in refs for rii in ri.record_views]
 
     def get_blanks(self, ms=None, limit=100):
         q = self.session.query(AnalysisTbl)

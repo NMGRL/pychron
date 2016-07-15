@@ -30,9 +30,10 @@ class PointInspector(InfoInspector):
 
     single_point = True
 
-    def get_selected_index(self, threshold=1):
+    def get_selected_index(self):
+        threshold = self.hittest_threshold
         if self.single_point:
-            idx = self.component.map_index(self.current_position, threshold=threshold)
+            idx = self.component.map_index(self.current_position, threshold=self.threshold)
             if idx is not None:
                 return [idx]
         else:

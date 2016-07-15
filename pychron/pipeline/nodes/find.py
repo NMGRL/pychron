@@ -177,18 +177,17 @@ class FindReferencesNode(FindNode):
         times = sorted((ai.timestamp for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
-        refs = self.dvc.find_references(times, atype, hours=self.threshold)
-        # print 'refs', atype, refs
+        refs = self.dvc.find_references(times, atype, hours=self.threshold, make_records=False)
+
         if refs:
-            # ans = unknowns[:]
             unknowns.extend(refs)
             model = GraphicalFilterModel(analyses=unknowns,
                                          dvc=self.dvc,
                                          low_post=times[0],
                                          high_post=times[-1],
                                          threshold=self.threshold)
-            model.setup()
 
+            model.setup()
             model.analysis_types = [self.analysis_type]
 
             obj = GraphicalFilterView(model=model)
@@ -198,6 +197,7 @@ class FindReferencesNode(FindNode):
                 for ri in refs:
                     ri.group_id = gid
 
+                refs = self.dvc.make_analyses(refs)
                 if obj.is_append:
                     state.references.extend(refs)
                 else:

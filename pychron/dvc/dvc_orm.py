@@ -145,6 +145,7 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def is_plateau_step(self):
         return
+
     @property
     def timestampf(self):
         return make_timef(self.timestamp)
@@ -161,7 +162,14 @@ class AnalysisTbl(Base, BaseMixin):
     def irradiation_level(self):
         return self.irradiation_position.level.name
 
-    #
+    @property
+    def project(self):
+        return self.irradiation_position.sample.project.name
+
+    @property
+    def sample(self):
+        return self.irradiation_position.sample.name
+
     @property
     def irradiation_position_position(self):
         return self.irradiation_position.position

@@ -189,7 +189,7 @@ class DVCAnalysis(Analysis):
         self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
 
-        self.timestamp = make_timef(self.rundate)
+        self.timestamp = self.timestampf = make_timef(self.rundate)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
         self.load_paths()

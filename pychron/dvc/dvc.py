@@ -29,7 +29,7 @@ import json
 # ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
-from pychron.core.progress import progress_loader
+from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
@@ -503,18 +503,18 @@ class DVC(Loggable):
             return
 
         globalv.active_analyses = records
-        # load repositories
-        exps = {r.repository_identifier for r in records}
-        # if self.pulled_repositories:
-        #     exps = exps - self.pulled_repositories
-        #
-        #     self.pulled_repositories.union(exps)
-        # else:
-        #     self.pulled_repositories = exps
 
+        # load repositories
         st = time.time()
-        for ei in exps:
-            self.sync_repo(ei, use_progress=False)
+
+        def func(xi, prog, i, n):
+            if prog:
+                prog.change_message('Syncing repository= {}'.format(xi))
+            self.sync_repo(xi, use_progress=False)
+
+        exps = {r.repository_identifier for r in records}
+        progress_iterator(exps, func, threshold=1)
+        # for ei in exps:
 
         make_record = self._make_record
 
@@ -524,7 +524,7 @@ class DVC(Loggable):
             # print 'make time {}'.format(time.time()-t)
             return r
 
-        ret = progress_loader(records, func, threshold=5, step=25)
+        ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
 
         n = len(records)
@@ -921,7 +921,7 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis):
             a = record
         else:
-            self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
+            # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             try:
                 rid = record.record_id
                 if record.use_repository_suffix:
@@ -945,9 +945,9 @@ class DVC(Loggable):
             # get repository branch
             a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
             # a.set_tag(record.tag)
-            self.debug('Irradiation {}'.format(a.irradiation))
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
+                # self.debug('Irradiation {}'.format(a.irradiation))
                 chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 
