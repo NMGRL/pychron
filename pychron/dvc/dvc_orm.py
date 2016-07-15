@@ -137,9 +137,10 @@ class AnalysisTbl(Base, BaseMixin):
     weight = Column(Float)
     comment = stringcolumn(80)
     repository_associations = relationship('RepositoryAssociationTbl', backref='analysis')
+    group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
+
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
-
     _record_view = None
 
     @property
@@ -275,6 +276,7 @@ class ProjectTbl(Base, NameMixin):
     principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
 
     samples = relationship('SampleTbl', backref='project')
+    analysis_groups = relationship('AnalysisGroupTbl', backref='project')
 
     @property
     def pname(self):
@@ -491,4 +493,21 @@ class IRTbl(Base, BaseMixin):
         if self.principal_investigator:
             ret = self.principal_investigator.name
         return ret
+
+
+# ======================== Analysis Groups ========================
+class AnalysisGroupTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(140))
+    create_date = Column(TIMESTAMP)
+    projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
+
+    sets = relationship('AnalysisGroupSetTbl', backref='group')
+
+
+class AnalysisGroupSetTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+    groupID = Column(Integer, ForeignKey('AnalysisGroupTbl.id'))
+
 # ============= EOF =============================================

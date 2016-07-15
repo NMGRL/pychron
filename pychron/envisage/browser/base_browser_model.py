@@ -31,7 +31,7 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.date_selector import DateSelector
-from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
+from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
@@ -282,8 +282,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
 
         gs = db.get_analysis_groups(projects=names)
-        grps = [AnalysisGroupRecordView(gi) for gi in gs]
-        return grps
+        return gs
+        # grps = [AnalysisGroupRecordView(gi) for gi in gs]
+        # return grps
 
     def do_filter(self):
         self._filter_by_hook()
@@ -334,6 +335,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         """
             names: list of project names
         """
+        self.debug('load associated analysis groups for {}'.format(names))
         grps = self.get_analysis_groups(names)
         self.analysis_groups = grps
 
@@ -555,7 +557,18 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if old_selection:
             self.selected_projects = [p for p in ps if p.name in old_selection]
 
+    def _load_analyses_for_group(self):
+        grps = self.selected_analysis_groups
+        if grps:
+            self.debug('analysis group changed={}'.format(grps))
+            ans = [si.analysis for gi in grps for si in gi.sets]
+            xx = self._make_records(ans)
+            self.analysis_table.set_analyses(xx)
+
     # handlers
+    def _selected_analysis_groups_changed(self):
+        self._load_analyses_for_group()
+
     def _principal_investigator_changed(self):
         self._load_projects_for_principal_investigator()
 

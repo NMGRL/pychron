@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, List
-from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor
+from traits.api import Int, Property, List, Button
+from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
@@ -30,6 +30,9 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.qt.tree_editor import PipelineEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.browser.sample_view import BaseBrowserSampleView
+from pychron.envisage.browser.view import PaneBrowserView
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes import FindReferencesNode
@@ -449,10 +452,64 @@ class AnalysesPane(TraitsDockPane):
 class InspectorPane(TraitsDockPane):
     name = 'Inspector'
     id = 'pychron.pipeline.inspector'
+
     def traits_view(self):
         v = View(UItem('object.active_inspector_item', style='custom',
-                       editor=InstanceEditor()),
-                 )
+                       editor=InstanceEditor()))
+        return v
+
+
+class BrowserPane(TraitsDockPane, PaneBrowserView):
+    id = 'pychron.browser.pane'
+    name = 'Analysis Selection'
+
+
+class SearcherPane(TraitsDockPane):
+    name = 'Search'
+    id = 'pychron.browser.searcher.pane'
+    add_search_entry_button = Button
+
+    def _add_search_entry_button_fired(self):
+        self.model.add_search_entry()
+
+    def traits_view(self):
+        v = View(VGroup(HGroup(UItem('search_entry'),
+                               UItem('search_entry', editor=EnumEditor(name='search_entries'), width=-35),
+                               icon_button_editor('pane.add_search_entry_button', 'add')),
+                        UItem('object.analysis_table.analyses',
+                              editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                                                     operations=['move', 'delete'],
+                                                     column_clicked='object.analysis_table.column_clicked',
+                                                     refresh='object.analysis_table.refresh_needed',
+                                                     selected='object.analysis_table.selected',
+                                                     dclicked='object.analysis_table.dclicked'))))
+        return v
+
+
+class AnalysisGroupsAdapter(TabularAdapter):
+    columns = [('Set', 'name'),
+               ('Date', 'create_date'),
+               ]
+
+
+class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
+    name = 'AnalysisSets'
+    id = 'pychron.browser.analysis_sets.pane'
+
+    def traits_view(self):
+        tgrp = UItem('object.analysis_table.analyses',
+                     editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                                            operations=['move', 'delete'],
+                                            column_clicked='object.analysis_table.column_clicked',
+                                            refresh='object.analysis_table.refresh_needed',
+                                            selected='object.analysis_table.selected',
+                                            dclicked='object.analysis_table.dclicked'))
+
+        pgrp = HGroup(self._get_pi_group(), self._get_project_group())
+        agrp = UItem('object.analysis_groups', editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
+                                                                      multi_select=True,
+                                                                      selected='object.selected_analysis_groups'))
+        v = View(VGroup(pgrp, agrp, tgrp))
         return v
 
 # ============= EOF =============================================

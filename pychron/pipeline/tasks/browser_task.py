@@ -17,56 +17,26 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Instance, Bool, Button
-from traitsui.api import View, UItem, VGroup, HGroup, EnumEditor
+from traits.api import Instance, Bool
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 # ============= local library imports  ==========================
-from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
-from pychron.envisage.browser.search.searcher import Searcher
-from pychron.envisage.browser.view import PaneBrowserView
-from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.browser.searcher import Searcher
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, \
     LoadReviewStatusAction, EditAnalysisAction, DiffViewAction
 from pychron.pipeline.tasks.analysis_range_selector import AnalysisRangeSelector
-
-
-class BrowserPane(TraitsDockPane, PaneBrowserView):
-    id = 'pychron.browser.pane'
-    name = 'Analysis Selection'
-
-
-class SearcherPane(TraitsDockPane):
-    name = 'Search'
-    id = 'pychron.browser.searcher.pane'
-    add_search_entry_button = Button
-
-    def _add_search_entry_button_fired(self):
-        self.model.add_search_entry()
-
-    def traits_view(self):
-        v = View(VGroup(HGroup(UItem('search_entry'),
-                               UItem('search_entry', editor=EnumEditor(name='search_entries'), width=-35),
-                               icon_button_editor('pane.add_search_entry_button', 'add')),
-                        UItem('object.analysis_table.analyses',
-                              editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
-                                                     operations=['move', 'delete'],
-                                                     column_clicked='object.analysis_table.column_clicked',
-                                                     refresh='object.analysis_table.refresh_needed',
-                                                     selected='object.analysis_table.selected',
-                                                     dclicked='object.analysis_table.dclicked'))))
-        return v
+from pychron.pipeline.tasks.panes import BrowserPane, SearcherPane, AnalysisGroupsPane
 
 
 class BrowserTask(BaseBrowserTask):
     name = 'Analysis Browser'
 
     searcher = Instance(Searcher)
+
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     tool_bars = [SToolBar(ConfigureRecallAction(),
                           ConfigureAnalysesTableAction(),
@@ -199,7 +169,8 @@ class BrowserTask(BaseBrowserTask):
 
     def create_dock_panes(self):
         return [BrowserPane(model=self.browser_model),
-                SearcherPane(model=self.searcher)]
+                SearcherPane(model=self.searcher),
+                AnalysisGroupsPane(model=self.browser_model)]
 
     def _searcher_default(self):
         db = self.application.get_service('pychron.dvc.dvc.DVC')

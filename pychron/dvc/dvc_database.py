@@ -36,7 +36,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl, AnalysisGroupTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -1021,8 +1021,11 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._query_all(q, verbose_query=True)
 
-    def get_analysis_groups(self, **kw):
-        return []
+    def get_analysis_groups(self, projects):
+        q = self.session.query(AnalysisGroupTbl)
+        q = q.join(ProjectTbl)
+        q = q.filter(ProjectTbl.name.in_(projects))
+        return self._query_all(q)
 
     # single getters
     def get_user(self, name):
