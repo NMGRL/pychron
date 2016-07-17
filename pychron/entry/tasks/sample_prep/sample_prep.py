@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import socket
+
+import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
     cached_property, Instance, Event, Date, Enum, Long
 from traitsui.api import View, UItem, Item, EnumEditor
-# ============= standard library imports ========================
-import os
-import socket
-import paramiko
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.paths import paths
@@ -149,6 +149,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def activated(self):
 
+        self.dvc.create_session()
         self._load_pis()
         self._load_workers()
 
@@ -163,6 +164,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self._load_session_samples()
 
     def prepare_destroy(self):
+        self.dvc.close_session()
         self.dump()
 
     def locate_sample(self):
@@ -339,8 +341,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _session_changed(self):
         self._load_session_samples()
 
-    def _selected_step_changed(self):
-        print 'asdfsafd', self.selected_step, self.selected_step.id
+    # def _selected_step_changed(self):
+    #     print 'asdfsafd', self.selected_step, self.selected_step.id
 
     def _upload_image_button_fired(self):
         step = self.selected_step
@@ -396,6 +398,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _get_projects(self):
         ps = self.dvc.get_projects(principal_investigator=self.principal_investigator,
                                    order='asc')
-        return [p.name for p in ps]
+        if ps:
+            return [p.name for p in ps]
+        else:
+            return []
 
 # ============= EOF =============================================

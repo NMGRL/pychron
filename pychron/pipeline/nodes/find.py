@@ -19,10 +19,8 @@ from itertools import groupby
 
 from traits.api import Float, Str, List, Instance, Property, cached_property, Button
 from traitsui.api import Item, EnumEditor, UItem
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
+
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -173,6 +171,21 @@ class FindReferencesNode(FindNode):
             if self._run_group(state, gid, list(ans)):
                 return
 
+        self._compress_groups(state.unknowns)
+        self._compress_groups(state.references)
+
+    def _compress_groups(self, ans):
+        if not ans:
+            return
+
+        key = lambda x: x.group_id
+        ans = sorted(ans, key=key)
+        groups = groupby(ans, key)
+
+        for i, (gid, analyses) in enumerate(groups):
+            for ai in analyses:
+                ai.group_id = i
+
     def _run_group(self, state, gid, unknowns):
         times = sorted((ai.timestamp for ai in unknowns))
 
@@ -185,7 +198,8 @@ class FindReferencesNode(FindNode):
                                          dvc=self.dvc,
                                          low_post=times[0],
                                          high_post=times[-1],
-                                         threshold=self.threshold)
+                                         threshold=self.threshold,
+                                         gid=gid)
 
             model.setup()
             model.analysis_types = [self.analysis_type]
@@ -194,8 +208,6 @@ class FindReferencesNode(FindNode):
             info = obj.edit_traits(kind='livemodal')
             if info.result:
                 unks, refs = model.get_filtered_selection()
-                for ri in refs:
-                    ri.group_id = gid
 
                 refs = self.dvc.make_analyses(refs)
                 if obj.is_append:

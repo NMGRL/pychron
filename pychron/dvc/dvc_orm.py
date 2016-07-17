@@ -20,7 +20,6 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Bo
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.database.records.isotope_record import DVCIsotopeRecordView
@@ -142,6 +141,7 @@ class AnalysisTbl(Base, BaseMixin):
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
     _record_view = None
+    group_id = 0
 
     @property
     def is_plateau_step(self):

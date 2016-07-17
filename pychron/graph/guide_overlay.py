@@ -65,6 +65,7 @@ class GuideOverlayMoveTool(DragTool):
     def drag_cancel(self, event):
         self.drag_end(event)
 
+
 class GuideOverlay(AbstractOverlay):
     """
     draws a horizontal or vertical line at the specified value

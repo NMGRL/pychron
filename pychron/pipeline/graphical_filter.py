@@ -14,24 +14,24 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import math
 from datetime import timedelta
+from itertools import groupby
 
+from chaco.abstract_overlay import AbstractOverlay
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
-from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float
+from enable.tools.drag_tool import DragTool
+from numpy import array, where
+from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float, Event
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
-# ============= standard library imports ========================
-from itertools import groupby
-import math
-# ============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
-
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
+from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
 
 REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
 
@@ -72,8 +72,72 @@ def analysis_type_func(analyses, offset=True):
     return f
 
 
+class GroupingTool(DragTool):
+    dividers = List
+    threshold = 2
+
+    selected_divider = None
+    grouping_event = Event
+
+    def is_draggable(self, x, y):
+        threshold = self.threshold
+        comp = self.component
+        y2 = comp.y2 + 5
+        self.selected_divider = None
+        for i, (dx, d) in enumerate(self.dividers):
+            if abs(d - x) < threshold:
+                if y2 + 6 >= y >= y2:
+                    self.selected_divider = i
+                    return True
+
+    def dragging(self, event):
+        self.dividers[self.selected_divider] = self._get_divider(event)
+        self.component.invalidate_and_redraw()
+        self.grouping_event = True
+
+    def drag_cancel(self, event):
+        self.drag_end(event)
+
+    def normal_right_down(self, event):
+        comp = self.component
+        if comp.y2 + 6 > event.y > comp.y2:
+            cdx, cx = self._get_divider(event)
+            for i, (dx, x) in enumerate(self.dividers):
+                if abs(cx - x) < self.threshold:
+                    self.dividers.pop(i)
+                    comp.invalidate_and_redraw()
+                    event.handled = True
+                    break
+
+    def normal_left_down(self, event):
+        if event.y > self.component.y2:
+            cdx, cx = self._get_divider(event)
+            for dx, x in self.dividers:
+                if abs(cx - x) <= self.threshold:
+                    break
+            else:
+                self.dividers.append((cdx, cx))
+                self.grouping_event = True
+                self.component.invalidate_and_redraw()
+
+    def _get_divider(self, event):
+        x = event.x
+        dx = self.component.index_mapper.map_data(x)
+        return dx, x
+
+
+class GroupingOverlay(AbstractOverlay):
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        for dx, d in self.tool.dividers:
+            gc.move_to(d, other_component.y)
+            gc.line_to(d, other_component.y2 + 5)
+            gc.rect(d - 3, other_component.y2 + 5, 6, 6)
+            gc.draw_path()
+
+
 class SelectionGraph(Graph):
     scatter = None
+    grouping_tool = None
 
     def setup(self, x, y, ans):
         from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator, TICKS
@@ -94,6 +158,13 @@ class SelectionGraph(Graph):
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
         p.x_grid.tick_generator = p.x_axis.tick_generator
         p.x_axis.title = 'Time'
+
+        t = GroupingTool(component=p)
+        p.tools.append(t)
+        o = GroupingOverlay(component=p, tool=t)
+        p.overlays.append(o)
+
+        self.grouping_tool = t
 
         scatter, _ = self.new_series(x, y, type='scatter',
                                      marker_size=1.5,
@@ -129,20 +200,6 @@ class SelectionGraph(Graph):
 
         self.scatter = scatter
 
-        # def get_selection_mask(self):
-        # sels = self.scatter.index.metadata['selections']
-
-        # d = self.scatter.index.get_data()
-        # print d,sels
-
-        # return array([x in sels for x in xrange(d.shape[0])])
-        #
-
-        # try:
-        #     return self.scatter.index.metadata[''][0]
-        # except KeyError, e:
-        #     print 'selection mask', e
-
 
 class GraphicalFilterModel(HasTraits):
     dvc = Any
@@ -159,6 +216,8 @@ class GraphicalFilterModel(HasTraits):
     always_exclude_unknowns = Bool(False)
     threshold = Float(1)
 
+    gid = Int
+
     # is_append = True
     # use_all = False
 
@@ -172,7 +231,7 @@ class GraphicalFilterModel(HasTraits):
         if set_atypes:
             def ff(at):
                 # return ' '.join(map(str.capitalize, at.split('_')))
-                return ' '.join((ai.capitalize() for ai in  at.split('_')))
+                return ' '.join((ai.capitalize() for ai in at.split('_')))
 
             self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
             # if self.always_exclude_unknowns:
@@ -199,12 +258,15 @@ class GraphicalFilterModel(HasTraits):
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
         ans = self.analyses
-        unks = None
+        unks = [ai for ai in self.analyses if ai.analysis_type == 'unknown']
         if selection:
-            unks = [ai for i, ai in enumerate(self.analyses) if i not in selection and ai.analysis_type == 'unknown']
+            unks = [ai for i, ai in enumerate(unks) if i not in selection]
             ans = [ai for i, ai in enumerate(self.analyses) if i not in selection]
 
-        return unks, self._filter_analysis_types(ans)
+        refs = self._filter_analysis_types(ans)
+        self._calculate_groups(refs)
+        self._calculate_groups(unks)
+        return unks, refs
 
     def search_backward(self):
         def func():
@@ -220,7 +282,7 @@ class GraphicalFilterModel(HasTraits):
 
     def search(self, func):
         uuids = [a.uuid for a in self.analyses]
-        for i in range(10):
+        for i in xrange(10):
             records = self.dvc.find_references([self.low_post, self.high_post],
                                                [x.lower().replace(' ', '_') for x in self.analysis_types],
                                                self.threshold,
@@ -230,6 +292,25 @@ class GraphicalFilterModel(HasTraits):
                 self.analyses.extend(records)
                 self.setup()
                 break
+
+    def _calculate_groups(self, ans):
+        px = None
+        ts = array([ai.timestampf for ai in ans])
+        for i, (dx, x) in enumerate(self.graph.grouping_tool.dividers):
+            # convert to idx
+            idx = where(ts < dx)[0][-1]+1
+            if i == 0:
+                l, h = (0, idx)
+            else:
+                l, h = (px, idx)
+
+            for ai in ans[l:h]:
+                ai.group_id = int('{}{:02n}'.format(self.gid, i))
+
+            px = idx
+
+        for ai in ans[px:]:
+            ai.group_id = int('{}{:02n}'.format(self.gid, i+1))
 
     def _filter_analysis_types(self, ans):
         """

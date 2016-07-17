@@ -14,21 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance, Str, Set, List, provides
-# ============= standard library imports ========================
-from math import isnan
-from datetime import datetime
-from uncertainties import nominal_value, std_dev
-from git import Repo
-from itertools import groupby
+import json
+import os
 import shutil
 import time
-import os
-import json
-# ============= local library imports  ==========================
-from pychron.core.i_datastore import IDatastore
+from datetime import datetime
+from itertools import groupby
+from math import isnan
+
+from apptools.preferences.preference_binding import bind_preference
+from git import Repo
+from traits.api import Instance, Str, Set, List, provides
+from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
+from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump, dvc_load
@@ -928,6 +928,7 @@ class DVC(Loggable):
                     rid = '-'.join(rid.split('-')[:-1])
 
                 a = DVCAnalysis(rid, expid)
+                a.group_id = record.group_id
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 try:

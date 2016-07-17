@@ -17,10 +17,6 @@ import re
 
 from traits.api import HasTraits, Instance, List, Str, Long
 from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Controller
-
-# ============= standard library imports ========================
-
-# ============= local library imports  ==========================
 from traitsui.menu import Action
 from traitsui.table_column import ObjectColumn
 
@@ -59,7 +55,7 @@ class SampleEditItem(HasTraits):
         self.id = rec.id
 
         if rec.project:
-            self.project = self._project = '{} ({})'.format(rec.project.name, rec.project.principal_investigator)
+            self.project = self._project = rec.project.pname
         if rec.material:
             self.material = self._material = rec.material.gname
 
@@ -80,8 +76,12 @@ class SampleEditModel(HasTraits):
     _projects = List
 
     def init(self):
+        self.dvc.create_session()
         self._projects = self.dvc.get_project_pnames()
         self._materials = self.dvc.get_material_gnames()
+
+    def closed(self):
+        self.dvc.close_session()
 
     def save(self):
         db = self.dvc
@@ -113,6 +113,9 @@ class SampleEditModel(HasTraits):
 
 class SampleEditView(Controller):
     dvc = Instance('pychron.dvc.dvc.DVC')
+
+    def closed( self, info, is_ok ):
+        self.model.closed()
 
     def save(self, info):
         self.model.save()

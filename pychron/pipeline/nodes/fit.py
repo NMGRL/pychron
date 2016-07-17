@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List, HasTraits, Str, Float, Instance
-# ============= standard library imports ========================
 from itertools import groupby
-# ============= local library imports  ==========================
+
+from traits.api import Bool, List, HasTraits, Str, Float, Instance
+
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -64,7 +64,7 @@ class FitReferencesNode(FitNode):
                     state.editors.append(editor)
 
                 unks = [u for u in state.unknowns if u.group_id == gid]
-                editor.set_items(unks)
+                editor.set_items(unks, compress=False)
                 editor.set_references(list(refs))
 
         self._set_saveable(state)

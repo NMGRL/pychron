@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 
+import os
+from itertools import groupby
+
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import List, Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 
-# ============= standard library imports ========================
-import os
-from itertools import groupby
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
 
 
@@ -68,7 +67,7 @@ class GraphEditor(BaseTraitsEditor):
 
             # self.rebuild_graph()
 
-    def set_items(self, ans, is_append=False, refresh=False):
+    def set_items(self, ans, is_append=False, refresh=False, compress=True):
         if is_append:
             self.analyses.extend(ans)
         else:
@@ -76,7 +75,8 @@ class GraphEditor(BaseTraitsEditor):
 
         if self.analyses:
             self._set_name()
-            self._compress_groups()
+            if compress:
+                self._compress_groups()
             if refresh:
                 self.refresh_needed = True
 

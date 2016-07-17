@@ -16,22 +16,22 @@
 
 # =============enthought library imports=======================
 
-from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-# =============standard library imports ========================
+import os
+import sys
+from datetime import datetime, timedelta
+from threading import Lock
+
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from threading import Lock
-from datetime import datetime, timedelta
-import sys
-import os
-# =============local library imports  ==========================
+from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+
+from pychron import version
+from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-from pychron.database.core.base_orm import AlembicVersionTable
-from pychron import version
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -103,6 +103,10 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 #                 self._sess.expire_on_commit = True
 #                 # self._sess.close()
 #                 # del self._sess
+
+class MockSession:
+    def __getattr__(self, item):
+        return
 
 
 class DatabaseAdapter(Loggable):
@@ -187,10 +191,13 @@ class DatabaseAdapter(Loggable):
     _session_cnt = 0
 
     def create_session(self):
-        if self.session_factory:
-            if not self.session:
-                self.session = self.session_factory()
-            self._session_cnt += 1
+        if self.connected:
+            if self.session_factory:
+                if not self.session:
+                    self.session = self.session_factory()
+                self._session_cnt += 1
+        else:
+            self.session = MockSession()
 
     def close_session(self):
         if self.session:
@@ -268,6 +275,7 @@ class DatabaseAdapter(Loggable):
                             warn = False
                         else:
                             if self.test_func:
+                                self.connected = True
                                 self.connected = self._test_db_connection(version_warn)
                             else:
                                 self.connected = True
