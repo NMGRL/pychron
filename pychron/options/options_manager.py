@@ -14,16 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import os
+
 import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property
 from traitsui.api import Controller, View, Item
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import list_directory2
+from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
-from pychron.file_defaults import SPECTRUM_PRESENTATION
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.options.blanks import BlanksOptions
@@ -128,8 +128,8 @@ class OptionsManager(Loggable):
         self.save(name, p)
         self._load_names()
 
-        print self.names
-        print self.name
+        # print self.names
+        # print self.name
         self.selected = name
 
     def factory_default(self):

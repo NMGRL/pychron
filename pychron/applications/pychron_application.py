@@ -15,22 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
+import os
 from datetime import datetime
+
+from apptools.preferences.preference_binding import bind_preference
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
 from traits.api import List, Str, Bool
 
-
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.envisage.resources import splash_icon
-from pychron.globals import globalv
-
-from pychron.paths import paths
 from pychron.applications.about_dialog import myAboutDialog
+from pychron.envisage.resources import splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
+from pychron.globals import globalv
+from pychron.paths import paths
 
 
 def get_resource_root():
@@ -95,12 +92,13 @@ class PychronApplication(BaseTasksApplication):
         if self.multi_user:
             self.dump_user_file()
 
-        super(BaseTasksApplication, self).stop()
         import threading
         self.debug('------------------- Alive Threads -------------------')
         for t in threading.enumerate():
             self.debug(str(t))
         self.debug('-----------------------------------------------------')
+
+        return super(BaseTasksApplication, self).stop()
 
     def dump_user_file(self):
         self.debug('dumping user file')

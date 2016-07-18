@@ -296,6 +296,7 @@ class GraphicalFilterModel(HasTraits):
     def _calculate_groups(self, ans):
         px = None
         ts = array([ai.timestampf for ai in ans])
+        i = -1
         for i, (dx, x) in enumerate(self.graph.grouping_tool.dividers):
             # convert to idx
             idx = where(ts < dx)[0][-1]+1

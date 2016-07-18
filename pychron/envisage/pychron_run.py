@@ -14,20 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-import sys
+
+import logging
 
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
 
-# ============= standard library imports ========================
-import logging
-# ============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
-from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.user.tasks.plugin import UsersPlugin
 
 logger = logging.getLogger()
@@ -50,7 +48,7 @@ PACKAGE_DICT = dict(
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
     FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
-        LoadingPlugin='pychron.loading.tasks.loading_plugin',
+    LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
     # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
     # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
@@ -197,7 +195,6 @@ def app_factory(klass, user):
     plugins += get_user_plugins()
 
     app = klass(username=user, plugins=plugins)
-
     # set key bindings
     update_key_bindings(pychron_plugin.actions)
 
@@ -240,7 +237,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-    finally:
-        sys.exit(0)
+    # finally:
+    #     sys.exit(0)
 
 # ============= EOF ====================================

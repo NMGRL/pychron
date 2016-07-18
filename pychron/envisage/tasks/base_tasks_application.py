@@ -21,13 +21,11 @@ from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import List, Instance
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.view_util import open_view, close_views, report_view_stats
 from pychron.globals import globalv
-from pychron.loggable import Loggable
 from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.startup_test.results_view import ResultsView
 from pychron.startup_test.tester import StartupTester
@@ -132,7 +130,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
 
         self._cleanup_services()
 
-        super(BaseTasksApplication, self).exit()
+        super(BaseTasksApplication, self).exit(**kw)
 
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):

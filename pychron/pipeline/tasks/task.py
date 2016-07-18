@@ -15,34 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from itertools import groupby
+
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change
-# ============= standard library imports ========================
-from itertools import groupby
-import os
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
+from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
     SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
-from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
+from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
 
 class DataMenu(SMenu):
@@ -112,8 +112,8 @@ class PipelineTask(BaseBrowserTask):
                 self.run()
 
     def prepare_destroy(self):
-        super(PipelineTask, self).prepare_destroy()
         self.interpreted_age_browser_model.dump_browser()
+        super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 import random
 
 from envisage.extension_point import ExtensionPoint
@@ -29,16 +30,13 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Tuple, HasTraits, Password
 from traitsui.api import View, Item
 
-# ============= standard library imports ========================
-import hashlib
-# ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.envisage.tasks.base_plugin import BasePlugin
-from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
+from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
 from pychron.globals import globalv
+from pychron.paths import paths
 
 # logger = new_logger('PychronTasksPlugin')
 
@@ -127,12 +125,11 @@ class mExitAction(ExitAction):
                 ret = confirm(None, 'Are you sure you want to Quit?')
                 if ret == NO:
                     return
-        try:
-            app.exit(force=True)
-        except RuntimeError:
-            import os
-
-            os._exit(0)
+        app.exit(force=True)
+        # try:
+        # except RuntimeError:
+        #     import os
+        #     os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):
