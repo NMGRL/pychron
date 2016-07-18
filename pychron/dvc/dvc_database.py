@@ -237,18 +237,12 @@ class DVCDatabase(DatabaseAdapter):
 
     def find_references(self, ans, atypes, hours=10, exclude=None,
                         exclude_invalid=True):
-
         if isinstance(ans[0], datetime):
             timestamps = sorted((time.mktime(t.timetuple()) for t in ans))
         elif not isinstance(ans[0], float):
-            timestamps = sorted((ai.timestamp for ai in ans))
+            timestamps = sorted((ai.timestampf for ai in ans))
         else:
             timestamps = ans
-
-        # if not isinstance(ans[0], (float, datetime,)):
-        #     timestamps = sorted((ai.timestamp for ai in ans))
-        # else:
-        #     timestamps = ans
 
         # delta = 60 * 60 * hours  # seconds
         delta = timedelta(hours=hours).total_seconds()
