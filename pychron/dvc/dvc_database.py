@@ -245,10 +245,10 @@ class DVCDatabase(DatabaseAdapter):
         else:
             timestamps = ans
 
-        if not isinstance(ans[0], (float, datetime,)):
-            timestamps = sorted((ai.timestamp for ai in ans))
-        else:
-            timestamps = ans
+        # if not isinstance(ans[0], (float, datetime,)):
+        #     timestamps = sorted((ai.timestamp for ai in ans))
+        # else:
+        #     timestamps = ans
 
         # delta = 60 * 60 * hours  # seconds
         delta = timedelta(hours=hours).total_seconds()
