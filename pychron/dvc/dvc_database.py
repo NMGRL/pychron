@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List
-from traitsui.api import View, Item
-# ============= standard library imports ========================
-from numpy import ediff1d, where, hstack
+import time
+from datetime import timedelta, datetime
+
+from numpy import ediff1d, where, hstack, array
+from sqlalchemy import not_, func, distinct, or_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
-from datetime import timedelta, datetime
-from sqlalchemy import not_, func, distinct, or_
-# ============= local library imports  ==========================
+from traits.api import HasTraits, Str, List
+from traitsui.api import View, Item
+
 from pychron.core.progress import progress_loader
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -236,6 +237,14 @@ class DVCDatabase(DatabaseAdapter):
 
     def find_references(self, ans, atypes, hours=10, exclude=None,
                         exclude_invalid=True):
+
+        if isinstance(ans[0], datetime):
+            timestamps = sorted((time.mktime(t.timetuple()) for t in ans))
+        elif not isinstance(ans[0], float):
+            timestamps = sorted((ai.timestamp for ai in ans))
+        else:
+            timestamps = ans
+
         if not isinstance(ans[0], (float, datetime,)):
             timestamps = sorted((ai.timestamp for ai in ans))
         else:
@@ -259,6 +268,7 @@ class DVCDatabase(DatabaseAdapter):
                                                  exclude_invalid=exclude_invalid)
             refs.update([rii for ri in rs for rii in ri.record_views])
 
+        timestamps = array(timestamps)
         ds = ediff1d(timestamps)
         w = where(ds > delta)[0]
         steps = hstack((timestamps[0], timestamps[w], timestamps[-1]))
