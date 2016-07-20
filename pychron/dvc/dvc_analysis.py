@@ -22,7 +22,7 @@ import os
 import time
 
 from uncertainties import ufloat, std_dev, nominal_value
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension, subdirize
 from pychron.core.helpers.iterfuncs import partition
@@ -214,68 +214,13 @@ class DVCAnalysis(Analysis):
         self.gains = sd['gains']
         self.deflections = sd['deflections']
 
-    def _load_tags(self, jd):
-        self.set_tag(jd)
-
-    def _load_blanks(self, jd):
-        for key, v in jd.iteritems():
-            if key in self.isotopes:
-                i = self.isotopes[key]
-                self._load_value_error(i.blank, v)
-                # i.blank.value = v['value']
-                # i.blank.error = v['error']
-                i.blank.fit = v['fit']
-            elif key == 'reviewed':
-                self.blank_reviewed = v
-
-    def _load_intercepts(self, jd):
-        for iso, v in jd.iteritems():
-            if iso in self.isotopes:
-                i = self.isotopes[iso]
-                self._load_value_error(i, v)
-
-                i.set_fit(v['fit'], notify=False)
-                i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
-                                           iterations=v.get('iterations', 0),
-                                           std_devs=v.get('std_devs', 0))
-
-    def _load_value_error(self, item, obj):
-        item.use_manual_value = obj.get('use_manual_value', False)
-        item.use_manual_error = obj.get('use_manual_error', False)
-        if item.use_manual_value:
-            item.value = obj['manual_value']
-        else:
-            item.value = obj['value']
-
-        if item.use_manual_error:
-            item.error = obj['manual_error']
-        else:
-            item.error = obj['error']
-
-        for k in ('n', 'fn'):
-            if k in obj:
-                setattr(item, k, obj[k])
-
-    def _load_baselines(self, jd):
-        for det, v in jd.iteritems():
-            for iso in self.isotopes.itervalues():
-                if iso.detector == det:
-                    self._load_value_error(iso.baseline, v)
-
-                    iso.baseline.set_fit(v['fit'], notify=False)
-                    iso.baseline.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
-                                                          iterations=v.get('iterations', 0),
-                                                          std_devs=v.get('std_devs', 0))
-
-    def _load_icfactors(self, jd):
-        for key, v in jd.iteritems():
-            if isinstance(v, dict):
-                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
-            elif key == 'reviewed':
-                self.icfactor_reviewed = v
-
     def check_has_n(self):
         return any((i._n is not None for i in self.iter_isotopes()))
+
+    def get_extraction_data(self):
+        path = self._analysis_path(modifier='extraction')
+        jd = dvc_load(path)
+        return jd
 
     def load_raw_data(self, keys=None, n_only=False):
         def format_blob(blob):
@@ -447,6 +392,67 @@ class DVCAnalysis(Analysis):
 
     def make_path(self, modifier):
         return self._analysis_path(modifier=modifier)
+
+    # private
+    def _load_tags(self, jd):
+        self.set_tag(jd)
+
+    def _load_blanks(self, jd):
+        for key, v in jd.iteritems():
+            if key in self.isotopes:
+                i = self.isotopes[key]
+                self._load_value_error(i.blank, v)
+                # i.blank.value = v['value']
+                # i.blank.error = v['error']
+                i.blank.fit = v['fit']
+            elif key == 'reviewed':
+                self.blank_reviewed = v
+
+    def _load_intercepts(self, jd):
+        for iso, v in jd.iteritems():
+            if iso in self.isotopes:
+                i = self.isotopes[iso]
+                self._load_value_error(i, v)
+
+                i.set_fit(v['fit'], notify=False)
+                i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
+                                           iterations=v.get('iterations', 0),
+                                           std_devs=v.get('std_devs', 0))
+
+    def _load_value_error(self, item, obj):
+        item.use_manual_value = obj.get('use_manual_value', False)
+        item.use_manual_error = obj.get('use_manual_error', False)
+        if item.use_manual_value:
+            item.value = obj['manual_value']
+        else:
+            item.value = obj['value']
+
+        if item.use_manual_error:
+            item.error = obj['manual_error']
+        else:
+            item.error = obj['error']
+
+        for k in ('n', 'fn'):
+            if k in obj:
+                setattr(item, k, obj[k])
+
+    def _load_baselines(self, jd):
+        for det, v in jd.iteritems():
+            for iso in self.isotopes.itervalues():
+                if iso.detector == det:
+                    self._load_value_error(iso.baseline, v)
+
+                    iso.baseline.set_fit(v['fit'], notify=False)
+                    iso.baseline.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
+                                                          iterations=v.get('iterations', 0),
+                                                          std_devs=v.get('std_devs', 0))
+
+    def _load_icfactors(self, jd):
+        for key, v in jd.iteritems():
+            if isinstance(v, dict):
+                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
+            elif key == 'reviewed':
+                self.icfactor_reviewed = v
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)

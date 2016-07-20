@@ -17,9 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.confirmation_dialog import confirm
 from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.menu import Action
+
 from pychron.envisage.resources import icon
 
 
@@ -221,6 +220,19 @@ class VerticalFluxAction(PipelineAction):
     name = 'Vertical Flux'
     action = 'set_vertical_flux_template'
 
+
+class ExtractionAction(Action):
+    name = 'Extraction Results...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        windows = app.windows
+        for tid in ('pychron.browser.task', 'pychron.pipeline.task'):
+            for win in windows:
+                task = win.active_task
+                if task and task.id == tid:
+                    getattr(task, 'show_extraction_graph')()
+                    break
 
 # ============= Quick Series ====================================
 class LastNAnalysesSeriesAction(PipelineAction):

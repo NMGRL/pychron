@@ -19,20 +19,19 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
+from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction
+    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
-from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 
 
 class PipelinePlugin(BaseTaskPlugin):
@@ -123,6 +122,8 @@ class PipelinePlugin(BaseTaskPlugin):
                             SchemaAddition(factory=SeriesAction,
                                            path=pg),
                             SchemaAddition(factory=VerticalFluxAction,
+                                           path=pg),
+                            SchemaAddition(factory=ExtractionAction,
                                            path=pg)]
 
         reduction_actions = [SchemaAddition(factory=reduction_group,
