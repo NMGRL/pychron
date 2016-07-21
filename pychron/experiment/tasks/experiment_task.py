@@ -234,10 +234,10 @@ class ExperimentEditorTask(EditorTask):
             else:
                 manager.stop_update()
 
-            # del manager. fixes problem of multiple experiments being started
-            # closed tasks were still receiving execute_event(s)
-            # del self.manager
-            # self.manager = None
+                # del manager. fixes problem of multiple experiments being started
+                # closed tasks were still receiving execute_event(s)
+                # del self.manager
+                # self.manager = None
 
     def bind_preferences(self):
         # notifications
@@ -263,14 +263,14 @@ class ExperimentEditorTask(EditorTask):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
-        self.manager.db.create_session()
+        self.manager.dvc.create_session()
 
         manager = self.application.get_service(IFurnaceManager)
         if manager:
             manager.start_update()
 
     def prepare_destory(self):
-        self.manager.db.close_session()
+        self.manager.dvc.close_session()
 
     def create_dock_panes(self):
 
@@ -472,7 +472,12 @@ class ExperimentEditorTask(EditorTask):
     def _generate_default_filename(self):
         name = self.active_editor.queue.load_name
         if name:
-            return 'Load{}.txt'.format(name)
+            if name.startswith('Load'):
+                name = name[4:].strip()
+
+            name = name.replace(' ', '_')
+
+            return 'Load{}'.format(name)
 
     def _publish_notification(self, run):
         if self.use_notifications:

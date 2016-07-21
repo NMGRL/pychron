@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, BaseStr, Directory, Int
-from traitsui.api import View, HGroup, VGroup, Item
+from traits.api import HasTraits, Bool, BaseStr, Directory, Int, Str
+from traitsui.api import View, HGroup, VGroup, Item, UItem
 # ============= standard library imports ========================
 import re
 import os
@@ -74,16 +74,22 @@ class ExperimentSaveDialog(BaseSaveDialog):
     name = PascalCase()
     use_current_exp = Bool
 
+    help_str = Str('<b>Name must be in PascalCase. NoSpaces and only AlphaNumeric characters</b>')
+
     def _use_current_exp_changed(self, new):
         if new:
             self.name = 'CurrentExperiment'
 
     def traits_view(self):
         ngrp = HGroup(Item('name',
-                           tooltip='Name must be in PascalCase. NoSpaces, use only AlphaNumeric'),
+                           tooltip='Name must be in PascalCase. NoSpaces, use only AlphaNumeric. '
+                                   'This is "PascalCase". This is not "pascalcase"'),
+
                       Item('use_current_exp'))
         dgrp = HGroup(Item('root', label='Directory'))
-        v = View(VGroup(ngrp, dgrp),
+        hgrp = UItem('help_str', style='readonly')
+
+        v = View(VGroup(ngrp, hgrp, dgrp),
                  kind='livemodal',
                  width=400,
                  title='Save Experiment',

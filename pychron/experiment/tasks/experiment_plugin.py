@@ -69,7 +69,7 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         # return ExperimentEditorTask(manager=self.experimentor)
-        return ExperimentEditorTask()
+        return ExperimentEditorTask(application=self.application)
 
     def _preferences_default(self):
         return self._preferences_factory('experiment')

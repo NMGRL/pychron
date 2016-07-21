@@ -42,7 +42,7 @@ class SelectorAdapter(TabularAdapter):
     extract_script_width = Int(90)
 
 
-class ReferenceAnalysisSelector(HasTraits, ColumnSorterMixin):
+class ReferenceAnalysisSelector(ColumnSorterMixin):
     db = Instance('pychron.dvc.dvc.DVC')
     title = Str
     items = List

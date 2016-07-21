@@ -50,7 +50,6 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
 from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers, \
     populate_repository_identifiers, get_curtag
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
@@ -2012,6 +2011,7 @@ Use Last "blank_{}"= {}
 
         if dbr is None:
             selected = True
+            from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
             selector = ReferenceAnalysisSelector(title='Select Default Blank')
             info = selector.edit_traits(kind='livemodal')
             dbs = db.get_blanks(ms)
