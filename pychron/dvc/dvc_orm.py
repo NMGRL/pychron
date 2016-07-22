@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -140,13 +140,8 @@ class AnalysisTbl(Base, BaseMixin):
 
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
-    media = relationship('MediaTbl', backref='analysis')
-
     _record_view = None
     group_id = 0
-    frozen = False
-
-    delta_time = 0
 
     @property
     def is_plateau_step(self):
@@ -237,6 +232,43 @@ class AnalysisTbl(Base, BaseMixin):
         iv.use_repository_suffix = use_suffix
         iv.init()
         return iv
+        # iv.extract_script_name = self.extractionName
+        # iv.meas_script_name = self.measurementName
+        #
+        # irradpos = self.irradiation_position
+        # iv.identifier = irradpos.identifier
+        # iv.irradiation = irradpos.level.irradiation.name
+        # iv.irradiation_level = irradpos.level.name
+        # iv.irradiation_position_position = irradpos.position
+        #
+        # iv.labnumber = iv.identifier
+        # # iv.repository_ids = es = [e.repository for e in self.repository_associations]
+        # # if len(es) == 1:
+        # #     iv.repository_identifier = es[0]
+        # iv.repository_identifier = repo
+        # iv.use_repository_suffix = use_suffix
+        #
+        # for tag in ('aliquot', 'increment', 'uuid',
+        #             'extract_value', 'cleanup', 'duration',
+        #             'mass_spectrometer',
+        #             'extract_device',
+        #             'rundate',
+        #             'analysis_type', 'comment'):
+        #     setattr(iv, tag, getattr(self, tag))
+        #
+        # if irradpos.sample:
+        #     iv.sample = irradpos.sample.name
+        #     if irradpos.sample.project:
+        #         iv.project = irradpos.sample.project.name
+        #
+        # iv.timestampf = make_timef(self.timestamp)
+        # iv.tag = self.change.tag
+        # iv.init()
+        # return iv
+
+        # self._record_view = iv
+
+        # return iv
 
 
 class ProjectTbl(Base, NameMixin):
@@ -245,10 +277,6 @@ class ProjectTbl(Base, NameMixin):
 
     samples = relationship('SampleTbl', backref='project')
     analysis_groups = relationship('AnalysisGroupTbl', backref='project')
-    checkin_date = Column(DATE)
-    comment = Column(BLOB)
-    lab_contact = stringcolumn(80)
-    institution = stringcolumn(80)
 
     @property
     def pname(self):
@@ -271,7 +299,6 @@ class SampleTbl(Base, NameMixin):
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
-    # note = stringcolumn(140)
 
 
 class ProductionTbl(Base, NameMixin):
@@ -294,7 +321,6 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
-    create_date = Column(TIMESTAMP)
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
@@ -328,7 +354,6 @@ class IrradiationPositionTbl(Base, BaseMixin):
 class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
     kind = stringcolumn(45)
-    # active = Column(Bool)
 
 
 class ExtractDeviceTbl(Base, BaseMixin):
@@ -362,8 +387,6 @@ class UserTbl(Base, BaseMixin):
     affiliation = stringcolumn(80)
     category = stringcolumn(80)
     email = stringcolumn(80)
-
-    media = relationship('MediaTbl.username', backref='user')
 
 
 class LoadTbl(Base, BaseMixin):
@@ -487,15 +510,5 @@ class AnalysisGroupSetTbl(Base, BaseMixin):
     id = Column(Integer, primary_key=True)
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     groupID = Column(Integer, ForeignKey('AnalysisGroupTbl.id'))
-
-
-class MediaTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
-    url = Column(TEXT)
-
-    username = Column(String(140), ForeignKey('UserTbl.name'))
-    create_date = Column(TIMESTAMP, default=func.now())
-
 
 # ============= EOF =============================================
