@@ -37,6 +37,19 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
+def principal_investigator_filter(q, principal_investigator):
+    if ',' in principal_investigator:
+        try:
+            ln, fi = principal_investigator.split(',')
+            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
+            q = q.filter(PrincipalInvestigatorTbl.first_initial == fi.strip())
+        except ValueError:
+            pass
+    else:
+        q = q.filter(PrincipalInvestigatorTbl.last_name == principal_investigator)
+
+    return q
+
 
 class NewMassSpectrometerView(HasTraits):
     name = Str
@@ -1370,7 +1383,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 # filters
                 if principal_investigator:
-                    q = q.filter(PrincipalInvestigatorTbl.name == principal_investigator)
+                    q = principal_investigator_filter(q, principal_investigator)
 
                 if irradiation:
                     if level:
