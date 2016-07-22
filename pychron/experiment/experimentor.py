@@ -54,6 +54,15 @@ class Experimentor(DVCIrradiationable):
     activate_editor_event = Event
     save_event = Event
 
+    def prepare_destory(self):
+        if self.executor:
+            if self.executor.datahub:
+                self.executor.datahub.prepare_destroy()
+        if self.experiment_factory:
+            if self.experiment_factory.run_factory:
+                if self.experiment_factory.run_factory.datahub:
+                    self.experiment_factory.run_factory.datahub.prepare_destroy()
+
     def load(self):
         self.experiment_factory.queue_factory.db_refresh_needed = True
         self.experiment_factory.run_factory.db_refresh_needed = True

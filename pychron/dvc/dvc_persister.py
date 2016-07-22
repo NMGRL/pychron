@@ -95,7 +95,6 @@ class DVCPersister(BasePersister):
         pass
 
     def post_extraction_save(self):
-        p = self._make_path(modifier='extraction')
 
         rblob = self.per_spec.response_blob
         oblob = self.per_spec.output_blob
@@ -150,7 +149,8 @@ class DVCPersister(BasePersister):
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
-        dvc_dump(obj, p)
+        path = self._make_path(modifier='extraction')
+        dvc_dump(obj, path)
 
     def pre_measurement_save(self):
         pass

@@ -104,6 +104,17 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 #                 # self._sess.close()
 #                 # del self._sess
 
+class SessionCTX(object):
+    def __init__(self, parent):
+        self._parent = parent
+
+    def __enter__(self):
+        self._parent.create_session()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._parent.close_session()
+
+
 class MockSession:
     pass
     # def __getattr__(self, item):
@@ -191,6 +202,10 @@ class DatabaseAdapter(Loggable):
 
     _session_cnt = 0
 
+    def session_ctx(self):
+        with self._session_lock:
+            return SessionCTX(self)
+
     def create_session(self):
         if self.connected:
             if self.session_factory:
@@ -276,7 +291,6 @@ class DatabaseAdapter(Loggable):
                             warn = False
                         else:
                             if self.test_func:
-                                self.connected = True
                                 self.connected = self._test_db_connection(version_warn)
                             else:
                                 self.connected = True
@@ -420,6 +434,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return driver
 
     def _test_db_connection(self, version_warn):
+        self.connected = True
         self.create_session()
 
         try:

@@ -89,14 +89,22 @@ class Datahub(Loggable):
             bind_preference(store.db, 'host', '{}.host'.format(prefid))
             bind_preference(store.db, 'username', '{}.username'.format(prefid))
             bind_preference(store.db, 'password', '{}.password'.format(prefid))
-
             self.stores['isotopedb'] = store
 
         self.stores['dvc'] = self.mainstore
 
-    def get_db(self,key):
+    def prepare_destory(self):
+        for s in ('massspec', 'isotopedb', 'dvc'):
+            try:
+                ss = self.stores[s]
+                ss.close_session()
+            except KeyError:
+                pass
+
+    def get_db(self, key):
         try:
             store = self.stores[key]
+            store.create_session()
             return store.db
         except KeyError:
             pass

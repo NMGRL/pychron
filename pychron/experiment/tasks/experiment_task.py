@@ -270,6 +270,7 @@ class ExperimentEditorTask(EditorTask):
             manager.start_update()
 
     def prepare_destory(self):
+        self.manager.prepare_destroy()
         self.manager.dvc.close_session()
 
     def create_dock_panes(self):
@@ -464,7 +465,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _get_save_path(self, default_filename=None, **kw):
         sd = ExperimentSaveDialog(root=paths.experiment_dir,
-                                  name=default_filename or '')
+                                  name=default_filename or 'Untitled')
         info = sd.edit_traits()
         if info.result:
             return sd.path

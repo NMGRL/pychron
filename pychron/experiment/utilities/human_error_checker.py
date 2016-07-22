@@ -19,9 +19,9 @@
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.loggable import Loggable
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import LINE_STR
 
 
 class HumanErrorChecker(Loggable):
@@ -83,7 +83,7 @@ class HumanErrorChecker(Loggable):
     def _check_run_non_fatal(self, run):
         es = run.extraction_script
         ed = run.extract_device
-        if run.extract_device and es:
+        if ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
             ds = ed.split(' ')[1].lower()
             if ds != es:
                 return 'Extraction script "{}" does not match the default "{}"'.format(es, ds)

@@ -108,9 +108,8 @@ class BaseEditorTask(BaseManagerTask):
                     return
 
             if not path:
-                path = self.save_file_dialog()
-
-            if path:
+                self.save_as()
+            else:
                 if self._save_file(path):
                     self.active_editor.dirty = False
                     self.active_editor.path = path

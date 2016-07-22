@@ -71,28 +71,33 @@ class MassSpecDatabaseImporter(Loggable):
     _analysis = None
     _database_version = 0
 
+    def create_session(self):
+        self.db.create_session()
+
     # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
         ret = 0
         if self.db:
-            identifier = self.get_identifier(identifier)
-            ret = self.db.get_latest_analysis(identifier, aliquot)
-            if ret:
-                _, s = ret
-                if s is not None and s in ALPHAS:
-                    ret = ALPHAS.index(s)  # if s is not None else -1
-                else:
-                    ret = -1
+            with self.db.session_ctx():
+                identifier = self.get_identifier(identifier)
+                ret = self.db.get_latest_analysis(identifier, aliquot)
+                if ret:
+                    _, s = ret
+                    if s is not None and s in ALPHAS:
+                        ret = ALPHAS.index(s)  # if s is not None else -1
+                    else:
+                        ret = -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
-            identifier = self.get_identifier(identifier)
-            ret = self.db.get_latest_analysis(identifier)
-            if ret:
-                ret, _ = ret
+            with self.db.session_ctx():
+                identifier = self.get_identifier(identifier)
+                ret = self.db.get_latest_analysis(identifier)
+                if ret:
+                    ret, _ = ret
         return ret
 
     def is_connected(self):
@@ -102,9 +107,10 @@ class MassSpecDatabaseImporter(Loggable):
     def connect(self, *args, **kw):
         ret = self.db.connect(*args, **kw)
         if ret:
-            ver = self.db.get_database_version()
-            if ver is not None:
-                self._database_version = ver
+            with self.db.session_ctx():
+                ver = self.db.get_database_version()
+                if ver is not None:
+                    self._database_version = ver
 
         return ret
 

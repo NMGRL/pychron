@@ -253,6 +253,7 @@ class ExperimentEditor(BaseTraitsEditor):
                     break
 
                 populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+                self.refresh()
 
             hec = qi.human_error_checker
 
