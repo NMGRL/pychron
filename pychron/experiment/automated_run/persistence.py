@@ -15,22 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import math
 from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
 # ============= standard library imports ========================
 import binascii
 import time
 import os
-from xlwt import Workbook
+from xlwt import Workbook, struct
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
+from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
 
 from pychron.loggable import Loggable
 # from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
+from pychron.processing.export.export_spec import MassSpecExportSpec
+from pychron.pychron_constants import NULL_STR
 
 DEBUG = False
 
@@ -670,3 +674,351 @@ class AutomatedRunPersister(BasePersister):
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
+
+    # def _get_filter_outlier_dict(self, iso, kind):
+    #     if kind == 'baseline':
+    #         fods = self.per_spec.baseline_fods
+    #         key = iso.detector
+    #     else:
+    #         fods = self.per_spec.signal_fods
+    #         key = iso.name
+    #
+    #     try:
+    #         fod = fods[key]
+    #     except KeyError:
+    #         fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
+    #     return fod
+
+    def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
+        if not (len(m.xs) and len(m.ys)):
+            self.debug('no data for {} {}'.format(iso.name, kind))
+            return
+
+        self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
+        dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
+        data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
+        db.add_signal(dbiso, data)
+
+        add_result = kind in ('baseline', 'signal')
+
+        if add_result:
+            # fod = self._get_filter_outlier_dict(iso, kind)
+            # m.set_filtering(fod)
+            fod = m.filter_outliers_dict
+            if m.fit:
+                # add fit
+                db.add_fit(dbhist, dbiso,
+                           fit=m.fit,
+                           filter_outliers=fod.get('filter_outliers', False),
+                           filter_outlier_iterations=fod.get('iterations', 1),
+                           filter_outlier_std_devs=fod.get('std_devs', 2))
+
+            # add isotope result
+            # print 'a',m.value, m.error, type(m.error), type(nan)
+            v, e = float(m.value), float(m.error)
+            v = 0 if math.isnan(v) or math.isinf(v) else v
+            e = 0 if math.isnan(e) or math.isinf(e) else e
+
+            db.add_isotope_result(dbiso,
+                                  dbhist,
+                                  signal_=v, signal_err=e)
+
+    def _save_sensitivity(self, extraction, measurement):
+        self.info('saving sensitivity')
+
+        # get the latest sensitivity entry for this spectrometer
+        spec = measurement.mass_spectrometer
+        if spec:
+            sens = spec.sensitivities
+            if sens:
+                extraction.sensitivity = sens[-1]
+
+    def _save_peak_center(self, db, analysis, cp):
+        self.info('saving peakcenter')
+
+        dm = self.data_manager
+        with dm.open_file(cp) as f:
+            if hasattr(f.root, 'peak_centers'):
+                for tab in f.walk_nodes(where='/peak_centers'):
+                    packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
+                    points = ''.join(packed_xy)
+                    center = tab.attrs.center_dac
+                    db.add_peak_center(analysis,
+                                       detector=tab.attrs.detector,
+                                       center=float(center) or 0,
+                                       points=points)
+
+    def _save_measurement(self, db, analysis):
+        self.info('saving measurement')
+
+        spec = self.per_spec.run_spec
+        meas = db.add_measurement(
+            analysis,
+            spec.analysis_type,
+            spec.mass_spectrometer,
+            time_zero_offset=spec.collection_time_zero_offset)
+
+        script = db.add_script(self.per_spec.measurement_name, self.per_spec.measurement_blob)
+
+        meas.script_id = script.id
+
+        return meas
+
+    def _save_extraction(self, db, analysis=None, loadtable=None,
+                         output_blob=None, response_blob=None, snapshots=None):
+        """
+            snapshots: list of tuples, (local_path, remote_path, imageblob)
+        """
+        self.info('saving extraction')
+
+        spec = self.per_spec.run_spec
+
+        self.debug('Saving extraction device {}'.format(spec.extract_device))
+
+        d = dict(extract_device=spec.extract_device,
+                 extract_value=spec.extract_value,
+                 extract_duration=spec.duration,
+                 cleanup_duration=spec.cleanup,
+                 weight=spec.weight,
+                 response_blob=response_blob or '',
+                 output_blob=output_blob or '',
+                 sensitivity_multiplier=self.per_spec.sensitivity_multiplier,
+                 is_degas=spec.labnumber == 'dg')
+
+        self._assemble_extraction_parameters(d)
+
+        ext = db.add_extraction(analysis, **d)
+
+        exp = db.add_script(self.per_spec.experiment_queue_name,
+                            self.per_spec.experiment_queue_blob)
+        self.debug('Script id {}'.format(exp.id))
+        ext.experiment_blob_id = exp.id
+
+        if self.per_spec.extraction_name:
+            script = db.add_script(self.per_spec.extraction_name,
+                                   self.per_spec.extraction_blob)
+            ext.script_id = script.id
+
+        for i, pp in enumerate(self.per_spec.positions):
+            if isinstance(pp, tuple):
+                if len(pp) > 1:
+
+                    if len(pp) == 3:
+                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1], z=pp[2])
+                    else:
+                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1])
+
+            else:
+                dbpos = db.add_analysis_position(ext, pp)
+                try:
+                    ep = self.per_spec.extraction_positions[i]
+                    dbpos.x = ep[0]
+                    dbpos.y = ep[1]
+                    if len(ep) == 3:
+                        dbpos.z = ep[2]
+                except IndexError:
+                    self.debug('no extraction position for {}'.format(pp))
+
+            if loadtable and dbpos:
+                dbpos.load_identifier = loadtable.name
+
+        if snapshots:
+            for lpath, rpath, image in snapshots:
+                dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
+                                              image=image)
+                ext.snapshots.append(dbsnap)
+        return ext
+
+    def _save_spectrometer_info(self, db, meas):
+        self.info('saving spectrometer info')
+
+        if self.per_spec.spec_dict:
+            db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
+            for det, deflection in self.per_spec.defl_dict.iteritems():
+                det = db.add_detector(det)
+                db.add_deflection(meas, det, deflection)
+
+    def _save_detector_intercalibration(self, db, analysis):
+        self.info('saving detector intercalibration')
+        if self.per_spec.isotope_group:
+            history = None
+            for det in self.per_spec.active_detectors:
+                det = det.name
+                ic = self.per_spec.isotope_group.get_ic_factor(det)
+                self.info('default ic_factor {}= {}'.format(det, ic))
+                if det == 'CDD':
+                    # save cdd_ic_factor so it can be exported to secondary db
+                    self.cdd_ic_factor = ic
+                    self.debug('default cdd_ic_factor={}'.format(ic))
+
+                user = self.per_spec.run_spec.username
+                user = user if user else NULL_STR
+
+                self.info(
+                    '{} adding detector intercalibration history for {}'.format(user, self.per_spec.run_spec.runid))
+
+                if history is None:
+                    history = db.add_detector_intercalibration_history(analysis,
+                                                                       user=user)
+                    analysis.selected_histories.selected_detector_intercalibration = history
+
+                uv, ue = ic.nominal_value, ic.std_dev
+                db.add_detector_intercalibration(history, det,
+                                                 user_value=float(uv),
+                                                 user_error=float(ue))
+
+    def _save_blank_info(self, db, analysis):
+        self.info('saving blank info')
+        self.debug('preceding blank id={}'.format(self.per_spec.previous_blank_id))
+
+        self._save_history_info(db, analysis, 'blanks', self.per_spec.previous_blanks,
+                                preceding_id=self.per_spec.previous_blank_id)
+
+    def _save_history_info(self, db, analysis, name, values, preceding_id=None):
+        if not values:
+            self.debug('no previous {} to save {}'.format(name, values))
+            return
+        spec = self.per_spec.run_spec
+        if spec.analysis_type.startswith('blank') or \
+                spec.analysis_type.startswith('background'):
+            return
+
+        user = spec.username
+        user = user if user else '---'
+
+        funchist = getattr(db, 'add_{}_history'.format(name))
+        self.info('{} adding {} history for {}-{}'.format(user, name,
+                                                          analysis.labnumber.identifier,
+                                                          analysis.aliquot))
+        history = funchist(analysis, user=user)
+
+        setattr(analysis.selected_histories,
+                'selected_{}'.format(name), history)
+
+        func = getattr(db, 'add_{}'.format(name))
+        for isotope, v in values.iteritems():
+            uv = v.nominal_value
+            ue = float(v.std_dev)
+            if preceding_id:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope, preceding_id=preceding_id)
+            else:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope)
+
+    def _save_monitor_info(self, db, analysis):
+        if self.per_spec.monitor:
+            self.info('saving monitor info')
+
+            for ci in self.per_spec.monitor.checks:
+                data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                params = dict(name=ci.name,
+                              parameter=ci.parameter, criterion=ci.criterion,
+                              comparator=ci.comparator, tripped=ci.tripped,
+                              data=data)
+
+                db.add_monitor(analysis, **params)
+
+    def _save_to_massspec(self, p):
+        # dm = self.data_manager
+        # ms = self.datahub.secondarystore
+        ms = self.datahub.stores['massspec']
+        h = ms.db.host
+        dn = ms.db.name
+        self.info('saving to massspec database {}/{}'.format(h, dn))
+
+        exp = self._export_spec_factory()
+        self.secondary_database_fail = False
+        if ms.add_analysis(exp):
+            self.info('analysis added to mass spec database')
+        else:
+            self.secondary_database_fail = 'Could not save {} to Mass Spec database'.format(
+                self.per_spec.run_spec.runid)
+
+    def _export_spec_factory(self):
+        # dc = self.collector
+        # fb = dc.get_fit_block(-1, self.fits)
+
+        # rs_name, rs_text = self._assemble_script_blob()
+        rid = self.per_spec.run_spec.runid
+
+        # blanks = self.get_previous_blanks()
+
+        # dkeys = [d.name for d in self._active_detectors]
+        # sf = dict(zip(dkeys, fb))
+        # p = self._current_data_frame
+
+        # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
+
+        exp = MassSpecExportSpec(runid=rid,
+                                 runscript_name=self.per_spec.runscript_name,
+                                 runscript_text=self.per_spec.runscript_blob,
+                                 # signal_fits=sf,
+                                 mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
+                                 # blanks=blanks,
+                                 # data_path=p,
+                                 isotopes=self.per_spec.isotope_group.isotopes,
+                                 # signal_intercepts=si,
+                                 # signal_intercepts=self._processed_signals_dict,
+                                 is_peak_hop=self.per_spec.save_as_peak_hop,
+                                 # ic_factor_v=float(nominal_value(ic)),
+                                 # ic_factor_e=float(std_dev(ic))
+                                 )
+        exp.load_record(self.per_spec.run_spec)
+
+        return exp
+
+    def _assemble_extraction_parameters(self, edict):
+        spec = self.per_spec.run_spec
+
+        edict.update(beam_diameter=spec.beam_diameter or 0,
+                     pattern=spec.pattern,
+                     ramp_duration=spec.ramp_duration or 0,
+                     ramp_rate=spec.ramp_rate or 0)
+
+    def _set_table_attr(self, name, grp, attr, value):
+        dm = self.data_manager
+        tab = dm.get_table(name, grp)
+        setattr(tab.attrs, attr, value)
+        tab.flush()
+
+    def _local_db_save(self):
+        ldb = self._local_lab_db_factory()
+        with ldb.session_ctx():
+            spec = self.per_spec.run_spec
+            ln = spec.labnumber
+            aliquot = spec.aliquot
+            step = spec.step
+            uuid = spec.uuid
+            cp = self._current_data_frame
+
+            ldb.add_analysis(labnumber=ln,
+                             aliquot=aliquot,
+                             uuid=uuid,
+                             step=step,
+
+                             mass_spectrometer=spec.mass_spectrometer,
+                             extract_device=spec.extract_device,
+                             extract_value=spec.extract_value,
+                             extract_units=spec.extract_units,
+                             duration=spec.duration,
+                             cleanup=spec.cleanup,
+
+                             comment=spec.comment,
+                             weight=spec.weight,
+                             collection_path=cp)
+
+    def _local_lab_db_factory(self):
+        # if self.local_lab_db:
+        #     return self.local_lab_db
+        # path = os.path.join(paths.hidden_dir, 'local_lab.db')
+        # name = '/Users/ross/Sandbox/local.db'
+        ldb = LocalLabAdapter()
+        ldb.build_database()
+        return ldb
+
+        # def _get_default_outlier_filtering(self):
+        # return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
+        # std_dev=self.fo_std_dev)
+
+# ============= EOF =============================================

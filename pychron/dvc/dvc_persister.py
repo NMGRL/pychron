@@ -191,7 +191,8 @@ class DVCPersister(BasePersister):
 
         self._save_analysis(timestamp)
 
-        self._save_analysis_db(timestamp)
+        with self.dvc.session_ctx():
+            self._save_analysis_db(timestamp)
 
         # save monitor
         self._save_monitor()
