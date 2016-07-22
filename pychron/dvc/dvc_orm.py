@@ -20,7 +20,6 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Bo
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.database.records.isotope_record import DVCIsotopeRecordView
@@ -77,7 +76,7 @@ class InterpretedAgeSetTbl(Base, BaseMixin):
 
 class RepositoryTbl(Base, BaseMixin):
     name = Column(String(80), primary_key=True)
-    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
     # timestamp = Column(TIMESTAMP, default=func.now())
     # creator = stringcolumn(80)
 
@@ -89,7 +88,8 @@ class RepositoryTbl(Base, BaseMixin):
 
         v = RepositoryRecordView()
         v.name = self.name
-        v.principal_investigator = self.principal_investigator or ''
+        if self.principal_investigator:
+            v.principal_investigator = self.principal_investigator.name
         return v
 
 
@@ -136,14 +136,17 @@ class AnalysisTbl(Base, BaseMixin):
     weight = Column(Float)
     comment = stringcolumn(80)
     repository_associations = relationship('RepositoryAssociationTbl', backref='analysis')
+    group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
+
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
-
     _record_view = None
+    group_id = 0
 
     @property
     def is_plateau_step(self):
         return
+
     @property
     def timestampf(self):
         return make_timef(self.timestamp)
@@ -160,7 +163,14 @@ class AnalysisTbl(Base, BaseMixin):
     def irradiation_level(self):
         return self.irradiation_position.level.name
 
-    #
+    @property
+    def project(self):
+        return self.irradiation_position.sample.project.name
+
+    @property
+    def sample(self):
+        return self.irradiation_position.sample.name
+
     @property
     def irradiation_position_position(self):
         return self.irradiation_position.position
@@ -263,13 +273,16 @@ class AnalysisTbl(Base, BaseMixin):
 
 class ProjectTbl(Base, NameMixin):
     id = primary_key()
-    principal_investigator = Column(String(140), ForeignKey('PrincipalInvestigatorTbl.name'))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
 
     samples = relationship('SampleTbl', backref='project')
+    analysis_groups = relationship('AnalysisGroupTbl', backref='project')
 
     @property
-    def gname(self):
-        return '{} ({})'.format(self.name, self.principal_investigator) if self.principal_investigator else self.name
+    def pname(self):
+        return '{} ({})'.format(self.name, self.principal_investigator.name) if self.principal_investigator else \
+            self.name
+
 
 class MaterialTbl(Base, NameMixin):
     id = primary_key()
@@ -348,9 +361,19 @@ class ExtractDeviceTbl(Base, BaseMixin):
 
 
 class PrincipalInvestigatorTbl(Base, BaseMixin):
-    name = Column(String(140), primary_key=True)
+    id = primary_key()
     affiliation = stringcolumn(140)
     email = stringcolumn(140)
+    last_name = Column(String(140))
+    first_initial = Column(String(10))
+
+    projects = relationship('ProjectTbl', backref='principal_investigator')
+    repositories = relationship('RepositoryTbl', backref='principal_investigator')
+    irs = relationship('IRTbl', backref='principal_investigator')
+
+    @property
+    def name(self):
+        return '{}, {}'.format(self.last_name, self.first_initial) if self.first_initial else self.last_name
 
     @property
     def record_view(self):
@@ -453,4 +476,39 @@ class RestrictedNameTbl(Base, BaseMixin):
     id = primary_key()
     name = stringcolumn()
     category = stringcolumn()
+
+
+# ======================== Lab Management ========================
+class IRTbl(Base, BaseMixin):
+    ir = primary_key(klass=String(32))
+    principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
+    institution = Column(String(140))
+    checkin_date = Column(DATE)
+    lab_contact = Column(String(140), ForeignKey('UserTbl.name'))
+    comment = Column(BLOB)
+
+    @property
+    def principal_investigator_name(self):
+        ret = ''
+        if self.principal_investigator:
+            ret = self.principal_investigator.name
+        return ret
+
+
+# ======================== Analysis Groups ========================
+class AnalysisGroupTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(140))
+    create_date = Column(TIMESTAMP)
+    projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
+    user = Column(String(140), ForeignKey('UserTbl.name'))
+
+    sets = relationship('AnalysisGroupSetTbl', backref='group')
+
+
+class AnalysisGroupSetTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+    groupID = Column(Integer, ForeignKey('AnalysisGroupTbl.id'))
+
 # ============= EOF =============================================

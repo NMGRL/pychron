@@ -404,7 +404,7 @@ class DVCDatabase(DatabaseAdapter):
     def add_principal_investigator(self, name):
         pi = self.get_principal_investigator(name)
         if pi is None:
-            pi = PrincipalInvestigatorTbl(name=name)
+            pi = PrincipalInvestigatorTbl(last_name=name)
             pi = self._add_item(pi)
         return pi
 
@@ -1256,11 +1256,12 @@ class DVCDatabase(DatabaseAdapter):
             return [mi.gname for mi in ms]
 
     def get_principal_investigator_names(self, *args, **kw):
-        return self._get_table_names(PrincipalInvestigatorTbl)
+        order = PrincipalInvestigatorTbl.last_name.asc()
+        return self._get_table_names(PrincipalInvestigatorTbl, order=order)
 
     def get_principal_investigators(self, order=None, **kw):
         if order:
-            order = getattr(PrincipalInvestigatorTbl.name, order)()
+            order = getattr(PrincipalInvestigatorTbl.last_name, order)()
 
         return self._retrieve_items(PrincipalInvestigatorTbl, order=order, **kw)
 
@@ -1386,7 +1387,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 ps = self._query_all(q)
         else:
-            ps = self._retrieve_items(ProjectTbl, order=order)
+            ps = self._retrieve_items(ProjectTbl, order=order, verbose_query=True)
         return ps
 
     # def get_tag(self, name):
@@ -1598,7 +1599,7 @@ class DVCDatabase(DatabaseAdapter):
     # private
     def _get_table_names(self, tbl, order='asc', use_distinct=False, **kw):
         with self.session_ctx():
-            if order:
+            if isinstance(order, str):
                 order = getattr(tbl.name, order)()
 
             names = self._retrieve_items(tbl, order=order, distinct_=use_distinct, **kw)
