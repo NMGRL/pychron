@@ -105,8 +105,9 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 #                 # del self._sess
 
 class MockSession:
-    def __getattr__(self, item):
-        return
+    pass
+    # def __getattr__(self, item):
+    #     return
 
 
 class DatabaseAdapter(Loggable):
@@ -200,7 +201,7 @@ class DatabaseAdapter(Loggable):
             self.session = MockSession()
 
     def close_session(self):
-        if self.session:
+        if self.session and not isinstance(self.session, MockSession):
             self._session_cnt -= 1
             if not self._session_cnt:
                 self.session.close()
@@ -533,9 +534,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
                         verbose_query=False):
 
         sess = self.session
-        if sess is None:
-            if self.session_factory:
-                sess = self.session_factory()
+        if sess is None or isinstance(sess, MockSession):
+            return []
+            # if self.session_factory:
+            #     sess = self.session_factory()
 
         if distinct_:
             if isinstance(distinct_, bool):
