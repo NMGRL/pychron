@@ -40,13 +40,14 @@ def add_view(info):
 
 def close_views():
     global __views__
-    # print len(__views__)
-    for v in __views__:
-        # print 'dispose {}'.format(v)
-        try:
-            v.dispose(abort=True)
-        except BaseException, e:
-            print v, e
+    if __views__:
+        # print len(__views__)
+        for v in __views__:
+            # print 'dispose {}'.format(v)
+            try:
+                v.dispose(abort=True)
+            except BaseException, e:
+                print v, e
     __views__ = None
 
 
