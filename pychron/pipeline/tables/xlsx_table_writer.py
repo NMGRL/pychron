@@ -15,14 +15,15 @@
 # ===============================================================================
 import os
 import re
-import subprocess
 
 import xlsxwriter
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from traits.api import Instance, Enum, Str, Bool
 from traitsui.api import View, VGroup, Item
 from uncertainties import nominal_value, std_dev
 
-from pychron.core.helpers.filetools import add_extension, unique_path2
+from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
@@ -44,21 +45,23 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_plateau_age = dumpable(Bool(True))
     include_integrated_age = dumpable(Bool(True))
     include_isochron_age = dumpable(Bool(True))
+    name = dumpable(Str('Untitled'))
+    auto_view = dumpable(Bool(False))
+
     _persistence_name = 'xlsx_table_options'
-    name = Str('Untitled')
-    title = 'Table. X'
 
     @property
     def path(self):
         name = self.name
         if not name or name == 'Untitled':
-            path = unique_path2(paths.table_dir, 'Untitled', extension='.xlsx')
+            path, _ = unique_path2(paths.table_dir, 'Untitled', extension='.xlsx')
         else:
             path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
         return path
 
     def traits_view(self):
         v = View(Item('name', label='Filename'),
+                 Item('auto_view', label='Open in Excel'),
                  # Item('title', label='Table Title'),
                  Item('power_units', label='Power Units'),
                  Item('age_units', label='Age Units'),
@@ -175,13 +178,13 @@ class XLSXTableWriter(BaseTableWriter):
 
         return [c for c in columns if c[0]]
 
-    def build(self, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
+    def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
         if options is None:
             options = XLSXTableWriterOptions()
 
         self._options = options
-
-        path = options.path
+        if path is None:
+            path = options.path
         self.debug('saving table to {}'.format(path))
         self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
         self._bold = self._workbook.add_format({'bold': True})
@@ -199,6 +202,13 @@ class XLSXTableWriter(BaseTableWriter):
             self._make_monitors(monitors)
 
         self._workbook.close()
+
+        view = self._options.auto_view
+        if not view:
+            view = confirm(None, 'Table saved to {}\n\nView Table?'.format(path)) == YES
+
+        if view:
+            view_file(path, application='Microsoft Office 2011/Microsoft Excel')
 
     def _make_unknowns(self, unks):
         self._make_sheet(unks, 'Unknowns')
@@ -259,7 +269,8 @@ class XLSXTableWriter(BaseTableWriter):
         subscript = self._workbook.add_format({'font_script': 2})
 
         border = self._workbook.add_format({'bottom': 2})
-        start = 9
+
+        start = next((i for i, c in enumerate(cols) if c[3]=='Ar40'), 9)
         sh.write(self._current_row, start, 'Corrected')
         sh.write(self._current_row, start + 10, 'Intercepts')
         sh.write(self._current_row, start + 20, 'Blanks')
@@ -364,7 +375,7 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _make_notes(self, sh, ncols, name):
         top = self._workbook.add_format({'top': 1})
-        sh.write_rich_string(self._current_row, 0, 'Notes:', top)
+        sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:',  top)
         for i in xrange(1, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
         self._current_row += 1
@@ -467,15 +478,19 @@ if __name__ == '__main__':
         plateau_age = 123
         integrated_age = 1231
         plateau_steps_str = 'A-F'
+        isochron_age =123323
 
 
     g = G()
     p = '/Users/ross/Sandbox/testtable.xlsx'
-    x.build(p, [g, g])
-    app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'
-
-    try:
-        subprocess.call(['open', '-a', app_path, p])
-    except OSError:
-        subprocess.call(['open', p])
+    paths.build('_dev')
+    options = XLSXTableWriterOptions()
+    options.configure_traits()
+    x.build(path=p, unknowns=[g, g], options=options)
+    # app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'
+    #
+    # try:
+    #     subprocess.call(['open', '-a', app_path, p])
+    # except OSError:
+    #     subprocess.call(['open', p])
 # ============= EOF =============================================
