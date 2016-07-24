@@ -24,5 +24,6 @@ from pychron.persistence_loggable import PersistenceMixin
 class BasePersistenceOptions(HasTraits, PersistenceMixin):
     def __init__(self, *args, **kw):
         self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
+        self.load()
 
 # ============= EOF =============================================

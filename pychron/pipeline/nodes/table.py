@@ -30,6 +30,9 @@ class XLSXAnalysisTableNode(TableNode):
     name = 'Analysis Table'
     options_klass = XLSXTableWriterOptions
 
+    def finish_configure(self):
+        self.options.dump()
+
     def run(self, state):
         self._make_table(state)
 
