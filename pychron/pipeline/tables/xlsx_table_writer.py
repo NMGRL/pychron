@@ -369,6 +369,13 @@ class XLSXTableWriter(BaseTableWriter):
                 ]
         return cols
 
+        view = self._options.auto_view
+        if not view:
+            view = confirm(None, 'Table saved to {}\n\nView Table?'.format(path)) == YES
+
+        if view:
+            view_file(path, application='Microsoft Office 2011/Microsoft Excel')
+
     def _make_unknowns(self, unks):
         self._make_sheet(unks, 'Unknowns')
 
