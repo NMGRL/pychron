@@ -16,9 +16,8 @@
 
 # ============= enthought library imports =======================
 import os
-# ============= standard library imports ========================
 import pickle
-# ============= local library imports  ==========================
+
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 
@@ -49,6 +48,10 @@ def load_persistence_values(obj, p, attrs):
 def dump_persistence_values(obj, p, attrs):
     d = {ai: getattr(obj, ai) for ai in attrs}
     dump_persistence_dict(p, d)
+
+
+def dumpable(klass, *args, **kw):
+    return klass(dump=True, *args, **kw)
 
 
 class PersistenceMixin(object):

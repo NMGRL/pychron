@@ -15,19 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import Str, Instance
 from traitsui.api import Item
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 from traitsui.editors import DirectoryEditor
 from uncertainties import ufloat
-from pychron.core.helpers.filetools import add_extension, view_file
+
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptions, InterpretedAgePersistOptionsView, \
-    AnalysisTablePersistOptions, AnalysisTablePersistOptionsView
+from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 
 
 class PersistNode(BaseNode):
@@ -209,48 +208,58 @@ class FluxPersistNode(DVCPersistNode):
                 i.recalculate_age()
 
 
-class TablePersistNode(FileNode):
-    pass
-
-
-class XLSTablePersistNode(BaseNode):
+class XLSXTablePersistNode(BaseNode):
     name = 'Save Analysis Table'
-    options_klass = AnalysisTablePersistOptionsView
-
-    def _options_factory(self):
-        opt = AnalysisTablePersistOptions(name='foo')
-        return self.options_klass(model=opt)
+    auto_configure = False
 
     def run(self, state):
-        from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
+        for table in state.tables:
+            writer = XLSXTableWriter()
+            writer.build(**table)
 
-        for editor in state.editors:
-            if isinstance(editor, ArArTableEditor):
-                opt = self.options.model
-                if opt.extension == 'xls':
-                    editor.make_xls_table(opt)
-                    view_file(opt.path)
-
-                    # basename = 'test_xls_table'
-                    # path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
-                    # editor.make_xls_table('FooBar', path)
-
-
-class InterpretedAgeTablePersistNode(BaseNode):
-    name = 'Save IA Table'
-    options_klass = InterpretedAgePersistOptionsView
-
-    def _options_factory(self):
-        opt = InterpretedAgePersistOptions(name='foo')
-        return self.options_klass(model=opt)
-
-    def run(self, state):
-        from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-        for editor in state.editors:
-            if isinstance(editor, InterpretedAgeTableEditor):
-                opt = self.options.model
-                if opt.extension == 'xls':
-                    editor.make_xls_table(opt)
-                    view_file(opt.path)
+#
+# class TablePersistNode(FileNode):
+#     pass
+#
+#
+# class XLSTablePersistNode(BaseNode):
+#     name = 'Save Analysis Table'
+#     options_klass = AnalysisTablePersistOptionsView
+#
+#     def _options_factory(self):
+#         opt = AnalysisTablePersistOptions(name='foo')
+#         return self.options_klass(model=opt)
+#
+#     def run(self, state):
+#         from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
+#
+#         for editor in state.editors:
+#             if isinstance(editor, ArArTableEditor):
+#                 opt = self.options.model
+#                 if opt.extension == 'xls':
+#                     editor.make_xls_table(opt)
+#                     view_file(opt.path)
+#
+#                     # basename = 'test_xls_table'
+#                     # path, _ = unique_path2(paths.data_dir, basename, extension='.xls')
+#                     # editor.make_xls_table('FooBar', path)
+#
+#
+# class InterpretedAgeTablePersistNode(BaseNode):
+#     name = 'Save IA Table'
+#     options_klass = InterpretedAgePersistOptionsView
+#
+#     def _options_factory(self):
+#         opt = InterpretedAgePersistOptions(name='foo')
+#         return self.options_klass(model=opt)
+#
+#     def run(self, state):
+#         from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
+#         for editor in state.editors:
+#             if isinstance(editor, InterpretedAgeTableEditor):
+#                 opt = self.options.model
+#                 if opt.extension == 'xls':
+#                     editor.make_xls_table(opt)
+#                     view_file(opt.path)
 
 # ============= EOF =============================================

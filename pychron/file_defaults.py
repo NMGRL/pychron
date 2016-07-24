@@ -439,9 +439,8 @@ XY_SCATTER = """- klass: UnknownNode
 
 ANALYSIS_TABLE = """- klass: UnknownNode
 - klass: GroupingNode
-- klass: AnalysisTableNode
-- klass: ReviewNode
-- klass: XLSTablePersistNode
+- klass: XLSXAnalysisTableNode
+- klass: XLSXTablePersistNode
 """
 
 INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode

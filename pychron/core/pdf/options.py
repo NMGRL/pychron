@@ -15,22 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Enum, \
+import os
+
+from traits.api import Str, Bool, Enum, \
     Button, Float, Int, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+
+from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.persistence_loggable import PersistenceMixin
+from pychron.persistence_loggable import dumpable
 
 
-def dumpable(klass, *args, **kw):
-    return klass(dump=True, *args, **kw)
-
-
-class BasePDFOptions(HasTraits, PersistenceMixin):
+class BasePDFOptions(BasePersistenceOptions):
     orientation = dumpable(Enum('landscape', 'portrait'))
     left_margin = dumpable(Float(1.5))
     right_margin = dumpable(Float(1))

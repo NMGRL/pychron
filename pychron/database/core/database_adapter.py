@@ -115,8 +115,23 @@ class SessionCTX(object):
         self._parent.close_session()
 
 
+class MockQuery:
+    def join(self, *args, **kw):
+        return self
+
+    def filter(self, *args, **kw):
+        return self
+
+    def all(self, *args, **kw):
+        return []
+
+    def order_by(self, *args, **kw):
+        return self
+
+
 class MockSession:
-    pass
+    def query(self, *args, **kw):
+        return MockQuery()
     # def __getattr__(self, item):
     #     return
 

@@ -21,14 +21,15 @@
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 from pychron.pipeline.editors.fusion.fusion_adapter import FusionTableAdapter, FusionGroupTableAdapter
+from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 from pychron.processing.tables.fusion.csv_writer import FusionTableCSVWriter
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
-from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 
 
 class FusionTableEditor(ArArTableEditor):
     pdf_writer_klass = FusionPDFTableWriter
-    xls_writer_klass = FusionTableXLSWriter
+    # xls_writer_klass = FusionTableXLSWriter
+    xls_writer_klass = XLSXTableWriter
     csv_writer_klass = FusionTableCSVWriter
     adapter_klass = FusionTableAdapter
     analysis_groups_adapter_klass = FusionGroupTableAdapter
