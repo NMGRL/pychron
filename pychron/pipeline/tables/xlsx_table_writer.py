@@ -34,6 +34,11 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 subreg = re.compile(r'^<sub>(?P<item>\w+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>\w+)</sup>')
 
+DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, baseline, radioactivity decay and '
+                         'detector intercalibration, not for interfering reactions.',
+                         'Intercepts: t-zero intercept corrected for detector baseline.',
+                         'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.')
+
 
 class XLSXTableWriterOptions(BasePersistenceOptions):
     power_units = dumpable(Enum('W', 'C'))
@@ -47,17 +52,16 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_isochron_age = dumpable(Bool(True))
     include_kca = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
+    repeat_header = dumpable(Bool(False))
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
-    unknown_notes = dumpable(Str('''Isotopic ratios corrected for blank, radioactive decay, and mass discrimination, not corrected for interfering reactions.
-Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
+    unknown_notes = dumpable(Str('''Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
 Integrated age calculated by summing isotopic measurements of all steps.
 Plateau age is inverse-variance-weighted mean of selected steps.
 Plateau age error is inverse-variance-weighted mean error (Taylor, 1982) times root MSWD where MSWD>1.
 Plateau error is weighted error of Taylor (1982).
 Decay constants and isotopic abundances after {decay_ref:}
-X symbol preceding sample ID denotes analyses excluded from plateau age calculations.
 Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at {monitor_age:} Ma'''))
 
     air_notes = dumpable(Str(''''''))
@@ -88,6 +92,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
                                 Item('power_units', label='Power Units'),
                                 Item('age_units', label='Age Units'),
+                                Item('repeat_header', label='Repeat Header'),
                                 show_border=True, label='Appearance')
 
         age_grp = VGroup(Item('include_F', label='Include 40Ar*/39ArK'),
@@ -125,6 +130,8 @@ class XLSXTableWriter(BaseTableWriter):
         self.debug('saving table to {}'.format(path))
         self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
         self._bold = self._workbook.add_format({'bold': True})
+        self._superscript = self._workbook.add_format({'font_script': 1})
+        self._subscript = self._workbook.add_format({'font_script': 2})
 
         if unknowns:
             self._make_unknowns(unknowns)
@@ -265,10 +272,14 @@ class XLSXTableWriter(BaseTableWriter):
 
         cols = self._get_columns(name)
 
-        for group in groups:
+        repeat_header = self._options.repeat_header
+
+        for i, group in enumerate(groups):
+
+            if repeat_header or i == 0:
+                self._make_column_header(worksheet, cols, i)
             self._make_meta(worksheet, group)
 
-            self._make_column_header(worksheet, cols)
             n = len(group.analyses) - 1
             for i, item in enumerate(group.analyses):
                 self._make_analysis(worksheet, cols, item, i == n)
@@ -283,6 +294,8 @@ class XLSXTableWriter(BaseTableWriter):
             sh.hide_gridlines(2)
 
         sh.set_column(0, 0, 2)
+        if not self._options.repeat_header:
+            sh.freeze_panes(5, 0)
 
     def _make_title(self, sh, name):
 
@@ -295,18 +308,21 @@ class XLSXTableWriter(BaseTableWriter):
             sh.write_blank(self._current_row, i, '', cell_format=fmt)
         self._current_row += 1
 
-    def _make_column_header(self, sh, cols):
+    def _make_column_header(self, sh, cols, it):
         names = [c[1] for c in cols]
         units = [c[2] for c in cols]
-
-        superscript = self._workbook.add_format({'font_script': 1})
-        subscript = self._workbook.add_format({'font_script': 2})
 
         border = self._workbook.add_format({'bottom': 2})
 
         start = next((i for i, c in enumerate(cols) if c[3] == 'Ar40'), 9)
-        sh.write(self._current_row, start, 'Corrected')
-        sh.write(self._current_row, start + 10, 'Intercepts')
+
+        if self._options.repeat_header and it > 0:
+            sh.write(self._current_row, start, 'Corrected')
+            sh.write(self._current_row, start + 10, 'Intercepts')
+        else:
+            sh.write_rich_string(self._current_row, start, 'Corrected', self._superscript, '1')
+            sh.write_rich_string(self._current_row, start + 10, 'Intercepts', self._superscript, '2')
+
         sh.write(self._current_row, start + 20, 'Blanks')
         self._current_row += 1
         for items, use_border in ((names, False), (units, True)):
@@ -315,8 +331,8 @@ class XLSXTableWriter(BaseTableWriter):
                 if isinstance(ci, tuple):
                     args = []
                     for cii in ci:
-                        for reg, fmt in ((supreg, superscript),
-                                         (subreg, subscript)):
+                        for reg, fmt in ((supreg, self._superscript),
+                                         (subreg, self._subscript)):
                             m = reg.match(cii)
                             if m:
                                 args.append(fmt),
@@ -433,6 +449,14 @@ class XLSXTableWriter(BaseTableWriter):
         decay_ref = u'Steiger and J\u00E4ger (1977)'
         notes = unicode(self._options.unknown_notes)
         notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
+
+        sh.write_rich_string(self._current_row, 0, self._superscript, '1', DEFAULT_UNKNOWN_NOTES[0])
+        self._current_row += 1
+        sh.write_rich_string(self._current_row, 0, self._superscript, '2', DEFAULT_UNKNOWN_NOTES[1])
+        self._current_row += 1
+        sh.write(self._current_row, 0, DEFAULT_UNKNOWN_NOTES[2])
+        self._current_row += 1
+
         self._write_notes(sh, notes)
 
     def _make_blanks_notes(self, sh):
