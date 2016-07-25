@@ -37,11 +37,22 @@ class XLSXAnalysisTableNode(TableNode):
         self._make_table(state)
 
     def _make_table(self, state):
+        unknowns = (a for a in state.unknowns if a.analysis_type == 'unknown')
+        blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
+        airs = (a for a in state.unknowns if a.analysis_type == 'air')
+
         key = lambda x: x.group_id
-        unk_group = [AnalysisGroup(analyses=list(unks)) for _, unks in groupby(sorted(state.unknowns, key=key),
-                                                                               key=key)]
+        unk_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(unknowns, key=key),
+                                                                                       key=key)]
+        blank_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(blanks, key=key),
+                                                                                         key=key)]
+        air_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(airs, key=key),
+                                                                                       key=key)]
+
         state.tables.append({'options': self.options,
-                             'unknowns': unk_group})
+                             'unknowns': unk_group,
+                             'blanks': blank_group,
+                             'airs': air_group})
 
 #
 # class TableOptions(HasTraits, PersistenceMixin):

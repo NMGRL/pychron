@@ -20,7 +20,7 @@ import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Instance, Enum, Str, Bool
-from traitsui.api import View, VGroup, Item
+from traitsui.api import View, VGroup, Item, UItem, Tabbed
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
@@ -47,6 +47,19 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_isochron_age = dumpable(Bool(True))
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
+    unknown_notes = dumpable(Str('''Isotopic ratios corrected for blank, radioactive decay, and mass discrimination, not corrected for interfering reactions.
+Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
+Integrated age calculated by summing isotopic measurements of all steps.
+Plateau age is inverse-variance-weighted mean of selected steps.
+Plateau age error is inverse-variance-weighted mean error (Taylor, 1982) times root MSWD where MSWD>1.
+Plateau error is weighted error of Taylor (1982).
+Decay constants and isotopic abundances after {decay_ref:}
+X symbol preceding sample ID denotes analyses excluded from plateau age calculations.
+Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at {monitor_age:} Ma'''))
+
+    air_notes = dumpable(Str(''''''))
+    blank_notes = dumpable(Str(''''''))
+    monitor_notes = dumpable(Str(''''''))
 
     _persistence_name = 'xlsx_table_options'
 
@@ -60,19 +73,31 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
         return path
 
     def traits_view(self):
-        v = View(Item('name', label='Filename'),
-                 Item('auto_view', label='Open in Excel'),
-                 # Item('title', label='Table Title'),
-                 Item('power_units', label='Power Units'),
-                 Item('age_units', label='Age Units'),
-                 Item('hide_gridlines', label='Hide Gridlines'),
-                 Item('include_F', label='Include 40Ar*/39ArK'),
-                 Item('include_radiogenic_yield', label='Include %40Ar*'),
-                 Item('include_production_ratios', label='Include Production Ratios'),
-                 VGroup(
-                     Item('include_plateau_age', label='Include Plateau'),
-                     Item('include_integrated_age', label='Include Integrated'),
-                     Item('include_isochron_age', label='Include Isochron'), label='Ages', show_border=True),
+        unknown_notes_grp = VGroup(UItem('unknown_notes', style='custom'), show_border=True, label='Unknown Notes')
+        air_notes_grp = VGroup(UItem('air_notes', style='custom'), show_border=True, label='Air Notes')
+        blank_notes_grp = VGroup(UItem('blank_notes', style='custom'), show_border=True, label='Blank Notes')
+        monitor_notes_grp = VGroup(UItem('monitor_notes', style='custom'), show_border=True, label='Monitor Notes')
+
+        grp = VGroup(Item('name', label='Filename'),
+                     Item('auto_view', label='Open in Excel'),
+                     show_border=True)
+
+        appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
+                        Item('power_units', label='Power Units'),
+                        Item('age_units', label='Age Units'),
+                        show_border=True, label='Appearance')
+
+        age_grp = VGroup(Item('include_F', label='Include 40Ar*/39ArK'),
+                         Item('include_radiogenic_yield', label='Include %40Ar*'),
+                         Item('include_production_ratios', label='Include Production Ratios'),
+                         Item('include_plateau_age', label='Include Plateau'),
+                         Item('include_integrated_age', label='Include Integrated'),
+                         Item('include_isochron_age', label='Include Isochron'), label='Unknowns', show_border=True)
+        g1 = VGroup(grp, age_grp, appearence_grp, label='Main')
+
+        v = View(Tabbed(g1, unknown_notes_grp, blank_notes_grp, air_notes_grp, monitor_notes_grp),
+                 resizable=True,
+                 width=750,
                  title='XLSX Analysis Table Options',
                  buttons=['OK', 'Cancel'])
         return v
@@ -85,6 +110,39 @@ class XLSXTableWriter(BaseTableWriter):
 
     _options = Instance(XLSXTableWriterOptions)
 
+    def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
+        if options is None:
+            options = XLSXTableWriterOptions()
+
+        self._options = options
+        if path is None:
+            path = options.path
+        self.debug('saving table to {}'.format(path))
+        self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
+        self._bold = self._workbook.add_format({'bold': True})
+
+        if unknowns:
+            self._make_unknowns(unknowns)
+
+        if airs:
+            self._make_airs(airs)
+
+        if blanks:
+            self._make_blanks(blanks)
+
+        if monitors:
+            self._make_monitors(monitors)
+
+        self._workbook.close()
+
+        view = self._options.auto_view
+        if not view:
+            view = confirm(None, 'Table saved to {}\n\nView Table?'.format(path)) == YES
+
+        if view:
+            view_file(path, application='Excel')
+
+    # private
     def _get_columns(self, name):
         options = self._options
 
@@ -178,38 +236,6 @@ class XLSXTableWriter(BaseTableWriter):
 
         return [c for c in columns if c[0]]
 
-    def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
-        if options is None:
-            options = XLSXTableWriterOptions()
-
-        self._options = options
-        if path is None:
-            path = options.path
-        self.debug('saving table to {}'.format(path))
-        self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
-        self._bold = self._workbook.add_format({'bold': True})
-
-        if unknowns:
-            self._make_unknowns(unknowns)
-
-        if airs:
-            self._make_airs(airs)
-
-        if blanks:
-            self._make_blanks(blanks)
-
-        if monitors:
-            self._make_monitors(monitors)
-
-        self._workbook.close()
-
-        view = self._options.auto_view
-        if not view:
-            view = confirm(None, 'Table saved to {}\n\nView Table?'.format(path)) == YES
-
-        if view:
-            view_file(path, application='Microsoft Office 2011/Microsoft Excel')
-
     def _make_unknowns(self, unks):
         self._make_sheet(unks, 'Unknowns')
 
@@ -270,7 +296,7 @@ class XLSXTableWriter(BaseTableWriter):
 
         border = self._workbook.add_format({'bottom': 2})
 
-        start = next((i for i, c in enumerate(cols) if c[3]=='Ar40'), 9)
+        start = next((i for i, c in enumerate(cols) if c[3] == 'Ar40'), 9)
         sh.write(self._current_row, start, 'Corrected')
         sh.write(self._current_row, start + 10, 'Intercepts')
         sh.write(self._current_row, start + 20, 'Blanks')
@@ -375,7 +401,7 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _make_notes(self, sh, ncols, name):
         top = self._workbook.add_format({'top': 1})
-        sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:',  top)
+        sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
         for i in xrange(1, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
         self._current_row += 1
@@ -389,30 +415,26 @@ class XLSXTableWriter(BaseTableWriter):
     def _make_unknowns_notes(self, sh):
         monitor_age = 28.201
         decay_ref = u'Steiger and J\u00E4ger (1977)'
-        for line in ('Isotopic ratios corrected for blank, radioactive decay, and mass discrimination, not corrected '
-                     'for interfering reactions.',
-                     'Errors quoted for individual analyses include analytical error only, without interfering '
-                     'reaction or J uncertainties.',
-                     'Integrated age calculated by summing isotopic measurements of all steps.',
-                     'Plateau age is inverse-variance-weighted mean of selected steps.',
-                     'Plateau age error is inverse-variance-weighted mean error (Taylor, 1982) times root MSWD where '
-                     'MSWD>1.',
-                     'Plateau error is weighted error of Taylor (1982).',
-                     u'Decay constants and isotopic abundances after {}.'.format(decay_ref),
-                     'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',
-                     'Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at '
-                     '{} Ma '.format(monitor_age)):
-            sh.write(self._current_row, 0, line)
-            self._current_row += 1
+        notes = unicode(self._options.unknown_notes)
+        notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
+        self._write_notes(sh, notes)
 
     def _make_blanks_notes(self, sh):
-        pass
+        notes = unicode(self._options.blank_notes)
+        self._write_notes(sh, notes)
 
     def _make_airs_notes(self, sh):
-        pass
+        notes = unicode(self._options.air_notes)
+        self._write_notes(sh, notes)
 
     def _make_monitor_notes(self, sh):
-        pass
+        notes = unicode(self._options.monitor_notes)
+        self._write_notes(sh, notes)
+
+    def _write_notes(self, sh, notes):
+        for line in notes.split('\n'):
+            sh.write(self._current_row, 0, line)
+            self._current_row += 1
 
 
 if __name__ == '__main__':
@@ -478,7 +500,7 @@ if __name__ == '__main__':
         plateau_age = 123
         integrated_age = 1231
         plateau_steps_str = 'A-F'
-        isochron_age =123323
+        isochron_age = 123323
 
 
     g = G()
