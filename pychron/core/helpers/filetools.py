@@ -20,7 +20,7 @@ import os
 import re
 import shutil
 import subprocess
-
+import sys
 from datetime import datetime
 
 
@@ -69,16 +69,20 @@ def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
 
 
 def view_file(p, application='Preview', logger=None):
-    app_path = '/Applications/{}.app'.format(application)
-    if not os.path.exists(app_path):
-        app_path = '/Applications/Preview.app'
+    if sys.platform == 'darwin':
+        if application == 'Excel':
+            application = 'Microsoft Office 2011/Microsoft Excel'
 
-    try:
-        subprocess.call(['open', '-a', app_path, p])
-    except OSError:
-        if logger:
-            logger.debug('failed opening {} using {}'.format(p, app_path))
-        subprocess.call(['open', p])
+        app_path = '/Applications/{}.app'.format(application)
+        if not os.path.exists(app_path):
+            app_path = '/Applications/Preview.app'
+
+        try:
+            subprocess.call(['open', '-a', app_path, p])
+        except OSError:
+            if logger:
+                logger.debug('failed opening {} using {}'.format(p, app_path))
+            subprocess.call(['open', p])
 
 
 def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
