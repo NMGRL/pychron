@@ -20,7 +20,7 @@ import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Instance, Enum, Str, Bool
-from traitsui.api import View, VGroup, Item, UItem, Tabbed
+from traitsui.api import View, VGroup, Item, UItem, Tabbed, HGroup
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
@@ -45,6 +45,9 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_plateau_age = dumpable(Bool(True))
     include_integrated_age = dumpable(Bool(True))
     include_isochron_age = dumpable(Bool(True))
+    include_kca = dumpable(Bool(True))
+    use_weighted_kca = dumpable(Bool(True))
+
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
     unknown_notes = dumpable(Str('''Isotopic ratios corrected for blank, radioactive decay, and mass discrimination, not corrected for interfering reactions.
@@ -83,12 +86,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                      show_border=True)
 
         appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
-                        Item('power_units', label='Power Units'),
-                        Item('age_units', label='Age Units'),
-                        show_border=True, label='Appearance')
+                                Item('power_units', label='Power Units'),
+                                Item('age_units', label='Age Units'),
+                                show_border=True, label='Appearance')
 
         age_grp = VGroup(Item('include_F', label='Include 40Ar*/39ArK'),
                          Item('include_radiogenic_yield', label='Include %40Ar*'),
+                         HGroup(Item('include_kca', label='Include K/Ca'),
+                                Item('use_weighted_kca', label='Weighted Mean')),
                          Item('include_production_ratios', label='Include Production Ratios'),
                          Item('include_plateau_age', label='Include Plateau'),
                          Item('include_integrated_age', label='Include Integrated'),
@@ -147,11 +152,12 @@ class XLSXTableWriter(BaseTableWriter):
         options = self._options
 
         ubit = name in ('Unknowns', 'Monitor')
+        kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
-        columns = [(True, 'Status', '', 'status'),
+        columns = [(True, '', '', 'status'),
                    (True, 'N', '', 'aliquot_step_str'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
-                   (ubit, 'K/Ca', '', 'kca', value),
+                   (kcabit, 'K/Ca', '', 'kca', value),
                    (ubit, PLUSMINUS_ONE_SIGMA, '', 'kca', error),
                    (ubit, 'Age', age_units, 'age', value),
                    (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', value),
@@ -276,6 +282,8 @@ class XLSXTableWriter(BaseTableWriter):
         if self._options.hide_gridlines:
             sh.hide_gridlines(2)
 
+        sh.set_column(0, 0, 2)
+
     def _make_title(self, sh, name):
 
         fmt = self._workbook.add_format({'font_size': 14, 'bold': True,
@@ -330,17 +338,17 @@ class XLSXTableWriter(BaseTableWriter):
     def _make_meta(self, sh, group):
         fmt = self._bold
         row = self._current_row
-        sh.write_rich_string(row, 0, 'Sample:', fmt)
-        sh.write_rich_string(row, 1, group.sample, fmt)
+        sh.write_rich_string(row, 1, 'Sample:', fmt)
+        sh.write_rich_string(row, 2, group.sample, fmt)
 
-        sh.write_rich_string(row, 4, 'Identifier:', fmt)
-        sh.write_rich_string(row, 5, group.identifier, fmt)
+        sh.write_rich_string(row, 5, 'Identifier:', fmt)
+        sh.write_rich_string(row, 6, group.identifier, fmt)
 
         self._current_row += 1
 
         row = self._current_row
-        sh.write_rich_string(row, 0, 'Material:', fmt)
-        sh.write_rich_string(row, 1, group.material, fmt)
+        sh.write_rich_string(row, 1, 'Material:', fmt)
+        sh.write_rich_string(row, 2, group.material, fmt)
         self._current_row += 1
 
     def _make_analysis(self, sh, cols, item, last):
@@ -367,24 +375,32 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
+        fmt = self._bold
+        if self._options.include_kca:
+            idx = next((i for i, c in enumerate(cols) if c[1] == 'K/Ca'))
+            sh.write_rich_string(self._current_row, 1, u'K/Ca {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+            kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
+            sh.write(self._current_row, idx, nominal_value(kca))
+            sh.write(self._current_row, idx + 1, std_dev(kca))
+            self._current_row += 1
+
         idx = next((i for i, c in enumerate(cols) if c[1] == 'Age'))
 
-        fmt = self._bold
-        sh.write_rich_string(self._current_row, 0, u'Weight Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+        sh.write_rich_string(self._current_row, 1, u'Weight Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
         sh.write(self._current_row, idx, nominal_value(group.weighted_age))
         sh.write(self._current_row, idx + 1, std_dev(group.weighted_age))
 
         self._current_row += 1
 
         if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
-            sh.write_rich_string(self._current_row, 0, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
-            sh.write(self._current_row, 2, 'steps {}'.format(group.plateau_steps_str))
+            sh.write_rich_string(self._current_row, 1, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+            sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
             sh.write(self._current_row, idx, nominal_value(group.plateau_age))
             sh.write(self._current_row, idx + 1, std_dev(group.plateau_age))
 
             self._current_row += 1
         if self._options.include_isochron_age:
-            sh.write_rich_string(self._current_row, 0, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
+            sh.write_rich_string(self._current_row, 1, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
             sh.write(self._current_row, idx, nominal_value(group.isochron_age))
             sh.write(self._current_row, idx + 1, std_dev(group.isochron_age))
@@ -392,7 +408,7 @@ class XLSXTableWriter(BaseTableWriter):
             self._current_row += 1
 
         if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-            sh.write_rich_string(self._current_row, 0, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
+            sh.write_rich_string(self._current_row, 1, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
             sh.write(self._current_row, idx, nominal_value(group.integrated_age))
             sh.write(self._current_row, idx + 1, std_dev(group.integrated_age))
@@ -501,6 +517,8 @@ if __name__ == '__main__':
         integrated_age = 1231
         plateau_steps_str = 'A-F'
         isochron_age = 123323
+        weighted_kca = 1412
+        arith_kca = 0.123
 
 
     g = G()
