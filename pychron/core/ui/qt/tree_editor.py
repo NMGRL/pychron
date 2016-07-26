@@ -40,10 +40,6 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
 
-        if self._tree:
-            item = PipelineDelegate(self._tree, self.factory.show_icons)
-            self._tree.setItemDelegate(item)
-
     def _collapse_all_fired(self):
         ctrl = self.control
         if ctrl is None:
@@ -209,6 +205,11 @@ class _PipelineEditor(SimpleEditor):
     #     super(_PipelineEditor, self).__init__(*args, **kw)
     #     self._delegate =
     #
+    def init(self, parent):
+        super(_PipelineEditor, self).init(parent)
+        if self._tree:
+            item = PipelineDelegate(self._tree, self.factory.show_icons)
+            self._tree.setItemDelegate(item)
 
     def _create_item(self, nid, node, object, index=None):
         """ Create  a new TreeWidgetItem as per word_wrap policy.
