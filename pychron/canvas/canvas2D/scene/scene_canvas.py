@@ -19,16 +19,15 @@ try:
     from kiva import JOIN_ROUND
 except ImportError:
     JOIN_ROUND = 0
-from traits.api import Instance, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import Instance
+
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.scene import Scene
 
 
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
-    scene_klass = Any
+    scene_klass = Scene
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
