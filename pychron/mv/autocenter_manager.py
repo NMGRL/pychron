@@ -18,8 +18,6 @@
 from traits.api import Float, Button, Bool, Any
 from traitsui.api import View, Item, HGroup, RangeEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 
 
@@ -124,7 +122,7 @@ class AutoCenterManager(MachineVisionManager):
 
     def traits_view(self):
         v = View(HGroup(Item('use_autocenter', label='Enabled'),
-                        Item('configure_button', show_label=False),
+                        # Item('configure_button', show_label=False),
                         show_border=True,
                         label='Autocenter'))
         return v
