@@ -83,7 +83,7 @@ class HumanErrorChecker(Loggable):
     def _check_run_non_fatal(self, run):
         es = run.extraction_script
         ed = run.extract_device
-        if ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
+        if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
             ds = ed.split(' ')[1].lower()
             if ds != es:
                 return 'Extraction script "{}" does not match the default "{}"'.format(es, ds)
