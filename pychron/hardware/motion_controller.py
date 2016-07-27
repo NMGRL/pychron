@@ -133,6 +133,7 @@ class MotionController(CoreDevice):
         timer.set_interval(period)
         return timer
 
+    @caller
     def set_z(self, v, **kw):
 
         self.single_axis_move('z', v, **kw)
@@ -246,7 +247,7 @@ class MotionController(CoreDevice):
         """
         """
 
-        self._check_moving(axis='z', verbose=False)
+        self._check_moving(axis='z', verbose=True)
 
         z = self.get_current_position('z')
         self.z_progress = z
@@ -334,6 +335,7 @@ class MotionController(CoreDevice):
     def _block(self, axis=None, event=None):
         """
         """
+        self.debug('block')
         if event is not None:
             event.clear()
 

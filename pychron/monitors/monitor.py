@@ -38,6 +38,9 @@ class Monitor(ConfigLoadable):
     _stop_signal = None
     configuration_dir_name = paths.monitors_dir
 
+    def reset(self):
+        pass
+
     def is_monitoring(self):
         return self._monitoring
 

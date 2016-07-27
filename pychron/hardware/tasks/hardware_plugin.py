@@ -113,9 +113,9 @@ class HardwarePlugin(BaseTaskPlugin):
                 from pychron.tx.server import TxServer
                 rhm = TxServer()
                 node = self.application.preferences.node('pychron.hardware')
-                ports = eval(node.get('ports'))
-                factories = eval(node.get('factories'))
-                for protocol in eval(node.get('pnames')):
+                ports = eval(node.get('ports', '[]'))
+                factories = eval(node.get('factories', '[]'))
+                for protocol in eval(node.get('pnames', '[]')):
                     factory = import_klass(factories[protocol])
                     port = int(ports[protocol])
                     rhm.add_endpoint(port, factory(self.application))

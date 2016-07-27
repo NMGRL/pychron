@@ -227,7 +227,7 @@ class ATLLaserControlUnit(CoreDevice):
         if verbose:
             self.debug('get nburst')
 
-        v = None
+        v = 0
         resp = self._send_query(22, 2, verbose=verbose)
         if resp is not None and len(resp) == 8:
             high = resp[4:]
