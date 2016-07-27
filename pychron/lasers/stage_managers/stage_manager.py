@@ -115,14 +115,14 @@ class StageManager(BaseStageManager):
         dev.parent = self
         return dev
 
-    def goto_position(self, v):
+    def goto_position(self, v, **kw):
         if XY_REGEX[0].match(v):
             self._move_to_calibrated_position(v)
         elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
             self.move_to_point(v)
 
         else:
-            self.move_to_hole(v, user_entry=True)
+            self.move_to_hole(v, user_entry=True, **kw)
 
     def get_current_position(self):
         if self.stage_controller:
@@ -233,7 +233,7 @@ class StageManager(BaseStageManager):
         self.stage_controller.linear_move(*pos, **kw)
 
     def move_to_hole(self, hole, **kw):
-        if self.stage_map.check_valid_hole(hole):
+        if self.stage_map.check_valid_hole(hole, **kw):
             self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
 
     def move_to_point(self, pt):
@@ -748,41 +748,42 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def _move_to_hole(self, key, correct_position=True, user_entry=False):
+    def _move_to_hole(self, key, correct_position=True, user_entry=False, autocenter_only=False):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
-        self.temp_hole = key
-        self.temp_position = self.stage_map.get_hole_pos(key)
-        pos = self.stage_map.get_corrected_hole_pos(key)
-        self.info('position {}'.format(pos))
+
         autocentered_position = False
-        if pos is not None:
-
-            if abs(pos[0]) < 1e-6:
-                pos = self.stage_map.get_hole_pos(key)
-                # map the position to calibrated space
-                pos = self.get_calibrated_position(pos, key=key)
-            else:
-                # check if this is an interpolated position
-                # if so probably want to do an autocentering routine
-                hole = self.stage_map.get_hole(key)
-                if hole.interpolated:
-                    self.info('using an interpolated value')
+        if not autocenter_only:
+            self.temp_hole = key
+            self.temp_position = self.stage_map.get_hole_pos(key)
+            pos = self.stage_map.get_corrected_hole_pos(key)
+            self.info('position {}'.format(pos))
+            if pos is not None:
+                if abs(pos[0]) < 1e-6:
+                    pos = self.stage_map.get_hole_pos(key)
+                    # map the position to calibrated space
+                    pos = self.get_calibrated_position(pos, key=key)
                 else:
-                    self.info('using previously calculated corrected position')
-                    autocentered_position = True
-            try:
-                self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
-            except TargetPositionError, e:
-                self.warning('Move to {} failed'.format(pos))
-                self.parent.emergency_shutoff(str(e))
-                return
-            except ZeroDisplacementException:
-                correct_position = False
+                    # check if this is an interpolated position
+                    # if so probably want to do an autocentering routine
+                    hole = self.stage_map.get_hole(key)
+                    if hole.interpolated:
+                        self.info('using an interpolated value')
+                    else:
+                        self.info('using previously calculated corrected position')
+                        autocentered_position = True
+                try:
+                    self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
+                except TargetPositionError, e:
+                    self.warning('Move to {} failed'.format(pos))
+                    self.parent.emergency_shutoff(str(e))
+                    return
+                except ZeroDisplacementException:
+                    correct_position = False
 
-            self._move_to_hole_hook(key, correct_position,
-                                    autocentered_position)
-            self.finish_move_to_hole(user_entry)
-            self.info('Move complete')
+        self._move_to_hole_hook(key, correct_position,
+                                autocentered_position)
+        self.finish_move_to_hole(user_entry)
+        self.info('Move complete')
 
     def _move_to_hole_hook(self, *args):
         pass

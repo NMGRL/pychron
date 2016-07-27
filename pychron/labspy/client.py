@@ -183,10 +183,11 @@ class LabspyClient(Loggable):
                     addr, status))
 
         appname, user = self.application.name.split('-')
-        self.db.set_connection(ts,
-                               appname.strip(),
-                               user.strip(),
-                               devname, com, addr, status)
+        with self.db.session_ctx():
+            self.db.set_connection(ts,
+                                   appname.strip(),
+                                   user.strip(),
+                                   devname, com, addr, status)
 
     @auto_connect
     def update_status(self, **kw):

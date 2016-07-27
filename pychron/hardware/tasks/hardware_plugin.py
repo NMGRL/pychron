@@ -143,7 +143,7 @@ class HardwarePlugin(BaseTaskPlugin):
                 s.stop_scan()
 
     def _factory(self):
-        task = HardwareTask()
+        task = HardwareTask(application=self.application)
         return task
 
     def _flag_manager_factory(self):

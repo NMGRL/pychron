@@ -149,6 +149,7 @@ class BaseLaserManager(Manager):
             return
 
         pm = self.pattern_executor
+        self.debug('execute pattern {}, block={}, lase={}'.format(name, block, lase))
         if pm.load_pattern(name):
             pm.set_stage_values(self.stage_manager)
 

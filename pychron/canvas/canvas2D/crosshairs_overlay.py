@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
+from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Float, Enum, Bool
 
 
@@ -77,7 +78,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         # mx += 1
         # my += 1
         if radius:
-            radius = component.get_wh(radius, 0)[0]
+            # radius = component.get_wh(radius, 0)[0]
             gc.arc(mx, my, radius, 0, 360)
 
             if not self.circle_only or not circle_only:
@@ -100,6 +101,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
 
 class CrosshairsOverlay(SimpleCrosshairsOverlay):
     circle_only = False
+    font = KivaFont("modern 10")
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
@@ -109,6 +111,8 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 radius = component.crosshairs_radius
             else:
                 radius = component.beam_radius
+
+            radius = component.get_wh(radius, 0)[0]
 
             sdp = component.show_desired_position
             dp = component.desired_position
@@ -124,7 +128,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
             my = component.y + (component.y2 - component.y) / 2.0
             if component.show_laser_position:
                 if ox or oy:
-                    pos_off = mx[0] + ox, my[1] + oy
+                    pos_off = mx + ox, my + oy
                     self._draw_radius_ch(gc, component, pos_off, radius,
                                          color=component.crosshairs_offset_color)
                 else:
@@ -136,6 +140,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 if h is not None:
                     x, y = mx + ox + radius, my + oy + radius
                     gc.set_text_position(x, y)
-                    gc.show_text(h)
+                    gc.set_font(self.font)
+                    gc.show_text(h.id)
 
 # ============= EOF ============================================
