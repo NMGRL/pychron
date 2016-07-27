@@ -19,8 +19,7 @@ import os
 from itertools import groupby
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.geometry.affine import transform_point, \
     itransform_point
 from pychron.loggable import Loggable
@@ -151,7 +150,7 @@ class BaseStageMap(Loggable):
             yield ri[len(ri)/2]
 
     def get_calibration_hole(self, h):
-        d = 'north', 'east', 'south', 'west'
+        d = 'north', 'east', 'south', 'west', 'center'
         try:
             idx = d.index(h)
         except IndexError, e:
@@ -218,7 +217,7 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
             return True
 
     def get_corrected_hole_pos(self, key):
-        return next(((h.x_cor, h.y_cor)
+        return next((h.corrected_position if h.has_correction else h.nominal_position
                      for h in self.sample_holes if h.id == key), None)
 
     def clear_correction_file(self):
