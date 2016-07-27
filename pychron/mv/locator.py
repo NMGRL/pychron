@@ -92,11 +92,12 @@ class Locator(Loggable):
         w, h = get_size(src)
 
         x = int((w - cw_px) / 2. + ox)
-        y = int((h - ch_px) / 2. + oy)
+        y = int((h - ch_px) / 2. - oy)
 
         # r = 4 - cw_px % 4
         # cw_px = ch_px = cw_px + r
-
+        self.debug('Crop: x={},y={}, cw={}, ch={}, width={}, height={}, ox={}, oy={}'.format(x, y, cw_px, ch_px, w, h,
+                                                                                             ox, oy))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
     def find_circle(self, image, frame, dim, **kw):
@@ -214,7 +215,7 @@ class Locator(Loggable):
 
         fa = self._get_filter_target_area(dim)
 
-        for i in range(n):
+        for i in xrange(n):
             seg.threshold_low = max((0, start + i * step - w))
             seg.threshold_high = max((1, min((255, start + i * step + w))))
 

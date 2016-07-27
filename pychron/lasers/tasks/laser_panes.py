@@ -71,9 +71,10 @@ class StageControlPane(TraitsDockPane):
         pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
                             tooltip='Enter a position e.g 1 for a hole, '
                                     'or 3,4 for X,Y'),
+                      icon_button_editor('stage_manager.autocenter_button', 'find',
+                                         enabled_when='stage_manager.autocenter_manager.use_autocenter'),
                       Item('stage_manager.keep_images_open',
-                           enabled_when='stage_manager.autocenter_manager'
-                                        '.use_autocenter',
+                           enabled_when='stage_manager.autocenter_manager.use_autocenter',
                            label='Keep Images Open',
                            tooltip='If checked  do not automatically close '
                                    'autocentering images when move finished'),

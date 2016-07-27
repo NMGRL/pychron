@@ -24,8 +24,9 @@ import os
 import cStringIO
 import time
 from numpy import polyfit, linspace, hstack, array, average, zeros_like
-from threading import Thread
+from threading import Thread, current_thread, Event
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
 from pychron.lasers.pattern.dragonfly_pattern import dragonfly
@@ -171,9 +172,16 @@ class PatternExecutor(Patternable):
             before returning
         """
         self.start(show=self.show_patterning)
+        evt = None
+        if current_thread().name != 'MainThread':
+            evt = Event()
+            invoke_in_main_thread(self._pre_execute, evt)
+            while not evt.is_set():
+                time.sleep(0.05)
+        else:
+            self._pre_execute(evt)
 
-        self._pre_execute()
-
+        self.debug('execute')
         t = Thread(target=self._execute)
         t.start()
 
@@ -182,7 +190,8 @@ class PatternExecutor(Patternable):
 
             self.finish()
 
-    def _pre_execute(self):
+    def _pre_execute(self, evt):
+        self.debug('pre execute')
         pattern = self.pattern
 
         kind = pattern.kind
@@ -192,6 +201,10 @@ class PatternExecutor(Patternable):
             g = Graph(window_x=1000, window_y=100, window_height=900)
             self._info = open_view(g)
             self._seek_graph = g
+
+        if evt is not None:
+            evt.set()
+        self.debug('pre execute finished')
 
     def _execute(self):
         pat = self.pattern

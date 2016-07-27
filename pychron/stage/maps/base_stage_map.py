@@ -196,12 +196,15 @@ class BaseStageMap(Loggable):
         return next(((h.x, h.y)
                      for h in self.sample_holes if h.id == str(key)), None)
 
-    def check_valid_hole(self, key):
+    def check_valid_hole(self, key, autocenter_only=False, **kw):
+        if autocenter_only and not key:
+            return True
+
         msg = None
         if self.sample_holes:
             hole = self.get_hole(key)
             if hole is None:
-                msg = '{} is not a valid hole for tray "{}".'.format(key,
+                msg = '"{}" is not a valid hole for tray "{}".'.format(key,
                                                                      self.name)
         else:
             msg = '''There a no holes in tray "{}". This is most likely because

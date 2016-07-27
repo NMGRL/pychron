@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from pyface.timer.do_later import do_after
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int, Float
 
@@ -469,7 +470,7 @@ class VideoStageManager(StageManager):
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.1)
             ox, oy = self.canvas.get_screen_offset()
-            for ti in range(max(1, ntries)):
+            for ti in xrange(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 args = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -505,14 +506,15 @@ class VideoStageManager(StageManager):
         if rpos:
             corrected = True
             # add an adjustment value to the stage map
-            if save:
+            if save and holenum is not None:
                 sm.set_hole_correction(holenum, *rpos)
                 sm.dump_correction_file()
                 #            f = 'interpolation' if interp else 'correction'
         else:
-            corrected = False
             #            f = 'uncorrected'
-            rpos = sm.get_hole(holenum).nominal_position
+            corrected = False
+            if holenum is not None:
+                rpos = sm.get_hole(holenum).nominal_position
         self.debug('Autocenter duration ={}'.format(time.time() - st))
         return rpos, corrected, interp
 
@@ -550,7 +552,7 @@ class VideoStageManager(StageManager):
             # self.lumen_detector.mask_radius = new*self.stage_map.g_dimension
 
     def _autocenter_button_fired(self):
-        self.autocenter()
+        self.goto_position(self.calibrated_position_entry, autocenter_only=True)
 
     #     def _configure_autocenter_button_fired(self):
     #         info = self.autocenter_manager.edit_traits(view='configure_view',
