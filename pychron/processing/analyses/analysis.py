@@ -15,26 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from collections import namedtuple
+
 from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
-
 from traits.api import Event, Dict, List
-
-# ============= standard library imports ========================
-from collections import namedtuple
-# ============= local library imports  ==========================
 from traitsui.handler import Handler
 from uncertainties import ufloat
+
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
-from pychron.processing.arar_age import ArArAge
-# from pychron.processing.analyses.analysis_view import AnalysisView
-# from pychron.processing.analyses.summary import AnalysisSummary
-# from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
+from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
@@ -165,7 +160,6 @@ class Analysis(ArArAge):
     extract_duration = 0
     extract_device = ''
     position = ''
-    rundate = None
     experiment_txt = ''
     extraction_script_blob = ''
     measurement_script_blob = ''
