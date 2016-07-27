@@ -52,7 +52,7 @@ class FusionsUVManager(FusionsLaserManager):
     fire_button = Event
     fire_label = Property(depends_on='firing')
     firing = DelegatesTo('atl_controller')
-    mode = Enum('Burst', 'Continuous', 'Single')
+    fire_mode = Enum('Burst', 'Continuous', 'Single')
 
     gas_handler = Instance(UVGasHandlerManager)
 
@@ -320,13 +320,13 @@ class FusionsUVManager(FusionsLaserManager):
             self.atl_controller.laser_stop()
         else:
             self.info('firing laser')
-            if self.mode == 'Single':
+            if self.fire_mode == 'Single':
                 self.atl_controller.laser_single_shot()
             else:
                 self.atl_controller.laser_run()
 
-    def _mode_changed(self):
-        if self.mode == 'Burst':
+    def _fire_mode_changed(self):
+        if self.fire_mode == 'Burst':
             self.atl_controller.set_burst_mode(True)
         else:
             self.atl_controller.set_burst_mode(False)
@@ -343,7 +343,7 @@ class FusionsUVManager(FusionsLaserManager):
     def _stage_manager_default(self):
         args = dict(name='stage',
                     configuration_dir_name='fusions_uv',
-                    stage_controller_class='Aerotech',
+                    stage_controller_klass='Aerotech',
                     stage_map_klass=UVLaserStageMap)
 
         return self._stage_manager_factory(args)
@@ -361,7 +361,7 @@ class FusionsUVManager(FusionsLaserManager):
         #        uv.bootstrap()
         return uv
 
-    def _mode_default(self):
+    def _fire_mode_default(self):
         return 'Burst'
 
     def _laser_script_executor_default(self):

@@ -147,11 +147,11 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                  enabled_when='use_video'),
                           label='Video')
 
-        canvasgrp = VGroup(Item('show_bounds_rect', 'Display Bounds Rectangle'),
+        canvasgrp = VGroup(Item('show_bounds_rect', label='Display Bounds Rectangle'),
                            Item('show_map', label='Display Map'),
                            Item('show_grids', label='Display Grids'),
                            Item('show_laser_position', label='Display Current Position'),
-                           Item('show_desired_position', 'Display Desired Position'),
+                           Item('show_desired_position', label='Display Desired Position'),
                            Item('show_hole', label='Display Hole Label'),
                            UItem('desired_position_color', enabled_when='show_desired_position'),
                            Item('crosshairs_kind', label='Crosshairs',

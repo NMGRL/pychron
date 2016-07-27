@@ -71,10 +71,10 @@ class FusionsUVControlPane(TraitsDockPane):
                 Item('action_readback', width=100, style='readonly', label='Action'),
                 Item('status_readback', style='readonly', label='Status')),
             HGroup(button_editor('fire_button', 'fire_label'),
-                   Item('mode', show_label=False),
+                   Item('fire_mode', show_label=False),
                    enabled_when='object.enabled and object.status_readback=="Laser On"'),
             HGroup(
-                Item('burst_shot', label='N Burst', enabled_when='mode=="Burst"'),
+                Item('burst_shot', label='N Burst', enabled_when='fire_mode=="Burst"'),
                 Item('reprate', label='Rep. Rate')),
             HGroup(
                 Item('burst_readback', label='Burst Rem.', width=50, style='readonly'),
