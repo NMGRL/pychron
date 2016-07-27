@@ -21,14 +21,13 @@
 from copy import copy
 
 from uncertainties import ufloat, std_dev, nominal_value
-# ============= local library imports  ==========================
-from pychron.processing.isotope_group import IsotopeGroup
-from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
-    calculate_decay_factor, calculate_flux
-from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.isotope import Blank
 
 from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
+from pychron.processing.arar_constants import ArArConstants
+from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
+    calculate_decay_factor, calculate_flux
+from pychron.processing.isotope import Blank
+from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS
 
 
@@ -94,17 +93,8 @@ class ArArAge(IsotopeGroup):
     _kcl_warning = False
 
     discrimination = None
-
-    # lambda_k = None
-
-    # def __init__(self, *args, **kw):
-    # HasTraits.__init__(self, *args, **kw)
-    #     self.logger = logger
-
-    # moles_Ar40 = Property
-    # irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
-    # decay_days = Property(depends_on='timestamp,irradiation_time')
-    # isotope_keys = Property
+    weight = 0  # in milligrams
+    rundate = None
 
     def __init__(self, *args, **kw):
         super(ArArAge, self).__init__(*args, **kw)
@@ -117,6 +107,36 @@ class ArArAge(IsotopeGroup):
         self.production_ratios = {}
         self.temporary_ic_factors = {}
         self.discrimination = ufloat(1, 0)
+
+    @property
+    def k2o(self):
+        """
+            MolKTot=Mol39*F39K*9.54/(JVal*KAbund40*.01) // moles of K40; = 39ArK*( (lambda*J/(lambda epsilon + lambda epsion prime)); McDougall  H. p. 19 eq. 2.17
+            a=MolKTot*94.2*100/(2*Weight)
+
+        weight should be in milligrams
+        @return:
+        """
+        k2o = 0
+        if self.weight:
+            k40_k = 0.0001167
+            k40 = self.non_ar_isotopes['k40']
+            moles_k = k40/k40_k*self.sensitivity
+            mw_k2o = 94.2
+            k2o = (moles_k * mw_k2o*100)/(2*self.weight*0.001)
+        return k2o
+
+    @property
+    def isochron3940(self):
+        a = self.get_interference_corrected_value('Ar39')
+        b = self.get_interference_corrected_value('Ar40')
+        return a/b
+
+    @property
+    def isochron3640(self):
+        a = self.get_interference_corrected_value('Ar36')
+        b = self.get_interference_corrected_value('Ar40')
+        return a/b
 
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
