@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Instance, HasTraits, Str, Bool, Float
-# ============= standard library imports ========================
 import time
 from threading import Thread
+
 from numpy import array, hstack, average
-# ============= local library imports  ==========================
+from traits.api import Instance, HasTraits, Str, Bool, Float
+
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -151,6 +151,15 @@ class SemiAutoCalibrator(TrayCalibrator):
 
             # traverse holes
             self._traverse(calibration)
+
+            # move back to center hole
+            center = self.stage_map.get_calibration_hole('center')
+            if center:
+                x, y = center.corrected_position if center.has_correction else center.nominal_position
+                self.stage_manager.linear_move(x, y, block=True, force=True, use_calibration=False)
+            else:
+                self.warning('No calibration hole defined for "center" in Stage Map file {}'.format(
+                    self.stage_map.file_path))
 
     def _traverse(self, calibration):
         """
