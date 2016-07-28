@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, Item, VGroup, \
-    HGroup, spring, UItem, ButtonEditor, Group
+    HGroup, spring, UItem, ButtonEditor, Group, EnumEditor
 
 from pychron.core.ui.led_editor import LEDEditor
+from pychron.core.ui.qt.reference_mark_editor import ReferenceMarkEditor
+from pychron.envisage import icon_button_editor
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, AxesPane, SupplementalPane
 
@@ -36,6 +38,16 @@ class FusionsUVPane(BaseLaserPane):
 
 class FusionsUVStagePane(StageControlPane):
     id = 'pychron.fusions.uv.stage'
+
+    def _get_tabs(self):
+        tabs = super(FusionsUVStagePane, self)._get_tabs()
+        refmark_grp = VGroup(HGroup(UItem('reference_marks.mark', editor=EnumEditor(name='reference_marks.mark_ids')),
+                                    icon_button_editor('add_reference_mark_button', 'add')),
+                             Item('reference_marks.mark_display', editor=ReferenceMarkEditor()),
+                             Item('reference_marks.reset_reference_marks_button'),
+                             Item('reference_marks.spacing'),
+                             label='Ref. Marks')
+        tabs.content.append(refmark_grp)
 
 
 class FusionsUVAxesPane(AxesPane):

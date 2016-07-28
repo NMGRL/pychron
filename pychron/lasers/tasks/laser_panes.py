@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
@@ -22,13 +23,10 @@ from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor, \
     ListStrEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
-from pychron.core.ui.led_editor import LEDEditor
-from enable.component_editor import ComponentEditor
 
 
 class BaseLaserPane(TraitsTaskPane):
@@ -67,94 +65,68 @@ class StageControlPane(TraitsDockPane):
                 'stage_manager': self.model.stage_manager,
                 'tray_calibration': self.model.stage_manager.tray_calibration_manager}
 
-    def traits_view(self):
-        pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
-                            tooltip='Enter a position e.g 1 for a hole, '
-                                    'or 3,4 for X,Y'),
-                      icon_button_editor('stage_manager.autocenter_button', 'find',
-                                         enabled_when='stage_manager.autocenter_manager.use_autocenter'),
-                      Item('stage_manager.keep_images_open',
-                           enabled_when='stage_manager.autocenter_manager.use_autocenter',
-                           label='Keep Images Open',
-                           tooltip='If checked  do not automatically close '
-                                   'autocentering images when move finished'),
-                      label='Calibrated Position',
-                      show_border=True)
-        hgrp = HGroup(UItem('stage_manager.stop_button'),
-                      UItem('stage_manager.home'),
-                      UItem('stage_manager.home_option',
-                            editor=EnumEditor(
-                                name='stage_manager.home_options')))
-        chgrp = VGroup(
-            HGroup(Item('canvas.show_laser_position', label='Display Current'),
-                   UItem('canvas.crosshairs_color')),
-            Item('canvas.show_hole', label='Display Hole Label'),
-            HGroup(
-                Item('canvas.show_desired_position',
-                     label='Show Desired'),
-                UItem('canvas.desired_position_color')),
-            Item('canvas.crosshairs_kind', label='Kind'),
-            Item('canvas.crosshairs_radius', label='Radius'),
-            HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
-                   UItem('canvas.crosshairs_offsety')),
-            Item('canvas.crosshairs_offset_color', label='Offset Color'),
-            label='Crosshairs',
-            show_border=True)
-        cngrp = VGroup(
-            Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
-            Item('canvas.show_grids', label='Show Grids'),
-            chgrp,
-            label='Canvas')
+    def _get_tabs(self):
+        canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
+                            Item('canvas.show_grids', label='Show Grids'),
+                            VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
+                                          UItem('canvas.crosshairs_color')),
+                                   Item('canvas.show_hole', label='Display Hole Label'),
+                                   HGroup(
+                                       Item('canvas.show_desired_position',
+                                            label='Show Desired'),
+                                       UItem('canvas.desired_position_color')),
+                                   Item('canvas.crosshairs_kind', label='Kind'),
+                                   Item('canvas.crosshairs_radius', label='Radius'),
+                                   HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
+                                          UItem('canvas.crosshairs_offsety')),
+                                   Item('canvas.crosshairs_offset_color', label='Offset Color'),
+                                   label='Crosshairs',
+                                   show_border=True),
+                            label='Canvas')
 
         mode = self.model.mode
-        cagrp = VGroup(
-            visible_when='use_video',
-            label='Camera')
+        camera_grp = VGroup(visible_when='use_video', label='Camera')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             mvgrp = VGroup(
                 UItem('stage_manager.autocenter_manager', style='custom'),
-                # UItem('stage_manager.autofocus_manager', style='custom'),
                 UItem('stage_manager.zoom_calibration_manager',
                       style='custom'),
                 label='Machine Vision', show_border=True)
 
-            recgrp = VGroup(
-                HGroup(icon_button_editor('stage_manager.snapshot_button',
-                                          'camera',
-                                          tooltip='Take a snapshot'),
-                       icon_button_editor('stage_manager.record',
-                                          'media-record',
-                                          tooltip='Record video'),
-                       CustomLabel('stage_manager.record_label',
-                                   color='red')),
-                VGroup(Item('stage_manager.auto_save_snapshot'),
-                       Item('stage_manager.render_with_markup')),
-                show_border=True,
-                label='Recording')
+            recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
+                                                      'camera',
+                                                      tooltip='Take a snapshot'),
+                                   icon_button_editor('stage_manager.record',
+                                                      'media-record',
+                                                      tooltip='Record video'),
+                                   CustomLabel('stage_manager.record_label',
+                                               color='red')),
+                            VGroup(Item('stage_manager.auto_save_snapshot'),
+                                   Item('stage_manager.render_with_markup')),
+                            show_border=True,
+                            label='Recording')
 
             cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
                                  label='Zoom Coefficients'))
-            cagrp.content.extend((cfggrp, recgrp, mvgrp))
+            camera_grp.content.extend((cfggrp, recgrp, mvgrp))
 
-        cgrp = Group(
-            UItem('stage_manager.stage_controller', style='custom',
-                  label='Axes'),
-            cngrp,
-            cagrp,
-            layout='tabbed')
+        tabs = Group(UItem('stage_manager.stage_controller', style='custom',
+                           label='Axes'),
+                     canvas_grp,
+                     camera_grp,
+                     layout='tabbed')
 
         if mode != 'client':
             pp_grp = UItem('stage_manager.points_programmer',
                            label='Points',
                            style='custom')
-            cgrp.content.append(pp_grp)
+            tabs.content.append(pp_grp)
 
             tc_grp = VGroup(UItem('tray_calibration.style',
                                   enabled_when='not tray_calibration.isCalibrating()'),
                             HGroup(UItem('tray_calibration.calibrate',
-                                         editor=ButtonEditor(
-                                             label_value='tray_calibration.calibration_step'),
+                                         editor=ButtonEditor(label_value='tray_calibration.calibration_step'),
                                          width=-125),
                                    UItem('tray_calibration.add_holes_button',
                                          label='Add Holes'),
@@ -183,9 +155,29 @@ class StageControlPane(TraitsDockPane):
                                    label='Help', show_border=True),
                             label='Calibration')
 
-            cgrp.content.append(tc_grp)
+            tabs.content.append(tc_grp)
+        return tabs
 
-        v = View(VGroup(hgrp, pgrp, cgrp))
+    def traits_view(self):
+        pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
+                            tooltip='Enter a position e.g 1 for a hole, '
+                                    'or 3,4 for X,Y'),
+                      icon_button_editor('stage_manager.autocenter_button', 'find',
+                                         enabled_when='stage_manager.autocenter_manager.use_autocenter'),
+                      Item('stage_manager.keep_images_open',
+                           enabled_when='stage_manager.autocenter_manager.use_autocenter',
+                           label='Keep Images Open',
+                           tooltip='If checked  do not automatically close '
+                                   'autocentering images when move finished'),
+                      label='Calibrated Position',
+                      show_border=True)
+        hgrp = HGroup(UItem('stage_manager.stop_button'),
+                      UItem('stage_manager.home'),
+                      UItem('stage_manager.home_option',
+                            editor=EnumEditor(
+                                name='stage_manager.home_options')))
+        tabs = self._get_tabs()
+        v = View(VGroup(hgrp, pgrp, tabs))
 
         return v
 
