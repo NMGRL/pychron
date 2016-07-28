@@ -23,9 +23,6 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.view_util import open_view
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserManager
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
 
@@ -222,4 +219,8 @@ class PIDTuningAction(LaserCalibrationAction):
         task = self._get_task(event)
         task.new_pid_tuner()
 
+
+class LaserScriptExecuteAction(TaskAction):
+    method = 'show_laser_script_executor'
+    name = 'Laser Script...'
 # ============= EOF =============================================

@@ -15,24 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Str
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.strtools import to_bool
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.envisage.initialization.initialization_parser import InitializationParser
-from pychron.paths import paths
-from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
+from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction, \
+    LaserScriptExecuteAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
+from pychron.paths import paths
 
 
 def pattern_action(name, application, manager_name, lase=False):
@@ -207,6 +207,8 @@ class FusionsPlugin(BaseLaserPlugin):
         exts = [TaskExtension(actions=actions)]
 
         actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                  path='MenuBar/laser.menu'),
+                   SchemaAddition(factory=LaserScriptExecuteAction,
                                   path='MenuBar/laser.menu')]
         lactions = []
         for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
