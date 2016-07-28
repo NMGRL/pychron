@@ -21,12 +21,13 @@ from traits.api import Instance, Bool, Button, Property, Str
 from traitsui.api import View, Item, ButtonEditor, UItem
 
 from pychron.core.helpers.filetools import pathtolist
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
 class LaserScriptExecutor(Loggable):
-    laser_manager = Instance('pychron.lasers.laser_managers.base_laser_manager.BaseLaserManager')
+    laser_manager = Instance(ILaserManager)
     execute_button = Button
     execute_label = Property(depends_on='_executing')
     message = Str

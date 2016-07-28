@@ -355,7 +355,8 @@ class FusionsUVManager(FusionsLaserManager):
     # handlers
     # ===============================================================================
     def _add_reference_mark_button_fired(self):
-        self._add_reference_mark()
+        t = Thread(target=self._add_reference_mark)
+        t.start()
 
     def _reset_reference_marks_button_fired(self):
         if self.confirmation_dialog('Are you sure you want to continue?'):

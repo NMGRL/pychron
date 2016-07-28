@@ -37,6 +37,7 @@ class Monitor(ConfigLoadable):
     _invalid_checks = None
     _stop_signal = None
     configuration_dir_name = paths.monitors_dir
+    start_time = None
 
     def reset(self):
         pass
