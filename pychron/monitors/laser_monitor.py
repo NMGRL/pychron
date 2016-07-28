@@ -64,6 +64,8 @@ class LaserMonitor(Monitor):
         manager = self.manager
         if verbose:
             self.info('Check lasing duration')
+        if not self.start_time:
+            self.reset_start_time()
 
         # max duration in mins convert to secs for comparison
         if time.time() - self.start_time > self.max_duration * 60.0:

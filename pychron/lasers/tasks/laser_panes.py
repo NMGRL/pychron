@@ -63,7 +63,8 @@ class StageControlPane(TraitsDockPane):
     def trait_context(self):
         return {'canvas': self.model.stage_manager.canvas,
                 'stage_manager': self.model.stage_manager,
-                'tray_calibration': self.model.stage_manager.tray_calibration_manager}
+                'tray_calibration': self.model.stage_manager.tray_calibration_manager,
+                'object': self.model}
 
     def _get_tabs(self):
         canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
