@@ -17,14 +17,14 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Float, Int, Str, Bool, Property, Array
-# ============= standard library imports ========================
-from numpy import array, hstack
 import time
 from threading import Lock
-# ============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+
+from numpy import array, hstack
+from traits.api import Float, Int, Str, Bool, Property, Array
+
 from pychron.hardware.core.checksum_helper import computeBCC
+from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 
 STX = chr(2)
@@ -287,7 +287,6 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_stop(self):
-    #        self.stop_update_timer()
         self.debug('stop laser')
         cmd = self._build_command(11, 1)
         self._send_command(cmd)

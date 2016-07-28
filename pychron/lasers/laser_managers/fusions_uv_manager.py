@@ -16,23 +16,20 @@
 
 
 # ============= enthought library imports =======================
+import time
+from threading import Thread
+
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
-# ============= standard library imports ========================
-import time
-
-# ============= local library imports  ==========================
 from fusions_laser_manager import FusionsLaserManager
-from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
-from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
-# from pychron.lasers.laser_managers.laser_shot_history import LaserShotHistory
-from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
-# from pychron.machine_vision.mosaic_manager import MosaicManager
-from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
-from pychron.stage.maps.laser_stage_map import UVLaserStageMap
-from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
 from pychron.core.geometry.geometry import calc_point_along_line
-from threading import Thread
+from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
+from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
+from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
+from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
+from pychron.lasers.reference_marks import ReferenceMarks
+from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
+from pychron.stage.maps.laser_stage_map import UVLaserStageMap
 
 
 class FusionsUVManager(FusionsLaserManager):
@@ -70,6 +67,10 @@ class FusionsUVManager(FusionsLaserManager):
 
     _is_tracing = False
     _cancel_tracing = False
+
+    add_reference_mark_button = Button
+    reset_reference_marks_button = Button
+    reference_marks = Instance(ReferenceMarks, ())
 
     # dbname = paths.uvlaser_db
     # db_root = paths.uvlaser_db_root
@@ -311,9 +312,55 @@ class FusionsUVManager(FusionsLaserManager):
         self.firing = False
         return resp
 
+    def _add_reference_mark(self):
+
+        if not self.enabled:
+            self.warning_dialog('Please enable the laser and wait for it to warm up')
+            return
+
+        if not self.is_ready():
+            self.warning_dialog('Please wait for the laser to warm up')
+            return
+
+        refmarks = self.reference_marks
+        if not refmarks.check_mark():
+            if not self.confirmation_dialog('Reference Mark "{}" already exists. Are you sure you want to add it '
+                                            'again?'.format(refmarks.mark)):
+                return
+
+        if not self.atl_controller.burst_shot:
+            self.warning_dialog('Please set nbursts')
+            return
+
+        sm = self.stage_manager
+        cx, cy = sm.get_current_position()
+        self.debug('Making reference mark "{}":{}'.format(refmarks.mark, refmarks.get_mark()))
+        for x, y in refmarks.make_mark():
+            self.debug('mark x={}, y={}'.format(x, y))
+            time.sleep(1)
+            sm.linear_move(cx + x, cy - y, use_calibration=False, block=True)
+            time.sleep(0.25)
+            ret = self.fire_laser('burst')
+            if isinstance(ret, str):
+                self.warning('make mark failed')
+                break
+
+            while self.is_firing():
+                time.sleep(0.1)
+        else:
+            self.info('mark mark complete')
+            refmarks.set_made()
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _add_reference_mark_button_fired(self):
+        self._add_reference_mark()
+
+    def _reset_reference_marks_button_fired(self):
+        if self.confirmation_dialog('Are you sure you want to continue?'):
+            self.reference_marks.reset()
+
     def _fire_button_fired(self):
         if self.firing:
             self.info('stopping laser')
