@@ -40,6 +40,7 @@ class StatusMonitor(Loggable):
     #     self._clients = []
 
     def start(self, oid, vm):
+        self.debug('start {}'.format(oid))
         if not self._clients:
             p = self.update_period
             s, c, l, o = self.state_freq, self.checksum_freq, self.lock_freq, self.owner_freq
@@ -66,6 +67,7 @@ class StatusMonitor(Loggable):
             return not self._stop_evt.isSet()
 
     def stop(self, oid):
+        self.debug('stop {}'.format(oid))
         try:
             self._clients.remove(oid)
         except ValueError:
