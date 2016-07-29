@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.timer.do_later import do_after
 from traits.api import Int, List
 # ============= standard library imports ========================
+import time
 # ============= local library imports  ==========================
-from threading import Event
+from threading import Event, Thread
 from pychron.loggable import Loggable
 
 
@@ -47,11 +47,14 @@ class StatusMonitor(Loggable):
                        'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(p, s, c, l, o))
             if self._stop_evt:
                 self._stop_evt.set()
-                self._stop_evt.wait(0.25)
+                self._stop_evt.wait(self.update_period)
 
             self._stop_evt = Event()
+            t = Thread(target=self._run, args=(vm,))
+            t.setDaemon(True)
+            t.start()
 
-            self._iter(1, vm)
+            # self._iter(1, vm)
         else:
             self.debug('Monitor already running')
 
@@ -63,7 +66,6 @@ class StatusMonitor(Loggable):
             return not self._stop_evt.isSet()
 
     def stop(self, oid):
-        # self._clients -= 1
         try:
             self._clients.remove(oid)
         except ValueError:
@@ -75,7 +77,24 @@ class StatusMonitor(Loggable):
         else:
             self.debug('Alive clients {}'.format(self._clients))
 
+    def _run(self, vm):
+        i = 0
+        while 1:
+            if self._stop_evt.is_set():
+                break
+
+            if not self._iter(i, vm):
+                break
+
+            time.sleep(self.update_period)
+
+            if i > 100:
+                i = 0
+            i += 1
+        self.debug('Status monitor finished')
+
     def _iter(self, i, vm):
+        self.debug('status monitor iteration i={}'.format(i))
         if self._stop_evt.is_set():
             return
 
@@ -84,21 +103,26 @@ class StatusMonitor(Loggable):
             return
 
         if self.state_freq and not i % self.state_freq:
+            self.debug('load valve states')
             vm.load_valve_states()
 
         if self.lock_freq and not i % self.lock_freq:
+            self.debug('load lock states')
             vm.load_valve_lock_states()
 
         if self.owner_freq and not i % self.owner_freq:
+            self.debug('load owners')
             vm.load_valve_owners()
 
         if self.checksum_freq and not i % self.checksum_freq:
             if not vm.state_checksum:
                 self.debug('State checksum failed')
 
-        if i > 100:
-            i = 0
-        if not self._stop_evt.is_set():
-            do_after(self.update_period * 1000, self._iter, i + 1, vm)
+        return not self._stop_evt.is_set()
+
+        # if i > 100:
+        #     i = 0
+        # if not self._stop_evt.is_set():
+        #     do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
 # ============= EOF =============================================

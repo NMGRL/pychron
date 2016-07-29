@@ -406,7 +406,9 @@ class GitRepoManager(Loggable):
         # return self._repo.git.log('--not', '--remotes', '--oneline')
         return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
 
-    def add_unstaged(self, root, add_all=False, extension=None, use_diff=False):
+    def add_unstaged(self, root=None, add_all=False, extension=None, use_diff=False):
+        if root is None:
+            root = self.path
 
         index = self.index
         def func(ps, extension):
@@ -534,7 +536,7 @@ class GitRepoManager(Loggable):
             if use_progress:
                 prog = open_progress(3,
                                      show_percent=False,
-                                     title='Pull Repository', close_at_end=False)
+                                     title='Pull Repository {}'.format(self.name), close_at_end=False)
                 prog.change_message('Fetching branch:"{}" from "{}"'.format(branch, remote))
             try:
                 self.fetch(remote)
@@ -653,6 +655,7 @@ class GitRepoManager(Loggable):
         repo.git.merge(src.commit)
 
     def commit(self, msg):
+        self.debug('commit message={}'.format(msg))
         index = self.index
         if index:
             index.commit(msg)

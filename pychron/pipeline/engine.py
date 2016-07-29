@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
 
 # ============= standard library imports ========================
 import os
@@ -36,6 +36,7 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate
 
@@ -127,6 +128,8 @@ class PipelineEngine(Loggable):
     selected = Instance(BaseNode, ())
     dclicked = Event
     active_editor = Event
+    active_inspector_item = Instance(BaseInspectorItem, ())
+    selected_editor = Any
 
     # unknowns = List
     # references = List
@@ -246,12 +249,31 @@ class PipelineEngine(Loggable):
     def get_experiment_ids(self):
         return self.pipeline.get_experiment_ids()
 
+    def set_review_permanent(self, state):
+        name = self.selected_pipeline_template
+        path, is_user_path = self._get_template_path(name)
+        if path:
+            with open(path, 'r') as rfile:
+                nodes = yaml.load(rfile)
+
+            for i, ni in enumerate(nodes):
+                klass = ni['klass']
+                if klass == 'ReviewNode':
+                    ni['enabled'] = state
+
+            with open(path, 'w') as wfile:
+                yaml.dump(nodes, wfile)
+
+            if is_user_path:
+                with open(path, 'r') as rfile:
+                    paths.update_manifest(name, rfile.read())
+
     # debugging
     def select_default(self):
         node = self.pipeline.nodes[0]
 
         self.browser_model.select_project('J-Curve')
-        self.browser_model.select_experiment('Irradiation-NM-272')
+        self.browser_model.select_repository('Irradiation-NM-272')
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
@@ -548,15 +570,7 @@ class PipelineEngine(Loggable):
     # private
     def _set_template(self, name):
         self.reset_event = True
-        pname = name.replace(' ', '_').lower()
-        pname = add_extension(pname, '.yaml')
-        path = os.path.join(paths.pipeline_template_dir, pname)
-        if not os.path.isfile(path):
-            path = os.path.join(paths.user_pipeline_template_dir, pname)
-            if not os.path.isfile(path):
-                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
-                return
-
+        path, _ = self._get_template_path(name)
         pt = PipelineTemplate(name, path)
         pt.render(self.application, self.pipeline,
                   self.browser_model,
@@ -566,6 +580,20 @@ class PipelineEngine(Loggable):
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
 
+    def _get_template_path(self, name):
+        pname = name.replace(' ', '_').lower()
+        pname = add_extension(pname, '.yaml')
+        path = os.path.join(paths.pipeline_template_dir, pname)
+        user_path = False
+        if not os.path.isfile(path):
+            path = os.path.join(paths.user_pipeline_template_dir, pname)
+            user_path = True
+            if not os.path.isfile(path):
+                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
+                return
+
+        return path, user_path
+
     def _load_predefined_templates(self):
         self.debug('load predefined templates')
         templates = []
@@ -573,7 +601,6 @@ class PipelineEngine(Loggable):
 
         for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
-            print temp
             templates.append(temp)
         self.debug('loaded {} pychron templates'.format(len(templates)))
 
@@ -659,7 +686,9 @@ class PipelineEngine(Loggable):
         if isinstance(new, FigureNode):
             # self.show_group_colors = True
             if new.editor:
-                self.active_editor = new.editor
+                editor = new.editor
+                self.selected_editor = editor
+                self.active_editor = editor
 
     # _suppress_handle_unknowns = False
     # def _handle_unknowns(self, obj, name, new):
@@ -751,6 +780,10 @@ class PipelineEngine(Loggable):
     def _dclicked_changed(self, new):
         self.configure(new)
         # self.update_needed = True
+
+    @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
+    def _handle_inspector_event(self, obj, name, old, new):
+        self.active_inspector_item = new
 
 # ============= EOF =============================================
 

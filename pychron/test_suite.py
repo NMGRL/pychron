@@ -21,7 +21,6 @@ def suite():
     from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
     from pychron.core.tests.spell_correct import SpellCorrectTestCase
-    from pychron.entry.tests.irradiation_loader import SimilarTestCase
     from pychron.core.tests.filtering_tests import FilteringTestCase
     from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
     from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
@@ -34,9 +33,6 @@ def suite():
     from pychron.experiment.tests.backup import BackupTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
-    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, \
-        XLSIrradiationLoaderLoadTestCase
-    # from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -58,7 +54,7 @@ def suite():
     tests = (CalibrationObjectTestCase,
              DurationTrackerTestCase,
              SpellCorrectTestCase,
-             SimilarTestCase,
+             # SimilarTestCase,
              FilteringTestCase,
              MultiPeakDetectionTestCase,
              ExperimentIdentifierTestCase,
@@ -69,8 +65,7 @@ def suite():
              BackupTestCase,
              # MassSpecIrradExportTestCase,
              XMLParserTestCase,
-             XLSIrradiationLoaderLoadTestCase,
-             XLSIrradiationLoaderParseTestCase,
+
              XLSAnalysisLoaderTestCase,
 
              RatioTestCase,

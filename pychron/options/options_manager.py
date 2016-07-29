@@ -114,9 +114,10 @@ class OptionsManager(Loggable):
         # dump the default plotter options
         self.save_selection()
 
-        if self.selected:
-            obj = self.selected_options
-            name = self.selected
+        if name is None:
+            if self.selected:
+                obj = self.selected_options
+                name = self.selected
 
         with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
             pickle.dump(obj, wfile)
@@ -126,6 +127,9 @@ class OptionsManager(Loggable):
         p.load_factory_defaults(self._default_options_txt)
         self.save(name, p)
         self._load_names()
+
+        print self.names
+        print self.name
         self.selected = name
 
     def factory_default(self):

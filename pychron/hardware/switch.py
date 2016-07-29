@@ -48,9 +48,11 @@ class BaseSwitch(Loggable):
         pass
 
     def lock(self):
+        self.debug('Locking')
         self.software_lock = True
 
     def unlock(self):
+        self.debug('Unlocking')
         self.software_lock = False
 
     def get_hardware_state(self, **kw):
@@ -128,10 +130,10 @@ class Switch(BaseSwitch):
             return self.actuator.get_lock_state(self)
 
     def set_open(self, mode='normal', force=False):
-        return self._actuate_state(self._open, mode, not self.state, True, force)
+        return self._actuate_state(self._open, mode, True, True, force)
 
     def set_closed(self, mode='normal', force=False):
-        return self._actuate_state(self._close, mode, self.state, False, force)
+        return self._actuate_state(self._close, mode, True, False, force)
 
     # private
     def _actuate_state(self, func, mode, cur, set_value, force):

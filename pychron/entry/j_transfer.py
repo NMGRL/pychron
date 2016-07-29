@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Bool, Str
+from traits.api import HasTraits, Instance, Bool, Str, Any
 from traitsui.api import View, Item, VGroup, Controller, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -51,7 +51,7 @@ class TransferConfigView(Controller):
 
 
 class JTransferer(Loggable):
-    pychrondb = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+    pychrondb = Any  # Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
     massspecdb = Instance('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
 
     src = Instance('pychron.database.adapters.database_adapter.DatabaseAdapter')
@@ -85,7 +85,7 @@ class JTransferer(Loggable):
         with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
             for pp in positions:
                 self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
-                                                                                        pp.labnumber,
+                                                                                        pp.identifier,
                                                                                         pp.j))
                 func(config, irrad, level, pp)
 
@@ -97,10 +97,10 @@ class JTransferer(Loggable):
         """
 
         posstr = '{}{} {}'.format(irrad, level, position.hole)
-        if position.labnumber:
+        if position.identifier:
             # pdb = self.pychrondb
             # get the massspec irradiation_position
-            ms_ip = self.massspecdb.get_irradiation_position(position.labnumber)
+            ms_ip = self.massspecdb.get_irradiation_position(position.identifier)
             if ms_ip:
                 # get j for this position
                 j, j_err = ms_ip.J, ms_ip.JEr

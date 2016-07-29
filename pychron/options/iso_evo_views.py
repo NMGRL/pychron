@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import EnumEditor, Item
+from traits.api import Bool, Enum, on_trait_change
+from traitsui.api import EnumEditor, Item, HGroup, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
+from pychron.pychron_constants import FIT_TYPES, ERROR_TYPES
 
 
 class IsoEvoSubOptions(SubOptions):
@@ -31,6 +33,32 @@ class IsoEvoAppearanceOptions(AppearanceSubOptions):
 
 
 class IsoEvoMainOptions(MainOptions):
+    plot_enabled = Bool
+    save_enabled = Bool
+    fit = Enum(FIT_TYPES)
+    error_type = Enum(ERROR_TYPES)
+    filter_outliers = Bool
+
+    def _get_global_group(self):
+        g = HGroup(Item('controller.plot_enabled', label='Plot'),
+                   Item('controller.save_enabled', label='Save'),
+                   Item('controller.fit'),
+                   UItem('controller.error_type', width=-75),
+                   Item('controller.filter_outliers', label='Filter Outliers'))
+        return g
+
+    @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers')
+    def _handle_global(self, name, new):
+        self._toggle_attr(name, new)
+
+    def _toggle_attr(self, attr, new):
+        items = self.model.selected
+        if not items:
+            items = self.model.aux_plots
+
+        for a in items:
+            setattr(a, attr, new)
+
     def _get_columns(self):
         cols = [object_column(name='name', editable=False),
                 checkbox_column(name='plot_enabled', label='Plot'),

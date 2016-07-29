@@ -29,7 +29,19 @@ class RepositoryIdentifierEntry(BaseEntry):
     value = SpacelessStr
 
     def _add_item(self):
-        return self.dvc.add_repository(self.value, self.principal_investigator)
+        if self.dvc.check_restricted_name(self.value, 'repository_identifier'):
+            self.error_message = '{} is a restricted!.'.format(self.value)
+            if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
+                                            'Repository?'.format(self.value)):
+                return
+
+        ret = True
+        if not self.dvc.add_repository(self.value, self.principal_investigator):
+            ret = False
+            if not self.confirmation_dialog('Could not add "{}". Try a different name?'.format(self.value)):
+                ret = None
+
+        return ret
 
     def traits_view(self):
         # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'
@@ -42,4 +54,5 @@ class RepositoryIdentifierEntry(BaseEntry):
                               width=400,
                               title='Add {}'.format(self.tag),
                               buttons=buttons)
+
 # ============= EOF =============================================

@@ -1,0 +1,357 @@
+endpoint: /tmp/psycho.sock
+
+support:
+  - root: Pychron_psychodrama
+  - path: Pychron_psychodrama/setupfiles/initialization.xml
+    text: "<root>\n
+  <globals>\n
+  </globals>\n
+  <plugins>\n
+    <general>\n
+      <plugin enabled='true'>ArArConstants</plugin>\n
+      <plugin enabled='true'>DVC</plugin>\n
+      <plugin enabled='true'>Pipeline</plugin>\n
+      <plugin enabled='true'>PsychoDrama</plugin>\n
+    </general>\n
+    <hardware>\n
+    </hardware>\n
+    <data>\n
+    </data>\n
+    <social>\n
+      <plugin enabled='false'>Email</plugin>\n
+      <plugin enabled='false'>Twitter</plugin>\n
+    </social>\n
+  </plugins>\n
+</root>\n"
+  - path: .enthought/pychron.experiment.application.root/preferences.ini
+    text: "[pychron.general]
+
+    use_advanced_ui = False
+
+    show_random_tip = False
+
+    use_login = False
+
+    root_dir = /Users/argonserver/Pychron_psychodrama
+
+    remote = NMGRL/Laboratory
+
+    organization = NMGRL
+
+    [pychron.dvc]
+
+    organization=NMGRLData
+
+    meta_repo_name=PsychoDramaMeta
+
+    [pychron.dvc.db]
+
+    kind=sqlite
+
+    path=/tmp/psycho_dvc.sqlite3
+
+    [pychron.psychodrama]
+
+    path=/tmp/psycho.sock
+    "
+  - path: Pychron_psychodrama/experiments/psychrodrama.txt
+    text: '''
+'''
+
+
+database:
+  path: /tmp/psycho_dvc.sqlite3
+  sql:
+    - 'BEGIN TRANSACTION;
+CREATE TABLE "alembic_version" (
+  "version_num" varchar(32) NOT NULL
+);
+CREATE TABLE "VersionTbl" (
+  "version" varchar(40) NOT NULL,
+  PRIMARY KEY ("version")
+);
+CREATE TABLE "UserTbl" (
+  "name" varchar(45) NOT NULL,
+  "affiliation" varchar(80) DEFAULT NULL,
+  "category" varchar(80) DEFAULT NULL,
+  "email" varchar(80) DEFAULT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "TagTbl" (
+  "name" varchar(40) NOT NULL,
+  "omit_ideo" tinyint(1) DEFAULT NULL,
+  "omit_spec" tinyint(1) DEFAULT NULL,
+  "omit_series" tinyint(1) DEFAULT NULL,
+  "omit_iso" tinyint(1) DEFAULT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "SampleTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  "materialID" int(11) DEFAULT NULL,
+  "projectID" int(11) DEFAULT NULL,
+  PRIMARY KEY ("id")
+  CONSTRAINT "sampletbl_ibfk_1" FOREIGN KEY ("materialID") REFERENCES "materialtbl" ("id"),
+  CONSTRAINT "sampletbl_ibfk_2" FOREIGN KEY ("projectID") REFERENCES "projecttbl" ("id")
+);
+CREATE TABLE "RepositoryTbl" (
+  "name" varchar(80) NOT NULL,
+  "principal_investigator" varchar(140) DEFAULT NULL,
+  PRIMARY KEY ("name")
+  CONSTRAINT "repositorytbl_ibfk_1" FOREIGN KEY ("principal_investigator") REFERENCES "principalinvestigatortbl" ("name")
+);
+CREATE TABLE "RepositoryAssociationTbl" (
+  "idrepositoryassociationTbl" int(11) NOT NULL ,
+  "repository" varchar(80) DEFAULT NULL,
+  "analysisID" int(11) DEFAULT NULL,
+  PRIMARY KEY ("idrepositoryassociationTbl")
+  CONSTRAINT "repositoryassociationtbl_ibfk_1" FOREIGN KEY ("repository") REFERENCES "repositorytbl" ("name"),
+  CONSTRAINT "repositoryassociationtbl_ibfk_2" FOREIGN KEY ("analysisID") REFERENCES "analysistbl" ("id")
+);
+CREATE TABLE "ProjectTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  "principal_investigator" varchar(140) DEFAULT NULL,
+  PRIMARY KEY ("id")
+  CONSTRAINT "projecttbl_ibfk_1" FOREIGN KEY ("principal_investigator") REFERENCES "principalinvestigatortbl" ("name")
+);
+CREATE TABLE "ProductionTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  PRIMARY KEY ("id")
+);
+CREATE TABLE "PrincipalInvestigatorTbl" (
+  "name" varchar(140) NOT NULL,
+  "email" varchar(140) DEFAULT NULL,
+  "affiliation" varchar(140) DEFAULT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "MeasuredPositionTbl" (
+  "id" int(11) NOT NULL ,
+  "position" int(11) DEFAULT NULL,
+  "x" float DEFAULT NULL,
+  "y" float DEFAULT NULL,
+  "z" float DEFAULT NULL,
+  "is_degas" tinyint(1) DEFAULT NULL,
+  "analysisID" int(11) DEFAULT NULL,
+  "loadName" varchar(45) DEFAULT NULL,
+  PRIMARY KEY ("id")
+  CONSTRAINT "measuredpositiontbl_ibfk_2" FOREIGN KEY ("loadName") REFERENCES "loadtbl" ("name"),
+  CONSTRAINT "measuredpositiontbl_ibfk_3" FOREIGN KEY ("analysisID") REFERENCES "AnalysisTbl" ("id")
+);
+CREATE TABLE "MaterialTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  "grainsize" varchar(80) DEFAULT NULL,
+  PRIMARY KEY ("id")
+);
+CREATE TABLE "MassSpectrometerTbl" (
+  "name" varchar(45) NOT NULL,
+  "kind" varchar(45) DEFAULT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "LoadTbl" (
+  "name" varchar(45) NOT NULL,
+  "create_date" timestamp NULL DEFAULT NULL,
+  "holderName" varchar(45) DEFAULT NULL,
+  "archived" tinyint(1) DEFAULT NULL,
+  PRIMARY KEY ("name")
+  CONSTRAINT "loadtbl_ibfk_1" FOREIGN KEY ("holderName") REFERENCES "loadholdertbl" ("name")
+);
+CREATE TABLE "LoadPositionTbl" (
+  "id" int(11) NOT NULL ,
+  "identifier" varchar(80) DEFAULT NULL,
+  "position" int(11) DEFAULT NULL,
+  "loadName" varchar(45) DEFAULT NULL,
+  "weight" float DEFAULT NULL,
+  "note" blob,
+  PRIMARY KEY ("id")
+  CONSTRAINT "loadpositiontbl_ibfk_1" FOREIGN KEY ("identifier") REFERENCES "irradiationpositiontbl" ("identifier"),
+  CONSTRAINT "loadpositiontbl_ibfk_2" FOREIGN KEY ("loadName") REFERENCES "loadtbl" ("name")
+);
+CREATE TABLE "LoadHolderTbl" (
+  "name" varchar(45) NOT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "LevelTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  "irradiationID" int(11) DEFAULT NULL,
+  "productionID" int(11) DEFAULT NULL,
+  "holder" varchar(45) DEFAULT NULL,
+  "z" float DEFAULT NULL,
+  "note" blob,
+  PRIMARY KEY ("id")
+  CONSTRAINT "leveltbl_ibfk_1" FOREIGN KEY ("irradiationID") REFERENCES "irradiationtbl" ("id"),
+  CONSTRAINT "leveltbl_ibfk_2" FOREIGN KEY ("productionID") REFERENCES "productiontbl" ("id")
+);
+CREATE TABLE "IrradiationTbl" (
+  "name" varchar(80) DEFAULT NULL,
+  "id" int(11) NOT NULL ,
+  PRIMARY KEY ("id")
+);
+CREATE TABLE "IrradiationPositionTbl" (
+  "id" int(11) NOT NULL ,
+  "identifier" varchar(80) DEFAULT NULL,
+  "sampleID" int(11) DEFAULT NULL,
+  "levelID" int(11) DEFAULT NULL,
+  "position" int(11) DEFAULT NULL,
+  "note" blob,
+  "weight" float DEFAULT NULL,
+  "j" float DEFAULT NULL,
+  "j_err" float DEFAULT NULL,
+  PRIMARY KEY ("id")
+  CONSTRAINT "irradiationpositiontbl_ibfk_1" FOREIGN KEY ("sampleID") REFERENCES "sampletbl" ("id"),
+  CONSTRAINT "irradiationpositiontbl_ibfk_2" FOREIGN KEY ("levelID") REFERENCES "leveltbl" ("id")
+);
+CREATE TABLE "InterpretedAgeTbl" (
+  "idinterpretedagetbl" int(11) NOT NULL ,
+  "age_kind" varchar(32) DEFAULT NULL,
+  "kca_kind" varchar(32) DEFAULT NULL,
+  "age" float DEFAULT NULL,
+  "age_err" float DEFAULT NULL,
+  "display_age_units" varchar(2) DEFAULT NULL,
+  "kca" float DEFAULT NULL,
+  "kca_err" float DEFAULT NULL,
+  "mswd" float DEFAULT NULL,
+  "age_error_kind" varchar(80) DEFAULT NULL,
+  "include_j_error_in_mean" tinyint(1) DEFAULT NULL,
+  "include_j_error_in_plateau" tinyint(1) DEFAULT NULL,
+  "include_j_error_in_individual_analyses" tinyint(1) DEFAULT NULL,
+  PRIMARY KEY ("idinterpretedagetbl")
+);
+CREATE TABLE "InterpretedAgeSetTbl" (
+  "idinterpretedagesettbl" int(11) NOT NULL ,
+  "interpreted_ageID" int(11) DEFAULT NULL,
+  "analysisID" int(11) DEFAULT NULL,
+  "forced_plateau_step" tinyint(1) DEFAULT NULL,
+  "plateau_step" tinyint(1) DEFAULT NULL,
+  "tag" varchar(80) DEFAULT NULL,
+  PRIMARY KEY ("idinterpretedagesettbl")
+  CONSTRAINT "interpretedagesettbl_ibfk_2" FOREIGN KEY ("interpreted_ageID") REFERENCES "interpretedagetbl" ("idinterpretedagetbl"),
+  CONSTRAINT "interpretedagesettbl_ibfk_3" FOREIGN KEY ("analysisID") REFERENCES "AnalysisTbl" ("id")
+);
+CREATE TABLE "ExtractDeviceTbl" (
+  "name" varchar(45) NOT NULL,
+  PRIMARY KEY ("name")
+);
+CREATE TABLE "AnalysisTbl" (
+  "id" int(11) NOT NULL ,
+  "timestamp" timestamp NULL DEFAULT NULL,
+  "uuid" varchar(40) DEFAULT NULL,
+  "analysis_type" varchar(45) DEFAULT NULL,
+  "aliquot" int(11) DEFAULT NULL,
+  "increment" int(11) DEFAULT NULL,
+  "irradiation_positionID" int(11) DEFAULT NULL,
+  "measurementName" varchar(45) DEFAULT NULL,
+  "extractionName" varchar(45) DEFAULT NULL,
+  "postEqName" varchar(45) DEFAULT NULL,
+  "postMeasName" varchar(45) DEFAULT NULL,
+  "mass_spectrometer" varchar(45) DEFAULT NULL,
+  "extract_device" varchar(45) DEFAULT NULL,
+  "extract_value" float DEFAULT NULL,
+  "extract_units" varchar(45) DEFAULT NULL,
+  "cleanup" float DEFAULT NULL,
+  "duration" float DEFAULT NULL,
+  "weight" float DEFAULT NULL,
+  "comment" varchar(80) DEFAULT NULL,
+  PRIMARY KEY ("id")
+  CONSTRAINT "analysistbl_ibfk_1" FOREIGN KEY ("irradiation_positionID") REFERENCES "irradiationpositiontbl" ("id"),
+  CONSTRAINT "analysistbl_ibfk_2" FOREIGN KEY ("mass_spectrometer") REFERENCES "massspectrometertbl" ("name"),
+  CONSTRAINT "analysistbl_ibfk_3" FOREIGN KEY ("extract_device") REFERENCES "extractdevicetbl" ("name")
+);
+CREATE TABLE "AnalysisChangeTbl" (
+  "idanalysischangeTbl" int(11)  NOT NULL ,
+  "tag" varchar(40) DEFAULT NULL,
+  "timestamp" timestamp NULL DEFAULT NULL,
+  "user" varchar(45) DEFAULT NULL,
+  "analysisID" int(11) DEFAULT NULL,
+  PRIMARY KEY ("idanalysischangeTbl")
+  CONSTRAINT "analysischangetbl_ibfk_2" FOREIGN KEY ("user") REFERENCES "usertbl" ("name"),
+  CONSTRAINT "analysischangetbl_ibfk_3" FOREIGN KEY ("analysisID") REFERENCES "AnalysisTbl" ("id")
+);
+CREATE INDEX "SampleTbl_projectID" ON "SampleTbl" ("projectID");
+CREATE INDEX "SampleTbl_materialID" ON "SampleTbl" ("materialID");
+CREATE INDEX "RepositoryTbl_principal_investigator" ON "RepositoryTbl" ("principal_investigator");
+CREATE INDEX "RepositoryAssociationTbl_repository" ON "RepositoryAssociationTbl" ("repository");
+CREATE INDEX "RepositoryAssociationTbl_analysisID" ON "RepositoryAssociationTbl" ("analysisID");
+CREATE INDEX "ProjectTbl_principal_investigator" ON "ProjectTbl" ("principal_investigator");
+CREATE INDEX "MeasuredPositionTbl_loadName" ON "MeasuredPositionTbl" ("loadName");
+CREATE INDEX "MeasuredPositionTbl_analysisID" ON "MeasuredPositionTbl" ("analysisID");
+CREATE INDEX "LoadTbl_holderName" ON "LoadTbl" ("holderName");
+CREATE INDEX "LoadPositionTbl_loadName" ON "LoadPositionTbl" ("loadName");
+CREATE INDEX "LoadPositionTbl_identifier" ON "LoadPositionTbl" ("identifier");
+CREATE INDEX "LevelTbl_productionID" ON "LevelTbl" ("productionID");
+CREATE INDEX "LevelTbl_irradiationID" ON "LevelTbl" ("irradiationID");
+CREATE INDEX "IrradiationPositionTbl_sampleID" ON "IrradiationPositionTbl" ("sampleID");
+CREATE INDEX "IrradiationPositionTbl_levelID" ON "IrradiationPositionTbl" ("levelID");
+CREATE INDEX "IrradiationPositionTbl_identifier" ON "IrradiationPositionTbl" ("identifier");
+CREATE INDEX "InterpretedAgeSetTbl_interpreted_ageID" ON "InterpretedAgeSetTbl" ("interpreted_ageID");
+CREATE INDEX "InterpretedAgeSetTbl_analysisID" ON "InterpretedAgeSetTbl" ("analysisID");
+CREATE INDEX "AnalysisTbl_mass_spectrometer" ON "AnalysisTbl" ("mass_spectrometer");
+CREATE INDEX "AnalysisTbl_irradiation_positionID" ON "AnalysisTbl" ("irradiation_positionID");
+CREATE INDEX "AnalysisTbl_analysistbl_ibfk_3" ON "AnalysisTbl" ("extract_device");
+CREATE INDEX "AnalysisChangeTbl_userID" ON "AnalysisChangeTbl" ("user");
+CREATE INDEX "AnalysisChangeTbl_tag" ON "AnalysisChangeTbl" ("tag");
+CREATE INDEX "AnalysisChangeTbl_analysisID" ON "AnalysisChangeTbl" ("analysisID");'
+    - "insert into irradiationtbl (id, name) values (1, 'NoIrradiation')"
+    - "insert into irradiationtbl (id, name) values (2, 'NM-PSYCHODRAMA')"
+    - "insert into productiontbl (id, name) values (1, 'TRIGA')"
+    - "insert into leveltbl (id, name, irradiationID, productionID) values (1, 'A', 1, 1)"
+    - "insert into leveltbl (id, name, irradiationID, productionID) values (2, 'A', 2, 1)"
+    - "insert into leveltbl (id, name, irradiationID, productionID) values (3, 'B', 2, 1)"
+    - "insert into materialtbl (id, name) values (1, 'sanidine')"
+    - "insert into principalinvestigatortbl (name) values ('psychodrama_pi')"
+    - "insert into projecttbl (id, name, principal_investigator)
+       values (1,'psychodrama', 'psychodrama_pi')"
+    - "insert into sampletbl (id, name, projectID, materialID) values (1, 'PD1', 1, 1)"
+    - "insert into irradiationpositiontbl (id, identifier, sampleID, levelID, position)
+       values (1, '10000', 1, 2, 1)"
+    - "insert into irradiationpositiontbl (id, identifier, sampleID, levelID, position)
+       values (2, '10001', 1, 2, 2)"
+    - "insert into irradiationpositiontbl (id, identifier, sampleID, levelID, position)
+       values (3, '20000', 1, 3, 1)"
+    - "insert into irradiationpositiontbl (id, identifier, sampleID, levelID, position)
+       values (4, '20001', 1, 3, 2)"
+
+environment:
+  name: pychron_pd
+  dependencies:
+    - traits
+    - traitsui
+    - envisage
+    - qt
+    - pyside
+    - chaco
+    - pyface
+    - pyyaml
+    - lxml
+    - requests
+    - reportlab
+    - sqlalchemy
+    - xlwt
+    - matplotlib
+    - scikit-learn
+    - statsmodels
+    - pymysql
+
+  pip:
+    - pint
+    - uncertainties
+    - gitpython
+
+pre_run:
+  - start_sim:pychron
+  - start_app:launchers/pychron_dev.py
+
+run:
+  - test_simulator:Valve, 8000
+  - test_simulator:Laser, 8001
+  - test_simulator:Spectrometer, 8002
+#  - move_laser
+#  - fire_laser
+#  - execute_experiment:psychrodrama.txt
+
+post_run:
+  - stop_sim
+  - report_results

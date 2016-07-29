@@ -26,7 +26,11 @@ from traits.trait_errors import TraitError
 import yaml
 import os
 # ============= local library imports  ==========================
+from uncertainties import nominal_value
+from uncertainties import std_dev
+
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.strtools import camel_case
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -185,6 +189,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
     add_repository_identifier = Event
     repository_identifier_dirty = Event
+    set_repository_identifier_button = Event
+
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -203,7 +209,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     _end_after = Bool(False)
 
     weight = Float
-    comment = Str
+    comment = String(auto_set=False, enter_set=True)
     auto_fill_comment = Bool
     comment_template = Str
     comment_templates = List
@@ -297,6 +303,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # readonly
     # ===========================================================================
     sample = Str
+    project = Str
+    material = Str
+
     display_irradiation = Str
     irrad_level = Str
     irrad_hole = Str
@@ -585,9 +594,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample', 'selected_irradiation',
+                'sample','project','material', 'username',
                 'ramp_duration',
-                'skip', 'mass_spectrometer', 'extract_device']
+                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier']
 
     def _set_run_values(self, arv, excludes=None):
         """
@@ -612,6 +621,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
             setattr(arv, sattr, v)
             setattr(arv, '_prev_{}'.format(sattr), v)
+
+        arv.irradiation = self.selected_irradiation
+        arv.irradiation_level = self.selected_level
+        arv.irradiation_position = int(self.irrad_hole)
 
         if self.aliquot:
             self.debug('setting user defined aliquot')
@@ -846,14 +859,20 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             dont load if was unknown and now unknown
             this preserves the users changes
         """
-        # if new is special e.g bu-01-01
         tag = new
         if '-' in new:
             tag = new.split('-')[0]
-        # if '-' in old:
-        #     old = old.split('-')[0]
 
-        if tag in ANALYSIS_MAPPING:  # or old in ANALYSIS_MAPPING or not old and new:
+        abit = tag in ANALYSIS_MAPPING
+        bbit = False
+        if not abit:
+            try:
+                int(tag)
+                bbit = True
+            except ValueError:
+                pass
+
+        if abit or bbit:  # or old in ANALYSIS_MAPPING or not old and new:
             # set default scripts
             self._load_default_scripts(tag, new)
 
@@ -933,8 +952,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
-            for attr in ('sample', 'irradiation', 'comment', 'repository_identifier'):
+            for attr in ('sample', 'comment', 'repository_identifier'):
                 setattr(self, attr, d[attr])
+
+            self.selected_irradiation = d['irradiation']
+            self.selected_level = d['irradiation_level']
 
             self.display_irradiation = d['display_irradiation']
             return True
@@ -947,7 +969,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 # convert labnumber (a, bg, or 10034 etc)
                 self.debug('load meta for {}'.format(labnumber))
                 ip = db.get_identifier(labnumber)
+
                 if ip:
+                    pos = ip.position
                     # set sample and irrad info
                     try:
                         self.sample = ip.sample.name
@@ -959,22 +983,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         elif project_name != 'REFERENCES':
-                            self.repository_identifier = project_name.replace(' ', '_').replace('/', '_')
-
-                            # if project_name.startswith('Irradiation-'):
-                            #     self.repository_identifier = project_name
-                            # else:
-                            #     project_name = project_name.replace(' ', '_').replace('/', '_')
-                            #     try:
-                            #         pi_name = project.principal_investigator.name
-                            #         pi_name = pi_name.replace(' ', '_').replace('/', '_')
-                            #     except AttributeError:
-                            #         self.debug('No principal investigator '
-                            #                    'specified for this project "{}". Using NMGRL'.format(project_name))
-                            #         pi_name = 'NMGRL'
-                            #
-                            #     self.repository_identifier = '{}_{}'.format(pi_name, project_name)
-
+                            repo = camel_case(project_name)
+                            self.repository_identifier = repo
+                            if not db.get_repository(repo):
+                                self.repository_identifier = ''
+                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                            'like to add it?'):
+                                    # this will set self.repository_identifier
+                                    self._add_repository_identifier_fired()
 
                     except AttributeError, e:
                         print e
@@ -983,6 +999,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                     self._make_irrad_level(ip)
                     d['irradiation'] = self.selected_irradiation
+                    d['irradiation_position'] = pos
+                    d['irradiation_level'] = self.selected_level
+
                     d['display_irradiation'] = self.display_irradiation
                     if self.auto_fill_comment:
                         self._set_auto_comment()
@@ -990,8 +1009,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self._meta_cache[labnumber] = d
                     return True
                 else:
-                    self.warning_dialog('{} does not exist. '
-                                        'Add using "Labnumber Entry" or "Utilities>>Import"'.format(labnumber))
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
@@ -1209,22 +1230,25 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_flux(self):
-        return self._get_flux_from_db()
+        return self._get_flux_from_datastore()
 
     @cached_property
     def _get_flux_error(self):
-        return self._get_flux_from_db(attr='j_err')
+        return self._get_flux_from_datastore(attr='err')
 
-    def _get_flux_from_db(self, attr='j'):
+    def _get_flux_from_datastore(self, attr='j'):
         j = 0
 
         identifier = self.labnumber
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier:
-                db = self.get_database()
-                j = db.get_flux_value(identifier, attr)
+                j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
+                if attr == 'err':
+                    j = std_dev(j)
+                else:
+                    j = nominal_value(j)
 
-        return j or 0
+        return j
 
     def _set_flux(self, a):
         if self.labnumber and a is not None:
@@ -1275,6 +1299,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
 
+    def _set_repository_identifier_button_fired(self):
+        self.debug('set repository identifier={}'.format(self.repository_identifier))
+        if self._selected_runs:
+            for si in self._selected_runs:
+                si.repository_identifier = self.repository_identifier
+            self.refresh_table_needed = True
+
     def _add_repository_identifier_fired(self):
         if self.dvc:
             a = RepositoryIdentifierEntry(dvc=self.dvc)
@@ -1283,6 +1314,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if a.do():
                 self.repository_identifier_dirty = True
                 self.repository_identifier = a.name
+                return True
         else:
             self.warning_dialog('DVC Plugin not enabled')
 

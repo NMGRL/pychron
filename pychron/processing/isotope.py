@@ -39,17 +39,6 @@ def fit_abbreviation(fit, ):
 
 
 class BaseMeasurement(object):
-    # xs = Array
-    # ys = Array
-    # xs = None
-    # ys = None
-
-    # n = Property(depends_on='xs')
-    # _n = Int
-    # name = Str
-    # mass = Float
-    # detector = Str
-
     unpack_error = None
     endianness = '>'
     reverse_unpack = False
@@ -58,10 +47,6 @@ class BaseMeasurement(object):
 
     _n = None
 
-    # time_zero_offset = Float
-    # offset_xs = Property
-
-    # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
     @property
     def n(self):
         if self._n:
@@ -84,15 +69,6 @@ class BaseMeasurement(object):
         self.mass = 0
         self.time_zero_offset = 0
 
-        # def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
-        # super(BaseMeasurement, self).__init__(*args, **kw)
-        # if dbrecord and unpack:
-        #     if unpacker is None:
-        #         unpacker = lambda x: x.signal.data
-        #
-        #     blob = unpacker(dbrecord)
-        #     self.unpack_data(blob)
-
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
             endianness = self.endianness
@@ -103,7 +79,7 @@ class BaseMeasurement(object):
             txt = hexlify(txt)
         return txt
 
-    def unpack_data(self, blob):
+    def unpack_data(self, blob, n_only=False):
         try:
             xs, ys = self._unpack_blob(blob)
         except (ValueError, TypeError, IndexError, AttributeError), e:
@@ -111,8 +87,12 @@ class BaseMeasurement(object):
             print e
             return
 
-        self.xs = array(xs)
-        self.ys = array(ys)
+        if n_only:
+            self.n = len(xs)
+        else:
+            self.xs = array(xs)
+            self.ys = array(ys)
+
         # print self.name, self.xs.shape, self.ys.shape
         # print self.name, self.ys
 
@@ -130,18 +110,6 @@ class BaseMeasurement(object):
         except struct.error, e:
             print 'unpack_blob', e
 
-    # def _get_n(self):
-    #     if not self._n:
-    #         return len(self.xs)
-    #     else:
-    #         return self._n
-
-    # def _set_n(self, v):
-    #     self._n = v
-    #
-    # def _get_offset_xs(self):
-    #     return self.xs - self.time_zero_offset
-
     def get_slope(self, n):
         if self.xs.shape[0] and self.ys.shape[0] and self.xs.shape[0] == self.ys.shape[0]:
             xs = self.xs
@@ -154,70 +122,45 @@ class BaseMeasurement(object):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    # uvalue = Property(depends_on='dirty')  # depends_on='value, error, _value, _error, dirty')
-
-    # value = Property(depends_on='_value, dirty')
-    # error = Property(depends_on='_error, dirty')
-    # value = Property(Float(enter_set=True, auto_set=False),
-    # depends_on='dirty')
-    # error = Property(Float(enter_set=True, auto_set=False),
-    #                  depends_on='dirty')
-    _value = 0
-    _error = 0
-    _regressor = None
-
-    # _uvalue = None
-    _fit = None
-    # _fit = String
-    # fit_abbreviation = Property(depends_on='dirty')
     fit_blocks = None
     error_type = None
-    #
     filter_outliers_dict = None
-    #
-    # regressor = Property(depends_on='fit, time_zero_offset, dirty')
-    # # regressor = Property(depends_on='fit, dirty, error_type')
     include_baseline_error = False
-    #
     use_static = False
     user_defined_value = False
     user_defined_error = False
+    use_stored_value = False
+
+    _value = 0
+    _error = 0
+    _regressor = None
+    _fit = None
 
     _oerror = None
     _ovalue = None
-    _dirty = False
 
-    # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
-    # 'include_baseline_error',
-    # '_ovalue', '_oerror',
-    #              'include_baseline_error', 'use_static',
-    #              'user_defined_value',
-    #              'user_defined_error', 'fit_blocks', 'error_type']
-
-    # def __init__(self, dbresult=None, *args, **kw):
-
-    # if dbresult:
-    #     self._value = dbresult.signal_
-    #     self._error = dbresult.signal_err
-    # else:
-    #     kw['unpack'] = True
-
-    # super(IsotopicMeasurement, self).__init__(*args, **kw)
-
-    # @property
-    # def uvalue(self):
-    #     return ufloat((1,0))
+    _fn = None
 
     def __init__(self, *args, **kw):
         super(IsotopicMeasurement, self).__init__(*args, **kw)
         self.filter_outliers_dict = dict()
 
+    @property
+    def fn(self):
+        if self._fn is not None:
+            n = self._fn
+        elif self._regressor:
+            n = self._regressor.clean_xs.shape[0]
+        else:
+            n = self.n
+        return n
+
+    @fn.setter
+    def fn(self, v):
+        self._fn = v
+
     def set_filtering(self, d):
         self.filter_outliers_dict = d.copy()
-        # self.dirty = True
-        # print self.filter_outliers_dict
-        # self.regressor.filter_outliers_dict=self.filter_outliers_dict
-        # self.regressor.calculate()
 
     def set_fit_blocks(self, fit):
         """
@@ -276,7 +219,7 @@ class IsotopicMeasurement(BaseMeasurement):
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
                                      'std_devs': std_devs}
-        self._dirty = notify
+        # self._dirty = notify
 
     def attr_set(self, **kw):
         for k, v in kw.iteritems():
@@ -299,14 +242,18 @@ class IsotopicMeasurement(BaseMeasurement):
                               time_zero_offset=fit.time_zero_offset or 0,
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)
-                if self._regressor:
-                    self._regressor.error_calc_type = self.error_type
+
+                self._regressor = None
+
+                # if self._regressor:
+                #     self._regressor.error_calc_type = self.error_type
+
                     # self.include_baseline_error = fit.include_baseline_error or False
 
                     # self._value = 0
                     # self._error = 0
-            if notify:
-                self._dirty = True
+            # if notify:
+            #     self._dirty = True
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -332,7 +279,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # elif self.user_defined_value:
         #     return self._value
 
-        if not self.user_defined_value and self.xs.shape[0] > 1:
+        if not self.use_stored_value and not self.user_defined_value and self.xs.shape[0] > 1:
             v = self.regressor.predict(0)
             return v
         else:
@@ -345,7 +292,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # elif self.user_defined_error:
         #     return self._error
 
-        if not self.user_defined_value and self.xs.shape[0] > 1:
+        if not self.use_stored_value and not self.user_defined_error and self.xs.shape[0] > 1:
             v = self.regressor.predict_error(0)
             return v
         else:

@@ -20,8 +20,9 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-import os
-from os import path, mkdir
+import pickle
+from hashlib import md5
+from os import path, mkdir, environ
 
 from pychron.file_defaults import TASK_EXTENSION_DEFAULT, SIMPLE_UI_DEFAULT, \
     EDIT_UI_DEFAULT, IDENTIFIERS_DEFAULT
@@ -168,6 +169,7 @@ class Paths(object):
     isotope_dir = None
 
     index_db = None
+    sample_dir = None
     # vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
@@ -190,9 +192,11 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    labspy_client_config = None
     template_manifest_file = None
     pipeline_template_file = None
     identifiers_file = None
+    identifier_mapping_file = None
     backup_recovery_file = None
     last_experiment = None
     mftable = None
@@ -265,7 +269,7 @@ class Paths(object):
     def set_icon_search_path(self):
         ps = [self.icons, self.app_resources]
         if self.app_resources:
-            ps.append(os.path.join(self.app_resources, 'icons'))
+            ps.append(path.join(self.app_resources, 'icons'))
 
         self.icon_search_path = ps
 
@@ -288,6 +292,9 @@ class Paths(object):
         # self.version = version
         if root.startswith('_'):
             root = join(path.expanduser('~'), 'Pychron{}'.format(root))
+
+        if root.startswith('~'):
+            root = join(path.expanduser('~'), root[2:])
 
         if not path.isdir(root):
             mkdir(root)
@@ -341,7 +348,7 @@ class Paths(object):
         self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
         self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
         self.global_hidden = join(self.base, '.pychron')
-        self.build_repo = join(self.global_hidden, 'updates', 'pychron')
+        self.build_repo = join(self.global_hidden, 'updates')
         self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_configs')
         # ==============================================================================
         # setup
@@ -401,7 +408,7 @@ class Paths(object):
         self.dvc_dir = join(self.data_dir, '.dvc')
         self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
         self.meta_root = join(self.dvc_dir, 'MetaData')
-
+        self.sample_dir = join(self.data_dir, 'sample_entry')
         # ==============================================================================
         # processing
         # ==============================================================================
@@ -418,9 +425,11 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
+        labspy_client_config = join(self.setup_dir, 'labspy_client.yaml')
         self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
         self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
+        self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftable.csv')
@@ -471,8 +480,42 @@ class Paths(object):
         self.series_template = join(self.pipeline_template_dir, 'series.yaml')
         build_directories()
 
+    def set_template_manifest(self, files):
+        # open the manifest file to set the overwrite flag
+        manifest = self._get_manifest()
+        for item in files:
+            fn, t, o = item
+            txt = get_file_text(t)
+            h = md5(txt).hexdigest()
+            if fn in manifest and h == manifest[fn]:
+                item[2] = False
+
+            manifest[fn] = h
+
+        with open(paths.template_manifest_file, 'w') as wfile:
+            pickle.dump(manifest, wfile)
+
+        return files
+
+    def update_manifest(self, name, text):
+        manifest = self._get_manifest()
+        manifest[name] = md5(text).hexdigest()
+
+    def _get_manifest(self):
+        if path.isfile(paths.template_manifest_file):
+            with open(paths.template_manifest_file) as rfile:
+                manifest = pickle.load(rfile)
+        else:
+            manifest = {}
+        return manifest
+
+    def hidden_path(self, basename):
+        from pychron.globals import globalv
+        basename = '{}.{}'.format(basename, globalv.username)
+        return path.join(self.hidden_dir, basename)
+
     def write_defaults(self):
-        if os.environ.get('TRAVIS_CI', 'False') == 'False' and os.environ.get('RTD', 'False') == 'False':
+        if environ.get('TRAVIS_CI', 'False') == 'False' and environ.get('RTD', 'False') == 'False':
             self._write_default_files()
 
     def reset_plot_factory_defaults(self):

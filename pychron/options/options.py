@@ -164,6 +164,9 @@ class MainOptions(SubOptions):
                         show_border=True))
         return v
 
+    def _get_global_group(self):
+        return
+
     def traits_view(self):
         aux_plots_grp = Item('aux_plots',
                              style='custom',
@@ -173,12 +176,17 @@ class MainOptions(SubOptions):
                                                   sortable=False,
                                                   deletable=False,
                                                   clear_selection_on_dclicked=True,
-                                                  # edit_on_first_click=False,
-                                                  # on_select=lambda *args: setattr(self, 'selected', True),
-                                                  # selected='selected',
+                                                  orientation='vertical',
+                                                  selected='selected',
+                                                  selection_mode='rows',
                                                   edit_view=self._get_edit_view(),
                                                   reorderable=False))
-        return self._make_view(aux_plots_grp)
+        global_grp = self._get_global_group()
+        if global_grp:
+            v = self._make_view(global_grp, aux_plots_grp)
+        else:
+            v = self._make_view(aux_plots_grp)
+        return v
 
 
 # ===============================================================
@@ -438,6 +446,7 @@ class FigureOptions(BaseOptions):
 class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
+    selected = List
 
     def get_loadable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots

@@ -15,23 +15,64 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, Dict
+import logging
+
+from traits.api import Property, Dict, Str
 # ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
+
+from traits.has_traits import HasTraits
 from uncertainties import ufloat
 from numpy import hstack
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
-from pychron.loggable import Loggable
+# from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
 
+logger = logging.getLogger('ISO')
 
-class IsotopeGroup(Loggable):
+
+class IsotopeGroup(HasTraits):
     isotopes = Dict
     isotope_keys = Property
     conditional_modifier = None
+    name = Str
+
+    def debug(self, msg, *args, **kw):
+        self._log(logger.debug, msg)
+
+    def info(self, msg, *args, **kw):
+        self._log(logger.info, msg)
+
+    def warning(self, msg, *args, **kw):
+        self._log(logger.warning, msg)
+
+    def critical(self, msg, *args, **kw):
+        self._log(logger.critical, msg)
+
+    def _log(self, func, msg):
+        func('{} - {}'.format(self.name, msg))
+
+    def set_stored_value_states(self, state, save=True):
+        if save:
+            self.save_stored_value_state()
+
+        for i in self.iter_isotopes():
+            i.use_stored_value = state
+            i.baseline.use_stored_value = state
+
+    def revert_use_stored_values(self):
+        if self._sv:
+            for i, v in zip(self.iter_isotopes(), self._sv):
+                i.use_stored_value = v[0]
+                i.baseline.use_stored_value = v[1]
+
+    _sv = None
+
+    def save_stored_value_state(self):
+        self._sv = [(i.use_stored_value, i.baseline.use_stored_value) for i in self.iter_isotopes()]
 
     def iter_isotopes(self):
         return (self.isotopes[k] for k in self.isotope_keys)
@@ -153,19 +194,6 @@ class IsotopeGroup(Loggable):
         r = ufloat(*ic)
         return r
 
-    def get_error_component(self, key):
-        # for var, error in self.uage.error_components().items():
-        #     print var.tag
-
-        v = next((error for (var, error) in self.uage.error_components().items()
-                  if var.tag == key), 0)
-
-        ae = self.uage.std_dev
-        if ae:
-            return v ** 2 / ae ** 2 * 100
-        else:
-            return 0
-
     def append_data(self, iso, det, x, signal, kind):
         """
             if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
@@ -199,8 +227,7 @@ class IsotopeGroup(Loggable):
         else:
             for i in (iso, '{}{}'.format(iso, det)):
                 if i in isotopes:
-                    ii = isotopes[i]
-                    _append(ii)
+                    _append(isotopes[i])
                     return True
 
     def clear_baselines(self):
@@ -266,7 +293,7 @@ class IsotopeGroup(Loggable):
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 
-    def set_isotope(self, iso, det,v, **kw):
+    def set_isotope(self, iso, det, v, **kw):
         # print 'set isotope', iso, v
         if iso not in self.isotopes:
             niso = Isotope(iso, det)
@@ -275,7 +302,7 @@ class IsotopeGroup(Loggable):
             niso = self.isotopes[iso]
 
         niso.set_uvalue(v)
-        for k,v in kw.iteritems():
+        for k, v in kw.iteritems():
             setattr(niso, k, v)
         # niso.trait_set(**kw)
 
@@ -314,7 +341,5 @@ class IsotopeGroup(Loggable):
                 return ufloat(0, 1e-20)
         else:
             raise AttributeError(attr)
+
 # ============= EOF =============================================
-
-
-

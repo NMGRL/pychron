@@ -158,7 +158,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
 
             item = self._tree.itemFromIndex(index)
             # print index, self.editor._tree.model().rowCount()
-            draw_line = index.row() != self._tree.model().rowCount() - 1
+            # draw_line = index.row() != self._tree.model().rowCount() - 1
 
             # expanded, node, object = self.editor._get_node_data(item)
             expanded, node, object = item._py_data
@@ -171,7 +171,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
 
             offset = 20
             r = 13  # rect.height() - 10
-            r2 = r / 2.
+            # r2 = r / 2.
             status_color = node.get_status_color(object)
 
             painter.setPen(status_color.darker())
@@ -179,10 +179,10 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
             pen.setWidth(2)
             painter.setPen(pen)
 
-            if draw_line:
-                x = rect.left() + 6 + r2
-                y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
-                painter.drawLine(x, y, x, y + rect.height())
+            # if draw_line:
+            #     x = rect.left() + 6 + r2
+            #     y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
+            #     painter.drawLine(x, y, x, y + rect.height())
 
             painter.setBrush(status_color)
             painter.drawEllipse(rect.left() + 5, rect.bottom() - r - 4, r, r)

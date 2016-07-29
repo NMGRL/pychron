@@ -215,14 +215,6 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
 
-    # def __init__(self, *args, **kw):
-    #     super(Analysis, self).__init__(*args, **kw)
-    #     self.snapshots = []
-    #     self.source_parameters = {}
-    #     self.deflections = {}
-    #     self.gains = {}
-    #     self.blank_changes = []
-    #     self.fit_changes = []
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()
         return self._get_isotope_dict(get)
@@ -238,11 +230,6 @@ class Analysis(ArArAge):
         else:
             r = ufloat(1, 0)
 
-        # if det in self.ic_factors:
-        # r = self.ic_factors[det]
-        # else:
-        # r = ufloat(1, 1e-20)
-
         return r
 
     def set_temp_status(self, tag):
@@ -256,34 +243,11 @@ class Analysis(ArArAge):
 
     def set_tag(self, tag):
         self.tag = tag
-        # if isinstance(tag, str):
-        #     self.tag = tag
-        #     omit = tag == 'invalid'
-        # else:
-        #     if not hasattr(tag, '__getitem__'):
-        #         tag = tag.to_dict()
-        #
-        #     name = tag['name']
-        #     self.tag = name
-        #
-        #     if 'omit_dict' in tag:
-        #         omit_dict = tag['omit_dict']
-        #     else:
-        #         omit_dict = tag
-        #
-        #     omit = name == 'omit'
-        #     for a in OMIT_KEYS:
-        #         v = omit_dict[a]
-        #         # v = getattr(tag, a)
-        #         setattr(self, a, v)
-        #         if v:
-        #             omit = True
-        #
-        # self.temp_status = 1 if omit else 0
 
     def show_isotope_evolutions(self, isotopes=None, **kw):
-        if isotopes and isinstance(isotopes[0], (str, unicode)):
-            isotopes = [self.isotopes[i] for i in isotopes]
+        if isotopes:
+            if isinstance(isotopes[0], (str, unicode)):
+                isotopes = [self.isotopes[i] for i in isotopes]
         else:
             isotopes = self.isotopes.values()
 
@@ -313,19 +277,6 @@ class Analysis(ArArAge):
             analyses = [self, ]
         self.invalid_event = analyses
 
-    # def is_temp_omitted(self, include_value_filtered=True):
-    #     return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
-    #
-    # def is_tag_omitted(self, omit_key):
-    #     if omit_key:
-    #         return getattr(self, omit_key)
-    #
-    # def is_omitted(self, omit_key=None, include_value_filtered=True):
-    #     omit = False
-    #     if omit_key:
-    #         omit = getattr(self, omit_key)
-    #
-    #     return self.is_temp_omitted(include_value_filtered) or omit
     def is_omitted(self):
         return self.is_omitted_by_tag() or self.temp_selected
 
@@ -334,16 +285,6 @@ class Analysis(ArArAge):
             tags = ('omit', 'invalid', 'outlier')
         return self.tag in tags
 
-    # def flush(self, *args, **kw):
-    #     """
-    #     """
-    #     return
-    #
-    # def commit(self, *args, **kw):
-    #     """
-    #     """
-    #     return
-    #
     def sync(self, obj, **kw):
         self._sync(obj, **kw)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
@@ -353,10 +294,6 @@ class Analysis(ArArAge):
         """
         return
 
-    # def _analysis_summary_default(self):
-    # return self.analysis_summary_klass(model=self)
-
-    # def _analysis_view_default(self):
     def refresh_view(self):
         if self._analysis_view:
             self._sync_view(self._analysis_view)
@@ -389,15 +326,6 @@ class Analysis(ArArAge):
 
             traceback.print_exc()
             print 'sync view {}'.format(e)
-
-    # def _set_record_id(self, v):
-    #     self._record_id = v
-    #
-    # def _get_record_id(self):
-    #     record_id = self._record_id
-    #     if not record_id:
-    #         record_id = make_runid(self.labnumber, self.aliquot, self.step)
-    #     return record_id
 
     def value_string(self, t):
         if t == 'uF':
@@ -456,3 +384,4 @@ class Analysis(ArArAge):
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)
+# ============= EOF =============================================

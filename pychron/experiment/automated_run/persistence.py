@@ -24,7 +24,6 @@ import os
 import struct
 import time
 import math
-from uncertainties import nominal_value, std_dev
 # ============= local library imports  ==========================
 # from pychron.core.codetools.file_log import file_log
 # from pychron.core.codetools.memory_usage import mem_log
@@ -286,6 +285,7 @@ class AutomatedRunPersister(BasePersister):
         :param grpname: str
         :return: function
         """
+        tables = {}
 
         def write_data(dets, x, keys, signals):
             # todo: test whether saving data to h5 in real time is expansive
@@ -303,9 +303,12 @@ class AutomatedRunPersister(BasePersister):
                             grp = '/{}'.format(grpname)
                         else:
                             grp = '/{}/{}'.format(grpname, det.isotope)
-                        # self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
-                        # self.debug('get table {}/{}'.format(grp,k))
-                        t = dm.get_table(k, grp)
+
+                        tag = '{}/{}'.format(grp, k)
+                        if tag in tables:
+                            t = tables['tag']
+                        else:
+                            t = dm.get_table(k, grp)
 
                         nrow = t.row
                         nrow['time'] = x
@@ -317,7 +320,7 @@ class AutomatedRunPersister(BasePersister):
 
         return write_data
 
-    def build_tables(self, grpname, detectors):
+    def build_tables(self, grpname, detectors, n):
         """
         construct the hdf5 table structure
 
@@ -333,11 +336,11 @@ class AutomatedRunPersister(BasePersister):
                 iso = d.isotope
                 name = d.name
                 if grpname == 'baseline':
-                    dm.new_table('/{}'.format(grpname), name)
+                    dm.new_table('/{}'.format(grpname), name, n)
                     self.debug('add group {} table {}'.format(grpname, name))
                 else:
                     isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
-                    dm.new_table(isogrp, name)
+                    dm.new_table(isogrp, name, n)
                     self.debug('add group {} table {}'.format(isogrp, name))
 
     def build_peak_hop_tables(self, grpname, hops):
@@ -950,7 +953,7 @@ class AutomatedRunPersister(BasePersister):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
-        ic = self.per_spec.isotope_group.get_ic_factor('CDD')
+        # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
         exp = MassSpecExportSpec(runid=rid,
                                  runscript_name=self.per_spec.runscript_name,
@@ -963,8 +966,9 @@ class AutomatedRunPersister(BasePersister):
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,
                                  is_peak_hop=self.per_spec.save_as_peak_hop,
-                                 ic_factor_v=float(nominal_value(ic)),
-                                 ic_factor_e=float(std_dev(ic)))
+                                 # ic_factor_v=float(nominal_value(ic)),
+                                 # ic_factor_e=float(std_dev(ic))
+                                 )
         exp.load_record(self.per_spec.run_spec)
 
         return exp

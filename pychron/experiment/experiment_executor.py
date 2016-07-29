@@ -51,7 +51,8 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
-from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
+from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers, \
+    populate_repository_identifiers, get_curtag
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
@@ -173,6 +174,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     dvc_username = Str
     dvc_password = Str
     dvc_organization = Str
+    default_principal_investigator = Str
 
     baseline_color = Color
     sniff_color = Color
@@ -282,6 +284,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_dashboard_client:
             self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
+        # general
+        self._preference_binder('pychron.general', ('default_principal_investigator',))
+
     def execute(self):
 
         if self.user_notifier.emailer is None:
@@ -290,7 +295,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
-        prog = open_progress(30, position=(100, 100))
+        prog = open_progress(100, position=(100, 100))
 
         if self._pre_execute_check(prog):
             self.info('pre execute check successful')
@@ -513,6 +518,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 except StopIteration:
                     self.debug('stop iteration')
                     break
+
+                if spec.skip:
+                    self.debug('caught a skipped run {}'.format(spec.runid))
+                    continue
 
                 if self._pre_run_check(spec):
                     self.warning('pre run check failed')
@@ -1135,10 +1144,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')
             if dvcp:
                 dvcp.load_name = exp.load_name
+                dvcp.default_principal_investigator = self.default_principal_investigator
                 arun.dvc_persister = dvcp
 
                 repid = spec.repository_identifier
-                self.datahub.mainstore.add_repository(repid, 'NMGRL', inform=False)
+                self.datahub.mainstore.add_repository(repid, self.default_principal_investigator, inform=False)
 
                 arun.dvc_persister.initialize(repid)
 
@@ -1209,20 +1219,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             handle databases in conflict
         """
         dh = self.datahub
-        self._canceled = True
-        self._err_message = 'Databases are in conflict. {}'.format(conflict)
 
         ret = self.confirmation_dialog('Databases are in conflict. '
                                        'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
-                                       timeout_ret=0,
+                                       timeout_ret=True,
                                        timeout=30)
-        if ret or ret == 0:
+        if ret:
             dh.update_spec(spec, aoffset, soffset)
             ret = True
             self._canceled = False
             self._err_message = ''
         else:
             spec.conflicts_checked = False
+            self._canceled = True
+            self._err_message = 'Databases are in conflict. {}'.format(conflict)
             self.message(self._err_message)
             # self.info('No response from user. Canceling run')
             # do_later(self.information_dialog,
@@ -1517,6 +1527,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.heading('Pre Extraction Check Passed')
         self.debug('=================================================================================')
+
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
@@ -1644,7 +1655,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         for e in experiment_ids:
             if prog:
                 prog.change_message('Syncing {}'.format(e))
-                if not self.datahub.mainstore.sync_repo(e):
+                if not self.datahub.mainstore.sync_repo(e, use_progress=False):
                     break
         else:
             return True
@@ -1697,20 +1708,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         if self.use_dvc_persistence:
-            no_exp = []
+            # create dated references repos
+
+            curtag = get_curtag()
+
+            dvc = self.datahub.stores['dvc']
+            ms = self.active_editor.queue.mass_spectrometer
+            for tag in ('air', 'cocktail', 'blank'):
+                dvc.add_repository('{}_{}{}'.format(ms, tag, curtag), self.default_principal_investigator, inform=False)
+
+            no_repo = []
             for i, ai in enumerate(runs):
                 if not ai.repository_identifier:
                     self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
-                    no_exp.append(ai)
+                    no_repo.append(ai)
 
-            if no_exp:
-                if self.confirmation_dialog('No Repository Identifiers.\n\nUse "laboratory" for all analyses without '
-                                            'a repository identifier'):
-                    for aa in no_exp:
-                        aa.repository_identifier = 'laboratory'
-
-                else:
+            if no_repo:
+                if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
                     return
+
+                populate_repository_identifiers(no_repo, ms, curtag, debug=self.debug)
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
@@ -1953,7 +1970,7 @@ Use Last "blank_{}"= {}
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                  exp.extract_device,
                                                  last=True,
-                                                 repository=an.repository_identifier, )
+                                                 repository=an.repository_identifier if an.is_special() else None)
 
                 if pdbr:
                     if selected:

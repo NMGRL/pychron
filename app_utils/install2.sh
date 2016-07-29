@@ -29,7 +29,7 @@ PREFERENCES_ROOT=pychron.view.application.root
 USE_UPDATE=1
 
 LAUNCHER_SCRIPT_PATH=pychron_launcher.sh
-APPLICATION=pyview
+APPLICATION=pyview_debug
 PYCHRON_GIT_SOURCE_URL=https://github.com/NMGRL/pychron.git
 
 PYCHRON_PATH=${PYCHRONDATA_PREFIX}/src
@@ -59,7 +59,9 @@ paramiko"
 
 PIP_REQ="uncertainties
 pint
-GitPython"
+GitPython
+peakutils
+qimage2ndarray"
 
 # =========== Payload text ===============
 INITIALIZATION="<root>\n
@@ -91,6 +93,9 @@ meta_repo_name=MetaData\n
 "
 
 PREFERENCES="[pychron.genera]\n
+[pychron.dvc]\n
+organization=NMGRLData\n
+meta_repo_name=MetaData\n
 "
 
 STARTUP_TESTS="- plugin: ArArConstantsPlugin\n
@@ -188,7 +193,7 @@ then
             mkdir ~/.pychron/updates
         fi
     git clone ${PYCHRON_GIT_SOURCE_URL} ~/.pychron/updates
-    PYCHRON_PATH=~/.pychron/updates/pychron
+    PYCHRON_PATH=~/.pychron/updates
 else
     # =========== Unpack Release ===============
     cd ${PYCHRONDATA_PREFIX}
@@ -200,7 +205,7 @@ fi
 # ========== Launcher Script ===============
 touch ${LAUNCHER_SCRIPT_PATH}
 
-echo ROOT= ${PYCHRON_PATH} > ${LAUNCHER_SCRIPT_PATH}
+echo ROOT=${PYCHRON_PATH} > ${LAUNCHER_SCRIPT_PATH}
 
 echo ENTRY_POINT=\$ROOT/launchers/${APPLICATION}.py >> ${LAUNCHER_SCRIPT_PATH}
 echo export PYTHONPATH=\$ROOT >> ${LAUNCHER_SCRIPT_PATH}

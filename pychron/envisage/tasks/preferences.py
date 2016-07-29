@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String
+from traits.api import Directory, Bool, String, Float, Int
 from traitsui.api import View, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
+from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
+    BasePreferencesHelper
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -34,6 +35,7 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     # use_advanced_ui = Bool
 
     organization = String(enter_set=True, auto_set=False)
+    default_principal_investigator = String
 
     def _organization_changed(self, new):
         if not self.remote and new:
@@ -47,7 +49,8 @@ class GeneralPreferencesPane(PreferencesPane):
     def traits_view(self):
         root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
                           show_border=True, label='Root')
-        login_grp = VGroup(Item('use_login'), Item('multi_user'),
+        login_grp = VGroup(Item('use_login', label='Use Login'),
+                           Item('multi_user', label='Multi User'),
                            label='Login', show_border=True)
 
         o_grp = VGroup(Item('organization', label='Name'),
@@ -59,6 +62,7 @@ class GeneralPreferencesPane(PreferencesPane):
                              tooltip='Ask user for confirmation when quitting application'),
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
+                        Item('default_principal_investigator', label='Default PI'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
                         root_grp,
@@ -68,7 +72,28 @@ class GeneralPreferencesPane(PreferencesPane):
                         show_border=True))
         return v
 
+
+class BrowserPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.browser'
+    recent_hours = Float
+    reference_hours_padding = Float
+    max_history = Int
+
+
+class BrowserPreferencesPane(PreferencesPane):
+    model_factory = BrowserPreferences
+    category = 'Browser'
+
+    def traits_view(self):
+        v = View(Item('recent_hours',
+                      label='RECENT (hrs)',
+                      tooltip='Number of hours to use for RECENT_... filtering'),
+                 Item('reference_hours_padding',
+                      label='References Padding (hrs)',
+                      tooltip='Padding in hours when finding associated references'),
+                 Item('max_history', label='Max. Analysis Sets',
+                      tooltip='Maximum number of analysis sets to maintain')
+                 )
+        return v
+
 # ============= EOF =============================================
-
-
-

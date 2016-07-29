@@ -384,8 +384,8 @@ class LoadIndicator(Circle):
         if self.space == 'data':
             r = self.map_dimension(r)
 
-        self.name_offsetx = r - 2
-        self.name_offsety = r - 2
+        self.name_offsetx = r
+        self.name_offsety = r
 
         if self.state:
             with gc:

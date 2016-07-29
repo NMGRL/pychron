@@ -17,28 +17,33 @@
 # ============= enthought library imports =======================
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class RegressionInspectorTool(InfoInspector):
     def assemble_lines(self):
-        reg = self.component.regressor
+        lines = []
+        if self.current_position:
+            reg = self.component.regressor
 
-        v, e = reg.predict(0), reg.predict_error(0)
-        lines = [reg.make_equation(),
-                 'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=9),
-                                               floatfmt(e, n=9),
-                                               format_percent_error(v, e))]
+            v, e = reg.predict(0), reg.predict_error(0)
+            lines = [reg.make_equation(),
+                     'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=9),
+                                                   floatfmt(e, n=9),
+                                                   format_percent_error(v, e))]
 
-        if not reg.mswd in ('NaN', None):
-            valid = '' if reg.valid_mswd else '*'
-            lines.append('MSWD= {}{}, n={}'.format(valid,
-                                                   floatfmt(reg.mswd, n=3), reg.n))
+            if reg.mswd not in ('NaN', None):
+                valid = '' if reg.valid_mswd else '*'
+                lines.append('MSWD= {}{}, n={}'.format(valid,
+                                                       floatfmt(reg.mswd, n=3), reg.n))
 
-        lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
+            lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
 
         return lines
+
 
 class RegressionInspectorOverlay(InfoOverlay):
     pass

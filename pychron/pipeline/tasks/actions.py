@@ -135,6 +135,12 @@ class ReductionAction(PipelineAction):
     pass
 
 
+class IsoEvolutionAction(PipelineAction):
+    name = 'Isotope Evolutions'
+    dname = 'Isotope Evolutions'
+    action = 'set_isotope_evolutions_template'
+
+
 class BlanksAction(PipelineAction):
     name = 'Blanks'
     dname = 'Blanks'
@@ -163,6 +169,7 @@ class FreezeFlux(PipelineAction):
     name = 'Freeze Flux'
     dname = 'Freeze Flux'
     action = 'freeze_flux'
+
 
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
@@ -196,6 +203,11 @@ class IsochronAction(PlotAction):
     name = 'Isochron'
     action = 'set_isochron_template'
     # image = icon('histogram')
+
+
+class InverseIsochronAction(PlotAction):
+    name = 'InverseIsochron'
+    action = 'set_inverse_isochron_template'
 
 
 class SeriesAction(PlotAction):

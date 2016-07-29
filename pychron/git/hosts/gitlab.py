@@ -27,6 +27,10 @@ class GitLabService(GitHostService):
     host = Str
     preference_path = 'pychron.gitlab'
 
+    @property
+    def remote_url(self):
+        return self.host
+
     def bind_preferences(self):
         super(GitLabService, self).bind_preferences()
         bind_preference(self, 'host', '{}.host'.format(self.preference_path))

@@ -25,7 +25,7 @@ class DummyApp(object):
 class DummyManager(object):
     application = DummyApp()
 
-    def set_extract_state(self, state):
+    def set_extract_state(self, state, *args, **kw):
         pass
 
     def info(self, *args, **kw):

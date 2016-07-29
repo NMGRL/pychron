@@ -20,7 +20,7 @@ from traitsui.api import View, UItem, Controller, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.dvc.dvc import get_review_status
+from pychron.dvc.func import get_review_status
 from pychron.envisage.resources import icon
 
 GREENBALL = icon('green_ball')

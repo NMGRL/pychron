@@ -80,6 +80,7 @@ class BasePDFTableWriter(BasePDFWriter):
             for s, e in ri.spans:
                 style.add('SPAN', (s, idx), (e, idx))
 
+        style.add('NOSPLIT', (0, -2), (-1, -1))
         # render rows
         rows = [di.render() if hasattr(di, 'render') else di
                 for di in data]
@@ -138,6 +139,4 @@ class BasePDFTableWriter(BasePDFWriter):
 
             t._argW = cs
 
-
 # ============= EOF =============================================
-

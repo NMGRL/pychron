@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import os
+import sys
 import traceback
+from datetime import datetime, timedelta
+from threading import Lock
 
-from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
-# =============standard library imports ========================
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from threading import Lock
-from datetime import datetime, timedelta
-import sys
-import os
-# =============local library imports  ==========================
+from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
+
+from pychron import version
+from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-from pychron.database.core.base_orm import AlembicVersionTable
-from pychron import version
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -50,7 +49,7 @@ class SessionCTX(object):
     _commit = True
     _parent = None
 
-    def __init__(self, sess=None, commit=True, rollback=True, parent=None):
+    def __init__(self, sess=None, commit=True, rollback=False, parent=None):
         """
         :param sess: existing Session object
         :param commit: commit Session at exit
@@ -101,8 +100,9 @@ class SessionCTX(object):
                     self._parent.debug('$%$%$%$%$%$%$%$ commiting changes error:\n{}'.format(str(e)))
                 self._sess.rollback()
             finally:
+                # self._sess.expire_on_commit = True
                 self._sess.close()
-                del self._sess
+                # del self._sess
 
 
 class DatabaseAdapter(Loggable):
@@ -158,6 +158,7 @@ class DatabaseAdapter(Loggable):
     modified = False
     _trying_to_add = False
     _test_connection_enabled = True
+
     # def __init__(self, *args, **kw):
     #     super(DatabaseAdapter, self).__init__(*args, **kw)
 
@@ -171,7 +172,7 @@ class DatabaseAdapter(Loggable):
         with self.session_ctx() as sess:
             metadata.create_all(sess.bind)
 
-    def session_ctx(self, sess=None, commit=True, rollback=True):
+    def session_ctx(self, sess=None, commit=True, rollback=False):
         """
         Make a new session context.
 
@@ -289,7 +290,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         if self.sess:
             try:
                 self.sess.commit()
-            except:
+            except BaseException, e:
+                self.warning('Commit exception: {}'.format(e))
                 self.sess.rollback()
 
     def post_commit(self):
@@ -420,14 +422,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         return connected
 
     def test_version(self):
-        if self.version_func:
-            with self.session_ctx():
-                ver = getattr(self, self.version_func)()
-                ver = ver.version_num
-                aver = version.__alembic__
-                if ver != aver:
-                    return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
-                    # @deprecated
+        with self.session_ctx():
+            ver = getattr(self, self.version_func)()
+            ver = ver.version_num
+            aver = version.__alembic__
+            if ver != aver:
+                return 'Database is out of data. Pychron ver={}, Database ver={}'.format(aver, ver)
+                # @deprecated
 
     # def _get_query(self, klass, join_table=None, filter_str=None, sess=None,
     #                     *args, **clause):

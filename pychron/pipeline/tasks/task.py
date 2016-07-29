@@ -26,7 +26,7 @@ import os
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
-from pychron.dvc.dvc import repository_has_staged
+from pychron.dvc.func import repository_has_staged
 from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -37,7 +37,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
     SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
@@ -117,7 +117,8 @@ class PipelineTask(BaseBrowserTask):
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
-                 AnalysesPane(model=self.engine)]
+                 AnalysesPane(model=self.engine),
+                 InspectorPane(model=self.engine)]
         return panes
 
     # toolbar actions
@@ -307,6 +308,9 @@ class PipelineTask(BaseBrowserTask):
         else:
             self._set_action_template('FreezeProductionRatios')
 
+    def set_isotope_evolutions_template(self):
+        self._set_action_template('Iso Evo')
+
     def set_icfactor_template(self):
         self._set_action_template('ICFactor')
 
@@ -324,6 +328,9 @@ class PipelineTask(BaseBrowserTask):
 
     def set_isochron_template(self):
         self._set_action_template('Isochron')
+
+    def set_inverse_isochron_template(self):
+        self._set_action_template('Inverse Isochron')
 
     def set_series_template(self):
         self._set_action_template('Series')
@@ -449,10 +456,12 @@ class PipelineTask(BaseBrowserTask):
 
     # defaults
     def _default_layout_default(self):
-        return TaskLayout(left=Splitter(PaneItem('pychron.pipeline.pane',
+        return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
-                                                 width=200)))
+                                                 width=200)),
+                                        PaneItem('pychron.pipeline.inspector'),
+                                        orientation='vertical'))
 
     def _extra_actions_default(self):
         sas = (('MenuBar/data.menu', RunAction, {}),)

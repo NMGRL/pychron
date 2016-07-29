@@ -32,7 +32,7 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Flux
 - Ideogram
 - Spectrum
-- InverseIsochron
+- Inverse Isochron
 - Series
 - Analysis Table
 - Interpreted Age Table
@@ -200,6 +200,8 @@ TASK_EXTENSION_DEFAULT = """
  plugin_id: pychron.entry.plugin
  actions:
   - pychron.entry1.labnumber_entry, True
+  - pychron.entry1.sample_entry, True
+  - pychron.entry1.sample_prep, True
   - pychron.entry1.generate_irradiation_table, False
   - pychron.entry1.import_irradiation_holder, False
   - pychron.entry1.sensitivity_entry, True
@@ -419,8 +421,8 @@ IDEO = """- klass: UnknownNode
 - klass: IdeogramNode
 """
 
-ISOCHRON = """- klass: UnknownNode
-- klass: IsochronNode
+INVERSE_ISOCHRON = """- klass: UnknownNode
+- klass: InverseIsochronNode
 """
 
 SPEC = """- klass: UnknownNode

@@ -39,7 +39,7 @@ class DVCPreferences(BasePreferencesHelper):
 class DVCDBConnectionPreferences(ConnectionPreferences):
     preferences_path = 'pychron.dvc.db'
     _adapter_klass = 'pychron.dvc.dvc_database.DVCDatabase'
-
+    _schema_identifier = 'AnalysisTbl'
 
 class DVCDBConnectionPreferencesPane(ConnectionPreferencesPane):
     model_factory = DVCDBConnectionPreferences

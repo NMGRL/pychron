@@ -16,15 +16,15 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
-    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event
-# import apptools.sweet_pickle as pickle
+    Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
+from traits.trait_types import BaseStr
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import timedelta, datetime
 import os
 import re
 import cPickle as pickle
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -35,6 +35,14 @@ from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRe
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
+
+
+class IdentifierStr(BaseStr):
+    def validate(self, obj, name, value):
+        if len(value) > 2:
+            return value
+        else:
+            self.error(obj, name, value)
 
 
 def filter_func(new, attr=None, comp=None):
@@ -71,8 +79,8 @@ def filter_func(new, attr=None, comp=None):
 
 
 class SearchCriteria(HasTraits):
-    recent_hours = Int
-    reference_hours_padding = Int
+    recent_hours = Float
+    reference_hours_padding = Float
     graphical_filtering_max_days = Int
 
 
@@ -96,13 +104,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
+    include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(False)
 
     analysis_groups = List
 
-    identifier = Str
+    identifier = IdentifierStr(enter_set=True, auto_set=False)
 
     sample_filter = Str
 
@@ -110,7 +119,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     selected_projects = Any
     selected_repositories = Any
-    selected_samples = Any
+    selected_samples = List
     selected_analysis_groups = Any
 
     dclicked_sample = Any
@@ -174,6 +183,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     selection_persistence_name = 'browser_selection'
 
     _suppress_post_update = False
+    _suppress_load_labnumbers = False
 
     def make_records(self, ans):
         return self._make_records(ans)
@@ -216,8 +226,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                    named_date_range=self.named_date_range,
                    low_post=self.low_post,
                    high_post=self.high_post)
-
-        # p = os.path.join(paths.hidden_dir, 'browser_selection')
 
         try:
             with open(self.selection_persistence_path, 'wb') as wfile:
@@ -287,6 +295,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def select_all(self):
         self.selected_samples = self.samples[:]
 
+    def load_associated_groups(self, names):
+        self._load_associated_groups(names)
+
     # private
     # column sort mixin interface
     def _sample_name_sort_key(self, v):
@@ -323,9 +334,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         self.use_low_post, self.use_high_post = ol, oh
 
-    def load_associated_groups(self, names):
-        self._load_associated_groups(names)
-
     def _load_associated_groups(self, names):
         """
             names: list of project names
@@ -345,29 +353,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         with db.session_ctx():
             self._recent_mass_spectrometers = []
             warned = False
-            # if isinstance(names, bool):
-            # sams.extend(self._make_labnumbers())
-            # else:
+
             if any((p.name.startswith('RECENT') for p in self.selected_projects)):
                 if not self.search_criteria.recent_hours:
                     if not warned:
-                        self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-                                            '"Recent Hours" is located in the "Processing" category')
+                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
+                                            '"RECENT (hrs)" is located in the "Browser" category')
 
             sams.extend(self._make_labnumbers())
-            # rnames, onames = partition(names, lambda x: x.startswith('RECENT'))
-            # for name in rnames:
-            #     # load associated samples
-            #     if not self.search_criteria.recent_hours:
-            #         if not warned:
-            #             self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-            #                                 '"Recent Hours" is located in the "Processing" category')
-            #             warned = True
-            #     else:
-            #         sams.extend(self._retrieve_recent_labnumbers(name))
-            #
-            # if list(onames):
-            #     sams.extend(self._make_labnumbers())
 
         self.samples = sams
         self.osamples = sams
@@ -417,36 +410,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         sams = progress_loader(lns, func, step=25)
         return sams
 
-    # def _retrieve_labnumbers_hook(self, db):
-    #     projects = self.selected_projects
-    #
-    #     if self.use_mass_spectrometers:
-    #         mass_spectrometers = self.mass_spectrometer_includes
-    #     else:
-    #         mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
-    #         mass_spectrometers = [ms for ms in mass_spectrometers if ms]
-    #
-    #     projects = [p.name for p in projects if not p.name.startswith('RECENT')]
-    #     atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
-    #
-    #     lp, hp = self.low_post, self.high_post
-    #     if atypes and projects:
-    #         tlp, thp = db.get_project_date_range(projects)
-    #         # tlp, thp = db.get_min_max_analysis_timestamp(projects=projects, delta=1)
-    #         if not lp:
-    #             lp = tlp
-    #         if not hp:
-    #             hp = thp
-    #
-    #     ls = db.get_project_labnumbers(projects,
-    #                                    self.filter_non_run_samples,
-    #                                    lp, hp,
-    #                                    # self.low_post,
-    #                                    # self.high_post,
-    #                                    analysis_types=atypes,
-    #                                    mass_spectrometers=mass_spectrometers)
-    #     return ls
-
     @caller
     def _make_labnumbers(self):
         db = self.db
@@ -455,11 +418,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
             return []
 
+        sams = []
         with db.session_ctx():
             ls = self._retrieve_labnumbers()
-            self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
-
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                self.debug('_retrieve_labnumbers n={}'.format(len(ls)))
+                sams = self._load_sample_record_views(ls)
+            else:
+                self.debug('No labnumbers')
 
         return sams
 
@@ -477,7 +443,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            repositories=None,
                            make_records=True):
         db = self.db
-        with db.session_ctx():
+        with db.session_ctx(commit=False) as sess:
             if samples:
                 lns = [si.labnumber for si in samples]
                 self.debug('retrieving identifiers={}'.format(','.join(lns)))
@@ -578,7 +544,33 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         load('experiments', self.repositories)
         load('samples', self.samples)
 
+    def _load_projects_for_principal_investigator(self):
+        ms = None
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
+
+        p_i = self.principal_investigator
+        self.debug('load projects for principal investigator= {}'.format(p_i))
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(principal_investigator=p_i,
+                                 mass_spectrometers=ms)
+
+            ps = self._make_project_records(ps, include_recent_first=True,
+                                            include_recent=True and self.include_recent)
+            old_selection = []
+            if self.selected_projects:
+                old_selection = [p.name for p in self.selected_projects]
+            self.projects = ps
+
+            if old_selection:
+                self.selected_projects = [p for p in ps if p.name in old_selection]
+
     # handlers
+    def _principal_investigator_changed(self, new):
+        if new:
+            self._load_projects_for_principal_investigator()
+
     def _identifier_changed(self, new):
         db = self.db
         if new:
@@ -716,9 +708,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         elif self.use_low_post:
             lp = self._low_post
-
-        if not lp:
-            lp = tdy
+            if not lp:
+                lp = tdy
 
         self.debug('GET LPOST={}'.format(lp))
         return lp
@@ -742,6 +733,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return map(str.lower, ats)
 
+    _warned = False
+
     def _get_db(self):
         if self.use_workspace:
             db = self.workspace.index_db
@@ -749,7 +742,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             db = self.application.get_service('pychron.dvc.dvc.DVC')
 
         if db is None:
-            self.warning_dialog('You need to enable the DVC plugin')
+            if not self._warned:
+                self.warning_dialog('You need to enable the DVC plugin')
+            self._warned = True
         else:
             return db
             # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):

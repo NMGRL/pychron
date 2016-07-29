@@ -107,6 +107,7 @@ class LabnumberEntry(DVCIrradiationable):
     _no_update = Bool
 
     monitor_name = Str
+    monitor_material = Str
 
     _level_editor = None
     _irradiation_editor = None
@@ -117,12 +118,9 @@ class LabnumberEntry(DVCIrradiationable):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        bind_preference(self, 'irradiation_prefix',
-                        'pychron.entry.irradiation_prefix')
-        bind_preference(self, 'monitor_name',
-                        'pychron.entry.monitor_name')
-        bind_preference(self, 'j_multiplier',
-                        'pychron.entry.j_multiplier')
+        for key in ('irradiation_prefix', 'monitor_name',
+                    'monitor_material', 'j_multiplier'):
+            bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
     def activated(self):
         pass
@@ -172,8 +170,8 @@ class LabnumberEntry(DVCIrradiationable):
         self.info('Transferring Js for Irradiation={}, Level={}'.format(self.irradiation,
                                                                         self.level))
         from pychron.entry.j_transfer import JTransferer
-
-        ms = self.application.get_service('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+        klass = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        ms = self.application.get_service(klass)
         if ms:
             ms.bind_preferences()
             if ms.connect():
@@ -265,7 +263,11 @@ class LabnumberEntry(DVCIrradiationable):
             irrad = db.get_irradiation(name)
             if irrad:
                 w = IrradiationPDFWriter()
-                w.build(out, irrad)
+                info = w.options.edit_traits(kind='livemodal')
+                if info.result:
+                    w.options.dump()
+                    w.build(out, irrad)
+                    return True
 
     def save(self):
         if self._validate_save():
@@ -314,8 +316,8 @@ class LabnumberEntry(DVCIrradiationable):
             #     i = IrradiationTemplate()
             #     i.make_template(p)
 
-        # loader = XLSIrradiationLoader()
-        # loader.make_template(p)
+            # loader = XLSIrradiationLoader()
+            # loader.make_template(p)
 
     # def import_irradiation_load_xls(self, p):
     #     self.warning_dialog('XLS Irradiation Import not currently available')
@@ -393,7 +395,7 @@ class LabnumberEntry(DVCIrradiationable):
     def _save_to_db(self):
         db = self.dvc.db
 
-        if not self.dvc.meta_repo.smart_pull(quiet=False):
+        if not self.dvc.meta_repo.smart_pull():
             return
 
         with db.session_ctx():
@@ -483,37 +485,6 @@ class LabnumberEntry(DVCIrradiationable):
         except ValueError:
             return name
 
-    # ===============================================================================
-    # handlers
-    # ===============================================================================
-    # @on_trait_change('irradiated_positions:sample')
-    # def _handle_entry(self, obj, name, old, new):
-    # if not self._no_update:
-    # if not new:
-    # obj.material = ''
-    #             obj.project = ''
-    #         else:
-    #             db = self.dvc.db
-    #             with db.session_ctx():
-    #                 dbsam = db.get_sample(new, new.project)
-    #                 if dbsam:
-    #                     if not obj.material:
-    #                         if dbsam.material:
-    #                             obj.material = dbsam.material.name
-    #
-    #                     if not obj.project:
-    #                         if dbsam.project:
-    #                             obj.project = dbsam.project.name
-
-    @on_trait_change('canvas:selected')
-    def _handle_canvas_selected(self, new):
-        if new:
-            self.selected = [next((ir for ir in self.irradiated_positions
-                                   if ir.hole == int(new.name)), None)]
-            if self.selected:
-                fill = self._set_selected_values(self.selected[0])
-                new.fill = fill
-
     def _set_selected_values(self, new):
         sam = self.selected_sample
         if sam:
@@ -584,8 +555,6 @@ THIS CHANGE CANNOT BE UNDONE')
                 self._load_holder_positions(holes)
                 self._load_holder_canvas(holes)
 
-            # self._load_canvas_analyses(db, level)
-
             try:
                 positions = level.positions
                 n = len(self.irradiated_positions)
@@ -613,16 +582,39 @@ THIS CHANGE CANNOT BE UNDONE')
                     self.debug('extra irradiation position for this tray {}'.format(hi))
 
     def _sync_position(self, dbpos, ir):
+
+        cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
+                                                             (255, 255, 160),
+                                                             (255, 255, 0),
+                                                             (25, 230, 25)))
+
+        def set_color(ii, value):
+            if value:
+                ii.fill_color = next(cgen)
+
         if dbpos:
             if dbpos.sample:
-                ir.sample = dbpos.sample.name
-                ir.material = dbpos.sample.material.name
-                ir.project = dbpos.sample.project.name
-                ir.identifier = dbpos.identifier or ''
-                ir.hole = dbpos.position
-
                 item = self.canvas.scene.get_item(str(ir.hole))
-                item.fill = bool(dbpos.identifier)
+                item.fill = True
+
+                ir.sample = v = dbpos.sample.name
+                set_color(item, v)
+
+                if dbpos.sample.material:
+                    ir.material = v = dbpos.sample.material.name
+                    set_color(item, v)
+
+                if dbpos.sample.project:
+                    ir.project = v = dbpos.sample.project.name
+                    set_color(item, v)
+                    if dbpos.sample.project.principal_investigator:
+                        ir.principal_investigator = dbpos.sample.project.principal_investigator
+
+                ir.identifier = v = dbpos.identifier or ''
+                if v:
+                    set_color(item, v)
+
+                ir.hole = dbpos.position
 
                 j, lambda_k = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
                 if j:
@@ -653,68 +645,9 @@ THIS CHANGE CANNOT BE UNDONE')
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    # @cached_property
-    # def _get_projects(self):
-    # print 'get projects'
-    # # order = gen_ProjectTable.name.asc()
-    # projects = [''] #+ [pi.name for pi in self.dvc.db.get_projects(order=order)]
-    #     return projects
-    #
-    # @cached_property
-    # def _get_samples(self):
-    #     # order = gen_SampleTable.name.asc()
-    #     samples = [''] #+ [si.name for si in self.dvc.db.get_samples(order=order)]
-    #     return samples
-    #
-    # @cached_property
-    # def _get_materials(self):
-    #     materials = [''] #+ [mi.name for mi in self.dvc.db.get_materials()]
-    #     return materials
-
-    # def _get_irradiation_tray_image(self):
-    # p = self._get_map_path()
-    #     db = self.dvc.db
-    #     with db.session_ctx():
-    #         level = db.get_irradiation_level(self.irradiation,
-    #                                          self.level)
-    #         holder = None
-    #         if level:
-    #             holder = level.holder
-    #             holder = holder.name if holder else None
-    #         holder = holder if holder is not None else NULL_STR
-    #         self.tray_name = holder
-    #         im = ImageResource('{}.png'.format(holder),
-    #                            search_path=[p])
-    #         return im
-
-    # @cached_property
-    # def _get_materials(self):
-    #     materials = [''] + [mi.name for mi in self.db.get_materials()]
-    #     return materials
-    #
-    # def _get_irradiation_tray_image(self):
-    #     p = self._get_map_path()
-    #     db = self.db
-    #     with db.session_ctx():
-    #         level = db.get_irradiation_level(self.irradiation,
-    #                                          self.level)
-    #         holder = None
-    #         if level:
-    #             holder = level.holder
-    #             holder = holder.name if holder else None
-    #         holder = holder if holder is not None else NULL_STR
-    #         self.tray_name = holder
-    #         im = ImageResource('{}.png'.format(holder),
-    #                            search_path=[p]
-    #         )
-    #         return im
-
     @cached_property
     def _get_trays(self):
         return self.dvc.meta_repo.get_irradiation_holder_names()
-
-    # def _get_map_path(self):
-    # return os.path.join(paths.setup_dir, 'irradiation_tray_maps')
 
     def _get_edit_irradiation_enabled(self):
         return self.irradiation is not None
@@ -722,7 +655,18 @@ THIS CHANGE CANNOT BE UNDONE')
     def _get_edit_level_enabled(self):
         return self.level is not None
 
+    # ===============================================================================
     # handlers
+    # ===============================================================================
+    @on_trait_change('canvas:selected')
+    def _handle_canvas_selected(self, new):
+        if new:
+            self.selected = [next((ir for ir in self.irradiated_positions
+                                   if ir.hole == int(new.name)), None)]
+            if self.selected:
+                fill = self._set_selected_values(self.selected[0])
+                new.fill = fill
+
     @on_trait_change('irradiated_positions:+')
     def _set_dirty(self, name, new):
         if not self.suppress_dirty:
@@ -741,15 +685,22 @@ THIS CHANGE CANNOT BE UNDONE')
         irrad = self._get_irradiation_editor(name=name)
         new_irrad = irrad.add()
         if new_irrad:
+            pname = 'Irradiation-{}'.format(new_irrad)
+            sname = self.monitor_name
+            if self.confirmation_dialog('Add default project ({}) and '
+                                        'flux monitor sample {{}} for this irradiation?'.format(pname, sname)):
+                # add irradiation project for flux monitors
+                self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
+
+                self.dvc.add_sample(sname, pname, self.monitor_material)
+            self.updated = True
             self.irradiation = new_irrad
-            # self.updated = 'Irradiation'
 
     def _edit_irradiation_button_fired(self):
         irrad = self._get_irradiation_editor(name=self.irradiation)
 
         new_irrad = irrad.edit()
         self._suppress_auto_select_irradiation = True
-        # self.updated = 'Irradiation'
         if new_irrad:
             self.irradiation = new_irrad
 
@@ -758,7 +709,6 @@ THIS CHANGE CANNOT BE UNDONE')
         olevel = self.level
         self._irradiation_changed()
         self.level = olevel
-        # print self.irradiation
 
     def _edit_level_button_fired(self):
         editor = self._get_level_editor(name=self.level,
@@ -766,26 +716,19 @@ THIS CHANGE CANNOT BE UNDONE')
 
         new_level = editor.edit()
         if new_level:
+            self.updated = True
             self.level = new_level
 
         self._update_level()
-        # self.updated = 'Level'
-        # self._level_changed(self.level)
 
     def _add_level_button_fired(self):
         editor = self._get_level_editor(irradiation=self.irradiation)
         new_level = editor.add()
         if new_level:
+            self.updated = True
             self.level = new_level
-            # self.updated = 'Level'
-
-    # def _updated_fired(self, new):
-    #     if self.dvc.meta_repo.has_unpushed_commits():
-    #         self.info('Pushing changes to meta repo. {} changed'.format(new))
-    #         self.dvc.meta_repo.push()
 
     def _irradiation_changed(self):
-        # super(LabnumberEntry, self)._irradiation_changed()
         if self.irradiation:
             self.level = ''
 
@@ -803,8 +746,6 @@ THIS CHANGE CANNOT BE UNDONE')
         self.irradiated_positions = []
         if new:
             self._update_level(debug=True)
-            # else:
-            # self.canvas = IrradiationCanvas()
 
 
 if __name__ == '__main__':

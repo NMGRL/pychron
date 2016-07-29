@@ -325,7 +325,7 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.is_baseline = False
 
-        self.persister.build_tables(group, self._active_detectors)
+        self.persister.build_tables(group, self._active_detectors, ncounts)
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -384,7 +384,7 @@ class AutomatedRun(Loggable):
 
         gn = 'baseline'
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
 
         ion = self.ion_optics_manager
 
@@ -906,6 +906,17 @@ class AutomatedRun(Loggable):
             v = 0
 
         return v
+
+    def get_ratio(self, r, non_ic_corr=True):
+        if self.isotope_group:
+            return self.isotope_group.get_ratio(r, non_ic_corr=non_ic_corr)
+
+    def get_reference_peakcenter_result(self):
+        if self.persistence_spec:
+            pc = self.persistence_spec.peak_center
+            if pc:
+                rn = pc.reference_detector.name
+                return pc.get_result(rn)
 
     def get_device_value(self, dev_name):
         return self.extraction_line_manager.get_device_value(dev_name)
@@ -2049,7 +2060,7 @@ anaylsis_type={}
 
         gn = 'sniff'
 
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
         check_conditionals = False

@@ -81,8 +81,9 @@ class BaseRegressor(HasTraits):
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
 
+        self.outlier_excluded = []
+        self.dirty = True
         if fod.get('filter_outliers', False):
-            self.outlier_excluded = []
             for _ in range(fod.get('iterations', 1)):
                 self.calculate(filtering=True)
 
@@ -185,7 +186,6 @@ class BaseRegressor(HasTraits):
         return rmodel - es, rmodel + es
 
     def calculate_ci(self, rx, rmodel):
-
         cors = self.calculate_ci_error(rx)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:

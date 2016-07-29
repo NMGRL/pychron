@@ -14,8 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+import sys
+
 from envisage.core_plugin import CorePlugin
 from pyface.message_dialog import warning
+
 # ============= standard library imports ========================
 import logging
 # ============= local library imports  ==========================
@@ -72,7 +75,8 @@ PACKAGE_DICT = dict(
     ImagePlugin='pychron.image.tasks.image_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
     NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
-    IGSNPlugin='pychron.repo.tasks.igsn_plugin'
+    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
 )
 
 
@@ -236,10 +240,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-        # finally:
-
-        # os._exit(0)
-
-        # return
+    finally:
+        sys.exit(0)
 
 # ============= EOF ====================================

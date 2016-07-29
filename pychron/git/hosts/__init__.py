@@ -59,6 +59,24 @@ class IGitHost(Interface):
         pass
 
 
+class CredentialException(BaseException):
+    def __init__(self, d):
+        self._auth = d['Authorization']
+
+    def __str__(self):
+        return 'Invalid user/password combination. {}'.format(self._auth)
+
+
+def authentication(username, password, oauth_token):
+    if oauth_token:
+        auth = oauth_token
+    else:
+        auth = base64.encodestring('{}:{}'.format(username, password)).replace('\n', '')
+        auth = 'Basic {}'.format(auth)
+
+    return {"Authorization": auth}
+
+
 @provides(IGitHost)
 class GitHostService(Loggable):
     username = Str
@@ -66,6 +84,7 @@ class GitHostService(Loggable):
     preference_path = ''
     oauth_token = Str
     default_remote_name = Str
+    remote_url = Str
 
     def bind_preferences(self):
         bind_preference(self, 'username', '{}.username'.format(self.preference_path))
@@ -102,6 +121,9 @@ class GitHostService(Loggable):
 
             def _rget(ci):
                 r = s.get(ci)
+                if r.status_code == 401:
+                    raise CredentialException(self._get_authorization())
+
                 d = json.loads(r.text)
 
                 result = []
@@ -137,13 +159,17 @@ class GitHostService(Loggable):
         raise NotImplementedError
 
     def _get_authorization(self):
+        token = None
         if self.oauth_token:
-            auth = self._get_oauth_token()
-        else:
-            auth = base64.encodestring('{}:{}'.format(self.username,
-                                                      self.password)).replace('\n', '')
-            auth = 'Basic {}'.format(auth)
-
-        return {"Authorization": auth}
+            token = self._get_oauth_token()
+        return authentication(self.username, self.password, token)
+        # if self.oauth_token:
+        #     auth = self._get_oauth_token()
+        # else:
+        #     auth = base64.encodestring('{}:{}'.format(self.username,
+        #                                               self.password)).replace('\n', '')
+        #     auth = 'Basic {}'.format(auth)
+        #
+        # return {"Authorization": auth}
 
 # ============= EOF =============================================

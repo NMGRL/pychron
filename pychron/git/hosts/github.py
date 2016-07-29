@@ -24,6 +24,10 @@ from pychron.paths import paths
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
 
+    @property
+    def remote_url(self):
+        return paths.github_url
+
     def test_api(self):
         ret, err = True, ''
         try:
@@ -38,13 +42,14 @@ class GitHubService(GitHostService):
         if permission is None:
             permission = 'pull'
 
-        team_id = self.get_team_id(team)
+        team_id = self.get_team_id(team, organization)
         if team_id:
-            cmd = 'teams/{}/repos/{}/{}'.format(team_id, organization, repo)
+            cmd = '{}/teams/{}/repos/{}/{}'.format(paths.github_api_url, team_id, organization, repo)
             self._put(cmd, permission=permission)
 
     def get_team_id(self, name, organization):
-        for td in self._get('orgs/{}/teams'.format(organization)):
+        for td in self._get('{}/orgs/{}/teams'.format(paths.github_api_url,
+                                                     organization)):
             if td['name'] == name:
                 return td['id']
 

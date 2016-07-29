@@ -31,6 +31,7 @@ class DVCAble(Loggable):
         else:
             db = self.iso_db_man.db
         return db
+    9
 
 
 class DVCIrradiationable(DVCAble):
