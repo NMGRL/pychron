@@ -279,14 +279,14 @@ class ExtractionLineManager(Manager, Consoleable):
                     vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update switch state {} {}'.format(name, state))
+        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state, *args, **kw)
+            c.update_switch_state(name, state)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
