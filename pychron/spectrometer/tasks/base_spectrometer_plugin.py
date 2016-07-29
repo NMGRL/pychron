@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
@@ -53,7 +52,8 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         t = SpectrometerTask(manager=self.spectrometer_manager,
-                             scan_manager=self.scan_manager)
+                             scan_manager=self.scan_manager,
+                             application=self.application)
         return t
 
     def _factory_spectrometer(self):

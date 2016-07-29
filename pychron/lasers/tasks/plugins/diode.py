@@ -64,7 +64,7 @@ class FusionsDiodePlugin(FusionsPlugin):
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsDiodeTask
-        t = FusionsDiodeTask(manager=self._get_manager())
+        t = FusionsDiodeTask(manager=self._get_manager(), application=self.application)
         return t
 
 # ============= EOF =============================================

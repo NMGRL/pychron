@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
@@ -37,7 +35,7 @@ class ChromiumCO2Plugin(BaseLaserPlugin):
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import ChromiumCO2Task
 
-        t = ChromiumCO2Task(manager=self._get_manager())
+        t = ChromiumCO2Task(manager=self._get_manager(), application=self.application)
         return t
 
     def _tasks_default(self):

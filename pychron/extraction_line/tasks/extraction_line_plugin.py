@@ -15,27 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List, Dict
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import list_directory2
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import ProcedureAction
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import PyScriptRunner
-from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
 from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
     ConsolePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
 from pychron.paths import paths
-
 
 
 def procedure_action(name, application):
@@ -141,7 +140,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         elm = self.application.get_service(ExtractionLineManager)
-        t = ExtractionLineTask(manager=elm)
+        t = ExtractionLineTask(manager=elm, application=self.application)
         return t
 
     def _preferences_panes_default(self):

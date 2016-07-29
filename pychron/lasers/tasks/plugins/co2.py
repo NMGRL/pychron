@@ -15,12 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.action.group import Group
-from pyface.tasks.action.schema_addition import SchemaAddition
 
-from pychron.lasers.tasks.laser_actions import PowerMapAction, \
-    PowerCalibrationAction, ExecutePatternAction, ExecuteAndLasePatternAction
 from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
@@ -39,7 +34,7 @@ class FusionsCO2Plugin(FusionsPlugin):
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsCO2Task
 
-        t = FusionsCO2Task(manager=self._get_manager())
+        t = FusionsCO2Task(manager=self._get_manager(), application=self.application)
         return t
 
     def _preferences_panes_default(self):
