@@ -18,8 +18,7 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema_addition import SchemaAddition
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.logger.tasks.actions import LogViewerAction, CurrentLogViewerAction
 from pychron.logger.tasks.logger_task import LoggerTask
@@ -35,7 +34,7 @@ class LoggerPlugin(BaseTaskPlugin):
                             name='Logger')]
 
     def _task_factory(self):
-        return LoggerTask()
+        return LoggerTask(application=self.application)
 
     def _task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(factory=LogViewerAction,
