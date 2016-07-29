@@ -353,7 +353,7 @@ class SwitchManager(Manager):
             if save:
                 self._save_soft_lock_states()
         else:
-            self.debug('unable to lock {}'.format(name))
+            self.warning('**************** Unable to lock {}'.format(name))
 
     def unlock(self, name, save=True):
         """
@@ -364,7 +364,7 @@ class SwitchManager(Manager):
             if save:
                 self._save_soft_lock_states()
         else:
-            self.debug('unable to unlock {}'.format(name))
+            self.warning('*************** Unable to unlock {}'.format(name))
 
     def set_valve_owner(self, name, owner):
         v = self.get_switch_by_name(name)
@@ -476,15 +476,6 @@ class SwitchManager(Manager):
                 pass
 
         return d
-
-    def load_valve_states(self):
-        self.load_hardware_states()
-
-    def load_valve_lock_states(self, *args, **kw):
-        self._load_soft_lock_states()
-
-    def load_valve_owners(self):
-        pass
 
     def load_hardware_states(self):
         self.debug('load hardware states')
