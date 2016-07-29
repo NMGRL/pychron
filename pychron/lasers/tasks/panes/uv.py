@@ -45,8 +45,9 @@ class FusionsUVStagePane(StageControlPane):
             HGroup(UItem('object.reference_marks.mark', editor=EnumEditor(name='object.reference_marks.mark_ids')),
                    icon_button_editor('add_reference_mark_button', 'add')),
             Item('object.reference_marks.mark_display', editor=ReferenceMarkEditor()),
-            Item('reset_reference_marks_button'),
+            UItem('reset_reference_marks_button'),
             Item('object.reference_marks.spacing'),
+            Item('save_reference_marks_canvas_button'),
             label='Ref. Marks')
         tabs.content.append(refmark_grp)
         return tabs
