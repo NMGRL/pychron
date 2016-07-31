@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Str, Int, List, Enum
-# ============= standard library imports ========================
 import time
+
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
-# ============= local library imports  ==========================
+from traits.api import Float, Str, Int, List, Enum
+
 from magnet_sweep import MagnetSweep
-from pychron.graph.graph import Graph
+from pychron.core.helpers.color_generators import colornames
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.graph import Graph
 
 
 class PeakCenterResult:
@@ -172,7 +173,7 @@ class BasePeakCenter(MagnetSweep):
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
 
-        tol = cur_intensity * (1 - self.percent/100.)
+        tol = cur_intensity * (1 - self.percent / 100.)
         timeout = 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
         # spec.save_integration()
@@ -212,7 +213,7 @@ class BasePeakCenter(MagnetSweep):
                 dac_values = graph.get_data()
                 intensities = graph.get_data(axis=1)
 
-                result = self._calculate_peak_center(dac_values, intensities, update_plot=True)
+                result = self._calculate_peak_center(dac_values, intensities)
                 self.debug('result of _calculate_peak_center={}'.format(result))
                 self.result = result
                 if result is not None:
@@ -243,7 +244,7 @@ class BasePeakCenter(MagnetSweep):
             pts = vstack((xs, ys)).T
             result = PeakCenterResult(det, pts)
 
-            p = self._calculate_peak_center(xs, ys, False)
+            p = self._calculate_peak_center(xs, ys)
             if p:
                 [lx, cx, hx], [ly, cy, hy], mx, my = p
                 result.low_dac = lx
@@ -291,6 +292,14 @@ class BasePeakCenter(MagnetSweep):
         graph.set_data(xs, series=s1)
         graph.set_data(ys, series=s1, axis=1)
 
+        if self.use_interpolation:
+            for i, det in enumerate(self.active_detectors):
+                xs = graph.get_data(series=i)
+                ys = graph.get_data(series=i, axis=1)
+
+                x, y = self._interpolate(xs, ys)
+                graph.new_series(x, y, line_width=1, color=colornames[i])
+
         graph.set_data([mx], series=s1 + 1)
         graph.set_data([my], series=s1 + 1, axis=1)
 
@@ -302,15 +311,15 @@ class BasePeakCenter(MagnetSweep):
 
         graph.redraw()
 
-    def _calculate_peak_center(self, x, y, update_plot):
-        if self.use_interpolation:
-            f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
-            x = linspace(x.min(), x.max(), 500)
-            y = f(x)
-            if update_plot:
-                self.graph.new_series(x, y, line_width=1)
-                self.graph.redraw()
+    def _interpolate(self, x, y):
+        f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
+        x = linspace(x.min(), x.max(), 500)
+        y = f(x)
+        return x, y
 
+    def _calculate_peak_center(self, x, y):
+        if self.use_interpolation:
+            x, y = self._interpolate(x, y)
         if self.n_peaks > 1:
             self.warning('peak deconvolution disabled')
             # def res(p, y, x):
