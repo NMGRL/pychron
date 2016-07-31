@@ -635,18 +635,19 @@ class DVCDatabase(DatabaseAdapter):
             return 0
 
     def get_greatest_aliquot(self, identifier):
-        if identifier:
-            if not self.get_identifier(identifier):
-                return
+        with self.session_ctx():
+            if identifier:
+                if not self.get_identifier(identifier):
+                    return
 
-            q = self.session.query(AnalysisTbl.aliquot)
-            q = q.join(IrradiationPositionTbl)
+                q = self.session.query(AnalysisTbl.aliquot)
+                q = q.join(IrradiationPositionTbl)
 
-            q = q.filter(IrradiationPositionTbl.identifier == identifier)
-            q = q.order_by(AnalysisTbl.aliquot.desc())
-            result = self._query_one(q, verbose_query=True)
-            if result:
-                return int(result[0])
+                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                q = q.order_by(AnalysisTbl.aliquot.desc())
+                result = self._query_one(q, verbose_query=True)
+                if result:
+                    return int(result[0])
 
     def get_greatest_step(self, ln, aliquot):
         """
@@ -654,20 +655,21 @@ class DVCDatabase(DatabaseAdapter):
             return step as an integer. A=0, B=1...
         """
         if ln:
-            dbln = self.get_identifier(ln)
-            if not dbln:
-                return
-            q = self.session.query(AnalysisTbl.increment)
-            q = q.join(IrradiationPositionTbl)
+            with self.session_ctx():
+                dbln = self.get_identifier(ln)
+                if not dbln:
+                    return
+                q = self.session.query(AnalysisTbl.increment)
+                q = q.join(IrradiationPositionTbl)
 
-            q = q.filter(IrradiationPositionTbl.identifier == ln)
-            q = q.filter(AnalysisTbl.aliquot == aliquot)
-            # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
-            q = q.order_by(AnalysisTbl.increment.desc())
-            result = self._query_one(q)
-            if result:
-                increment = result[0]
-                return increment if increment is not None else -1
+                q = q.filter(IrradiationPositionTbl.identifier == ln)
+                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
+                q = q.order_by(AnalysisTbl.increment.desc())
+                result = self._query_one(q)
+                if result:
+                    increment = result[0]
+                    return increment if increment is not None else -1
                 # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):

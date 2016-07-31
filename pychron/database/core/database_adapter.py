@@ -232,6 +232,8 @@ class DatabaseAdapter(Loggable):
 
     def close_session(self):
         if self.session and not isinstance(self.session, MockSession):
+            self.session.flush()
+
             self._session_cnt -= 1
             if not self._session_cnt:
                 self.session.close()
