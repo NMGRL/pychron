@@ -108,15 +108,20 @@ class SessionCTX(object):
     def __init__(self, parent, use_parent_session=True):
         self._use_parent_session = use_parent_session
         self._parent = parent
+        self._session = None
 
     def __enter__(self):
         if self._use_parent_session:
             self._parent.create_session()
         else:
-            return self.parent.session_factory()
+            self._session = self._parent.session_factory()
+            return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._parent.close_session()
+        if self._session:
+            self._session.close()
+        else:
+            self._parent.close_session()
 
 
 class MockQuery:
