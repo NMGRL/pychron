@@ -635,12 +635,12 @@ class DVCDatabase(DatabaseAdapter):
             return 0
 
     def get_greatest_aliquot(self, identifier):
-        with self.session_ctx():
+        with self.session_ctx(use_parent_session=False) as session:
             if identifier:
                 if not self.get_identifier(identifier):
                     return
 
-                q = self.session.query(AnalysisTbl.aliquot)
+                q = session.query(AnalysisTbl.aliquot)
                 q = q.join(IrradiationPositionTbl)
 
                 q = q.filter(IrradiationPositionTbl.identifier == identifier)
@@ -655,11 +655,11 @@ class DVCDatabase(DatabaseAdapter):
             return step as an integer. A=0, B=1...
         """
         if ln:
-            with self.session_ctx():
+            with self.session_ctx(use_parent_session=False) as session:
                 dbln = self.get_identifier(ln)
                 if not dbln:
                     return
-                q = self.session.query(AnalysisTbl.increment)
+                q = session.query(AnalysisTbl.increment)
                 q = q.join(IrradiationPositionTbl)
 
                 q = q.filter(IrradiationPositionTbl.identifier == ln)
