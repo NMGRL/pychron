@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+import os
 import time
 from threading import Thread
 
 from numpy import array, hstack, average
 from traits.api import Instance, HasTraits, Str, Bool, Float
 
+from pychron.core.helpers.filetools import pathtolist
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
@@ -113,7 +114,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 center = smap.get_calibration_hole('center')
                 if center is not None:
                     self.debug('walk out to locate east')
-                    for hid in xrange(int(center.id)+1, int(east.id), 2):
+                    for hid in xrange(int(center.id) + 1, int(east.id), 2):
                         if not self._alive:
                             break
                         hole = smap.get_hole(hid)
@@ -278,12 +279,66 @@ class SemiAutoCalibrator(TrayCalibrator):
         return l is not None or r is not None
 
 
-class AutoCalibrator(TrayCalibrator):
+class AutoCalibrator(SemiAutoCalibrator):
     """
         1a. move to center position automatically
          b. autocenter
         2a. move to right position automatically
          b. autocenter
     """
+
+    _warned = False
+
+    def handle(self, step, x, y, canvas):
+        if step == 'Cancel':
+            self._alive = False
+            self.calibration_step = 'Calibrate'
+        else:
+            center_guess = self._get_center_guess()
+            center_hole = self.stage_map.get_calibration_hole('center')
+            if not self._check_auto_calibration():
+                if not self._warned:
+                    self.warning_dialog('Auto calibration not available. Stage map not properly configured')
+                    self._warned = True
+                return super(AutoCalibrator, self).handle(step, x, y, canvas)
+
+            if center_guess is None or center_hole is None:
+                if not self._warned:
+                    self.warning_dialog('Center hole/Center guess not configured. Center hole={}, Guess={}'.format(
+                        center_hole, center_guess))
+                    self._warned = True
+                return super(AutoCalibrator, self).handle(step, x, y, canvas)
+            else:
+                ret = None
+                if step == 'Calibrate':
+                    self.stage_map.clear_correction_file()
+                    canvas.new_calibration_item()
+                    self.calibration_step = 'Cancel'
+
+                    self._alive = True
+                    t = Thread(target=self._auto_calibrate,
+                               args=(canvas.calibration_item, center_hole, center_guess))
+                    t.start()
+                    self.calibration_step = 'Cancel'
+                return ret
+
+    def _auto_calibrate(self, calibration, center_hole, center_guess):
+        npos, corrected = self._autocenter(center_hole, center_guess)
+        if not corrected:
+            invoke_in_main_thread(self.warning_dialog, 'Failed to located center hole. Try SemiAutoCalibration')
+            self._warned = False
+            self.calibration_step = 'Calibrate'
+        else:
+            super(AutoCalibrator, self)._auto_calibrate(calibration)
+
+    def _get_center_guess(self):
+        path = self.stage_map.center_guess_path
+
+        if os.path.isfile(path):
+            try:
+                guess = pathtolist(path)
+                return map(float, guess[0].split(','))
+            except BaseException, e:
+                self.debug('Failed parsing center guess file {}. error={}'.format(path, e))
 
 # ============= EOF =============================================

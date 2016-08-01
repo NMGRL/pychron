@@ -15,18 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
-# ============= standard library imports ========================
-import shutil
 import cPickle as pickle
 import os
-# ============= local library imports  ==========================
+import shutil
+
+from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
+
 from pychron.loggable import Loggable
-from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator
-from pychron.stage.calibration.free_calibrator import FreeCalibrator
+from pychron.paths import paths
+from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator
 from pychron.stage.calibration.calibrator import TrayCalibrator, \
     LinearCalibrator, BaseCalibrator
-from pychron.paths import paths
+from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 
 TRAY_HELP = '''1. Locate center hole
@@ -46,7 +46,8 @@ HELP_DICT = {
 STYLE_DICT = {'Free': FreeCalibrator,
               'Hole': HoleCalibrator,
               'Linear': LinearCalibrator,
-              'SemiAuto': SemiAutoCalibrator}
+              'SemiAuto': SemiAutoCalibrator,
+              'Auto': AutoCalibrator}
 
 
 def get_hole_calibration(name, hole):
@@ -78,6 +79,7 @@ class TrayCalibrationManager(Loggable):
     add_holes_button = Button
     reset_holes_button = Button
     holes_list = List
+    set_center_button = Button('Set Center Guess')
 
     def isCalibrating(self):
         return self.calibration_step != 'Calibrate'
@@ -135,6 +137,11 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+
+    def _set_center_button_fired(self):
+        x, y = self.parent.get_current_position()
+        self.parent.stage_map.set_center_guess(x,y)
+
     def _reset_holes_button_fired(self):
         name = self.parent.stage_map_name
         root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))

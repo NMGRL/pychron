@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import pickle
+
+import yaml
 from traits.api import Button, on_trait_change
 from traitsui.api import View, Item, TabularEditor, HGroup
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-import os
-import pickle
-import yaml
-# ============= local library imports  ==========================
+
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
 
@@ -50,12 +50,29 @@ class LaserStageMap(BaseStageMap):
     rotation = None
 
     @property
+    def center_guess_path(self):
+        head, tail = os.path.splitext(self.path)
+        path = '{}.center.txt'.format(head)
+        return path
+
+    @property
     def correction_path(self):
         p = ''
         if paths.hidden_dir:
             p = os.path.join(paths.hidden_dir,
                              '{}_correction_file'.format(self.name))
         return p
+
+    def set_center_guess(self, x, y):
+        previous = []
+        p = self.center_guess_path
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                previous = [l if l[0] == '#' else '#{}'.format(l) for l in rfile.readlines()]
+
+        previous.append('{},{}\n'.format(x, y))
+        with open(p, 'w') as wfile:
+            wfile.writelines(previous)
 
     def load_correction_file(self):
         self.debug('load correction file')
@@ -195,7 +212,7 @@ class LaserStageMap(BaseStageMap):
         pythag = lambda hi, xi, yi: ((hi.x - xi) ** 2 + (hi.y - yi) ** 2) ** 0.5
         holes = [(hole, pythag(hole, x, y)) for hole in self.sample_holes
                  if abs(getattr(hole, xkey) - x) < tol and abs(
-                    getattr(hole, ykey) - y) < tol]
+                getattr(hole, ykey) - y) < tol]
         if holes:
             #            #sort holes by deviation
             holes = sorted(holes, lambda a, b: cmp(a[1], b[1]))
@@ -205,15 +222,15 @@ class LaserStageMap(BaseStageMap):
     def traits_view(self):
         editor = TabularEditor(adapter=SampleHoleAdapter())
         v = View(
-                HGroup(Item('clear_corrections', show_label=False)),
-                HGroup(Item('g_shape'),
-                       Item('g_dimension'), show_labels=False),
+            HGroup(Item('clear_corrections', show_label=False)),
+            HGroup(Item('g_shape'),
+                   Item('g_dimension'), show_labels=False),
 
-                Item('sample_holes',
-                     show_label=False, editor=editor),
-                height=500, width=250,
-                resizable=True,
-                title=self.name)
+            Item('sample_holes',
+                 show_label=False, editor=editor),
+            height=500, width=250,
+            resizable=True,
+            title=self.name)
         return v
 
 
