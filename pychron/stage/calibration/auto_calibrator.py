@@ -108,14 +108,29 @@ class SemiAutoCalibrator(TrayCalibrator):
         rrot = lrot = None
         # locate right
         if self._alive:
-            hole = smap.get_calibration_hole('east')
-            if hole is not None:
-                self.debug('Locate east {}'.format(hole.id))
-                npt, corrected = self._autocenter(hole)
-                if corrected:
-                    rrot = calibration.calculate_rotation(*npt)
-                    calibration.set_right(*npt)
-                    self.debug('Calculated rotation= {}'.format(rrot))
+            east = smap.get_calibration_hole('east')
+            if east is not None:
+                center = smap.get_calibration_hole('center')
+                if center is not None:
+                    self.debug('walk out to locate east')
+                    for hid in xrange(int(center.id)+1, int(east.id), 2):
+                        if not self._alive:
+                            break
+                        hole = smap.get_hole(hid)
+                        npt, corrected = self._autocenter(hole)
+                        if corrected:
+                            rrot = calibration.calculate_rotation(*npt)
+                            calibration.set_right(*npt)
+                            self.debug('Calculated rotation= {}'.format(rrot))
+                        self.stage_manager.close_open_images()
+
+                if self._alive:
+                    self.debug('Locate east {}'.format(east.id))
+                    npt, corrected = self._autocenter(east)
+                    if corrected:
+                        rrot = calibration.calculate_rotation(*npt)
+                        calibration.set_right(*npt)
+                        self.debug('Calculated rotation= {}'.format(rrot))
                 self.stage_manager.close_open_images()
 
         # locate left
@@ -233,6 +248,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         self.calibration_step = 'Calibrate'
 
     def _autocenter(self, hi, guess=None):
+        self.debug('autocentering hole={}, guess={}'.format(hi.id, guess))
         sm = self.stage_manager
         kw = {'block': True, 'force': True}
         if guess is None:
