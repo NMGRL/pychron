@@ -198,7 +198,8 @@ class SemiAutoCalibrator(TrayCalibrator):
         guess = None
         weights = [1, 2, 3, 4, 5, 6]
         # holes = [smap.get_hole(1), smap.get_hole(3), smap.get_hole(5)]
-
+        success = True
+        non_corrected = 0
         for hi in holes:
             sm.close_open_images()
 
@@ -219,8 +220,19 @@ class SemiAutoCalibrator(TrayCalibrator):
 
             npt, corrected = self._autocenter(hi, guess=guess)
             if not corrected:
+                non_corrected += 1
                 self.info('Failed to autocenter {}'.format(hi.id))
                 npt = nominal_x, nominal_y
+
+            if non_corrected > 5:
+                invoke_in_main_thread(self.warning_dialog,
+                                      '6 consecutive holes failed to autocenter. Autocalibration Canceled')
+                success = False
+                break
+            else:
+                non_corrected = -1
+
+            non_corrected += 1
 
             dx = nominal_x - npt[0]
             dy = nominal_y - npt[1]
@@ -233,17 +245,17 @@ class SemiAutoCalibrator(TrayCalibrator):
             results.append(res)
             points.append((npt, corrected))
 
-        smap.generate_row_interpolated_corrections()
-
         sm.close_open_images()
 
-        # display the results
-        sv = StageVisualizer()
-        sv.results = results
-        sv.set_stage_map(self.stage_map, points, calibration)
-        sv.save()
+        if success:
+            smap.generate_row_interpolated_corrections()
+            # display the results
+            sv = StageVisualizer()
+            sv.results = results
+            sv.set_stage_map(self.stage_map, points, calibration)
+            sv.save()
 
-        invoke_in_main_thread(open_view, sv)
+            invoke_in_main_thread(open_view, sv)
 
         # reset calibration manager
         self.calibration_step = 'Calibrate'
