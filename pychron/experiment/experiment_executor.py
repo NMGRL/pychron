@@ -15,6 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import time
+from datetime import datetime
+from itertools import groupby
+from threading import Thread, Event as Flag, Lock, currentThread
+
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
@@ -22,14 +29,6 @@ from traits.api import Event, Button, String, Bool, Enum, Property, Instance, In
     on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
 
-# ============= standard library imports ========================
-from threading import Thread, Event as Flag, Lock, currentThread
-from datetime import datetime
-from itertools import groupby
-import time
-import os
-import yaml
-# ============= local library imports  ==========================
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path
@@ -50,9 +49,9 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
 from pychron.experiment.utilities.conditionals_results import reset_conditional_results
+from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers, \
     populate_repository_identifiers, get_curtag
-from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -2012,10 +2011,10 @@ Use Last "blank_{}"= {}
         if dbr is None:
             selected = True
             from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-            selector = ReferenceAnalysisSelector(title='Select Default Blank')
+            selector = ReferenceAnalysisSelector()
             info = selector.edit_traits(kind='livemodal')
             dbs = db.get_blanks(ms)
-            selector.init(dbs)
+            selector.init('Select Default Blank', dbs)
             if info.result:
                 dbr = selector.selected
         if dbr:
