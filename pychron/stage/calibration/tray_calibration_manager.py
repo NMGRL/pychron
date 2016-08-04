@@ -140,7 +140,7 @@ class TrayCalibrationManager(Loggable):
 
     def _set_center_button_fired(self):
         x, y = self.parent.get_current_position()
-        self.parent.stage_map.set_center_guess(x,y)
+        self.parent.stage_map.set_center_guess(x, y)
 
     def _reset_holes_button_fired(self):
         name = self.parent.stage_map_name
