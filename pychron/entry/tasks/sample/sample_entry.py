@@ -166,13 +166,16 @@ class SampleEntry(DVCAble):
         self.refresh_materials = True
         self.refresh_projects = True
         self.refresh_grainsizes = True
+        self.dvc.create_session()
 
     def prepare_destroy(self):
         self._backup()
+        self.dvc.close_session()
 
     def save(self):
         self._backup()
-        self._save()
+        with self.dvc.session_ctx():
+            self._save()
 
     def load(self, p):
         with open(p, 'r') as rfile:
