@@ -396,7 +396,7 @@ class DVCDatabase(DatabaseAdapter):
             self.debug('adding to repo={} instead')
 
     def add_material(self, name, grainsize=None):
-        a = self.get_material(name)
+        a = self.get_material(name, grainsize)
         if a is None:
             a = MaterialTbl(name=name, grainsize=grainsize)
             a = self._add_item(a)
