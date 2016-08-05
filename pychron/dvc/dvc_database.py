@@ -1114,7 +1114,7 @@ class DVCDatabase(DatabaseAdapter):
 
             if pi:
                 pi = self.get_principal_investigator(pi)
-                q = q.filter(PrincipalInvestigatorTbl.principal_investigatorID == pi.id)
+                q = q.filter(PrincipalInvestigatorTbl.id == pi.id)
 
             return self._query_one(q)
         else:
