@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Instance, Event, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.loggable import Loggable
 
 
@@ -31,7 +30,6 @@ class DVCAble(Loggable):
         else:
             db = self.iso_db_man.db
         return db
-    9
 
 
 class DVCIrradiationable(DVCAble):

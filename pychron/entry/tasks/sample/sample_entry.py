@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 import os
+import re
 
 import yaml
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List
-# ============= standard library imports ========================
-import re
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
@@ -334,17 +333,20 @@ class SampleEntry(DVCAble):
 
     @cached_property
     def _get_principal_investigators(self):
-        return self.dvc.get_principal_investigator_names()
+        with self.dvc.session_ctx():
+            return self.dvc.get_principal_investigator_names()
 
     @cached_property
     def _get_materials(self):
-        ms = self.dvc.get_material_names()
-        return ms
+        with self.dvc.session_ctx():
+            ms = self.dvc.get_material_names()
+            return ms
 
     @cached_property
     def _get_projects(self):
-        ps = self.dvc.get_project_names()
-        return ps
+        with self.dvc.session_ctx():
+            ps = self.dvc.get_project_names()
+            return ps
 
     @cached_property
     def _get_grainsizes(self):
