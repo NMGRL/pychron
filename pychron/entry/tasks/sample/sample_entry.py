@@ -25,7 +25,7 @@ from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
-PI_REGEX = re.compile(r'^[A-Z]+\w+(,[A-Z]{1})*$')
+PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
 MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 
 
