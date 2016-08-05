@@ -350,7 +350,8 @@ class SampleEntry(DVCAble):
 
     @cached_property
     def _get_grainsizes(self):
-        gs = [''] + self.dvc.get_grainsizes()
-        return gs
+        with self.dvc.session_ctx():
+            gs = [''] + self.dvc.get_grainsizes()
+            return gs
 
 # ============= EOF =============================================
