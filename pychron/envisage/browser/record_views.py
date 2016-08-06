@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Date, Long
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.experiment.utilities.identifier import get_analysis_type
 
 
@@ -66,15 +65,19 @@ class SampleRecordView(RecordView):
     lithology = ''
     rock_type = ''
     identifier = ''
+    principal_investigator = ''
+    note = ''
 
     def _create(self, dbrecord):
         if dbrecord.material:
             self.material = dbrecord.material.name
         if dbrecord.project:
             self.project = dbrecord.project.name
+            if dbrecord.project.principal_investigator:
+                self.principal_investigator = dbrecord.project.principal_investigator.name
 
         for attr in ('name', 'lat', ('lon', 'long'),
-                     'elevation', 'lithology', 'location', 'igsn', 'rock_type'):
+                     'elevation', 'lithology', 'location', 'igsn', 'rock_type', 'note'):
             if isinstance(attr, tuple):
                 attr, dbattr = attr
             else:

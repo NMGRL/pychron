@@ -101,13 +101,16 @@ class ProjectSpec(Spec):
 class SampleSpec(Spec):
     project = Instance(ProjectSpec)
     material = Instance(MaterialSpec)
+    note = Str
 
     def todump(self):
-        return {'name': str(self.name), 'project': self.project.todump(), 'material': self.material.todump()}
+        return {'name': str(self.name), 'project': self.project.todump(), 'material': self.material.todump(),
+                'note': self.note}
 
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
+        obj.note = d['note']
         obj.name = d['name']
         project = d['project']
         pname = project['name']
@@ -144,6 +147,7 @@ class SampleEntry(DVCAble):
     refresh_grainsizes = Event
 
     sample = Str
+    note = Str
 
     add_principal_investigator_button = Button
     add_project_button = Button
@@ -234,7 +238,8 @@ class SampleEntry(DVCAble):
                 dvc.commit()
 
         for s in self._samples:
-            if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None):
+            if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
+                              note=s.note):
                 s.added = True
                 dvc.commit()
 

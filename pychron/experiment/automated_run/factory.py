@@ -15,41 +15,40 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import pickle
+
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum, Dict
 from traits.trait_errors import TraitError
-# ============= standard library imports ========================
-import pickle
-import yaml
-import os
 from uncertainties import nominal_value, std_dev
-# ============= local library imports  ==========================
 
+from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2, remove_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.helpers.strtools import camel_case
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
+from pychron.experiment.automated_run.factory_view import FactoryView
+from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.queue.increment_heat_template import LaserIncrementalHeatTemplate, BaseIncrementalHeatTemplate
 from pychron.experiment.queue.run_block import RunBlock
+from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
-from pychron.persistence_loggable import PersistenceLoggable
-from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
-from pychron.experiment.automated_run.factory_view import FactoryView
+from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
-from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.paths import paths
-from pychron.experiment.script.script import Script, ScriptOptions
-from pychron.experiment.queue.increment_heat_template import LaserIncrementalHeatTemplate, BaseIncrementalHeatTemplate
-from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension, list_directory2, remove_extension
+from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
-from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
 
 
 class EditEvent(Event):
@@ -964,51 +963,51 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             db = self.get_database()
             # convert labnumber (a, bg, or 10034 etc)
             self.debug('load meta for {}'.format(labnumber))
-            ip = db.get_identifier(labnumber)
+            with db.session_ctx():
+                ip = db.get_identifier(labnumber)
+                if ip:
+                    pos = ip.position
+                    # set sample and irrad info
+                    try:
+                        self.sample = ip.sample.name
+                        d['sample'] = self.sample
 
-            if ip:
-                pos = ip.position
-                # set sample and irrad info
-                try:
-                    self.sample = ip.sample.name
-                    d['sample'] = self.sample
+                        project = ip.sample.project
+                        project_name = project.name
+                        if project_name == 'J-Curve':
+                            irrad = ip.level.irradiation.name
+                            self.repository_identifier = 'Irradiation-{}'.format(irrad)
+                        elif project_name != 'REFERENCES':
+                            repo = camel_case(project_name)
+                            self.repository_identifier = repo
+                            if not db.get_repository(repo):
+                                self.repository_identifier = ''
+                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                            'like to add it?'):
+                                    # this will set self.repository_identifier
+                                    self._add_repository_identifier_fired()
 
-                    project = ip.sample.project
-                    project_name = project.name
-                    if project_name == 'J-Curve':
-                        irrad = ip.level.irradiation.name
-                        self.repository_identifier = 'Irradiation-{}'.format(irrad)
-                    elif project_name != 'REFERENCES':
-                        repo = camel_case(project_name)
-                        self.repository_identifier = repo
-                        if not db.get_repository(repo):
-                            self.repository_identifier = ''
-                            if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
-                                                        'like to add it?'):
-                                # this will set self.repository_identifier
-                                self._add_repository_identifier_fired()
+                    except AttributeError, e:
+                        print e
 
-                except AttributeError, e:
-                    print e
+                    d['repository_identifier'] = self.repository_identifier
 
-                d['repository_identifier'] = self.repository_identifier
+                    self._make_irrad_level(ip)
+                    d['irradiation'] = self.selected_irradiation
+                    d['irradiation_position'] = pos
+                    d['irradiation_level'] = self.selected_level
 
-                self._make_irrad_level(ip)
-                d['irradiation'] = self.selected_irradiation
-                d['irradiation_position'] = pos
-                d['irradiation_level'] = self.selected_level
-
-                d['display_irradiation'] = self.display_irradiation
-                if self.auto_fill_comment:
-                    self._set_auto_comment()
-                d['comment'] = self.comment
-                self._meta_cache[labnumber] = d
-                return True
-            else:
-                self.warning_dialog('{} does not exist.\n\n'
-                                    'Add using "Entry>>Labnumber"\n'
-                                    'or "Utilities>>Import"\n'
-                                    'or manually'.format(labnumber))
+                    d['display_irradiation'] = self.display_irradiation
+                    if self.auto_fill_comment:
+                        self._set_auto_comment()
+                    d['comment'] = self.comment
+                    self._meta_cache[labnumber] = d
+                    return True
+                else:
+                    self.warning_dialog('{} does not exist.\n\n'
+                                        'Add using "Entry>>Labnumber"\n'
+                                        'or "Utilities>>Import"\n'
+                                        'or manually'.format(labnumber))
 
     def _load_labnumber_defaults(self, old, labnumber, special):
         self.debug('load labnumber defaults {} {}'.format(labnumber, special))
@@ -1044,9 +1043,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     @cached_property
     def _get_repository_identifiers(self):
         db = self.get_database()
-        ids = []
+        ids = ['']
         if db and db.connect():
-            ids = db.get_repository_identifiers()
+            with db.session_ctx():
+                ids.extend(db.get_repository_identifiers())
         return ids
 
     @cached_property
@@ -1054,8 +1054,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         if db is None or not db.connect():
             return []
-
-        irradiations = db.get_irradiation_names()
+        with db.session_ctx():
+            irradiations = db.get_irradiation_names()
         return ['Irradiation', LINE_STR] + irradiations
 
     @cached_property
@@ -1066,9 +1066,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return []
 
         if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
-            irrad = db.get_irradiation(self.selected_irradiation)
-            if irrad:
-                levels = sorted([li.name for li in irrad.levels])
+            with db.session_ctx():
+                irrad = db.get_irradiation(self.selected_irradiation)
+                if irrad:
+                    levels = sorted([li.name for li in irrad.levels])
         if levels:
             self.selected_level = levels[0] if levels else 'LEVEL'
 
@@ -1092,7 +1093,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return []
 
         if self.selected_level and self.selected_level not in ('Level', LINE_STR):
-            lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
+            with db.session_ctx():
+                lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
 
         return lns
 

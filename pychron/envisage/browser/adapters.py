@@ -19,8 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property, Str
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.envisage.resources import icon
 
@@ -46,11 +45,13 @@ class ProjectAdapter(BrowserAdapter):
 class SampleAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Material', 'material'),
-               ('Project', 'project')]
+               ('Project', 'project'),
+               ]
 
     all_columns = [('Sample', 'name'),
                    ('Material', 'material'),
-                   ('Project', 'project')]
+                   ('Project', 'project'),
+                   ('Note', 'note')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 

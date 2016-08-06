@@ -19,17 +19,15 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
 from traitsui.api import View, Item, VGroup, UItem, HGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
-from pychron.envisage.browser.record_views import SampleRecordView
-from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction, ClearSelectionAction
+    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
+from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 
@@ -94,7 +92,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                  SToolBar(GenerateIdentifiersAction(),
                           PreviewGenerateIdentifiersAction(),
                           image_size=(16, 16)),
-                 SToolBar(ClearSelectionAction())]
+                 SToolBar(ClearSelectionAction()),
+                 SToolBar(RecoverAction())
+                 ]
 
     invert_flag = Bool
     selection_freq = Int
@@ -121,6 +121,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.manager.activated()
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
+
+    def recover(self):
+        self.manager.recover()
 
     def clear_selection(self):
         cs = ClearSelectionView()
@@ -339,8 +342,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if new:
             ni = new[0]
             # self.manager.set_selected_attr(new.name, 'sample')
-            self.manager.set_selected_attrs((ni.name, ni.material, ni.project),
-                                            ('sample', 'material', 'project'))
+            self.manager.set_selected_attrs((ni.name, ni.material, ni.project, ni.principal_investigator),
+                                            ('sample', 'material', 'project', 'principal_investigator'))
 
     def _load_associated_samples(self, names=None):
         if names is None:

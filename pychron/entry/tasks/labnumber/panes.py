@@ -25,15 +25,13 @@ from traitsui.api import View, Item, TabularEditor, VGroup, HGroup, \
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
+from pychron.entry.irradiated_position import IrradiatedPositionAdapter
+from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
-from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -84,7 +82,8 @@ class IrradiationEditorPane(TraitsDockPane):
 
     def traits_view(self):
         self.sample_tabular_adapter.columns = [('Sample', 'name'),
-                                               ('Material', 'material')]
+                                               ('Material', 'material'),
+                                               ('Note', 'note')]
 
         # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',
         #                                  enabled_when='selected',

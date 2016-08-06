@@ -402,11 +402,11 @@ class DVCDatabase(DatabaseAdapter):
             a = self._add_item(a)
         return a
 
-    def add_sample(self, name, project, material, grainsize=None):
+    def add_sample(self, name, project, material, grainsize=None, note=None):
         a = self.get_sample(name, project, material, grainsize)
         if a is None:
             self.debug('Adding sample {},{},{}'.format(name, project, material))
-            a = SampleTbl(name=name)
+            a = SampleTbl(name=name, note=note)
             a.project = self.get_project(project)
             a.material = self.get_material(material, grainsize)
             a = self._add_item(a)
@@ -421,7 +421,7 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     def add_irradiation(self, name):
-        a = IrradiationTbl(name=name)
+        a = IrradiationTbl(name=name, create_date=datetime.now())
         return self._add_item(a)
 
     def add_irradiation_level(self, name, irradiation, holder, production_name,
@@ -1384,7 +1384,7 @@ class DVCDatabase(DatabaseAdapter):
 
         order = None
         if order_func:
-            order = getattr(IrradiationTbl.name, order_func)()
+            order = getattr(IrradiationTbl.create_date, order_func)()
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
