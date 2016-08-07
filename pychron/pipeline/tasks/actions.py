@@ -118,11 +118,24 @@ class PipelineAction(Action):
 
 
 class BrowserAction(Action):
+    _task_id = 'pychron.browser.task'
+
     def perform(self, event):
-        app = event.task.window.application
-        task = app.get_task('pychron.browser.task')
+        task = self._get_task(event)
         if hasattr(task, self.action):
             getattr(task, self.action)()
+
+    def _get_task(self, event):
+        app = event.task.window.application
+        task = app.get_task(self._task_id)
+        return task
+
+
+class RecallAction(BrowserAction):
+    name = 'Recall...'
+
+    def perform(self, event):
+        self._get_task(event)
 
 
 class TimeViewBrowserAction(BrowserAction):

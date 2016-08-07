@@ -16,16 +16,14 @@
 
 # ============= enthought library imports =======================
 import json
-
-from traits.api import Bool
-
-# ============= standard library imports ========================
-from datetime import datetime
 import os
 import shutil
 import time
-# ============= local library imports  ==========================
+from datetime import datetime
+
+from traits.api import Bool
 from uncertainties import ufloat
+
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, add_extension, \
@@ -404,10 +402,10 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=False)
 
     def set_identifier(self, irradiation, level, pos, identifier):
-        p = self.get_level_path(irradiation, level)
-        jd = dvc_load(p)
-
-        d = next((p for p in jd if p['position'] != pos), None)
+        # p = self.get_level_path(irradiation, level)
+        # jd = dvc_load(p)
+        positions = self._get_level_positions(irradiation, level)
+        d = next((p for p in positions if p['position'] != pos), None)
         if d:
             d['identifier'] = identifier
 
@@ -419,7 +417,8 @@ class MetaRepo(GitRepoManager):
 
     def add_level(self, irrad, level, add=True):
         p = self.get_level_path(irrad, level)
-        dvc_dump([], p)
+        l = dict(z=0, positions=[])
+        dvc_dump(l, p)
         if add:
             self.add(p, commit=False)
 
@@ -439,10 +438,16 @@ class MetaRepo(GitRepoManager):
     def add_position(self, irradiation, level, pos, add=True):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
 
-        pd = next((p for p in jd if p['position'] == pos), None)
+        pd = next((p for p in positions if p['position'] == pos), None)
         if pd is None:
-            jd.append({'position': pos, 'decay_constants': {}})
+            positions.append({'position': pos, 'decay_constants': {}})
         # for pd in jd:
         #     if pd['position'] == pos:
 
@@ -454,7 +459,7 @@ class MetaRepo(GitRepoManager):
         #                                                        'status': ai.is_omitted()}
         #                                                       for ai in analyses]} for ji in jd]
 
-        dvc_dump(jd, p)
+        dvc_dump({'z': z, 'positions': positions}, p)
         if add:
             self.add(p, commit=False)
 
@@ -491,14 +496,29 @@ class MetaRepo(GitRepoManager):
     def update_level_z(self, irradiation, level, z):
         p = self.get_level_path(irradiation, level)
         obj = dvc_load(p)
-        obj['z'] = z
+
+        if isinstance(obj, list):
+            obj = {'z': z, 'positions': obj}
+        else:
+            obj['z'] = z
+
         dvc_dump(obj, p)
 
     def remove_irradiation_position(self, irradiation, level, hole):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
-        njd = [ji for ji in jd if not ji['position'] == hole]
-        dvc_dump(njd, p)
+
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
+
+        # njd = [ji for ji in jd if not ji['position'] == hole]
+        npositions = [ji for ji in positions if not ji['position'] == hole]
+        obj = {'z': z, 'positions': npositions}
+        dvc_dump(obj, p)
         self.add(p, commit=False)
 
     def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
@@ -509,6 +529,13 @@ class MetaRepo(GitRepoManager):
 
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
+
         npos = {'position': pos, 'j': j, 'j_err': e,
                 'decay_constants': decay,
                 'identifier': identifier,
@@ -516,16 +543,16 @@ class MetaRepo(GitRepoManager):
                               'record_id': ai.record_id,
                               'status': ai.is_omitted()}
                              for ai in analyses]}
-        if jd:
-            added = any((ji['position'] == pos for ji in jd))
-            njd = [ji if ji['position'] != pos else npos for ji in jd]
+        if positions:
+            added = any((ji['position'] == pos for ji in positions))
+            npositions = [ji if ji['position'] != pos else npos for ji in positions]
             if not added:
-                njd.append(npos)
-
+                npositions.append(npos)
         else:
-            njd = [npos]
+            npositions = [npos]
 
-        dvc_dump(njd, p)
+        obj = {'z':z, 'positions': npositions}
+        dvc_dump(obj, p)
         if add:
             self.add(p, commit=False)
 
@@ -562,15 +589,11 @@ class MetaRepo(GitRepoManager):
     #     return prs
 
     def get_flux(self, irradiation, level, position):
-        path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
+        # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, e, lambda_k = 0, 0, None
 
-        if os.path.isfile(path):
-            with open(path) as rfile:
-                positions = json.load(rfile)
-            # if isinstance(positions, dict):
-            #     positions = positions['positions']
-
+        positions = self._get_level_positions(irradiation, level)
+        if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
                 j, e = pos.get('j', 0), pos.get('j_err', 0)
@@ -622,6 +645,15 @@ class MetaRepo(GitRepoManager):
         return holder.holes
 
     # private
+    def _get_level_positions(self, irrad, level):
+        p = self.get_level_path(irrad, level)
+        obj = dvc_load(p)
+        if isinstance(obj, list):
+            positions = obj
+        else:
+            positions = obj['positions']
+        return positions
+
     def _chron_name(self, name):
         return os.path.join(paths.meta_root, name, 'chronology.txt')
 

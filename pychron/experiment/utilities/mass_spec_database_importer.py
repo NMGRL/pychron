@@ -195,46 +195,48 @@ class MassSpecDatabaseImporter(Loggable):
 
     def add_analysis(self, spec, commit=True):
         db = self.db
-        for i in range(3):
-            with self.db.session_ctx():
-                irradpos = spec.irradpos
-                rid = spec.runid
-                trid = rid.lower()
-                identifier = spec.labnumber
+        # for i in range(3):
+        with self.db.session_ctx():
+            irradpos = spec.irradpos
+            rid = spec.runid
+            trid = rid.lower()
+            identifier = spec.labnumber
 
-                if trid.startswith('b'):
-                    runtype = 'Blank'
-                    irradpos = -1
-                elif trid.startswith('a'):
-                    runtype = 'Air'
-                    irradpos = -2
-                elif trid.startswith('c'):
-                    runtype = 'Unknown'
-                    identifier = irradpos = self.get_identifier(spec)
-                else:
-                    runtype = 'Unknown'
+            if trid.startswith('b'):
+                runtype = 'Blank'
+                irradpos = -1
+            elif trid.startswith('a'):
+                runtype = 'Air'
+                irradpos = -2
+            elif trid.startswith('c'):
+                runtype = 'Unknown'
+                identifier = irradpos = self.get_identifier(spec)
+            else:
+                runtype = 'Unknown'
 
-                rid = make_runid(identifier, spec.aliquot, spec.step)
+            rid = make_runid(identifier, spec.aliquot, spec.step)
 
-                self._analysis = None
-                db.reraise = True
-                try:
-                    ret = self._add_analysis(db.session, spec, irradpos, rid, runtype)
-                    db.commit()
-                    return ret
-                except Exception, e:
-                    import traceback
-                    tb = traceback.format_exc()
-                    self.debug('Mass Spec save exception. {}\n {}'.format(e, tb))
-                    if i == 2:
-                        self.message('Could not save spec.runid={} rid={} '
-                                     'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
-                    else:
-                        self.debug('retry mass spec save')
-                    # if commit:
-                    db.rollback()
-                finally:
-                    self.db.reraise = True
+            self._analysis = None
+            db.reraise = True
+            try:
+                ret = self._add_analysis(db.session, spec, irradpos, rid, runtype)
+                db.commit()
+                return ret
+            except Exception, e:
+                import traceback
+                self.debug('Mass Spec save exception. {}'.format(e))
+                tb = traceback.format_exc()
+                self.debug(tb)
+                self.message('Could not save spec. runid={} rid={} to MassSpec DB.\n{}'.format(spec.runid, rid, tb))
+                # if i == 2:
+                #     self.message('Could not save spec.runid={} rid={} '
+                #                  'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                # else:
+                #     self.debug('retry mass spec save')
+                # # if commit:
+                # db.rollback()
+            finally:
+                self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 

@@ -28,7 +28,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction
+    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -101,9 +101,20 @@ class PipelinePlugin(BaseTaskPlugin):
         def quick_series_group():
             return SGroup(id='quick_series.group')
 
+        def recall_group():
+            return SGroup(id='recall.group')
+
         pg = 'MenuBar/data.menu/plot.group'
         rg = 'MenuBar/data.menu/reduction.group'
+        reg = 'MenuBar/data.menu/recall.group'
         qsg = 'MenuBar/data.menu/quick_series.group'
+
+        recall_actions = [SchemaAddition(factory=recall_group,
+                                         path='MenuBar/data.menu'),
+                          SchemaAddition(factory=RecallAction,
+                                         path=reg),
+                          SchemaAddition(factory=TimeViewBrowserAction,
+                                         path=reg)]
 
         plotting_actions = [SchemaAddition(factory=data_menu,
                                            path='MenuBar',
@@ -158,12 +169,12 @@ class PipelinePlugin(BaseTaskPlugin):
                                 SchemaAddition(factory=LastMonthSeriesAction,
                                                path=qsg), ]
 
-        actions = plotting_actions
+        actions = recall_actions
+        actions.extend(plotting_actions)
         actions.extend(reduction_actions)
         actions.extend(help_actions)
         actions.extend(quick_series_actions)
-        actions.append(SchemaAddition(factory=TimeViewBrowserAction,
-                                      path='MenuBar/data.menu'))
+
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),
                 TaskExtension(task_id='pychron.browser.task',

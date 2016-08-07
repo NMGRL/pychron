@@ -158,29 +158,29 @@ class DVC(Loggable):
 
     def load_analysis_backend(self, ln, isotope_group):
         db = self.db
+        with db.session_ctx():
+            ip = db.get_identifier(ln)
+            dblevel = ip.level
+            irrad = dblevel.irradiation.name
+            level = dblevel.name
+            pos = ip.position
 
-        ip = db.get_identifier(ln)
-        dblevel = ip.level
-        irrad = dblevel.irradiation.name
-        level = dblevel.name
-        pos = ip.position
+            j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+            prodname, prod = self.meta_repo.get_production(irrad, level)
+            cs = self.meta_repo.get_chronology(irrad)
 
-        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
-        prodname, prod = self.meta_repo.get_production(irrad, level)
-        cs = self.meta_repo.get_chronology(irrad)
+            x = datetime.now()
+            now = time.mktime(x.timetuple())
+            if lambda_k:
+                isotope_group.arar_constants.lambda_k = lambda_k
 
-        x = datetime.now()
-        now = time.mktime(x.timetuple())
-        if lambda_k:
-            isotope_group.arar_constants.lambda_k = lambda_k
-
-        isotope_group.trait_set(j=j,
-                                # lambda_k=lambda_k,
-                                production_ratios=prod.to_dict(RATIO_KEYS),
-                                interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
-                                chron_segments=cs.get_chron_segments(x),
-                                irradiation_time=cs.irradiation_time,
-                                timestamp=now)
+            isotope_group.trait_set(j=j,
+                                    # lambda_k=lambda_k,
+                                    production_ratios=prod.to_dict(RATIO_KEYS),
+                                    interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                    chron_segments=cs.get_chron_segments(x),
+                                    irradiation_time=cs.irradiation_time,
+                                    timestamp=now)
         return True
 
     def repository_db_sync(self, reponame):
@@ -273,8 +273,14 @@ class DVC(Loggable):
                 for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
                     p = self.get_level_path(irrad, level)
                     obj = dvc_load(p)
+                    if isinstance(obj, list):
+                        positions = obj
+                    else:
+                        positions = obj['positions']
+
                     for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
-                        yield repo, irrad, level, {ai.irradiation_position: obj[ai.irradiation_position] for ai in ais}
+                        yield repo, irrad, level, {ai.irradiation_position: positions[ai.irradiation_position] for ai in
+                                                   ais}
 
         added = []
 

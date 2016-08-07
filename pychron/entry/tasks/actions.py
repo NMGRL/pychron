@@ -81,6 +81,11 @@ class ClearSelectionAction(TaskAction):
     method = 'clear_selection'
 
 
+class RecoverAction(TaskAction):
+    name = 'Recover'
+    method = 'recover'
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'

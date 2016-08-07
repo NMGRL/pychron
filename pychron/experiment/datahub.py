@@ -104,7 +104,7 @@ class Datahub(Loggable):
     def get_db(self, key):
         try:
             store = self.stores[key]
-            store.create_session()
+            # store.create_session()
             return store.db
         except KeyError:
             pass

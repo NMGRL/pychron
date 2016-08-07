@@ -24,19 +24,17 @@ from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.stylesheets import load_stylesheet
+from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
-from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.experiment.plot_panel import PlotPanel
 
 
 # ===============================================================================
@@ -183,21 +181,11 @@ class ExperimentFactoryPane(TraitsDockPane):
                            # run_factory_item('freq_after', label='After'),
                            spring),
 
-                    # HGroup(run_factory_item('labnumber',
-                    # tooltip='Enter a Labnumber',
-                    # width=100, ),
-                    # run_factory_item('_labnumber', show_label=False,
-                    # editor=CheckListEditor(name=run_factory_name('labnumbers')),
-                    # width=-20),
-                    # run_factory_item('aliquot',
-                    #                         width=50),
-                    #        spring),
-
                     HGroup(run_factory_item('labnumber',
                                             tooltip='Enter a Labnumber',
                                             width=100,
                                             enabled_when='object.run_factory.special_labnumber == "Special Labnumber"',
-                                            editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
+                                            editor=EnumEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),
                            spring),
@@ -218,9 +206,6 @@ class ExperimentFactoryPane(TraitsDockPane):
                            run_factory_item('auto_fill_comment',
                                             show_label=False,
                                             tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'),
-                           # run_factory_item('comment_template',
-                           # editor=EnumEditor(name=run_factory_name('comment_templates')),
-                           # show_label=False),
                            icon_button_editor(run_factory_name('edit_comment_template'), 'cog',
                                               tooltip='Edit comment template')),
                     HGroup(run_factory_item('flux'),
@@ -239,9 +224,7 @@ class ExperimentFactoryPane(TraitsDockPane):
         grp = VGroup(HGroup(run_factory_item('use_simple_truncation', label='Use Simple'),
                             icon_button_editor(run_factory_name('clear_conditionals'),
                                                'delete',
-                                               tooltip='Clear Conditionals from selected runs'
-                                               # enabled_when=run_factory_name('edit_mode')
-                                               )),
+                                               tooltip='Clear Conditionals from selected runs')),
                      HGroup(run_factory_item('trunc_attr',
                                              editor=EnumEditor(name=run_factory_name('trunc_attrs')),
                                              show_label=False),
@@ -250,7 +233,6 @@ class ExperimentFactoryPane(TraitsDockPane):
                             spacer(-10),
                             run_factory_item('trunc_start', label='Start Count'),
                             show_border=True,
-                            # enabled_when = run_factory_name('use_simple_truncation'),
                             label='Simple'),
                      HGroup(run_factory_item('conditionals_path',
                                              editor=EnumEditor(name=run_factory_name('conditionals')),

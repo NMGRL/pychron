@@ -494,7 +494,7 @@ class Isotope(BaseIsotope):
     # background = Instance(Background)
     # sniff = Instance(Sniff)
     temporary_blank = None
-    ic_factor = None
+    ic_factor = 1.0
     correct_for_blank = True
     # ic_factor = Either(Variable, AffineScalarFunc)
 

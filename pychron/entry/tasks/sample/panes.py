@@ -21,9 +21,6 @@ from traits.api import Int, Property
 from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -148,10 +145,11 @@ class SampleEditorPane(TraitsDockPane):
                       label='Material',
                       show_border=True)
 
-        sgrp = HGroup(UItem('sample'),
+        sgrp = VGroup(HGroup(UItem('sample'),
                       icon_button_editor('add_sample_button', 'add',
                                          enabled_when='sample',
-                                         tooltip='Add a sample'),
+                                         tooltip='Add a sample')),
+                      VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',
                       label='Sample',
                       show_border=True)

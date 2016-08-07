@@ -299,6 +299,7 @@ class SampleTbl(Base, NameMixin):
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
+    note = stringcolumn(140)
 
 
 class ProductionTbl(Base, NameMixin):
@@ -321,6 +322,7 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
+    create_date = Column(TIMESTAMP)
 
 
 class IrradiationPositionTbl(Base, BaseMixin):

@@ -396,17 +396,17 @@ class DVCDatabase(DatabaseAdapter):
             self.debug('adding to repo={} instead')
 
     def add_material(self, name, grainsize=None):
-        a = self.get_material(name)
+        a = self.get_material(name, grainsize)
         if a is None:
             a = MaterialTbl(name=name, grainsize=grainsize)
             a = self._add_item(a)
         return a
 
-    def add_sample(self, name, project, material, grainsize=None):
+    def add_sample(self, name, project, material, grainsize=None, note=None):
         a = self.get_sample(name, project, material, grainsize)
         if a is None:
             self.debug('Adding sample {},{},{}'.format(name, project, material))
-            a = SampleTbl(name=name)
+            a = SampleTbl(name=name, note=note)
             a.project = self.get_project(project)
             a.material = self.get_material(material, grainsize)
             a = self._add_item(a)
@@ -421,7 +421,7 @@ class DVCDatabase(DatabaseAdapter):
         return self._add_item(a)
 
     def add_irradiation(self, name):
-        a = IrradiationTbl(name=name)
+        a = IrradiationTbl(name=name, create_date=datetime.now())
         return self._add_item(a)
 
     def add_irradiation_level(self, name, irradiation, holder, production_name,
@@ -446,7 +446,11 @@ class DVCDatabase(DatabaseAdapter):
     def add_principal_investigator(self, name):
         pi = self.get_principal_investigator(name)
         if pi is None:
-            pi = PrincipalInvestigatorTbl(last_name=name)
+            if ',' in name:
+                last_name, fi = name.split(',')
+            else:
+                last_name, fi = name, ''
+            pi = PrincipalInvestigatorTbl(last_name=last_name, first_initial=fi)
             pi = self._add_item(pi)
         return pi
 
@@ -635,18 +639,19 @@ class DVCDatabase(DatabaseAdapter):
             return 0
 
     def get_greatest_aliquot(self, identifier):
-        if identifier:
-            if not self.get_identifier(identifier):
-                return
+        with self.session_ctx(use_parent_session=False) as session:
+            if identifier:
+                if not self.get_identifier(identifier):
+                    return
 
-            q = self.session.query(AnalysisTbl.aliquot)
-            q = q.join(IrradiationPositionTbl)
+                q = session.query(AnalysisTbl.aliquot)
+                q = q.join(IrradiationPositionTbl)
 
-            q = q.filter(IrradiationPositionTbl.identifier == identifier)
-            q = q.order_by(AnalysisTbl.aliquot.desc())
-            result = self._query_one(q, verbose_query=True)
-            if result:
-                return int(result[0])
+                q = q.filter(IrradiationPositionTbl.identifier == identifier)
+                q = q.order_by(AnalysisTbl.aliquot.desc())
+                result = self._query_one(q, verbose_query=True)
+                if result:
+                    return int(result[0])
 
     def get_greatest_step(self, ln, aliquot):
         """
@@ -654,20 +659,21 @@ class DVCDatabase(DatabaseAdapter):
             return step as an integer. A=0, B=1...
         """
         if ln:
-            dbln = self.get_identifier(ln)
-            if not dbln:
-                return
-            q = self.session.query(AnalysisTbl.increment)
-            q = q.join(IrradiationPositionTbl)
+            with self.session_ctx(use_parent_session=False) as session:
+                dbln = self.get_identifier(ln)
+                if not dbln:
+                    return
+                q = session.query(AnalysisTbl.increment)
+                q = q.join(IrradiationPositionTbl)
 
-            q = q.filter(IrradiationPositionTbl.identifier == ln)
-            q = q.filter(AnalysisTbl.aliquot == aliquot)
-            # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
-            q = q.order_by(AnalysisTbl.increment.desc())
-            result = self._query_one(q)
-            if result:
-                increment = result[0]
-                return increment if increment is not None else -1
+                q = q.filter(IrradiationPositionTbl.identifier == ln)
+                q = q.filter(AnalysisTbl.aliquot == aliquot)
+                # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
+                q = q.order_by(AnalysisTbl.increment.desc())
+                result = self._query_one(q)
+                if result:
+                    increment = result[0]
+                    return increment if increment is not None else -1
                 # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
@@ -1112,7 +1118,7 @@ class DVCDatabase(DatabaseAdapter):
 
             if pi:
                 pi = self.get_principal_investigator(pi)
-                q = q.filter(PrincipalInvestigatorTbl.principal_investigatorID == pi.id)
+                q = q.filter(PrincipalInvestigatorTbl.id == pi.id)
 
             return self._query_one(q)
         else:
@@ -1378,7 +1384,7 @@ class DVCDatabase(DatabaseAdapter):
 
         order = None
         if order_func:
-            order = getattr(IrradiationTbl.name, order_func)()
+            order = getattr(IrradiationTbl.create_date, order_func)()
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
