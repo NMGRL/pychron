@@ -1602,49 +1602,50 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         db = self.datahub.mainstore.db
 
         cr = ConflictResolver()
-        for ei in self.experiment_queues:
-            identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
-            identifiers = [idn for idn in identifiers if not is_special(idn)]
+        with db.session_ctx():
+            for ei in self.experiment_queues:
+                identifiers = {ai.identifier for ai in ei.cleaned_automated_runs}
+                identifiers = [idn for idn in identifiers if not is_special(idn)]
 
-            repositories = {}
-            eas = db.get_associated_repositories(identifiers)
-            for idn, exps in groupby(eas, key=lambda x: x[1]):
-                repositories[idn] = [e[0] for e in exps]
+                repositories = {}
+                eas = db.get_associated_repositories(identifiers)
+                for idn, exps in groupby(eas, key=lambda x: x[1]):
+                    repositories[idn] = [e[0] for e in exps]
 
-            conflicts = []
-            for ai in ei.cleaned_automated_runs:
-                identifier = ai.identifier
-                if not is_special(identifier):
-                    try:
-                        es = repositories[identifier]
-                        if ai.repository_identifier not in es:
-                            if ai.sample == self.monitor_name:
-                                ai.repository_identifier = 'Irradiation-{}'.format(ai.irradiation)
+                conflicts = []
+                for ai in ei.cleaned_automated_runs:
+                    identifier = ai.identifier
+                    if not is_special(identifier):
+                        try:
+                            es = repositories[identifier]
+                            if ai.repository_identifier not in es:
+                                if ai.sample == self.monitor_name:
+                                    ai.repository_identifier = 'Irradiation-{}'.format(ai.irradiation)
 
-                            else:
+                                else:
 
-                                self.debug('Experiment association conflict. '
-                                           'experimentID={} '
-                                           'previous_associations={}'.format(ai.repository_identifier,
-                                                                             ','.join(es)))
-                                conflicts.append((ai, es))
-                    except KeyError:
-                        pass
+                                    self.debug('Experiment association conflict. '
+                                               'experimentID={} '
+                                               'previous_associations={}'.format(ai.repository_identifier,
+                                                                                 ','.join(es)))
+                                    conflicts.append((ai, es))
+                        except KeyError:
+                            pass
 
-            if conflicts:
-                self.debug('Experiment association warning')
-                cr.add_conflicts(ei.name, conflicts)
+                if conflicts:
+                    self.debug('Experiment association warning')
+                    cr.add_conflicts(ei.name, conflicts)
 
-        if cr.conflicts:
-            cr.available_ids = db.get_repository_identifiers()
+            if cr.conflicts:
+                cr.available_ids = db.get_repository_identifiers()
 
-            info = cr.edit_traits(kind='livemodal')
-            if info.result:
-                cr.apply()
-                self.experiment_queue.refresh_table_needed = True
+                info = cr.edit_traits(kind='livemodal')
+                if info.result:
+                    cr.apply()
+                    self.experiment_queue.refresh_table_needed = True
+                    return True
+            else:
                 return True
-        else:
-            return True
 
     def _sync_repositories(self, prog):
         experiment_ids = {a.repository_identifier for q in self.experiment_queues for a in q.cleaned_automated_runs}

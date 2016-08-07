@@ -153,32 +153,7 @@ class ExperimentEditorTask(EditorTask):
         if not self.has_active_editor():
             return
         queue = self.active_editor.queue
-        ms = queue.mass_spectrometer
-        ed = queue.extract_device
-        for i, ai in enumerate(queue.automated_runs):
-            if ai.skip or ai.is_special():
-                continue
-
-            kw = {'identifier': ai.identifier, 'position': ai.position,
-                  'mass_spectrometer': ms,
-                  'extract_device': ed}
-            if ai.is_step_heat():
-                kw['aliquot'] = ai.aliquot
-                kw['extract_value'] = ai.extract_value
-
-            self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
-            aa = self.manager.get_analysis(**kw)
-            if aa is None:
-                self.debug('----- not found')
-                break
-
-        if i:
-            if i == len(queue.automated_runs) - 1:
-                self.information_dialog('All Analyses from this experiment have been run')
-            else:
-                queue.automated_runs = queue.automated_runs[i:]
-        else:
-            self.information_dialog('No Analyses from this experiment have been run')
+        self.manager.sync_queue(queue)
 
     def _assemble_state_colors(self):
         colors = {}
