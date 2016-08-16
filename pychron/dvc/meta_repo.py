@@ -497,10 +497,10 @@ class MetaRepo(GitRepoManager):
         p = self.get_level_path(irradiation, level)
         obj = dvc_load(p)
 
-        if isinstance(obj, list):
-            obj = {'z': z, 'positions': obj}
-        else:
+        try:
             obj['z'] = z
+        except TypeError:
+            obj = {'z': z, 'positions': obj}
 
         dvc_dump(obj, p)
 
