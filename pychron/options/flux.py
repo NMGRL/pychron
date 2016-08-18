@@ -16,10 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Str, Int, Enum, Float, Property, Bool
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.options.aux_plot import AuxPlot
 
+from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
 from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES
 
@@ -30,7 +28,7 @@ class FluxOptions(FigureOptions):
     marker_size = Int(5)
     levels = Int(50, auto_set=False, enter_set=True)
 
-    error_kind = Str('SD')
+    error_kind = Enum(*ERROR_TYPES)
 
     selected_decay = Enum(FLUX_CONSTANTS.keys())
     monitor_age = Float(28.201)
