@@ -774,14 +774,19 @@ class StageManager(BaseStageManager):
                 try:
                     self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
                 except TargetPositionError, e:
-                    self.warning('Move to {} failed'.format(pos))
+                    self.warning('(001) Move to {} failed'.format(pos))
                     self.parent.emergency_shutoff(str(e))
                     return
                 except ZeroDisplacementException:
                     correct_position = False
-
-        self._move_to_hole_hook(key, correct_position,
+        try:
+            self._move_to_hole_hook(key, correct_position,
                                 autocentered_position)
+        except TargetPositionError, e:
+            self.warning('(002) Move failed. {}'.format(e))
+            self.parent.emergency_shutoff(str(e))
+            return
+
         self.finish_move_to_hole(user_entry)
         self.info('Move complete')
 
