@@ -103,12 +103,20 @@ class IrradiatedPositionAdapter(TabularAdapter):
     j_width = Int(75)
     j_err_width = Int(75)
 
+    j_text = Property
+    j_err_text = Property
+
     font = 'arial 10'
 
     #    hole_can_edit = False
 
     #    def _get_hole_width(self):
     #        return 35
+    def _get_j_text(self):
+        return '{:0.6E}'.format(self.item.j)
+
+    def _get_j_err_text(self):
+        return '{:0.6E}'.format(self.item.j_err)
 
     def get_bg_color(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
