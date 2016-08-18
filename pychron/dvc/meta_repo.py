@@ -402,8 +402,8 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=False)
 
     def set_identifier(self, irradiation, level, pos, identifier):
-        # p = self.get_level_path(irradiation, level)
-        # jd = dvc_load(p)
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
         positions = self._get_level_positions(irradiation, level)
         d = next((p for p in positions if p['position'] != pos), None)
         if d:
@@ -521,7 +521,7 @@ class MetaRepo(GitRepoManager):
         dvc_dump(obj, p)
         self.add(p, commit=False)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
         if decay is None:
             decay = {}
         if analyses is None:
@@ -537,6 +537,7 @@ class MetaRepo(GitRepoManager):
             z = jd['z']
 
         npos = {'position': pos, 'j': j, 'j_err': e,
+                'mean_j': mj, 'mean_j_err': me,
                 'decay_constants': decay,
                 'identifier': identifier,
                 'analyses': [{'uuid': ai.uuid,
