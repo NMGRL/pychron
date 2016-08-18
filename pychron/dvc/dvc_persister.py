@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Bool, Str
-# ============= standard library imports ========================
 import base64
 import hashlib
 import os
 import struct
 from datetime import datetime
-from uncertainties import std_dev, nominal_value
+
 from git.exc import GitCommandError
-# ============= local library imports  ==========================
+from traits.api import Instance, Bool, Str
+from uncertainties import std_dev, nominal_value
+
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
@@ -191,8 +191,7 @@ class DVCPersister(BasePersister):
 
         self._save_analysis(timestamp)
 
-        with self.dvc.session_ctx():
-            self._save_analysis_db(timestamp)
+
 
         # save monitor
         self._save_monitor()
@@ -233,6 +232,8 @@ class DVCPersister(BasePersister):
                                                     timeout=30):
                         ret = False
 
+        with self.dvc.session_ctx():
+            self._save_analysis_db(timestamp)
         self.debug('================= post measurement finished')
         return ret
 

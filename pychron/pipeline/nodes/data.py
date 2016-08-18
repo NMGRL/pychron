@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 import os
+import time
 from datetime import datetime, timedelta
 
 from pyface.constant import OK
@@ -260,15 +261,17 @@ def debug_generator():
 
     return f()
 
+
 class ListenUnknownNode(UnknownNode):
     hours = Int(10)
     mass_spectrometer = Str()
     available_spectrometers = List
     exclude_uuids = List
-    period = 5
+    period = Int(15)
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
+    _cached_analyses = None
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -333,12 +336,40 @@ class ListenUnknownNode(UnknownNode):
 
         # low = '2014-10-25 03:30:30'
         # high = '2014-10-25 04:32:25'
-        low, high = self._gen.next()
-        unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                   # exclude_uuids=self.exclude_uuids,
-                                                   analysis_type='unknown',
-                                                   mass_spectrometers=self.mass_spectrometer, verbose=True)
-        records = [ri for unk in unks for ri in unk.record_views]
-        return self.dvc.make_analyses(records)
+        # low, high = self._gen.next()
+        with self.dvc.session_ctx(use_parent_session=False):
+            unks = self.dvc.get_analyses_by_date_range(low, high,
+                                                       # exclude_uuids=self.exclude_uuids,
+                                                       analysis_type='unknown',
+                                                       mass_spectrometers=self.mass_spectrometer, verbose=True)
+            records = [ri for unk in unks for ri in unk.record_views]
+            if not self._cached_analyses:
+                ans = self.dvc.make_analyses(records)
+            else:
+                ans = []
+                ais = []
+                for ri in records:
+                    ca = next((ci for ci in self._cached_analyses if ci.record_id == ri.record_id), None)
+                    if ca is not None:
+                        ans.append(ca)
+                    else:
+                        ais.append(ri)
+                print 'ans', len(ans), len(ais)
+                if ais:
+                    # the database may have updated but the repository not yet updated.
+                    # sleeping X seconds is a potential work around but a little dump.
+                    # better solution is to save to database after repository is updated
+                    try:
+                        ans.extend(self.dvc.make_analyses(ais))
+                    except BaseException:
+                        time.sleep(10)
+                        try:
+                            ans.extend(self.dvc.make_analyses(ais))
+                        except BaseException:
+                            pass
+
+        self._cached_analyses = ans
+
+        return ans
 
 # ============= EOF =============================================
