@@ -236,6 +236,8 @@ class DVCDatabase(DatabaseAdapter):
         self.commit()
 
     def find_references(self, ans, atypes, hours=10, exclude=None,
+                        mass_spectrometer=None,
+                        extract_device=None,
                         exclude_invalid=True):
         if isinstance(ans[0], datetime):
             timestamps = sorted((time.mktime(t.timetuple()) for t in ans))
@@ -256,6 +258,8 @@ class DVCDatabase(DatabaseAdapter):
             if prog:
                 prog.change_message('Searching {} - {}'.format(low, high))
             rs = self.get_analyses_by_date_range(low, high,
+                                                 mass_spectrometers=mass_spectrometer,
+                                                 extract_device=extract_device,
                                                  analysis_type=atypes,
                                                  exclude=[r.id for r in refs],
                                                  exclude_uuids=exclude,

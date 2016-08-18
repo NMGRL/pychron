@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Float, Str, List, Instance, Property, cached_property, Button
+from traits.api import Float, Str, List, Instance, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem
 from traitsui.editors.check_list_editor import CheckListEditor
 
@@ -145,6 +145,14 @@ class FindReferencesNode(FindNode):
 
     analysis_type = Str
     analysis_types = List
+
+    extract_device = Str
+    enable_extract_device = Bool
+    extract_devices = List
+
+    mass_spectrometer = Str
+    enable_mass_spectrometer = Bool
+    mass_spectrometers = List
     # analysis_type_name = None
     name = 'Find References'
 
@@ -165,6 +173,17 @@ class FindReferencesNode(FindNode):
     def run(self, state):
         if not state.unknowns:
             return
+
+        eds = {ai.extract_device for ai in state.unknowns}
+        self.enable_extract_device = len(eds) > 1
+        self.extract_device = eds[0]
+
+        ms = {ai.mass_spectrometer for ai in state.unknowns}
+        self.enable_mass_spectrometer = len(ms) > 1
+        self.mass_spectrometer = ms[0]
+
+        self.extract_devices = self.dvc.get_extraction_device_names()
+        self.mass_spectrometers = self.dvc.get_mass_spectrometer_names()
 
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
@@ -190,7 +209,10 @@ class FindReferencesNode(FindNode):
         times = sorted((ai.timestamp for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
-        refs = self.dvc.find_references(times, atype, hours=self.threshold, make_records=False)
+        refs = self.dvc.find_references(times, atype, hours=self.threshold,
+                                        extract_device=self.extract_device,
+                                        mass_spectrometer=self.mass_spectrometer,
+                                        make_records=False)
 
         if refs:
             unknowns.extend(refs)
@@ -227,7 +249,15 @@ class FindReferencesNode(FindNode):
                                     tooltip='Maximum difference between blank and unknowns in hours',
                                     label='Threshold (Hrs)'),
                                Item('analysis_type',
-                                    editor=EnumEditor(name='analysis_types')))
+                                    label='Analysis Type',
+                                    editor=EnumEditor(name='analysis_types')),
+                               Item('extract_device', editor=EnumEditor(name='extract_devices'),
+                                    label='Extract Device',
+                                    enabled_when='enable_extract_device'),
+                               Item('mass_spectrometer',
+                                    label='Mass Spectrometer',
+                                    editor=EnumEditor(name='mass_spectrometers'),
+                                    enabled_when='enable_mass_spectrometer'))
 
         return v
 
