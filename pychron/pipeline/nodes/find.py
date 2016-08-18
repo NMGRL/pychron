@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Float, Str, List, Instance, Property, cached_property, Button, Bool
+from traits.api import Float, Str, List, Instance, Property, cached_property, Button
 from traitsui.api import Item, EnumEditor, UItem
 from traitsui.editors.check_list_editor import CheckListEditor
 
@@ -147,11 +147,11 @@ class FindReferencesNode(FindNode):
     analysis_types = List
 
     extract_device = Str
-    enable_extract_device = Bool
+    # enable_extract_device = Bool
     extract_devices = List
 
     mass_spectrometer = Str
-    enable_mass_spectrometer = Bool
+    # enable_mass_spectrometer = Bool
     mass_spectrometers = List
     # analysis_type_name = None
     name = 'Find References'
@@ -164,27 +164,32 @@ class FindReferencesNode(FindNode):
         self.threshold = nodedict['threshold']
         self.analysis_type = nodedict['analysis_type']
 
+    def finish_load(self):
+        self.extract_devices = self.dvc.get_extraction_device_names()
+        self.mass_spectrometers = self.dvc.get_mass_spectrometer_names()
+
     # def dump(self, obj):
     #     obj['threshold'] = self.threshold
 
     def _analysis_type_changed(self, new):
         self.name = 'Find {}s'.format(new)
 
-    def run(self, state):
+    def pre_run(self, state, configure=True):
         if not state.unknowns:
             return
 
         eds = {ai.extract_device for ai in state.unknowns}
         self.enable_extract_device = len(eds) > 1
-        self.extract_device = eds[0]
+        self.extract_device = list(eds)[0]
 
         ms = {ai.mass_spectrometer for ai in state.unknowns}
         self.enable_mass_spectrometer = len(ms) > 1
-        self.mass_spectrometer = ms[0]
+        self.mass_spectrometer = list(ms)[0]
 
-        self.extract_devices = self.dvc.get_extraction_device_names()
-        self.mass_spectrometers = self.dvc.get_mass_spectrometer_names()
+        return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
+    def run(self, state):
+        
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
             if self._run_group(state, gid, list(ans)):
@@ -233,8 +238,10 @@ class FindReferencesNode(FindNode):
 
                 refs = self.dvc.make_analyses(refs)
                 if obj.is_append:
+                    state.append_references = True
                     state.references.extend(refs)
                 else:
+                    state.append_references = False
                     state.references = list(refs)
 
                 if unks is not None:
@@ -251,13 +258,12 @@ class FindReferencesNode(FindNode):
                                Item('analysis_type',
                                     label='Analysis Type',
                                     editor=EnumEditor(name='analysis_types')),
+
                                Item('extract_device', editor=EnumEditor(name='extract_devices'),
-                                    label='Extract Device',
-                                    enabled_when='enable_extract_device'),
+                                    label='Extract Device'),
                                Item('mass_spectrometer',
                                     label='Mass Spectrometer',
-                                    editor=EnumEditor(name='mass_spectrometers'),
-                                    enabled_when='enable_mass_spectrometer'))
+                                    editor=EnumEditor(name='mass_spectrometers')))
 
         return v
 

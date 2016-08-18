@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 
+import os
+from datetime import datetime, timedelta
+
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum
 from traitsui.api import View, Item, EnumEditor
-# ============= standard library imports ========================
-import os
-from datetime import datetime, timedelta
-# ============= local library imports  ==========================
+
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -215,7 +215,10 @@ class ReferenceNode(DataNode):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
-            self.references.extend(refs)
+            if state.append_references:
+                self.references.extend(refs)
+            else:
+                self.references = refs
 
         if not self.references:
             self.configure(pre_run=True)
