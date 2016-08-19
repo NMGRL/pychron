@@ -178,8 +178,7 @@ class SampleEntry(DVCAble):
 
     def save(self):
         self._backup()
-        with self.dvc.session_ctx():
-            self._save()
+        self._save()
 
     def load(self, p):
         with open(p, 'r') as rfile:
@@ -222,26 +221,30 @@ class SampleEntry(DVCAble):
     def _save(self):
         self.debug('saving sample info')
         dvc = self.dvc
-        for p in self._principal_investigators:
-            if dvc.add_principal_investigator(p.name):
-                p.added = True
-                dvc.commit()
+        with dvc.session_ctx(use_parent_session=False):
+            for p in self._principal_investigators:
+                if dvc.add_principal_investigator(p.name):
+                    p.added = True
+                    dvc.commit()
 
-        for p in self._projects:
-            if dvc.add_project(p.name, p.principal_investigator.name):
-                p.added = True
-                dvc.commit()
+        with dvc.session_ctx(use_parent_session=False):
+            for p in self._projects:
+                if dvc.add_project(p.name, p.principal_investigator.name):
+                    p.added = True
+                    dvc.commit()
 
-        for m in self._materials:
-            if dvc.add_material(m.name, m.grainsize or None):
-                m.added = True
-                dvc.commit()
+        with dvc.session_ctx(use_parent_session=False):
+            for m in self._materials:
+                if dvc.add_material(m.name, m.grainsize or None):
+                    m.added = True
+                    dvc.commit()
 
-        for s in self._samples:
-            if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
-                              note=s.note):
-                s.added = True
-                dvc.commit()
+        with dvc.session_ctx(use_parent_session=False):
+            for s in self._samples:
+                if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
+                                  note=s.note):
+                    s.added = True
+                    dvc.commit()
 
         self.refresh_table = True
 
