@@ -600,6 +600,7 @@ class MetaRepo(GitRepoManager):
                 j, e = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
+                    # this was a temporary fix and likely can be removed
                     if isinstance(dc, float):
                         v, e = dc, 0
                     else:

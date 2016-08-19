@@ -323,7 +323,7 @@ class ListenUnknownNode(UnknownNode):
                 # self.engine.selected.unknowns = unks
                 # self.engine.run(state=self.engine.state)
 
-            do_after(self.period * 1000, self._iter)
+            do_after(int(self.period * 1000), self._iter)
 
     def _load_unknowns(self):
         td = timedelta(hours=self.hours)
