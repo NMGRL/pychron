@@ -461,7 +461,7 @@ class LabnumberEntry(DVCIrradiationable):
                     dbpos.identifier = ln
 
             self.dvc.meta_repo.update_flux(self.irradiation, level,
-                                           ir.hole, ir.identifier, ir.j, ir.j_err)
+                                           ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
 
             dbpos.weight = float(ir.weight or 0)
             dbpos.note = ir.note
