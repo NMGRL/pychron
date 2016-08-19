@@ -458,7 +458,7 @@ class PipelineTask(BaseBrowserTask):
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
                                                  width=200)),
-                                        PaneItem('pychron.pipeline.inspector'),
+                                        # PaneItem('pychron.pipeline.inspector'),
                                         orientation='vertical'))
 
     def _extra_actions_default(self):

@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Int, Str, Bool, provides
-# ============= standard library imports ========================
-from datetime import datetime
-import struct
-from numpy import array
-import time
 import os
-# ============= local library imports  ==========================
+import struct
+import time
+from datetime import datetime
+
+from numpy import array
+from traits.api import Instance, Int, Str, Bool, provides
 from uncertainties import nominal_value, std_dev
-from pychron.core.i_datastore import IDatastore
+
 from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.i_datastore import IDatastore
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.identifier_mapper import IdentifierMapper
+from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
@@ -196,7 +196,7 @@ class MassSpecDatabaseImporter(Loggable):
     def add_analysis(self, spec, commit=True):
         db = self.db
         # for i in range(3):
-        with self.db.session_ctx():
+        with db.session_ctx(use_parent_session=False) as session:
             irradpos = spec.irradpos
             rid = spec.runid
             trid = rid.lower()
@@ -219,7 +219,7 @@ class MassSpecDatabaseImporter(Loggable):
             self._analysis = None
             db.reraise = True
             try:
-                ret = self._add_analysis(db.session, spec, irradpos, rid, runtype)
+                ret = self._add_analysis(session, spec, irradpos, rid, runtype)
                 db.commit()
                 return ret
             except Exception, e:
@@ -323,7 +323,7 @@ class MassSpecDatabaseImporter(Loggable):
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
                                    RUN_TYPE_DICT[runtype], **params)
-        sess.flush()
+        sess.commit()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d

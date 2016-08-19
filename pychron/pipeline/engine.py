@@ -15,20 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import time
 
+import yaml
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
 
-# ============= standard library imports ========================
-import os
-import yaml
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
-from pychron.loggable import Loggable
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
@@ -781,9 +779,19 @@ class PipelineEngine(Loggable):
         self.configure(new)
         # self.update_needed = True
 
-    @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
-    def _handle_inspector_event(self, obj, name, old, new):
-        self.active_inspector_item = new
+    # @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
+    # def _handle_inspector_event(self, new):
+    #     self.active_inspector_item = new
+    #
+    # def _selected_editor_changed(self, old, new):
+    #     if new:
+    #         if hasattr(new, 'figure_model'):
+    #             new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]')
+    #
+    #     if old:
+    #         new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]',
+    #                             remove=True)
+
 
 # ============= EOF =============================================
 
