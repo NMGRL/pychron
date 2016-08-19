@@ -122,14 +122,16 @@ class SampleEditorPane(TraitsDockPane):
 '''
     def traits_view(self):
         pigrp = HGroup(UItem('principal_investigator',
-                             editor=ComboboxEditor(name='principal_investigators')),
+                             editor=ComboboxEditor(name='principal_investigators',
+                                                   use_filter=False)),
                        icon_button_editor('add_principal_investigator_button', 'add',
                                           enabled_when='principal_investigator',
                                           tooltip='Add a principal investigator'),
                        label='PrincipalInvestigator',
                        show_border=True)
 
-        prgrp = HGroup(UItem('project', editor=ComboboxEditor(name='projects')),
+        prgrp = HGroup(UItem('project', editor=ComboboxEditor(name='projects',
+                                                              use_filter=False)),
                        icon_button_editor('add_project_button', 'add',
                                           enabled_when='project',
                                           tooltip='Add a project'),
@@ -137,8 +139,8 @@ class SampleEditorPane(TraitsDockPane):
                        label='Project',
                        show_border=True)
 
-        mgrp = HGroup(UItem('material', editor=ComboboxEditor(name='materials')),
-                      UItem('grainsize', editor=ComboboxEditor(name='grainsizes')),
+        mgrp = HGroup(UItem('material', editor=ComboboxEditor(name='materials', use_filter=False)),
+                      UItem('grainsize', editor=ComboboxEditor(name='grainsizes', use_filter=False)),
                       icon_button_editor('add_material_button', 'add',
                                          enabled_when='material',
                                          tooltip='Add a material'),

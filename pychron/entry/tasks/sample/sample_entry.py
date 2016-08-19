@@ -31,7 +31,7 @@ MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 
 class PIStr(String):
     def validate(self, obj, name, value):
-        if not PI_REGEX.match(value) and name != 'NMGRL':
+        if not PI_REGEX.match(value) and value != 'NMGRL':
             return self.error(obj, name, value)
         else:
             return value
