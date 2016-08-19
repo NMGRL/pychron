@@ -455,7 +455,7 @@ class DVCDatabase(DatabaseAdapter):
                 last_name, fi = name.split(',')
             else:
                 last_name, fi = name, ''
-            pi = PrincipalInvestigatorTbl(last_name=last_name, first_initial=fi)
+            pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
             pi = self._add_item(pi)
         return pi
 
