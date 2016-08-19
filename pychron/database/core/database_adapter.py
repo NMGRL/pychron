@@ -109,6 +109,7 @@ class SessionCTX(object):
         self._use_parent_session = use_parent_session
         self._parent = parent
         self._session = None
+        self._psession = None
 
     def __enter__(self):
         if self._use_parent_session:
