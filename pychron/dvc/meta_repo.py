@@ -552,7 +552,7 @@ class MetaRepo(GitRepoManager):
         else:
             npositions = [npos]
 
-        obj = {'z':z, 'positions': npositions}
+        obj = {'z': z, 'positions': npositions}
         dvc_dump(obj, p)
         if add:
             self.add(p, commit=False)
@@ -600,7 +600,11 @@ class MetaRepo(GitRepoManager):
                 j, e = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
-                    lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
+                    if isinstance(dc, float):
+                        v, e = dc, 0
+                    else:
+                        v, e = dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0)
+                    lambda_k = ufloat(v, e)
 
         return ufloat(j or 0, e or 0), lambda_k
 

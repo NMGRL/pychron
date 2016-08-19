@@ -196,8 +196,9 @@ class FluxPersistNode(DVCPersistNode):
 
         decay = state.decay_constants
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-                        irp.j, irp.jerr, decay,
+                        irp.j, irp.jerr,
                         irp.mean_j, irp.mean_jerr,
+                        decay,
                         analyses=irp.analyses,
                         add=False)
 
