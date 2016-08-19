@@ -110,7 +110,7 @@ class SampleSpec(Spec):
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
-        obj.note = d['note']
+        obj.note = d.get('note', '')
         obj.name = d['name']
         project = d['project']
         pname = project['name']
