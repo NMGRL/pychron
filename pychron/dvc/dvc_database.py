@@ -410,8 +410,8 @@ class DVCDatabase(DatabaseAdapter):
         a = self.get_sample(name, project, material, grainsize)
         if a is None:
             self.debug('Adding sample {},{},{}'.format(name, project, material))
-            # a = SampleTbl(name=name, note=note)
-            a = SampleTbl(name=name)
+            a = SampleTbl(name=name, note=note)
+            # a = SampleTbl(name=name)
             a.project = self.get_project(project)
             a.material = self.get_material(material, grainsize)
             a = self._add_item(a)
