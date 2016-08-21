@@ -40,8 +40,6 @@ class InterpretedAgeNode(DVCNode):
     interpreted_ages = List
 
     def configure(self, pre_run=False, **kw):
-        # if pre_run and getattr(self, self.analysis_kind):
-        #     return True
         if not pre_run:
             self._manual_configured = True
 
@@ -169,7 +167,6 @@ class UnknownNode(DataNode):
     def set_last_n_analyses(self, n):
         db = self.dvc.db
         ans = db.get_last_n_analyses(n)
-        # ans = db.get_analyses_by_date_range(mi,ma)
         records = [ri for ai in ans for ri in ai.record_views]
         self.unknowns = self.dvc.make_analyses(records)
 
@@ -225,13 +222,6 @@ class ReferenceNode(DataNode):
             self.configure(pre_run=True)
 
         return self.references
-        # items = getattr(state, self.analysis_kind)
-        # if state.has_references:
-        #     for ai in self.references:
-        #         ai.group_id = 0
-
-        # items.extend(self.references)
-        # self.references = items
 
     def run(self, state):
         pass
@@ -246,23 +236,9 @@ class FluxMonitorsNode(DataNode):
         items = getattr(state, self.analysis_kind)
         self.unknowns = items
 
-        # if not self.unknowns or state.has_flux_monitors:
-        #     self.unknowns = items
-        # else:
-        #     items.extend(self.unknowns)
-
-
-def debug_generator():
-    def f():
-        low = datetime.strptime('2014-10-25 04:32:25', '%Y-%m-%d %H:%M:%S')
-        for i in range(60):
-            high = low + timedelta(minutes=10 * i + 1)
-            yield low, high
-
-    return f()
-
 
 class ListenUnknownNode(UnknownNode):
+    name = 'Unknowns (Auto)'
     hours = Int(10)
     mass_spectrometer = Str()
     available_spectrometers = List
@@ -271,7 +247,7 @@ class ListenUnknownNode(UnknownNode):
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
-    _cached_analyses = None
+    unknowns = None
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -285,7 +261,7 @@ class ListenUnknownNode(UnknownNode):
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between start of pipeline and start of pipeline - hours\n'
+        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)'),
@@ -296,8 +272,6 @@ class ListenUnknownNode(UnknownNode):
 
     def post_run(self, engine, state):
         if not self._alive:
-            self._gen = debug_generator()
-
             self.engine = engine
             self._start_listening()
 
@@ -314,14 +288,8 @@ class ListenUnknownNode(UnknownNode):
 
             unks = self._load_unknowns()
             if unks:
-                self.unknowns = unks
                 self.engine.rerun_with(unks, post_run=False)
                 self.engine.refresh_figure_editors()
-                # self.exclude_uuids = [u.uuid for u in unks]
-                # self.engine.refresh_unknowns(unks)
-                # # self.engine.
-                # self.engine.selected.unknowns = unks
-                # self.engine.run(state=self.engine.state)
 
             do_after(int(self.period * 1000), self._iter)
 
@@ -334,27 +302,23 @@ class ListenUnknownNode(UnknownNode):
         else:
             low = high - td
 
-        # low = '2014-10-25 03:30:30'
-        # high = '2014-10-25 04:32:25'
-        # low, high = self._gen.next()
         with self.dvc.session_ctx(use_parent_session=False):
             unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       # exclude_uuids=self.exclude_uuids,
                                                        analysis_type='unknown',
                                                        mass_spectrometers=self.mass_spectrometer, verbose=True)
             records = [ri for unk in unks for ri in unk.record_views]
-            if not self._cached_analyses:
+            if not self.unknowns:
                 ans = self.dvc.make_analyses(records)
             else:
                 ans = []
                 ais = []
                 for ri in records:
-                    ca = next((ci for ci in self._cached_analyses if ci.record_id == ri.record_id), None)
+                    ca = next((ci for ci in self.unknowns if ci.record_id == ri.record_id), None)
                     if ca is not None:
                         ans.append(ca)
                     else:
                         ais.append(ri)
-                print 'ans', len(ans), len(ais)
+
                 if ais:
                     # the database may have updated but the repository not yet updated.
                     # sleeping X seconds is a potential work around but a little dump.
@@ -368,8 +332,7 @@ class ListenUnknownNode(UnknownNode):
                         except BaseException:
                             pass
 
-        self._cached_analyses = ans
-
+        self.unknowns = ans
         return ans
 
 # ============= EOF =============================================

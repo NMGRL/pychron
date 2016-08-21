@@ -117,11 +117,6 @@ class FilterNode(BaseNode):
             buttons=['OK', 'Cancel'])
         return v
 
-    # def configure(self):
-    #     info = self.edit_traits()
-    #     if info.result:
-    #         return True
-
     def _generate_filter(self):
         def func(item):
             for fi in self.filters:
