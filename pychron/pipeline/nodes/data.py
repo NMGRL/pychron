@@ -247,7 +247,6 @@ class ListenUnknownNode(UnknownNode):
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
-    unknowns = None
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -332,7 +331,8 @@ class ListenUnknownNode(UnknownNode):
                         except BaseException:
                             pass
 
-        self.unknowns = ans
+        if ans is not None:
+            self.unknowns = ans
         return ans
 
 # ============= EOF =============================================
