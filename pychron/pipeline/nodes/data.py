@@ -27,6 +27,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum
 from traitsui.api import View, Item, EnumEditor
 
+from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -243,19 +244,29 @@ class ListenUnknownNode(UnknownNode):
     mass_spectrometer = Str
     available_spectrometers = List
     exclude_uuids = List
-    period = Int(5)
+    period = Int(15)
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
 
     _cached_unknowns = None
+    _unks_ids = None
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
         if self.available_spectrometers:
             self.mass_spectrometer = self.available_spectrometers[0]
 
-        self.mass_spectrometer = 'jan'
+        if globalv.auto_pipeline_debug:
+            self.mass_spectrometer = 'jan'
+            self.period = 5
+
+            # from pympler.classtracker import ClassTracker
+            # self.tracker = ClassTracker()
+            # from pychron.dvc.dvc_orm import AnalysisTbl
+            # from pychron.database.records.isotope_record import DVCIsotopeRecordView
+            # self.tracker.track_class(DVCIsotopeRecordView)
+            # self.tracker.create_snapshot()
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -291,13 +302,18 @@ class ListenUnknownNode(UnknownNode):
 
     def _iter(self):
         if self._alive:
-
             unks = self._load_unknowns()
+            if globalv.auto_pipeline_debug:
+                self.tracker.stats.print_summary()
+
             if self._alive:
                 if unks:
-                    self.unknowns = unks
-                    self.engine.rerun_with(unks, post_run=False)
-                    self.engine.refresh_figure_editors()
+                    unks_ids = [id(ai) for ai in unks]
+                    if self._unks_ids != unks_ids:
+                        self.unknowns = unks
+                        self._unks_ids = unks_ids
+                        self.engine.rerun_with(unks, post_run=False)
+                        self.engine.refresh_figure_editors()
 
                 if self._alive:
                     do_after(int(self.period * 1000), self._iter)

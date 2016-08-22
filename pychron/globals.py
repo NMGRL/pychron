@@ -71,6 +71,7 @@ class Globals(object):
     system_monitor_debug = False
     figure_debug = False
     browser_debug = False
+    auto_pipeline_debug = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -123,6 +124,7 @@ class Globals(object):
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
 
+                           ('auto_pipeline_debug', to_bool),
                            ('pipeline_debug', to_bool),
                            ('run_pipeline', to_bool),
                            ('select_default_data', to_bool),

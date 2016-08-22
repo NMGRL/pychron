@@ -454,7 +454,7 @@ class PipelineEngine(Loggable):
                         self.debug('Pre run failed {}'.format(node))
                         return True
 
-                    node.unknowns = []
+                    # node.unknowns = []
                     st = time.time()
                     try:
                         node.run(state)
