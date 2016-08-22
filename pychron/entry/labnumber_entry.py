@@ -726,12 +726,22 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
         if new_irrad:
             pname = 'Irradiation-{}'.format(new_irrad)
             sname = self.monitor_name
-            if self.confirmation_dialog('Add default project ({}) and '
-                                        'flux monitor sample {{}} for this irradiation?'.format(pname, sname)):
+
+            def add_default():
                 # add irradiation project for flux monitors
                 self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
-
                 self.dvc.add_sample(sname, pname, self.monitor_material)
+
+            if self.confirmation_dialog('Add default project ({}) and '
+                                        'flux monitor sample ({}) for this irradiation?'.format(pname, sname)):
+                add_default()
+            else:
+                msg = 'Are you sure you do not want to add a default project ({}) and flux monitor sample ({}) ' \
+                      'for this irradiation?\n\nPlease seek help if you are not sure what to do! Yes="Do not add", ' \
+                      'No="Add default"'.format(pname, sname)
+                if not self.confirmation_dialog(msg):
+                    add_default()
+
             self.updated = True
             self.irradiation = new_irrad
 

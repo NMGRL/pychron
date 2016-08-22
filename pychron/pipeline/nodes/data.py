@@ -251,6 +251,7 @@ class ListenUnknownNode(UnknownNode):
 
     _cached_unknowns = None
     _unks_ids = None
+    _updated = False
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -295,6 +296,7 @@ class ListenUnknownNode(UnknownNode):
     def _start_listening(self):
         self._low = datetime.now()
         self._alive = True
+        self._updated = False
         self._iter()
 
     def _stop_listening(self):
@@ -316,7 +318,15 @@ class ListenUnknownNode(UnknownNode):
                         self.engine.refresh_figure_editors()
 
                 if self._alive:
-                    do_after(int(self.period * 1000), self._iter)
+
+                    if self._updated:
+                        # if a new analysis was just found wait for at least 2mins before querying again
+                        period = 120
+                        self._updated = False
+                    else:
+                        period = self.period
+
+                    do_after(int(period * 1000), self._iter)
 
     def _load_unknowns(self):
         td = timedelta(hours=self.hours)
@@ -345,6 +355,7 @@ class ListenUnknownNode(UnknownNode):
                         ais.append(ri)
 
                 if ais:
+                    self._updated = True
                     # the database may have updated but the repository not yet updated.
                     # sleeping X seconds is a potential work around but a little dump.
                     # better solution is to save to database after repository is updated
