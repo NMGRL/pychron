@@ -239,19 +239,23 @@ class FluxMonitorsNode(DataNode):
 
 class ListenUnknownNode(UnknownNode):
     name = 'Unknowns (Auto)'
-    hours = Int(10)
-    mass_spectrometer = Str()
+    hours = Int(2)
+    mass_spectrometer = Str
     available_spectrometers = List
     exclude_uuids = List
-    period = Int(15)
+    period = Int(5)
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
+
+    _cached_unknowns = None
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
         if self.available_spectrometers:
             self.mass_spectrometer = self.available_spectrometers[0]
+
+        self.mass_spectrometer = 'jan'
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -274,23 +278,29 @@ class ListenUnknownNode(UnknownNode):
             self.engine = engine
             self._start_listening()
 
+    def reset(self):
+        self._stop_listening()
+
     def _start_listening(self):
         self._low = datetime.now()
         self._alive = True
         self._iter()
 
     def _stop_listening(self):
-        pass
+        self._alive = False
 
     def _iter(self):
         if self._alive:
 
             unks = self._load_unknowns()
-            if unks:
-                self.engine.rerun_with(unks, post_run=False)
-                self.engine.refresh_figure_editors()
+            if self._alive:
+                if unks:
+                    self.unknowns = unks
+                    self.engine.rerun_with(unks, post_run=False)
+                    self.engine.refresh_figure_editors()
 
-            do_after(int(self.period * 1000), self._iter)
+                if self._alive:
+                    do_after(int(self.period * 1000), self._iter)
 
     def _load_unknowns(self):
         td = timedelta(hours=self.hours)
@@ -306,13 +316,13 @@ class ListenUnknownNode(UnknownNode):
                                                        analysis_type='unknown',
                                                        mass_spectrometers=self.mass_spectrometer, verbose=True)
             records = [ri for unk in unks for ri in unk.record_views]
-            if not self.unknowns:
+            if not self._cached_unknowns:
                 ans = self.dvc.make_analyses(records)
             else:
                 ans = []
                 ais = []
                 for ri in records:
-                    ca = next((ci for ci in self.unknowns if ci.record_id == ri.record_id), None)
+                    ca = next((ci for ci in self._cached_unknowns if ci.record_id == ri.record_id), None)
                     if ca is not None:
                         ans.append(ca)
                     else:
@@ -331,8 +341,7 @@ class ListenUnknownNode(UnknownNode):
                         except BaseException:
                             pass
 
-        if ans is not None:
-            self.unknowns = ans
+        self._cached_unknowns = ans
         return ans
 
 # ============= EOF =============================================

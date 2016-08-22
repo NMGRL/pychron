@@ -113,6 +113,8 @@ class PipelineTask(BaseBrowserTask):
 
     def prepare_destroy(self):
         self.interpreted_age_browser_model.dump_browser()
+        self.engine.reset()
+
         super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):

@@ -1068,8 +1068,8 @@ class DVC(Loggable):
             try:
                 return getattr(self.meta_repo, item)
             except AttributeError, e:
-                # print e, item
-                raise DVCException(item)
+                print e, item
+                # raise DVCException(item)
 
     # defaults
     def _db_default(self):
