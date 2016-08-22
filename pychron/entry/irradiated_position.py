@@ -27,6 +27,7 @@ class BaseIrradiatedPosition(HasTraits):
     identifier = Str
     material = Str
     sample = Str
+    grainsize = Str
     hole = Int
     alt_hole = Int
     project = Str
@@ -87,6 +88,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         ('PI', 'principal_investigator'),
         ('Project', 'project'),
         ('Material', 'material'),
+        ('Grainsize', 'grainsize'),
         #               ('Size', 'size'),
         ('Weight', 'weight'),
         ('J', 'j'),
@@ -98,6 +100,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
     sample_width = Int(100)
     project_width = Int(150)
     material_width = Int(100)
+    grainsize_width = Int(70)
     size_width = Int(50)
     weight_width = Int(50)
     j_width = Int(75)

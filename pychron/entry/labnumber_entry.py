@@ -640,6 +640,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
                 if dbpos.sample.material:
                     ir.material = v = dbpos.sample.material.name
+                    ir.grainsize = dbpos.sample.material.grainsize or ''
                     set_color(item, v)
 
                 if dbpos.sample.project:
