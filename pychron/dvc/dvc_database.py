@@ -1300,11 +1300,13 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_project_pnames(self):
         q = self.session.query(ProjectTbl)
+        q = q.order_by(ProjectTbl.name.asc())
         ms = self._query_all(q)
         return [mi.pname for mi in ms]
 
     def get_material_gnames(self):
         q = self.session.query(MaterialTbl)
+        q = q.order_by(MaterialTbl.name.asc())
         ms = self._query_all(q)
         return [mi.gname for mi in ms]
 
