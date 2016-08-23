@@ -257,7 +257,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         es = db.get_repositories()
         if es:
-            es = [e.record_view for e in es]
+            es = sorted([e.record_view for e in es], key=lambda x: x.name)
 
             self.repositories = es
             self.orepositories = es
@@ -487,7 +487,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if include_recent:
             recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
 
-        pss = [ProjectRecordView(p) for p in ps]
+        pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
 
         if include_recent:
             # move references project to after Recent
