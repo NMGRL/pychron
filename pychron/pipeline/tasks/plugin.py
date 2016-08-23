@@ -28,7 +28,8 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
     LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction
+    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
+    AnalysisTableAction
 from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
@@ -146,6 +147,8 @@ class PipelinePlugin(BaseTaskPlugin):
                              SchemaAddition(factory=ICFactorAction,
                                             path=rg),
                              SchemaAddition(factory=FluxAction,
+                                            path=rg),
+                             SchemaAddition(factory=AnalysisTableAction,
                                             path=rg),
                              SchemaAddition(factory=FreezeProductionRatios,
                                             path=rg)]

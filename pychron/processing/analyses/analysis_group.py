@@ -77,6 +77,7 @@ class AnalysisGroup(HasTraits):
     include_j_error_in_mean = Bool(True)
     include_j_error_in_individual_analyses = Bool(False)
 
+    percent_39Ar = AGProperty()
     dirty = Event
 
     def get_mswd_tuple(self):
@@ -162,6 +163,10 @@ class AnalysisGroup(HasTraits):
 
     def _set_sample(self, s):
         self._sample = s
+
+    @cached_property
+    def _get_percent_39Ar(self):
+        return 0
 
     # @cached_property
     def _get_weighted_age(self):

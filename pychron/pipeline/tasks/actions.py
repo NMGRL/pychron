@@ -183,6 +183,12 @@ class FreezeFlux(PipelineAction):
     action = 'freeze_flux'
 
 
+class AnalysisTableAction(PipelineAction):
+    name = 'Analysis Table'
+    dname = 'Analysis Table'
+    action = 'set_analysis_table_template'
+
+
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(Action):
     name = 'Reset Factory Defaults'

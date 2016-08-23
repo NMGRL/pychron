@@ -357,14 +357,21 @@ class XLSXTableWriter(BaseTableWriter):
                 (opt.include_summary_location, 'Location', '', 'location'),
                 (opt.include_summary_irradiation, 'Irradiation', '', 'irradiation_label'),
                 (opt.include_summary_material, 'Material', '', 'material'),
-                (opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
+
+                (opt.include_summary_age, 'Age Type', '', None),
+                # (opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
+
                 (opt.include_summary_n, 'N', '', 'nanalyses'),
                 (opt.include_summary_percent_ar39, ('%', '<sup>39</sup>', 'Ar'), '', 'percent_39Ar'),
                 (opt.include_summary_mswd, 'MSWD', '', 'mswd'),
                 (opt.include_summary_kca, 'K/Ca', '', 'weighted_kca', value),
                 (opt.include_summary_kca, PLUSMINUS_ONE_SIGMA, '', 'weighted_kca', error),
-                (opt.include_summary_age, 'Age', '', 'preferred_age', value),
-                (opt.include_summary_age, PLUSMINUS_ONE_SIGMA, '', 'preferred_age', error),
+
+                (opt.include_summary_age, 'Age', '', 'preferred_age', None),
+                # (opt.include_summary_age, 'Age', '', 'preferred_age', value),
+                (opt.include_summary_age, PLUSMINUS_ONE_SIGMA, '', 'preferred_age', None),
+                # (opt.include_summary_age, PLUSMINUS_ONE_SIGMA, '', 'preferred_age', error),
+
                 (opt.include_summary_comments, 'Comments', '', None),
                 ]
         return cols
@@ -689,7 +696,10 @@ class XLSXTableWriter(BaseTableWriter):
         else:
             getter = getattr
 
-        return getter(item, attr)
+        if getter is None:
+            return ''
+        else:
+            return getter(item, attr)
 
 
 if __name__ == '__main__':
