@@ -15,26 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+import os
+import re
+from datetime import timedelta, datetime
+
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-from datetime import timedelta, datetime
-import os
-import re
-import cPickle as pickle
-# ============= local library imports  ==========================
+
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
+from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView
-from pychron.core.ui.table_configurer import SampleTableConfigurer
-from pychron.persistence_loggable import PersistenceLoggable
 from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
 
 
 class IdentifierStr(BaseStr):
@@ -310,17 +310,17 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         lp, hp = self.db.get_repository_date_range(names)
         if lp.date() == hp.date():
             hp += timedelta(days=1)
-        self._set_posts(lp, hp)
+        self._set_posts(lp, hp, enable=False)
 
     def _load_project_date_range(self, names):
         lp, hp = self.db.get_project_date_range(names)
         if lp.date() == hp.date():
             hp += timedelta(days=1)
-        self._set_posts(lp, hp)
+        self._set_posts(lp, hp, enable=False)
 
-    def _set_posts(self, lp, hp):
+    def _set_posts(self, lp, hp, enable=True):
         self.use_low_post, self.use_high_post = True, True
-        ol, oh = self.use_low_post, self.use_high_post
+        # ol, oh = self.use_low_post, self.use_high_post
         self.debug('set posts lp={} hp={}'.format(lp, hp))
         self.low_post, self.high_post = lp, hp
 
@@ -329,7 +329,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.trait_property_changed('high_post', None)
         self._suppress_post_update = False
 
-        self.use_low_post, self.use_high_post = ol, oh
+        self.use_low_post, self.use_high_post = enable, enable
+        # self.use_low_post, self.use_high_post = ol, oh
 
     def _load_associated_groups(self, names):
         """
