@@ -208,6 +208,7 @@ class Analysis(ArArAge):
     recall_event = Event
     tag_event = Event
     invalid_event = Event
+    omit_event = Event
 
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()
@@ -270,6 +271,11 @@ class Analysis(ArArAge):
         if analyses is None:
             analyses = [self, ]
         self.invalid_event = analyses
+
+    def trigger_omit(self, analyses=None):
+        if analyses is None:
+            analyses = [self, ]
+        self.omit_event = analyses
 
     def is_omitted(self):
         return self.is_omitted_by_tag() or self.temp_selected

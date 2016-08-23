@@ -455,6 +455,9 @@ class PipelineTask(BaseBrowserTask):
     def _set_invalid(self, items):
         self.set_tag(tag='invalid', items=items, warn=True)
 
+    def _set_omit(self, items):
+        self.set_tag(tag='omit', items=items, warn=True)
+
     # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
@@ -493,12 +496,14 @@ class PipelineTask(BaseBrowserTask):
     # def _handle_save_needed(self):
     #     self.engine.run_persist(self._temp_state)
 
-    @on_trait_change('engine:[tag_event, invalid_event, recall_event]')
+    @on_trait_change('engine:[tag_event, invalid_event, recall_event, omit_event]')
     def _handle_analysis_tagging(self, name, new):
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':
             self._set_invalid(new)
+        elif name == 'omit_event':
+            self._set_omit(new)
         elif name == 'recall_event':
             self.recall(new)
 

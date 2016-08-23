@@ -48,6 +48,7 @@ class ActiveCTX(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._node.active = False
+        self._node = None
 
 
 class Pipeline(HasTraits):
@@ -152,6 +153,7 @@ class PipelineEngine(Loggable):
     tag_event = Event
     invalid_event = Event
     recall_event = Event
+    omit_event = Event
 
     state = Instance(EngineState)
 
@@ -454,7 +456,7 @@ class PipelineEngine(Loggable):
                         self.debug('Pre run failed {}'.format(node))
                         return True
 
-                    # node.unknowns = []
+                    node.unknowns = []
                     st = time.time()
                     try:
                         node.run(state)
@@ -666,6 +668,7 @@ class PipelineEngine(Loggable):
         if old:
             old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
             old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event', remove=True)
+            old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
             old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
             old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
             old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
@@ -674,6 +677,7 @@ class PipelineEngine(Loggable):
         if new:
             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+            old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
             new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
             new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
             new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
@@ -775,23 +779,25 @@ class PipelineEngine(Loggable):
     def _handle_invalid(self, new):
         self.invalid_event = new
 
+    def _handle_omit(self, new):
+        self.omit_event = new
+
     def _dclicked_changed(self, new):
         self.configure(new)
         # self.update_needed = True
 
-    # @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
-    # def _handle_inspector_event(self, new):
-    #     self.active_inspector_item = new
-    #
-    # def _selected_editor_changed(self, old, new):
-    #     if new:
-    #         if hasattr(new, 'figure_model'):
-    #             new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]')
-    #
-    #     if old:
-    #         new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]',
-    #                             remove=True)
-
+        # @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
+        # def _handle_inspector_event(self, new):
+        #     self.active_inspector_item = new
+        #
+        # def _selected_editor_changed(self, old, new):
+        #     if new:
+        #         if hasattr(new, 'figure_model'):
+        #             new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]')
+        #
+        #     if old:
+        #         new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]',
+        #                             remove=True)
 
 # ============= EOF =============================================
 
