@@ -20,8 +20,7 @@ import time
 from pyface.timer.do_later import do_after
 from traits.api import Instance
 from traitsui.api import View, Item, VGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
 from pychron.hardware.linear_axis import LinearAxis
 from pychron.paths import paths
@@ -119,11 +118,25 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
         pos = self.stage_map.get_hole_pos(key)
 
         if pos:
+            do_hystersis = self.temp_position and self.temp_position>pos
+
             self.temp_hole = key
             self.temp_position = pos
 
             x, y = self.get_calibrated_position(pos, key=key)
             self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
+            if do_hystersis:
+                self.info('doing hystersis')
+                hx = x - 5
+                self.debug('hystersis position={}'.format(hx))
+                self.canvas.set_desired_position(hx, 0)
+                self.feeder._position = hx
+                self.feeder.move_absolute(hx, units='mm')
+
+                self._inprogress()
+
+                self.info('Hystersis correction complete')
+                self.update_axes()
 
             self.canvas.set_desired_position(x, 0)
             self.feeder._position = x
@@ -142,13 +155,18 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
         moving = self.feeder.moving
         update = self._update_axes
 
+        cnt = 0
         while 1:
             if time.time() - st > timeout:
                 break
 
             update()
             if not moving():
-                break
+                cnt += 1
+                if cnt > 2:
+                    break
+            else:
+                cnt = 0
             time.sleep(0.5)
 
     def _update_axes(self):
