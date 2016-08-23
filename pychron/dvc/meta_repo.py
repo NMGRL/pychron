@@ -597,7 +597,7 @@ class MetaRepo(GitRepoManager):
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, e = pos.get('j', 0), pos.get('j_err', 0)
+                j, je = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
                     # this was a temporary fix and likely can be removed
@@ -607,7 +607,7 @@ class MetaRepo(GitRepoManager):
                         v, e = dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0)
                     lambda_k = ufloat(v, e)
 
-        return ufloat(j or 0, e or 0), lambda_k
+        return ufloat(j, je), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)
