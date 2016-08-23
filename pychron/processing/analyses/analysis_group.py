@@ -62,6 +62,7 @@ class AnalysisGroup(HasTraits):
     _repository_identifier = Str
 
     irradiation = Property
+    irradiation_label = Property
     sample = Property
     aliquot = Property
     material = Property
@@ -139,6 +140,10 @@ class AnalysisGroup(HasTraits):
 
     def _set_repository_identifier(self, v):
         self._repository_identifier = v
+
+    @cached_property
+    def _get_irradiation_label(self):
+        return self.analyses[0].irradiation_label
 
     @cached_property
     def _get_irradiation(self):
