@@ -66,6 +66,7 @@ class AnalysisGroup(HasTraits):
     aliquot = Property
     material = Property
     unit = Str
+    location = Str
 
     _sample = Str
     age_scalar = Property
