@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import collections
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
@@ -125,25 +124,19 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, tree, show_icons, *args, **kwargs):
         self._tree = tree
         self._show_icons = show_icons
-        self.size_map = collections.defaultdict(lambda: QtCore.QSize(1, 21))
+        self._size_map = {}
         super(PipelineDelegate, self).__init__(*args, **kwargs)
-        # QtGui.QStyledItemDelegate.__init__(self, *args, **kwargs)
 
     def sizeHint(self, option, index):
         """ returns area taken by the text. """
-        # try:
-        return self.size_map[self._tree.itemFromIndex(index)]
-        # except KeyboardInterrupt:
-        #     pass
+        try:
+            return self._size_map[self._tree.itemFromIndex(index)]
+        except KeyError:
+            return QtCore.QSize(1, 21)
 
     def paint(self, painter, option, index):
-        # try:
-        # QtGui.QStyledItemDelegate.paint(self, painter, option, index)
         super(PipelineDelegate, self).paint(painter, option, index)
-        # print idx.row(), option
-        # painter.begin()
-        # painter.draw(0,0,'Fasdfe'
-        # painter.setPen(QColor('white'))
+
         hint = painter.renderHints()
         painter.setRenderHints(hint | QtGui.QPainter.Antialiasing)
 
@@ -153,12 +146,9 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         painter.drawRoundedRect(rect, 5, 5)
 
         item = self._tree.itemFromIndex(index)
-        # print index, self.editor._tree.model().rowCount()
-        # draw_line = index.row() != self._tree.model().rowCount() - 1
 
-        # expanded, node, object = self.editor._get_node_data(item)
-        expanded, node, object = item._py_data
-        text = node.get_label(object)
+        expanded, node, obj = item._py_data
+        text = node.get_label(obj)
 
         if self._show_icons:
             iconwidth = 24  # FIXME: get width from actual
@@ -168,7 +158,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         offset = 20
         r = 13  # rect.height() - 10
         # r2 = r / 2.
-        status_color = node.get_status_color(object)
+        status_color = node.get_status_color(obj)
 
         c = status_color.darker()
         painter.setPen(c)
@@ -191,20 +181,20 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
                                 rect.width() - iconwidth,
                                 rect.height(),
                                 QtCore.Qt.TextWordWrap, text)
-        if self.size_map[item] != rect.size():
-            size = rect.size()
-            size.setHeight(size.height() + 10)
-            self.size_map[item] = size
-            self.sizeHintChanged.emit(index)
-            # except KeyboardInterrupt:
-            #     pass
+
+        item_id = id(item)
+        size = rect.size()
+        if item_id not in self._size_map:
+            self._size_map[item_id] = size
+        else:
+            if self._size_map[item_id] != size:
+                size.setHeight(size.height() + 10)
+                self._size_map[item_id] = size
+                self.sizeHintChanged.emit(index)
 
 
 class _PipelineEditor(SimpleEditor):
-    # def __init__(self, *args, **kw):
-    #     super(_PipelineEditor, self).__init__(*args, **kw)
-    #     self._delegate =
-    #
+
     def init(self, parent):
         super(_PipelineEditor, self).init(parent)
         if self._tree:
