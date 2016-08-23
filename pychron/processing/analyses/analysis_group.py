@@ -17,16 +17,13 @@
 # ============= enthought library imports =======================
 import math
 
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Tuple
-
-# ============= standard library imports ========================
 from numpy import array, nan
-# ============= local library imports  ==========================
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Tuple
 from uncertainties import ufloat, nominal_value
-# from pychron.processing.analysis import Marker
+
+from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
-from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 
 
 def AGProperty(*depends):
@@ -68,6 +65,7 @@ class AnalysisGroup(HasTraits):
     sample = Property
     aliquot = Property
     material = Property
+    unit = Str
 
     _sample = Str
     age_scalar = Property
