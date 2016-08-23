@@ -305,7 +305,7 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, PLUSMINUS_ONE_SIGMA, '', 'CDD_ic_factor', icf_error),
 
                    (options.include_rundate, 'RunDate', '', 'rundate'),
-                   (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_delta'),
+                   (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
                    (ubit, 'J', '', 'j', value),
                    (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
                    (ubit, ('<sup>39</sup>', 'Ar Decay'), '', 'ar39decayfactor', value),
@@ -746,7 +746,7 @@ if __name__ == '__main__':
             self.uF = ufloat(frand(10, 10), frand(10))
             self.rad40_percent = frand(3, 100)
             self.rundate = datetime.now()
-            self.decay_delta = frand(2, 200)
+            self.decay_days = frand(2, 200)
             self.k2o = frand(2)
             self.irradiation_label = 'NM-284 E9'
             self.irradiation = 'NM-284'
