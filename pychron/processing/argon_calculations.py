@@ -23,10 +23,9 @@ from copy import deepcopy
 from numpy import asarray, average, array
 from uncertainties import ufloat, umath, nominal_value
 
-# ============= local library imports  ==========================
-from pychron.pychron_constants import ALPHAS
-from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
+from pychron.processing.arar_constants import ArArConstants
+from pychron.pychron_constants import ALPHAS
 
 
 # def calculate_F_ratio(m4039, m3739, m3639, pr):
@@ -139,9 +138,9 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     errors = asarray(errors)
     k39 = asarray(k39)
 
-    force_steps = options.get('force_steps', False)
-    if force_steps:
-        sstep, estep = force_steps
+    fixed_steps = options.get('fixed_steps', False)
+    if fixed_steps:
+        sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
             sidx = 0

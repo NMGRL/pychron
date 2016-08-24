@@ -1446,7 +1446,7 @@ class DVCDatabase(DatabaseAdapter):
             if order is not None:
                 q = q.order_by(order)
 
-            ps = self._query_all(q)
+            ps = self._query_all(q, verbose_query=True)
         else:
             ps = self._retrieve_items(ProjectTbl, order=order)
         return ps

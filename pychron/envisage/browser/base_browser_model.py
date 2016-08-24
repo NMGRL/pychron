@@ -553,7 +553,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ms = self.mass_spectrometer_includes
 
         pis = None
-        if self.selected_principal_investigators:
+        if self.principal_investigator_enabled and self.selected_principal_investigators:
             pis = [p.name for p in self.selected_principal_investigators]
             self.debug('load projects for principal investigator= {}'.format(pis))
         db = self.db

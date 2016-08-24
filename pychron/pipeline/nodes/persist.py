@@ -215,6 +215,7 @@ class FluxPersistNode(DVCPersistNode):
 class XLSXTablePersistNode(BaseNode):
     name = 'Save Analysis Table'
     auto_configure = False
+    configurable = False
 
     def run(self, state):
         for table in state.tables:

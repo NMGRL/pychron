@@ -31,6 +31,8 @@ class BaseNode(HasTraits):
     options_klass = None
     options = Any
     auto_configure = Bool(True)
+    configurable = Bool(True)
+
     active = Bool(False)
     # metadata = Event
     _manual_configured = Bool(False)
@@ -104,16 +106,19 @@ class BaseNode(HasTraits):
         return self._configure(**kw)
 
     def _configure(self, obj=None, **kw):
-        if obj is None:
-            if self.options_klass:
-                obj = self.options
-            else:
-                obj = self
+        if self.configurable:
+            if obj is None:
+                if self.options_klass:
+                    obj = self.options
+                else:
+                    obj = self
 
-        info = obj.edit_traits(kind='livemodal')
-        if info.result:
-            self.finish_configure()
-            self.refresh()
+            info = obj.edit_traits(kind='livemodal')
+            if info.result:
+                self.finish_configure()
+                self.refresh()
+                return True
+        else:
             return True
 
     def finish_configure(self):

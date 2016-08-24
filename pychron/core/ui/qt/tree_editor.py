@@ -20,7 +20,6 @@ import collections
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from PySide.QtGui import QIcon, QTreeWidgetItemIterator, QColor
-from pyface.timer.do_later import do_later
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
@@ -132,7 +131,8 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         """ returns area taken by the text. """
-        return self._size_map[self._tree.itemFromIndex(index)]
+        # return self._size_map[self._tree.itemFromIndex(index)]
+        return QtCore.QSize(1, 30)
 
     def paint(self, painter, option, index):
         hint = painter.renderHints()
@@ -140,13 +140,12 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
 
         painter.setBrush(QColor(100, 100, 100, 100))
         painter.setPen(QColor(100, 100, 100, 100))
-        rect = option.rect
-        top = rect.top()
-        if index.row() > 0:
-            top += 6*index.row()
+        # rect = option.rect
+        # top = rect.top()
+        # if index.row() > 0:
+        #     top += 6*index.row()
 
-        painter.drawRoundedRect(rect.left(), top,
-                                rect.width(), rect.height() + 6, 5, 5)
+        painter.drawRoundedRect(option.rect, 5, 5)
 
         item = self._tree.itemFromIndex(index)
 
@@ -170,9 +169,10 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         #     x = rect.left() + 6 + r2
         #     y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
         #     painter.drawLine(x, y, x, y + rect.height())
-        r = (rect.height()+6)*0.6
+        # r = (rect.height()+6)*0.6
         painter.setBrush(status_color)
-        painter.drawEllipse(rect.left() + 6, top+3.5, r, r)
+        # painter.drawEllipse(rect.left() + 6, top+3.5, r, r)
+        # painter.drawEllipse(rect.left() + 3, top+3.5, r, r)
 
         # draw text
         painter.setPen(Qt.black)
@@ -180,16 +180,16 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         font.setPointSize(14)
         painter.setFont(font)
 
-        rect = painter.drawText(option.rect.left() + iconwidth,
+        painter.drawText(option.rect.left() + iconwidth,
                                 # option.rect.top(),
-                                top+3,
+                                option.rect.top()+option.rect.height()/3,
                                 option.rect.width() - iconwidth,
-                                option.rect.height()+6,
+                                option.rect.height(),
                                 QtCore.Qt.TextWordWrap, text)
         # Need to set the appropriate sizeHint of the item.
-        if self._size_map[item] != rect.size():
-            self._size_map[item] = rect.size()
-            do_later(self.sizeHintChanged.emit, index)
+        # if self._size_map[item] != rect.size():
+        #     self._size_map[item] = rect.size()
+        #     do_later(self.sizeHintChanged.emit, index)
 
 
 class _PipelineEditor(SimpleEditor):

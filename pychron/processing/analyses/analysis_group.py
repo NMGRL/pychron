@@ -18,7 +18,7 @@
 import math
 
 from numpy import array, nan
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Tuple
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Float
 from uncertainties import ufloat, nominal_value
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
@@ -287,7 +287,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_age_error_kind = Str
     nsteps = Int
-    calculate_fixed_plateau_steps = Tuple
+    fixed_step_low = Str
+    fixed_step_high = Str
+
+    plateau_nsteps = Int(3)
+    plateau_gas_fraction = Float(50)
 
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
@@ -323,6 +327,18 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     #
     #     return zip(*d)
 
+    @property
+    def fixed_steps(self):
+        l, h = '', ''
+        if self.fixed_step_low:
+            l = self.fixed_step_low
+
+        if self.fixed_step_high:
+            h = self.fixed_step_high
+
+        if not (l is None and h is None):
+            return l, h
+
     # @cached_property
     def _get_plateau_age(self):
         # ages, errors, k39 = self._get_steps()
@@ -331,9 +347,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         errors = [ai.age_err for ai in self.analyses]
         k39 = [nominal_value(ai.get_computed_value('k39')) for ai in self.analyses]
 
-        options = {'nsteps': self.pc_nsteps,
-                   'gas_fraction': self.pc_gas_fraction,
-                   'force_steps': self.calculate_fixed_plateau_steps}
+        options = {'nsteps': self.plateau_nsteps,
+                   'gas_fraction': self.plateau_gas_fraction,
+                   'fixed_steps': self.fixed_steps}
 
         excludes = [i for i in enumerate(self.analyses) if ai.is_omitted()]
         args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
