@@ -132,6 +132,7 @@ class SampleEditorPane(TraitsDockPane):
 
         prgrp = HGroup(UItem('project', editor=ComboboxEditor(name='projects',
                                                               use_filter=False)),
+                       UItem('generate_project_button', tooltip='Generate a default name for this project'),
                        icon_button_editor('add_project_button', 'add',
                                           enabled_when='project',
                                           tooltip='Add a project'),

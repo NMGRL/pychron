@@ -1397,6 +1397,11 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
+    def get_last_project_id(self):
+        q = self.session.query(ProjectTbl.id)
+        q = q.order_by(ProjectTbl.id.desc())
+        return self._query_first(q)
+
     def get_projects(self, principal_investigators=None,
                      irradiation=None, level=None,
                      mass_spectrometers=None, order=None):
