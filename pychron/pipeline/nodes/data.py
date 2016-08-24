@@ -260,7 +260,8 @@ class ListenUnknownNode(UnknownNode):
 
         if globalv.auto_pipeline_debug:
             self.mass_spectrometer = 'jan'
-            self.period = 5
+            self.period = 15
+            self.hours = 9
 
             # from pympler.classtracker import ClassTracker
             # self.tracker = ClassTracker()
@@ -305,14 +306,14 @@ class ListenUnknownNode(UnknownNode):
     def _iter(self):
         if self._alive:
             unks = self._load_unknowns()
-            if globalv.auto_pipeline_debug:
-                self.tracker.stats.print_summary()
+            # if globalv.auto_pipeline_debug:
+            #     self.tracker.stats.print_summary()
 
             if self._alive:
                 if unks:
                     unks_ids = [id(ai) for ai in unks]
                     if self._unks_ids != unks_ids:
-                        self.unknowns = unks
+                        # self.unknowns = unks
                         self._unks_ids = unks_ids
                         self.engine.rerun_with(unks, post_run=False)
                         self.engine.refresh_figure_editors()

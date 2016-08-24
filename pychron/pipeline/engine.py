@@ -677,7 +677,7 @@ class PipelineEngine(Loggable):
         if new:
             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
-            old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
+            new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
             new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
             new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
             new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')

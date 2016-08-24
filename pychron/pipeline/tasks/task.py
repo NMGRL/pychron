@@ -410,7 +410,6 @@ class PipelineTask(BaseBrowserTask):
 
     def _add_interpreted_ages(self, ias):
         dvc = self.dvc
-        db = dvc.db
         for ia in ias:
             if ia.use:
                 dvc.add_interpreted_age(ia)
