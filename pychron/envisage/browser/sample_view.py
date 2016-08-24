@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.adapters import ProjectAdapter
-from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter
 from pychron.envisage.browser.pane_model_view import PaneModelView
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 # from pychron.envisage.browser.tableview import TableView
@@ -61,21 +60,21 @@ class BaseBrowserSampleView(PaneModelView):
                             label='Projects')
         return project_grp
 
-    def _get_repositories_group(self):
-        exp_grp = Group(UItem('repositories',
-                              height=-150,
-                              editor=FilterTabularEditor(editable=False,
-                                                         use_fuzzy=True,
-                                                         enabled_cb='repository_enabled',
-                                                         refresh='refresh_needed',
-                                                         selected='selected_repositories',
-                                                         adapter=ProjectAdapter(),
-                                                         multi_select=True)),
-                        springy=False,
-                        visible_when='repository_visible',
-                        show_border=True,
-                        label='Repositories')
-        return exp_grp
+    # def _get_repositories_group(self):
+    #     exp_grp = Group(UItem('repositories',
+    #                           height=-150,
+    #                           editor=FilterTabularEditor(editable=False,
+    #                                                      use_fuzzy=True,
+    #                                                      enabled_cb='repository_enabled',
+    #                                                      refresh='refresh_needed',
+    #                                                      selected='selected_repositories',
+    #                                                      adapter=ProjectAdapter(),
+    #                                                      multi_select=True)),
+    #                     springy=False,
+    #                     visible_when='repository_visible',
+    #                     show_border=True,
+    #                     label='Repositories')
+    #     return exp_grp
 
     def _get_analysis_type_group(self):
         analysis_type_group = HGroup(
@@ -127,18 +126,32 @@ class BaseBrowserSampleView(PaneModelView):
         return ln_grp
 
     def _get_pi_group(self):
-        pi_grp = HGroup(UItem('principal_investigator_enabled'),
-                        UItem('principal_investigator',
-                              enabled_when='principal_investigator_enabled',
-                              editor=ComboboxEditor(name='principal_investigators')),
-                        label='PIs', show_border=True)
-
+        pi_grp = Group(UItem('principal_investigators',
+                             height=-150,
+                             editor=FilterTabularEditor(editable=False,
+                                                        use_fuzzy=True,
+                                                        enabled_cb='principal_investigator_enabled',
+                                                        refresh='refresh_needed',
+                                                        selected='selected_principal_investigators',
+                                                        adapter=PrincipalInvestigatorAdapter(),
+                                                        multi_select=True)),
+                       springy=False,
+                       visible_when='principal_investigator_visible',
+                       show_border=True,
+                       label='PI')
         return pi_grp
+        # pi_grp = HGroup(UItem('principal_investigator_enabled'),
+        #                 UItem('principal_investigator',
+        #                       enabled_when='principal_investigator_enabled',
+        #                       editor=ComboboxEditor(name='principal_investigators')),
+        #                 label='PIs', show_border=True)
+        #
+        # return pi_grp
 
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
-        exp_grp = self._get_repositories_group()
+        # exp_grp = self._get_repositories_group()
         analysis_type_group = self._get_analysis_type_group()
         date_grp = self._get_date_group()
         ms_grp = self._get_mass_spectrometer_group()
@@ -150,8 +163,8 @@ class BaseBrowserSampleView(PaneModelView):
             #             style='custom',
             #             width=-1.0,
             #             visible_when='not filter_focus'),
-            HGroup(pi_grp, ms_grp, ln_grp),
-            HGroup(project_grp, exp_grp, irrad_grp),
+            HGroup(ms_grp, ln_grp),
+            HGroup(pi_grp, project_grp, irrad_grp),
             analysis_type_group,
             date_grp)
 

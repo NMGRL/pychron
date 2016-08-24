@@ -201,7 +201,6 @@ class RepositoryRecordView(NameView):
     principal_investigator = Str
 
 
-
 class AnalysisGroupRecordView(RecordView):
     name = Str
     create_date = Date
@@ -220,7 +219,7 @@ class AnalysisRecordView(RecordView):
             setattr(self, attr, getattr(dbrecord, attr))
 
 
-class PrincipalInvestigatorRecordView(RecordView):
+class PrincipalInvestigatorRecordView(RecordView, NameView):
     name = ''
     email = ''
     affiliation = ''

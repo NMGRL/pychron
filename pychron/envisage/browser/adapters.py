@@ -42,6 +42,10 @@ class ProjectAdapter(BrowserAdapter):
         return MenuManager(Action(name='Unselect', action='unselect_projects'))
 
 
+class PrincipalInvestigatorAdapter(BrowserAdapter):
+    columns = [('Name', 'name')]
+
+
 class SampleAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Material', 'material'),

@@ -34,14 +34,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Property, on_trait_change, Button, List
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
 import re
+from datetime import datetime, timedelta
 
-# ============= local library imports  ==========================
-# from pychron.processing.tasks.browser.browser_task import NCHARS
-# from pychron.database.records.isotope_record import GraphicalRecordView
+from traits.api import Str, Bool, Property, on_trait_change, Button, List
+
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
@@ -64,6 +61,7 @@ class BrowserModel(BaseBrowserModel):
     mass_spectrometer_visible = Property(depends_on='filter_focus')
     identifier_visible = Property(depends_on='filter_focus')
     project_visible = Property(depends_on='filter_focus')
+    principal_investigator_visible = Property(depends_on='filter_focus')
 
     filter_by_button = Button
     toggle_focus = Button
@@ -118,12 +116,12 @@ class BrowserModel(BaseBrowserModel):
                 self.project_enabled = True
                 break
 
-    def select_repository(self, exp):
-        for e in self.repositories:
-            if e.name == exp:
-                self.selected_repositories = [e]
-                self.repository_enabled = True
-                break
+    # def select_repository(self, exp):
+    #     for e in self.repositories:
+    #         if e.name == exp:
+    #             self.selected_repositories = [e]
+    #             self.repository_enabled = True
+    #             break
 
     # handlers
     def _irradiation_enabled_changed(self, new):
@@ -223,12 +221,12 @@ class BrowserModel(BaseBrowserModel):
             obj = self.manager
         return obj
 
-    def _selected_repositories_changed_hook(self, names):
-        self.irradiations = []
-        # get all irradiations contained within these experiments
-        irrads = self.db.get_irradiations_by_repositories(names)
-        if irrads:
-            self.irradiations = [i.name for i in irrads]
+    # def _selected_repositories_changed_hook(self, names):
+    #     self.irradiations = []
+    #     # get all irradiations contained within these experiments
+    #     irrads = self.db.get_irradiations_by_repositories(names)
+    #     if irrads:
+    #         self.irradiations = [i.name for i in irrads]
 
     # def _selected_projects_change_hook(self, names):
     #
@@ -253,13 +251,13 @@ class BrowserModel(BaseBrowserModel):
             if self.mass_spectrometer_includes:
                 ms = self.mass_spectrometer_includes
 
-        principal_investigator = None
+        principal_investigators = None
         if self.principal_investigator_enabled:
-            principal_investigator = self.principal_investigator
+            principal_investigators = [p.name for p in self.selected_principal_investigators]
 
-        if self.repository_enabled:
-            if self.selected_repositories:
-                es = [e.name for e in self.selected_repositories]
+        # if self.repository_enabled:
+        #     if self.selected_repositories:
+        #         es = [e.name for e in self.selected_repositories]
         if self.project_enabled:
             if self.selected_projects:
                 rs, ps = partition([p.name for p in self.selected_projects], lambda x: x.startswith('RECENT'))
@@ -279,8 +277,9 @@ class BrowserModel(BaseBrowserModel):
                             ms.append(mi)
                         self._recent_mass_spectrometers.append(mi)
 
-        ls = self.db.get_labnumbers(principal_investigator=principal_investigator,
-                                    projects=ps, repositories=es,
+        ls = self.db.get_labnumbers(principal_investigators=principal_investigators,
+                                    projects=ps,
+                                    # repositories=es,
                                     mass_spectrometers=ms,
                                     irradiation=self.irradiation if self.irradiation_enabled else None,
                                     level=self.level if self.irradiation_enabled else None,
@@ -394,6 +393,9 @@ class BrowserModel(BaseBrowserModel):
 
     def _get_project_visible(self):
         return self._get_visible(self.project_enabled)
+
+    def _get_principal_investigator_visible(self):
+        return self._get_visible(self.principal_investigator_enabled)
 
     def _get_visible(self, default):
         return True

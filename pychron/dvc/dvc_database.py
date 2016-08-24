@@ -679,7 +679,7 @@ class DVCDatabase(DatabaseAdapter):
                 if result:
                     increment = result[0]
                     return increment if increment is not None else -1
-                # return ALPHAS.index(step) if step else -1
+                    # return ALPHAS.index(step) if step else -1
 
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
@@ -974,7 +974,7 @@ class DVCDatabase(DatabaseAdapter):
         q = q.order_by(LevelTbl.name.asc())
         return self._query_all(q)
 
-    def get_labnumbers(self, principal_investigator=None,
+    def get_labnumbers(self, principal_investigators=None,
                        projects=None, repositories=None,
                        mass_spectrometers=None,
                        irradiation=None, level=None,
@@ -983,7 +983,7 @@ class DVCDatabase(DatabaseAdapter):
                        low_post=None):
 
         self.debug('------- Get Labnumbers -------')
-        self.debug('------- principal_investigator: {}'.format(principal_investigator))
+        self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
         self.debug('------- experiments: {}'.format(repositories))
         self.debug('------- mass_spectrometers: {}'.format(mass_spectrometers))
@@ -1006,7 +1006,7 @@ class DVCDatabase(DatabaseAdapter):
         if projects:
             q = q.join(SampleTbl, ProjectTbl)
 
-        if principal_investigator:
+        if principal_investigators:
             q = q.join(PrincipalInvestigatorTbl)
 
         if mass_spectrometers and not at:
@@ -1029,9 +1029,11 @@ class DVCDatabase(DatabaseAdapter):
         # filters
         if repositories:
             q = q.filter(RepositoryTbl.name.in_(repositories))
-        if principal_investigator:
-            q = principal_investigator_filter(q, principal_investigator)
-            # q = q.filter(PrincipalInvestigatorTbl.name == principal_investigator)
+
+        if principal_investigators:
+            for p in principal_investigators:
+                q = principal_investigator_filter(q, p)
+
         if projects:
             q = q.filter(ProjectTbl.name.in_(projects))
         if mass_spectrometers:
@@ -1395,18 +1397,18 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
-    def get_projects(self, principal_investigator=None,
+    def get_projects(self, principal_investigators=None,
                      irradiation=None, level=None,
                      mass_spectrometers=None, order=None):
 
         if order:
             order = getattr(ProjectTbl.name, order)()
 
-        if principal_investigator or irradiation or mass_spectrometers:
+        if principal_investigators or irradiation or mass_spectrometers:
             q = self.session.query(ProjectTbl)
 
             # joins
-            if principal_investigator:
+            if principal_investigators:
                 q = q.join(PrincipalInvestigatorTbl)
 
             if irradiation:
@@ -1418,17 +1420,18 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(SampleTbl, IrradiationPositionTbl, AnalysisTbl)
 
             # filters
-            if principal_investigator:
-                q = principal_investigator_filter(q, principal_investigator)
-                # if ',' in principal_investigator:
-                #     try:
-                #         ln, fi = principal_investigator.split(',')
-                #         q = q.filter(PrincipalInvestigatorTbl.last_name == ln)
-                #         q = q.filter(PrincipalInvestigatorTbl.first_initial == fi)
-                #     except ValueError:
-                #         self.warning('invalid principal_investigator name "{}"'.format(principal_investigator))
-                # else:
-                #     q = q.filter(PrincipalInvestigatorTbl.last_name == principal_investigator)
+            if principal_investigators:
+                for p in principal_investigators:
+                    q = principal_investigator_filter(q, p)
+                    # if ',' in principal_investigator:
+                    #     try:
+                    #         ln, fi = principal_investigator.split(',')
+                    #         q = q.filter(PrincipalInvestigatorTbl.last_name == ln)
+                    #         q = q.filter(PrincipalInvestigatorTbl.first_initial == fi)
+                    #     except ValueError:
+                    #         self.warning('invalid principal_investigator name "{}"'.format(principal_investigator))
+                    # else:
+                    #     q = q.filter(PrincipalInvestigatorTbl.last_name == principal_investigator)
 
             if irradiation:
                 if level:
@@ -1463,6 +1466,17 @@ class DVCDatabase(DatabaseAdapter):
     def get_mass_spectrometer_names(self):
         ms = self.get_mass_spectrometers()
         return [mi.name for mi in ms]
+
+    def get_active_mass_spectrometer_names(self):
+
+        # temporary workaround until MassSpectrometerTbl.active can be added
+        ms = self.get_mass_spectrometers()
+        return [mi.name for mi in ms if mi.name != 'obama']
+
+        # q = self.session.query(MassSpectrometerTbl)
+        # q = q.filter(MassSpectrometerTbl.active)
+        # ms = self._query_all(q)
+        # return [mi.name for mi in ms]
 
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
