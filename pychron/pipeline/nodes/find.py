@@ -172,6 +172,8 @@ class FindReferencesNode(FindNode):
     #     obj['threshold'] = self.threshold
 
     def _analysis_type_changed(self, new):
+        if new == 'Blank Unknown':
+            new = 'Blank'
         self.name = 'Find {}s'.format(new)
 
     def pre_run(self, state, configure=True):
@@ -189,7 +191,7 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-        
+
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
             if self._run_group(state, gid, list(ans)):

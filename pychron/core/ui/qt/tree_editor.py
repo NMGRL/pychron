@@ -169,9 +169,14 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         #     x = rect.left() + 6 + r2
         #     y = rect.bottom() - rect.height() / 2.  # status_color.setAlpha(150)
         #     painter.drawLine(x, y, x, y + rect.height())
-        # r = (rect.height()+6)*0.6
+
         painter.setBrush(status_color)
-        # painter.drawEllipse(rect.left() + 6, top+3.5, r, r)
+
+        r = 15
+        x = option.rect.left() + 5
+        y = option.rect.top() + (option.rect.height() - r) / 2
+
+        painter.drawEllipse(x, y, r, r)
         # painter.drawEllipse(rect.left() + 3, top+3.5, r, r)
 
         # draw text
@@ -181,11 +186,11 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         painter.setFont(font)
 
         painter.drawText(option.rect.left() + iconwidth,
-                                # option.rect.top(),
-                                option.rect.top()+option.rect.height()/3,
-                                option.rect.width() - iconwidth,
-                                option.rect.height(),
-                                QtCore.Qt.TextWordWrap, text)
+                         # option.rect.top(),
+                         option.rect.top() + option.rect.height() / 3,
+                         option.rect.width() - iconwidth,
+                         option.rect.height(),
+                         QtCore.Qt.TextWordWrap, text)
         # Need to set the appropriate sizeHint of the item.
         # if self._size_map[item] != rect.size():
         #     self._size_map[item] = rect.size()

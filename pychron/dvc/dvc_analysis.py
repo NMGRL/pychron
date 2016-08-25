@@ -404,7 +404,16 @@ class DVCAnalysis(Analysis):
                 self._load_value_error(i.blank, v)
                 # i.blank.value = v['value']
                 # i.blank.error = v['error']
-                i.blank.fit = v['fit']
+                i.blank.fit = fit = v['fit']
+                print 'blank fit', fit
+                if fit == 'previous':
+                    refs = v.get('references')
+                    print refs, v
+                    if refs:
+                        i.blank_source = refs[0]['runid']
+                else:
+                    i.blank_source = fit
+
             elif key == 'reviewed':
                 self.blank_reviewed = v
 
