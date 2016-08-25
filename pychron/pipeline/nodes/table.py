@@ -44,7 +44,7 @@ class XLSXAnalysisTableNode(TableNode):
         key = lambda x: x.group_id
 
         options = self.options
-        if self.options.kind == 'Step Heat':
+        if self.options.table_kind == 'Step Heat':
             def factory(ans):
                 return InterpretedAgeGroup(analyses=list(ans),
                                            plateau_nsteps=options.plateau_nsteps,

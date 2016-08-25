@@ -110,6 +110,7 @@ class FluxPosition(HasTraits):
 
     mean_j = Float
     mean_jerr = Float
+    mean_j_mswd = Float
 
     n = Int
 
@@ -134,9 +135,10 @@ class FluxPosition(HasTraits):
         ans = [a for a in self.analyses if not a.is_omitted()]
 
         if ans:
-            j = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
+            j, mswd = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
             self.mean_jerr = std_dev(j)
+            self.mean_j_mswd = mswd
 
         self.n = len(ans)
 
@@ -587,6 +589,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             column(name='percent_mean_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2) if x else ''),
+            column(name='mean_j_mswd',
+                   label='MSWD',
+                   format_func=lambda x: floatfmt(x, n=2)),
             column(name='j', label='Pred. J',
                    format_func=sciformat,
                    width=75),
