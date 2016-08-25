@@ -1118,6 +1118,9 @@ class DVCDatabase(DatabaseAdapter):
     def get_production(self, name):
         return self._retrieve_item(ProductionTbl, name)
 
+    def get_project_by_id(self, uid):
+        return self._retrieve_item(ProjectTbl, uid, key='id')
+
     def get_project(self, name, pi=None):
         if pi:
             q = self.session.query(ProjectTbl)
