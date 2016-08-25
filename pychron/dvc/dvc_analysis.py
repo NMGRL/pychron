@@ -402,13 +402,9 @@ class DVCAnalysis(Analysis):
             if key in self.isotopes:
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
-                # i.blank.value = v['value']
-                # i.blank.error = v['error']
                 i.blank.fit = fit = v['fit']
-                print 'blank fit', fit
                 if fit == 'previous':
                     refs = v.get('references')
-                    print refs, v
                     if refs:
                         i.blank_source = refs[0]['runid']
                 else:
