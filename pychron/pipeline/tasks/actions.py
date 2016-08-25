@@ -50,13 +50,13 @@ class ResumeAction(TaskAction):
 class RunFromAction(TaskAction):
     name = 'Run From'
     method = 'run_from'
+    image = icon('start')
 
 
 class ResetAction(TaskAction):
     name = 'Reset'
     method = 'reset'
-    image = icon('resume')
-    # enabled_name = 'resume_enabled'
+    image = icon('arrow_refresh')
 
 
 class ClearAction(TaskAction):

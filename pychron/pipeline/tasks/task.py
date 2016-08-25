@@ -28,7 +28,6 @@ from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
@@ -36,9 +35,9 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
-    SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
+from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
+    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, SetFilteringTagAction, \
+    EditAnalysisAction, RunFromAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
@@ -61,17 +60,16 @@ def select_experiment_repo():
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [SToolBar(ConfigureRecallAction(),
-                          ToggleFullWindowAction()),
+    tool_bars = [SToolBar(ConfigureRecallAction()),
                  SToolBar(RunAction(),
                           ResumeAction(),
                           RunFromAction(),
                           ResetAction(),
                           ClearAction(),
-                          SavePipelineTemplateAction(),
+                          # SavePipelineTemplateAction(),
                           name='Pipeline'),
                  SToolBar(SavePDFAction(),
-                          SaveFigureAction(),
+                          # SaveFigureAction(),
                           name='Save'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit'),
@@ -80,7 +78,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
-                          TabularViewAction(),
+                          # TabularViewAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
