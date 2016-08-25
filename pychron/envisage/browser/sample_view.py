@@ -232,11 +232,9 @@ class BrowserSampleView(BaseBrowserSampleView):
         obj.selected = []
 
     def configure_sample_table(self, info, obj):
-        print 'asfdasdfsadf', obj
         obj.configure_sample_table()
 
     def configure_analysis_table(self, info, obj):
-        # self.model.analysis_table.configure_table()
         obj.configure_table()
 
     def recall_items(self, info, obj):
@@ -245,6 +243,8 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def toggle_freeze(self, info, obj):
+        obj.toggle_freeze()
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def trait_context(self):

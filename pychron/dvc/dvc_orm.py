@@ -142,6 +142,7 @@ class AnalysisTbl(Base, BaseMixin):
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
     _record_view = None
     group_id = 0
+    frozen = False
 
     @property
     def is_plateau_step(self):

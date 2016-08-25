@@ -15,19 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr, Int, Button
-# ============= standard library imports ========================
 import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-# ============= local library imports  ==========================
+
+from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
+    CStr, Int, Button
+
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
-from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
 
 
@@ -142,7 +142,13 @@ class AnalysisTable(ColumnSorterMixin):
         else:
             aa = ans
 
-        self.oanalyses = self.analyses = sort_items(aa)
+        new_items = sort_items(aa)
+        items = [ai for ai in self.analyses if ai.frozen]
+
+        new_items = [ai for ai in new_items if ai not in items]
+        items.extend(new_items)
+
+        self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)
 
@@ -169,8 +175,11 @@ class AnalysisTable(ColumnSorterMixin):
         rsd = ReviewStatusDetailsView(model=m)
         rsd.edit_traits()
 
-    # handlers
+    def toggle_freeze(self):
+        for ai in self.get_selected_analyses():
+            ai.frozen = not ai.frozen
 
+    # handlers
     def _add_analysis_set_button_fired(self):
         name = self.add_analysis_set()
         if name:

@@ -166,7 +166,8 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Replace', action='replace_items', enabled=e),
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Review Status Details', action='review_status_details')
+                   Action(name='Review Status Details', action='review_status_details'),
+                   Action(name='Toggle Freeze', action='toggle_freeze')
                    # Action(name='Open Copy', action='recall_copies'),
                    # Action(name='Find References', action='find_refs')
                    ]
@@ -176,11 +177,13 @@ class AnalysisAdapter(BrowserAdapter):
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
         item = getattr(obj, trait)[row]
-
-        if item.delta_time > 1440:  # 24 hours
-            color = '#76C1E2'
-        elif row % 2:
-            color = 'lightgray'
+        if item.frozen:
+            color = '#11BAF2'
+        else:
+            if item.delta_time > 1440:  # 24 hours
+                color = '#FAE900'
+            elif row % 2:
+                color = 'lightgray'
         return color
 
 
