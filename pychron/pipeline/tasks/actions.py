@@ -85,9 +85,17 @@ class ConfigureAnalysesTableAction(TaskAction):
     image = icon('cog')
 
 
+class ConfigureSampleTableAction(TaskAction):
+    name = 'Configure Sample Table'
+    dname = 'Configure Sample Table'
+    method = 'configure_sample_table'
+    image = icon('cog')
+
+
 class LoadReviewStatusAction(TaskAction):
     name = 'Review Status'
     method = 'load_review_status'
+    image = icon('check_boxes')
 
 
 class EditAnalysisAction(TaskAction):

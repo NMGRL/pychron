@@ -140,18 +140,10 @@ class BaseBrowserSampleView(PaneModelView):
                        show_border=True,
                        label='PI')
         return pi_grp
-        # pi_grp = HGroup(UItem('principal_investigator_enabled'),
-        #                 UItem('principal_investigator',
-        #                       enabled_when='principal_investigator_enabled',
-        #                       editor=ComboboxEditor(name='principal_investigators')),
-        #                 label='PIs', show_border=True)
-        #
-        # return pi_grp
 
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
-        # exp_grp = self._get_repositories_group()
         analysis_type_group = self._get_analysis_type_group()
         date_grp = self._get_date_group()
         ms_grp = self._get_mass_spectrometer_group()
@@ -167,8 +159,6 @@ class BaseBrowserSampleView(PaneModelView):
             HGroup(pi_grp, project_grp, irrad_grp),
             analysis_type_group,
             date_grp)
-
-        # g1 = UItem('controller.tableview', style='custom')
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
@@ -196,19 +186,12 @@ class BaseBrowserSampleView(PaneModelView):
 
 
 class BrowserSampleView(BaseBrowserSampleView):
-    # tableview = Instance(TableView)
-
-    # def _tableview_default(self):
-    #     return TableView(model=self.model, pane=self.pane)
     def trait_context(self):
         ctx = super(BrowserSampleView, self).trait_context()
         ctx['analysis_table'] = self.model.analysis_table
         return ctx
 
     def traits_view(self):
-        # def make_name(name):
-        #     return 'object.analysis_table.{}'.format(name)
-
         analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
                                              editor=EnumEditor(name='analysis_table.analysis_set_names')),
                                        icon_button_editor('analysis_table.add_analysis_set_button', 'add',
@@ -221,27 +204,23 @@ class BrowserSampleView(BaseBrowserSampleView):
                                              width=-90,
                                              editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),
                                        UItem('analysis_table.analysis_filter')))
-        # UItem(make_name('analysis_filter'),
-        #       editor=ComboboxEditor(name=make_name('analysis_filter_values'))))
-
-        agrp = VGroup(analysis_tools,
-                      UItem('analysis_table.analyses',
-                            width=0.4,
-                            editor=myTabularEditor(
-                                adapter=self.model.analysis_table.tabular_adapter,
-                                operations=['move', 'delete'],
-                                column_clicked='analysis_table.column_clicked',
-                                refresh='analysis_table.refresh_needed',
-                                selected='analysis_table.selected',
-                                dclicked='analysis_table.dclicked',
-                                multi_select=self.pane.multi_select,
-                                drag_external=True,
-                                scroll_to_row='analysis_table.scroll_to_row',
-                                stretch_last_section=False)),
-                      # HGroup(spring, Item(make_name('omit_invalid'))),
-                      defined_when=self.pane.analyses_defined,
-                      show_border=True,
-                      label='Analyses')
+        agrp = Group(VGroup(analysis_tools,
+                            UItem('analysis_table.analyses',
+                                  width=0.4,
+                                  editor=myTabularEditor(
+                                      adapter=self.model.analysis_table.tabular_adapter,
+                                      operations=['move', 'delete'],
+                                      column_clicked='analysis_table.column_clicked',
+                                      refresh='analysis_table.refresh_needed',
+                                      selected='analysis_table.selected',
+                                      dclicked='analysis_table.dclicked',
+                                      multi_select=self.pane.multi_select,
+                                      drag_external=True,
+                                      scroll_to_row='analysis_table.scroll_to_row',
+                                      stretch_last_section=False)),
+                            defined_when=self.pane.analyses_defined,
+                            show_border=True,
+                            label='Analyses'))
 
         sample_grp = self._get_sample_group()
         return View(HGroup(sample_grp, agrp))

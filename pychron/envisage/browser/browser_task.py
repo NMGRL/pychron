@@ -156,6 +156,11 @@ class BaseBrowserTask(BaseEditorTask):
             for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
 
+    def configure_sample_table(self):
+        self.debug('configure sample table')
+        bm = self.browser_model
+        bm.configure_sample_table()
+
     def configure_analyses_table(self):
         self.debug('configure analyses table')
         at = self.browser_model.analysis_table
