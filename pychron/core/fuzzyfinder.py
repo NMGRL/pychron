@@ -28,7 +28,7 @@ def func(regex, item, attr):
     if attr:
         txt = getattr(item, attr)
 
-    match = regex.search(txt)
+    match = regex.search(str(txt))
     if match:
         return len(match.group()), match.start(), item
 

@@ -648,8 +648,11 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     set_color(item, v)
                     if dbpos.sample.project.principal_investigator:
                         ir.principal_investigator = dbpos.sample.project.principal_investigator.name
+                v=''
+                if dbpos.identifier:
+                    v = str(dbpos.identifier)
 
-                ir.identifier = v = dbpos.identifier or ''
+                ir.identifier = v
                 if v:
                     set_color(item, v)
 

@@ -15,22 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from reportlab.platypus import Paragraph
-from traits.api import Bool, Float
-from traitsui.api import View, VGroup, Tabbed, Item
-# ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
-# ============= local library imports  ==========================
+from reportlab.platypus import Paragraph
+from traits.api import Bool, Float
+from traitsui.api import View, VGroup, Tabbed, Item
+
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-# from pychron.entry.level import load_holder_canvas
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Row
 from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronology
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
-from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.core.pdf.items import Row
 
 
 class RotatedParagraph(Paragraph):
@@ -194,7 +192,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             if sample.material:
                 material = sample.material.name[:15]
             project = sample.project.name
-            pi = sample.project.principal_investigator
+            pi = sample.project.principal_investigator.name
             sample = sample.name
             if sample == 'FC-2':
                 project, pi, material = '', '', ''
@@ -203,7 +201,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         r.add_item(value=pos.position)
         r.add_item(value=pos.identifier or '')
         r.add_item(value=sample or '')
-        r.add_item(value=material)
+        r.add_item(value=material, fontsize=8)
         r.add_item(value=project)
         r.add_item(value=pi)
         r.add_item(value='')
@@ -229,6 +227,7 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         flowables.extend(self._make_title_page(irrads))
 
         for irrad in irrads:
+            self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
             fs, _ = self._make_levels(irrad, progress)
             flowables.extend(self._make_summary(irrad))
 
