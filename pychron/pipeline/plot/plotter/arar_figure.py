@@ -492,7 +492,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     def _plot_moles_k39(self, po, plot, pid, **kw):
         k = 'k39'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('K39(fA)', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, ys, po, plot, pid, es, **kw)
 
     def _get_aux_plot_data(self, k):
         vs = self._unpack_attr(k)
