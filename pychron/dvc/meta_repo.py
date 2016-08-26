@@ -591,7 +591,7 @@ class MetaRepo(GitRepoManager):
 
     def get_flux(self, irradiation, level, position):
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
-        j, e, lambda_k = 0, 0, None
+        j, je, lambda_k = 0, 0, None
 
         positions = self._get_level_positions(irradiation, level)
         if positions:
