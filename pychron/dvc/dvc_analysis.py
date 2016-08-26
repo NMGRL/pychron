@@ -406,7 +406,11 @@ class DVCAnalysis(Analysis):
                 if fit.lower() in ('previous', 'preceding'):
                     refs = v.get('references')
                     if refs:
-                        i.blank_source = refs[0].get(['runid'], '')
+                        ref = refs[0]
+                        try:
+                            i.blank_source = ref['record_id']
+                        except KeyError:
+                            i.blank_source = ref.get('runid', '')
                 else:
                     i.blank_source = fit
 

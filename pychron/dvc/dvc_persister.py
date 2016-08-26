@@ -342,7 +342,7 @@ class DVCPersister(BasePersister):
                                     'value': float(nominal_value(iso.uvalue)),
                                     'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',
-                                'references': [{'runid': self.per_spec.previous_blank_runid,
+                                'references': [{'record_id': self.per_spec.previous_blank_runid,
                                                 'exclude': False}],
                                 'value': float(nominal_value(iso.blank.uvalue)),
                                 'error': float(std_dev(iso.blank.uvalue))}
