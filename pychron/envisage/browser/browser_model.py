@@ -277,15 +277,18 @@ class BrowserModel(BaseBrowserModel):
                             ms.append(mi)
                         self._recent_mass_spectrometers.append(mi)
 
+        at = self.analysis_include_types if self.use_analysis_type_filtering else None
+        hp = self.high_post if self.use_high_post or self.use_named_date_range else None
+        lp = self.low_post if self.use_low_post or self.use_named_date_range else None
         ls = self.db.get_labnumbers(principal_investigators=principal_investigators,
                                     projects=ps,
                                     # repositories=es,
                                     mass_spectrometers=ms,
                                     irradiation=self.irradiation if self.irradiation_enabled else None,
                                     level=self.level if self.irradiation_enabled else None,
-                                    analysis_types=self.analysis_include_types if self.use_analysis_type_filtering else None,
-                                    high_post=self.high_post if self.use_high_post else None,
-                                    low_post=self.low_post if self.use_low_post else None)
+                                    analysis_types=at,
+                                    high_post=hp,
+                                    low_post=lp)
         return ls
 
     def _identifier_change_hook(self, db, new, lns):

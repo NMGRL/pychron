@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
-    HGroup, CheckListEditor, spring, Group
+    HGroup, CheckListEditor, spring, Group, HSplit
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
@@ -29,6 +30,34 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 # from pychron.envisage.browser.tableview import TableView
 
 class BaseBrowserSampleView(PaneModelView):
+    configure_date_filter_button = Button
+    configure_analysis_type_filter_button = Button
+    configure_mass_spectrometer_filter_button = Button
+
+    def _configure_date_filter_button_fired(self):
+        v = View(self._get_date_group(), resizable=True,
+                 height=150,
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 title='Configure Date Filter')
+        self.edit_traits(view=v)
+
+    def _configure_analysis_type_filter_button_fired(self):
+        v = View(self._get_analysis_type_group(), resizable=True,
+                 height=150,
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 title='Configure Analysis Type Filter')
+        self.edit_traits(view=v)
+
+    def _configure_mass_spectrometer_filter_button_fired(self):
+        v = View(self._get_mass_spectrometer_group(), resizable=True,
+                 height=150,
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 title='Configure Mass Spectrometer Filter')
+        self.edit_traits(view=v)
+
     def _get_irrad_group(self):
         irrad_grp = VGroup(
             HGroup(UItem('irradiation_enabled',
@@ -75,6 +104,29 @@ class BaseBrowserSampleView(PaneModelView):
     #                     show_border=True,
     #                     label='Repositories')
     #     return exp_grp
+    def _get_simple_analysis_type_group(self):
+        grp = HGroup(UItem('use_analysis_type_filtering',
+                           tooltip='Enable Analysis Type filter'),
+                     icon_button_editor('controller.configure_analysis_type_filter_button',
+                                        'cog',
+                                        tooltip='Configure analysis type filtering',
+                                        enabled_when='use_analysis_type_filtering'),
+                     show_border=True, label='Analysis Types')
+        return grp
+
+    def _get_simple_date_group(self):
+        grp = HGroup(icon_button_editor('controller.configure_date_filter_button', 'cog',
+                                        tooltip='Configure date filtering'), show_border=True,
+                     label='Date')
+        return grp
+
+    def _get_simple_mass_spectrometer_group(self):
+        grp = HGroup(UItem('mass_spectrometers_enabled',
+                           tooltip='Enable Mass Spectrometer filter'),
+                     icon_button_editor('controller.configure_mass_spectrometer_filter_button', 'cog',
+                                        tooltip='Configure mass_spectrometer filtering'), show_border=True,
+                     label='Mass Spectrometer')
+        return grp
 
     def _get_analysis_type_group(self):
         analysis_type_group = HGroup(
@@ -144,9 +196,15 @@ class BaseBrowserSampleView(PaneModelView):
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
-        analysis_type_group = self._get_analysis_type_group()
-        date_grp = self._get_date_group()
-        ms_grp = self._get_mass_spectrometer_group()
+
+        # analysis_type_group = self._get_analysis_type_group()
+        # date_grp = self._get_date_group()
+        # ms_grp = self._get_mass_spectrometer_group()
+
+        simple_analysis_type_grp = self._get_simple_analysis_type_group()
+        simple_date_grp = self._get_simple_date_group()
+        simple_mass_spectrometer_grp = self._get_simple_mass_spectrometer_group()
+
         ln_grp = self._get_identifier_group()
         pi_grp = self._get_pi_group()
 
@@ -155,10 +213,10 @@ class BaseBrowserSampleView(PaneModelView):
             #             style='custom',
             #             width=-1.0,
             #             visible_when='not filter_focus'),
-            HGroup(ms_grp, ln_grp),
-            HGroup(pi_grp, project_grp, irrad_grp),
-            analysis_type_group,
-            date_grp)
+            HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
+            HGroup(pi_grp, project_grp, irrad_grp))
+        # analysis_type_group,
+        # date_grp)
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),
@@ -193,6 +251,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
     def traits_view(self):
         analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
+                                             width=-90,
                                              editor=EnumEditor(name='analysis_table.analysis_set_names')),
                                        icon_button_editor('analysis_table.add_analysis_set_button', 'add',
                                                           enabled_when='analysis_table.items',
@@ -223,7 +282,7 @@ class BrowserSampleView(BaseBrowserSampleView):
                             label='Analyses'))
 
         sample_grp = self._get_sample_group()
-        return View(HGroup(sample_grp, agrp))
+        return View(HSplit(sample_grp, agrp))
 
     def unselect_projects(self, info, obj):
         obj.selected_projects = []
@@ -245,6 +304,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
+
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def trait_context(self):
