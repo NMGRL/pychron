@@ -178,6 +178,7 @@ class AnalysisTable(ColumnSorterMixin):
     def toggle_freeze(self):
         for ai in self.get_selected_analyses():
             ai.frozen = not ai.frozen
+        self.refresh_needed = True
 
     # handlers
     def _add_analysis_set_button_fired(self):
