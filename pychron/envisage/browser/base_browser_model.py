@@ -97,6 +97,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     selected_principal_investigators = Any
     principal_investigators = List
+    principal_investigator_names = List
 
     projects = List
     oprojects = List
@@ -281,6 +282,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         ps = db.get_principal_investigators(order='asc', verbose_query=True)
         if ps:
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
+            self.principal_investigator_names = [p.name for p in ps]
 
     def get_analysis_groups(self, names):
         if not isinstance(names[0], (str, unicode)):
