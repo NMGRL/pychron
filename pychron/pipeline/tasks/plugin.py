@@ -24,9 +24,8 @@ from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAg
 from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
-from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, IsochronAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, VerticalFluxAction, \
-    LastNAnalysesSeriesAction, \
+from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
     FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction
@@ -127,14 +126,14 @@ class PipelinePlugin(BaseTaskPlugin):
                                            path=pg),
                             SchemaAddition(factory=SpectrumAction,
                                            path=pg),
-                            SchemaAddition(factory=IsochronAction,
-                                           path=pg),
+                            # SchemaAddition(factory=IsochronAction,
+                            #                path=pg),
                             SchemaAddition(factory=InverseIsochronAction,
                                            path=pg),
                             SchemaAddition(factory=SeriesAction,
                                            path=pg),
-                            SchemaAddition(factory=VerticalFluxAction,
-                                           path=pg),
+                            # SchemaAddition(factory=VerticalFluxAction,
+                            #                path=pg),
                             SchemaAddition(factory=ExtractionAction,
                                            path=pg)]
 
