@@ -89,7 +89,7 @@ class IrradiationEditorPane(TraitsDockPane):
         #                                  enabled_when='selected',
         #                                  tooltip='Clear contents of selected positions'))
         pi_grp = VGroup(UItem('principal_investigator',
-                              editor=EnumEditor(name='principal_investigators')),
+                              editor=EnumEditor(name='principal_investigator_names')),
                         show_border=True,
                         label='Principal Investigator')
         project_grp = VGroup(UItem('projects',

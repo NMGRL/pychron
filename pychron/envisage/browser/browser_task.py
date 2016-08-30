@@ -85,7 +85,6 @@ class BaseBrowserTask(BaseEditorTask):
         self.dvc.db.close_session()
 
     def activated(self):
-
         self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         self.dvc.create_session()
 
@@ -156,6 +155,11 @@ class BaseBrowserTask(BaseEditorTask):
             for e in self.get_recall_editors():
                 tc.set_fonts(e.analysis_view)
 
+    def configure_sample_table(self):
+        self.debug('configure sample table')
+        bm = self.browser_model
+        bm.configure_sample_table()
+
     def configure_analyses_table(self):
         self.debug('configure analyses table')
         at = self.browser_model.analysis_table
@@ -207,7 +211,7 @@ class BaseBrowserTask(BaseEditorTask):
     # private
     def _opened_hook(self):
         self.dvc.initialize()
-
+        self.dvc.create_session()
         if not self.browser_model.is_activated:
             self._setup_browser_model()
 
@@ -217,6 +221,8 @@ class BaseBrowserTask(BaseEditorTask):
             # self.browser_model.activated()
             # self._activate_sample_browser()
             # self.activate_workspace()
+    def _closed_hook(self):
+        self.dvc.close_session()
 
     def _find_refs(self, an):
         self.information_dialog('Finding references not currently implemented')

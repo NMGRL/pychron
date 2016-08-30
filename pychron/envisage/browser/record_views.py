@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Long
+from traits.api import HasTraits, Str, Date, Long, Bool
 
 from pychron.experiment.utilities.identifier import get_analysis_type
 
@@ -187,19 +187,29 @@ class NameView(HasTraits):
 class ProjectRecordView(RecordView, NameView):
     name = Str
     principal_investigator = Str
+    lab_contact = Str
+    checkin_date = Date
+    unique_id = Long
+
+    comment = Str
+    db_comment = Str
+    dirty = Bool(False)
 
     def _create(self, dbrecord):
         if not isinstance(dbrecord, str):
             self.name = dbrecord.name
             if dbrecord.principal_investigator:
                 self.principal_investigator = dbrecord.principal_investigator.name
+            self.unique_id = dbrecord.id
+
+            # self.db_comment = self.comment = dbrecord.comment
+
         else:
             self.name = dbrecord
 
 
 class RepositoryRecordView(NameView):
     principal_investigator = Str
-
 
 
 class AnalysisGroupRecordView(RecordView):
@@ -220,7 +230,7 @@ class AnalysisRecordView(RecordView):
             setattr(self, attr, getattr(dbrecord, attr))
 
 
-class PrincipalInvestigatorRecordView(RecordView):
+class PrincipalInvestigatorRecordView(RecordView, NameView):
     name = ''
     email = ''
     affiliation = ''

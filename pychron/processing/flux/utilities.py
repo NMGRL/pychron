@@ -44,7 +44,8 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
     uf = (av, werr)
     j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
     # print age_equation(j, uf, lambda_k=lambda_k, scalar=1)
-    return j
+    mswd = calculate_mswd(fs, es)
+    return j, mswd
 
 # def calculate_flux(error_kind, monitor_age):
 #

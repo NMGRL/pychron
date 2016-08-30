@@ -15,18 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import re
+
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance
-# ============= standard library imports ========================
-import re
-# ============= local library imports  ==========================
-# from pychron.processing.tasks.browser.browser_task import NCHARS
-# from pychron.database.records.isotope_record import GraphicalRecordView
+
 from pychron.dvc.func import get_review_status
+from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
-from pychron.envisage.browser.analysis_table import AnalysisTable
-# from pychron.processing.tasks.browser.time_view import TimeViewModel
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
 
@@ -213,7 +210,8 @@ class SampleBrowserModel(BrowserModel):
                       include_invalid=not at.omit_invalid,
                       mass_spectrometers=self._recent_mass_spectrometers,
                       exclude_uuids=uuids,
-                      repositories=[e.name for e in self.selected_repositories] if self.selected_repositories else None)
+                      # repositories=[e.name for e in self.selected_repositories] if self.selected_repositories else None
+                      )
 
             lp, hp = self.low_post, self.high_post
             ans = self._retrieve_sample_analyses(new,

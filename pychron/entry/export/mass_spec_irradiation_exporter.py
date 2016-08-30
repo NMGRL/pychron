@@ -15,17 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import binascii
 import struct
 
 from traits.api import Instance
-
-# ============= standard library imports ========================
-import binascii
-# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 
-from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
 
 SRC_PR_KEYS = ('Ca3637', 'Ca3637_err',
                'Ca3937', 'Ca3937_err',
@@ -93,14 +90,15 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         action = 'Skipping'
 
         irradname = dbirrad.name
-        if not dest.get_irradiation_exists(irradname):
-            self._export_chronology(dbirrad)
-        else:
-            self.debug('Irradiation="{}" already exists. {}'.format(irradname, action))
+        with dest.session_ctx():
+            if not dest.get_irradiation_exists(irradname):
+                self._export_chronology(dbirrad)
+            else:
+                self.debug('Irradiation="{}" already exists. {}'.format(irradname, action))
 
-        for level in dbirrad.levels:
-            self._export_level(irradname, level)
-        dest.commit()
+            for level in dbirrad.levels:
+                self._export_level(irradname, level)
+            dest.commit()
 
     def _export_chronology(self, src_irr):
         self.info('Exporting chronology for "{}"'.format(src_irr.name))
@@ -188,7 +186,8 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                     pname = pos.sample.project.name
                     proj = dest.get_project(pname)
                     if not proj:
-                        proj = dest.add_project(pname, PrincipalInvestigator=pos.sample.project.principal_investigator)
+                        proj = dest.add_project(pname,
+                                                PrincipalInvestigator=pos.sample.project.principal_investigator.name)
                 except AttributeError:
                     proj = None
 

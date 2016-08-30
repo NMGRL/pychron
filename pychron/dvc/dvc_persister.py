@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Bool, Str
-# ============= standard library imports ========================
 import base64
 import hashlib
 import os
 import struct
 from datetime import datetime
-from uncertainties import std_dev, nominal_value
+
 from git.exc import GitCommandError
-# ============= local library imports  ==========================
+from traits.api import Instance, Bool, Str
+from uncertainties import std_dev, nominal_value
+
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
@@ -96,9 +96,9 @@ class DVCPersister(BasePersister):
 
     def post_extraction_save(self):
 
-        rblob = self.per_spec.response_blob
-        oblob = self.per_spec.output_blob
-        sblob = self.per_spec.setpoint_blob
+        rblob = self.per_spec.response_blob  # time vs measured response
+        oblob = self.per_spec.output_blob  # time vs %output
+        sblob = self.per_spec.setpoint_blob  # time vs requested
 
         if rblob:
             rblob = base64.b64encode(rblob)
@@ -107,7 +107,7 @@ class DVCPersister(BasePersister):
         if sblob:
             sblob = base64.b64encode(sblob)
 
-        obj = {'request': rblob,
+        obj = {'request': rblob, # time vs
                'response': oblob,
                'sblob': sblob}
 
@@ -191,9 +191,6 @@ class DVCPersister(BasePersister):
 
         self._save_analysis(timestamp)
 
-        with self.dvc.session_ctx():
-            self._save_analysis_db(timestamp)
-
         # save monitor
         self._save_monitor()
 
@@ -233,6 +230,8 @@ class DVCPersister(BasePersister):
                                                     timeout=30):
                         ret = False
 
+        with self.dvc.session_ctx():
+            self._save_analysis_db(timestamp)
         self.debug('================= post measurement finished')
         return ret
 
@@ -341,7 +340,7 @@ class DVCPersister(BasePersister):
                                     'value': float(nominal_value(iso.uvalue)),
                                     'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',
-                                'references': [{'runid': self.per_spec.previous_blank_runid,
+                                'references': [{'record_id': self.per_spec.previous_blank_runid,
                                                 'exclude': False}],
                                 'value': float(nominal_value(iso.blank.uvalue)),
                                 'error': float(std_dev(iso.blank.uvalue))}

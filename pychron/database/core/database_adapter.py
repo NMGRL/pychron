@@ -109,12 +109,15 @@ class SessionCTX(object):
         self._use_parent_session = use_parent_session
         self._parent = parent
         self._session = None
+        self._psession = None
 
     def __enter__(self):
         if self._use_parent_session:
             self._parent.create_session()
         else:
+            self._psession = self._parent.session
             self._session = self._parent.session_factory()
+            self._parent.session = self._session
             return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -122,6 +125,10 @@ class SessionCTX(object):
             self._session.close()
         else:
             self._parent.close_session()
+
+        if self._psession:
+            self._parent.session = self._psession
+        self._psession = None
 
 
 class MockQuery:

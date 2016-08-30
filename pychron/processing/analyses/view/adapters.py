@@ -18,15 +18,13 @@
 from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.formatting import format_percent_error
 from uncertainties import nominal_value, std_dev
-from pychron.core.helpers.formatting import floatfmt
 
+from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import format_percent_error
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -307,6 +305,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                    ('Bk', 'blank_value'),
                    (sigmaf('Bk'), 'blank_error'),
                    ('%(Bk)', 'blank_percent_error'),
+                   ('Bk Source', 'blank_source'),
                    ('IC', 'ic_factor'),
                    (sigmaf('IC'), 'ic_factor_error'),
                    ('Disc', 'discrimination'),
@@ -325,6 +324,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                ('Bk', 'blank_value'),
                (sigmaf('Bk'), 'blank_error'),
                ('%(Bk)', 'blank_percent_error'),
+               ('Bk Source', 'blank_source'),
                ('IC', 'ic_factor')]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')

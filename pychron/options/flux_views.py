@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.options.options import SubOptions, AppearanceSubOptions
 
 
@@ -42,7 +41,8 @@ class FluxSubOptions(SubOptions):
                      Item('selected_decay', label='Decay Const.'),
                      Readonly('lambda_k', label=u'Total \u03BB K'),
                      Item('monitor_age'),
-                     Item('predicted_j_error_type', ),
+                     Item('error_kind', label='Mean J Error'),
+                     Item('predicted_j_error_type', label='Predicted J Error'),
                      Item('use_weighted_fit', ),
                      Item('monte_carlo_ntrials', ),
                      Item('use_monte_carlo', ),

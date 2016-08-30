@@ -15,30 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Str, List, Event
-# ============= standard library imports ========================
 import hashlib
-
-import subprocess
-import re
 import os
-import time
+import re
 import shutil
+import subprocess
+import time
 from cStringIO import StringIO
 from datetime import datetime
-from git.exc import GitCommandError
+
 from git import Repo, Diff, RemoteProgress
-# ============= local library imports  ==========================
+from git.exc import GitCommandError
+from traits.api import Any, Str, List, Event
+
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
+from pychron.git_archive.commit import Commit
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
-from pychron.git_archive.commit import Commit
 
 
 def get_repository_branch(path):
@@ -755,8 +754,20 @@ class GitRepoManager(Loggable):
         if index:
             if not isinstance(p, list):
                 p = [p]
+            try:
+                index.add(p)
+            except IOError, e:
+                self.warning('Failed to add file. Error:"{}"'.format(e))
 
-            index.add(p)
+                # an IOError has been caused in the past by "'...index.lock' could not be obtained"
+                os.remove(os.path.join(self.path, '.git', 'index.lock'))
+                try:
+                    self.warning('Retry after "Failed to add file"'.format(e))
+                    index.add(p)
+                except IOError, e:
+                    self.warning('Retry failed. Error:"{}"'.format(e))
+                    return
+
             if commit:
                 index.commit(msg)
 

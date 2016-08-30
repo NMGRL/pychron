@@ -17,15 +17,13 @@
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, List, Button
+from traits.api import Int, Property, Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup, VSplit
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-
-# ============= standard library imports ========================
 from uncertainties import nominal_value, std_dev
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.qt.tree_editor import PipelineEditor
@@ -33,7 +31,6 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.sample_view import BaseBrowserSampleView
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
-
 from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
@@ -172,19 +169,18 @@ class PipelinePane(TraitsDockPane):
 
     def traits_view(self):
         def enable_disable_menu_factory():
-            return MenuManager(
-                Action(name='Enable',
-                       action='enable',
-                       visible_when='not object.enabled'),
-                Action(name='Disable',
-                       action='disable',
-                       visible_when='object.enabled'),
-                Action(name='Enable Permanent',
-                       action='enable_permanent',
-                       visible_when='not object.enabled'),
-                Action(name='Disable Permanent',
-                       action='disable_permanent',
-                       visible_when='object.enabled'))
+            return MenuManager(Action(name='Enable',
+                                      action='enable',
+                                      visible_when='not object.enabled'),
+                               Action(name='Disable',
+                                      action='disable',
+                                      visible_when='object.enabled'),
+                               Action(name='Enable Permanent',
+                                      action='enable_permanent',
+                                      visible_when='not object.enabled'),
+                               Action(name='Disable Permanent',
+                                      action='disable_permanent',
+                                      visible_when='object.enabled'))
 
         def menu_factory(*actions):
             return MenuManager(Action(name='Enable',
@@ -288,29 +284,24 @@ class PipelinePane(TraitsDockPane):
                  ReviewTreeNode(node_for=[ReviewNode], menu=enable_disable_menu_factory()),
                  PipelineTreeNode(node_for=[BaseNode], label='name')]
 
-        # editor = TreeEditor(nodes=nodes,
         editor = PipelineEditor(nodes=nodes,
                                 editable=False,
-                                # selection_mode='extended',
                                 selected='selected',
                                 dclick='dclicked',
                                 hide_root=True,
                                 lines_mode='off',
-                                # word_wrap=True,
                                 show_disabled=True,
                                 refresh_all_icons='refresh_all_needed',
                                 update='update_needed')
-        v = View(VGroup(
-            UItem('selected_pipeline_template',
-                  editor=EnumEditor(name='available_pipeline_templates')),
-            UItem('pipeline',
-                  editor=editor)), handler=PipelineHandler())
+        v = View(VGroup(UItem('selected_pipeline_template',
+                              editor=EnumEditor(name='available_pipeline_templates')),
+                        UItem('pipeline',
+                              editor=editor)), handler=PipelineHandler())
         return v
 
 
 class UnknownsAdapter(TabularAdapter):
     columns = [('Run ID', 'record_id'),
-               # ('Class','klass'),
                ('Sample', 'sample'),
                ('Age', 'age'),
                (PLUSMINUS_ONE_SIGMA, 'error'),
@@ -325,33 +316,23 @@ class UnknownsAdapter(TabularAdapter):
     tag_width = Int(50)
     graph_id_width = Int(30)
 
-    font = 'arial 10'
-    # record_id_text_color = Property
-    # tag_text_color = Property
     age_text = Property
     error_text = Property
-    colors = List(colornames)
 
-    # klass_text = Property
-    # def _get_klass_text(self):
-    # return self.item.__class__.__name__.split('.')[-1]
+    font = 'arial 10'
 
-    def get_menu(self, object, trait, row, column):
+    def __init__(self, *args, **kw):
+        super(UnknownsAdapter, self).__init__(*args, **kw)
+        self._ncolors = len(colornames)
+
+    def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Recall', action='recall_unknowns'),
                            Action(name='Group Selected', action='unknowns_group_by_selected'),
                            Action(name='Clear Group', action='unknowns_clear_grouping'),
-                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'),
-                           )
-
-    # return MenuManager(Action(name='Group Selected', action='group_by_selected'),
-    # Action(name='Group by Labnumber', action='group_by_labnumber'),
-    # Action(name='Group by Aliquot', action='group_by_aliquot'),
-    # Action(name='Clear Grouping', action='clear_grouping'),
-    # Action(name='Unselect', action='unselect'))
+                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'
-        # if not isinstance(self.item, IsotopeRecordView):
         if self.item.tag == 'invalid':
             c = '#C9C5C5'
         elif self.item.is_omitted():
@@ -359,32 +340,21 @@ class UnknownsAdapter(TabularAdapter):
         return c
 
     def _get_age_text(self):
-        r = ''
-        # print self.item,not isinstance(self.item, IsotopeRecordView)
-        # if not isinstance(self.item, IsotopeRecordView):
         r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
 
     def _get_error_text(self):
-        r = ''
-        # if not isinstance(self.item, IsotopeRecordView):
-        # r = floatfmt(std_dev(self.item.uage_wo_j_err), n=4)
         r = floatfmt(std_dev(self.item.uage), n=4)
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
         color = 'black'
-        # if obj.show_group_colors:
-        # n = len(colornames)
-        colors = self.colors
-        n = len(colors)
 
         gid = getattr(obj, trait)[row].group_id
-        # gid = obj.items[row].group_id
 
-        cid = gid % n if n else 0
+        cid = gid % self._ncolors if self._ncolors else 0
         try:
-            color = colors[cid]
+            color = colornames[cid]
         except IndexError:
             pass
 
@@ -392,8 +362,7 @@ class UnknownsAdapter(TabularAdapter):
 
 
 class ReferencesAdapter(TabularAdapter):
-    columns = [
-        ('Run ID', 'record_id'), ]
+    columns = [('Run ID', 'record_id'), ]
     font = 'arial 10'
 
     def get_menu(self, object, trait, row, column):

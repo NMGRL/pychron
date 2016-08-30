@@ -16,14 +16,15 @@
 
 # ============= enthought library imports =======================
 
-from chaco.legend import Legend
-from traits.api import HasTraits, Any, List, Str
-# ============= standard library imports ========================
-from itertools import groupby
-from numpy import inf
-from math import isinf
 import time
-# ============= local library imports  ==========================
+from itertools import groupby
+from math import isinf
+
+from chaco.legend import Legend
+from numpy import inf
+from traits.api import HasTraits, Any, List, Str
+
+from pychron.core.codetools.inspection import caller
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
@@ -72,7 +73,7 @@ class FigurePanel(HasTraits):
     def _make_graph_hook(self, g):
         pass
 
-    # @caller
+    @caller
     def make_graph(self):
 
         st = time.time()
@@ -139,7 +140,6 @@ class FigurePanel(HasTraits):
                     tmi, tma = plots[0].xlimits
                     if tmi != -inf and tma != inf:
                         mi, ma = tmi, tma
-                        print 'using previous limits', mi, ma
 
             for i, p in enumerate(plots):
                 if p.has_ylimits():
@@ -157,7 +157,6 @@ class FigurePanel(HasTraits):
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                # print 'setting xlimits', mi, ma, fig.xpad, self.plot_options.xpadding
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[0].post_make()

@@ -19,7 +19,7 @@ from itertools import groupby
 
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
-from pychron.processing.analyses.analysis_group import AnalysisGroup
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 
 class TableNode(BaseNode):
@@ -42,14 +42,25 @@ class XLSXAnalysisTableNode(TableNode):
         airs = (a for a in state.unknowns if a.analysis_type == 'air')
 
         key = lambda x: x.group_id
-        unk_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(unknowns, key=key),
-                                                                                       key=key)]
-        blank_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(blanks, key=key),
-                                                                                         key=key)]
-        air_group = [AnalysisGroup(analyses=list(analyses)) for _, analyses in groupby(sorted(airs, key=key),
-                                                                                       key=key)]
 
-        state.tables.append({'options': self.options,
+        options = self.options
+        if self.options.table_kind == 'Step Heat':
+            def factory(ans):
+                return InterpretedAgeGroup(analyses=list(ans),
+                                           plateau_nsteps=options.plateau_nsteps,
+                                           plateau_gas_fraction=options.plateau_gas_fraction,
+                                           fixed_step_low=options.fixed_step_low,
+                                           fixed_step_high=options.fixed_step_high)
+
+        else:
+            def factory(ans):
+                return InterpretedAgeGroup(analyses=list(ans))
+
+        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
+        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
+
+        state.tables.append({'options': options,
                              'unknowns': unk_group,
                              'blanks': blank_group,
                              'airs': air_group})

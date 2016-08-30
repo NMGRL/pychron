@@ -21,9 +21,8 @@ import os
 import shutil
 from logging.handlers import RotatingFileHandler
 
-# =============local library imports  =========================
-from pychron.paths import paths
 from pychron.core.helpers.filetools import list_directory, unique_path2
+from pychron.paths import paths
 
 NAME_WIDTH = 40
 gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
@@ -138,7 +137,7 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     handlers = [shandler]
     if use_file:
         rhandler = RotatingFileHandler(
-                logpath, maxBytes=1e7, backupCount=5)
+                logpath, maxBytes=1e7, backupCount=50)
         handlers.append(rhandler)
 
     for hi in handlers:

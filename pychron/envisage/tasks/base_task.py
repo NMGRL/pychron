@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from itertools import groupby
+
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pyface.action.api import ActionItem, Group
 from pyface.confirmation_dialog import ConfirmationDialog
@@ -26,10 +29,7 @@ from pyface.tasks.task import Task
 from pyface.tasks.task_layout import TaskLayout
 from pyface.timer.do_later import do_later, do_after
 from traits.api import Any, on_trait_change, List, Unicode, Instance
-# ============= standard library imports ========================
-import os
-from itertools import groupby
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
@@ -139,10 +139,8 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         if self.window:
             for task in self.window.tasks:
                 if task.id == tid:
-                    print 'found task'
                     break
             else:
-                print 'add task'
                 task = self.application.create_task(tid)
                 self.window.add_task(task)
 
@@ -325,6 +323,13 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         self._opened_hook()
 
     def _opened_hook(self):
+        pass
+
+    @on_trait_change('window:closed')
+    def _on_closed(self, event):
+        self._closed_hook()
+
+    def _closed_hook(self):
         pass
 
     @on_trait_change('window:closing')

@@ -15,7 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pickle import dumps
 
+from PySide import QtCore, QtGui
+from PySide.QtGui import QColor, QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
@@ -23,11 +26,7 @@ from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
-# ============= standard library imports ========================
-from PySide import QtCore, QtGui
-from PySide.QtGui import QColor, QHeaderView, QApplication
-from pickle import dumps
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.ctx_managers import no_update
 
 
@@ -50,6 +49,7 @@ class myTabularEditor(TabularEditor):
     bgcolor = Color
     row_height = Int
     mime_type = Str('pychron.tabular_item')
+
     # scroll_to_row_hint = 'top'
 
     def _get_klass(self):
@@ -199,9 +199,7 @@ class _TableView(TableView):
         if self._editor.factory.drag_external:
             idxs = self.selectedIndexes()
             rows = sorted(list(set([idx.row() for idx in idxs])))
-            drag_object = [
-                (ri, self._editor.value[ri])
-                for ri in rows]
+            drag_object = [(ri, self._editor.value[ri]) for ri in rows]
 
             md = PyMimeData.coerce(drag_object)
 
@@ -289,8 +287,7 @@ class _TableView(TableView):
             self._copy()
 
         elif event.matches(QtGui.QKeySequence.Cut):
-            self._cut_indices = [ci.row() for ci in
-                                 self.selectionModel().selectedRows()]
+            self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
 
             # self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
             # self._copy_cache = self._get_selection(self._cut_indices)
@@ -659,9 +656,9 @@ class _TabularEditor(qtTabularEditor):
         QtCore.QObject.connect(control.horizontalHeader(), signal,
                                self._on_column_resize)
 
-    def dispose(self):
-        # self.control._should_consume = False
-        super(_TabularEditor, self).dispose()
+    # def dispose(self):
+    #     # self.control._should_consume = False
+    #     super(_TabularEditor, self).dispose()
 
     def refresh_editor(self):
         if self.control:
@@ -687,7 +684,7 @@ class _TabularEditor(qtTabularEditor):
     def _on_column_resize(self, idx, old, new):
         control = self.control
         header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in range(header.count())]
+        cs = [header.sectionSize(i) for i in xrange(header.count())]
         self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):

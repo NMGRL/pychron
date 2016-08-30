@@ -115,9 +115,9 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Ar39_e', 'pychron.arar.constants.lambda_Ar39_error')
 
             bind_preference(self, 'atm4036_v', 'pychron.arar.constants.Ar40_Ar36_atm')
-            bind_preference(self, 'atm_4036_e', 'pychron.arar.constants.Ar40_Ar36_atm_error')
+            bind_preference(self, 'atm4036_e', 'pychron.arar.constants.Ar40_Ar36_atm_error')
             bind_preference(self, 'atm4038_v', 'pychron.arar.constants.Ar40_Ar38_atm')
-            bind_preference(self, 'atm_4038_e', 'pychron.arar.constants.Ar40_Ar38_atm_error')
+            bind_preference(self, 'atm4038_e', 'pychron.arar.constants.Ar40_Ar38_atm_error')
 
             bind_preference(self, 'k3739_mode', 'pychron.arar.constants.Ar37_Ar39_mode')
             bind_preference(self, 'k3739_v', 'pychron.arar.constants.Ar37_Ar39')

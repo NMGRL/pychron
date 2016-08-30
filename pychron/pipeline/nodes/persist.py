@@ -22,6 +22,7 @@ from traitsui.api import Item
 from traitsui.editors import DirectoryEditor
 from uncertainties import ufloat
 
+from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
@@ -155,11 +156,6 @@ class ICFactorPersistNode(DVCPersistNode):
                                                               state.references)
         progress_iterator(state.unknowns, wrapper, threshold=1)
 
-        # for ai in state.unknowns:
-        #     self.dvc.save_icfactors(ai, state.saveable_keys,
-        #                             state.saveable_fits,
-        #                             state.references)
-
         msg = self.commit_message
         if not msg:
             f = ','.join('{}({})'.format(x, y) for x, y in zip(state.saveable_keys, state.saveable_fits))
@@ -182,6 +178,8 @@ class FluxPersistNode(DVCPersistNode):
         if state.saveable_irradiation_positions:
             xs = [x for x in state.saveable_irradiation_positions if x.save]
             if xs:
+                self.dvc.meta_repo.smart_pull()
+
                 progress_iterator(xs,
                                   lambda *args: self._save_j(state, *args),
                                   threshold=1)
@@ -190,13 +188,19 @@ class FluxPersistNode(DVCPersistNode):
                 self.dvc.meta_repo.add(p)
                 self.dvc.meta_commit('fit flux for {}'.format(state.irradiation, state.level))
 
+                if confirmation_dialog('Would you like to share your changes?'):
+                    self.dvc.meta_repo.smart_pull()
+                    self.dvc.meta_repo.push()
+
     def _save_j(self, state, irp, prog, i, n):
         if prog:
             prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
         decay = state.decay_constants
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-                        irp.j, irp.jerr, decay,
+                        irp.j, irp.jerr,
+                        irp.mean_j, irp.mean_jerr,
+                        decay,
                         analyses=irp.analyses,
                         add=False)
 
@@ -211,6 +215,7 @@ class FluxPersistNode(DVCPersistNode):
 class XLSXTablePersistNode(BaseNode):
     name = 'Save Analysis Table'
     auto_configure = False
+    configurable = False
 
     def run(self, state):
         for table in state.tables:

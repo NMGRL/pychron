@@ -45,6 +45,7 @@ class SampleEditItem(HasTraits):
     material = Str
     grainsize = Str
     id = Long
+    note = Str
 
     _projects = List
     _materials = List
@@ -53,6 +54,7 @@ class SampleEditItem(HasTraits):
         super(SampleEditItem, self).__init__(*args, **kw)
         self.name = self._name = rec.name
         self.id = rec.id
+        self.note = self._note = rec.note or ''
 
         if rec.project:
             self.project = self._project = rec.project.pname
@@ -61,7 +63,8 @@ class SampleEditItem(HasTraits):
 
     @property
     def altered(self):
-        return self.name != self._name or self.project != self._project or self.material != self._material
+        attrs = 'name', 'project', 'material', 'note'
+        return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
 
     @property
     def project_pi(self):
@@ -89,13 +92,14 @@ class SampleEditModel(HasTraits):
             if si.altered:
                 dbsam = db.get_sample_id(si.id)
                 dbsam.name = si.name
+                dbsam.note = si.note
 
                 dbproj = db.get_project(*extract_names(si.project))
                 if dbproj:
                     dbsam.projectID = dbproj.id
 
                 dbmat = db.get_material(*extract_names(si.material))
-                print dbmat, extract_names(si.material)
+                # print dbmat, extract_names(si.material)
                 if dbmat:
                     dbsam.materialID = dbmat.id
             db.commit()
@@ -114,21 +118,23 @@ class SampleEditModel(HasTraits):
 class SampleEditView(Controller):
     dvc = Instance('pychron.dvc.dvc.DVC')
 
-    def closed( self, info, is_ok ):
+    def closed(self, info, is_ok):
         self.model.closed()
 
     def save(self, info):
         self.model.save()
 
     def traits_view(self):
-        vv = View(VGroup(Item('name'),
+        vv = View(VGroup(Item('name', label='Sample Name'),
                          Item('project', editor=EnumEditor(name='_projects')),
-                         Item('material', editor=EnumEditor(name='_materials'))))
+                         Item('material', editor=EnumEditor(name='_materials')),
+                         VGroup(UItem('note', style='custom'), show_border=True, label='Note')))
 
         cols = [ObjectColumn(name='id', editable=False, text_font='arial 10'),
                 ObjectColumn(name='name', editable=False, text_font='arial 10'),
                 ObjectColumn(name='project', editable=False, text_font='arial 10'),
-                ObjectColumn(name='material', editable=False, text_font='arial 10')]
+                ObjectColumn(name='material', editable=False, text_font='arial 10'),
+                ObjectColumn(name='note', editable=False, text_font='arial 10')]
 
         a = UItem('sample')
         b = UItem('samples', editor=TableEditor(columns=cols,
