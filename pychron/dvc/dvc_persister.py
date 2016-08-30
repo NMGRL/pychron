@@ -96,9 +96,9 @@ class DVCPersister(BasePersister):
 
     def post_extraction_save(self):
 
-        rblob = self.per_spec.response_blob
-        oblob = self.per_spec.output_blob
-        sblob = self.per_spec.setpoint_blob
+        rblob = self.per_spec.response_blob  # time vs measured response
+        oblob = self.per_spec.output_blob  # time vs %output
+        sblob = self.per_spec.setpoint_blob  # time vs requested
 
         if rblob:
             rblob = base64.b64encode(rblob)
@@ -107,7 +107,7 @@ class DVCPersister(BasePersister):
         if sblob:
             sblob = base64.b64encode(sblob)
 
-        obj = {'request': rblob,
+        obj = {'request': rblob, # time vs
                'response': oblob,
                'sblob': sblob}
 
@@ -190,8 +190,6 @@ class DVCPersister(BasePersister):
         self._check_repository_identifier()
 
         self._save_analysis(timestamp)
-
-
 
         # save monitor
         self._save_monitor()

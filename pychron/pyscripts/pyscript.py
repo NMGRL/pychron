@@ -15,21 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Int, Dict
-# ============= standard library imports ========================
-from threading import Event, Thread, Lock
-from Queue import Empty, LifoQueue
 import hashlib
-import time
-import os
 import inspect
-import traceback
-import yaml
+import os
 import sys
-# ============= local library imports  ==========================
-from pychron.paths import paths
-from pychron.loggable import Loggable
+import time
+import traceback
+from Queue import Empty, LifoQueue
+from threading import Event, Thread, Lock
+
+import yaml
+from traits.api import Str, Any, Bool, Property, Int, Dict
+
 from pychron.globals import globalv
+from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -631,7 +631,7 @@ class PyScript(Loggable):
             return
 
         try:
-            _, f, n = self._interval_stack.get(timeout=0.01)
+            f, n = self._interval_stack.get(timeout=0.01)
         except Empty:
             raise IntervalError()
 
@@ -647,6 +647,8 @@ class PyScript(Loggable):
 
         if not self._cancel:
             f.clear()
+
+        self._interval_stack.task_done()
 
     @calculate_duration
     @command_register
@@ -673,9 +675,11 @@ class PyScript(Loggable):
             self.console_info('BEGIN INTERVAL {} waiting for {}'.format(name, duration))
             t = Thread(name=name,
                        target=wait, args=(duration, f, name))
-            t.start()
 
-        self._interval_stack.put((t, f, name))
+        self._interval_stack.put((f, name))
+        # only start the thread after item pushed onto stack
+        if t:
+            t.start()
 
     @count_verbose_skip
     @command_register

@@ -16,13 +16,11 @@
 
 # =============enthought library imports=======================
 from traits.api import Button, DelegatesTo
-# import apptools.sweet_pickle as pickle
-# =============standard library imports ========================
-# import os
-# =============local library imports  ==========================
+
+from fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_co2_logic_board import FusionsCO2LogicBoard
 from pychron.monitors.fusions_co2_laser_monitor import FusionsCO2LaserMonitor
-from fusions_laser_manager import FusionsLaserManager
+from pychron.response_recorder import ResponseRecorder
 
 
 class FusionsCO2Manager(FusionsLaserManager):
@@ -85,6 +83,10 @@ class FusionsCO2Manager(FusionsLaserManager):
 
         return self._stage_manager_factory(args)
 
+    def _response_recorder_default(self):
+        r = ResponseRecorder(response_device=self.laser_controller,
+                             output_device=self.laser_controller)
+        return r
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
