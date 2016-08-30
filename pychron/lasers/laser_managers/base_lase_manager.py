@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
-# ============= standard library imports ========================
 import os
 import time
-# ============= local library imports  ==========================
+
+from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
+
+from pychron.core.helpers.filetools import list_directory
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.meter_calibration import MeterCalibration
-from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.helpers.filetools import list_directory
+from pychron.managers.manager import Manager
 from pychron.paths import paths
 
 
@@ -104,12 +104,6 @@ class BaseLaserManager(Manager):
 
     def get_motor(self, name):
         pass
-
-    def get_response_blob(self):
-        return ''
-
-    def get_output_blob(self):
-        return ''
 
     def enable_device(self, **kw):
         return self.enable_laser(**kw)

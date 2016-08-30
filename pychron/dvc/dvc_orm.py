@@ -142,6 +142,7 @@ class AnalysisTbl(Base, BaseMixin):
     measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
     _record_view = None
     group_id = 0
+    frozen = False
 
     @property
     def is_plateau_step(self):
@@ -299,6 +300,7 @@ class SampleTbl(Base, NameMixin):
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
+    note = stringcolumn(140)
 
 
 class ProductionTbl(Base, NameMixin):
@@ -321,6 +323,7 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
+    create_date = Column(TIMESTAMP)
 
 
 class IrradiationPositionTbl(Base, BaseMixin):
@@ -354,6 +357,7 @@ class IrradiationPositionTbl(Base, BaseMixin):
 class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
     kind = stringcolumn(45)
+    # active = Column(Bool)
 
 
 class ExtractDeviceTbl(Base, BaseMixin):

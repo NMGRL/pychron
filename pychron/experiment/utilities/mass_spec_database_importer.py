@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, Int, Str, Bool, provides
-# ============= standard library imports ========================
-from datetime import datetime
-import struct
-from numpy import array
-import time
 import os
-# ============= local library imports  ==========================
+import struct
+import time
+from datetime import datetime
+
+from numpy import array
+from traits.api import Instance, Int, Str, Bool, provides
 from uncertainties import nominal_value, std_dev
-from pychron.core.i_datastore import IDatastore
+
 from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.i_datastore import IDatastore
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.identifier_mapper import IdentifierMapper
+from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
@@ -195,46 +195,48 @@ class MassSpecDatabaseImporter(Loggable):
 
     def add_analysis(self, spec, commit=True):
         db = self.db
-        for i in range(3):
-            with self.db.session_ctx():
-                irradpos = spec.irradpos
-                rid = spec.runid
-                trid = rid.lower()
-                identifier = spec.labnumber
+        # for i in range(3):
+        with db.session_ctx(use_parent_session=False) as session:
+            irradpos = spec.irradpos
+            rid = spec.runid
+            trid = rid.lower()
+            identifier = spec.labnumber
 
-                if trid.startswith('b'):
-                    runtype = 'Blank'
-                    irradpos = -1
-                elif trid.startswith('a'):
-                    runtype = 'Air'
-                    irradpos = -2
-                elif trid.startswith('c'):
-                    runtype = 'Unknown'
-                    identifier = irradpos = self.get_identifier(spec)
-                else:
-                    runtype = 'Unknown'
+            if trid.startswith('b'):
+                runtype = 'Blank'
+                irradpos = -1
+            elif trid.startswith('a'):
+                runtype = 'Air'
+                irradpos = -2
+            elif trid.startswith('c'):
+                runtype = 'Unknown'
+                identifier = irradpos = self.get_identifier(spec)
+            else:
+                runtype = 'Unknown'
 
-                rid = make_runid(identifier, spec.aliquot, spec.step)
+            rid = make_runid(identifier, spec.aliquot, spec.step)
 
-                self._analysis = None
-                db.reraise = True
-                try:
-                    ret = self._add_analysis(db.session, spec, irradpos, rid, runtype)
-                    db.commit()
-                    return ret
-                except Exception, e:
-                    import traceback
-                    tb = traceback.format_exc()
-                    self.debug('Mass Spec save exception. {}\n {}'.format(e, tb))
-                    if i == 2:
-                        self.message('Could not save spec.runid={} rid={} '
-                                     'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
-                    else:
-                        self.debug('retry mass spec save')
-                    # if commit:
-                    db.rollback()
-                finally:
-                    self.db.reraise = True
+            self._analysis = None
+            db.reraise = True
+            try:
+                ret = self._add_analysis(session, spec, irradpos, rid, runtype)
+                db.commit()
+                return ret
+            except Exception, e:
+                import traceback
+                self.debug('Mass Spec save exception. {}'.format(e))
+                tb = traceback.format_exc()
+                self.debug(tb)
+                self.message('Could not save spec. runid={} rid={} to MassSpec DB.\n{}'.format(spec.runid, rid, tb))
+                # if i == 2:
+                #     self.message('Could not save spec.runid={} rid={} '
+                #                  'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                # else:
+                #     self.debug('retry mass spec save')
+                # # if commit:
+                # db.rollback()
+            finally:
+                self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 
@@ -321,7 +323,7 @@ class MassSpecDatabaseImporter(Loggable):
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
                                    RUN_TYPE_DICT[runtype], **params)
-        sess.flush()
+        sess.commit()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
             analysis.RunDateTime = d

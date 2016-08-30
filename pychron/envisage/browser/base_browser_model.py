@@ -15,26 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cPickle as pickle
+import os
+import re
+from datetime import timedelta, datetime
+
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-from datetime import timedelta, datetime
-import os
-import re
-import cPickle as pickle
-# ============= local library imports  ==========================
+
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
+from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.date_selector import DateSelector
-from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView
-from pychron.core.ui.table_configurer import SampleTableConfigurer
-from pychron.persistence_loggable import PersistenceLoggable
+from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
+    PrincipalInvestigatorRecordView
 from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceLoggable
 
 
 class IdentifierStr(BaseStr):
@@ -94,8 +95,9 @@ def extract_mass_spectrometer_name(name):
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     plot_selected = Event
 
-    principal_investigator = Str
+    selected_principal_investigators = Any
     principal_investigators = List
+    principal_investigator_names = List
 
     projects = List
     oprojects = List
@@ -107,7 +109,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
-    principal_investigator_enabled = Bool(False)
+    principal_investigator_enabled = Bool(True)
 
     analysis_groups = List
 
@@ -118,7 +120,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     date_configure_button = Button
 
     selected_projects = Any
-    selected_repositories = Any
+    # selected_repositories = Any
     selected_samples = List
     selected_analysis_groups = Any
 
@@ -175,6 +177,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     use_fuzzy = True
     pattributes = ('project_enabled',
                    'repository_enabled',
+                   'principal_investigator_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -199,11 +202,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def load_browser_selection(self):
         obj = self._get_browser_persistence()
         if obj:
-            # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
+            self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
             self._load_browser_selection(obj)
 
     def dump_browser_selection(self):
-        # self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
 
         ps = []
         if self.selected_projects:
@@ -213,13 +216,18 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self.selected_samples:
             ss = [p.identifier for p in self.selected_samples]
 
-        es = []
-        if self.selected_repositories:
-            es = [e.name for e in self.selected_repositories]
+        # es = []
+        # if self.selected_repositories:
+        #     es = [e.name for e in self.selected_repositories]
+
+        pis = []
+        if self.selected_principal_investigators:
+            pis = [p.name for p in self.selected_principal_investigators]
 
         obj = dict(projects=ps,
                    samples=ss,
-                   repositories=es,
+                   # repositories=es,
+                   principal_investigators=pis,
                    use_low_post=self.use_low_post,
                    use_high_post=self.use_high_post,
                    use_named_date_range=self.use_named_date_range,
@@ -257,7 +265,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         es = db.get_repositories()
         if es:
-            es = [e.record_view for e in es]
+            es = sorted([e.record_view for e in es], key=lambda x: x.name)
 
             self.repositories = es
             self.orepositories = es
@@ -273,7 +281,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         db = self.db
         ps = db.get_principal_investigators(order='asc', verbose_query=True)
         if ps:
-            self.principal_investigators = [p.name for p in ps]
+            self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
+            self.principal_investigator_names = [p.name for p in ps]
 
     def get_analysis_groups(self, names):
         if not isinstance(names[0], (str, unicode)):
@@ -310,17 +319,17 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         lp, hp = self.db.get_repository_date_range(names)
         if lp.date() == hp.date():
             hp += timedelta(days=1)
-        self._set_posts(lp, hp)
+        self._set_posts(lp, hp, enable=False)
 
     def _load_project_date_range(self, names):
         lp, hp = self.db.get_project_date_range(names)
         if lp.date() == hp.date():
             hp += timedelta(days=1)
-        self._set_posts(lp, hp)
+        self._set_posts(lp, hp, enable=False)
 
-    def _set_posts(self, lp, hp):
+    def _set_posts(self, lp, hp, enable=True):
         self.use_low_post, self.use_high_post = True, True
-        ol, oh = self.use_low_post, self.use_high_post
+        # ol, oh = self.use_low_post, self.use_high_post
         self.debug('set posts lp={} hp={}'.format(lp, hp))
         self.low_post, self.high_post = lp, hp
 
@@ -329,7 +338,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.trait_property_changed('high_post', None)
         self._suppress_post_update = False
 
-        self.use_low_post, self.use_high_post = ol, oh
+        self.use_low_post, self.use_high_post = enable, enable
+        # self.use_low_post, self.use_high_post = ol, oh
 
     def _load_associated_groups(self, names):
         """
@@ -375,8 +385,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.trait_property_changed('low_post', self._low_post)
         self._recent_mass_spectrometers.append(ms)
 
-        es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-        ls = db.get_labnumbers(repositories=es, mass_spectrometers=(ms,), low_post=lpost)
+        # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
+        ls = db.get_labnumbers(mass_spectrometers=(ms,),
+                               # repositories=es,
+                               low_post=lpost)
 
         sams = self._load_sample_record_views(ls)
 
@@ -476,17 +488,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
         if not ms:
-            ms = db.get_mass_spectrometers()
-            if ms:
-                ms = [mi.name for mi in ms]
-            else:
-                ms = []
+            ms = db.get_active_mass_spectrometer_names()
 
         recents = []
         if include_recent:
             recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
 
-        pss = [ProjectRecordView(p) for p in ps]
+        pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
 
         if include_recent:
             # move references project to after Recent
@@ -521,7 +529,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _load_browser_selection(self, selection):
         def load(attr, values):
             def get(n):
-                return next((p for p in values if p.id == n), None)
+                try:
+                    return next((p for p in values if p.id == n), None)
+                except AttributeError, e:
+                    print e
+                    return
 
             try:
                 sel = selection[attr]
@@ -532,19 +544,22 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             vs = [pp for pp in vs if pp is not None]
             setattr(self, 'selected_{}'.format(attr), vs)
 
+        load('principal_investigators', self.principal_investigators)
         load('projects', self.projects)
-        load('experiments', self.repositories)
+        # load('experiments', self.repositories)
         load('samples', self.samples)
 
-    def _load_projects_for_principal_investigator(self):
+    def _load_projects_for_principal_investigators(self):
         ms = None
         if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
 
-        p_i = self.principal_investigator
-        self.debug('load projects for principal investigator= {}'.format(p_i))
+        pis = None
+        if self.principal_investigator_enabled and self.selected_principal_investigators:
+            pis = [p.name for p in self.selected_principal_investigators]
+            self.debug('load projects for principal investigator= {}'.format(pis))
         db = self.db
-        ps = db.get_projects(principal_investigator=p_i,
+        ps = db.get_projects(principal_investigators=pis,
                              mass_spectrometers=ms)
 
         ps = self._make_project_records(ps, include_recent_first=True,
@@ -569,11 +584,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _selected_analysis_groups_changed(self):
         self._load_analyses_for_group()
 
-    def _principal_investigator_changed(self):
-        self._load_projects_for_principal_investigator()
+    def _selected_principal_investigators_changed(self, new):
+        if new and self.principal_investigator_enabled:
+            self._load_projects_for_principal_investigators()
+            self.dump_browser_selection()
 
     def _principal_investigator_enabled_changed(self):
-        self._load_projects_for_principal_investigator()
+        self._load_projects_for_principal_investigators()
 
     def _identifier_changed(self, new):
         db = self.db
@@ -601,12 +618,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _identifier_change_hook(self, db, new, lns):
         pass
 
-    def _selected_repositories_changed(self, old, new):
-        if new and self.repository_enabled:
-            names = [n.name for n in new]
-            self._load_repository_date_range(names)
-            self._load_associated_labnumbers()
-            self._selected_repositories_changed_hook(names)
+    # def _selected_repositories_changed(self, old, new):
+    #     if new and self.repository_enabled:
+    #         names = [n.name for n in new]
+    #         self._load_repository_date_range(names)
+    #         self._load_associated_labnumbers()
+    #         self._selected_repositories_changed_hook(names)
 
     def _selected_projects_changed(self, old, new):
 

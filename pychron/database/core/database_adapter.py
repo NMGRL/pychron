@@ -105,14 +105,30 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 #                 # del self._sess
 
 class SessionCTX(object):
-    def __init__(self, parent):
+    def __init__(self, parent, use_parent_session=True):
+        self._use_parent_session = use_parent_session
         self._parent = parent
+        self._session = None
+        self._psession = None
 
     def __enter__(self):
-        self._parent.create_session()
+        if self._use_parent_session:
+            self._parent.create_session()
+        else:
+            self._psession = self._parent.session
+            self._session = self._parent.session_factory()
+            self._parent.session = self._session
+            return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._parent.close_session()
+        if self._session:
+            self._session.close()
+        else:
+            self._parent.close_session()
+
+        if self._psession:
+            self._parent.session = self._psession
+        self._psession = None
 
 
 class MockQuery:
@@ -217,14 +233,15 @@ class DatabaseAdapter(Loggable):
 
     _session_cnt = 0
 
-    def session_ctx(self):
+    def session_ctx(self, use_parent_session=True):
         with self._session_lock:
-            return SessionCTX(self)
+            return SessionCTX(self, use_parent_session)
 
     def create_session(self):
         if self.connected:
             if self.session_factory:
                 if not self.session:
+                    self.debug('create new session {}'.format(id(self)))
                     self.session = self.session_factory()
                 self._session_cnt += 1
         else:
@@ -232,8 +249,11 @@ class DatabaseAdapter(Loggable):
 
     def close_session(self):
         if self.session and not isinstance(self.session, MockSession):
+            self.session.flush()
+
             self._session_cnt -= 1
             if not self._session_cnt:
+                self.debug('close session {}'.format(id(self)))
                 self.session.close()
                 self.session = None
 

@@ -28,7 +28,6 @@ from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
-from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
@@ -36,12 +35,12 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.tasks.actions import RunAction, SavePipelineTemplateAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SaveFigureAction, \
-    SetInvalidAction, SetFilteringTagAction, TabularViewAction, EditAnalysisAction, RunFromAction
+from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
+    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, SetFilteringTagAction, \
+    EditAnalysisAction, RunFromAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, InspectorPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
 
@@ -61,17 +60,16 @@ def select_experiment_repo():
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [SToolBar(ConfigureRecallAction(),
-                          ToggleFullWindowAction()),
+    tool_bars = [SToolBar(ConfigureRecallAction()),
                  SToolBar(RunAction(),
                           ResumeAction(),
                           RunFromAction(),
                           ResetAction(),
                           ClearAction(),
-                          SavePipelineTemplateAction(),
+                          # SavePipelineTemplateAction(),
                           name='Pipeline'),
                  SToolBar(SavePDFAction(),
-                          SaveFigureAction(),
+                          # SaveFigureAction(),
                           name='Save'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit'),
@@ -80,7 +78,7 @@ class PipelineTask(BaseBrowserTask):
                           SetInvalidAction(),
                           SetFilteringTagAction(),
                           SetInterpretedAgeAction(),
-                          TabularViewAction(),
+                          # TabularViewAction(),
                           name='Misc')]
 
     state = Instance(EngineState)
@@ -113,12 +111,15 @@ class PipelineTask(BaseBrowserTask):
 
     def prepare_destroy(self):
         self.interpreted_age_browser_model.dump_browser()
+        self.engine.reset()
+
         super(PipelineTask, self).prepare_destroy()
 
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
                  AnalysesPane(model=self.engine),
-                 InspectorPane(model=self.engine)]
+                 # InspectorPane(model=self.engine)
+                 ]
         return panes
 
     # toolbar actions
@@ -372,6 +373,10 @@ class PipelineTask(BaseBrowserTask):
         self.engine.selected_pipeline_template = 'Series'
         self._set_last_nhours(24 * 7 * 30.5)
 
+    def set_analysis_table_template(self):
+        self.engine.selected_pipeline_template = 'Analysis Table'
+        self.run()
+
     # private
     def _get_active_analyses(self):
         if self.active_editor:
@@ -403,7 +408,6 @@ class PipelineTask(BaseBrowserTask):
 
     def _add_interpreted_ages(self, ias):
         dvc = self.dvc
-        db = dvc.db
         for ia in ias:
             if ia.use:
                 dvc.add_interpreted_age(ia)
@@ -452,13 +456,16 @@ class PipelineTask(BaseBrowserTask):
     def _set_invalid(self, items):
         self.set_tag(tag='invalid', items=items, warn=True)
 
+    def _set_omit(self, items):
+        self.set_tag(tag='omit', items=items, warn=True)
+
     # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
                                                  width=200)),
-                                        PaneItem('pychron.pipeline.inspector'),
+                                        # PaneItem('pychron.pipeline.inspector'),
                                         orientation='vertical'))
 
     def _extra_actions_default(self):
@@ -490,12 +497,14 @@ class PipelineTask(BaseBrowserTask):
     # def _handle_save_needed(self):
     #     self.engine.run_persist(self._temp_state)
 
-    @on_trait_change('engine:[tag_event, invalid_event, recall_event]')
+    @on_trait_change('engine:[tag_event, invalid_event, recall_event, omit_event]')
     def _handle_analysis_tagging(self, name, new):
         if name == 'tag_event':
             self.set_tag(items=new)
         elif name == 'invalid_event':
             self._set_invalid(new)
+        elif name == 'omit_event':
+            self._set_omit(new)
         elif name == 'recall_event':
             self.recall(new)
 

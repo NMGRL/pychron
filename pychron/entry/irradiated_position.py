@@ -27,6 +27,7 @@ class BaseIrradiatedPosition(HasTraits):
     identifier = Str
     material = Str
     sample = Str
+    grainsize = Str
     hole = Int
     alt_hole = Int
     project = Str
@@ -87,6 +88,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         ('PI', 'principal_investigator'),
         ('Project', 'project'),
         ('Material', 'material'),
+        ('Grainsize', 'grainsize'),
         #               ('Size', 'size'),
         ('Weight', 'weight'),
         ('J', 'j'),
@@ -98,10 +100,14 @@ class IrradiatedPositionAdapter(TabularAdapter):
     sample_width = Int(100)
     project_width = Int(150)
     material_width = Int(100)
+    grainsize_width = Int(70)
     size_width = Int(50)
     weight_width = Int(50)
     j_width = Int(75)
     j_err_width = Int(75)
+
+    j_text = Property
+    j_err_text = Property
 
     font = 'arial 10'
 
@@ -109,6 +115,11 @@ class IrradiatedPositionAdapter(TabularAdapter):
 
     #    def _get_hole_width(self):
     #        return 35
+    def _get_j_text(self):
+        return '{:0.6E}'.format(self.item.j)
+
+    def _get_j_err_text(self):
+        return '{:0.6E}'.format(self.item.j_err)
 
     def get_bg_color(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]

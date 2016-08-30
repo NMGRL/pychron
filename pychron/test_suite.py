@@ -27,9 +27,9 @@ def suite():
 
     from pychron.stage.tests.stage_map import StageMapTestCase, \
         TransformTestCase
-    from pychron.entry.tests.sample_loader import SampleLoaderTestCase
+    # from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
-    from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
+    # from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
     from pychron.experiment.tests.backup import BackupTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
     from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
@@ -60,8 +60,8 @@ def suite():
              ExperimentIdentifierTestCase,
              StageMapTestCase,
              TransformTestCase,
-             SampleLoaderTestCase,
-             AnalysisModifierTestCase,
+             # SampleLoaderTestCase,
+             # AnalysisModifierTestCase,
              BackupTestCase,
              # MassSpecIrradExportTestCase,
              XMLParserTestCase,

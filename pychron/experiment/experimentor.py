@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, on_trait_change, Bool, Event
-# ============= standard library imports ========================
 from itertools import groupby
-# ============= local library imports  ==========================
+
+from traits.api import Instance, List, on_trait_change, Bool, Event
+
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
-from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.experiment.factory import ExperimentFactory
-from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
+from pychron.experiment.factory import ExperimentFactory
+from pychron.experiment.queue.experiment_queue import ExperimentQueue
+from pychron.experiment.stats import StatsGroup
 
 
 class Experimentor(DVCIrradiationable):
@@ -153,41 +153,37 @@ class Experimentor(DVCIrradiationable):
         return ((ln, group) for ln, group in groupby(sorted(ans, key=key), key)
                 if ln not in exclude)
 
-    def _get_analysis_info(self, li):
-        db = self.get_database()
-        return db.get_analysis_info(li)
-
     def _set_analysis_metadata(self):
         cache = dict()
 
         db = self.get_database()
         aruns = self._get_all_automated_runs()
+        with db.session_ctx():
+            for ai in aruns:
+                if ai.skip:
+                    continue
 
-        for ai in aruns:
-            if ai.skip:
-                continue
+                ln = ai.labnumber
+                if ln == 'dg':
+                    continue
 
-            ln = ai.labnumber
-            if ln == 'dg':
-                continue
+                # is run in cache
+                if ln not in cache:
+                    info = db.get_analysis_info(ln)
+                    self.debug('Info for {}={}'.format(ln, info))
+                    if not info:
+                        cache[ln] = dict(identifier_error=True)
+                    else:
+                        project, sample, material, irrad, level, pos = info
 
-            # is run in cache
-            if ln not in cache:
-                info = self._get_analysis_info(ln)
-                self.debug('Info for {}={}'.format(ln, info))
-                if not info:
-                    cache[ln] = dict(identifier_error=True)
-                else:
-                    project, sample, material, irrad, level, pos = info
+                        cache[ln] = dict(project=project or '', sample=sample or '',
+                                         material=material or '',
+                                         irradiation=irrad or '',
+                                         irradiation_level=level or '',
+                                         irradiation_position=pos or '',
+                                         identifier_error=False)
 
-                    cache[ln] = dict(project=project or '', sample=sample or '',
-                                     material=material or '',
-                                     irradiation=irrad or '',
-                                     irradiation_level=level or '',
-                                     irradiation_position=pos or '',
-                                     identifier_error=False)
-
-            ai.trait_set(**cache[ln])
+                ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
         self.debug('<{}> setup executor'.format(id(self)))
@@ -213,9 +209,37 @@ class Experimentor(DVCIrradiationable):
         elif inform:
             self.warning_dialog('No Database available')
 
-    def get_analysis(self, **kw):
+    def sync_queue(self, queue):
+        ms = queue.mass_spectrometer
+        ed = queue.extract_device
         db = self.get_database()
-        return db.get_analysis_by_attr(**kw)
+        with db.session_ctx():
+            for i, ai in enumerate(queue.automated_runs):
+
+                if ai.skip or ai.is_special():
+                    continue
+
+                kw = {'identifier': ai.identifier, 'position': ai.position,
+                      'mass_spectrometer': ms,
+                      'extract_device': ed}
+                if ai.is_step_heat():
+                    kw['aliquot'] = ai.aliquot
+                    kw['extract_value'] = ai.extract_value
+
+                self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
+
+                aa = db.get_analysis_by_attr(**kw)
+                if aa is None:
+                    self.debug('----- not found')
+                    break
+
+            if i:
+                if i == len(queue.automated_runs) - 1:
+                    self.information_dialog('All Analyses from this experiment have been run')
+                else:
+                    queue.automated_runs = queue.automated_runs[i:]
+            else:
+                self.information_dialog('No Analyses from this experiment have been run')
 
     # ===============================================================================
     # handlers

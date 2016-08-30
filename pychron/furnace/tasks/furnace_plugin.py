@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import List
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.tasks.preferences import NMGRLFurnacePreferencesPane
@@ -44,7 +43,8 @@ class BaseFurnacePlugin(BaseTaskPlugin):
         return m
 
     def _task_factory(self):
-        return FurnaceTask(manager=self._get_manager())
+        return FurnaceTask(manager=self._get_manager(),
+                           application=self.application)
 
     def _get_manager(self):
         return self.application.get_service(IFurnaceManager, 'name=="{}"'.format(self.name))

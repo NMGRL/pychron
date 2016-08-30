@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 import shutil
+import time
+from threading import Thread
 
 import yaml
 from traits.api import TraitError, Instance, Float, provides, Bool
 
-# ============= standard library imports ========================
-import os
-import time
-from threading import Thread
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
@@ -437,7 +435,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 states = yaml.load(rfile)
 
                 for si in states:
-                    hole = self.stage_map.get_hole(si)
+                    hole = self.stage_manager.stage_map.get_hole(si)
                     hole.analyzed = True
 
     def _dump_sample_states(self, states=None):
@@ -480,29 +478,37 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _update_scan(self):
         d = self.controller.get_summary(verbose=False)
         if d:
-            state = d['h2o_state']
+            state = d.get('h2o_state')
             if state in (0, 1):
                 self.water_flow_led.state = 2 if state else 0
             else:
                 self.water_flow_led.state = 1
 
-            response = d.get('response', 0) or 0
-            op = d.get('output', 0) or 0
+            response = d.get('response')
+            output = d.get('output')
+            if response is not None:
+                self.temperature_readback = response
+            if output is not None:
+                self.output_percent_readback = output
 
-            self.temperature_readback = response
-            self.output_percent_readback = op
-
-            self._update_scan_graph(response, op, d['setpoint'])
+            self._update_scan_graph(response, output, d['setpoint'])
 
     def _stop_update(self):
         self.debug('stop update')
         self._alive = False
 
     def _update_scan_graph(self, response, output, setpoint):
-        if response is not None and output is not None:
+        x = None
+        update = False
+        if response is not None:
             x = self.graph.record(response, series=1, track_y=False)
-            self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
+            update = True
 
+        if output is not None:
+            self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
+            update = True
+
+        if update:
             ss = self.graph.get_data(plotid=0, axis=1)
             if len(ss) > 1:
                 xs = self.graph.get_data(plotid=0)
@@ -527,7 +533,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
 
             if self._recording:
-                self.record_data_manager.write_to_frame((x, response, output))
+                self.record_data_manager.write_to_frame((x, response or 0, output or 0))
 
     def _start_recording(self):
         self._recording = True

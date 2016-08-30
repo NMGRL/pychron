@@ -71,7 +71,7 @@ class IsoEvo(BaseArArFigure):
                                                    fit=None,
                                                    add_inspector=False,
                                                    color='red')
-                psinspector = PointInspector(scatter, use_pane=True)
+                psinspector = PointInspector(scatter)
                 ymi, yma = min_max(ymi, yma, iso.sniff.ys)
                 xmi, xma = min_max(xmi, xma, iso.sniff.xs)
 
@@ -88,8 +88,8 @@ class IsoEvo(BaseArArFigure):
                                                         color='black',
                                                         add_inspector=False)
 
-            pinspector = PointInspector(scatter, use_pane=True)
-            linspector = RegressionInspectorTool(component=line, use_pane=True)
+            pinspector = PointInspector(scatter, use_pane=False)
+            linspector = RegressionInspectorTool(component=line, use_pane=False)
             if psinspector:
                 inspectors = [linspector, pinspector, psinspector]
             else:
@@ -120,7 +120,7 @@ class IsoEvo(BaseArArFigure):
                                            add_tools=False,
                                            color='black')
 
-        pinspector = PointInspector(scatter, use_pane=True)
+        pinspector = PointInspector(scatter, use_pane=False)
 
         xmi, xma = min_max(xmi, xma, xs)
         ymi, yma = min_max(ymi, yma, ys)

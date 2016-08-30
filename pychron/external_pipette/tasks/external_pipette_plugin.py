@@ -18,8 +18,6 @@
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import List
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.external_pipette.tasks.external_pipette_task import ExternalPipetteTask
@@ -64,7 +62,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
                             accelerator='Ctrl+Shift+0')]
 
     def _task_factory(self):
-        t = ExternalPipetteTask(manager=self._manager)
+        t = ExternalPipetteTask(manager=self._manager, application=self.application)
         return t
 
 # ============= EOF =============================================

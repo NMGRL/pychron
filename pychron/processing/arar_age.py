@@ -70,6 +70,7 @@ class ArArAge(IsotopeGroup):
     uage = None
     # uage_wo_j_err =None
     uage_w_j_err = None
+    uage_wo_j_err = None
 
     age = None
     age_err = None
@@ -439,6 +440,7 @@ class ArArAge(IsotopeGroup):
         self.age_err = std_dev(age)
         self.age_err_wo_j = float(age.std_dev)
         self.uage = ufloat(self.age, self.age_err)
+        self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
         # if self.j is not None:
         # j = copy(self.j)

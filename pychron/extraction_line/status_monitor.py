@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, List
-# ============= standard library imports ========================
 import time
-# ============= local library imports  ==========================
 from threading import Event, Thread
+
+from traits.api import Int, List
+
 from pychron.loggable import Loggable
 
 
@@ -40,6 +40,7 @@ class StatusMonitor(Loggable):
     #     self._clients = []
 
     def start(self, oid, vm):
+        self.debug('start {}'.format(oid))
         if not self._clients:
             p = self.update_period
             s, c, l, o = self.state_freq, self.checksum_freq, self.lock_freq, self.owner_freq
@@ -66,6 +67,7 @@ class StatusMonitor(Loggable):
             return not self._stop_evt.isSet()
 
     def stop(self, oid):
+        self.debug('stop {}'.format(oid))
         try:
             self._clients.remove(oid)
         except ValueError:
@@ -80,13 +82,14 @@ class StatusMonitor(Loggable):
     def _run(self, vm):
         i = 0
         while 1:
+            time.sleep(self.update_period)
             if self._stop_evt.is_set():
                 break
 
-            if not self._iter(i, vm):
-                break
+            # if not self._iter(i, vm):
+            #     break
 
-            time.sleep(self.update_period)
+            self._iter(i, vm)
 
             if i > 100:
                 i = 0
@@ -96,6 +99,7 @@ class StatusMonitor(Loggable):
     def _iter(self, i, vm):
         self.debug('status monitor iteration i={}'.format(i))
         if self._stop_evt.is_set():
+            self.debug('stop_event set. no more iterations')
             return
 
         if vm is None:
@@ -118,7 +122,7 @@ class StatusMonitor(Loggable):
             if not vm.state_checksum:
                 self.debug('State checksum failed')
 
-        return not self._stop_evt.is_set()
+        # return not self._stop_evt.is_set()
 
         # if i > 100:
         #     i = 0

@@ -15,36 +15,35 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import shutil
+import time
+
+import xlrd
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
 from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 
-# ============= standard library imports ========================
-import shutil
-import time
-import os
-import xlrd
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference, toTuple
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
+from pychron.envisage.tasks.wait_pane import WaitPane
 from pychron.envisage.view_util import open_view
 from pychron.experiment.experiment_launch_history import update_launch_history
 from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
-from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
+from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
+from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL
-from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
-from pychron.envisage.tasks.wait_pane import WaitPane
 
 
 class ExperimentEditorTask(EditorTask):
@@ -154,32 +153,7 @@ class ExperimentEditorTask(EditorTask):
         if not self.has_active_editor():
             return
         queue = self.active_editor.queue
-        ms = queue.mass_spectrometer
-        ed = queue.extract_device
-        for i, ai in enumerate(queue.automated_runs):
-            if ai.skip or ai.is_special():
-                continue
-
-            kw = {'identifier': ai.identifier, 'position': ai.position,
-                  'mass_spectrometer': ms,
-                  'extract_device': ed}
-            if ai.is_step_heat():
-                kw['aliquot'] = ai.aliquot
-                kw['extract_value'] = ai.extract_value
-
-            self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
-            aa = self.manager.get_analysis(**kw)
-            if aa is None:
-                self.debug('----- not found')
-                break
-
-        if i:
-            if i == len(queue.automated_runs) - 1:
-                self.information_dialog('All Analyses from this experiment have been run')
-            else:
-                queue.automated_runs = queue.automated_runs[i:]
-        else:
-            self.information_dialog('No Analyses from this experiment have been run')
+        self.manager.sync_queue(queue)
 
     def _assemble_state_colors(self):
         colors = {}
@@ -263,7 +237,7 @@ class ExperimentEditorTask(EditorTask):
         self.bind_preferences()
         super(ExperimentEditorTask, self).activated()
 
-        self.manager.dvc.create_session()
+        # self.manager.dvc.create_session()
 
         manager = self.application.get_service(IFurnaceManager)
         if manager:
@@ -271,7 +245,7 @@ class ExperimentEditorTask(EditorTask):
 
     def prepare_destory(self):
         self.manager.prepare_destroy()
-        self.manager.dvc.close_session()
+        # self.manager.dvc.close_session()
 
     def create_dock_panes(self):
 

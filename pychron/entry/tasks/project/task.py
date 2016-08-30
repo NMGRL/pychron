@@ -15,47 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.tasks.ir.ir_database import IR
-from pychron.entry.tasks.ir.panes import IRPane
+from pychron.entry.tasks.project.panes import ProjectPane
+from pychron.entry.tasks.project.project_manager import ProjectManager
 from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
-class LocateSampleAction(TaskAction):
-    name = 'Locate Sample'
-    method = 'locate_sample'
-
-
-class IRTask(BaseManagerTask):
-    name = 'IR Database'
-    id = 'pychron.entry.ir.task'
-
-    # tool_bars = [SToolBar()]
+class ProjectTask(BaseManagerTask):
+    name = 'Project Database'
+    id = 'pychron.entry.project.task'
 
     def activated(self):
         self.manager.activated()
 
-    def prepare_destroy(self):
-        self.manager.prepare_destroy()
-
     def create_central_pane(self):
-        return IRPane(model=self.manager)
-
-    # def create_dock_panes(self):
-    #     panes = [SamplePrepFilterPane(model=self.manager),
-    #              SamplePrepSessionPane(model=self.manager)]
-    #     return panes
+        return ProjectPane(model=self.manager)
 
     def _manager_default(self):
         dvc = self.application.get_service('pychron.dvc.dvc.DVC')
         dvc.connect()
-        return IR(application=self.application, dvc=dvc)
-
-    # def _default_layout_default(self):
-    #     return TaskLayout(left=VSplitter(PaneItem('pychron.entry.sample.session'),
-    #                                      PaneItem('pychron.entry.sample.filter')))
+        return ProjectManager(application=self.application, dvc=dvc)
 
 # ============= EOF =============================================

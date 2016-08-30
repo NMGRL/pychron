@@ -28,7 +28,7 @@ def func(regex, item, attr):
     if attr:
         txt = getattr(item, attr)
 
-    match = regex.search(txt)
+    match = regex.search(str(txt))
     if match:
         return len(match.group()), match.start(), item
 
@@ -36,7 +36,10 @@ def func(regex, item, attr):
 def fuzzyfinder(user_input, collection, attr=None):
     # suggestions = []
     pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
-    regex = re.compile('%s' % pattern)  # Compiles a regex.
+    try:
+        regex = re.compile('%s' % pattern)  # Compiles a regex.
+    except re.error:
+        return []
     # for item in collection:
     #     match = regex.search(item)   # Checks if the current item matches the regex.
     #     if match:

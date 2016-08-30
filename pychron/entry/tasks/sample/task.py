@@ -16,16 +16,15 @@
 
 # ============= enthought library imports =======================
 
+import os
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction
 from pychron.entry.tasks.sample.actions import SaveAction
 from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
+from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.paths import paths
 
@@ -63,8 +62,8 @@ class SampleEntryTask(BaseManagerTask):
             self.manager.load(p)
 
     def dump(self):
-        # p = self.save_file_dialog(default_directory=paths.sample_dir)
-        p = '/Users/ross/Sandbox/sample_entry.yaml'
+        p = self.save_file_dialog(default_directory=paths.sample_dir)
+        # p = '/Users/ross/Sandbox/sample_entry.yaml'
         if p:
             self.manager.dump(p)
 

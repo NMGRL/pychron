@@ -145,6 +145,14 @@ class FindReferencesNode(FindNode):
 
     analysis_type = Str
     analysis_types = List
+
+    extract_device = Str
+    # enable_extract_device = Bool
+    extract_devices = List
+
+    mass_spectrometer = Str
+    # enable_mass_spectrometer = Bool
+    mass_spectrometers = List
     # analysis_type_name = None
     name = 'Find References'
 
@@ -156,15 +164,33 @@ class FindReferencesNode(FindNode):
         self.threshold = nodedict['threshold']
         self.analysis_type = nodedict['analysis_type']
 
+    def finish_load(self):
+        self.extract_devices = self.dvc.get_extraction_device_names()
+        self.mass_spectrometers = self.dvc.get_mass_spectrometer_names()
+
     # def dump(self, obj):
     #     obj['threshold'] = self.threshold
 
     def _analysis_type_changed(self, new):
+        if new == 'Blank Unknown':
+            new = 'Blank'
         self.name = 'Find {}s'.format(new)
 
-    def run(self, state):
+    def pre_run(self, state, configure=True):
         if not state.unknowns:
             return
+
+        eds = {ai.extract_device for ai in state.unknowns}
+        self.enable_extract_device = len(eds) > 1
+        self.extract_device = list(eds)[0]
+
+        ms = {ai.mass_spectrometer for ai in state.unknowns}
+        self.enable_mass_spectrometer = len(ms) > 1
+        self.mass_spectrometer = list(ms)[0]
+
+        return super(FindReferencesNode, self).pre_run(state, configure=configure)
+
+    def run(self, state):
 
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
@@ -190,7 +216,10 @@ class FindReferencesNode(FindNode):
         times = sorted((ai.timestamp for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
-        refs = self.dvc.find_references(times, atype, hours=self.threshold, make_records=False)
+        refs = self.dvc.find_references(times, atype, hours=self.threshold,
+                                        extract_device=self.extract_device,
+                                        mass_spectrometer=self.mass_spectrometer,
+                                        make_records=False)
 
         if refs:
             unknowns.extend(refs)
@@ -211,8 +240,10 @@ class FindReferencesNode(FindNode):
 
                 refs = self.dvc.make_analyses(refs)
                 if obj.is_append:
+                    state.append_references = True
                     state.references.extend(refs)
                 else:
+                    state.append_references = False
                     state.references = list(refs)
 
                 if unks is not None:
@@ -227,7 +258,14 @@ class FindReferencesNode(FindNode):
                                     tooltip='Maximum difference between blank and unknowns in hours',
                                     label='Threshold (Hrs)'),
                                Item('analysis_type',
-                                    editor=EnumEditor(name='analysis_types')))
+                                    label='Analysis Type',
+                                    editor=EnumEditor(name='analysis_types')),
+
+                               Item('extract_device', editor=EnumEditor(name='extract_devices'),
+                                    label='Extract Device'),
+                               Item('mass_spectrometer',
+                                    label='Mass Spectrometer',
+                                    editor=EnumEditor(name='mass_spectrometers')))
 
         return v
 

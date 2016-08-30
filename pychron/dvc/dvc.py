@@ -158,29 +158,29 @@ class DVC(Loggable):
 
     def load_analysis_backend(self, ln, isotope_group):
         db = self.db
+        with db.session_ctx():
+            ip = db.get_identifier(ln)
+            dblevel = ip.level
+            irrad = dblevel.irradiation.name
+            level = dblevel.name
+            pos = ip.position
 
-        ip = db.get_identifier(ln)
-        dblevel = ip.level
-        irrad = dblevel.irradiation.name
-        level = dblevel.name
-        pos = ip.position
+            j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+            prodname, prod = self.meta_repo.get_production(irrad, level)
+            cs = self.meta_repo.get_chronology(irrad)
 
-        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
-        prodname, prod = self.meta_repo.get_production(irrad, level)
-        cs = self.meta_repo.get_chronology(irrad)
+            x = datetime.now()
+            now = time.mktime(x.timetuple())
+            if lambda_k:
+                isotope_group.arar_constants.lambda_k = lambda_k
 
-        x = datetime.now()
-        now = time.mktime(x.timetuple())
-        if lambda_k:
-            isotope_group.arar_constants.lambda_k = lambda_k
-
-        isotope_group.trait_set(j=j,
-                                # lambda_k=lambda_k,
-                                production_ratios=prod.to_dict(RATIO_KEYS),
-                                interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
-                                chron_segments=cs.get_chron_segments(x),
-                                irradiation_time=cs.irradiation_time,
-                                timestamp=now)
+            isotope_group.trait_set(j=j,
+                                    # lambda_k=lambda_k,
+                                    production_ratios=prod.to_dict(RATIO_KEYS),
+                                    interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
+                                    chron_segments=cs.get_chron_segments(x),
+                                    irradiation_time=cs.irradiation_time,
+                                    timestamp=now)
         return True
 
     def repository_db_sync(self, reponame):
@@ -273,8 +273,14 @@ class DVC(Loggable):
                 for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
                     p = self.get_level_path(irrad, level)
                     obj = dvc_load(p)
+                    if isinstance(obj, list):
+                        positions = obj
+                    else:
+                        positions = obj['positions']
+
                     for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
-                        yield repo, irrad, level, {ai.irradiation_position: obj[ai.irradiation_position] for ai in ais}
+                        yield repo, irrad, level, {ai.irradiation_position: positions[ai.irradiation_position] for ai in
+                                                   ais}
 
         added = []
 
@@ -438,10 +444,10 @@ class DVC(Loggable):
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, analyses, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
 
         db = self.db
         ip = db.get_identifier(identifier)
@@ -757,12 +763,12 @@ class DVC(Loggable):
             db.add_project(name, pi)
         return added
 
-    def add_sample(self, name, project, material, grainsize=None):
+    def add_sample(self, name, project, material, grainsize=None, note=None):
         added = False
         db = self.db
         if not db.get_sample(name, project, material, grainsize):
             added = True
-            db.add_sample(name, project, material, grainsize)
+            db.add_sample(name, project, material, grainsize, note=note)
         return added
 
     def add_principal_investigator(self, name):
@@ -1062,8 +1068,8 @@ class DVC(Loggable):
             try:
                 return getattr(self.meta_repo, item)
             except AttributeError, e:
-                # print e, item
-                raise DVCException(item)
+                print e, item
+                # raise DVCException(item)
 
     # defaults
     def _db_default(self):

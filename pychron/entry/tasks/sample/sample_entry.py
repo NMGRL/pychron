@@ -16,23 +16,22 @@
 
 # ============= enthought library imports =======================
 import os
+import re
 
 import yaml
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List
-# ============= standard library imports ========================
-import re
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
-PI_REGEX = re.compile(r'^[A-Z]+\w+(,[A-Z]{1})*$')
+PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
 MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 
 
 class PIStr(String):
     def validate(self, obj, name, value):
-        if not PI_REGEX.match(value) and name != 'NMGRL':
+        if not PI_REGEX.match(value) and value != 'NMGRL':
             return self.error(obj, name, value)
         else:
             return value
@@ -102,13 +101,16 @@ class ProjectSpec(Spec):
 class SampleSpec(Spec):
     project = Instance(ProjectSpec)
     material = Instance(MaterialSpec)
+    note = Str
 
     def todump(self):
-        return {'name': str(self.name), 'project': self.project.todump(), 'material': self.material.todump()}
+        return {'name': str(self.name), 'project': self.project.todump(), 'material': self.material.todump(),
+                'note': self.note}
 
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
+        obj.note = d.get('note', '')
         obj.name = d['name']
         project = d['project']
         pname = project['name']
@@ -145,13 +147,14 @@ class SampleEntry(DVCAble):
     refresh_grainsizes = Event
 
     sample = Str
+    note = Str
 
     add_principal_investigator_button = Button
     add_project_button = Button
     add_sample_button = Button
     add_button = Button
     add_material_button = Button
-
+    generate_project_button = Button('Generate Name')
     project_enabled = Property(depends_on='principal_investigator')
     sample_enabled = Property(depends_on='principal_investigator, project, material')
 
@@ -161,15 +164,18 @@ class SampleEntry(DVCAble):
     _projects = List
     _materials = List
     _principal_investigators = List
+    _default_project_count = 0
 
     def activated(self):
         self.refresh_pis = True
         self.refresh_materials = True
         self.refresh_projects = True
         self.refresh_grainsizes = True
+        self.dvc.create_session()
 
     def prepare_destroy(self):
         self._backup()
+        self.dvc.close_session()
 
     def save(self):
         self._backup()
@@ -216,21 +222,41 @@ class SampleEntry(DVCAble):
     def _save(self):
         self.debug('saving sample info')
         dvc = self.dvc
-        for p in self._principal_investigators:
-            if dvc.add_principal_investigator(p.name):
-                p.added = True
+        with dvc.session_ctx(use_parent_session=False):
+            for p in self._principal_investigators:
+                if dvc.add_principal_investigator(p.name):
+                    p.added = True
+                    dvc.commit()
 
         for p in self._projects:
-            if dvc.add_project(p.name, p.principal_investigator.name):
-                p.added = True
+            with dvc.session_ctx(use_parent_session=False):
 
-        for m in self._materials:
-            if dvc.add_material(m.name, m.grainsize or None):
-                m.added = True
+                if p.name.startswith('?'):
+                    if dvc.add_project(p.name, p.principal_investigator.name):
+                        dbproject = dvc.get_project(p.name, p.principal_investigator.name)
+                        p.added = True
+                        dvc.commit()
 
-        for s in self._samples:
-            if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None):
-                s.added = True
+                        dbproject.name = p.name = '{}{}'.format(p.name[1:-2], dbproject.id)
+                        dvc.commit()
+
+                else:
+                    if dvc.add_project(p.name, p.principal_investigator.name):
+                        p.added = True
+                        dvc.commit()
+
+        with dvc.session_ctx(use_parent_session=False):
+            for m in self._materials:
+                if dvc.add_material(m.name, m.grainsize or None):
+                    m.added = True
+                    dvc.commit()
+
+        with dvc.session_ctx(use_parent_session=False):
+            for s in self._samples:
+                if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
+                                  note=s.note):
+                    s.added = True
+                    dvc.commit()
 
         self.refresh_table = True
 
@@ -324,6 +350,13 @@ class SampleEntry(DVCAble):
                 self._principal_investigators.append(PISpec(name=self.principal_investigator))
                 self._backup()
 
+    def _generate_project_button_fired(self):
+        piname = self.principal_investigator
+        if ',' in piname:
+            piname = piname.split(',')[0]
+        self.project = '?{}{:03n}'.format(piname, self._default_project_count)
+        self._default_project_count += 1
+
     @cached_property
     def _get_project_enabled(self):
         return bool(self.principal_investigator)
@@ -334,21 +367,25 @@ class SampleEntry(DVCAble):
 
     @cached_property
     def _get_principal_investigators(self):
-        return self.dvc.get_principal_investigator_names()
+        with self.dvc.session_ctx():
+            return self.dvc.get_principal_investigator_names()
 
     @cached_property
     def _get_materials(self):
-        ms = self.dvc.get_material_names()
-        return ms
+        with self.dvc.session_ctx():
+            ms = self.dvc.get_material_names()
+            return ms
 
     @cached_property
     def _get_projects(self):
-        ps = self.dvc.get_project_names()
-        return ps
+        with self.dvc.session_ctx():
+            ps = self.dvc.get_project_names()
+            return ps
 
     @cached_property
     def _get_grainsizes(self):
-        gs = [''] + self.dvc.get_grainsizes()
-        return gs
+        with self.dvc.session_ctx():
+            gs = [''] + self.dvc.get_grainsizes()
+            return gs
 
 # ============= EOF =============================================

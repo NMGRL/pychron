@@ -15,15 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from math import isnan, isinf
+
 from chaco.array_data_source import ArrayDataSource
 from chaco.legend import Legend
 from enable.font_metrics_provider import font_metrics_provider
-from traits.api import Property, on_trait_change, List, Array
-# ============= standard library imports ========================
-from math import isnan, isinf
-from uncertainties import nominal_value, std_dev
 from numpy import zeros_like, array, asarray
-# ============= local library imports  ==========================
+from pyface.timer.do_later import do_later
+from traits.api import Property, on_trait_change, List, Array
+from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
@@ -229,7 +230,6 @@ class ReferencesSeries(BaseSeries):
         ans = self.sorted_analyses
 
         xs = [(ai.timestamp - ma) / self._normalization_factor for ai in ans]
-
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
         if any(map(isnan, p_ues)) or any(map(isinf, p_ues)):
@@ -242,10 +242,9 @@ class ReferencesSeries(BaseSeries):
         return asarray(p_uys), asarray(p_ues)
 
     def post_make(self):
-        self.graph.refresh()
+        do_later(self.graph.refresh)
 
     def plot(self, plots, legend):
-
         if plots:
             _, mx = self._get_min_max()
 
@@ -420,7 +419,9 @@ class ReferencesSeries(BaseSeries):
         ymi, yma = self._calc_limits(r_ys, r_es)
 
         reg = None
-        kw = dict(add_tools=False, add_inspector=False, color='red',
+        kw = dict(add_tools=True, add_inspector=True,
+                  add_point_inspector=False,
+                  color='red',
                   plotid=pid,
                   selection_marker=po.marker,
                   marker=po.marker,
@@ -456,10 +457,9 @@ class ReferencesSeries(BaseSeries):
                                     add_selection=True,
                                     additional_info=af,
                                     items=self.sorted_references)
-        plot = self.graph.plots[pid]
+        plot = graph.plots[pid]
         plot.isotope = po.name
         plot.fit = ffit
-
         scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
         return reg, ymi, yma
 

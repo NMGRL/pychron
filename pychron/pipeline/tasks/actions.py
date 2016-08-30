@@ -50,13 +50,13 @@ class ResumeAction(TaskAction):
 class RunFromAction(TaskAction):
     name = 'Run From'
     method = 'run_from'
+    image = icon('start')
 
 
 class ResetAction(TaskAction):
     name = 'Reset'
     method = 'reset'
-    image = icon('resume')
-    # enabled_name = 'resume_enabled'
+    image = icon('arrow_refresh')
 
 
 class ClearAction(TaskAction):
@@ -85,9 +85,17 @@ class ConfigureAnalysesTableAction(TaskAction):
     image = icon('cog')
 
 
+class ConfigureSampleTableAction(TaskAction):
+    name = 'Configure Sample Table'
+    dname = 'Configure Sample Table'
+    method = 'configure_sample_table'
+    image = icon('cog')
+
+
 class LoadReviewStatusAction(TaskAction):
     name = 'Review Status'
     method = 'load_review_status'
+    image = icon('check_boxes')
 
 
 class EditAnalysisAction(TaskAction):
@@ -118,11 +126,24 @@ class PipelineAction(Action):
 
 
 class BrowserAction(Action):
+    _task_id = 'pychron.browser.task'
+
     def perform(self, event):
-        app = event.task.window.application
-        task = app.get_task('pychron.browser.task')
+        task = self._get_task(event)
         if hasattr(task, self.action):
             getattr(task, self.action)()
+
+    def _get_task(self, event):
+        app = event.task.window.application
+        task = app.get_task(self._task_id)
+        return task
+
+
+class RecallAction(BrowserAction):
+    name = 'Recall...'
+
+    def perform(self, event):
+        self._get_task(event)
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -168,6 +189,12 @@ class FreezeFlux(PipelineAction):
     name = 'Freeze Flux'
     dname = 'Freeze Flux'
     action = 'freeze_flux'
+
+
+class AnalysisTableAction(PipelineAction):
+    name = 'Analysis Table'
+    dname = 'Analysis Table'
+    action = 'set_analysis_table_template'
 
 
 # ============= Plotting Actions =============================================

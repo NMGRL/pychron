@@ -17,14 +17,13 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
+from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
-from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
-# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -111,6 +110,7 @@ class FluxPosition(HasTraits):
 
     mean_j = Float
     mean_jerr = Float
+    mean_j_mswd = Float
 
     n = Int
 
@@ -135,9 +135,10 @@ class FluxPosition(HasTraits):
         ans = [a for a in self.analyses if not a.is_omitted()]
 
         if ans:
-            j = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
+            j, mswd = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
             self.mean_jerr = std_dev(j)
+            self.mean_j_mswd = mswd
 
         self.n = len(ans)
 
@@ -559,6 +560,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         def column(klass=ObjectColumn, editable=False, **kw):
             return klass(text_font='arial 10', editable=editable, **kw)
 
+        def sciformat(x):
+            return '{:0.6E}'.format(x) if x else ''
+
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
             column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
@@ -572,24 +576,27 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
-                   format_func=lambda x: floatfmt(x, n=8, s=4)),
+                   format_func=sciformat),
             column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
-                   format_func=lambda x: floatfmt(x, n=8, s=4)),
+                   format_func=sciformat),
             column(name='percent_saved_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2)),
             column(name='mean_j', label='Mean J',
-                   format_func=lambda x: floatfmt(x, n=8, s=4) if x else ''),
+                   format_func=sciformat),
             column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
-                   format_func=lambda x: floatfmt(x, n=8, s=4) if x else ''),
+                   format_func=sciformat),
             column(name='percent_mean_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2) if x else ''),
+            column(name='mean_j_mswd',
+                   label='MSWD',
+                   format_func=lambda x: floatfmt(x, n=2)),
             column(name='j', label='Pred. J',
-                   format_func=lambda x: floatfmt(x, n=8, s=4),
+                   format_func=sciformat,
                    width=75),
             column(name='jerr',
-                   format_func=lambda x: floatfmt(x, n=10, s=4),
+                   format_func=sciformat,
                    label=PLUSMINUS_ONE_SIGMA,
                    width=75),
             column(name='percent_pred_error',
@@ -604,17 +611,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                     column(name='identifier', label='Identifier'),
                     column(name='sample', label='Sample', width=115),
                     column(name='saved_j', label='Saved J',
-                           format_func=lambda x: floatfmt(x, n=8, s=4)),
+                           format_func=sciformat),
                     column(name='saved_jerr', label=PLUSMINUS_ONE_SIGMA,
-                           format_func=lambda x: floatfmt(x, n=8, s=4)),
+                           format_func=sciformat),
                     column(name='percent_saved_error',
                            label='%',
                            format_func=lambda x: floatfmt(x, n=2)),
                     column(name='j', label='Pred. J',
-                           format_func=lambda x: floatfmt(x, n=8, s=4),
+                           format_func=sciformat,
                            width=75),
                     column(name='jerr',
-                           format_func=lambda x: floatfmt(x, n=10, s=5),
+                           format_func=sciformat,
                            label=PLUSMINUS_ONE_SIGMA,
                            width=75),
                     column(name='percent_pred_error',

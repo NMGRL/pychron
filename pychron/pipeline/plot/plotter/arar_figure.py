@@ -19,27 +19,25 @@
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
+from numpy import Inf, vstack, zeros_like, ma
 from traits.api import HasTraits, Any, Int, Str, Property, \
     Event, Bool, cached_property, List, Float
-# ============= standard library imports ========================
-from numpy import Inf, vstack, zeros_like, ma
 from uncertainties import std_dev, nominal_value, ufloat
-# ============= local library imports  ==========================
+
 from pychron.core.filtering import filter_ufloats, sigma_filter
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.ml_label import MPlotAxis
-from pychron.graph.tools.axis_tool import AxisTool
-from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.graph.ticks import SparseLogTicks
 from pychron.graph.ticks import SparseTicks
-from pychron.processing.analyses.analysis_group import AnalysisGroup
-from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
-# from pychron.pipeline.plot import SparseLogTicks, SparseTicks
-from pychron.core.helpers.formatting import floatfmt, format_percent_error
-# from pychron.pipeline.plot import FlowDataLabel
+from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
+from pychron.graph.tools.axis_tool import AxisTool
+from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
-from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
+from pychron.pipeline.plot.flow_label import FlowDataLabel
+from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -494,7 +492,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     def _plot_moles_k39(self, po, plot, pid, **kw):
         k = 'k39'
         ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('K39(fA)', k, ys, po, plot, pid, es, **kw)
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, ys, po, plot, pid, es, **kw)
 
     def _get_aux_plot_data(self, k):
         vs = self._unpack_attr(k)
@@ -613,7 +611,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                 if items is None:
                     items = self.sorted_analyses
                 inspector = AnalysisPointInspector(scatter,
-                                                   use_pane=True,
+                                                   use_pane=False,
                                                    analyses=items,
                                                    convert_index=convert_index,
                                                    index_tag=index_tag,
@@ -621,19 +619,23 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                                                    value_format=value_format,
                                                    additional_info=additional_info)
 
-            if not isinstance(inspector, (list, tuple)):
-                inspector = (inspector,)
-
-            # pinspector_overlay = PointInspectorOverlay(component=scatter,
-            #                                            tool=point_inspector)
-            # print 'fff', inspector
-
-            event_queue = {}
-            for i in inspector:
-                i.event_queue = event_queue
-                i.on_trait_change(self._handle_inspection, 'inspector_item')
-                # scatter.overlays.append(pinspector_overlay)
-                broadcaster.tools.append(i)
+            pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                       tool=inspector)
+            scatter.overlays.append(pinspector_overlay)
+            broadcaster.tools.append(inspector)
+            # if not isinstance(inspector, (list, tuple)):
+            #     inspector = (inspector,)
+            #
+            # # pinspector_overlay = PointInspectorOverlay(component=scatter,
+            # #                                            tool=point_inspector)
+            # # print 'fff', inspector
+            #
+            # event_queue = {}
+            # for i in inspector:
+            #     i.event_queue = event_queue
+            #     i.on_trait_change(self._handle_inspection, 'inspector_item')
+            #     # scatter.overlays.append(pinspector_overlay)
+            #     broadcaster.tools.append(i)
 
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata

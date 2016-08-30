@@ -15,31 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import time
+from Queue import Queue
+from threading import Thread
+
+import yaml
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     Str
-# ============= standard library imports ========================
-import os
-import time
-from numpy import Inf, array
-from threading import Thread
-from Queue import Queue
-import yaml
-# ============= local library imports  ==========================
-from pychron.core.ui.preference_binding import bind_preference
-from pychron.managers.stream_graph_manager import StreamGraphManager
-from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
-from pychron.spectrometer.jobs.mass_scanner import MassScanner
-from pychron.spectrometer.jobs.dac_scanner import DACScanner
-from pychron.spectrometer.base_detector import BaseDetector
-from pychron.spectrometer.jobs.rise_rate import RiseRate
-from pychron.paths import paths
-from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
-from pychron.pychron_constants import NULL_STR
-from pychron.spectrometer.readout_view import ReadoutView
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
+from pychron.managers.data_managers.csv_data_manager import CSVDataManager
+from pychron.managers.stream_graph_manager import StreamGraphManager
+from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
+from pychron.spectrometer.base_detector import BaseDetector
+from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
+from pychron.spectrometer.jobs.dac_scanner import DACScanner
+from pychron.spectrometer.jobs.mass_scanner import MassScanner
+from pychron.spectrometer.jobs.rise_rate import RiseRate
+from pychron.spectrometer.readout_view import ReadoutView
 
 
 class ScanManager(StreamGraphManager):
@@ -263,9 +261,9 @@ class ScanManager(StreamGraphManager):
             self._prev_signals = None
             return True
 
-        if self._prev_signals is not None:
-            if signals is None:
-                self._no_intensity_change_cnt += 1
+        if signals is None:
+            self._no_intensity_change_cnt += 1
+        elif self._prev_signals is not None:
             if (signals == self._prev_signals).all():
                 self._no_intensity_change_cnt += 1
             else:

@@ -16,13 +16,11 @@
 
 # ============= enthought library imports =======================
 
+import yaml
 from traits.api import HasTraits
 
-# ============= standard library imports ========================
-import yaml
-# ============= local library imports  ==========================
+from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode
 from pychron.pipeline.nodes.diff import DiffNode
-from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.persist import PersistNode
@@ -42,7 +40,7 @@ class PipelineTemplate(HasTraits):
         datanode = None
         try:
             node = pipeline.nodes[0]
-            if isinstance(node, DataNode):
+            if isinstance(node, DataNode) and not isinstance(node, ListenUnknownNode):
                 datanode = node
                 datanode.visited = False
         except IndexError:

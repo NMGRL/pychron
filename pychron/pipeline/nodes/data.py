@@ -16,16 +16,18 @@
 
 # ============= enthought library imports =======================
 
+import os
+import time
+from datetime import datetime, timedelta
+
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum
 from traitsui.api import View, Item, EnumEditor
-# ============= standard library imports ========================
-import os
-from datetime import datetime, timedelta
-# ============= local library imports  ==========================
+
+from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 
 
@@ -39,8 +41,6 @@ class InterpretedAgeNode(DVCNode):
     interpreted_ages = List
 
     def configure(self, pre_run=False, **kw):
-        # if pre_run and getattr(self, self.analysis_kind):
-        #     return True
         if not pre_run:
             self._manual_configured = True
 
@@ -168,7 +168,6 @@ class UnknownNode(DataNode):
     def set_last_n_analyses(self, n):
         db = self.dvc.db
         ans = db.get_last_n_analyses(n)
-        # ans = db.get_analyses_by_date_range(mi,ma)
         records = [ri for ai in ans for ri in ai.record_views]
         self.unknowns = self.dvc.make_analyses(records)
 
@@ -215,19 +214,15 @@ class ReferenceNode(DataNode):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
-            self.references.extend(refs)
+            if state.append_references:
+                self.references.extend(refs)
+            else:
+                self.references = refs
 
         if not self.references:
             self.configure(pre_run=True)
 
         return self.references
-        # items = getattr(state, self.analysis_kind)
-        # if state.has_references:
-        #     for ai in self.references:
-        #         ai.group_id = 0
-
-        # items.extend(self.references)
-        # self.references = items
 
     def run(self, state):
         pass
@@ -242,35 +237,38 @@ class FluxMonitorsNode(DataNode):
         items = getattr(state, self.analysis_kind)
         self.unknowns = items
 
-        # if not self.unknowns or state.has_flux_monitors:
-        #     self.unknowns = items
-        # else:
-        #     items.extend(self.unknowns)
-
-
-def debug_generator():
-    def f():
-        low = datetime.strptime('2014-10-25 04:32:25', '%Y-%m-%d %H:%M:%S')
-        for i in range(60):
-            high = low + timedelta(minutes=10 * i + 1)
-            yield low, high
-
-    return f()
 
 class ListenUnknownNode(UnknownNode):
-    hours = Int(10)
-    mass_spectrometer = Str()
+    name = 'Unknowns (Auto)'
+    hours = Int(2)
+    mass_spectrometer = Str
     available_spectrometers = List
     exclude_uuids = List
-    period = 5
+    period = Int(15)
     mode = Enum('Normal', 'Window')
     engine = None
     _alive = False
+
+    _cached_unknowns = None
+    _unks_ids = None
+    _updated = False
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
         if self.available_spectrometers:
             self.mass_spectrometer = self.available_spectrometers[0]
+
+        if globalv.auto_pipeline_debug:
+            self.mass_spectrometer = 'jan'
+            self.period = 15
+            self.hours = 9
+
+            # from pympler.classtracker import ClassTracker
+            # self.tracker = ClassTracker()
+            # from pychron.dvc.dvc_orm import AnalysisTbl
+            # from pychron.database.records.isotope_record import DVCIsotopeRecordView
+            # self.tracker.track_class(DVCIsotopeRecordView)
+            # self.tracker.create_snapshot()
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -279,7 +277,7 @@ class ListenUnknownNode(UnknownNode):
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
-        v = View(Item('mode', tooltip='Normal: get analyses between start of pipeline and start of pipeline - hours\n'
+        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)'),
@@ -290,34 +288,46 @@ class ListenUnknownNode(UnknownNode):
 
     def post_run(self, engine, state):
         if not self._alive:
-            self._gen = debug_generator()
-
             self.engine = engine
             self._start_listening()
+
+    def reset(self):
+        self._stop_listening()
 
     def _start_listening(self):
         self._low = datetime.now()
         self._alive = True
+        self._updated = False
         self._iter()
 
     def _stop_listening(self):
-        pass
+        self._alive = False
 
     def _iter(self):
         if self._alive:
-
             unks = self._load_unknowns()
-            if unks:
-                self.unknowns = unks
-                self.engine.rerun_with(unks, post_run=False)
-                self.engine.refresh_figure_editors()
-                # self.exclude_uuids = [u.uuid for u in unks]
-                # self.engine.refresh_unknowns(unks)
-                # # self.engine.
-                # self.engine.selected.unknowns = unks
-                # self.engine.run(state=self.engine.state)
+            # if globalv.auto_pipeline_debug:
+            #     self.tracker.stats.print_summary()
 
-            do_after(self.period * 1000, self._iter)
+            if self._alive:
+                if unks:
+                    unks_ids = [id(ai) for ai in unks]
+                    if self._unks_ids != unks_ids:
+                        # self.unknowns = unks
+                        self._unks_ids = unks_ids
+                        self.engine.rerun_with(unks, post_run=False)
+                        self.engine.refresh_figure_editors()
+
+                if self._alive:
+
+                    if self._updated:
+                        # if a new analysis was just found wait for at least 2mins before querying again
+                        period = 120
+                        self._updated = False
+                    else:
+                        period = self.period
+
+                    do_after(int(period * 1000), self._iter)
 
     def _load_unknowns(self):
         td = timedelta(hours=self.hours)
@@ -328,14 +338,38 @@ class ListenUnknownNode(UnknownNode):
         else:
             low = high - td
 
-        # low = '2014-10-25 03:30:30'
-        # high = '2014-10-25 04:32:25'
-        low, high = self._gen.next()
-        unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                   # exclude_uuids=self.exclude_uuids,
-                                                   analysis_type='unknown',
-                                                   mass_spectrometers=self.mass_spectrometer, verbose=True)
-        records = [ri for unk in unks for ri in unk.record_views]
-        return self.dvc.make_analyses(records)
+        with self.dvc.session_ctx(use_parent_session=False):
+            unks = self.dvc.get_analyses_by_date_range(low, high,
+                                                       analysis_type='unknown',
+                                                       mass_spectrometers=self.mass_spectrometer, verbose=True)
+            records = [ri for unk in unks for ri in unk.record_views]
+            if not self._cached_unknowns:
+                ans = self.dvc.make_analyses(records)
+            else:
+                ans = []
+                ais = []
+                for ri in records:
+                    ca = next((ci for ci in self._cached_unknowns if ci.record_id == ri.record_id), None)
+                    if ca is not None:
+                        ans.append(ca)
+                    else:
+                        ais.append(ri)
+
+                if ais:
+                    self._updated = True
+                    # the database may have updated but the repository not yet updated.
+                    # sleeping X seconds is a potential work around but a little dump.
+                    # better solution is to save to database after repository is updated
+                    try:
+                        ans.extend(self.dvc.make_analyses(ais))
+                    except BaseException:
+                        time.sleep(10)
+                        try:
+                            ans.extend(self.dvc.make_analyses(ais))
+                        except BaseException:
+                            pass
+
+        self._cached_unknowns = ans
+        return ans
 
 # ============= EOF =============================================

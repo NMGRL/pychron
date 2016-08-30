@@ -19,8 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property, Str
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.envisage.resources import icon
 
@@ -43,14 +42,20 @@ class ProjectAdapter(BrowserAdapter):
         return MenuManager(Action(name='Unselect', action='unselect_projects'))
 
 
+class PrincipalInvestigatorAdapter(BrowserAdapter):
+    columns = [('Name', 'name')]
+
+
 class SampleAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Material', 'material'),
-               ('Project', 'project')]
+               ('Project', 'project'),
+               ]
 
     all_columns = [('Sample', 'name'),
                    ('Material', 'material'),
-                   ('Project', 'project')]
+                   ('Project', 'project'),
+                   ('Note', 'note')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 
@@ -161,7 +166,8 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Replace', action='replace_items', enabled=e),
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Review Status Details', action='review_status_details')
+                   Action(name='Review Status Details', action='review_status_details'),
+                   Action(name='Toggle Freeze', action='toggle_freeze')
                    # Action(name='Open Copy', action='recall_copies'),
                    # Action(name='Find References', action='find_refs')
                    ]
@@ -171,11 +177,13 @@ class AnalysisAdapter(BrowserAdapter):
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
         item = getattr(obj, trait)[row]
-
-        if item.delta_time > 1440:  # 24 hours
-            color = '#76C1E2'
-        elif row % 2:
-            color = 'lightgray'
+        if item.frozen:
+            color = '#11BAF2'
+        else:
+            if item.delta_time > 1440:  # 24 hours
+                color = '#FAE900'
+            elif row % 2:
+                color = 'lightgray'
         return color
 
 

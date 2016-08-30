@@ -14,23 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import List, Any, Event, Callable, Dict
-# ============= standard library imports ========================
 from numpy import linspace
-# ============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
-    RectSelectionOverlay
-from pychron.core.helpers.fits import convert_fit
+from traits.api import List, Any, Event, Callable, Dict
 
+from pychron.core.helpers.fits import convert_fit
+from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
-from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
-    RegressionInspectorOverlay
+from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.graph import Graph
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-
-from pychron.core.regression.base_regressor import BaseRegressor
-from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
+    RectSelectionOverlay
+from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
+    RegressionInspectorOverlay
 
 
 class NoRegressionCTX(object):
@@ -103,6 +100,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    marker_size=2,
                    add_tools=True,
                    add_inspector=True,
+                   add_point_inspector=True,
                    convert_index=None,
                    plotid=None, *args,
                    **kw):
@@ -118,7 +116,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                            plotid=plotid,
                                                            *args, **kw)
             if add_tools:
-                self.add_tools(p, s, None, convert_index, add_inspector)
+                self.add_tools(p, s, None, convert_index, add_inspector, add_point_inspector)
             return s, p
 
         scatter, si = self._new_scatter(kw, marker, marker_size,
@@ -159,12 +157,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         if add_tools:
             self.add_tools(plot, scatter, line,
-                           convert_index, add_inspector)
+                           convert_index, add_inspector, add_point_inspector)
 
         return plot, scatter, line
 
     def add_tools(self, plot, scatter, line=None,
-                  convert_index=None, add_inspector=True):
+                  convert_index=None, add_inspector=True, add_point_inspector=True):
 
         if add_inspector:
             # add a regression inspector tool to the line
@@ -175,6 +173,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 line.tools.append(tool)
                 line.overlays.append(overlay)
 
+        if add_point_inspector:
             point_inspector = PointInspector(scatter,
                                              convert_index=convert_index or self.convert_index_func)
             pinspector_overlay = PointInspectorOverlay(component=scatter,
@@ -213,7 +212,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             # print key
             if scatter.fit != fi:
                 lkey = 'line{}'.format(series)
-                if plot.plots.has_key(lkey):
+                if lkey in plot.plots:
                     line = plot.plots[lkey][0]
                     line.regressor = None
 

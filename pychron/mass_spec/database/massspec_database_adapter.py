@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from sqlalchemy.exc import InvalidRequestError
-from traits.api import provides
-# =============standard library imports ========================
 import binascii
 import math
 
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.sql.expression import func, distinct
+from traits.api import provides
 from uncertainties import std_dev, nominal_value
 
-# =============local library imports  ==========================
+from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.functions import delete_one
 from pychron.entry.iimport_source import IImportSource
 from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -35,8 +35,6 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
-from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.functions import delete_one
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
@@ -698,9 +696,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         self._add_item(drs, )
         return drs
 
-    def add_changeable_items(self, rid, drs_id):
+    def add_changeable_items(self, analysis, drs_id):
         item = AnalysesChangeableItemsTable()
-        analysis = self.get_analysis(rid, )
+        # analysis = self.get_analysis(rid, )
         if analysis is not None:
             # get the lastest preferencesetid
             #            sess = self.get_session()
@@ -719,7 +717,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
             item.DataReductionSessionID = drs_id
             #            drs.changeable_items.append(item)
-            self._add_item(item, )
+            self._add_item(item)
+        else:
+            self.warning('Cannot save AnalysesChangeableItemsTable. Analysis is None')
 
         return item
 

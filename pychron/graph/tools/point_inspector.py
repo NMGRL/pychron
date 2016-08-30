@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Callable
-# ============= standard library imports ========================
 from numpy import where, vstack
-# ============= local library imports  ==========================
+from traits.api import Callable
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
@@ -33,7 +32,7 @@ class PointInspector(InfoInspector):
     def get_selected_index(self):
         threshold = self.hittest_threshold
         if self.single_point:
-            idx = self.component.map_index(self.current_position, threshold=self.threshold)
+            idx = self.component.map_index(self.current_position, threshold=threshold)
             if idx is not None:
                 return [idx]
         else:
