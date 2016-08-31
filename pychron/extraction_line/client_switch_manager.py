@@ -61,11 +61,9 @@ class ClientSwitchManager(SwitchManager):
             # elm.refresh_canvas()
 
     def load_valve_lock_states(self, refresh=True, force=False):
-        # elm = self.extraction_line_manager
         word = self.get_lock_word()
-        # if globalv.valve_debug:
-        #     self.debug('valve lock word={}'.format(word))
-        self.debug('valve lock word={}'.format(word))
+        if globalv.valve_debug:
+            self.debug('valve lock word={}'.format(word))
 
         changed = False
         if word is not None:

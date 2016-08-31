@@ -715,9 +715,6 @@ class PyScript(Loggable):
         self.info(message)
 
         try:
-            t = datetime.now().strftime('%H:%M:%S')
-            message = '{} {}'.format(t, message)
-
             if self.manager:
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)

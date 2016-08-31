@@ -2006,20 +2006,21 @@ Use Last "blank_{}"= {}
         db = mainstore.db
         selected = False
         dbr = None
-        if last:
-            dbr = db.retrieve_blank(kind, ms, ed, last, repository)
+        with db.session_ctx(use_parent_session=False):
+            if last:
+                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
-        if dbr is None:
-            selected = True
-            from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-            selector = ReferenceAnalysisSelector()
-            info = selector.edit_traits(kind='livemodal')
-            dbs = db.get_blanks(ms)
-            selector.init('Select Default Blank', dbs)
-            if info.result:
-                dbr = selector.selected
-        if dbr:
-            dbr = mainstore.make_analysis(dbr.make_record_view(repository))
+            if dbr is None:
+                selected = True
+                from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
+                selector = ReferenceAnalysisSelector()
+                info = selector.edit_traits(kind='livemodal')
+                dbs = db.get_blanks(ms)
+                selector.init('Select Default Blank', dbs)
+                if info.result:
+                    dbr = selector.selected
+            if dbr:
+                dbr = mainstore.make_analysis(dbr.make_record_view(repository))
 
         return dbr, selected
 

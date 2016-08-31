@@ -20,6 +20,7 @@ from threading import Event, Thread
 
 from traits.api import Int, List
 
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
@@ -97,7 +98,8 @@ class StatusMonitor(Loggable):
         self.debug('Status monitor finished')
 
     def _iter(self, i, vm):
-        self.debug('status monitor iteration i={}'.format(i))
+        if globalv.valve_debug:
+            self.debug('status monitor iteration i={}'.format(i))
         if self._stop_evt.is_set():
             self.debug('stop_event set. no more iterations')
             return
@@ -107,15 +109,18 @@ class StatusMonitor(Loggable):
             return
 
         if self.state_freq and not i % self.state_freq:
-            self.debug('load valve states')
+            if globalv.valve_debug:
+                self.debug('load valve states')
             vm.load_valve_states()
 
         if self.lock_freq and not i % self.lock_freq:
-            self.debug('load lock states')
+            if globalv.valve_debug:
+                self.debug('load lock states')
             vm.load_valve_lock_states()
 
         if self.owner_freq and not i % self.owner_freq:
-            self.debug('load owners')
+            if globalv.valve_debug:
+                self.debug('load owners')
             vm.load_valve_owners()
 
         if self.checksum_freq and not i % self.checksum_freq:
