@@ -346,7 +346,7 @@ Quick=   measure_iteration stopped at current step
                                            enabled_when='can_start',
                                            tooltip=start_tt),
 
-                        icon_button_editor('configure_scheduled_button', 'calender',
+                        icon_button_editor('configure_scheduled_button', 'calendar',
                                            enabled_when='can_start',
                                            tooltip=schedule_tt),
 

@@ -1312,10 +1312,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self._end_flag:
                 self._end_flag.set()
 
-                # wait until previous loop finished.
-                cf = self._complete_flag
-                while not cf.is_set():
-                    time.sleep(0.05)
+                # # wait until previous loop finished.
+                # cf = self._complete_flag
+                # while not cf.is_set():
+                #     time.sleep(0.05)
 
             else:
                 self._end_flag = Flag()
@@ -2112,6 +2112,7 @@ Use Last "blank_{}"= {}
         self.executing_led.state = 2 if new else 0
 
     def _configure_scheduled_button_fired(self):
+        self.scheduler.setup()
         self.scheduler.edit_traits(kind='livemodal')
 
     # ===============================================================================
