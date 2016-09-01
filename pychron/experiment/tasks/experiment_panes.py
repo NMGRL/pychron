@@ -337,12 +337,19 @@ Quick=   measure_iteration stopped at current step
     script continues using abbreviated_count_ratio*counts'''
         end_tt = '''Stop the queue and the end of the current run'''
 
+        schedule_tt = '''Set a scheduled start time'''
+
         v = View(HGroup(UItem('executing_led', editor=LEDEditor(radius=30)),
                         spacer(-20),
                         icon_button_editor('start_button',
                                            'start',
                                            enabled_when='can_start',
                                            tooltip=start_tt),
+
+                        icon_button_editor('configure_scheduled_button', 'calender',
+                                           enabled_when='can_start',
+                                           tooltip=schedule_tt),
+
                         icon_button_editor('stop_button', 'stop',
                                            enabled_when='not can_start',
                                            tooltip=stop_tt),

@@ -43,6 +43,7 @@ from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
@@ -92,6 +93,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     show_conditionals_button = Button('Show Conditionals')
     start_button = Event
     stop_button = Event
+    configure_scheduled_button = Event
     can_start = Property(depends_on='executable, _alive')
     executing_led = Instance(LED, ())
     delaying_between_runs = Bool
@@ -135,6 +137,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     datahub = Instance(Datahub)
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
+
+    scheduler = Instance(ExperimentScheduler)
     # ===========================================================================
     #
     # ===========================================================================
@@ -301,11 +305,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # reset executor
             self._reset()
 
-            name = self.experiment_queue.name
-
-            msg = 'Starting Execution "{}"'.format(name)
-            self.heading(msg)
-
             self._aborted = False
             self._canceled = False
             self.extraction_state_label = ''
@@ -437,12 +436,35 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             execute opened experiment queues
         """
-        # delay before starting
         exp = self.experiment_queue
+        scheduler = self.scheduler
+
+        name = exp.name
+
+        if scheduler.delayed_start_enabled:
+            t = scheduler.start_time
+            tseconds = scheduler.get_startf()
+            st = t.strftime('%a %H:%M')
+            self.heading('Waiting until {} to start "{}"'.format(st, name))
+            self.set_extract_state('scheduled start {}'.format(st), flash=False)
+            while 1:
+                if self._canceled or not self.alive:
+                    return
+                if time.time() > tseconds:
+                    break
+                time.sleep(1)
+            self.set_extract_state(False)
+        else:
+            msg = 'Starting Execution "{}"'.format(name)
+            self.heading(msg)
+
+        # delay before starting
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
+            msg = '"{}" started'.format(exp.name)
+            self.heading(msg)
             if self.is_alive():
                 if self._pre_queue_check(exp):
                     break
@@ -1268,9 +1290,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wc.start(duration=delay)
         wg.pop(wc)
 
-        # if wc.is_continued():
-        # self.stats.continue_clock()
-
     def _set_extract_state(self, state, *args):
         """
             state: str
@@ -2092,6 +2111,9 @@ Use Last "blank_{}"= {}
     def _alive_changed(self, new):
         self.executing_led.state = 2 if new else 0
 
+    def _configure_scheduled_button_fired(self):
+        self.scheduler.edit_traits(kind='livemodal')
+
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -2101,6 +2123,9 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _scheduler_default(self):
+        return ExperimentScheduler()
+
     def _system_health_default(self):
         sh = SystemHealthSeries()
         return sh
