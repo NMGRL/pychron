@@ -49,11 +49,13 @@ class PrincipalInvestigatorAdapter(BrowserAdapter):
 class SampleAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Material', 'material'),
+               ('Grainsize', 'grainsize'),
                ('Project', 'project'),
                ]
 
     all_columns = [('Sample', 'name'),
                    ('Material', 'material'),
+                   ('Grainsize', 'grainsize'),
                    ('Project', 'project'),
                    ('Note', 'note')]
     #     material_text = Property

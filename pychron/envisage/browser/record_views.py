@@ -59,6 +59,7 @@ class SampleRecordView(RecordView):
     name = ''
     material = ''
     project = ''
+    grainsize = ''
     lat = 0
     lon = 0
     elevation = 0
@@ -71,6 +72,8 @@ class SampleRecordView(RecordView):
     def _create(self, dbrecord):
         if dbrecord.material:
             self.material = dbrecord.material.name
+            self.grainsize = dbrecord.material.grainsize or ''
+
         if dbrecord.project:
             self.project = dbrecord.project.name
             if dbrecord.project.principal_investigator:

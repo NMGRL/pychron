@@ -54,8 +54,8 @@ class IrradiationPDFTableOptions(BasePDFOptions):
 
     def widths(self, units=inch):
         return [getattr(self, '{}_width'.format(w)) * units for w in ('status', 'position', 'identifier', 'sample',
-                                                                     'material',
-                                                                     'project')]
+                                                                      'material',
+                                                                      'project')]
 
     def traits_view(self):
         layout_grp = self._get_layout_group()
@@ -160,7 +160,27 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             row.add_item(value=self._new_paragraph('<b>{}</b>'.format(v)))
         rows.append(row)
 
-        srows = sorted([self._make_row(pi, c) for pi in level.positions], key=lambda x: x[0])
+        cnt = 1
+        srows = []
+        # for po in sorted(level.positions, key=lambda x: x.position):
+        #     if po.position != cnt:
+        #         row = self._make_blank_row()
+        #         cnt = po.position + 1
+        #     else:
+        #         row = self._make_row(po, c)
+        #         cnt += 1
+        spos = sorted(level.positions, key=lambda x: x.position)
+        for i in xrange(c.scene.nholes):
+            pos = i+1
+            item = next((p for p in spos if p.position == pos), None)
+            if not item:
+                row = self._make_blank_row(pos)
+            else:
+                row = self._make_row(item, c)
+                spos.remove(item)
+            srows.append(row)
+
+        # srows = [self._make_row(pi, c) for pi in sorted(level.positions, key=lambda x: x.position)]
 
         rows.extend(srows)
 
@@ -183,6 +203,15 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         t = '{}{} {}'.format(irrad.name, level.name, level.holder)
         p = self._new_paragraph(t, s='Heading1', alignment=TA_CENTER)
         return p
+
+    def _make_blank_row(self, pos):
+        r = Row()
+        r.add_item(value='[  ]')
+        r.add_item(value=pos)
+        for i in xrange(6):
+            r.add_item(value='')
+
+        return r
 
     def _make_row(self, pos, canvas):
         r = Row()

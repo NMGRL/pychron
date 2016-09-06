@@ -414,6 +414,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #                    self.selected_projects,
     #                    sam.material)
     #
+    def _principal_investigator_changed(self, new):
+        if new:
+            self._load_projects_for_principal_investigators(pis=[new])
 
     def _selected_projects_changed(self, old, new):
         if new:
