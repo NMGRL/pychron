@@ -85,7 +85,7 @@ xlwt
 pip
 PySide
 matplotlib
-PyMySQL
+PyMySQL=0.6.6
 requests
 keyring
 pil

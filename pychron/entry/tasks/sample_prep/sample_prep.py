@@ -396,11 +396,12 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     @cached_property
     def _get_projects(self):
-        ps = self.dvc.get_projects(principal_investigators=self.principal_investigator,
-                                   order='asc')
-        if ps:
-            return [p.name for p in ps]
-        else:
-            return []
+        with self.dvc.session_ctx(use_parent_session=False):
+            ps = self.dvc.get_projects(principal_investigators=(self.principal_investigator,),
+                                       order='asc')
+            if ps:
+                return [p.name for p in ps]
+            else:
+                return []
 
 # ============= EOF =============================================
