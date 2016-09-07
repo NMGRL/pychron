@@ -459,11 +459,15 @@ class DVCDatabase(DatabaseAdapter):
             pi = self._add_item(pi)
         return pi
 
-    def add_project(self, name, pi=None):
+    def add_project(self, name, pi=None, comment='', lab_contact='', institution=''):
         a = self.get_project(name, pi)
         if a is None:
             self.debug('Adding project {} {}'.format(name, pi))
-            a = ProjectTbl(name=name)
+            a = ProjectTbl(name=name,
+                           checkin_date=datetime.now().date(),
+                           comment='',
+                           lab_contact='',
+                           institution='')
             if pi:
                 dbpi = self.get_principal_investigator(pi)
                 if dbpi:

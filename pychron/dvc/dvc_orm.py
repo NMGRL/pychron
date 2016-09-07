@@ -278,6 +278,10 @@ class ProjectTbl(Base, NameMixin):
 
     samples = relationship('SampleTbl', backref='project')
     analysis_groups = relationship('AnalysisGroupTbl', backref='project')
+    checkin_date = Column(DATE)
+    comment = Column(BLOB)
+    lab_contact = stringcolumn(80)
+    institution = stringcolumn(80)
 
     @property
     def pname(self):

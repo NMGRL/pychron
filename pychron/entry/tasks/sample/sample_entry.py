@@ -82,6 +82,13 @@ class MaterialSpec(Spec):
 
 class ProjectSpec(Spec):
     principal_investigator = Instance(PISpec)
+    lab_contact = Str
+    comment = Str
+    institution = Str
+
+    @property
+    def optionals(self):
+        return {'lab_contact': self.lab_contact, 'comment': self.comment, 'institution': self.institution}
 
     def todump(self):
         return {'name': str(self.name), 'principal_investigator': self.principal_investigator.todump()}
@@ -155,6 +162,17 @@ class SampleEntry(DVCAble):
     add_button = Button
     add_material_button = Button
     generate_project_button = Button('Generate Name')
+    set_optionals_button = Button('Set Optionals')
+
+    project_comment = Str
+    project_institution = Str
+    project_lab_contact = Str
+    lab_contacts = List
+
+    lock_project_comment = Bool
+    lock_project_institution = Bool
+    lock_project_lab_contact = Bool
+
     project_enabled = Property(depends_on='principal_investigator')
     sample_enabled = Property(depends_on='principal_investigator, project, material')
 
@@ -232,7 +250,8 @@ class SampleEntry(DVCAble):
             with dvc.session_ctx(use_parent_session=False):
 
                 if p.name.startswith('?'):
-                    if dvc.add_project(p.name, p.principal_investigator.name):
+                    if dvc.add_project(p.name, p.principal_investigator.name,
+                                       **p.optionals):
                         dbproject = dvc.get_project(p.name, p.principal_investigator.name)
                         p.added = True
                         dvc.commit()
@@ -241,7 +260,7 @@ class SampleEntry(DVCAble):
                         dvc.commit()
 
                 else:
-                    if dvc.add_project(p.name, p.principal_investigator.name):
+                    if dvc.add_project(p.name, p.principal_investigator.name, **p.optionals):
                         p.added = True
                         dvc.commit()
 
@@ -276,9 +295,22 @@ class SampleEntry(DVCAble):
                 if p.name == self.project and p.principal_investigator.name == pspec.name:
                     return p
             else:
-                p = ProjectSpec(name=self.project, principal_investigator=pspec)
-                self._projects.append(p)
+                p = self._new_project_spec(pspec)
                 return p
+
+    def _new_project_spec(self, principal_investigator_spec):
+        project_spec = ProjectSpec(name=self.project,
+                                   principal_investigator=principal_investigator_spec)
+
+        for attr in ('lab_contact', 'comment', 'institution'):
+            name = 'project_{}'.format(attr)
+            setattr(project_spec, attr, getattr(self, name))
+            if not getattr(self, 'lock_{}'.format(name)):
+                setattr(self, name, '')
+
+        self._projects.append(project_spec)
+
+        return project_spec
 
     def _get_material_spec(self):
         if self.material:
@@ -317,8 +349,7 @@ class SampleEntry(DVCAble):
                 if p.name == self.project and p.principal_investigator.name == pispec.name:
                     break
             else:
-                self._projects.append(ProjectSpec(name=self.project,
-                                                  principal_investigator=pispec))
+                self._new_project_spec(pispec)
                 self._backup()
 
     def _add_material_button_fired(self):
@@ -356,6 +387,13 @@ class SampleEntry(DVCAble):
             piname = piname.split(',')[0]
         self.project = '?{}{:03n}'.format(piname, self._default_project_count)
         self._default_project_count += 1
+
+    def _set_optionals_button_fired(self):
+        self.lab_contacts = self.dvc.get_usernames()
+
+        from pychron.entry.tasks.sample.project_optionals_view import ProjectOptionalsView
+        v = ProjectOptionalsView(model=self)
+        v.edit_traits()
 
     @cached_property
     def _get_project_enabled(self):

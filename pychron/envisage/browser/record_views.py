@@ -194,6 +194,7 @@ class ProjectRecordView(RecordView, NameView):
     checkin_date = Date
     unique_id = Long
 
+    institution = Str
     comment = Str
     db_comment = Str
     dirty = Bool(False)
@@ -204,8 +205,10 @@ class ProjectRecordView(RecordView, NameView):
             if dbrecord.principal_investigator:
                 self.principal_investigator = dbrecord.principal_investigator.name
             self.unique_id = dbrecord.id
-
-            # self.db_comment = self.comment = dbrecord.comment
+            self.checkin_date = dbrecord.checkin_date
+            self.db_comment = self.comment = dbrecord.comment or ''
+            self.lab_contact = dbrecord.lab_contact or ''
+            self.institution = dbrecord.institution or ''
 
         else:
             self.name = dbrecord

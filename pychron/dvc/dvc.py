@@ -755,12 +755,12 @@ class DVC(Loggable):
 
         return added
 
-    def add_project(self, name, pi=None):
+    def add_project(self, name, pi=None, **kw):
         added = False
         db = self.db
         if not db.get_project(name, pi):
             added = True
-            db.add_project(name, pi)
+            db.add_project(name, pi, **kw)
         return added
 
     def add_sample(self, name, project, material, grainsize=None, note=None):
