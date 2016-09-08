@@ -21,8 +21,8 @@ import socket
 import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, \
-    cached_property, Instance, Event, Date, Enum, Long
+from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
+    Instance, Event, Date, Enum, Long
 from traitsui.api import View, UItem, Item, EnumEditor
 
 from pychron.dvc.dvc_irradiationable import DVCAble
@@ -340,9 +340,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _session_changed(self):
         self._load_session_samples()
-
-    # def _selected_step_changed(self):
-    #     print 'asdfsafd', self.selected_step, self.selected_step.id
 
     def _upload_image_button_fired(self):
         step = self.selected_step

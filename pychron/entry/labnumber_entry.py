@@ -20,8 +20,8 @@ import os
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
-from traits.api import Property, Str, cached_property, \
-    List, Event, Button, Instance, Bool, on_trait_change, Float, HasTraits, Any
+from traits.api import Property, Str, cached_property, List, Event, Button, Instance, Bool, on_trait_change, \
+    Float, HasTraits, Any
 from uncertainties import nominal_value
 from uncertainties import std_dev
 
@@ -136,7 +136,6 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_analyses(self):
         self.debug('import analyses')
-        # from pychron.entry.dvc_import import do_analyses_import
 
     def import_irradiation_load_xls(self, p):
         self.debug('import irradiation file: {}'.format(p))
@@ -264,6 +263,7 @@ class LabnumberEntry(DVCIrradiationable):
             w = IrradiationPDFWriter()
             info = w.options.edit_traits(kind='livemodal')
             if info.result:
+                w.selected_level = self.level
                 w.options.dump()
                 w.build(out, irrad)
                 return True
