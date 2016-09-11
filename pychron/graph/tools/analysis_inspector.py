@@ -16,12 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Callable
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.graph.tools.point_inspector import PointInspector
-
 from traitsui.menu import Action, Menu as MenuManager
 
+from pychron.graph.tools.point_inspector import PointInspector
 from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
@@ -42,6 +39,8 @@ class AnalysisPointInspector(PointInspector):
                           on_perform=self._recall_analysis),
                    Action(name='Set tag',
                           on_perform=self._set_tag),
+                   Action(name='Set Omit',
+                          on_perform=self._set_omit),
                    Action(name='Set INVALID',
                           on_perform=self._set_invalid))
         # menu = MenuManager(name='recall', *actions)
@@ -64,6 +63,11 @@ class AnalysisPointInspector(PointInspector):
         ai = self.analyses[0]
         ans = [self.analyses[i] for i in self._selected_indices]
         ai.trigger_tag(ans)
+
+    def _set_omit(self):
+        ai = self.analyses[0]
+        ans = [self.analyses[i] for i in self._selected_indices]
+        ai.trigger_omit(ans)
 
     def _set_invalid(self):
         ai = self.analyses[0]

@@ -28,10 +28,8 @@ from pychron.options.views import view
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pychron_constants import NULL_STR
 
-
-# from zobs.options.plotter_options_manager import IsotopeEvolutionOptionsManager, BlanksOptionsManager, \
-#     ICFactorOptionsManager, FluxOptionsManager
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
@@ -86,6 +84,7 @@ class FitBlanksNode(FitReferencesNode):
             unk = self.unknowns[0]
             names = unk.isotope_keys
             if names:
+                names = [NULL_STR] + names
                 pom.set_names(names)
                 # def _set_saveable(self, state):
                 #     super(FitBlanksNode, self)._set_saveable()

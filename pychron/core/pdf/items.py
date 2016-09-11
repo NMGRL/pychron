@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
-# ============= standard library imports ========================
-from reportlab.platypus.paragraph import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus.paragraph import Paragraph
+from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
+
 # ============= local library imports  ==========================
 
 STYLES = getSampleStyleSheet()
@@ -61,7 +61,7 @@ class Row(HasTraits):
 class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
-    fontsize = Int(8)
+    fontsize = Int(10)
     fontname = Str#'Helvetica'
     italic = False
 
@@ -94,6 +94,8 @@ class BaseItem(HasTraits):
                     frag.fontSize = size
         elif name:
             v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
+        else:
+            v = self._new_paragraph(u'<font size="{}">{}</font>'.format(size, v))
 
         return v
 

@@ -26,7 +26,6 @@ from itertools import izip
 from numpy import array, Inf, polyfit
 from uncertainties import ufloat, nominal_value, std_dev
 
-# ============= local library imports  ==========================
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
 
@@ -505,6 +504,7 @@ class Isotope(BaseIsotope):
 
     discrimination = None
     interference_corrected_value = None
+    blank_source = ''
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)

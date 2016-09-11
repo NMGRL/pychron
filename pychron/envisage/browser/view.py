@@ -18,8 +18,7 @@
 from traits.api import HasTraits, Str, Instance, Button
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
 from traitsui.handler import Handler
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
@@ -104,7 +103,8 @@ class StandaloneBrowserView(BaseBrowserView):
                                          'arrow_switch',
                                          tooltip='Toggle between Sample and Time views'),
                       spring,
-                      CustomLabel('datasource_url', color='maroon'))
+                      CustomLabel('datasource_url', color='maroon'),
+                      show_border=True)
 
         v = View(VGroup(hgrp, main_grp),
                  buttons=['OK', 'Cancel'],
@@ -121,20 +121,21 @@ class PaneBrowserView(BaseBrowserView):
         hgrp = HGroup(icon_button_editor('filter_by_button',
                                          'find',
                                          tooltip='Filter analyses using defined criteria'),
-                      icon_button_editor('load_view_button',
-                                         'table',
-                                         tooltip='Select analyses by load'),
+                      # icon_button_editor('load_view_button',
+                      #                    'table',
+                      #                    tooltip='Select analyses by load'),
                       # icon_button_editor('graphical_filter_button',
                       #                    'chart_curve_go',
                       #                    tooltip='Filter analyses graphically'),
                       icon_button_editor('find_references_button',
-                                         '',
+                                         '3d_glasses',
                                          tooltip='Find references associated with current selection'),
                       icon_button_editor('toggle_view',
                                          'arrow_switch',
                                          tooltip='Toggle between Sample and Time views'),
                       spring,
-                      CustomLabel('datasource_url', color='maroon'))
+                      CustomLabel('datasource_url', color='maroon'),
+                      show_border=True)
 
         v = View(VGroup(hgrp, main_grp))
 

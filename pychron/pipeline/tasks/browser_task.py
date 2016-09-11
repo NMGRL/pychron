@@ -15,19 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed
 from traits.api import Instance, Bool
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
-# ============= local library imports  ==========================
+
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.searcher import Searcher
-from pychron.envisage.tasks.actions import ToggleFullWindowAction
 from pychron.globals import globalv
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnalysesTableAction, \
-    LoadReviewStatusAction, EditAnalysisAction, DiffViewAction
+    LoadReviewStatusAction, EditAnalysisAction, DiffViewAction, ConfigureSampleTableAction
 from pychron.pipeline.tasks.analysis_range_selector import AnalysisRangeSelector
 from pychron.pipeline.tasks.panes import BrowserPane, SearcherPane, AnalysisGroupsPane
 
@@ -40,9 +39,9 @@ class BrowserTask(BaseBrowserTask):
     model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
     tool_bars = [SToolBar(ConfigureRecallAction(),
                           ConfigureAnalysesTableAction(),
+                          ConfigureSampleTableAction(),
                           name='Configure'),
-                 SToolBar(ToggleFullWindowAction(),
-                          LoadReviewStatusAction(),
+                 SToolBar(LoadReviewStatusAction(),
                           DiffViewAction(),
                           name='View'),
                  SToolBar(EditAnalysisAction(),

@@ -31,7 +31,7 @@ MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 
 class PIStr(String):
     def validate(self, obj, name, value):
-        if not PI_REGEX.match(value) and name != 'NMGRL':
+        if not PI_REGEX.match(value) and value != 'NMGRL':
             return self.error(obj, name, value)
         else:
             return value
@@ -110,7 +110,7 @@ class SampleSpec(Spec):
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
-        obj.note = d['note']
+        obj.note = d.get('note', '')
         obj.name = d['name']
         project = d['project']
         pname = project['name']
@@ -154,7 +154,7 @@ class SampleEntry(DVCAble):
     add_sample_button = Button
     add_button = Button
     add_material_button = Button
-
+    generate_project_button = Button('Generate Name')
     project_enabled = Property(depends_on='principal_investigator')
     sample_enabled = Property(depends_on='principal_investigator, project, material')
 
@@ -164,6 +164,7 @@ class SampleEntry(DVCAble):
     _projects = List
     _materials = List
     _principal_investigators = List
+    _default_project_count = 0
 
     def activated(self):
         self.refresh_pis = True
@@ -178,8 +179,7 @@ class SampleEntry(DVCAble):
 
     def save(self):
         self._backup()
-        with self.dvc.session_ctx():
-            self._save()
+        self._save()
 
     def load(self, p):
         with open(p, 'r') as rfile:
@@ -222,26 +222,41 @@ class SampleEntry(DVCAble):
     def _save(self):
         self.debug('saving sample info')
         dvc = self.dvc
-        for p in self._principal_investigators:
-            if dvc.add_principal_investigator(p.name):
-                p.added = True
-                dvc.commit()
+        with dvc.session_ctx(use_parent_session=False):
+            for p in self._principal_investigators:
+                if dvc.add_principal_investigator(p.name):
+                    p.added = True
+                    dvc.commit()
 
         for p in self._projects:
-            if dvc.add_project(p.name, p.principal_investigator.name):
-                p.added = True
-                dvc.commit()
+            with dvc.session_ctx(use_parent_session=False):
 
-        for m in self._materials:
-            if dvc.add_material(m.name, m.grainsize or None):
-                m.added = True
-                dvc.commit()
+                if p.name.startswith('?'):
+                    if dvc.add_project(p.name, p.principal_investigator.name):
+                        dbproject = dvc.get_project(p.name, p.principal_investigator.name)
+                        p.added = True
+                        dvc.commit()
 
-        for s in self._samples:
-            if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
-                              note=s.note):
-                s.added = True
-                dvc.commit()
+                        dbproject.name = p.name = '{}{}'.format(p.name[1:-2], dbproject.id)
+                        dvc.commit()
+
+                else:
+                    if dvc.add_project(p.name, p.principal_investigator.name):
+                        p.added = True
+                        dvc.commit()
+
+        with dvc.session_ctx(use_parent_session=False):
+            for m in self._materials:
+                if dvc.add_material(m.name, m.grainsize or None):
+                    m.added = True
+                    dvc.commit()
+
+        with dvc.session_ctx(use_parent_session=False):
+            for s in self._samples:
+                if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
+                                  note=s.note):
+                    s.added = True
+                    dvc.commit()
 
         self.refresh_table = True
 
@@ -334,6 +349,13 @@ class SampleEntry(DVCAble):
             else:
                 self._principal_investigators.append(PISpec(name=self.principal_investigator))
                 self._backup()
+
+    def _generate_project_button_fired(self):
+        piname = self.principal_investigator
+        if ',' in piname:
+            piname = piname.split(',')[0]
+        self.project = '?{}{:03n}'.format(piname, self._default_project_count)
+        self._default_project_count += 1
 
     @cached_property
     def _get_project_enabled(self):

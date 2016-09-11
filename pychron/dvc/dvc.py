@@ -444,10 +444,10 @@ class DVC(Loggable):
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, decay, analyses, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
 
         db = self.db
         ip = db.get_identifier(identifier)
@@ -763,12 +763,12 @@ class DVC(Loggable):
             db.add_project(name, pi)
         return added
 
-    def add_sample(self, name, project, material, grainsize=None):
+    def add_sample(self, name, project, material, grainsize=None, note=None):
         added = False
         db = self.db
         if not db.get_sample(name, project, material, grainsize):
             added = True
-            db.add_sample(name, project, material, grainsize)
+            db.add_sample(name, project, material, grainsize, note=note)
         return added
 
     def add_principal_investigator(self, name):
@@ -1068,8 +1068,8 @@ class DVC(Loggable):
             try:
                 return getattr(self.meta_repo, item)
             except AttributeError, e:
-                # print e, item
-                raise DVCException(item)
+                print e, item
+                # raise DVCException(item)
 
     # defaults
     def _db_default(self):

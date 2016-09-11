@@ -15,23 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Property, List, Enum, Button
-from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor
-# ============= standard library imports ========================
 import re
-# ============= local library imports  ==========================
+
+from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool
+from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item
 from traitsui.editors import ListEditor
+from uncertainties import std_dev, nominal_value
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
 
-COMP_RE = re.compile(r'<=|>=|>|<|==')
+COMP_RE = re.compile(r'<=|>=|>|<|==|between|not between')
 
 
 class PipelineFilter(HasTraits):
     attribute = Str
-    comparator = Enum('<', '>', '<=', '>=', '!=')
+    comparator = Enum('<', '>', '<=', '>=', '!=', 'between', 'not between')
     criterion = Str
-    attributes = ('uage', 'aliquot', 'step')
+    attributes = ('age', 'age error', 'kca', 'kca error', 'aliquot', 'step')
 
     def __init__(self, txt=None, *args, **kw):
         super(PipelineFilter, self).__init__(*args, **kw)
@@ -42,8 +43,34 @@ class PipelineFilter(HasTraits):
         attr = self.attribute
         comp = self.comparator
         crit = self.criterion
-        val = getattr(item, attr)
-        return eval('{}{}{}'.format(attr, comp, crit), {attr: val})
+        val = self._get_value(item, attr)
+        if comp in ('between', 'not between'):
+            try:
+                low, high = crit.split(',')
+            except ValueError:
+                return
+            if comp == 'between':
+                test = '{}<{}<{}'.format(low, attr, high)
+            else:
+                test = '{}>{} or {}>{}'.format(low, attr, attr, high)
+        else:
+            test = '{}{}{}'.format(attr, comp, crit)
+
+        result = eval(test, {attr: val})
+        return result
+
+    def _get_value(self, item, attr):
+        val = None
+        if attr in ('aliquot', 'step'):
+            val = getattr(item, attr)
+        elif attr in ('age', 'age error'):
+            val = getattr(item, 'uage')
+            val = nominal_value(val) if attr == 'age' else std_dev(val)
+        elif attr in ('kca', 'kca error'):
+            val = getattr(item, 'kca')
+            val = nominal_value(val) if attr == 'kca' else std_dev(val)
+
+        return val
 
     def traits_view(self):
         v = View(HGroup(UItem('attribute',
@@ -67,6 +94,7 @@ class FilterNode(BaseNode):
     analysis_kind = 'unknowns'
     filters = List
     add_filter_button = Button
+    remove = Bool(False)
 
     def load(self, nodedict):
         fs = [PipelineFilter(fi) for fi in nodedict['filters']]
@@ -84,14 +112,10 @@ class FilterNode(BaseNode):
             UItem('filters', editor=ListEditor(mutable=False,
                                                style='custom',
                                                editor=InstanceEditor())),
+            Item('remove', label='Remove Analyses'),
             kind='livemodal',
             buttons=['OK', 'Cancel'])
         return v
-
-    # def configure(self):
-    #     info = self.edit_traits()
-    #     if info.result:
-    #         return True
 
     def _generate_filter(self):
         def func(item):
@@ -104,8 +128,15 @@ class FilterNode(BaseNode):
         return func
 
     def run(self, state):
-        vs = filter(self._generate_filter(), getattr(state, self.analysis_kind))
-        setattr(state, self.analysis_kind, vs)
+        filterfunc = self._generate_filter()
+        if self.remove:
+            vs = filter(filterfunc, getattr(state, self.analysis_kind))
+            setattr(state, self.analysis_kind, vs)
+        else:
+            ans = getattr(state, self.analysis_kind)
+            for a in ans:
+                if not filterfunc(a):
+                    a.tag = 'omit'
 
     def add_filter(self, attr, comp, crit):
         self.filters.append(PipelineFilter(attribute=attr, comparator=comp, criterion=crit))

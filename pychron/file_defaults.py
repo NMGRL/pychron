@@ -450,6 +450,9 @@ INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
 """
 
 AUTO_IDEOGRAM = """- klass: ListenUnknownNode
+- klass: FilterNode
+  filters:
+   - age<0
 - klass: GroupingNode
   key: Identifier
 - klass: IdeogramNode

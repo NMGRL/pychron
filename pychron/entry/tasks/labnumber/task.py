@@ -86,6 +86,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     refresh_needed = Event
     dclicked = Event
 
+    principal_investigator = Str
     tool_bars = [SToolBar(SavePDFAction(),
                           DatabaseSaveAction(),
                           image_size=(16, 16)),

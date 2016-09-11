@@ -402,8 +402,8 @@ class MetaRepo(GitRepoManager):
             self.add(p, commit=False)
 
     def set_identifier(self, irradiation, level, pos, identifier):
-        # p = self.get_level_path(irradiation, level)
-        # jd = dvc_load(p)
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
         positions = self._get_level_positions(irradiation, level)
         d = next((p for p in positions if p['position'] != pos), None)
         if d:
@@ -521,7 +521,7 @@ class MetaRepo(GitRepoManager):
         dvc_dump(obj, p)
         self.add(p, commit=False)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay=None, analyses=None, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
         if decay is None:
             decay = {}
         if analyses is None:
@@ -537,6 +537,7 @@ class MetaRepo(GitRepoManager):
             z = jd['z']
 
         npos = {'position': pos, 'j': j, 'j_err': e,
+                'mean_j': mj, 'mean_j_err': me,
                 'decay_constants': decay,
                 'identifier': identifier,
                 'analyses': [{'uuid': ai.uuid,
@@ -551,7 +552,7 @@ class MetaRepo(GitRepoManager):
         else:
             npositions = [npos]
 
-        obj = {'z':z, 'positions': npositions}
+        obj = {'z': z, 'positions': npositions}
         dvc_dump(obj, p)
         if add:
             self.add(p, commit=False)
@@ -590,18 +591,23 @@ class MetaRepo(GitRepoManager):
 
     def get_flux(self, irradiation, level, position):
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
-        j, e, lambda_k = 0, 0, None
+        j, je, lambda_k = 0, 0, None
 
         positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, e = pos.get('j', 0), pos.get('j_err', 0)
+                j, je = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
-                    lambda_k = ufloat(dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0))
+                    # this was a temporary fix and likely can be removed
+                    if isinstance(dc, float):
+                        v, e = dc, 0
+                    else:
+                        v, e = dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0)
+                    lambda_k = ufloat(v, e)
 
-        return ufloat(j or 0, e or 0), lambda_k
+        return ufloat(j, je), lambda_k
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)

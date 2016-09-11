@@ -461,7 +461,7 @@ class LabnumberEntry(DVCIrradiationable):
                     dbpos.identifier = ln
 
             self.dvc.meta_repo.update_flux(self.irradiation, level,
-                                           ir.hole, ir.identifier, ir.j, ir.j_err)
+                                           ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
 
             dbpos.weight = float(ir.weight or 0)
             dbpos.note = ir.note
@@ -640,6 +640,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
                 if dbpos.sample.material:
                     ir.material = v = dbpos.sample.material.name
+                    ir.grainsize = dbpos.sample.material.grainsize or ''
                     set_color(item, v)
 
                 if dbpos.sample.project:
@@ -647,8 +648,11 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     set_color(item, v)
                     if dbpos.sample.project.principal_investigator:
                         ir.principal_investigator = dbpos.sample.project.principal_investigator.name
+                v=''
+                if dbpos.identifier:
+                    v = str(dbpos.identifier)
 
-                ir.identifier = v = dbpos.identifier or ''
+                ir.identifier = v
                 if v:
                     set_color(item, v)
 
@@ -725,12 +729,22 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
         if new_irrad:
             pname = 'Irradiation-{}'.format(new_irrad)
             sname = self.monitor_name
-            if self.confirmation_dialog('Add default project ({}) and '
-                                        'flux monitor sample {{}} for this irradiation?'.format(pname, sname)):
+
+            def add_default():
                 # add irradiation project for flux monitors
                 self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
-
                 self.dvc.add_sample(sname, pname, self.monitor_material)
+
+            if self.confirmation_dialog('Add default project ({}) and '
+                                        'flux monitor sample ({}) for this irradiation?'.format(pname, sname)):
+                add_default()
+            else:
+                msg = 'Are you sure you do not want to add a default project ({}) and flux monitor sample ({}) ' \
+                      'for this irradiation?\n\nPlease seek help if you are not sure what to do! Yes="Do not add", ' \
+                      'No="Add default"'.format(pname, sname)
+                if not self.confirmation_dialog(msg):
+                    add_default()
+
             self.updated = True
             self.irradiation = new_irrad
 

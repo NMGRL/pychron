@@ -15,20 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
+import yaml
 from traits.api import Property, Instance, List, Either, Int, Float, HasTraits, \
     Str, Bool, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
 from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-import os
-import yaml
 from uncertainties import nominal_value, std_dev
-# ============= local library imports  ==========================
+
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.core.helpers.formatting import floatfmt
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -144,7 +144,7 @@ class ValueTabularAdapter(TabularAdapter):
         v = self.item.rvalue
         return self._get_value_text(v)
 
-    def _get_value_text(self, v, n=6):
+    def _get_value_text(self, v, n=8):
         if isinstance(v, float):
             v = floatfmt(v, n=n, s=5, use_scientific=True)
         return v

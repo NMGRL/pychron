@@ -50,13 +50,13 @@ class ResumeAction(TaskAction):
 class RunFromAction(TaskAction):
     name = 'Run From'
     method = 'run_from'
+    image = icon('start')
 
 
 class ResetAction(TaskAction):
     name = 'Reset'
     method = 'reset'
-    image = icon('resume')
-    # enabled_name = 'resume_enabled'
+    image = icon('arrow_refresh')
 
 
 class ClearAction(TaskAction):
@@ -85,9 +85,17 @@ class ConfigureAnalysesTableAction(TaskAction):
     image = icon('cog')
 
 
+class ConfigureSampleTableAction(TaskAction):
+    name = 'Configure Sample Table'
+    dname = 'Configure Sample Table'
+    method = 'configure_sample_table'
+    image = icon('cog')
+
+
 class LoadReviewStatusAction(TaskAction):
     name = 'Review Status'
     method = 'load_review_status'
+    image = icon('check_boxes')
 
 
 class EditAnalysisAction(TaskAction):
@@ -181,6 +189,12 @@ class FreezeFlux(PipelineAction):
     name = 'Freeze Flux'
     dname = 'Freeze Flux'
     action = 'freeze_flux'
+
+
+class AnalysisTableAction(PipelineAction):
+    name = 'Analysis Table'
+    dname = 'Analysis Table'
+    action = 'set_analysis_table_template'
 
 
 # ============= Plotting Actions =============================================
