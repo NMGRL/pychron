@@ -160,15 +160,12 @@ class ExperimentEditorTask(EditorTask):
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
                   'failed', 'end_after', 'invalid'):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
-            # tt = toTuple(v)
-            # print 'fff',v, tt, type(tt[0]), type(tt[1]), type(tt[2])
             colors[c] = '#{:02X}{:02X}{:02X}'.format(*toTuple(v)[:3])
         return colors
 
     def new(self):
         manager = self.manager
         if manager.verify_database_connection(inform=True):
-
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 

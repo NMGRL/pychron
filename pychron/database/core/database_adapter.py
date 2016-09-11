@@ -585,9 +585,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
+            self.debug('USING MOCKSESSION**************')
             return []
-            # if self.session_factory:
-            #     sess = self.session_factory()
 
         if distinct_:
             if isinstance(distinct_, bool):
@@ -600,9 +599,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
             q = sess.query(table)
 
         if joins:
-            # print joins
-            # joins = list(set(joins))
-            # print joins
             try:
                 for ji in joins:
                     if ji != table:
