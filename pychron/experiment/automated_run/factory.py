@@ -94,6 +94,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     add_repository_identifier = Event
     repository_identifier_dirty = Event
     set_repository_identifier_button = Event
+    clear_repository_identifier_button = Event
 
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
@@ -1164,6 +1165,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if new:
             if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
+
+    def _clear_repository_identifier_button_fired(self):
+        self.debug('clear repository identifiier')
+
+        self.repository_identifier = ''
+        self.repository_identifier_dirty = True
 
     def _set_repository_identifier_button_fired(self):
         self.debug('set repository identifier={}'.format(self.repository_identifier))
