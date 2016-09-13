@@ -444,16 +444,24 @@ class DVC(Loggable):
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
 
+    def save_flux(self, identifier, j, e):
+        with self.session_ctx(use_parent_session=False):
+            irp = self.get_identifier(identifier)
+            if irp:
+                level = irp.level
+                irradiation = level.irradiation
+
+                self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
+
     def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
         self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
 
-        db = self.db
-        ip = db.get_identifier(identifier)
-        ip.j = j
-        ip.j_err = e
-        db.commit()
+        with self.session_ctx(use_parent_session=False):
+            ip = self.get_identifier(identifier)
+            ip.j = j
+            ip.j_err = e
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
