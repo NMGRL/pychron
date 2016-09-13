@@ -445,6 +445,8 @@ class DVC(Loggable):
             ai.dump_fits(keys, reviewed=True)
 
     def save_flux(self, identifier, j, e):
+        self.meta_pull()
+
         with self.session_ctx(use_parent_session=False):
             irp = self.get_identifier(identifier)
             if irp:
@@ -452,6 +454,8 @@ class DVC(Loggable):
                 irradiation = level.irradiation
 
                 self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
+                self.meta_commit('User manual edited flux')
+        self.meta_push()
 
     def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,

@@ -83,7 +83,7 @@ class ExperimentEditorTask(EditorTask):
     def save_as_current_experiment(self):
         self.debug('save as current experiment')
         if self.has_active_editor():
-            path = os.path.join(paths.experiment_dir, 'Current Experiment.txt')
+            path = os.path.join(paths.experiment_dir, 'CurrentExperiment.txt')
             self.save(path=path)
 
     def configure_experiment_table(self):

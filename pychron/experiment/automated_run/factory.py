@@ -101,8 +101,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     selected_level = Str('Level')
     levels = Property(depends_on='selected_irradiation, db')
 
-    flux = Property(Float, depends_on='labnumber')
-    flux_error = Property(Float, depends_on='labnumber')
+    flux = Property(Float, depends_on='refresh_flux_needed')
+    flux_error = Property(Float, depends_on='refresh_flux_needed')
+    refresh_flux_needed = Event
 
     _flux = None
     _flux_error = None
@@ -208,7 +209,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     display_irradiation = Str
     irrad_level = Str
-    irrad_hole = Str
+    irrad_hole = Int
 
     info_label = Property(depends_on='labnumber, display_irradiation, sample')
     extractable = Property(depends_on='labnumber')
@@ -431,7 +432,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 irrad = level.irradiation
                 hole = ipos.position
                 irradname = irrad.name
-                self.irrad_hole = str(hole)
+                self.irrad_hole = int(hole)
                 self.irrad_level = irrad_level = str(level.name)
                 if irradname == 'NoIrradiation':
                     il = NULL_STR
@@ -829,7 +830,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
             self.selected_irradiation = d['irradiation']
             self.selected_level = d['irradiation_level']
-
+            self.irrad_hole = d['irradiation_position']
             self.display_irradiation = d['display_irradiation']
             return True
         else:
@@ -1092,9 +1093,15 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         j = 0
 
         identifier = self.labnumber
+
+        print attr, identifier, self.suppress_meta, self.irrad_hole
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier and self.irrad_hole:
+
+                print identifier, self.selected_irradiation, self.selected_level, self.irrad_hole
+
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
+                print j
                 if attr == 'err':
                     j = std_dev(j)
                 else:
@@ -1349,6 +1356,7 @@ post_equilibration_script:name''')
             self._suppress_special_labnumber_change = False
 
             if self._load_labnumber_meta(new):
+                self.refresh_flux_needed = True
                 if self._set_defaults:
                     self._load_labnumber_defaults(old, new, special)
         else:
