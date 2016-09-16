@@ -144,6 +144,8 @@ class AnalysisTbl(Base, BaseMixin):
     group_id = 0
     frozen = False
 
+    delta_time = 0
+
     @property
     def is_plateau_step(self):
         return

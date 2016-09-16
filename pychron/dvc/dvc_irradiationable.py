@@ -68,6 +68,8 @@ class DVCIrradiationable(DVCAble):
                 if names:
                     self.irradiation = names[0]
                 return names
+        else:
+            return []
 
     @cached_property
     def _get_levels(self):
@@ -82,5 +84,7 @@ class DVCIrradiationable(DVCAble):
                     return names
                 else:
                     return []
+        else:
+            return []
 
 # ============= EOF =============================================
