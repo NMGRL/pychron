@@ -115,6 +115,13 @@ class IrradiatedPositionAdapter(TabularAdapter):
 
     #    def _get_hole_width(self):
     #        return 35
+
+    def _set_j_text(self, t):
+        self.item.j = float(t)
+
+    def _set_j_err_text(self, t):
+        self.item.j_err = t
+
     def _get_j_text(self):
         return '{:0.6E}'.format(self.item.j)
 
