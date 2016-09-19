@@ -32,7 +32,7 @@ def suite():
     # from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
     from pychron.experiment.tests.backup import BackupTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
-    from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
+    # from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -66,7 +66,7 @@ def suite():
              # MassSpecIrradExportTestCase,
              XMLParserTestCase,
 
-             XLSAnalysisLoaderTestCase,
+             # XLSAnalysisLoaderTestCase,
 
              RatioTestCase,
              InterpolationTestCase,
