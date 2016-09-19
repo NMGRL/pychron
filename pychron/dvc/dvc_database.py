@@ -984,7 +984,8 @@ class DVCDatabase(DatabaseAdapter):
                        irradiation=None, level=None,
                        analysis_types=None,
                        high_post=None,
-                       low_post=None):
+                       low_post=None,
+                       filter_non_run=False):
 
         self.debug('------- Get Labnumbers -------')
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
@@ -1011,6 +1012,8 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(SampleTbl, ProjectTbl)
 
         if principal_investigators:
+            if not projects:
+                q = q.join(SampleTbl, ProjectTbl)
             q = q.join(PrincipalInvestigatorTbl)
 
         if mass_spectrometers and not at:
@@ -1022,6 +1025,10 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(AnalysisTbl)
 
         if analysis_types and not at:
+            at = True
+            q = q.join(AnalysisTbl)
+
+        if filter_non_run and not at:
             at = True
             q = q.join(AnalysisTbl)
 
@@ -1050,11 +1057,11 @@ class DVCDatabase(DatabaseAdapter):
         if analysis_types:
             if 'blank' in analysis_types:
                 analysis_types.remove('blank')
-                q = q.filter(
-                    or_(AnalysisTbl.analysis_type.startswith('blank'),
-                        AnalysisTbl.analysis_type.in_(analysis_types)))
+                q = q.filter(or_(AnalysisTbl.analysis_type.startswith('blank'),
+                                 AnalysisTbl.analysis_type.in_(analysis_types)))
             else:
                 q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+
         if irradiation:
             q = q.filter(IrradiationTbl.name == irradiation)
             q = q.filter(LevelTbl.name == level)
