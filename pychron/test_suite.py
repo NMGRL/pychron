@@ -29,6 +29,7 @@ def suite():
         TransformTestCase
     # from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
+    from pychron.core.helpers.tests.strtools import CamelCaseTestCase
     # from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
     from pychron.experiment.tests.backup import BackupTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
@@ -86,7 +87,8 @@ def suite():
              ParseConditionalsTestCase,
              IdentifierTestCase,
              CommentTemplaterTestCase,
-             FloatfmtTestCase)
+             FloatfmtTestCase,
+             CamelCaseTestCase)
 
     for t in tests:
         suite.addTest(loader.loadTestsFromTestCase(t))

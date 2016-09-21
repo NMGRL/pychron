@@ -25,9 +25,12 @@
 def camel_case(name, delimiters=None):
     if delimiters is None:
         delimiters = ('_', '/', ' ')
-    name = name.title()
+
+    name = '{}{}'.format(name[0].upper(), name[1:])
     for d in delimiters:
-        name = name.replace(d, '')
+        if d in name:
+            name = ''.join(a.title() for a in name.split(d))
+
     return name
 
 
