@@ -15,27 +15,26 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import csv
+import math
+import os
+
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
     BasePlotContainer, Plot, ArrayPlotData
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
+from numpy import array, hstack, Inf, savetxt, column_stack
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
 
-# =============standard library imports ========================
-import os
-from numpy import array, hstack, Inf, savetxt, column_stack
-import csv
-import math
-# =============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.core.helpers.filetools import add_extension
+from pychron.graph.context_menu_mixin import ContextMenuMixin
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from tools.contextual_menu_tool import ContextualMenuTool
-from pychron.graph.context_menu_mixin import ContextMenuMixin
 
 VALID_FONTS = [
     # 'Helvetica',
@@ -303,9 +302,13 @@ class Graph(ContextMenuMixin):
         """
 
         """
-        s = self.series[plotid][series]
+        if isinstance(series, (str, unicode)):
+            s = series
+        else:
+            s = self.series[plotid][series][axis]
+
         p = self.plots[plotid]
-        return p.data.get_data(s[axis])
+        return p.data.get_data(s)
 
     def get_aux_data(self, plotid=0, series=1):
         plot = self.plots[plotid]
