@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+import os
+
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
@@ -22,10 +25,7 @@ from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTra
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-import json
-import os
-# ============= local library imports  ==========================
+
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas, iter_geom
 from pychron.core.helpers.logger_setup import logging_setup
@@ -143,6 +143,9 @@ class LevelEditor(Loggable):
         return self._add_level()
 
     def _edit_level(self):
+
+        self.meta_repo.smart_pull()
+
         orignal_name = self.name
         db = self.db
         level = db.get_irradiation_level(self.irradiation, self.name)
@@ -179,8 +182,6 @@ class LevelEditor(Loggable):
                     else:
                         return
 
-                self._save_production()
-
                 level.note = self.level_note
                 level.z = self.z
 
@@ -188,10 +189,15 @@ class LevelEditor(Loggable):
                 self.meta_repo.update_level_z(self.irradiation, self.name, self.z)
 
                 if self.selected_production:
-                    pr = db.get_production(self.selected_production.name)
+                    self._save_production()
+
+                    prname = self.selected_production.name
+                    pr = db.get_production(prname)
                     if not pr:
-                        pr = db.add_production(self.selected_production.name)
+                        pr = db.add_production(prname)
                     level.production = pr
+
+                    self.meta_repo.update_level_production(self.irradiation, self.name, prname)
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -200,7 +206,11 @@ class LevelEditor(Loggable):
             else:
                 break
 
+        self.meta_repo.smart_pull()
+        self.meta_repo.commit('Edited level {}'.format(self.name))
+        self.meta_repo.push()
         db.commit()
+
         return self.name
 
     def _save_tray(self, level, original_tray):
