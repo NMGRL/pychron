@@ -15,29 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import time
+from itertools import groupby
+
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
-# ============= standard library imports ========================
-import time
-from itertools import groupby
-import os
-# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
-from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-# from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
-from pychron.processing.analyses.analysis import show_evolutions_factory, CloseHandler
 
 
 class RepeatRunBlockView(HasTraits):
@@ -218,12 +215,13 @@ class ExperimentQueue(BaseExperimentQueue):
                 if self._temp_analysis and spec.uuid == self._temp_analysis[0].uuid:
                     analysis = self._temp_analysis
 
-                if analysis is None:
-                    analysis = dvc.get_analysis(spec.uuid)
+                with dvc.session_ctx(use_parent_session=False):
+                    if analysis is None:
+                        analysis = dvc.get_analysis(spec.uuid)
 
-                if analysis:
-                    for ai in analysis:
-                        ai.show_isotope_evolutions(isotopes=isotopes, **kw)
+                    if analysis:
+                        for ai in analysis:
+                            ai.show_isotope_evolutions(isotopes=isotopes, **kw)
 
                 self._temp_analysis = analysis
 
