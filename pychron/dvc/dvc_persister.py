@@ -218,7 +218,9 @@ class DVCPersister(BasePersister):
                     if add:
                         self.active_repository.commit('<ISOEVO> default collection fits')
 
-                    for pp, tag, msg in (('blanks', 'BLANKS', 'preceding'), ('icfactors', 'ICFactor', 'default')):
+                    for pp, tag, msg in (('blanks', 'BLANKS',
+                                          'preceding {}'.format(self.per_spec.previous_blank_runid)),
+                                         ('icfactors', 'ICFactor', 'default')):
                         p = self._make_path(pp)
                         if os.path.isfile(p):
                             self.active_repository.add(p, commit=False)
@@ -235,7 +237,6 @@ class DVCPersister(BasePersister):
 
                     # commit files
                     self.active_repository.commit('<{}>'.format(commit_tag))
-                    # self.active_repository.push()
                     self.dvc.push_repository(self.active_repository)
 
                     # update meta
