@@ -15,32 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Button, on_trait_change
-from traitsui.api import View, Item, TabularEditor, HGroup
-from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
 import os
 import pickle
+
 import yaml
-# ============= local library imports  ==========================
+from traits.api import Button, on_trait_change
+
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
-
-
-class SampleHoleAdapter(TabularAdapter):
-    columns = [('ID', 'id'),
-               ('X', 'x'), ('Y', 'y'),
-               ('XCor', 'x_cor'), ('YCor', 'y_cor'),
-               ('Render', 'render')]
-
-    def set_text(self, obj, trait, row, column, txt):
-        if column in [3, 4]:
-            try:
-                txt = float(txt)
-            except:
-                txt = '0'
-
-        setattr(getattr(obj, trait)[row], self.columns[column][1], txt)
 
 
 class LaserStageMap(BaseStageMap):
@@ -201,20 +183,9 @@ class LaserStageMap(BaseStageMap):
             holes = sorted(holes, lambda a, b: cmp(a[1], b[1]))
             return holes[0][0]
 
-    # ============= views ===========================================
     def traits_view(self):
-        editor = TabularEditor(adapter=SampleHoleAdapter())
-        v = View(
-                HGroup(Item('clear_corrections', show_label=False)),
-                HGroup(Item('g_shape'),
-                       Item('g_dimension'), show_labels=False),
-
-                Item('sample_holes',
-                     show_label=False, editor=editor),
-                height=500, width=250,
-                resizable=True,
-                title=self.name)
-        return v
+        from stage_map_view import StageMapView
+        return StageMapView(model=self).traits_view()
 
 
 class UVLaserStageMap(LaserStageMap):
