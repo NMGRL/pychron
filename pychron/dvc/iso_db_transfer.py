@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
-# ============= standard library imports ========================
 import json
 import os
 import time
-from itertools import groupby
 from datetime import timedelta
-# ============= local library imports  ==========================
+from itertools import groupby
+
 from numpy import array_split
+from traits.api import Instance
+
 from pychron.canvas.utils import make_geom
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -679,7 +679,7 @@ class IsoDBTransfer(Loggable):
                              positions=[p.position for p in extraction.positions])
 
         self.debug('transfer analysis with persister')
-        self.persister.per_spec_save(ps, commit=False, msg_prefix='Database Transfer')
+        self.persister.per_spec_save(ps, commit=False, commit_tag='Database Transfer')
         return True
 
     def _get_irradpos(self, dest, irradname, levelname, identifier):
