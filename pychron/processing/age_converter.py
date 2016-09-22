@@ -18,7 +18,7 @@
 # ============= local library imports  ==========================
 from numpy import exp, ones, log, std, mean
 from numpy.random.mtrand import randn
-from uncertainties import ufloat, nominal_value, std_dev
+from uncertainties import ufloat, nominal_value, std_dev, umath
 
 
 class AgeConverter(object):
@@ -39,11 +39,15 @@ class AgeConverter(object):
 
             self._lambda_t = ec + b
 
-        self._f = ufloat(0.001642, 4.50e-6)  # 40Ar*/40K for mineral standard
+        self._f = ufloat(0.0016417, 4.50e-6)  # 40Ar*/40K for mineral standard
 
     def setup(self, monitor_age=28.02, total_decay=5.543e-10):
         self._original_monitor_age = monitor_age
         self._original_total_decay_constant = total_decay
+
+    def set_constants(self, **kw):
+        for k, v in kw.iteritems():
+            setattr(self, '_{}'.format(k), v)
 
     def convert(self, age, error):
         if hasattr(age, '__iter__'):
@@ -51,33 +55,41 @@ class AgeConverter(object):
         else:
             m = 1
 
-        oma = self._original_monitor_age
         torig = self._original_total_decay_constant
         t = self._lambda_t
 
-        ex_orig = exp(t * oma * 1e6) - 1
-        ex = exp(t * age * 1e6) - 1
+        r, ex, ex_orig = self._calculate_r(age)
 
-        r = ex / ex_orig
         sr = torig * exp(torig * age * 1e6) * error * 1e6 / ex_orig
 
         r_mc = ones(self._n) * r
         sr_mc = ones(self._n) * sr
+        # return age, error
 
         vr = r_mc + sr_mc * randn(self._n, m)
 
-        t = log(((t / self._lambda_ec) * self._f * r) + 1) / (t * 1e6)
+        age = umath.log(((t / self._lambda_ec) * self._f * r) + 1) / (t * 1e6)
 
         # linear error propagation
 
-        e = self._linear_error_propagation(t * 1e6, r, vr, m)
+        e = self._linear_error_propagation(age * 1e6, r, sr)
         e *= 1e-6
 
-        tm, tme = self._monte_carlo_error_propagation()
-        tm *= 1e-6
-        tme *= 1e-6
+        # tm, tme = self._monte_carlo_error_propagation()
+        # tm *= 1e-6
+        # tme *= 1e-6
+        tm, tme = 0, 0
+        return age, e, tm, tme
 
-        return t, e, tm, tme
+    def _calculate_r(self, age):
+        oma = self._original_monitor_age
+
+        torig = self._original_total_decay_constant
+        ex_orig = umath.exp(torig * oma * 1e6) - 1
+        ex = umath.exp(torig * age * 1e6) - 1
+
+        r = ex / ex_orig
+        return r, ex, ex_orig
 
     def _monte_carlo_error_propagation(self, vr, m):
         lambda_total = self._lambda_t
@@ -95,7 +107,7 @@ class AgeConverter(object):
         t_mc = log(vt_mc / vel_mc * vf_mc * vr + 1) / vt_mc
         return mean(t_mc), std(t_mc)
 
-    def _linear_error_propagation(self, age, r, vr, m):
+    def _linear_error_propagation(self, age, r, sr):
         """
         age in years
         :param age:
@@ -109,15 +121,15 @@ class AgeConverter(object):
         f = self._f
 
         # partial derivatives
-        pd_el = -(1. / lambda_total) * (age + (b * f * r / ((el ** 2) * exp(lambda_total * age))))
-        pd_b = (1 / lambda_total) * ((f * r / (el * exp(lambda_total * age))) - age)
-        pd_f = r / (el * exp(lambda_total * age))
-        pd_r = f / (el * exp(lambda_total * age))
+        pd_el = -(1. / lambda_total) * (age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age))))
+        pd_b = (1 / lambda_total) * ((f * r / (el * umath.exp(lambda_total * age))) - age)
+        pd_f = r / (el * umath.exp(lambda_total * age))
+        pd_r = f / (el * umath.exp(lambda_total * age))
 
         sel = std_dev(el)
         sb = std_dev(b)
         sf = std_dev(self._f)
-        sr = std_dev(r)
+        # sr = std_dev(r)
 
         # (partial derivatives x sigma) ** 2
         pd_el2 = (pd_el * sel) ** 2
@@ -142,6 +154,6 @@ class AgeConverter(object):
 
         # uncertainty in age
         st = ss ** 0.5
-        return st
+        return nominal_value(st)
 
 # ============= EOF =============================================
