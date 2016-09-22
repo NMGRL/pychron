@@ -113,6 +113,8 @@ class LabnumberEntry(DVCIrradiationable):
     j_multiplier = Float(1e-4)  # j units per hour
     _estimated_j_value = 0
 
+    _old_irradiation = None
+
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
@@ -427,7 +429,7 @@ class LabnumberEntry(DVCIrradiationable):
     def _inform_save(self):
         self.information_dialog('Changes saved to Database')
 
-    def _save_to_db(self, level, update):
+    def _save_to_db(self, level, update, irradiation=None):
         db = self.dvc.db
 
         if not self.dvc.meta_repo.smart_pull():
@@ -436,31 +438,34 @@ class LabnumberEntry(DVCIrradiationable):
         n = len(self.irradiated_positions)
         prog = open_progress(n)
 
+        if not irradiation:
+            irradiation = self.irradiation
+
         for ir in self.irradiated_positions:
             sam = ir.sample
 
             if not sam:
-                self.dvc.remove_irradiation_position(self.irradiation, level, ir.hole)
+                self.dvc.remove_irradiation_position(irradiation, level, ir.hole)
                 continue
 
             ln = ir.identifier
 
-            dbpos = db.get_irradiation_position(self.irradiation, level, ir.hole)
+            dbpos = db.get_irradiation_position(irradiation, level, ir.hole)
             if not dbpos:
-                dbpos = db.add_irradiation_position(self.irradiation, level, ir.hole)
+                dbpos = db.add_irradiation_position(irradiation, level, ir.hole)
 
             if ln:
                 dbpos2 = db.get_identifier(ln)
                 if dbpos2:
                     irradname = dbpos2.level.irradiation.name
-                    if irradname != self.irradiation:
+                    if irradname != irradiation:
                         self.warning_dialog('Labnumber {} already exists '
                                             'in Irradiation {}'.format(ln, irradname))
                         return
                 else:
                     dbpos.identifier = ln
 
-            self.dvc.meta_repo.update_flux(self.irradiation, level,
+            self.dvc.meta_repo.update_flux(irradiation, level,
                                            ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0)
 
             dbpos.weight = float(ir.weight or 0)
@@ -480,7 +485,7 @@ class LabnumberEntry(DVCIrradiationable):
                                     material=mat)
                 dbpos.sample = sam
 
-            prog.change_message('Saving {}{}{} identifier={}'.format(self.irradiation, level, ir.hole, ln))
+            prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))
             db.commit()
 
         prog.close()
@@ -780,8 +785,10 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             self.updated = True
             self.level = new_level
 
-    def _irradiation_changed(self):
+    def _irradiation_changed(self, old, new):
+
         if self.irradiation:
+            self._old_irradiation = old
             self.level = ''
 
             chron = self.dvc.meta_repo.get_chronology(self.irradiation)
@@ -796,7 +803,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
     def _level_changed(self, old, new):
         if self.dirty:
             if self.confirmation_dialog('You have unsaved changes. Do you want to save now?'):
-                self.save(level=old, update=False)
+                self.save(level=old, update=False, irradiation=None if new else self._old_irradiation)
             self.dirty = False
 
         self.debug('level changed "{}"'.format(new))

@@ -20,7 +20,7 @@ from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Con
 from traitsui.menu import Action
 from traitsui.table_column import ObjectColumn
 
-EN = re.compile(r'(?P<a>\w*) \((?P<b>\w*)\)')
+EN = re.compile(r'(?P<a>\w*) \((?P<b>\w+, {0,1}\w+)\)')
 
 
 def extract_names(s):
