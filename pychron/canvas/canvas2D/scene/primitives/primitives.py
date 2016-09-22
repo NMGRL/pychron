@@ -17,26 +17,18 @@
 # ============= enthought library imports =======================
 import time
 
+import Image as PImage
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray
-from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, \
+from numpy import array
+from traits.api import Float, Any, Bool, Str, Property, List, \
     Int, \
     Color, String, Either
 from traitsui.api import VGroup, Item, Group
 
-# ============= standard library imports ========================
-import Image as PImage
-import math
-from numpy import array
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
-
-
-def calc_rotation(x1, y1, x2, y2):
-    rise = y2 - y1
-    run = x2 - x1
-    return math.degrees(math.atan2(rise, run))
+from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
 
 
 class Point(QPrimitive):
@@ -410,64 +402,6 @@ class LoadIndicator(Circle):
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
             pm.render(gc)
-
-
-class CalibrationObject(HasTraits):
-    tweak_dict = Dict
-    cx = Float
-    cy = Float
-    rx = Float
-    ry = Float
-
-    rotation = Property(depends_on='rx,ry,_rotation')
-    _rotation = Float
-    center = Property(depends_on='cx,cy')
-    scale = Float(1)
-
-    def _set_rotation(self, rot):
-        self._rotation = rot
-
-    def _get_rotation(self):
-        # if not (self.rx and self.rx):
-        #     return self._rotation
-        rot = self._rotation
-        if not rot:
-            rot = self.calculate_rotation(self.rx, self.ry)
-        return rot
-
-    def _get_center(self):
-        return self.cx, self.cy
-
-    def set_right(self, x, y):
-        self.rx = x
-        self.ry = y
-        self._rotation = 0
-
-    def set_center(self, x, y):
-        self.cx = x
-        self.cy = y
-
-    def calculate_rotation(self, x, y, sense='east'):
-        def rotation(a, b):
-            return calc_rotation(self.cx, self.cy, a, b)
-
-        if sense == 'west':
-            print 'x={}, y={}, cx={}, cy={}'.format(x, y, self.cx, self.cy)
-            if y > self.cy:
-                rot = calc_rotation(self.cx, self.cy, x, y) - 180
-            else:
-                rot = calc_rotation(self.cx, self.cy, x, y) + 180
-        elif sense == 'north':
-            if x > self.cx:
-                rot = rotation(x, -y)
-            else:
-                rot = rotation(y, -x)
-        elif sense == 'south':
-            rot = rotation(-y, x)
-        else:
-            rot = rotation(x, y)
-
-        return rot
 
 
 class Label(QPrimitive):

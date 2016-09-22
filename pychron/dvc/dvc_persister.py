@@ -169,9 +169,11 @@ class DVCPersister(BasePersister):
         self.debug('================= post measurement started')
         ret = True
 
+        ar = self.active_repository
+
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
+        spec_path = os.path.join(ar.path, '{}.json'.format(spec_sha))
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
@@ -201,43 +203,43 @@ class DVCPersister(BasePersister):
         if self.stage_files:
             if commit:
                 try:
-                    self.active_repository.smart_pull(accept_their=True)
+                    ar.smart_pull(accept_their=True)
 
                     # default commits
                     add = False
                     p = self._make_path('intercepts')
                     if os.path.isfile(p):
-                        self.active_repository.add(p, commit=False)
+                        ar.add(p, commit=False)
                         add = True
 
                     p = self._make_path('baselines')
                     if os.path.isfile(p):
-                        self.active_repository.add(p, commit=False)
+                        ar.add(p, commit=False)
                         add = True
 
                     if add:
-                        self.active_repository.commit('<ISOEVO> default collection fits')
+                        ar.commit('<ISOEVO> default collection fits')
 
                     for pp, tag, msg in (('blanks', 'BLANKS',
                                           'preceding {}'.format(self.per_spec.previous_blank_runid)),
                                          ('icfactors', 'ICFactor', 'default')):
                         p = self._make_path(pp)
                         if os.path.isfile(p):
-                            self.active_repository.add(p, commit=False)
-                            self.active_repository.commit('<{}> {}'.format(tag, msg))
+                            ar.add(p, commit=False)
+                            ar.commit('<{}> {}'.format(tag, msg))
 
                     # commit the reset of the files
                     paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
 
                     for p in paths:
                         if os.path.isfile(p):
-                            self.active_repository.add(p, commit=False)
+                            ar.add(p, commit=False)
                         else:
                             self.debug('not at valid file {}'.format(p))
 
                     # commit files
-                    self.active_repository.commit('<{}>'.format(commit_tag))
-                    self.dvc.push_repository(self.active_repository)
+                    ar.commit('<{}>'.format(commit_tag))
+                    self.dvc.push_repository(ar)
 
                     # update meta
                     self.dvc.meta_pull(accept_our=True)
