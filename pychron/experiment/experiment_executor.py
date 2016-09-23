@@ -1312,10 +1312,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self._end_flag:
                 self._end_flag.set()
 
-                # # wait until previous loop finished.
-                # cf = self._complete_flag
-                # while not cf.is_set():
-                #     time.sleep(0.05)
+                # wait until previous loop finished.
+                cf = self._complete_flag
+                while not cf.is_set():
+                    time.sleep(0.05)
 
             else:
                 self._end_flag = Flag()
@@ -1357,21 +1357,28 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             iterator for extraction state label.
             used to flash label
         """
-        t, state = gen.next()
-        if state:
-            self.debug('set state label={}, color={}'.format(label, color))
-            self.trait_set(extraction_state_label=label,
-                           extraction_state_color=color)
-        else:
-            self.debug('clear extraction_state_label')
-            self.trait_set(extraction_state_label='')
 
-        if not self._end_flag.is_set():
-            do_after(t * 1000, self._extraction_state_iter, gen, label, color)
-        else:
-            self.debug('extract state complete')
+        if self._end_flag.is_set():
+            self.debug('extract state complete1')
             self._complete_flag.set()
             self.trait_set(extraction_state_label='')
+        else:
+
+            t, state = gen.next()
+            if state:
+                self.debug('set state label={}, color={}'.format(label, color))
+                self.trait_set(extraction_state_label=label,
+                               extraction_state_color=color)
+            else:
+                self.debug('clear extraction_state_label')
+                self.trait_set(extraction_state_label='')
+
+            if not self._end_flag.is_set():
+                do_after(t * 1000, self._extraction_state_iter, gen, label, color)
+            # else:
+            #     self.debug('extract state complete2')
+            #     self._complete_flag.set()
+            #     self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
         """
