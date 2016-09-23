@@ -232,6 +232,9 @@ def remove_comp(s):
 def extract_attr(key):
     """
     """
+    if key.startswith('L2(CDD)'):
+        return 'L2(CDD)'
+
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(',')
         key = aa[0]

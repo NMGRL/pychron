@@ -1875,7 +1875,10 @@ anaylsis_type={}
 
         if self._alive:
             # analyze the equilibration
-            self._analyze_equilibration()
+            try:
+                self._analyze_equilibration()
+            except TypeError, e:
+                self.debug('AutomatedRun._equilibrate _analyze_equilibration error. TypeError={}'.format(e))
 
             self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
@@ -1904,6 +1907,8 @@ anaylsis_type={}
                     continue
 
                 ys = g.get_data(i, axis=1)
+                if ys is None:
+                    continue
 
                 for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):
                     xsi, ysi = xs[-ni:], ys[-ni:]
@@ -2135,7 +2140,7 @@ anaylsis_type={}
         # mem_log('post measure')
         if m.terminated:
             self.debug('measurement terminated')
-            self.cancel_run()
+            self.cancel_run(state='terminated')
         if m.canceled:
             self.debug('measurement collection canceled')
             self.cancel_run()

@@ -752,7 +752,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in ('truncated', 'canceled', 'failed'):
                 run.spec.state = 'success'
 
-        if run.spec.state in ('success', 'truncated'):
+        if run.spec.state in ('success', 'truncated', 'terminated'):
             run.save()
             self.run_completed = run
 
@@ -1458,8 +1458,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         elm_connectable = Connectable(name='Extraction Line',
                                       manager=self.extraction_line_manager)
         self.connectables = [elm_connectable]
-
-        print self.extraction_line_manager
 
         if self.extraction_line_manager is None:
             nonfound.append('extraction_line')
