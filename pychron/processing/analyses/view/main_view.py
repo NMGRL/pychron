@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Dict
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property
 from traitsui.api import View, UItem, VGroup, HGroup
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
+
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 # class MainViewHandler(Handler):
@@ -288,6 +286,13 @@ class MainView(HasTraits):
                       ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
                       ('40Ar/39Ar', 'Ar40/Ar39', 1)]
             cv = self._make_ratios(ratios)
+
+            an.calculate_age()
+
+            cv.append(ComputedValue(name='Age',
+                                    tag='uage',
+                                    value=nominal_value(an.uage),
+                                    error=std_dev(an.uage)))
             self.computed_values = cv
         else:
             self._update_ratios()
@@ -317,7 +322,7 @@ class MainView(HasTraits):
 
                 return ComputedValue(name=n,
                                      tag=a,
-                                     value=nominal_value(value) or 0,
+                                     value=nominal_value(value or 0),
                                      display_value=display_value,
                                      error=e or 0)
 
