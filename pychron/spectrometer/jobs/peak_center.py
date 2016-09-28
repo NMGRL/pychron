@@ -238,8 +238,11 @@ class BasePeakCenter(MagnetSweep):
 
     # private
     def _get_result(self, i, det):
+        # ys = self.graph.get_data(series=i, axis=1)
+
         xs = self.graph.get_data(series=i)
-        ys = self.graph.get_data(series=i, axis=1)
+        ys = getattr(self.graph.plots[0], 'odata{}'.format(i))
+
         if xs.shape == ys.shape:
             pts = vstack((xs, ys)).T
             result = PeakCenterResult(det, pts)

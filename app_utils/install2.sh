@@ -67,7 +67,8 @@ PYCHRON_PATH=${PYCHRONDATA_PREFIX}/src
 
 ICON_NAME=pyexperiment_icon.icns
 
-CONDA_REQ="statsmodels
+CONDA_REQ="qt=4.8.5
+statsmodels
 scikit-learn
 PyYAML
 traits
@@ -84,7 +85,7 @@ xlwt
 pip
 PySide
 matplotlib
-PyMySQL
+PyMySQL=0.6.6
 requests
 keyring
 pil
@@ -242,14 +243,14 @@ touch ${LAUNCHER_SCRIPT_PATH}
 echo export GITHUB_ORGANIZATION=${go} >> ${LAUNCHER_SCRIPT_PATH}
 echo export GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
 echo export GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
-echo export MassSpecDBVersion=$dbv >> ${LAUNCHER_SCRIPT_PATH}
+echo export MassSpecDBVersion=${dbv} >> ${LAUNCHER_SCRIPT_PATH}
 
-echo ROOT=${PYCHRON_PATH} > ${LAUNCHER_SCRIPT_PATH}
+echo ROOT=${PYCHRON_PATH} >> ${LAUNCHER_SCRIPT_PATH}
 
 echo ENTRY_POINT=\$ROOT/launchers/${APPLICATION}.py >> ${LAUNCHER_SCRIPT_PATH}
 echo export PYTHONPATH=\$ROOT >> ${LAUNCHER_SCRIPT_PATH}
 
-echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python \$ENTRY_POINT >> ${LAUNCHER_SCRIPT_PATH}
+echo ${MINICONDA_PREFIX}/envs/${CONDA_ENV}/bin/python.app \$ENTRY_POINT >> ${LAUNCHER_SCRIPT_PATH}
 if [[ ${use_app_bundle} == "1" ]]
 then
   #  Create the app bundle

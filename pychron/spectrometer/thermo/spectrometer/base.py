@@ -274,6 +274,8 @@ class ThermoSpectrometer(SpectrometerDevice):
             if current:
                 det.read_deflection()
             deflection = det.deflection
+        else:
+            self.warning('Failed getting deflection for detector ="{}"'.format(name))
 
         return deflection
 
@@ -284,9 +286,14 @@ class ThermoSpectrometer(SpectrometerDevice):
         :param name: str
         :return: Detector
         """
+
         if isinstance(name, BaseDetector):
             return name
         else:
+            if name.endswith('_'):
+                name = '{})'.format(name[:-1])
+                name = name.replace('_', '(')
+
             return next((det for det in self.detectors if det.name == name), None)
 
     def update_isotopes(self, isotope, detector):

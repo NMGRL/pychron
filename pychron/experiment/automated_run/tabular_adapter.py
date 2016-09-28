@@ -50,6 +50,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
+        ('Project', 'project'),
+        ('Material', 'material'),
         ('RepositoryID', 'repository_identifier'),
         ('Position', 'position'),
         ('Extract', 'extract_value'),
@@ -185,10 +187,10 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                            Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
                            Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
             for iso in item.result.isotope_group.iter_isotopes():
-
                 actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
                            Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
-                           Action(name='Equilibration/Signal/Baseline', action='show_evolution_eq_bs_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal/Baseline',
+                                  action='show_evolution_eq_bs_{}'.format(iso.name)),
                            Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
                 m = MenuManager(*actions, name=iso.name)
                 evo_actions.append(m)

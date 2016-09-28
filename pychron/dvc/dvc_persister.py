@@ -56,7 +56,7 @@ class DVCPersister(BasePersister):
     stage_files = Bool(True)
     default_principal_investigator = Str
 
-    def per_spec_save(self, pr, repository_identifier=None, commit=False, msg_prefix=None):
+    def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
         self.per_spec = pr
 
         if repository_identifier:
@@ -65,7 +65,7 @@ class DVCPersister(BasePersister):
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save()
-        self.post_measurement_save(commit=commit, msg_prefix=msg_prefix)
+        self.post_measurement_save(commit=commit, commit_tag=commit_tag)
 
     def initialize(self, repository, pull=True):
         """
@@ -107,7 +107,7 @@ class DVCPersister(BasePersister):
         if sblob:
             sblob = base64.b64encode(sblob)
 
-        obj = {'request': rblob, # time vs
+        obj = {'request': rblob,  # time vs
                'response': oblob,
                'sblob': sblob}
 
@@ -155,7 +155,7 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, msg_prefix='Collection'):
+    def post_measurement_save(self, commit=True, commit_tag='COLLECTION'):
         """
         save
             - analysis.json
@@ -169,9 +169,11 @@ class DVCPersister(BasePersister):
         self.debug('================= post measurement started')
         ret = True
 
+        ar = self.active_repository
+
         # save spectrometer
         spec_sha = self._get_spectrometer_sha()
-        spec_path = os.path.join(self.active_repository.path, '{}.json'.format(spec_sha))
+        spec_path = os.path.join(ar.path, '{}.json'.format(spec_sha))
         if not os.path.isfile(spec_path):
             self._save_spectrometer_file(spec_path)
 
@@ -199,22 +201,45 @@ class DVCPersister(BasePersister):
 
         # stage files
         if self.stage_files:
-            paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
-
-            for p in paths:
-                if os.path.isfile(p):
-                    self.active_repository.add(p, commit=False, msg_prefix=msg_prefix)
-                else:
-                    self.debug('not at valid file {}'.format(p))
-
             if commit:
                 try:
-                    self.active_repository.smart_pull(accept_their=True)
+                    ar.smart_pull(accept_their=True)
+
+                    # default commits
+                    add = False
+                    p = self._make_path('intercepts')
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                        add = True
+
+                    p = self._make_path('baselines')
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                        add = True
+
+                    if add:
+                        ar.commit('<ISOEVO> default collection fits')
+
+                    for pp, tag, msg in (('blanks', 'BLANKS',
+                                          'preceding {}'.format(self.per_spec.previous_blank_runid)),
+                                         ('icfactors', 'ICFactor', 'default')):
+                        p = self._make_path(pp)
+                        if os.path.isfile(p):
+                            ar.add(p, commit=False)
+                            ar.commit('<{}> {}'.format(tag, msg))
+
+                    # commit the reset of the files
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+
+                    for p in paths:
+                        if os.path.isfile(p):
+                            ar.add(p, commit=False)
+                        else:
+                            self.debug('not at valid file {}'.format(p))
 
                     # commit files
-                    self.active_repository.commit('<COLLECTION>')
-                    # self.active_repository.push()
-                    self.dvc.push_repository(self.active_repository)
+                    ar.commit('<{}>'.format(commit_tag))
+                    self.dvc.push_repository(ar)
 
                     # update meta
                     self.dvc.meta_pull(accept_our=True)
@@ -449,21 +474,21 @@ class DVCPersister(BasePersister):
                                             'points': base64.b64encode(''.join([struct.pack(fmt, *di)
                                                                                 for di in result.points]))}
 
-            # if pc.result:
-            #     xs, ys, _mx, _my = pc.result
-            #     obj.update({'low_dac': xs[0],
-            #                 'center_dac': xs[1],
-            #                 'high_dac': xs[2],
-            #                 'low_signal': ys[0],
-            #                 'center_signal': ys[1],
-            #                 'high_signal': ys[2]})
-            #
-            # data = pc.get_data()
-            # if data:
-            #     fmt = '>ff'
-            #     obj['fmt'] = fmt
-            #     for det, pts in data:
-            #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
+                    # if pc.result:
+                    #     xs, ys, _mx, _my = pc.result
+                    #     obj.update({'low_dac': xs[0],
+                    #                 'center_dac': xs[1],
+                    #                 'high_dac': xs[2],
+                    #                 'low_signal': ys[0],
+                    #                 'center_signal': ys[1],
+                    #                 'high_signal': ys[2]})
+                    #
+                    # data = pc.get_data()
+                    # if data:
+                    #     fmt = '>ff'
+                    #     obj['fmt'] = fmt
+                    #     for det, pts in data:
+                    #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
 
         dvc_dump(obj, p)
 
@@ -500,7 +525,7 @@ class DVCPersister(BasePersister):
         """
         return spectrometer_sha(self.per_spec.spec_dict, self.per_spec.defl_dict, self.per_spec.gains)
 
-# ============= EOF =============================================
+        # ============= EOF =============================================
         #         self._save_measured_positions()
         #
         #

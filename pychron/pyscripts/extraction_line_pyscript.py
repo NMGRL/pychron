@@ -268,8 +268,8 @@ class ExtractionPyScript(ValvePyScript):
 
         self._interval_stack.put((t, f, name))
 
-    def _set_extraction_state(self, msg, color='red'):
-        self._manager_action([('set_extract_state', (msg,), {'color': color})])
+    def _set_extraction_state(self, msg, color='red', flash=0.75):
+        self._manager_action([('set_extract_state', (msg,), {'color': color, 'flash': flash})])
 
     @verbose_skip
     @command_register
@@ -765,7 +765,7 @@ class ExtractionPyScript(ValvePyScript):
     def enable(self):
         ed = self.extract_device
         ed = ed.replace('_', ' ')
-        self._set_extraction_state('{} Enabled'.format(ed))
+        self._set_extraction_state('{} Enabled'.format(ed), flash=False)
         # self.manager.set_extract_state('{} Enabled'.format(ed))
 
         return self._manager_action([('enable_device', (), {})],

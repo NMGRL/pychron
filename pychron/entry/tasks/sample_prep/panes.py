@@ -23,8 +23,6 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumE
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -58,7 +56,8 @@ class PrepStepAdapter(TabularAdapter):
                ('Frantz', 'frantz'),
                ('Acid', 'acid'),
                ('Heavy_liquid', 'heavy_liquid'),
-               ('Pick', 'pick')]
+               ('Pick', 'pick'),
+               ('Comments','comment')]
     font = 'arial 10'
     odd_bg_color = '#f5f5d6'
     timestamp_width = Int(100)
@@ -67,7 +66,7 @@ class PrepStepAdapter(TabularAdapter):
     wash_width = Int(75)
     frantz_width = Int(75)
     acid_width = Int(75)
-    heavy_liquid_width = Int(75)
+    heavy_liquid_width = Int(80)
     frantz_width = Int(125)
 
     timestamp_text = Property

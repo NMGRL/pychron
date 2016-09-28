@@ -81,6 +81,11 @@ class ParseConditionalsTestCase(unittest.TestCase):
         tokens = tokenize(t)
         self.assertEqual(tokens, [('not age<10', None)])
 
+    def test_parse_deflection2(self):
+        t = 'L2(CDD).deflection==2000'
+        tokens = tokenize(t)
+        self.assertListEqual(tokens, [('L2(CDD).deflection==2000', None)])
+
 
 class ConditionalsTestCase(unittest.TestCase):
     def setUp(self):
@@ -280,12 +285,17 @@ class ConditionalsTestCase(unittest.TestCase):
 
     @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_Inactive2(self):
-        d = {'check': 'CDD.inactive', 'attr': 'CDD'}
+        d = {'check': 'L2(CDD).inactive', 'attr': 'L2(CDD)'}
         self._test(d)
 
     @unittest.skipIf(DEBUGGING, 'Debugging')
     def test_Deflection(self):
         d = {'check': 'CDD.deflection==2000', 'attr': 'CDD'}
+        self._test(d)
+
+    @unittest.skipIf(DEBUGGING, 'Debugging')
+    def test_Deflection2(self):
+        d = {'check': 'L2(CDD).deflection==2000', 'attr': 'CDD'}
         self._test(d)
 
     def _test_between(self, l, h):

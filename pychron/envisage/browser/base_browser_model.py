@@ -549,15 +549,17 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         # load('experiments', self.repositories)
         load('samples', self.samples)
 
-    def _load_projects_for_principal_investigators(self):
+    def _load_projects_for_principal_investigators(self, pis=None):
         ms = None
         if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
 
-        pis = None
-        if self.principal_investigator_enabled and self.selected_principal_investigators:
+        if not pis and self.principal_investigator_enabled and self.selected_principal_investigators:
             pis = [p.name for p in self.selected_principal_investigators]
+
+        if pis:
             self.debug('load projects for principal investigator= {}'.format(pis))
+
         db = self.db
         ps = db.get_projects(principal_investigators=pis,
                              mass_spectrometers=ms)

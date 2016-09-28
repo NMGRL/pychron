@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.trait_types import Bool, Instance, Event, Int
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traits.traits import Color
+# ============= standard library imports ========================
+from datetime import datetime
+# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.pychron_constants import LIGHT_YELLOW
 
@@ -67,6 +68,9 @@ class Consoleable(Loggable):
             color = self.console_default_color
 
         if self.console_display:
+            t = datetime.now().strftime('%H:%M:%S')
+            msg = '{} -- {}'.format(t, msg)
+
             self.console_display.add_text(msg, color=color)
 
         if log:

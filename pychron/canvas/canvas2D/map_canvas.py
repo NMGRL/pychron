@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Instance, Bool, Enum, Float, Color
-# =============standard library imports ========================
 import math
-# =============local library imports  ==========================
-from pychron.stage.maps.base_stage_map import BaseStageMap
+
+from traits.api import Instance, Bool, Enum, Float, Color
+
+from pychron.canvas.canvas2D.scene.primitives.calibration import CalibrationObject
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
-from pychron.canvas.canvas2D.scene.primitives.primitives import CalibrationObject
 from pychron.core.geometry.affine import AffineTransform
+from pychron.stage.maps.base_stage_map import BaseStageMap
 
 
 class MapCanvas(SceneCanvas):

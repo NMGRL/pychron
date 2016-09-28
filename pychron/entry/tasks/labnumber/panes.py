@@ -83,6 +83,7 @@ class IrradiationEditorPane(TraitsDockPane):
     def traits_view(self):
         self.sample_tabular_adapter.columns = [('Sample', 'name'),
                                                ('Material', 'material'),
+                                               ('Grainsize','grainsize'),
                                                ('Note', 'note')]
 
         # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',

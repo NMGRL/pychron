@@ -52,7 +52,8 @@ class MaterialAdapter(BaseAdapter):
 
 
 class ProjectAdapter(BaseAdapter):
-    columns = [('Added', 'added'), ('Name', 'name'), ('PI', 'principal_investigator')]
+    columns = [('Added', 'added'), ('Name', 'name'), ('PI', 'principal_investigator'),
+               ('Contact', 'lab_contact'), ('Institution', 'institution'), ('Comment', 'comment')]
     principal_investigator_text = Property
 
     def _get_principal_investigator_text(self):
@@ -120,6 +121,7 @@ class SampleEditorPane(TraitsDockPane):
 </p>
 
 '''
+
     def traits_view(self):
         pigrp = HGroup(UItem('principal_investigator',
                              editor=ComboboxEditor(name='principal_investigators',
@@ -133,6 +135,7 @@ class SampleEditorPane(TraitsDockPane):
         prgrp = HGroup(UItem('project', editor=ComboboxEditor(name='projects',
                                                               use_filter=False)),
                        UItem('generate_project_button', tooltip='Generate a default name for this project'),
+                       UItem('set_optionals_button', tooltip='Set optional values for current project'),
                        icon_button_editor('add_project_button', 'add',
                                           enabled_when='project',
                                           tooltip='Add a project'),
@@ -149,9 +152,9 @@ class SampleEditorPane(TraitsDockPane):
                       show_border=True)
 
         sgrp = VGroup(HGroup(UItem('sample'),
-                      icon_button_editor('add_sample_button', 'add',
-                                         enabled_when='sample',
-                                         tooltip='Add a sample')),
+                             icon_button_editor('add_sample_button', 'add',
+                                                enabled_when='sample',
+                                                tooltip='Add a sample')),
                       VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',
                       label='Sample',

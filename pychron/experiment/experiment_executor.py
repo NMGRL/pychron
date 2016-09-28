@@ -43,6 +43,7 @@ from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
@@ -92,6 +93,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     show_conditionals_button = Button('Show Conditionals')
     start_button = Event
     stop_button = Event
+    configure_scheduled_button = Event
     can_start = Property(depends_on='executable, _alive')
     executing_led = Instance(LED, ())
     delaying_between_runs = Bool
@@ -135,6 +137,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     datahub = Instance(Datahub)
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
+
+    scheduler = Instance(ExperimentScheduler)
     # ===========================================================================
     #
     # ===========================================================================
@@ -301,11 +305,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # reset executor
             self._reset()
 
-            name = self.experiment_queue.name
-
-            msg = 'Starting Execution "{}"'.format(name)
-            self.heading(msg)
-
             self._aborted = False
             self._canceled = False
             self.extraction_state_label = ''
@@ -437,12 +436,35 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             execute opened experiment queues
         """
-        # delay before starting
         exp = self.experiment_queue
+        scheduler = self.scheduler
+
+        name = exp.name
+
+        if scheduler.delayed_start_enabled:
+            t = scheduler.start_time
+            tseconds = scheduler.get_startf()
+            st = t.strftime('%a %H:%M')
+            self.heading('Waiting until {} to start "{}"'.format(st, name))
+            self.set_extract_state('scheduled start {}'.format(st), flash=False)
+            while 1:
+                if self._canceled or not self.alive:
+                    return
+                if time.time() > tseconds:
+                    break
+                time.sleep(1)
+            self.set_extract_state(False)
+        else:
+            msg = 'Starting Execution "{}"'.format(name)
+            self.heading(msg)
+
+        # delay before starting
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
+            msg = '"{}" started'.format(exp.name)
+            self.heading(msg)
             if self.is_alive():
                 if self._pre_queue_check(exp):
                     break
@@ -730,7 +752,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in ('truncated', 'canceled', 'failed'):
                 run.spec.state = 'success'
 
-        if run.spec.state in ('success', 'truncated'):
+        if run.spec.state in ('success', 'truncated', 'terminated'):
             run.save()
             self.run_completed = run
 
@@ -1268,9 +1290,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         wc.start(duration=delay)
         wg.pop(wc)
 
-        # if wc.is_continued():
-        # self.stats.continue_clock()
-
     def _set_extract_state(self, state, *args):
         """
             state: str
@@ -1338,21 +1357,28 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             iterator for extraction state label.
             used to flash label
         """
-        t, state = gen.next()
-        if state:
-            self.debug('set state label={}, color={}'.format(label, color))
-            self.trait_set(extraction_state_label=label,
-                           extraction_state_color=color)
-        else:
-            self.debug('clear extraction_state_label')
-            self.trait_set(extraction_state_label='')
 
-        if not self._end_flag.is_set():
-            do_after(t * 1000, self._extraction_state_iter, gen, label, color)
-        else:
-            self.debug('extract state complete')
+        if self._end_flag.is_set():
+            self.debug('extract state complete1')
             self._complete_flag.set()
             self.trait_set(extraction_state_label='')
+        else:
+
+            t, state = gen.next()
+            if state:
+                self.debug('set state label={}, color={}'.format(label, color))
+                self.trait_set(extraction_state_label=label,
+                               extraction_state_color=color)
+            else:
+                self.debug('clear extraction_state_label')
+                self.trait_set(extraction_state_label='')
+
+            if not self._end_flag.is_set():
+                do_after(t * 1000, self._extraction_state_iter, gen, label, color)
+            # else:
+            #     self.debug('extract state complete2')
+            #     self._complete_flag.set()
+            #     self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
         """
@@ -1432,8 +1458,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         elm_connectable = Connectable(name='Extraction Line',
                                       manager=self.extraction_line_manager)
         self.connectables = [elm_connectable]
-
-        print self.extraction_line_manager
 
         if self.extraction_line_manager is None:
             nonfound.append('extraction_line')
@@ -2006,20 +2030,21 @@ Use Last "blank_{}"= {}
         db = mainstore.db
         selected = False
         dbr = None
-        if last:
-            dbr = db.retrieve_blank(kind, ms, ed, last, repository)
+        with db.session_ctx(use_parent_session=False):
+            if last:
+                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
-        if dbr is None:
-            selected = True
-            from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-            selector = ReferenceAnalysisSelector()
-            info = selector.edit_traits(kind='livemodal')
-            dbs = db.get_blanks(ms)
-            selector.init('Select Default Blank', dbs)
-            if info.result:
-                dbr = selector.selected
-        if dbr:
-            dbr = mainstore.make_analysis(dbr.make_record_view(repository))
+            if dbr is None:
+                selected = True
+                from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
+                selector = ReferenceAnalysisSelector()
+                info = selector.edit_traits(kind='livemodal')
+                dbs = db.get_blanks(ms)
+                selector.init('Select Default Blank', dbs)
+                if info.result:
+                    dbr = selector.selected
+            if dbr:
+                dbr = mainstore.make_analysis(dbr.make_record_view(repository))
 
         return dbr, selected
 
@@ -2091,6 +2116,10 @@ Use Last "blank_{}"= {}
     def _alive_changed(self, new):
         self.executing_led.state = 2 if new else 0
 
+    def _configure_scheduled_button_fired(self):
+        self.scheduler.setup()
+        self.scheduler.edit_traits(kind='livemodal')
+
     # ===============================================================================
     # property get/set
     # ===============================================================================
@@ -2100,6 +2129,9 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _scheduler_default(self):
+        return ExperimentScheduler()
+
     def _system_health_default(self):
         sh = SystemHealthSeries()
         return sh

@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import Str, Bool, Enum, \
-    Button, Float, Int, Color
+from traits.api import Str, Bool, Enum, Button, Float, Int, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
 
 from pychron.core.persistence_options import BasePersistenceOptions
@@ -34,11 +33,10 @@ class BasePDFOptions(BasePersistenceOptions):
     top_margin = dumpable(Float(1))
     bottom_margin = dumpable(Float(1))
     show_page_numbers = dumpable(Bool(False))
-    # use_alternating_background = dumpable(Bool)
-    # alternating_background = dumpable(Color)
 
-    # persistence_path = Property
     _persistence_name = 'base_pdf_options'
+
+    page_number_format = None
 
     def __init__(self, *args, **kw):
         self.persistence_path = os.path.join(paths.hidden_dir, self._persistence_name)
@@ -65,7 +63,6 @@ class PDFTableOptions(BasePDFOptions):
     use_alternating_background = Bool
     alternating_background = Color
 
-    # show_page_numbers = Bool
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)
     options_button = Button
@@ -151,4 +148,5 @@ class PDFTableOptions(BasePDFOptions):
             title='PDF Options',
             buttons=['OK', 'Cancel', 'Revert'])
         return v
-        # ============= EOF =============================================
+
+# ============= EOF =============================================

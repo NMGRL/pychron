@@ -16,21 +16,19 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Event, Str, Bool, List
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Spring, Group, Handler
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Group, Handler, spring, HGroup
+
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
+from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
-# from pychron.processing.analyses.view.isotope_view import IsotopeView
+from pychron.processing.analyses.view.interferences_view import InterferencesView
+from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
-from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
-from pychron.processing.analyses.view.interferences_view import InterferencesView
-from pychron.processing.analyses.view.main_view import MainView
 
 
 class AnalysisViewHandler(Handler):
@@ -102,6 +100,7 @@ class AnalysisView(HasTraits):
         self.model = an
         analysis_type = an.analysis_type
         analysis_id = an.record_id
+        self.analysis_id = analysis_id
 
         main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view = main_view
@@ -209,7 +208,8 @@ class AnalysisView(HasTraits):
         peak_center_grp = Group(UItem('peak_center_view', style='custom',
                                       editor=InstanceEditor()),
                                 defined_when='peak_center_view', label='Peak_center')
-        v = View(VGroup(Spring(springy=False, height=-10),
+        v = View(VGroup(spring,
+                        HGroup(spring, UItem('analysis_id', style='readonly'), spring),
                         Tabbed(main_grp,
                                isotope_grp,
                                history_grp,

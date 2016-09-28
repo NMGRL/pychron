@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Table, TableStyle
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 from pychron.core.pdf.items import FooterRow, FootNoteRow, Row
 from pychron.core.pdf.options import PDFTableOptions

@@ -82,11 +82,18 @@ class HumanErrorChecker(Loggable):
 
     def _check_run_non_fatal(self, run):
         es = run.extraction_script
+        if es:
+            es = es.lower()
+
         ed = run.extract_device
         if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
             ds = ed.split(' ')[1].lower()
-            if ds != es:
+            if ds not in es:
                 return 'Extraction script "{}" does not match the default "{}"'.format(es, ds)
+        elif run.analysis_type == 'cocktail' and es and 'cocktail' not in es:
+            return 'Cocktail analysis is not using a "cocktail" extraction script'
+        elif run.analysis_type == 'air' and es and 'air' not in es:
+            return 'Air analysis is not using an "air" extraction script'
 
     def _check_run(self, run, inform, test):
         if test:

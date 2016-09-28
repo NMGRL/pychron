@@ -17,11 +17,9 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, List, Property
 from traitsui.api import View, Item, UItem, TabularEditor, VGroup, HGroup
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_PERCENT
 
@@ -51,10 +49,10 @@ class InterferenceAdapter(TabularAdapter):
     font = '10'
 
     def _get_value_text(self):
-        return floatfmt(self.item.value, n=5)
+        return floatfmt(self.item.value, n=5, use_scientific=True)
 
     def _get_error_text(self):
-        return floatfmt(self.item.error, n=5)
+        return floatfmt(self.item.error, n=5, use_scientific=True)
 
     def _get_percent_error_text(self):
         return format_percent_error(self.item.value, self.item.error)
@@ -80,8 +78,8 @@ class InterferencesView(HasTraits):
             if k in MAPPING:
                 k = MAPPING[k]
 
-            a.append(Interference(name=k, value=v.nominal_value,
-                                  error=v.std_dev))
+            a.append(Interference(name=k, value=nominal_value(v),
+                                  error=std_dev(v)))
         self.interferences = a
 
         p = []

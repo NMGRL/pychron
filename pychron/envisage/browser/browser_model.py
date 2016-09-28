@@ -288,7 +288,8 @@ class BrowserModel(BaseBrowserModel):
                                     level=self.level if self.irradiation_enabled else None,
                                     analysis_types=at,
                                     high_post=hp,
-                                    low_post=lp)
+                                    low_post=lp,
+                                    filter_non_run=self.filter_non_run_samples)
         return ls
 
     def _identifier_change_hook(self, db, new, lns):

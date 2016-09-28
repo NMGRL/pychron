@@ -215,6 +215,7 @@ class AutomatedRunConditional(BaseConditional):
     _teststr = None
     _ctx = None
     value_context = None
+
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
@@ -289,6 +290,7 @@ class AutomatedRunConditional(BaseConditional):
 
         self.debug('testing {}'.format(teststr))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
+        print msg
         self.debug(msg)
         if eval(teststr, ctx):
             self.trips += 1
@@ -309,6 +311,10 @@ class AutomatedRunConditional(BaseConditional):
         tt = []
         for ti, oper in tokenize(teststr):
             ts, attr, func = get_teststr_attr_func(ti)
+
+            attr = attr.replace('(', '_').replace(')', '_')
+            ts = ts.replace('(', '_').replace(')', '_')
+
             v = func(obj, data, self.window)
 
             vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)

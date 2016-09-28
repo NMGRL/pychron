@@ -59,6 +59,7 @@ class SampleRecordView(RecordView):
     name = ''
     material = ''
     project = ''
+    grainsize = ''
     lat = 0
     lon = 0
     elevation = 0
@@ -71,6 +72,8 @@ class SampleRecordView(RecordView):
     def _create(self, dbrecord):
         if dbrecord.material:
             self.material = dbrecord.material.name
+            self.grainsize = dbrecord.material.grainsize or ''
+
         if dbrecord.project:
             self.project = dbrecord.project.name
             if dbrecord.project.principal_investigator:
@@ -191,6 +194,7 @@ class ProjectRecordView(RecordView, NameView):
     checkin_date = Date
     unique_id = Long
 
+    institution = Str
     comment = Str
     db_comment = Str
     dirty = Bool(False)
@@ -201,8 +205,10 @@ class ProjectRecordView(RecordView, NameView):
             if dbrecord.principal_investigator:
                 self.principal_investigator = dbrecord.principal_investigator.name
             self.unique_id = dbrecord.id
-
-            # self.db_comment = self.comment = dbrecord.comment
+            self.checkin_date = dbrecord.checkin_date
+            self.db_comment = self.comment = dbrecord.comment or ''
+            self.lab_contact = dbrecord.lab_contact or ''
+            self.institution = dbrecord.institution or ''
 
         else:
             self.name = dbrecord

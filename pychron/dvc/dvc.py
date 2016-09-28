@@ -444,16 +444,28 @@ class DVC(Loggable):
             self.info('Saving fits for {}'.format(ai))
             ai.dump_fits(keys, reviewed=True)
 
+    def save_flux(self, identifier, j, e):
+        self.meta_pull()
+
+        with self.session_ctx(use_parent_session=False):
+            irp = self.get_identifier(identifier)
+            if irp:
+                level = irp.level
+                irradiation = level.irradiation
+
+                self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
+                self.meta_commit('User manual edited flux')
+        self.meta_push()
+
     def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
         self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
 
-        db = self.db
-        ip = db.get_identifier(identifier)
-        ip.j = j
-        ip.j_err = e
-        db.commit()
+        with self.session_ctx(use_parent_session=False):
+            ip = self.get_identifier(identifier)
+            ip.j = j
+            ip.j_err = e
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
@@ -755,12 +767,12 @@ class DVC(Loggable):
 
         return added
 
-    def add_project(self, name, pi=None):
+    def add_project(self, name, pi=None, **kw):
         added = False
         db = self.db
         if not db.get_project(name, pi):
             added = True
-            db.add_project(name, pi)
+            db.add_project(name, pi, **kw)
         return added
 
     def add_sample(self, name, project, material, grainsize=None, note=None):

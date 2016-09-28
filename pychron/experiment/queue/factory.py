@@ -129,9 +129,10 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
             return []
 
         names = []
-        ts = db.get_loads()
-        if ts:
-            names = ts
+        with db.session_ctx(use_parent_session=False):
+            ts = db.get_loads()
+            if ts:
+                names = ts
         return names
 
     @cached_property
@@ -149,9 +150,10 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         if db is None or not db.connect():
             return []
-        dbus = db.get_users()
-        us = [ui.name for ui in dbus]
-        self._emails = {ui.name: ui.email or '' for ui in dbus}
+        with db.session_ctx(use_parent_session=False):
+            dbus = db.get_users()
+            us = [ui.name for ui in dbus]
+            self._emails = {ui.name: ui.email or '' for ui in dbus}
 
         return [''] + us
 
@@ -167,7 +169,8 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         if db:
             if not db.connect():
                 return []
-            names = db.get_extraction_device_names()
+            with db.session_ctx(use_parent_session=False):
+                names = db.get_extraction_device_names()
 
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Extraction Devices')
@@ -186,9 +189,11 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         cp = os.path.join(paths.setup_dir, 'names')
         if db:
             if not db.connect():
+                self.warning('not connected to database')
                 return []
-            ms = db.get_mass_spectrometer_names()
-            names = [mi.capitalize() for mi in ms]
+            with db.session_ctx(use_parent_session=False):
+                ms = db.get_mass_spectrometer_names()
+                names = [mi.capitalize() for mi in ms]
         elif os.path.isfile(cp):
             names = self._get_names_from_config(cp, 'Mass Spectrometers')
         else:

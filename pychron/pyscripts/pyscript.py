@@ -790,20 +790,25 @@ class PyScript(Loggable):
         if app is None:
             if self.manager:
                 app = self.manager.application
+
+        if app is None:
+            self.debug('no application available. self.manager = {}'.format(self.manager))
         return app
 
     def _manager_action(self, func, name=None, protocol=None, protocols=None, *args, **kw):
         man = self.manager
-        if protocol:
-            app = self._get_application()
-            if app is not None:
-                app_args = (protocol,)
-                if name is not None:
-                    app_args = (protocol, 'name=="{}"'.format(name))
 
-                man = app.get_service(*app_args)
+        app = self._get_application()
+        if app is None:
+            return
+
+        if protocol:
+            app_args = (protocol,)
+            if name is not None:
+                app_args = (protocol, 'name=="{}"'.format(name))
+
+            man = app.get_service(*app_args)
         elif protocols:
-            app = self._get_application()
             for p in protocols:
                 if name:
                     man = app.get_service(p, 'name=="{}"'.format(name))
@@ -826,8 +831,8 @@ class PyScript(Loggable):
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
         elif name:
-            self.warning('could not find manager name="{}" func="{}"'.format(name,
-                                                                             ','.join([f for f, _, _ in func])))
+            msg = ','.join([f for f, _, _ in func])
+            self.warning('could not find manager name="{}" func="{}"'.format(name, msg))
 
     # ==============================================================================
     # Sleep/ Wait

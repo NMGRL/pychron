@@ -55,7 +55,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 self.warning('no deflection data for {}'.format(self.name))
 
     def read_deflection(self):
-        if self.use_deflection:
+        if self.use_deflection or self.kind in ('IonCounter',):
             r = self.ask('GetDeflection {}'.format(self.name))
             try:
                 if r is None:
