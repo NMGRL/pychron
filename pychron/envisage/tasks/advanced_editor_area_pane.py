@@ -24,8 +24,8 @@ from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
 
 # ============= standard library imports ========================
 import sys
-from PySide import QtCore
-from PySide.QtGui import QAction, QCursor
+from pyface.qt import QtCore
+from pyface.qt.QtGui import QAction, QCursor
 # ============= local library imports  ==========================
 
 # class myEditorWidget(EditorWidget):

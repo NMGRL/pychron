@@ -18,8 +18,8 @@
 from pyface.ui.qt4.about_dialog import AboutDialog
 from traits.api import List, Str
 # ============= standard library imports ========================
-from PySide import QtGui, QtCore
-from PySide.QtGui import QPlainTextEdit
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtGui import QPlainTextEdit
 import sys
 # ============= local library imports  ==========================
 

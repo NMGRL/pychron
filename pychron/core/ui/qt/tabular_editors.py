@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QRegExp, Qt
-from PySide.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
+from pyface.qt.QtCore import QRegExp, Qt
+from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
     QSortFilterProxyModel, QItemSelectionModel
 from pyface.qt import QtCore
 from traits.trait_types import Str, Bool, Any

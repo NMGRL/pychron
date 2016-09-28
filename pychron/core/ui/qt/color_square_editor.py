@@ -18,7 +18,7 @@
 from traits.api import Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from PySide.QtGui import QFrame, QPainter, QColor
+from pyface.qt.QtGui import QFrame, QPainter, QColor
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 

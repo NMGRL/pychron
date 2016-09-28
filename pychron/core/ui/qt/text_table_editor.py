@@ -18,7 +18,7 @@
 from traits.api import Event, Color, Str, Any, Int
 from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================
-from PySide.QtGui import QTextEdit, QPalette, QTextCursor, QTextTableFormat, QTextFrameFormat, \
+from pyface.qt.QtGui import QTextEdit, QPalette, QTextCursor, QTextTableFormat, QTextFrameFormat, \
     QTextTableCellFormat, QColor, QFont, QPlainTextEdit, QTextCharFormat
 from traitsui.basic_editor_factory import BasicEditorFactory
 

@@ -18,8 +18,8 @@
 import collections
 
 from PySide import QtGui, QtCore
-from PySide.QtCore import Qt
-from PySide.QtGui import QIcon, QTreeWidgetItemIterator, QColor
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor

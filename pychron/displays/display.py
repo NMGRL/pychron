@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtGui import QColor
+from pyface.qt.QtGui import QColor
 from traits.api import HasTraits, Int, Color, Str, Event, Bool
 # from traitsui.api import View, UItem
 # from pychron.lasers.scanner import ApplicationController
@@ -118,14 +118,14 @@ class DisplayController(ApplicationController):
             q = QColor(kw['color'])
             kw['color'] = q
 
-        rgba = kw['color'].toTuple()
-        b_rgba = self.bgcolor.toTuple()
-        for a, b in zip(rgba, b_rgba):
-            if abs(a - b) > tol:
-                break
-        else:
-            r, b, g, a = b_rgba
-            kw['color'].setRgb(255 - r, 255 - b, 255 - g, a)
+        # rgba = kw['color'].toTuple()
+        # b_rgba = self.bgcolor.toTuple()
+        # for a, b in zip(rgba, b_rgba):
+        #     if abs(a - b) > tol:
+        #         break
+        # else:
+        #     r, b, g, a = b_rgba
+        #     kw['color'].setRgb(255 - r, 255 - b, 255 - g, a)
 
         with self._lock:
             self.model.add_text(txt, **kw)

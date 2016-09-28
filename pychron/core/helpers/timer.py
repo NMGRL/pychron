@@ -19,7 +19,7 @@
 import time
 from threading import Event
 
-from PySide.QtCore import QThread
+from pyface.qt.QtCore import QThread
 
 
 # ============= local library imports  ==========================

@@ -18,7 +18,7 @@ from collections import namedtuple
 
 def get_display_size():
     size = namedtuple('Size', 'width height')
-    from PySide.QtGui import QApplication
+    from pyface.qt.QtGui import QApplication
     desktop = QApplication.desktop()
     rect = desktop.screenGeometry()
     w, h = rect.width(), rect.height()

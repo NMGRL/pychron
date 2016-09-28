@@ -33,8 +33,8 @@ import traits.has_traits
 
 traits.has_traits.CHECK_INTERFACES = 1
 
-from PySide import QtCore
-from pyface.qt import QtGui
+#from PySide import QtCore
+from pyface.qt import QtGui, QtCore
 from traits.trait_base import Undefined
 from traitsui.group import Group
 from traitsui.qt4 import ui_panel

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from PySide import QtCore
-from PySide.QtGui import QWidget, QImage, QPixmap
+from pyface.qt.QtGui import QWidget, QImage, QPixmap
 from pyface.qt import QtGui
 from traits.has_traits import HasTraits
 from traits.trait_types import Str

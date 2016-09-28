@@ -21,7 +21,7 @@ from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
 # ============= standard library imports ========================
 import random
-from PySide.QtGui import QLabel
+from pyface.qt.QtGui import QLabel
 # ============= local library imports  ==========================
 
 

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QRect, QSize
-from PySide.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
+from pyface.qt.QtCore import QRect, QSize
+from pyface.qt.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
     QColor, QPainter, QPen
 from pyface.qt import QtCore
 

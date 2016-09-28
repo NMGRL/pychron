@@ -21,7 +21,7 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
-from PySide.QtGui import QColor, QFont, QWidget, QLabel
+from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel
 
 # ============= local library imports  ==========================
 # ============= views ===================================
@@ -214,9 +214,9 @@ def change_intensity(color, fac):
 #
 #         self._set_image(color1, color2)
 
-from PySide.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
+from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
     QPen, QRadialGradient, QVBoxLayout
-from PySide.QtCore import Qt
+from pyface.qt.QtCore import Qt
 
 
 class qtLED(QGraphicsView):

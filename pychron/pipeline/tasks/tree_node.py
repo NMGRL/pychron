@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt
-from PySide.QtGui import QColor
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QColor
 from traitsui.tree_node import TreeNode
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

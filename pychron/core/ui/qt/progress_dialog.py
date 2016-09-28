@@ -20,9 +20,9 @@
 import sys
 import time
 
-from PySide import QtGui
-from PySide.QtCore import Qt
-from PySide.QtGui import QLabel, QDialogButtonBox
+from pyface.qt import QtGui
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
 from traits.api import Property, Bool, Int
 

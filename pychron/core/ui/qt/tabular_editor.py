@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from pickle import dumps
 
-from PySide import QtCore, QtGui
-from PySide.QtGui import QColor, QHeaderView, QApplication
+from pyface.qt import QtCore, QtGui
+from pyface.qt.QtGui import QColor, QHeaderView, QApplication
 from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
@@ -175,7 +175,7 @@ class _TableView(TableView):
             elif len(bgcolor) == 4:
                 bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         elif isinstance(bgcolor, QColor):
-            bgcolor = 'rgba({},{},{},{})'.format(*bgcolor.toTuple())
+            bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
         self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
 
     def set_vertical_header_font(self, fnt):

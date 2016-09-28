@@ -19,7 +19,7 @@ from traits.api import Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================
-from PySide.QtGui import QProgressBar, QVBoxLayout, QLabel
+from pyface.qt.QtGui import QProgressBar, QVBoxLayout, QLabel
 # ============= local library imports  ==========================
 
 class _ProgressEditor(Editor):

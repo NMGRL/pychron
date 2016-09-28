@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import Qt, QThread
-from PySide.QtGui import QColor, \
+from pyface.qt.QtCore import Qt, QThread
+from pyface.qt.QtGui import QColor, \
     QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
