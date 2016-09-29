@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtGui, QtCore
-from PySide.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
 from traits.api import Str, Bool, Event, List
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory

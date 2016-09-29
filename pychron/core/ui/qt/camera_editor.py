@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtCore import QTimer
-from PySide.QtGui import QLabel, QImage, QPixmap, QSizePolicy
+from pyface.qt.QtCore import QTimer
+from pyface.qt.QtGui import QLabel, QImage, QPixmap, QSizePolicy
 from traits.api import Int, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

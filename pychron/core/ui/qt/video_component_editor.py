@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Int, Str, Event
 # ============= standard library imports ========================
-from PySide.QtCore import QTimer, SIGNAL
+from pyface.qt.QtCore import QTimer, SIGNAL
 # ============= local library imports  ==========================
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 

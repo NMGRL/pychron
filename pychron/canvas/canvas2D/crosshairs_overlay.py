@@ -60,7 +60,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
     def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
         if color is not None:
             if not isinstance(color, (list, tuple)):
-                color = color.toTuple()
+                color = color.red(), color.green(), color.blue(), color.alpha()
 
             if not all(map(lambda xx: 0 <= xx <= 1., color)):
                 color = map(lambda xx: xx / 255., color)

@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from PySide.QtCore import QThread
+from pyface.qt.QtCore import QThread
 class Thread(QThread):
     _target = None
     _args = None

@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtCore
-from PySide.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
+from pyface.qt import QtCore
+from pyface.qt.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
     QSizePolicy, QPainterPath
 from traits.trait_errors import TraitError
 # ============= standard library imports ========================

@@ -132,7 +132,7 @@ class MapCanvas(SceneCanvas):
         rgb = lambda x: 0 <= x <= 1.
 
         if not isinstance(color, (list, tuple)):
-            color = color.toTuple()
+            color = color.red(), color.green(), color.blue(), color.alpha()
 
         if not all(map(rgb, color)):
             f = lambda x: x / 255.

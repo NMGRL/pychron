@@ -125,7 +125,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if valves_path is None:
             valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
 
-        if os.path.isfile(canvas_path):
+        if canvas_path and os.path.isfile(canvas_path):
             self.scene.load(canvas_path, canvas_config_path, valves_path, self)
             self.invalidate_and_redraw()
 

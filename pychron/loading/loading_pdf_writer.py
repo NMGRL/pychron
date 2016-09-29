@@ -53,7 +53,8 @@ class LoadingPDFOptions(BasePDFOptions):
             self.use_alternating_background = False
 
     def get_alternating_background(self):
-        t = self.alternating_background.toTuple()[:3]
+        color = self.alternating_background
+        t = color.red(), color.green(), color.blue()
         return map(lambda x: x / 255., t)
 
     def traits_view(self):

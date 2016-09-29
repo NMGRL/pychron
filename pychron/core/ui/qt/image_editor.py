@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from PySide.QtGui import QLabel, QImage, QPixmap, QScrollArea
+from pyface.qt.QtGui import QLabel, QImage, QPixmap, QScrollArea
 from pyface.image_resource import ImageResource
 from qimage2ndarray import array2qimage
 from traits.api import Any, Bool, Event, Str

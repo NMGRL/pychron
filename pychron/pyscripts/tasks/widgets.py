@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtGui, QtCore
-from PySide.QtCore import Qt
-from PySide.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat
 from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
 from pyface.ui.qt4.code_editor.find_widget import FindWidget
 from pyface.ui.qt4.code_editor.replace_widget import ReplaceWidget

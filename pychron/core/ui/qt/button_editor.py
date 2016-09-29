@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtGui import QSizePolicy
+from pyface.qt.QtGui import QSizePolicy
 from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View
 from traitsui.basic_editor_factory import BasicEditorFactory

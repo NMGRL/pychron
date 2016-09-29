@@ -24,6 +24,7 @@ HW_PACKAGE_MAP = {
 
     'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
     'SwitchController': 'pychron.hardware.actuators.switch_controller',
+    'DummyController':'pychron.hardware.actuators.dummy_controller',
     'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
     'ADC': 'pychron.hardware.adc.adc_device',
     'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',

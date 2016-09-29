@@ -205,7 +205,7 @@ class BaseOptions(HasTraits):
     def formatted_attr(self, key):
         obj = getattr(self, key)
         if 'color' in key:
-            obj = obj.toTuple()
+            obj = obj.red(), obj.green(), obj.blue(), obj.alpha()
         return obj
 
     def to_dict_test(self, k):

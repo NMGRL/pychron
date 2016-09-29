@@ -18,6 +18,6 @@ matplotlib
 PyMySQL
 requests
 keyring
-pil
+Pillow
 paramiko
 xlsxwriter

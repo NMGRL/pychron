@@ -20,7 +20,7 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
-from PySide.QtGui import QColor, QLCDNumber
+from pyface.qt.QtGui import QColor, QLCDNumber
 
 
 # ============= local library imports  ==========================

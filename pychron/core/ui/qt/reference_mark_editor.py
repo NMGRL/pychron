@@ -16,12 +16,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from PySide.QtGui import QBrush
-from PySide.QtGui import QColor
-from PySide.QtGui import QGraphicsScene
-from PySide.QtGui import QGraphicsView
-from PySide.QtGui import QVBoxLayout
-from PySide.QtGui import QWidget
+from pyface.qt.QtGui import QBrush
+from pyface.qt.QtGui import QColor
+from pyface.qt.QtGui import QGraphicsScene
+from pyface.qt.QtGui import QGraphicsView
+from pyface.qt.QtGui import QVBoxLayout
+from pyface.qt.QtGui import QWidget
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import os
 
-from PySide.QtGui import QSound
+from pyface.qt.QtGui import QSound
 
 
 # ============= standard library imports ========================

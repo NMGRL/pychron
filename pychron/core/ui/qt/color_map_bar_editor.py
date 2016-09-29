@@ -21,7 +21,7 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
-from PySide.QtGui import QPainter, QColor, QFrame
+from pyface.qt.QtGui import QPainter, QColor, QFrame
 # ============= local library imports  ==========================
 # from matplotlib.cm import get_cmap
 

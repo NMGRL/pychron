@@ -26,7 +26,7 @@ from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 # from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.signal_calculator import SignalCalculator
-from pychron.experiment.image_browser import ImageBrowser
+# from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
@@ -57,8 +57,8 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _sens_selector_factory(self, *args, **kw):
         return SensitivitySelector()
 
-    def _image_browser_factory(self, *args, **kw):
-        return ImageBrowser(application=self.application)
+    # def _image_browser_factory(self, *args, **kw):
+    #     return ImageBrowser(application=self.application)
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment.task',
@@ -164,16 +164,16 @@ class ExperimentPlugin(BaseTaskPlugin):
             protocol=SignalCalculator,
             factory=self._signal_calculator_factory)
 
-        so_image_browser = self.service_offer_factory(
-            protocol=ImageBrowser,
-            factory=self._image_browser_factory)
+        # so_image_browser = self.service_offer_factory(
+        #     protocol=ImageBrowser,
+        #     factory=self._image_browser_factory)
 
         so_sens_selector = self.service_offer_factory(
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
 
         return [so_signal_calculator,
-                so_image_browser,
+                # so_image_browser,
                 so_sens_selector]
 
         #     def _experimentor_default(self):

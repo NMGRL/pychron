@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from PySide import QtCore
+from pyface.qt import QtCore
 # ============= local library imports  ==========================
 import math
 
@@ -59,10 +59,10 @@ def invoke_in_main_thread(fn, *args, **kwargs):
 #    _FutureCall(1, fn, *args, **kw)
 
 def convert_color(color, output='rgbF'):
-    from PySide.QtGui import QColor
+    from pyface.qt.QtGui import QColor
 
     if isinstance(color, QColor):
-        rgb = color.toTuple()
+        rgb = color.red(), color.green(), color.blue()
 
     tofloat = lambda x: x / 255.
     if output == 'rgbF':
@@ -73,7 +73,7 @@ def convert_color(color, output='rgbF'):
 
 def wake_screen():
     import random, time
-    from PySide.QtGui import QCursor
+    from pyface.qt.QtGui import QCursor
 
     time.sleep(5)
 

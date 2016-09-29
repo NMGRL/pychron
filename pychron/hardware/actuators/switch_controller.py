@@ -24,6 +24,11 @@ from actuator import Actuator
 
 
 class SwitchController(Actuator):
+
+    def get_state_checksum(self, *args, **kw):
+        if self._cdevice:
+            return self._cdevice.get_state_checksum(*args, **kw)
+
     def get_open_indicator_state(self, *args, **kw):
         """
         """
