@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+import os
+
+from git import Repo
 from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
 from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
-# ============= standard library imports ========================
-import json
-import os
-from git import Repo
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.dvc.dvc_analysis import analysis_path
@@ -99,14 +99,14 @@ class BaseDiffView(HasTraits):
     values = List
     only_show_diff = Bool(True)
 
-    def __init__(self, record_id, lh, rh, ld, rd, d, *args, **kw):
+    def __init__(self, record_id, lh, rh, ld, rd, *args, **kw):
         super(BaseDiffView, self).__init__(*args, **kw)
 
         self.record_id = record_id
-        aj = json.load(d[0].data_stream)
-        bj = json.load(d[1].data_stream)
-        # print 'dddd', d.diff
-        self._load_values(lh, rh, ld, rd, aj, bj)
+        # aj = json.load(d[0].data_stream)
+        # bj = json.load(d[1].data_stream)
+        # # print 'dddd', d.diff
+        # self._load_values(lh, rh, ld, rd, aj, bj)
         self._filter_values()
 
     @on_trait_change('only_show_diff')
@@ -181,7 +181,7 @@ class DiffView(BaseDiffView):
     oisoevos = List
 
     def __init__(self, record_id, lh, rh, ld, rd, *args, **kw):
-        super(DiffView, self).__init__(*args, **kw)
+        super(DiffView, self).__init__(record_id, lh, rh, ld, rd, *args, **kw)
 
         self.record_id = record_id
         # aj = json.load(d.a_blob.data_stream)
@@ -213,20 +213,23 @@ class DiffView(BaseDiffView):
 
     def set_intercepts(self, aj, bj):
         self.oisoevos = [DiffValue(t, aj[name][k], bj[name][k])
-                         for name in aj.keys()
+                         for name in aj.keys() if name != 'reviewed'
                          for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_blanks(self, aj, bj):
+        keys = aj.keys()
         self.oblanks = [DiffValue(t, aj[name][k], bj[name][k])
-                        for name in aj.keys()
+                        for name in aj.keys() if name != 'reviewed'
                         for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_icfactors(self, aj, bj):
         self.oicfactors = [DiffValue(t, aj[name][k], bj[name][k])
-                           for name in aj.keys()
+                           for name in aj.keys() if name != 'reviewed'
                            for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_tags(self, aj, bj):
+        print 'a', aj
+        print 'b', bj
         self.otags = [DiffValue(name, aj[name], bj[name]) for name in ('name',)]
 
     def traits_view(self):

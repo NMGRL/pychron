@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Date
-# ============= standard library imports ========================
-from datetime import datetime
 import os
-from gitdb.util import hex_to_bin
+from datetime import datetime
+
 from git import Repo, Blob, Diff
+from gitdb.util import hex_to_bin
+from traits.api import HasTraits, Str, Bool, Date
 
 
 # ============= local library imports  ==========================
@@ -121,9 +121,29 @@ def get_diff(repo, a, b, path, change_type='M'):
 
 def fu(repo, text):
     for header in Diff.re_header.finditer(text):
-        a_path, b_path, similarity_index, rename_from, rename_to, \
-        old_mode, new_mode, new_file_mode, deleted_file_mode, \
-        a_blob_id, b_blob_id, b_mode = header.groups()
+        groups = header.groups()
+
+        a_path_fallback = groups[0]
+        b_path_fallback = groups[1]
+        old_mode = groups[2]
+        new_mode = groups[3]
+        rename_from = groups[4]
+        rename_to = groups[5]
+        new_file_mode = groups[6]
+        deleted_file_mode = groups[7]
+        a_blob_id = groups[8]
+        b_blob_id = groups[9]
+        b_mode = groups[10]
+        a_path = groups[11]
+        b_path = groups[12]
+
+        # print groups
+        # print len(groups)
+        # a_path, b_path, \
+        # similarity_index, rename_from, rename_to, \
+        # old_mode, new_mode, new_file_mode, deleted_file_mode, \
+        # a_blob_id, b_blob_id, b_mode = header.groups()
+
         # new_file, deleted_file = bool(new_file_mode), bool(deleted_file_mode)
 
         # Our only means to find the actual text is to see what has not been matched by our regex,
