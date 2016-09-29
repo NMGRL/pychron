@@ -62,7 +62,7 @@ def convert_color(color, output='rgbF'):
     from pyface.qt.QtGui import QColor
 
     if isinstance(color, QColor):
-        rgb = color.toTuple()
+        rgb = color.red(), color.green(), color.blue()
 
     tofloat = lambda x: x / 255.
     if output == 'rgbF':

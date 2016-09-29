@@ -162,7 +162,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         color = self.color
         # if isinstance(color, str):
         #    color=color_table[color]
-        self._color = map(lambda x: x / 255., color.toTuple())
+        self._color = map(lambda x: x / 255., (color.red(), color.green(), color.blue(), color.alpha()))
         # self._color=color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):

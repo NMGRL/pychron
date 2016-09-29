@@ -272,7 +272,7 @@ class Primitive(HasTraits):
 class QPrimitive(Primitive):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-            c = c.toTuple()
+            c = c.red(), c.green(), c.blue(), c.alpha()
 
         c = map(lambda x: x / 255., c)
         return c

@@ -183,7 +183,8 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 alpha = 1.0
                 func = gc.stroke_path
 
-            color = map(lambda x: x / 255., self.user_color.toTuple())
+            color = self.user_color
+            color = map(lambda x: x / 255., (color.red(), color.green(), color.blue(), color.alpha()))
 
             color = color[0], color[1], color[2], alpha
             if abs(alpha - 0.3) < 0.1:
