@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import collections
 
-from PySide import QtGui, QtCore
+from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
