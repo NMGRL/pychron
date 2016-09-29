@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtCore, QtGui
+from pyface.qt import QtCore, QtGui
 from traits.api import Bool, Int, Color, Str
 from traits.trait_errors import TraitError
 

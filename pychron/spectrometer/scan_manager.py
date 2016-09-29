@@ -264,7 +264,12 @@ class ScanManager(StreamGraphManager):
         if signals is None:
             self._no_intensity_change_cnt += 1
         elif self._prev_signals is not None:
-            if (signals == self._prev_signals).all():
+            try:
+                test = (signals == self._prev_signals).all()
+            except TypeError:
+                test = True
+
+            if test:
                 self._no_intensity_change_cnt += 1
             else:
                 self._no_intensity_change_cnt = 0

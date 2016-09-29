@@ -477,6 +477,15 @@ class SwitchManager(Manager):
 
         return d
 
+    def load_valve_states(self):
+        self.load_hardware_states()
+
+    def load_valve_lock_states(self, *args, **kw):
+        self._load_soft_lock_states()
+
+    def load_valve_owners(self):
+        pass
+
     def load_hardware_states(self):
         self.debug('load hardware states')
         for k, v in self.switches.iteritems():

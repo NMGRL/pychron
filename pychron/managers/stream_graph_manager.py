@@ -160,7 +160,6 @@ class StreamGraphManager(Manager):
     def _graph_scan_width_changed(self):
         g = self.graph
         n = self.graph_scan_width
-        print 'asdasd', n
         n = max(n, 1 / 60.)
         mins = n * 60
         g.set_data_limits(1.8 * mins)
