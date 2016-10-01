@@ -64,19 +64,41 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
 
                ('Non IC Corrected', 'noncorrected_value'),
                (SIGMA_1, 'noncorrected_error')]
-    calc_ic_text = Property
 
+    value_text = Property
+    error_text = Property
+    calc_ic_text = Property
+    ic_factor_text = Property
+    ref_ratio_text = Property
     noncorrected_value_text = Property
     noncorrected_error_text = Property
 
+    def _get_value_text(self):
+        return floatfmt(self.item.value)
+
+    def _get_error_text(self):
+        return floatfmt(self.item.error)
+
+    def _get_attr_text(self, attr):
+        try:
+            return floatfmt(getattr(self.item, attr))
+        except AttributeError:
+            return '---'
+
+    def _get_ic_factor_text(self):
+        return self._get_attr_text('ic_factor')
+
+    def _get_ref_ratio_text(self):
+        return self._get_attr_text('ref_ratio')
+
     def _get_calc_ic_text(self):
-        return floatfmt(self.item.calc_ic)
+        return self._get_attr_text('calc_ic')
 
     def _get_noncorrected_value_text(self):
-        return floatfmt(self.item.noncorrected_value)
+        return self._get_attr_text('noncorrected_value')
 
     def _get_noncorrected_error_text(self):
-        return floatfmt(self.item.noncorrected_error)
+        return self._get_attr_text('noncorrected_error')
 
 
 class MeasurementTabularAdapter(BaseTabularAdapter):

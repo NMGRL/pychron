@@ -294,6 +294,7 @@ class MainView(HasTraits):
                                     value=nominal_value(an.uage),
                                     error=std_dev(an.uage)))
             self.computed_values = cv
+            self._update_ratios()
         else:
             self._update_ratios()
 

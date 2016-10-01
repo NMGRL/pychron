@@ -20,21 +20,16 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.plot_label import PlotLabel
 from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
+from numpy import linspace
 from traits.api import Array, Float, Str
 
-# ============= standard library imports ========================
-from numpy import linspace
-# ============= local library imports  ==========================
-
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
+from pychron.core.stats import validate_mswd
+from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
-from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
-
-from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
-from pychron.core.stats import validate_mswd
-# from pychron.pipeline.plot import InverseIsochronPointsInset, InverseIsochronLineInset
+from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -149,16 +144,16 @@ class InverseIsochron(Isochron):
 
         graph = self.graph
 
-        u39 = u'\u00b3\u2079'
-        u40 = u'\u2074\u2070'
-        u36 = u'\u00b3\u2076'
-        xtitle = u'{}Ar/{}Ar'.format(u39, u40)
-        ytitle = u'{}Ar/{}Ar'.format(u36, u40)
+        # u39 = u'\u00b3\u2079'
+        # u40 = u'\u2074\u2070'
+        # u36 = u'\u00b3\u2076'
+        # xtitle = u'{}Ar/{}Ar'.format(u39, u40)
+        # ytitle = u'{}Ar/{}Ar'.format(u36, u40)
 
         # xtitle = '39Ar/40Ar'
         # ytitle = '36Ar/40Ar'
-        xtitle = '<sup>39</sup>Ar/<sub>40</sup>Ar'
-        ytitle = '<sup>36</sup>Ar/<sub>40</sup>Ar'
+        xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
+        ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
         # for axis in (plot.x_axis, plot.y_axis):
         #     axis.title_font = 'courier 15'
 
