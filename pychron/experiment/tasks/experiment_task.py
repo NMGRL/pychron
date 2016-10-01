@@ -26,7 +26,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
 
 from pychron.core.helpers.filetools import add_extension, backup
-from pychron.core.ui.preference_binding import color_bind_preference, toTuple
+from pychron.core.ui.preference_binding import color_bind_preference
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
@@ -160,7 +160,9 @@ class ExperimentEditorTask(EditorTask):
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
                   'failed', 'end_after', 'invalid'):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
-            colors[c] = '#{:02X}{:02X}{:02X}'.format(*toTuple(v)[:3])
+            if v:
+                colors[c] = v
+
         return colors
 
     def new(self):

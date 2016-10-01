@@ -33,11 +33,13 @@ import traits.has_traits
 
 traits.has_traits.CHECK_INTERFACES = 1
 
-#from PySide import QtCore
 from pyface.qt import QtGui, QtCore
 from traits.trait_base import Undefined
 from traitsui.group import Group
 from traitsui.qt4 import ui_panel
+
+# monkey patch how QColors are converted to strings
+QtGui.QColor.__str__ = lambda obj: '#{:02X}{:02X}{:02X}'.format(obj.red(), obj.green(), obj.blue(), obj.alpha())
 
 
 class _GroupPanel(object):
