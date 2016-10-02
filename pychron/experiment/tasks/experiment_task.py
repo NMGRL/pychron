@@ -160,8 +160,7 @@ class ExperimentEditorTask(EditorTask):
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
                   'failed', 'end_after', 'invalid'):
             v = self.application.preferences.get('pychron.experiment.{}_color'.format(c))
-            if v:
-                colors[c] = v
+            colors[c] = v or '#FFFFFF'
 
         return colors
 
