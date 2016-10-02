@@ -30,6 +30,11 @@ echo -n "MassSpec Database Version [$default] >> "
 read dbv
 [ -z "$dbv" ] && dbv=$default
 
+default=NMGRL
+echo -n "Pychron Fork [$default] >> "
+read pychron_fork
+[ -z "$pychron_fork" ] && pychron_fork=$default
+
 default=release/v16.7
 echo -n "Pychron Version [$default] >> "
 read pychron_release
@@ -68,7 +73,7 @@ USE_UPDATE=1
 
 LAUNCHER_SCRIPT_PATH=pychron_launcher.sh
 APPLICATION=pyview_debug
-PYCHRON_GIT_SOURCE_URL=https://github.com/NMGRL/pychron.git
+PYCHRON_GIT_SOURCE_URL=https://github.com/{$pychron_fork}/pychron.git
 
 PYCHRON_PATH=${PYCHRONDATA_PREFIX}/src
 
