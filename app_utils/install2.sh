@@ -30,6 +30,11 @@ echo -n "MassSpec Database Version [$default] >> "
 read dbv
 [ -z "$dbv" ] && dbv=$default
 
+default=release/v16.7
+echo -n "Pychron Version [$default] >> "
+read pychron_release
+[ -z "$pychron_release" ] && pychron_release=$default
+
 default=yes
 echo -n "Make a MacOSX application [$default] >> "
 read use_app_bundle
@@ -42,6 +47,8 @@ then
   read app_name
   [ -z "$app_name" ] && app_name=$default
 fi
+
+
 
 # =========== Configuration ===============
 WORKING_DIR=~/pychron_install_wd
@@ -97,51 +104,6 @@ GitPython
 peakutils
 qimage2ndarray"
 
-# =========== Payload text ===============
-INITIALIZATION="<root>\n
-  <globals>\n
-  </globals>\n
-  <plugins>\n
-    <general>\n
-      <plugin enabled='true'>ArArConstants</plugin>\n
-      <plugin enabled='true'>DVC</plugin>\n
-      <plugin enabled='true'>GitHub</plugin>\n
-      <plugin enabled='true'>Pipeline</plugin>\n
-      <plugin enabled='true'>Update</plugin>\n
-    </general>\n
-    <hardware>\n
-    </hardware>\n
-    <data>\n
-    </data>\n
-    <social>\n
-      <plugin enabled='false'>Email</plugin>\n
-      <plugin enabled='false'>Twitter</plugin>\n
-    </social>\n
-  </plugins>\n
-</root>\n
-"
-
-DVC_PREFS="[pychron.dvc]\n
-organization=NMGRLData\n
-meta_repo_name=MetaData\n
-"
-
-PREFERENCES="[pychron.genera]\n
-[pychron.dvc]\n
-organization=NMGRLData\n
-meta_repo_name=MetaData\n
-"
-
-STARTUP_TESTS="- plugin: ArArConstantsPlugin\n
-  tests:\n
-- plugin: DVC\n
-  tests:\n
-    - test_database\n
-    - test_dvc_fetch_meta\n
-- plugin: GitHub\n
-  tests:\n
-    - test_api\n
-"
 # =========== Setup Working dir ===========
 cd
 
@@ -198,9 +160,48 @@ else
     mkdir ${PYCHRONDATA_PREFIX}/setupfiles
     mkdir ${PYCHRONDATA_PREFIX}/preferences
 
-    printf ${DVC_PREFS} > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini
-    printf ${INITIALIZATION} > ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml
-    printf ${STARTUP_TESTS} > ${PYCHRONDATA_PREFIX}/setupfiles/startup_tests.yaml
+    cat ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
+[pychron.dvc]
+organization=NMGRLData
+meta_repo_name=MetaData
+EOF
+
+    cat ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml << EOF
+<root>
+  <globals>
+  </globals>
+  <plugins>
+    <general>
+      <plugin enabled='true'>ArArConstants</plugin>
+      <plugin enabled='true'>DVC</plugin>
+      <plugin enabled='true'>GitHub</plugin>
+      <plugin enabled='true'>Pipeline</plugin>
+      <plugin enabled='true'>Update</plugin>
+    </general>
+    <hardware>
+    </hardware>
+    <data>
+    </data>
+    <social>
+      <plugin enabled='false'>Email</plugin>
+      <plugin enabled='false'>Twitter</plugin>
+    </social>
+  </plugins>
+</root>
+EOF
+
+    cat ${PYCHRONDATA_PREFIX}/setupfiles/startup_tests.yaml << EOF
+- plugin: ArArConstantsPlugin
+  tests:
+- plugin: DVC
+  tests:
+    - test_database
+    - test_dvc_fetch_meta
+- plugin: GitHub
+  tests:
+    - test_api
+EOF
+
 fi
 
 # ========= Enthought directory ============
@@ -211,8 +212,6 @@ else
     echo Making root directory ${ENTHOUGHT_DIR}
     mkdir ${ENTHOUGHT_DIR}
 fi
-
-printf ${PREFERENCES} > ${ENTHOUGHT_DIR}/${PREFERENCES_ROOT}/preferences.ini
 
 # ============== Install Pychron source ==============
 if [[ ${USE_UPDATE} == "1" ]]
@@ -227,7 +226,7 @@ then
             mkdir ~/.pychron/
             mkdir ~/.pychron/updates
         fi
-    git clone ${PYCHRON_GIT_SOURCE_URL} ~/.pychron/updates
+    git clone ${PYCHRON_GIT_SOURCE_URL} --branch=${pychron_release} ~/.pychron/updates
     PYCHRON_PATH=~/.pychron/updates
 else
     # =========== Unpack Release ===============
