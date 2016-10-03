@@ -55,6 +55,12 @@ echo -n "Github organization [$default] >> "
 read go
 [ -z "$go" ] && go=$default
 
+default=NMGRLData
+echo -n "Github DVC organization [$default] >> "
+read dvc
+[ -z "$dvc" ] && go=$default
+
+
 default=nmgrluser
 echo -n "Github user name [$default] >> "
 read gu
@@ -148,7 +154,8 @@ PyMySQL=0.6.6
 requests
 keyring
 pil
-paramiko"
+paramiko
+python.app"
 
 if [[ ${USE_PYQT} == "1" ]]
 then
@@ -222,7 +229,7 @@ else
 
     cat > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
 [pychron.dvc]
-organization=NMGRLData
+organization=${dvc}
 meta_repo_name=MetaData
 EOF
 
