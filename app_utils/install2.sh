@@ -11,7 +11,45 @@
 # the source code is stored in the Pychron support directory
 # a launcher script is created and copied to the desktop
 
+# =========== Front Matter ==============
+
+cat << "EOF"
+  _______     _______ _    _ _____   ____  _   _
+ |  __ \ \   / / ____| |  | |  __ \ / __ \| \ | |
+ | |__) \ \_/ / |    | |__| | |__) | |  | |  \| |
+ |  ___/ \   /| |    |  __  |  _  /| |  | | . ` |
+ | |      | | | |____| |  | | | \ \| |__| | |\  |
+ |_|      |_|  \_____|_|  |_|_|  \_\\____/|_| \_|
+
+
+Developer: Jake Ross (NMT)
+Date: 10-02-2016
+---*---*---*---*---*---*---*---*---*---*---*---*
+Welcome to the Pychron Installer.
+
+Hit "Enter" to continue
+
+---*---*---*---*---*---*---*---*---*---*---*---*
+EOF
+
+read wait
+
+cat << "EOF"
+You will be asked to provide a series of configuration values. Each value has as default value, indicated in square
+brackets e.g., [default]
+
+To except the default value hit "Enter" when prompted
+
+
+!!!WARNING!!!
+This installer is beta and not guaranteed to work. USE WITH CAUTION
+
+Hit "Enter" to continue
+EOF
+read wait
+
 # =========== User Questions ==============
+
 default=NMGRL
 echo -n "Github organization [$default] >> "
 read go
@@ -40,6 +78,17 @@ echo -n "Pychron Version [$default] >> "
 read pychron_release
 [ -z "$pychron_release" ] && pychron_release=$default
 
+default=pyqt
+echo -n "Qt Bindings [$default] >> "
+read qt_bindings
+[ -z "$qt_bindings" ] && qt_bindings=$default
+if [[ ${qt_bindings} == "pyqt" ]]
+then
+    USE_PYQT=1
+else
+    USE_PYQT=0
+fi
+
 default=yes
 echo -n "Make a MacOSX application [$default] >> "
 read use_app_bundle
@@ -52,7 +101,6 @@ then
   read app_name
   [ -z "$app_name" ] && app_name=$default
 fi
-
 
 
 # =========== Configuration ===============
@@ -95,13 +143,20 @@ lxml
 xlrd
 xlwt
 pip
-PySide
 matplotlib
 PyMySQL=0.6.6
 requests
 keyring
 pil
 paramiko"
+
+if [[ ${USE_PYQT} == "1" ]]
+then
+    CONDA_REQ="pyqt ${CONDA_REQ}"
+else
+    CONDA_REQ="pyside ${CONDA_REQ}"
+fi
+
 
 PIP_REQ="uncertainties
 pint
@@ -165,13 +220,13 @@ else
     mkdir ${PYCHRONDATA_PREFIX}/setupfiles
     mkdir ${PYCHRONDATA_PREFIX}/preferences
 
-    cat ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
+    cat > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
 [pychron.dvc]
 organization=NMGRLData
 meta_repo_name=MetaData
 EOF
 
-    cat ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml << EOF
+    cat > ${PYCHRONDATA_PREFIX}/setupfiles/initialization.xml << EOF
 <root>
   <globals>
   </globals>
@@ -195,7 +250,7 @@ EOF
 </root>
 EOF
 
-    cat ${PYCHRONDATA_PREFIX}/setupfiles/startup_tests.yaml << EOF
+    cat > ${PYCHRONDATA_PREFIX}/setupfiles/startup_tests.yaml << EOF
 - plugin: ArArConstantsPlugin
   tests:
 - plugin: DVC
@@ -249,6 +304,13 @@ echo export GITHUB_USER=${gu} >> ${LAUNCHER_SCRIPT_PATH}
 echo export GITHUB_PASSWORD=${gp} >> ${LAUNCHER_SCRIPT_PATH}
 echo export MassSpecDBVersion=${dbv} >> ${LAUNCHER_SCRIPT_PATH}
 
+if [[ ${USE_PYQT} == "1" ]]
+then
+    echo export QT_API=pyqt >> ${LAUNCHER_SCRIPT_PATH}
+else
+    echo export QT_API=pyside >> ${LAUNCHER_SCRIPT_PATH}
+fi
+
 echo ROOT=${PYCHRON_PATH} >> ${LAUNCHER_SCRIPT_PATH}
 
 echo ENTRY_POINT=\$ROOT/launchers/${APPLICATION}.py >> ${LAUNCHER_SCRIPT_PATH}
@@ -270,14 +332,15 @@ then
   # write plist
   PLIST="${APPNAME}.app/Contents/Info.plist"
   touch ${PLIST}
-   printf "<?xml version="1.0" encoding="UTF-8"?>
+  cat > ${PLIST} << EOF
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleIconFile</key><string>${ICON_NAME}</string>
 </dict>
 </plist>
-" > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini
-  # copy info file
+EOF
+
 else
   chmod +x ${LAUNCHER_SCRIPT_PATH}
   cp ${LAUNCHER_SCRIPT_PATH} ~/Desktop/
