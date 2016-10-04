@@ -14,14 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from traits.etsconfig.api import ETSConfig
+ETSConfig.toolkit = "qt4"
+
 from ConfigParser import NoSectionError
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import OK
 from pyface.message_dialog import information, warning
-from traits.etsconfig.api import ETSConfig
-
-ETSConfig.toolkit = "qt4"
 
 from traitsui.qt4.table_editor import TableDelegate
 from traitsui.qt4.extra import checkbox_renderer

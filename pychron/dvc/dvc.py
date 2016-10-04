@@ -560,7 +560,18 @@ class DVC(Loggable):
         repo = self._get_repository(repository)
         repo.commit(msg)
 
-    def remote_repositories(self, attributes=None):
+    def remote_repositories(self):
+        rs = []
+        gs = self.application.get_services(IGitHost)
+        if gs:
+            for gi in gs:
+                ri = gi.get_repos(self.organization)
+                rs.extend(ri)
+        else:
+            self.warning_dialog('GitLab or GitHub plugin is required')
+        return rs
+
+    def remote_repository_names(self):
         rs = []
         gs = self.application.get_services(IGitHost)
         if gs:
@@ -596,12 +607,18 @@ class DVC(Loggable):
             repo.pull(use_progress=use_progress)
         else:
             self.debug('getting repository from remote')
-            names = self.remote_repositories()
+            names = self.remote_repository_names()
+            service = self.application.get_service(IGitHost)
             if name in names:
-                service = self.application.get_service(IGitHost)
                 service.clone_from(name, root, self.organization)
+                return True
+            else:
+                self.debug('name={} not in available repos from service={}, organization={}'.format(name,
+                                                                                   service.remote_url,
+                                                                                   self.organization))
+                for ni in names:
 
-        return True
+                    self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -828,7 +845,7 @@ class DVC(Loggable):
             self.debug('already a directory {}'.format(identifier))
             return
 
-        names = self.remote_repositories()
+        names = self.remote_repository_names()
         if identifier in names:
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)

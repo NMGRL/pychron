@@ -511,6 +511,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return pss + recents
 
     def _make_records(self, ans):
+        self.debug('make records')
+
         def func(xi, prog, i, n):
             if prog:
                 # if prog and i % 25 == 0:

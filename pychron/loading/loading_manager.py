@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from datetime import datetime
+from itertools import groupby
+
+from chaco.default_colormaps import color_map_name_dict, color_map_dict
 from traits.api import HasTraits, cached_property, List, Str, Instance, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, \
     RGBColor
 from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-# ============= standard library imports ========================
-import os
-from datetime import datetime
-from matplotlib.cm import get_cmap, cmap_d
-from itertools import groupby
-# ============= local library imports  ==========================
 from xlwt import Workbook
 
+from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
+from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.filetools import view_file, unique_path
-from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
-
-from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
@@ -97,7 +95,7 @@ class LoadPosition(HasTraits):
                                 self.irrad_position)
 
 
-maps = [m for m in cmap_d if not m.endswith("_r")]
+maps = color_map_name_dict.keys()
 
 
 class LoadingManager(DVCIrradiationable):
@@ -903,7 +901,7 @@ class LoadingManager(DVCIrradiationable):
             canvas = self.canvas
 
         if self.use_cmap:
-            c = get_cmap(self.cmap_name)
+            c = color_map_dict[self.cmap_name]
         else:
             c = lambda x: (1, 1, 0, 1)
 

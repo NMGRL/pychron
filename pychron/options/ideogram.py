@@ -15,12 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from matplotlib.cm import cmap_d
+from chaco.default_colormaps import color_map_name_dict
 from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.options.aux_plot import AuxPlot
-# from pychron.options.group.ideogram_group_options import IdeogramGroupEditor, IdeogramGroupOptions
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
@@ -73,7 +71,7 @@ class IdeogramOptions(AgeOptions):
     mean_sig_figs = Int
 
     use_cmap_analysis_number = Bool(False)
-    cmap_analysis_number = Enum(*[m for m in cmap_d if not m.endswith("_r")])
+    cmap_analysis_number = Enum(color_map_name_dict.keys())
     use_latest_overlay = Bool(False)
 
     group_options_klass = IdeogramGroupOptions

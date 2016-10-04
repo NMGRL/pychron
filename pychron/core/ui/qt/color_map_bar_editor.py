@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from matplotlib.cm import get_cmap
+from chaco.default_colormaps import color_map_dict
+from pyface.qt.QtGui import QPainter, QColor, QFrame
 from traits.api import Float, Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
-# ============= standard library imports ========================
-from pyface.qt.QtGui import QPainter, QColor, QFrame
+
 # ============= local library imports  ==========================
 # from matplotlib.cm import get_cmap
 
@@ -75,7 +75,8 @@ class _BarGaugeEditor(Editor):
         self.control.color_scalar = self.factory.color_scalar
         self.control.bar_width = self.factory.width
         self.control.scale = self.factory.scale
-        self.control.cmap = get_cmap(self.factory.colormap)
+        self.control.cmap = color_map_dict[self.factory.colormap]
+
 
     def update_editor(self):
         if self.control:
