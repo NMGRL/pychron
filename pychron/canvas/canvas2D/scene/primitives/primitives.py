@@ -365,7 +365,7 @@ class LoadIndicator(Circle):
     def _render(self, gc):
         c = (0, 0, 0)
         color = self.fill_color
-        fc = sum(color.red(), color.green(), color.blue())
+        fc = sum((color.red(), color.green(), color.blue()))
         if self.fill and self.fill_color and fc < 1.5:
             c = (255, 255, 255)
 

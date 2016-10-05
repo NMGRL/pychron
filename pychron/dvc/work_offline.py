@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import os
+import time
 
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
@@ -23,7 +24,7 @@ from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2
-from pychron.core.progress import progress_iterator
+from pychron.core.progress import progress_iterator, open_progress
 from pychron.envisage.browser.record_views import RepositoryRecordView
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -153,6 +154,8 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, 'index', extension='.sqlite3')[0]
 
     def _clone_central_db(self, repositories, analyses=None, principal_investigators=None, projects=None):
+
+        self.info('--------- Clone DB -----------')
         # create an a sqlite database
         from pychron.dvc.dvc_orm import Base
         metadata = Base.metadata
@@ -169,62 +172,123 @@ class WorkOffline(Loggable):
                 os.remove(path)
 
         if path:
+            progress = open_progress(n=20)
+            self.debug('--------- Starting db clone to {}'.format(path))
             src = self.dvc
             db = DVCDatabase(path=path, kind='sqlite')
             db.connect()
             with db.session_ctx(use_parent_session=False) as sess:
                 metadata.create_all(sess.bind)
 
-            tables = ['SampleTbl',
-                      'IrradiationTbl', 'LevelTbl', 'ProductionTbl',
-                      'IrradiationPositionTbl',
-                      'RepositoryAssociationTbl',
-                      'MassSpectrometerTbl', 'ExtractDeviceTbl', 'VersionTbl', 'MaterialTbl', 'UserTbl']
-
-            if principal_investigators:
-                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
-                with src.session_ctx(use_parent_session=False):
-                    pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
-                    self._copy_records(db, PrincipalInvestigatorTbl, pis)
-            else:
-                tables.append('PrincipalInvestigatorTbl')
-
-            if projects:
-                from pychron.dvc.dvc_orm import ProjectTbl
-                with src.session_ctx(use_parent_session=False):
-                    prjs = [src.get_project(pp) for pp in projects]
-                    self._copy_records(db, ProjectTbl, prjs)
-            else:
-                tables.append('ProjectTbl')
+            tables = ['ProductionTbl', 'MassSpectrometerTbl', 'ExtractDeviceTbl', 'VersionTbl', 'UserTbl']
 
             for table in tables:
                 mod = __import__('pychron.dvc.dvc_orm', fromlist=[table])
+                progress.change_message('Cloning {}'.format(table))
                 self._copy_table(db, getattr(mod, table))
 
             with src.session_ctx(use_parent_session=False):
                 from pychron.dvc.dvc_orm import RepositoryTbl
-                repos = [src.db.get_repository(reponame) for reponame in repositories]
-                self._copy_records(db, RepositoryTbl, repos)
-
                 from pychron.dvc.dvc_orm import AnalysisTbl
                 from pychron.dvc.dvc_orm import AnalysisChangeTbl
+                from pychron.dvc.dvc_orm import RepositoryAssociationTbl
+                from pychron.dvc.dvc_orm import AnalysisGroupTbl
+                from pychron.dvc.dvc_orm import AnalysisGroupSetTbl
+
+                repos = [src.db.get_repository(reponame) for reponame in repositories]
+
+                progress.change_message('Assembling Analyses 0/5')
+                st = time.time()
                 if analyses:
                     ans = analyses
+                    ras = [rai for ai in ans
+                           for rai in ai.repository_associations]
                 else:
-                    ans = [ra.analysis for repo in repos
-                           for ra in repo.repository_associations]
 
-                self._copy_records(db, AnalysisTbl, ans)
+                    at = time.time()
+                    ras = [ra for repo in repos for ra in repo.repository_associations]
+                    self.debug('association time={}'.format(time.time()-at))
+                    progress.change_message('Assembling Analyses 1/5')
 
+                    at = time.time()
+                    ans = [ri.analysis for ri in ras]
+                    self.debug('analysis time={}'.format(time.time()-at))
+
+                    progress.change_message('Assembling Analyses 2/5')
+
+                at = time.time()
                 ans_c = [ai.change for ai in ans]
-                self._copy_records(db, AnalysisChangeTbl, ans_c)
+                self.debug('change time={}'.format(time.time()-at))
+                progress.change_message('Assembling Analyses 3/5')
 
-    def _copy_records(self, dest, table, records):
+                at = time.time()
+                agss = [gi for ai in ans for gi in ai.group_sets]
+                self.debug('agss time={}'.format(time.time()-at))
+                progress.change_message('Assembling Analyses 4/5')
+
+                at = time.time()
+                ags = {gi.group for gi in agss}
+                self.debug('ags time={}'.format(time.time()-at))
+                progress.change_message('Assembling Analyses 5/5')
+
+                self.debug('total analysis assembly time={}'.format(time.time()-st))
+
+                self._copy_records(progress, db, RepositoryTbl, repos)
+                self._copy_records(progress, db, RepositoryAssociationTbl, ras)
+                self._copy_records(progress, db, AnalysisTbl, ans)
+                self._copy_records(progress, db, AnalysisChangeTbl, ans_c)
+                self._copy_records(progress, db, AnalysisGroupTbl, ags)
+                self._copy_records(progress, db, AnalysisGroupSetTbl, agss)
+
+                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
+                if principal_investigators:
+                    pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
+                else:
+                    pis = {repo.principal_investigator for repo in repos}
+                self._copy_records(progress, db, PrincipalInvestigatorTbl, pis)
+
+                from pychron.dvc.dvc_orm import ProjectTbl
+                if projects:
+                    prjs = [src.get_project(pp) for pp in projects]
+                else:
+                    prjs = {ai.irradiation_position.sample.project for ai in ans}
+                self._copy_records(progress, db, ProjectTbl, prjs)
+
+                ips = {ai.irradiation_position for ai in ans}
+                from pychron.dvc.dvc_orm import IrradiationPositionTbl
+                self._copy_records(progress, db, IrradiationPositionTbl, ips)
+
+                from pychron.dvc.dvc_orm import LevelTbl
+                ls = {ip.level for ip in ips}
+                self._copy_records(progress, db, LevelTbl, ls)
+
+                from pychron.dvc.dvc_orm import IrradiationTbl
+                irs = {l.irradiation for l in ls}
+                self._copy_records(progress, db, IrradiationTbl, irs)
+
+                from pychron.dvc.dvc_orm import SampleTbl
+                sams = {ip.sample for ip in ips}
+                self._copy_records(progress, db, SampleTbl, sams)
+
+                from pychron.dvc.dvc_orm import MaterialTbl
+                mats = {si.material for si in sams}
+                self._copy_records(progress, db, MaterialTbl, mats)
+                self.debug('--------- db clone finished')
+                progress.close()
+
+    def _copy_records(self, progress, dest, table, records):
+
+        st = time.time()
+        msg = 'Copying records from {}. n={}'.format(table.__tablename__, len(records))
+        self.debug(msg)
+        progress.change_message(msg)
+
         with dest.session_ctx(use_parent_session=False) as dest_sess:
             keys = table.__table__.columns.keys()
-            mappings = [{k: getattr(row, k) for k in keys} for row in records]
+            mappings = ({k: getattr(row, k) for k in keys} for row in records)
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
+        self.debug('copy finished et={:0.5f}'.format(time.time()-st))
 
     def _copy_table(self, dest, table, filter_criterion=None):
         src = self.dvc
@@ -238,46 +302,6 @@ class WorkOffline(Loggable):
                 mappings = [{k: getattr(row, k) for k in keys} for row in query]
                 dest_sess.bulk_insert_mappings(table, mappings)
                 dest_sess.commit()
-
-                # """
-                # use mysql2sqlite.sh. this script requires mysqldump so maybe not the
-                # best option.
-                #
-                # another solution is to have the server convert the database to sqlite
-                # then grab the sqlite file from the server
-                #
-                # use ssh to run mysql2sqlite.sh
-                # use ftp to grab the file
-                # """
-                # self.debug('clone central db')
-                #
-                # # dump the mysql database to sqlite
-                # ssh = paramiko.SSHClient()
-                # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                #
-                # ssh.connect(self.work_offline_host,
-                #             username=self.work_offline_user,
-                #             password=self.work_offline_password,
-                #             allow_agent=False,
-                #             look_for_keys=False)
-                #
-                # cmd = '/Users/{}/workoffline/workoffline.sh'.format(self.work_offline_user)
-                # stdin, stdout, stderr = ssh.exec_command(cmd)
-                # self.debug('============ Output ============')
-                # for line in stdout:
-                #     self.debug(line)
-                # self.debug('============ Output ============')
-                #
-                # self.debug('============ Error ============')
-                # for line in stderr:
-                #     self.debug('****** {}'.format(line))
-                # self.debug('============ Error ============')
-                #
-                # # fetch the sqlite file
-                # ftp = ssh.open_sftp()
-                # rp = '/Users/{}/workoffline/database.sqlite3'.format(self.work_offline_user)
-                #
-                # ftp.get(rp, database_path())
 
     def _update_preferences(self):
         self.debug('update dvc preferences')
@@ -302,3 +326,42 @@ class WorkOffline(Loggable):
         return v
 
 # ============= EOF =============================================
+# """
+# use mysql2sqlite.sh. this script requires mysqldump so maybe not the
+# best option.
+#
+# another solution is to have the server convert the database to sqlite
+# then grab the sqlite file from the server
+#
+# use ssh to run mysql2sqlite.sh
+# use ftp to grab the file
+# """
+# self.debug('clone central db')
+#
+# # dump the mysql database to sqlite
+# ssh = paramiko.SSHClient()
+# ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#
+# ssh.connect(self.work_offline_host,
+#             username=self.work_offline_user,
+#             password=self.work_offline_password,
+#             allow_agent=False,
+#             look_for_keys=False)
+#
+# cmd = '/Users/{}/workoffline/workoffline.sh'.format(self.work_offline_user)
+# stdin, stdout, stderr = ssh.exec_command(cmd)
+# self.debug('============ Output ============')
+# for line in stdout:
+#     self.debug(line)
+# self.debug('============ Output ============')
+#
+# self.debug('============ Error ============')
+# for line in stderr:
+#     self.debug('****** {}'.format(line))
+# self.debug('============ Error ============')
+#
+# # fetch the sqlite file
+# ftp = ssh.open_sftp()
+# rp = '/Users/{}/workoffline/database.sqlite3'.format(self.work_offline_user)
+#
+# ftp.get(rp, database_path())

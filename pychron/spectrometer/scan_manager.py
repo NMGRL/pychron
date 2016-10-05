@@ -51,6 +51,7 @@ class ScanManager(StreamGraphManager):
     spectrometer_configurations = DelegatesTo('spectrometer')
     spectrometer_configuration = DelegatesTo('spectrometer')
     set_spectrometer_configuration = Button
+    set_magnet_position_button = Button
 
     detectors = DelegatesTo('spectrometer')
     detector_names = DelegatesTo('spectrometer')
@@ -378,6 +379,10 @@ class ScanManager(StreamGraphManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _set_magnet_position_button_fired(self):
+        self.debug('user triggered set magnet position')
+        self._set_position()
+
     def _set_spectrometer_configuration_fired(self):
         self.debug('user triggered send_configuration')
         self.spectrometer.send_configuration()

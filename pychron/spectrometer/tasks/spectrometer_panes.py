@@ -19,11 +19,9 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -201,15 +199,17 @@ class ControlsPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        magnet_grp = VGroup(
-            HGroup(
+
+        magnet_pos_grp = HGroup(
                 UItem('_detector',
                       editor=EnumEditor(name='detector_names')),
                 UItem('isotope',
-                      editor=EnumEditor(name='isotopes'))),
-            UItem('magnet', style='custom'),
+                      editor=EnumEditor(name='isotopes')),
+                icon_button_editor('set_magnet_position_button', 'arrow_left', tooltip='Apply Detector/Isotope magnet '
+                                                                                'position'))
 
-            # UItem('scanner', style='custom'),
+        magnet_grp = VGroup(magnet_pos_grp,
+            UItem('magnet', style='custom'),
             label='Magnet')
         detector_grp = VGroup(
             HGroup(

@@ -121,7 +121,6 @@ class UseOfflineDatabase(Action):
         from pychron.dvc.work_offline import switch_to_offline_database
         app = event.task.window.application
         switch_to_offline_database(app.preferences)
-        information(None, 'You are now using the offline database. Close any Browser or Pipeline windows to activate '
-                          'offline database')
+        information(None, 'You are now using the offline database. Restart for changes to take effect')
 
 # ============= EOF =============================================

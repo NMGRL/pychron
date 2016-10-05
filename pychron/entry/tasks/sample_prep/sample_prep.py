@@ -343,9 +343,12 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _upload_image_button_fired(self):
         step = self.selected_step
-        if step is None:
+        if step is None and self.active_sample.steps:
             step = self.active_sample.steps[0]
+
         if not step:
+            self.warning_dialog('Select a prep step to associate with the image')
+
             return
 
         host = self.application.preferences.get('pychron.entry.sample_prep.host')

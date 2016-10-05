@@ -112,7 +112,7 @@ fi
 # =========== Configuration ===============
 WORKING_DIR=~/pychron_install_wd
 
-MINICONDA_URL=https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh
+MINICONDA_URL=https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh
 MINICONDA_INSTALLER_SCRIPT=miniconda_installer.sh
 MINICONDA_PREFIX=$HOME/miniconda2
 
@@ -137,24 +137,23 @@ CONDA_REQ="qt=4.8.5
 statsmodels
 scikit-learn
 PyYAML
+yaml
 traits
 traitsui
 chaco
 enable
-pyface
 envisage
 sqlalchemy
 Reportlab
 lxml
 xlrd
 xlwt
+xlsxwriter
 pip
-matplotlib
 PyMySQL=0.6.6
 requests
 keyring
 pil
-paramiko
 python.app"
 
 if [[ ${USE_PYQT} == "1" ]]
