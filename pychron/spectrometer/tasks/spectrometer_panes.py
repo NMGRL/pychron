@@ -205,8 +205,8 @@ class ControlsPane(TraitsDockPane):
                       editor=EnumEditor(name='detector_names')),
                 UItem('isotope',
                       editor=EnumEditor(name='isotopes')),
-                icon_button_editor('set_magnet_position_button', 'arrow_left', tooltip='Apply Detector/Isotope magnet '
-                                                                                'position'))
+                icon_button_editor('set_magnet_position_button', 'arrow_left',
+                                   tooltip='Apply Detector/Isotope magnet position'))
 
         magnet_grp = VGroup(magnet_pos_grp,
             UItem('magnet', style='custom'),
