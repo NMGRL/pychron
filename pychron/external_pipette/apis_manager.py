@@ -38,7 +38,7 @@ class InvalidPipetteError(BaseException):
 
 @provides(IPipetteManager)
 class SimpleApisManager(Manager):
-    controller = Instance('pychron.hardware.apis_controller import ApisController')
+    controller = Instance('pychron.hardware.apis_controller.ApisController')
 
     test_command = Str
     test_command_response = Str
