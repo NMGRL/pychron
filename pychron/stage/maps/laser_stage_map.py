@@ -83,8 +83,11 @@ class LaserStageMap(BaseStageMap):
                 try:
                     cors = pickle.load(f)
                 except (ValueError, pickle.PickleError), e:
-                    print 'exception', e
-
+                    self.warning_dialog('Failed to load the correction file:\n{}\n'
+                                        'If you are relying on SemiAuto or Auto calibration a'
+                                        'recalibration is required'.format(p))
+                    if self.confirmation_dialog('Would you like to delete the file:\n {}'.format(p)):
+                        os.remove(p)
             if cors:
                 self.info('loaded correction file {}'.format(p))
                 for i, x, y in cors:
