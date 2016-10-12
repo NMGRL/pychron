@@ -75,7 +75,7 @@ class BaseStageMap(Loggable):
         self.load()
 
     def load(self):
-
+        self.debug('loading stage map file {}'.format(self.file_path))
         with open(self.file_path, 'r') as rfile:
 
             line = rfile.readline()

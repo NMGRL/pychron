@@ -51,7 +51,7 @@ class LaserStageMap(BaseStageMap):
 
     @property
     def center_guess_path(self):
-        head, tail = os.path.splitext(self.path)
+        head, tail = os.path.splitext(self.file_path)
         path = '{}.center.txt'.format(head)
         return path
 
@@ -82,7 +82,7 @@ class LaserStageMap(BaseStageMap):
             with open(p, 'rb') as f:
                 try:
                     cors = pickle.load(f)
-                except pickle.PickleError, e:
+                except (ValueError, pickle.PickleError), e:
                     print 'exception', e
 
             if cors:
