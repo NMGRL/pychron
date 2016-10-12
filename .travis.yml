@@ -19,7 +19,7 @@ env:
 before_install:
   # adapted from statsmodels travis file https://github.com/statsmodels/statsmodels/blob/master/.travis.yml
   # setup anaconda
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda2/bin:$PATH
@@ -39,7 +39,7 @@ before_install:
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - conda install --yes pyside statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
+  - conda install --yes qt=4.8.5 pyside statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
   - pip install uncertainties pint
 
 script: python setup.py test
