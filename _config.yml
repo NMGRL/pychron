@@ -83,6 +83,9 @@ clients:
     img: bureau_logo_screen.png
   - name: New Mexico Tech
     img: nmtlogo-small.gif
+  - name: USGS
+    img: USGS.png
+
 
 # Short text about your company. Shown in footer on every page and also separately on Home and Contact page.
 about: "New Mexico Geochronology Research Laboratory (NMGRL) is a world class Ar-Ar geochronology laboratory located at
