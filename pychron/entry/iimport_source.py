@@ -21,7 +21,7 @@ from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class IImportSource(Interface):
-    def get_import_spec(self, name):
+    def get_irradiation_import_spec(self, name):
         pass
 
     def get_irradiation_names(self):

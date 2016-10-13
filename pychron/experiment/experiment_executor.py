@@ -56,7 +56,7 @@ from pychron.experiment.utilities.repository_identifier import retroactive_repos
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -167,6 +167,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_dvc = Bool(False)
     use_autoplot = Bool(False)
     monitor_name = 'FC-2'
+    experiment_type = Str(AR_AR)
 
     use_xls_persistence = Bool(False)
     use_db_persistence = Bool(True)
@@ -247,7 +248,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'default_integration_time',
                  'use_dvc_persistence',
                  'use_xls_persistence',
-                 'use_db_persistence')
+                 'use_db_persistence',
+                 'experiment_type')
         self._preference_binder(prefid, attrs)
 
         if self.use_dvc_persistence:
@@ -770,6 +772,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
+        if self.experiment_type == AR_AR and run.spec.state in ('success', 'truncated'):
+            run.spec.uage = self.run.isotope_group.uage
+            run.spec.k39 = self.run.isotope_group.get_computed_value('k39')
+
         if run.spec.state not in ('canceled', 'failed', 'aborted'):
             self._retroactive_repository_identifiers(run.spec)
 

@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from itertools import groupby
 
+import yaml
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button
@@ -25,10 +27,7 @@ from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, 
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
-import os
-import yaml
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.aux_plot import AuxPlot
@@ -447,6 +446,14 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
     selected = List
+
+    def add_aux_plot(self, name, i=0, **kw):
+        plt = self.aux_plot_klass(name=name, **kw)
+        plt.plot_enabled = True
+        try:
+            self.aux_plots[i] = plt
+        except IndexError:
+            self.aux_plots.append(plt)
 
     def get_loadable_aux_plots(self):
         return reversed([pi for pi in self.aux_plots

@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 ross
+# Copyright 2015 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,27 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.has_traits import Interface
+# ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.repo.igsn import IGSNRepository
+
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from zobs.repo.tasks.preferences import IGSNPreferencesPane
 
 
-class IDVCSource(Interface):
-    def get_irradiation_import_spec(self, name):
-        pass
+class IGSNPlugin(BaseTaskPlugin):
+    id = 'pychron.igsn.plugin'
 
-    def connect(self):
-        pass
+    def _help_tips_default(self):
+        return ['More information about IGSN is located at http://www.geosamples.org/']
 
-    def get_irradiation_names(self):
-        pass
+    def _service_offers_default(self):
+        so1 = self.service_offer_factory(factory=IGSNRepository,
+                                         protocol=IGSNRepository)
+        return [so1]
 
+    def _preferences_panes_default(self):
+        return [IGSNPreferencesPane]
 
 # ============= EOF =============================================

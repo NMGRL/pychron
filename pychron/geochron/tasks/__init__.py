@@ -14,20 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.has_traits import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-class IDVCSource(Interface):
-    def get_irradiation_import_spec(self, name):
-        pass
-
-    def connect(self):
-        pass
-
-    def get_irradiation_names(self):
-        pass
 
 
 # ============= EOF =============================================

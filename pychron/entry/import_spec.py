@@ -67,7 +67,30 @@ class Project:
     principal_investigator = None
 
 
+class Analysis:
+    position = None
+    runid = None
+    timestamp = None
+    isotopes = None
+
+
+class BaseMeasurement:
+    name = None
+    xs = None
+    ys = None
+
+
+class Isotope(BaseMeasurement):
+    baseline = None
+
+
+class Baseline(BaseMeasurement):
+    pass
+
+
 class ImportSpec:
     irradiation = None
+    analyses = None
+    analysis = None
 
 # ============= EOF =============================================

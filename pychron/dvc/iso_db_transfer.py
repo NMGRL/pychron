@@ -32,7 +32,7 @@ from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
 from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps, get_project_timestamps, \
-    set_spectrometer_files
+    set_spectrometer_files, commit_initial_import
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import make_runid, IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
@@ -69,13 +69,9 @@ class IsoDBTransfer(Loggable):
                     password=os.environ.get('ARGONSERVER_DB_PWD'),
                     kind='mysql')
 
-        self.dvc = DVC(bind=False,
-                       organization='NMGRLData',
-                       meta_repo_name='MetaData')
-        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
-
-        use_local = True
+        use_local = False
         if use_local:
+            meta_name = 'MetaDataDev'
             dest_conn = dict(host='localhost',
                              username=os.environ.get('LOCALHOST_DB_USER'),
                              password=os.environ.get('LOCALHOST_DB_PWD'),
@@ -83,9 +79,14 @@ class IsoDBTransfer(Loggable):
                              # echo=True,
                              name='pychrondvc_dev')
         else:
+            meta_name = 'MetaData'
             dest_conn = conn.copy()
             dest_conn['name'] = 'pychrondvc'
 
+        self.dvc = DVC(bind=False,
+                       organization='NMGRLData',
+                       meta_repo_name=meta_name)
+        paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
         self.dvc.db.trait_set(**dest_conn)
         if not self.dvc.initialize():
             self.warning_dialog('Failed to initialize DVC')
@@ -96,7 +97,7 @@ class IsoDBTransfer(Loggable):
 
         proc = IsotopeDatabaseManager(bind=False, connect=False)
 
-        use_local_src = True
+        use_local_src = False
         if use_local_src:
             conn = dict(host='localhost',
                         username=os.environ.get('LOCALHOST_DB_USER'),
@@ -214,7 +215,7 @@ class IsoDBTransfer(Loggable):
 
         return oruns
 
-    def bulk_import_project(self, project, principal_investigator, dry=True):
+    def bulk_import_project(self, project, principal_investigator, source_name=None, dry=True):
         src = self.processor.db
         tol_hrs = 6
         self.debug('bulk import project={}, pi={}'.format(project, principal_investigator))
@@ -237,9 +238,12 @@ class IsoDBTransfer(Loggable):
         #             d = ed.name == 'Fusions CO2'
         #
         #     return (a or b) and d
-        #
-        for ms in ('jan', 'obama'):
-            ts, idxs = self._get_project_timestamps(project, ms, tol_hrs=tol_hrs)
+
+        if source_name is None:
+            source_name = project
+
+        for ms in ('jan', 'obama', 'felix'):
+            ts, idxs = self._get_project_timestamps(source_name, ms, tol_hrs=tol_hrs)
             for i, ais in enumerate(array_split(ts, idxs + 1)):
                 if not ais.shape[0]:
                     self.debug('skipping {}'.format(i))
@@ -251,7 +255,7 @@ class IsoDBTransfer(Loggable):
                 print '========{}, {}, {}'.format(ms, low, high)
                 with src.session_ctx():
                     runs = src.get_analyses_date_range(low, high,
-                                                       projects=('REFERENCES', project),
+                                                       projects=('REFERENCES', source_name),
                                                        mass_spectrometers=(ms,))
 
                     if dry:
@@ -393,6 +397,9 @@ class IsoDBTransfer(Loggable):
             material_name = dbsam.material.name
         else:
             sample_name, material, project = monitor_mapping
+
+        if material_name == 'bi':
+            material_name = 'Biotite'
 
         sam = dest.get_sample(sample_name, project_name, material_name)
         if not sam:
@@ -670,7 +677,7 @@ class IsoDBTransfer(Loggable):
 
         ps = PersistenceSpec(run_spec=rs,
                              tag=an.tag.name,
-                             arar_age=an,
+                             isotope_group=an,
                              timestamp=dban.analysis_timestamp,
                              defl_dict=deflections,
                              gains=gains,
@@ -702,9 +709,12 @@ if __name__ == '__main__':
     paths.build('_dev')
     logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
 
-    e = IsoDBTransfer()
-    e.quiet = True
-    e.init()
+    # e = IsoDBTransfer()
+    # e.quiet = True
+    # e.init()
+    #
+    # e.bulk_import_project('FootPrint', 'Mcintosh,W', dry=False)
+    commit_initial_import('FootPrint', paths.repository_dataset_dir)
 
     # runs, expid, creator = load_path()
     # runs, expid, creator = load_import_request()
@@ -713,7 +723,7 @@ if __name__ == '__main__':
     #     project = 'Irradiation-{}'.format(i)
     #     create_repo_for_existing_local(project, paths.repository_dataset_dir)
     #     commit_initial_import(project, paths.repository_dataset_dir)
-    e.bulk_import_irradiation('NM-281', 'NMGRL', dry=False)
+    # e.bulk_import_irradiation('NM-281', 'NMGRL', dry=False)
 
     # e.bulk_import_project('Cascades', 'Templeton', dry=False)
     # fix_a_steps(e.dvc.db, 'Toba', paths.repository_dataset_dir)

@@ -180,7 +180,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         pass
 
     def replot(self, *args, **kw):
-        pass
+        self.plot(self.options.get_plotable_aux_plots())
 
     def max_x(self, *args):
         return -Inf

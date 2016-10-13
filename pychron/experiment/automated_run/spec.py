@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
+import uuid
+from datetime import datetime
+
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits, Instance
-# ============= standard library imports ========================
-import hashlib
-from datetime import datetime
-import uuid
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
@@ -127,6 +127,9 @@ class AutomatedRunSpec(HasTraits):
     data_reduction_tag = Str
 
     branch = 'master'
+
+    uage = None
+    v39 = None
 
     _estimated_duration = 0
     _changed = False

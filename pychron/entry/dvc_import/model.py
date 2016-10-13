@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, Any, Button, Instance, List, Dict
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import open_progress
 from pychron.loggable import Loggable
@@ -110,7 +108,7 @@ class DVCImporterModel(Loggable):
         for irrad in self.selected:
             self.debug(irrad.name)
 
-        specs = [(i.name, self.source.get_import_spec(i.name)) for i in self.selected]
+        specs = [(i.name, self.source.irradiation_get_import_spec(i.name)) for i in self.selected]
         prog = self._open_progress(specs)
 
         for irradname, spec in specs:

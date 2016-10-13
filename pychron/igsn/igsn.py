@@ -17,10 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import Str, Button, Event
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.repo.http_repository import HTTPRepository
+from zobs.repo import HTTPRepository
 
 
 class IGSNRepository(HTTPRepository):
@@ -76,4 +74,5 @@ class IGSNRepository(HTTPRepository):
         """
         new_igsn = 'foodat'
         self.new_igsn = new_igsn
+
 # ============= EOF =============================================

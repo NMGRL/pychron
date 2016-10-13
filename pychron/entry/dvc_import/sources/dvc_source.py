@@ -21,7 +21,7 @@ from pychron.loggable import Loggable
 
 @provides(IDVCSource)
 class DVCSource(Loggable):
-    def get_import_spec(self, name):
+    def get_irradiation_import_spec(self, name):
         pass
 
     def connect(self):

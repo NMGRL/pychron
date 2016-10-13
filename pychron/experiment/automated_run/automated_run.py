@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long
-# ============= standard library imports ========================
+import ast
 import os
 import re
 import time
-import ast
-import yaml
 import weakref
 from itertools import groupby
 from threading import Thread, Event as TEvent
-from uncertainties import ufloat, nominal_value, std_dev
+
+import yaml
 from numpy import Inf, polyfit, linspace, polyval
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import get_path
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long
+from uncertainties import ufloat, nominal_value, std_dev
+
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment import ExtractionException
@@ -2133,6 +2133,9 @@ anaylsis_type={}
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
+            if self.spec.analysis_type in ('unknown', 'cocktail'):
+                invoke_in_main_thread(self._setup_figure_graph)
+
         time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
@@ -2147,6 +2150,9 @@ anaylsis_type={}
             self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
+
+    def _setup_figure_graph(self):
+        self.plot_panel.add_figure_graph(self.spec, self.experiment_executor.experiment_queue.executed_runs)
 
     def _setup_sniff_graph(self, starttime_offset, color):
         graph = self.plot_panel.sniff_graph

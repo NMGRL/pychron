@@ -114,6 +114,7 @@ class SessionCTX(object):
     def __enter__(self):
         if self._use_parent_session:
             self._parent.create_session()
+            return self._parent.session
         else:
             self._psession = self._parent.session
             self._session = self._parent.session_factory()

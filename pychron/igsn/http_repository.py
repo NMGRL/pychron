@@ -70,12 +70,12 @@ class HTTPRepository(Loggable):
             form['password'] = self.password
         return form
 
-# ===============================================================================
-# handlers
-# ===============================================================================
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     @on_trait_change('username, password')
     def _update_enabled(self):
         self.enabled = all([getattr(self, a)
-                                 for a in ('username', 'password')])
+                            for a in ('username', 'password')])
 
 # ============= EOF =============================================

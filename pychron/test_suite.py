@@ -18,6 +18,7 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.entry.tests.usgs_menlo_file_source import USGSMenloFileSourceUnittest
     from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
     from pychron.core.tests.spell_correct import SpellCorrectTestCase
@@ -52,7 +53,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (CalibrationObjectTestCase,
+    tests = (USGSMenloFileSourceUnittest,
+             CalibrationObjectTestCase,
              DurationTrackerTestCase,
              SpellCorrectTestCase,
              # SimilarTestCase,

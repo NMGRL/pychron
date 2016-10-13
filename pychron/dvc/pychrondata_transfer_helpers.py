@@ -18,12 +18,11 @@
 # ============= standard library imports ========================
 import json
 import os
+from datetime import timedelta
 from itertools import groupby
 
-from datetime import timedelta
 from numpy import array, array_split
 
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import bin_timestamps, make_timef, get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.dvc import dvc_dump, dvc_load
@@ -339,12 +338,12 @@ def get_project_bins(project):
 
 
 def get_project_timestamps(src, project, mass_spectrometer, tol_hrs):
-    sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
-join gen_labtable as lt on lt.id = ant.lab_id
-join gen_sampletable as st on lt.sample_id = st.id
-join gen_projecttable as pt on st.project_id = pt.id
-join meas_measurementtable as mst on ant.measurement_id = mst.id
-join gen_massspectrometertable as ms on mst.mass_spectrometer_id = ms.id
+    sql = """SELECT ant.analysis_timestamp from meas_AnalysisTable as ant
+join gen_LabTable as lt on lt.id = ant.lab_id
+join gen_SampleTable as st on lt.sample_id = st.id
+join gen_ProjectTable as pt on st.project_id = pt.id
+join meas_MeasurementTable as mst on ant.measurement_id = mst.id
+join gen_MassSpectrometerTable as ms on mst.mass_spectrometer_id = ms.id
 where pt.name="{}" and ms.name="{}"
 order by ant.analysis_timestamp ASC
 """.format(project, mass_spectrometer)
@@ -353,12 +352,12 @@ order by ant.analysis_timestamp ASC
 
 
 def get_irradiation_timestamps(src, irradname, tol_hrs):
-    sql = """SELECT ant.analysis_timestamp from meas_analysistable as ant
-    join gen_labtable as lt on lt.id = ant.lab_id
-    join gen_sampletable as st on lt.sample_id = st.id
+    sql = """SELECT ant.analysis_timestamp from meas_AnalysisTable as ant
+    join gen_LabTable as lt on lt.id = ant.lab_id
+    join gen_SampleTable as st on lt.sample_id = st.id
     join irrad_PositionTable as irp on lt.irradiation_id = irp.id
-    join irrad_leveltable as il on irp.level_id = il.id
-    join irrad_irradiationtable as ir on il.irradiation_id = ir.id
+    join irrad_LevelTable as il on irp.level_id = il.id
+    join irrad_IrradiationTable as ir on il.irradiation_id = ir.id
 
     where ir.name = "{}" and st.name ="FC-2"
     order by ant.analysis_timestamp ASC

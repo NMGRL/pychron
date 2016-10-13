@@ -16,12 +16,11 @@
 
 # ============= enthought library imports =======================
 from traits.api import provides
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.entry.iimport_source import IImportSource
-from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
     Sample, Project, Position, Production
+from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 
 NAME = ('Name', 'irradiation', 'irrad')
 PR = ('ProductionRatio', 'PR', 'Production Ratios', 'ProductionRatios', 'Production Ratio')
@@ -52,7 +51,7 @@ class XLSIrradiationSource:
         nameidx = dm.get_column_idx(NAME, sheet)
         return list({r[nameidx].value for r in dm.iterrows(sheet, start=1)})
 
-    def get_import_spec(self, name):
+    def get_irradiation_import_spec(self, name):
 
         spec = ImportSpec()
 

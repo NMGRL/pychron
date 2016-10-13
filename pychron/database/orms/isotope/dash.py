@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 # ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.repo.igsn import IGSNRepository
-from pychron.repo.tasks.preferences import IGSNPreferencesPane
+from sqlalchemy import Column, DateTime, BLOB, String
+from sqlalchemy.orm import relationship
+
+from pychron.database.core.base_orm import BaseMixin, NameMixin
+from util import Base, foreignkey
 
 
-class IGSNPlugin(BaseTaskPlugin):
-    id = 'pychron.igsn.plugin'
+class dash_TimeTable(Base, BaseMixin):
+    start = Column(DateTime)
+    end = Column(DateTime)
+    devices = relationship('dash_DeviceTable', backref='time_table')
 
-    def _help_tips_default(self):
-        return ['More information about IGSN is located at http://www.geosamples.org/']
 
-    def _service_offers_default(self):
-        so1 = self.service_offer_factory(factory=IGSNRepository,
-                                         protocol=IGSNRepository)
-        return [so1]
-
-    def _preferences_panes_default(self):
-        return [IGSNPreferencesPane]
+class dash_DeviceTable(Base, NameMixin):
+    time_table_id = foreignkey('dash_TimeTable')
+    scan_blob = Column(BLOB)
+    scan_fmt = Column(String(32))
+    scan_meta = Column(BLOB)
 
 # ============= EOF =============================================

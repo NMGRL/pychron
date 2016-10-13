@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, List, CInt, Int, Bool, Enum, Str
-# from traitsui.api import View, Item
-# from pyface.timer.do_later import do_after
-# ============= standard library imports ========================
 import time
 from threading import Event
-# ============= local library imports  ==========================
+
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str
+
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR
@@ -305,8 +303,7 @@ class DataCollector(Consoleable):
         else:
             self._plot_data_(i, x, keys, signals)
 
-        graph = self.plot_panel.isotope_graph
-        graph.refresh()
+        self.plot_panel.update()
 
     # ===============================================================================
     #

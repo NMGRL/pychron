@@ -14,20 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.has_traits import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.geochron.geochron_service import GeochronService
+from pychron.geochron.tasks.preferences import GeochronPreferencesPane
 
 
-class IDVCSource(Interface):
-    def get_irradiation_import_spec(self, name):
-        pass
+class GeochronPlugin(BaseTaskPlugin):
+    id = 'pychron.geochron.plugin'
 
-    def connect(self):
-        pass
+    def _help_tips_default(self):
+        return ['More information about Geochron is located at http://geochron.org/']
 
-    def get_irradiation_names(self):
-        pass
+    def _service_offers_default(self):
+        so1 = self.service_offer_factory(factory=GeochronService,
+                                         protocol=GeochronService)
+        return [so1]
 
+    def _preferences_panes_default(self):
+        return [GeochronPreferencesPane]
 
 # ============= EOF =============================================

@@ -73,8 +73,11 @@ PACKAGE_DICT = dict(
     ImagePlugin='pychron.image.tasks.image_plugin',
     NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
     NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
-    IGSNPlugin='pychron.repo.tasks.igsn_plugin',
-    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin'
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+
+    # outside database/repositories
+    IGSNPlugin='pychron.igsn.tasks.igsn_plugin',
+    GeochronPlugin='pychron.geochron.tasks.geochron_plugin'
 )
 
 

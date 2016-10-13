@@ -15,22 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+from threading import Event
+
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
     Str, CInt, Tuple, Color, HasTraits, Any, Int
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
-# ============= standard library imports ========================
-from threading import Event
-import time
-# ============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.core.ui.text_table import MultiTextTableAdapter
+from uncertainties import std_dev, nominal_value
+
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.text_table import MultiTextTableAdapter
+from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+from pychron.loggable import Loggable
+from pychron.options.ideogram import IdeogramOptions
+from pychron.options.spectrum import SpectrumOptions
+from pychron.pipeline.plot.plotter.ideogram import Ideogram
+from pychron.pipeline.plot.plotter.spectrum import Spectrum
+from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import PLUSMINUS, AR_AR
-from pychron.loggable import Loggable
 
 HEIGHT = 250
 ERROR_WIDTH = 10
@@ -97,6 +103,7 @@ class PlotPanel(Loggable):
     isotope_graph = Instance(Graph)
     peak_center_graph = Instance(Graph)
     selected_graph = Any
+    figure = Any
 
     graphs = Tuple
 
@@ -152,9 +159,11 @@ class PlotPanel(Loggable):
 
     def reset(self):
         self.debug('clearing graphs')
-        self.isotope_graph.clear()
-        self.peak_center_graph.clear()
-        self.sniff_graph.clear()
+        # self.isotope_graph.clear()
+        # self.peak_center_graph.clear()
+        # self.sniff_graph.clear()
+        for g in self.graphs:
+            g.clear()
 
     def create(self, dets):
         """
@@ -170,6 +179,22 @@ class PlotPanel(Loggable):
         while not evt.is_set():
             time.sleep(0.05)
 
+    def update(self):
+        self.isotope_graph.refresh()
+
+        if self.figure and isinstance(self.isotope_group, ArArAge):
+            age = self.isotope_group.uage
+            k39 = self.isotope_group.get_computed_value('k39')
+            v, e = nominal_value(age), std_dev(age)
+
+            self.debug('update figure age={} +/- {}. k39={}'.format(v, e, nominal_value(k39)))
+
+            a = self.figure.analyses[-1]
+            a.uage = age
+            a.k39 = k39
+
+            self.figure.replot()
+
     def new_plot(self, **kw):
         return self._new_plot(**kw)
 
@@ -183,10 +208,44 @@ class PlotPanel(Loggable):
         self.analysis_view = klass(**kw)
 
     def add_isotope_graph(self, name):
+        self.debug('add isotope graph name={}'.format(name))
         g = self._graph_factory()
         g.page_name = name
         self.graphs.append(g)
         self.isotope_graph = g
+        self.selected_graph = g
+
+    def add_figure_graph(self, spec, analyses):
+        self.debug('add figure graph. runid={}, nanalyses={}'.format(spec.runid, len(analyses)))
+        ans = [ai for ai in analyses if ai.labnumber == spec.labnumber]
+        if spec.is_step_heat():
+            f = Spectrum
+            opt = SpectrumOptions()
+
+            opt.add_aux_plot('Age Spectrum')
+            f.options = opt
+
+            name = 'Spec.'
+            ans = [ai for ai in ans if ai.aliquot == spec.aliquot]
+
+        else:
+            name = 'Ideo.'
+            f = Ideogram()
+            opt = IdeogramOptions()
+            opt.add_aux_plot('Ideogram')
+
+        ans.append(spec)
+
+        f.analyses = ans
+
+        plots = opt.get_plotable_aux_plots()
+        f.build(plots)
+        f.plot(plots)
+
+        self.figure = f
+        g = f.graph
+        g.page_name = name
+        self.graphs.append(g)
         self.selected_graph = g
 
     # private

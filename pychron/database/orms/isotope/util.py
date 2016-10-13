@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.types import Integer, String, Float
 
 # ============= enthought library imports =======================
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+Base = declarative_base()
 
+
+def foreignkey(name):
+    return Column(Integer, ForeignKey('{}.id'.format(name)))
+
+
+def stringcolumn(size=40, *args, **kw):
+    return Column(String(size), *args, **kw)
+
+
+def doublecolumn(**kw):
+    if 'default' not in kw:
+        kw['default'] = 0
+
+    return Column(Float(32), **kw)
 
 # ============= EOF =============================================
