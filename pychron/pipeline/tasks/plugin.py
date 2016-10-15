@@ -26,10 +26,8 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
-    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, TimeViewBrowserAction, \
-    FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
+    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction
-from pychron.pipeline.tasks.browser_task import BrowserTask
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 
@@ -64,11 +62,11 @@ class PipelinePlugin(BaseTaskPlugin):
                          application=self.application)
         return t
 
-    def _browser_factory(self):
-        model = self.application.get_service(SampleBrowserModel)
-        t = BrowserTask(browser_model=model,
-                        application=self.application)
-        return t
+    # def _browser_factory(self):
+    #     model = self.application.get_service(SampleBrowserModel)
+    #     t = BrowserTask(browser_model=model,
+    #                     application=self.application)
+    #     return t
 
     def _browser_model_factory(self):
         return SampleBrowserModel(application=self.application)
@@ -113,8 +111,9 @@ class PipelinePlugin(BaseTaskPlugin):
                                          path='MenuBar/data.menu'),
                           SchemaAddition(factory=RecallAction,
                                          path=reg),
-                          SchemaAddition(factory=TimeViewBrowserAction,
-                                         path=reg)]
+                          # SchemaAddition(factory=TimeViewBrowserAction,
+                          #                path=reg)
+                          ]
 
         plotting_actions = [SchemaAddition(factory=data_menu,
                                            path='MenuBar',
@@ -156,7 +155,7 @@ class PipelinePlugin(BaseTaskPlugin):
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
-        browser_actions = [configure_recall]
+        # browser_actions = [configure_recall]
 
         quick_series_actions = [SchemaAddition(factory=quick_series_group,
                                                path='MenuBar/data.menu'),
@@ -179,8 +178,8 @@ class PipelinePlugin(BaseTaskPlugin):
 
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),
-                TaskExtension(task_id='pychron.browser.task',
-                              actions=browser_actions),
+                # TaskExtension(task_id='pychron.browser.task',
+                #               actions=browser_actions),
                 TaskExtension(actions=actions)]
 
     def _tasks_default(self):
@@ -188,9 +187,10 @@ class PipelinePlugin(BaseTaskPlugin):
                             name='Pipeline',
                             accelerator='Ctrl+p',
                             factory=self._pipeline_factory),
-                TaskFactory(id='pychron.browser.task',
-                            name='Browser',
-                            accelerator='Ctrl+b',
-                            factory=self._browser_factory)]
+                # TaskFactory(id='pychron.browser.task',
+                #             name='Browser',
+                #             accelerator='Ctrl+b',
+                #             factory=self._browser_factory)
+                ]
 
 # ============= EOF =============================================
