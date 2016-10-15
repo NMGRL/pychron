@@ -139,11 +139,12 @@ class BrowserAction(Action):
         return task
 
 
-class RecallAction(BrowserAction):
+class RecallAction(PipelineAction):
     name = 'Recall...'
-
-    def perform(self, event):
-        self._get_task(event)
+    action = 'pipeline_recall'
+    
+    # def perform(self, event):
+    #     self._get_task(event)
 
 
 class TimeViewBrowserAction(BrowserAction):
@@ -195,6 +196,11 @@ class AnalysisTableAction(PipelineAction):
     name = 'Analysis Table'
     dname = 'Analysis Table'
     action = 'set_analysis_table_template'
+
+
+class PipelineRecallAction(TaskAction):
+    name = 'Recall'
+    method = 'pipeline_recall'
 
 
 # ============= Plotting Actions =============================================

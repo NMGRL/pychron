@@ -28,6 +28,7 @@ from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.view import BrowserView
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine
@@ -37,7 +38,8 @@ from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction
+    EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
+    InverseIsochronAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
@@ -58,9 +60,14 @@ def select_experiment_repo():
 
 
 class PipelineTask(BaseBrowserTask):
-    name = 'Pipeline Processing'
+    name = 'Pipeline Data Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [SToolBar(ConfigureRecallAction()),
+    tool_bars = [SToolBar(PipelineRecallAction(),
+                          IdeogramAction(),
+                          SpectrumAction(),
+                          InverseIsochronAction()),
+
+                 SToolBar(ConfigureRecallAction()),
                  SToolBar(RunAction(),
                           ResumeAction(),
                           RunFromAction(),
@@ -89,6 +96,7 @@ class PipelineTask(BaseBrowserTask):
 
     modified = False
     projects = None
+    _browser_info = None
 
     def activated(self):
         super(PipelineTask, self).activated()
@@ -123,6 +131,18 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def pipeline_recall(self):
+        if self._browser_info:
+            if self._browser.info.control:
+                self._browser_info.control.raise_()
+                return
+
+        self.browser_model.activated()
+        browser_view = BrowserView(show_append_replace_buttons=False,
+                                   model=self.browser_model)
+        info = browser_view.edit_traits(kind='live')
+        self._browser_info = info
+
     def tabular_view(self):
         self.debug('open tabular view')
         if not self.has_active_editor():

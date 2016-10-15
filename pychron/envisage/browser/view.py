@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance, Button
+from traits.api import HasTraits, Str, Instance, Button, Bool
 from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
 from traitsui.handler import Handler
 
@@ -147,6 +147,7 @@ class BrowserView(BaseBrowserView):
 
     append_button = Button('Append')
     replace_button = Button('Replace')
+    show_append_replace_buttons = Bool(True)
 
     def traits_view(self):
         main_grp = self._get_browser_group()
@@ -166,7 +167,8 @@ class BrowserView(BaseBrowserView):
                       spring,
                       CustomLabel('datasource_url', color='maroon'))
 
-        bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'))
+        bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'),
+                      defined_when='pane.show_append_replace_buttons')
         v = View(VGroup(hgrp, main_grp, bgrp),
                  # buttons=['Cancel'],
                  # Action(name='Append',
