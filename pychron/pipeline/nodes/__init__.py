@@ -20,6 +20,7 @@
 
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode
+from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
     VerticalFluxNode, XYScatterNode
@@ -27,10 +28,12 @@ from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
+from pychron.pipeline.nodes.geochron import GeochronNode
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSXTablePersistNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import XLSXAnalysisTableNode
+
 
 # ============= EOF =============================================

@@ -23,6 +23,7 @@ from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, Interpre
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
+from pychron.pipeline.nodes.geochron import GeochronNode
 from pychron.pipeline.nodes.persist import PersistNode
 
 
@@ -51,7 +52,9 @@ class PipelineTemplate(HasTraits):
 
         pipeline.nodes = []
         with open(self.path, 'r') as rfile:
-            nodes = yaml.load(rfile)
+            yd = yaml.load(rfile)
+
+        nodes = yd['nodes']
         # print 'fafa', nodes
         for i, ni in enumerate(nodes):
             # print i, ni
@@ -70,6 +73,10 @@ class PipelineTemplate(HasTraits):
             elif isinstance(node, DiffNode):
                 recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
                 node.trait_set(recaller=recaller)
+            elif isinstance(node, GeochronNode):
+                service = application.get_service('pychron.geochron.geochron_service.GeochronService')
+                node.trait_set(service=service)
+
             node.finish_load()
             # elif isinstance(node, FitICFactorNode):
             #     node.set_detectors()
