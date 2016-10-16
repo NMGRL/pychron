@@ -156,6 +156,14 @@ class ArArConstants(HasTraits):
         d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
+    @property
+    def atm3836_v(self):
+        return nominal_value(self.atm3836)
+
+    @property
+    def atm3836_e(self):
+        return std_dev(self.atm3836)
+
     def _get_fixed_k3739(self):
         return self._get_ufloat('k3739')
 

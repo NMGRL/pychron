@@ -45,7 +45,9 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
               'username', 'queue_conditionals_name', 'identifier',
-              'repository_identifier')
+              'repository_identifier',
+              'acquisition_software',
+              'data_reduction_software')
 
 PATH_MODIFIERS = (
     None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
@@ -135,6 +137,9 @@ class TIsotope:
 class DVCAnalysis(Analysis):
     icfactor_reviewed = False
     blank_reviewed = False
+
+    production_obj = None
+    chronology_obj = None
 
     def __init__(self, record_id, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
@@ -271,6 +276,7 @@ class DVCAnalysis(Analysis):
             iso.sniff.unpack_data(format_blob(sn['blob']), n_only)
 
     def set_production(self, prod, r):
+        self.production_obj = r
         self.production_name = prod
         self.production_ratios = r.to_dict(('Ca_K', 'Cl_K'))
         self.interference_corrections = r.to_dict(INTERFERENCE_KEYS)

@@ -141,16 +141,26 @@ class Analysis(ArArAge):
     group_id = 0  # Int
     graph_id = 0  # Int
 
+    # sample
+    sample = ''
+    material = ''
+    project = ''
+    latitude = 0
+    longitude = 0
+    elevation = 0
+    igsn = ''
+
     # collection
+    acquisition_software = None
+    data_reduction_software = None
+    laboratory = ''
+    analystName = ''
     uuid = None  # Str
     labnumber = ''
     aliquot = 0
     step = ''
     increment = None
     aliquot_step_str = ''
-    sample = ''
-    material = ''
-    project = ''
     comment = ''
     mass_spectrometer = ''
     analysis_type = ''
@@ -209,6 +219,26 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
     omit_event = Event
+
+    standard_name = None
+    standard_age = None
+    standard_material = None
+
+    _experiment_type = None
+
+    @property
+    def experiment_type(self):
+        if self._experiment_type:
+            return self._experiment_type
+
+        if self.step:
+            return 'Incremental Heating'
+        else:
+            return 'Laser Fusion'
+
+    @experiment_type.setter
+    def experiment_type(self, v):
+        self._experiment_type = v
 
     def get_baseline_corrected_signal_dict(self):
         get = lambda iso: iso.get_baseline_corrected_value()

@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2016 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,30 +14,27 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.repo.igsn import IGSNRepository
+from pyface.tasks.action.task_action import TaskAction
 
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from zobs.repo.tasks.preferences import IGSNPreferencesPane
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 
 
-class IGSNPlugin(BaseTaskPlugin):
-    id = 'pychron.igsn.plugin'
+class UploadAction(TaskAction):
+    name = 'Upload to Geochron...'
 
-    def _help_tips_default(self):
-        return ['More information about IGSN is located at http://www.geosamples.org/']
+    def perform(self, event):
+        app = event.task.application
+        geochron_service = app.get_service('pychron.geochron.geochron_service.GeochronService')
 
-    def _service_offers_default(self):
-        so1 = self.service_offer_factory(factory=IGSNRepository,
-                                         protocol=IGSNRepository)
-        return [so1]
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        with dvc.session_ctx():
+            ai = dvc.get_analysis('c038c72a-cf21-49f9-a5b5-1e43bb4a6b93')
+            ans = dvc.make_analyses(ai)
 
-    def _preferences_panes_default(self):
-        return [IGSNPreferencesPane]
-
-    def _prefereneces_default(self):
-        return self._preferences_factory('igsn')
+            ag = AnalysisGroup()
+            ag.analyses = ans
+            print geochron_service.assemble_xml(ag)
 
 # ============= EOF =============================================

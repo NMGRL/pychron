@@ -663,7 +663,8 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
                 ir.hole = dbpos.position
 
-                j, lambda_k = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
+                fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
+                j = fd['j']
                 if j:
                     ir.j = nominal_value(j)
                     ir.j_err = std_dev(j)

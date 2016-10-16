@@ -227,6 +227,10 @@ else
     mkdir ${PYCHRONDATA_PREFIX}/preferences
 
     cat > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
+[pychron.igsn]
+url = 'https://app.geosamples.org/webservices/upload.php'
+EOF
+    cat > ${PYCHRONDATA_PREFIX}/preferences/dvc.ini << EOF
 [pychron.dvc]
 organization=${dvc}
 meta_repo_name=MetaData

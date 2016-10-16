@@ -49,7 +49,7 @@ class IGSNPreferencesPane(PreferencesPane):
                           label='Authentication')
 
         v = View(VGroup(Item('url', label='IGSN URL'),
-                        Item('usercode', tooltip='Three alphanumeric characters used as a sample prefix'),
+                        Item('user_code', tooltip='Three alphanumeric characters used as a sample prefix'),
                         auth_grp))
         return v
 

@@ -56,6 +56,7 @@ class AutomatedRunSpec(HasTraits):
     username = Str
     tray = Str
     queue_conditionals_name = Str
+    laboratory = Str
     # ===========================================================================
     # run id
     # ===========================================================================

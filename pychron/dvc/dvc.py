@@ -165,16 +165,16 @@ class DVC(Loggable):
             level = dblevel.name
             pos = ip.position
 
-            j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
+            fd = self.meta_repo.get_flux(irrad, level, pos)
             prodname, prod = self.meta_repo.get_production(irrad, level)
             cs = self.meta_repo.get_chronology(irrad)
 
             x = datetime.now()
             now = time.mktime(x.timetuple())
-            if lambda_k:
-                isotope_group.arar_constants.lambda_k = lambda_k
+            if fd['lambda_k']:
+                isotope_group.arar_constants.lambda_k = fd['lambda_k']
 
-            isotope_group.trait_set(j=j,
+            isotope_group.trait_set(j=fd['j'],
                                     # lambda_k=lambda_k,
                                     production_ratios=prod.to_dict(RATIO_KEYS),
                                     interference_corrections=prod.to_dict(INTERFERENCE_KEYS),
@@ -258,8 +258,8 @@ class DVC(Loggable):
         return ops, nps
 
     def get_flux(self, irrad, level, pos):
-        j, lambda_k = self.meta_repo.get_flux(irrad, level, pos)
-        return j
+        fd = self.meta_repo.get_flux(irrad, level, pos)
+        return fd['j']
 
     def freeze_flux(self, ans):
         self.info('freeze flux')
@@ -614,10 +614,9 @@ class DVC(Loggable):
                 return True
             else:
                 self.debug('name={} not in available repos from service={}, organization={}'.format(name,
-                                                                                   service.remote_url,
-                                                                                   self.organization))
+                                                                                                    service.remote_url,
+                                                                                                    self.organization))
                 for ni in names:
-
                     self.debug('available repo== {}'.format(ni))
 
     def rollback_repository(self, expid):
@@ -994,11 +993,16 @@ class DVC(Loggable):
                     pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                 a.set_production(pname, prod)
 
-                j, lambda_k = meta_repo.get_flux(record.irradiation, record.irradiation_level,
-                                                 record.irradiation_position_position)
-                a.j = j
-                if lambda_k:
-                    a.arar_constants.lambda_k = lambda_k
+                fd = meta_repo.get_flux(record.irradiation,
+                                        record.irradiation_level,
+                                        record.irradiation_position_position)
+                a.j = fd['j']
+                if fd['lambda_k']:
+                    a.arar_constants.lambda_k = fd['lambda_k']
+
+                a.standard_age = fd['standard_age']
+                a.standard_name = fd['standard_name']
+                a.standard_material = fd['standard_material']
 
                 if calculate_f_only:
                     a.calculate_F()

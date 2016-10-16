@@ -226,6 +226,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     mass_spectrometer = String
     extract_device = Str
     username = Str
+    laboratory = Str
 
     pattributes = ('collection_time_zero_offset',
                    'selected_irradiation', 'selected_level',
@@ -253,6 +254,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def __init__(self, *args, **kw):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
         bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
+        bind_preference(self, 'laboratory', 'pychron.general.organiziation')
+
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
     def setup_files(self):
@@ -452,7 +455,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _new_run(self, excludes=None, **kw):
 
         # need to set the labnumber now because analysis_type depends on it
-        arv = self._spec_klass(labnumber=self.labnumber, **kw)
+        arv = self._spec_klass(laboratory=self.laboratory,
+                               labnumber=self.labnumber, **kw)
 
         if excludes is None:
             excludes = []

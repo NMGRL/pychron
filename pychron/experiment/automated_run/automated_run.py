@@ -841,6 +841,7 @@ class AutomatedRun(Loggable):
         self.debug('----------------- start -----------------')
         self._aborted = False
         self.persistence_spec = PersistenceSpec()
+
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
                 p.per_spec = self.persistence_spec

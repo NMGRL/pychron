@@ -22,7 +22,7 @@ import time
 from datetime import datetime
 
 from traits.api import Bool
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev
 
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
@@ -198,7 +198,24 @@ class Production2(MetaObject):
 class Production(MetaObject):
     name = ''
     note = ''
+    reactor = 'Triga'
     attrs = None
+
+    @property
+    def k_ca(self):
+        return 1 / self.ca_k
+
+    @property
+    def k_cl(self):
+        return 1 / self.cl_k
+
+    @property
+    def k_cl_err(self):
+        return std_dev(1 / ufloat(self.cl_k, self.cl_k_err))
+
+    @property
+    def k_ca_err(self):
+        return std_dev(1 / ufloat(self.ca_k, self.ca_k_err))
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]
@@ -206,9 +223,12 @@ class Production(MetaObject):
 
         attrs = []
         for k, v in obj.iteritems():
-            setattr(self, k, float(v[0]))
-            setattr(self, '{}_err'.format(k), float(v[1]))
-            attrs.append(k)
+            if k == 'reactor':
+                self.reactor = v
+            else:
+                setattr(self, k, float(v[0]))
+                setattr(self, '{}_err'.format(k), float(v[1]))
+                attrs.append(k)
 
         self.attrs = attrs
 
@@ -592,7 +612,7 @@ class MetaRepo(GitRepoManager):
     def get_flux(self, irradiation, level, position):
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, je, lambda_k = 0, 0, None
-
+        standard_name, standard_material, standard_age = 'FC-2', 'sanidine', ufloat(28.201, 0)
         positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
@@ -606,8 +626,19 @@ class MetaRepo(GitRepoManager):
                     else:
                         v, e = dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0)
                     lambda_k = ufloat(v, e)
+                mon = pos.get('monitor')
+                if mon:
+                    standard_name = mon.get('name', 'FC-2')
+                    sa = mon.get('age', 28.201)
+                    se = mon.get('error', 0)
+                    standard_age = ufloat(sa, se)
+                    standard_material = mon.get('material', 'sanidine')
 
-        return ufloat(j, je), lambda_k
+        fd = {'j': ufloat(j, je), 'lambda_k': lambda_k,
+              'standard_name': standard_name,
+              'standard_material': standard_material,
+              'standard_age': standard_age}
+        return fd
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)

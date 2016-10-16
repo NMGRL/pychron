@@ -16,8 +16,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.tasks.action.schema_addition import SchemaAddition
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.geochron.geochron_service import GeochronService
+from pychron.geochron.tasks.actions import UploadAction
 from pychron.geochron.tasks.preferences import GeochronPreferencesPane
 
 
@@ -34,5 +38,11 @@ class GeochronPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [GeochronPreferencesPane]
+
+    def _task_extensions_default(self):
+        actions = [SchemaAddition(factory=UploadAction,
+                                  path='MenuBar/data.menu')]
+        ts = [TaskExtension(actions=actions)]
+        return ts
 
 # ============= EOF =============================================

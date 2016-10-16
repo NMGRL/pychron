@@ -331,7 +331,8 @@ class DVCPersister(BasePersister):
             clf = self.isotope_classifier
 
         endianness = '>'
-        for iso in self.per_spec.isotope_group.isotopes.values():
+        per_spec = self.per_spec
+        for iso in per_spec.isotope_group.isotopes.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
@@ -348,8 +349,8 @@ class DVCPersister(BasePersister):
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
-                dets[iso.detector] = {'deflection': self.per_spec.defl_dict.get(iso.detector),
-                                      'gain': self.per_spec.gains.get(iso.detector)}
+                dets[iso.detector] = {'deflection': per_spec.defl_dict.get(iso.detector),
+                                      'gain': per_spec.gains.get(iso.detector)}
 
                 icfactors[iso.detector] = {'value': float(nominal_value(iso.ic_factor or 1)),
                                            'error': float(std_dev(iso.ic_factor or 0)),
@@ -365,34 +366,41 @@ class DVCPersister(BasePersister):
                                     'value': float(nominal_value(iso.uvalue)),
                                     'error': float(std_dev(iso.uvalue))}
             blanks[iso.name] = {'fit': 'previous',
-                                'references': [{'record_id': self.per_spec.previous_blank_runid,
+                                'references': [{'record_id': per_spec.previous_blank_runid,
                                                 'exclude': False}],
                                 'value': float(nominal_value(iso.blank.uvalue)),
                                 'error': float(std_dev(iso.blank.uvalue))}
 
         obj = self._make_analysis_dict()
 
+        from pychron.version import __version__ as pversion
         from pychron.experiment import __version__ as eversion
         from pychron.dvc import __version__ as dversion
 
         obj['timestamp'] = timestamp.isoformat()
+
         obj['collection_version'] = '{}:{}'.format(eversion, dversion)
+        obj['acquisition_software'] = 'pychron version={}'.format(pversion)
+        obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+        obj['laboratory'] = per_spec.run_spec.laboratory
+        obj['analyst_name'] = per_spec.run_spec.username
+
         obj['detectors'] = dets
         obj['isotopes'] = isos
         obj['spec_sha'] = self._get_spectrometer_sha()
-        obj['intensity_scalar'] = self.per_spec.intensity_scalar
+        obj['intensity_scalar'] = per_spec.intensity_scalar
 
         # save the conditionals
-        obj['conditionals'] = [c.to_dict() for c in self.per_spec.conditionals] if \
-            self.per_spec.conditionals else None
-        obj['tripped_conditional'] = self.per_spec.tripped_conditional.result_dict() if \
-            self.per_spec.tripped_conditional else None
+        obj['conditionals'] = [c.to_dict() for c in per_spec.conditionals] if \
+            per_spec.conditionals else None
+        obj['tripped_conditional'] = per_spec.tripped_conditional.result_dict() if \
+            per_spec.tripped_conditional else None
 
         # save the scripts
-        ms = self.per_spec.run_spec.mass_spectrometer
+        ms = per_spec.run_spec.mass_spectrometer
         for si in ('measurement', 'extraction'):
-            name = getattr(self.per_spec, '{}_name'.format(si))
-            blob = getattr(self.per_spec, '{}_blob'.format(si))
+            name = getattr(per_spec, '{}_name'.format(si))
+            blob = getattr(per_spec, '{}_blob'.format(si))
             self.dvc.meta_repo.update_script(ms, name, blob)
             obj[si] = name
 
