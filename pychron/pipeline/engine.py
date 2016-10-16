@@ -612,14 +612,38 @@ class PipelineEngine(Loggable):
         def formatter(t):
             return ' '.join(map(str.capitalize, t.split('_')))
 
-        templates = map(formatter, templates)
-        user_templates = map(formatter, user_templates)
+        # ftemplates = map(formatter, templates)
+        # fuser_templates = map(formatter, user_templates)
 
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
 
-        ns = [pt for pt in tnames if pt in templates]
-        ns.extend(user_templates)
+        ns = []
+        for ti in templates:
+            name = formatter(ti)
+            if name not in tnames:
+                continue
+            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ti))
+
+            with open(p,'r') as rfile:
+                yd = yaml.load(rfile)
+                required = yd['required']
+                if required:
+                    if all((self.application.get_service(ri)for ri in required)):
+                        ns.append(name)
+                else:
+                    ns.append(name)
+
+
+        # ns = [pt for pt in tnames if pt in ftemplates]
+        # ns.extend(fuser_templates)
+        # check for requirements
+
+            # p = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format())
+            # if os.path.isfile(p):
+            #     p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ni))
+
+
 
         self.available_pipeline_templates = ns
 
@@ -722,6 +746,7 @@ class PipelineEngine(Loggable):
         # self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
         def func(editor):
             vs = self.selected.unknowns
+            print 'asdfasfasf', vs
             editor.set_items(vs)
             self.state.unknowns = vs
             for node in self.pipeline.nodes:

@@ -40,6 +40,8 @@ PIPELINE_TEMPLATES = '''- Iso Evo
 - Diff
 - Vertical Flux
 - Xy Scatter
+- Geochron
+- Yield
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -378,104 +380,155 @@ SPECTRUM_SCREEN = make_screen(**spec_d)
 # ===============================================================
 # Pipeline Templates
 # ===============================================================
+YIELD = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: YieldNode
+"""
+GEOCHRON = """
+required:
+ - pychron.geochron.geochron_service.GeochronService
+nodes:
+ - klass: UnknownNode
+ - klass: GeochronNode
+"""
 ICFACTOR = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Air
-- klass: ReferenceNode
-- klass: FitICFactorNode
-  fits:
-    - numerator: H1
-      denominator: CDD
-      standard_ratio: 295.5
-      analysis_type: Air
-- klass: ReviewNode
-- klass: ICFactorPersistNode
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: FindReferencesNode
+    threshold: 10
+    analysis_type: Air
+  - klass: ReferenceNode
+  - klass: FitICFactorNode
+    fits:
+      - numerator: H1
+        denominator: CDD
+        standard_ratio: 295.5
+        analysis_type: Air
+  - klass: ReviewNode
+  - klass: ICFactorPersistNode
 """
 
 ISOEVO = """
-- klass: UnknownNode
-- klass: FitIsotopeEvolutionNode
-- klass: ReviewNode
-- klass: IsotopeEvolutionPersistNode
-  use_editor: False
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: FitIsotopeEvolutionNode
+  - klass: ReviewNode
+  - klass: IsotopeEvolutionPersistNode
+    use_editor: False
 """
 
 BLANKS = """
-- klass: UnknownNode
-- klass: FindReferencesNode
-  threshold: 10
-  analysis_type: Blank Unknown
-- klass: ReferenceNode
-- klass: FitBlanksNode
-- klass: ReviewNode
-- klass: BlanksPersistNode
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: FindReferencesNode
+    threshold: 10
+    analysis_type: Blank Unknown
+  - klass: ReferenceNode
+  - klass: FitBlanksNode
+  - klass: ReviewNode
+  - klass: BlanksPersistNode
 """
 
-CSV_IDEO = """- klass: CSVNode
-- klass: IdeogramNode
+CSV_IDEO = """
+required:
+nodes:
+  - klass: CSVNode
+  - klass: IdeogramNode
 """
 
-IDEO = """- klass: UnknownNode
-- klass: IdeogramNode
+IDEO = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: IdeogramNode
 """
 
-INVERSE_ISOCHRON = """- klass: UnknownNode
-- klass: InverseIsochronNode
+INVERSE_ISOCHRON = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: InverseIsochronNode
 """
 
-SPEC = """- klass: UnknownNode
-- klass: SpectrumNode
+SPEC = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: SpectrumNode
 """
 
-VERTICAL_FLUX = """- klass: FindVerticalFluxNode
-- klass: VerticalFluxNode
+VERTICAL_FLUX = """
+required:
+nodes:
+  - klass: FindVerticalFluxNode
+  - klass: VerticalFluxNode
 """
 
-XY_SCATTER = """- klass: UnknownNode
-- klass: XYScatterNode
+XY_SCATTER = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: XYScatterNode
 """
 
-ANALYSIS_TABLE = """- klass: UnknownNode
-- klass: GroupingNode
-- klass: XLSXAnalysisTableNode
-- klass: XLSXTablePersistNode
+ANALYSIS_TABLE = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: XLSXAnalysisTableNode
+  - klass: XLSXTablePersistNode
 """
 
-INTERPRETED_AGE_TABLE = """- klass: InterpretedAgeNode
-- klass: InterpretedAgeTableNode
-- klass: ReviewNode
-- klass: InterpretedAgeTablePersistNode
+INTERPRETED_AGE_TABLE = """
+required:
+nodes:
+  - klass: InterpretedAgeNode
+  - klass: InterpretedAgeTableNode
+  - klass: ReviewNode
+  - klass: InterpretedAgeTablePersistNode
 """
 
-AUTO_IDEOGRAM = """- klass: ListenUnknownNode
-- klass: FilterNode
-  filters:
-   - age<0
-- klass: GroupingNode
-  key: Identifier
-- klass: IdeogramNode
-  no_analyses_warning: False
+AUTO_IDEOGRAM = """
+required:
+nodes:
+  - klass: ListenUnknownNode
+  - klass: FilterNode
+    filters:
+     - age<0
+  - klass: GroupingNode
+    key: Identifier
+  - klass: IdeogramNode
+    no_analyses_warning: False
 """
 
-SERIES = """- klass: UnknownNode
-- klass: SeriesNode
+SERIES = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: SeriesNode
 """
 
 FLUX = """
-- klass: FindFluxMonitorsNode
+required:
+nodes:
+  - klass: FindFluxMonitorsNode
 #  irradiation: NM-274
 #  level: E
-- klass: FluxMonitorsNode
-#- klass: GroupingNode
+  - klass: FluxMonitorsNode
+#  - klass: GroupingNode
 #  key: Identifier
-#- klass: IdeogramNode
-#- klass: TableNode
-#- klass: ReviewNode
-- klass: FitFluxNode
-- klass: ReviewNode
-- klass: FluxPersistNode
+#  - klass: IdeogramNode
+#  - klass: TableNode
+#  - klass: ReviewNode
+  - klass: FitFluxNode
+  - klass: ReviewNode
+  - klass: FluxPersistNode
 """
 # SYSTEM_HEALTH = '''
 # values:

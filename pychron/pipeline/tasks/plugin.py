@@ -49,7 +49,9 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['xy_scatter_template', 'XY_SCATTER', ov],
                  ['analysis_table_template', 'ANALYSIS_TABLE', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
-                 ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov]]
+                 ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov],
+                 ['geochron_template', 'GEOCHRON', ov],
+                 ['yield_template', 'YIELD', ov]]
 
         files = paths.set_template_manifest(files)
         return files

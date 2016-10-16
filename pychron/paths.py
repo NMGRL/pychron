@@ -249,6 +249,8 @@ class Paths(object):
     interpreted_age_table_template = None
     auto_ideogram_template = None
     series_template = None
+    geochron_template = None
+    yield_template = None
 
     furnace_sample_states = None
 
@@ -481,6 +483,8 @@ class Paths(object):
         self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
         self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
         self.series_template = join(self.pipeline_template_dir, 'series.yaml')
+        self.geochron_template = join(self.pipeline_template_dir, 'geochron.yaml')
+        self.yield_template = join(self.pipeline_template_dir, 'yield.yaml')
         build_directories()
 
     def set_template_manifest(self, files):
