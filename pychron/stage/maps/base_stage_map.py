@@ -75,7 +75,7 @@ class BaseStageMap(Loggable):
         self.load()
 
     def load(self):
-
+        self.debug('loading stage map file {}'.format(self.file_path))
         with open(self.file_path, 'r') as rfile:
 
             line = rfile.readline()
@@ -161,6 +161,7 @@ class BaseStageMap(Loggable):
             key = self.calibration_holes[idx]
         except IndexError, e:
             self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}'.format(idx, e))
+            self.debug('calibration holes={}'.format(self.calibration_holes))
             return
 
         return self.get_hole(key.strip())

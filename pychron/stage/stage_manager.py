@@ -55,7 +55,7 @@ class BaseStageManager(Manager):
 
     def refresh_stage_map_names(self):
         sms = list_directory2(self.root, '.txt', remove_extension=True)
-
+        sms = [si for si in sms if not si.endswith('.center')]
         us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
         if us:
             sms.extend(us)
@@ -195,7 +195,9 @@ class BaseStageManager(Manager):
             self.info('loading previous stage map from {}'.format(p))
             with open(p, 'rb') as f:
                 try:
-                    return pickle.load(f)
+                    sm = pickle.load(f)
+                    if not sm.endswith('.center'):
+                        return sm
                 except pickle.PickleError:
                     pass
                     # def traits_view(self):

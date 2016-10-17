@@ -147,6 +147,7 @@ class StageControlPane(TraitsDockPane):
                                    Item('tray_calibration.error', format_str='%0.2f',
                                         style='readonly'),
                                    label='Results', show_border=True),
+                            UItem('tray_calibration.set_center_button'),
                             # UItem('tray_calibration.calibrator', style='custom',
                             #       editor=InstanceEditor()),
                             VGroup(CustomLabel('tray_calibration.calibration_help',

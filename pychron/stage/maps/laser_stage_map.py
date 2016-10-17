@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Button, on_trait_change
+
 import os
 import pickle
-
 import yaml
-from traits.api import Button, on_trait_change
 
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
@@ -32,12 +32,29 @@ class LaserStageMap(BaseStageMap):
     rotation = None
 
     @property
+    def center_guess_path(self):
+        head, tail = os.path.splitext(self.file_path)
+        path = '{}.center.txt'.format(head)
+        return path
+
+    @property
     def correction_path(self):
         p = ''
         if paths.hidden_dir:
             p = os.path.join(paths.hidden_dir,
                              '{}_correction_file'.format(self.name))
         return p
+
+    def set_center_guess(self, x, y):
+        previous = []
+        p = self.center_guess_path
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                previous = [l if l[0] == '#' else '#{}'.format(l) for l in rfile.readlines()]
+
+        previous.append('{},{}\n'.format(x, y))
+        with open(p, 'w') as wfile:
+            wfile.writelines(previous)
 
     def load_correction_file(self):
         self.debug('load correction file')
@@ -47,9 +64,12 @@ class LaserStageMap(BaseStageMap):
             with open(p, 'rb') as f:
                 try:
                     cors = pickle.load(f)
-                except pickle.PickleError, e:
-                    print 'exception', e
-
+                except (ValueError, pickle.PickleError), e:
+                    self.warning_dialog('Failed to load the correction file:\n{}\n'
+                                        'If you are relying on SemiAuto or Auto calibration a'
+                                        'recalibration is required'.format(p))
+                    if self.confirmation_dialog('Would you like to delete the file:\n {}'.format(p)):
+                        os.remove(p)
             if cors:
                 self.info('loaded correction file {}'.format(p))
                 for i, x, y in cors:
@@ -177,7 +197,7 @@ class LaserStageMap(BaseStageMap):
         pythag = lambda hi, xi, yi: ((hi.x - xi) ** 2 + (hi.y - yi) ** 2) ** 0.5
         holes = [(hole, pythag(hole, x, y)) for hole in self.sample_holes
                  if abs(getattr(hole, xkey) - x) < tol and abs(
-                    getattr(hole, ykey) - y) < tol]
+                getattr(hole, ykey) - y) < tol]
         if holes:
             #            #sort holes by deviation
             holes = sorted(holes, lambda a, b: cmp(a[1], b[1]))
