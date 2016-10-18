@@ -76,6 +76,7 @@ class TrayCalibrationManager(Loggable):
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')
 
+    cancel_button = Button('Cancel')
     add_holes_button = Button
     reset_holes_button = Button
     holes_list = List
@@ -137,6 +138,9 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _cancel_button_fired(self):
+        if self.calibrator:
+            self.calibrator.cancel()
 
     def _set_center_button_fired(self):
         x, y = self.parent.get_current_position()

@@ -47,11 +47,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         3. traverse holes finding autocenter position
     """
 
-    _alive = False
     stage_map = Instance('pychron.stage.maps.base_stage_map.BaseStageMap')
-
-    def isAlive(self):
-        return self._alive
 
     def handle(self, step, x, y, canvas):
         ret = None
@@ -65,7 +61,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             # check stage map has at least one calibration hole.
             # if not issue warning and ask for manual locate right
             if self._check_auto_calibration():
-                self.calibration_step = 'Auto Calibration'
+                self.calibration_step = 'Auto Calibrate'
             else:
                 name = self.stage_map.name
                 msg = 'Auto Rotation calibration not available.\n ' \
@@ -87,19 +83,19 @@ class SemiAutoCalibrator(TrayCalibrator):
             t = Thread(target=self._auto_calibrate,
                        args=(canvas.calibration_item,))
             t.start()
-            self.calibration_step = 'Cancel'
+            self.calibration_enabled = False
+            # self.calibration_step = 'Cancel'
         elif step == 'Traverse':
             if self.confirmation_dialog('Start Autocentering Traverse'):
                 self._alive = True
                 t = Thread(target=self._traverse,
                            args=(canvas.calibration_item,))
                 t.start()
-                self.calibration_step = 'Cancel'
+                self.calibration_enabled = False
+                # self.calibration_step = 'Cancel'
             else:
                 self.calibration_step = 'Calibrate'
-        elif step == 'Cancel':
-            self._alive = False
-            self.calibration_step = 'Calibrate'
+                self.calibration_enabled = True
 
         return ret
 
@@ -259,6 +255,7 @@ class SemiAutoCalibrator(TrayCalibrator):
 
         # reset calibration manager
         self.calibration_step = 'Calibrate'
+        self.calibration_enabled = True
 
     def _autocenter(self, hi, guess=None):
         self.debug('autocentering hole={}, guess={}'.format(hi.id, guess))
@@ -302,37 +299,33 @@ class AutoCalibrator(SemiAutoCalibrator):
     _warned = False
 
     def handle(self, step, x, y, canvas):
-        if step == 'Cancel':
-            self._alive = False
-            self.calibration_step = 'Calibrate'
+
+        center_guess = self._get_center_guess()
+        center_hole = self.stage_map.get_calibration_hole('center')
+        if not self._check_auto_calibration():
+            if not self._warned:
+                self.warning_dialog('Auto calibration not available. Stage map not properly configured')
+                self._warned = True
+            return super(AutoCalibrator, self).handle(step, x, y, canvas)
+
+        if center_guess is None or center_hole is None:
+            if not self._warned:
+                self.warning_dialog('Center hole/Center guess not configured. Center hole={}, Guess={}'.format(
+                    center_hole, center_guess))
+                self._warned = True
+            return super(AutoCalibrator, self).handle(step, x, y, canvas)
         else:
-            center_guess = self._get_center_guess()
-            center_hole = self.stage_map.get_calibration_hole('center')
-            if not self._check_auto_calibration():
-                if not self._warned:
-                    self.warning_dialog('Auto calibration not available. Stage map not properly configured')
-                    self._warned = True
-                return super(AutoCalibrator, self).handle(step, x, y, canvas)
+            ret = None
+            if step == 'Calibrate':
+                self.stage_map.clear_correction_file()
+                canvas.new_calibration_item()
+                self.calibration_enabled = False
 
-            if center_guess is None or center_hole is None:
-                if not self._warned:
-                    self.warning_dialog('Center hole/Center guess not configured. Center hole={}, Guess={}'.format(
-                        center_hole, center_guess))
-                    self._warned = True
-                return super(AutoCalibrator, self).handle(step, x, y, canvas)
-            else:
-                ret = None
-                if step == 'Calibrate':
-                    self.stage_map.clear_correction_file()
-                    canvas.new_calibration_item()
-                    self.calibration_step = 'Cancel'
-
-                    self._alive = True
-                    t = Thread(target=self._auto_calibrate,
-                               args=(canvas.calibration_item, center_hole, center_guess))
-                    t.start()
-                    self.calibration_step = 'Cancel'
-                return ret
+                self._alive = True
+                t = Thread(target=self._auto_calibrate,
+                           args=(canvas.calibration_item, center_hole, center_guess))
+                t.start()
+            return ret
 
     def _auto_calibrate(self, calibration, center_hole, center_guess):
         npos, corrected = self._autocenter(center_hole, center_guess)
@@ -340,6 +333,7 @@ class AutoCalibrator(SemiAutoCalibrator):
             invoke_in_main_thread(self.warning_dialog, 'Failed to located center hole. Try SemiAutoCalibration')
             self._warned = False
             self.calibration_step = 'Calibrate'
+            self.calibration_enabled = True
         else:
             super(AutoCalibrator, self)._auto_calibrate(calibration)
 
