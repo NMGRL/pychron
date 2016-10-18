@@ -27,6 +27,7 @@ from pychron.loggable import Loggable
 class StatusMonitor(Loggable):
     # valve_manager = None
     _stop_evt = None
+    _finished_evt = None
     _clients = List
 
     state_freq = Int(3)
@@ -35,10 +36,6 @@ class StatusMonitor(Loggable):
     lock_freq = Int(5)
     owner_freq = Int(5)
     update_period = Int(1)
-
-    # def __init__(self, *args, **kw):
-    #     super(StatusMonitor, self).__init__(*args, **kw)
-    #     self._clients = []
 
     def start(self, oid, vm):
         self.debug('start {}'.format(oid))
@@ -55,8 +52,6 @@ class StatusMonitor(Loggable):
             t = Thread(target=self._run, args=(vm,))
             t.setDaemon(True)
             t.start()
-
-            # self._iter(1, vm)
         else:
             self.debug('Monitor already running')
 
@@ -67,7 +62,7 @@ class StatusMonitor(Loggable):
         if self._stop_evt:
             return not self._stop_evt.isSet()
 
-    def stop(self, oid):
+    def stop(self, oid, block=False):
         self.debug('stop {}'.format(oid))
         try:
             self._clients.remove(oid)
@@ -77,24 +72,29 @@ class StatusMonitor(Loggable):
         if not self._clients:
             self._stop_evt.set()
             self.debug('Status monitor stopped')
+
+            if block:
+                self._stop_evt.wait(self.update_period)
+
         else:
             self.debug('Alive clients {}'.format(self._clients))
 
     def _run(self, vm):
-        i = 0
-        while 1:
-            time.sleep(self.update_period)
-            if self._stop_evt.is_set():
-                break
+        if vm is None:
+            self.debug('No valve manager')
+        else:
+            i = 0
+            while 1:
+                time.sleep(self.update_period)
+                if self._stop_evt.is_set():
+                    break
 
-            # if not self._iter(i, vm):
-            #     break
+                self._iter(i, vm)
 
-            self._iter(i, vm)
+                if i > 100:
+                    i = 0
+                i += 1
 
-            if i > 100:
-                i = 0
-            i += 1
         self.debug('Status monitor finished')
 
     def _iter(self, i, vm):
@@ -102,10 +102,6 @@ class StatusMonitor(Loggable):
             self.debug('status monitor iteration i={}'.format(i))
         if self._stop_evt.is_set():
             self.debug('stop_event set. no more iterations')
-            return
-
-        if vm is None:
-            self.debug('No valve manager')
             return
 
         if self.state_freq and not i % self.state_freq:

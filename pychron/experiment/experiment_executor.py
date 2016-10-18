@@ -1051,7 +1051,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._err_message = 'Pre Extraction Check Failed'
             return
 
-        # self.extracting_run = ai
+        # make sure status monitor is running a
+        self.extraction_line_manager.stop_status_monitor(id(self), block=True)
+        self.extraction_line_manager.start_status_monitor(id(self))
+        self.extraction_line_manager.refresh_states()
+
         ret = True
         if ai.start_extraction():
             self.extracting = True
