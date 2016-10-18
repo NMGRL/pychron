@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Bool, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.status_monitor import StatusMonitor
@@ -33,13 +32,24 @@ class ClientExtractionLineManager(ExtractionLineManager):
         super(ClientExtractionLineManager, self).bind_preferences()
         bind_preference(self, 'use_status_monitor', 'pychron.extraction_line.use_status_monitor')
 
-    def start_status_monitor(self):
+    def start_status_monitor(self, oid=None):
+        if oid is None:
+            oid = id(self)
         self.info('starting status monitor')
-        self.status_monitor.start(id(self), self.switch_manager)
+        self.status_monitor.start(oid, self.switch_manager)
 
-    def stop_status_monitor(self):
+    def stop_status_monitor(self, oid=None, block=False):
+        if oid is None:
+            oid = id(self)
         self.info('stopping status monitor')
-        self.status_monitor.stop(id(self))
+        self.status_monitor.stop(oid, block=block)
+
+    def refresh_states(self):
+        vm = self.switch_manager
+        if vm:
+            vm.load_valve_owners(refresh=False)
+            vm.load_valve_lock_states(refresh=True)
+            vm.load_valve_states(refresh=True)
 
     def _reload_canvas_hook(self):
         vm = self.switch_manager
