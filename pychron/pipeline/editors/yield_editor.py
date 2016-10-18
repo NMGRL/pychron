@@ -122,8 +122,14 @@ class YieldEditor(BaseTraitsEditor):
         self.refresh_current = True
 
     def _get_new_yield(self):
-        n = self.current / self.standard_ratio * self.current_yield
-        return n
+        """
+        yield  == 1/gain
+
+        increase yield increase 40/36 ratio
+        @return:
+        """
+
+        return self.standard_ratio / self.current * self.current_yield
 
     def dump(self):
         with open(self.yield_path, 'w') as wfile:
