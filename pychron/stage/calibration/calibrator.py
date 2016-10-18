@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Float, Event
+from traits.api import Str, Float, Event, Bool
 # ============= standard library imports ========================
 import cPickle as pickle
 import os
@@ -33,11 +33,23 @@ class BaseCalibrator(Loggable):
     calibration_step = Str
     rotation = Float
     save_event = Event
+    _alive = False
+    calibration_enabled = Bool(True)
+
+    def isAlive(self):
+        return self._alive
+
+    def cancel(self):
+        self._alive = False
+        self.calibration_step = 'Calibrate'
 
     def save(self, obj):
         p = self._get_path(self.name)
         with open(p, 'wb') as f:
             pickle.dump(obj, f)
+
+    def handle(self, step, x, y, canvas):
+        raise NotImplementedError
 
     @classmethod
     def load(cls, name):
@@ -48,7 +60,7 @@ class BaseCalibrator(Loggable):
                 try:
                     obj = pickle.load(f)
                     return obj
-                except (pickle.PickleError,EOFError), e:
+                except (pickle.PickleError, EOFError), e:
                     pass
                     #                    cls.debug(e)
 
