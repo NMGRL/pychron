@@ -30,8 +30,10 @@ class MediaStoragePreferences(BasePreferencesHelper):
 
     root = Str
 
-    sftp_username = Str
-    sftp_password = Password
+    host = Str
+    username = Str
+    password = Password
+    smb_service_name = Str
 
 
 class MediaStoragePreferencesPane(PreferencesPane):
@@ -41,14 +43,17 @@ class MediaStoragePreferencesPane(PreferencesPane):
     def traits_view(self):
         local_grp = VGroup(Item('root', editor=DirectoryEditor(root_path=paths.media_storage_dir)),
                            visible_when='backend_kind=="Local"')
-        sftp_grp = VGroup(Item('sftp_host', label='Host'),
-                          Item('sftp_username', label='Username'),
-                          Item('sftp_password', label='Password'),
-                          visible_when='backend_kind=="SFTP"')
+        remote_grp = VGroup(Item('host', label='Host'),
+                          Item('username', label='Username'),
+                          Item('password', label='Password'),
+                          visible_when='backend_kind in ("SFTP", "FTP","SMB")')
+
+        smb_grp = VGroup(Item('smb_service_name', label='SMB Root Folder'))
         v = View(VGroup(Item('backend_kind',
                              label='Backend'),
                         local_grp,
-                        sftp_grp))
+                        remote_grp,
+                        smb_grp))
         return v
 
 # ============= EOF =============================================

@@ -43,14 +43,14 @@ class SMBStorage(AuthenticationStorage):
 
     def put(self, src, dest):
         conn = self._get_connection()
+        if conn:
+            # make sure directory available to write to
+            if os.path.basename(dest) != dest:
+                self._r_mkdir(os.path.dirname(dest), conn)
 
-        # make sure directory available to write to
-        if os.path.basename(dest) != dest:
-            self._r_mkdir(os.path.dirname(dest), conn)
-
-        with open(src, 'r') as rfile:
-            conn.storeFile(self.service_name, dest, rfile)
-        conn.close()
+            with open(src, 'r') as rfile:
+                conn.storeFile(self.service_name, dest, rfile)
+            conn.close()
 
     def _r_mkdir(self, dest, conn=None):
         if not os.path.dirname(dest):
@@ -65,17 +65,18 @@ class SMBStorage(AuthenticationStorage):
             conn = self._get_connection()
             close = True
 
-        conn.createDirectory(self.service_name, dest)
+        if conn:
+            conn.createDirectory(self.service_name, dest)
 
-        if close:
-            conn.close()
+            if close:
+                conn.close()
 
     def _get_connection(self):
         localname = socket.gethostname()
         remotename = 'agustin'
         conn = SMBConnection(self.username, self.password,
                              localname, remotename)
-        if conn.connect('agustin.nmbgmr.nmt.edu'):
+        if conn.connect(self.host):
             return conn
         else:
             print 'failed to connect'
