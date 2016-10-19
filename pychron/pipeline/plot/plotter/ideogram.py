@@ -20,23 +20,21 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from enable.colors import ColorTrait
-from pyface.message_dialog import warning
-from traits.api import Array
-# ============= standard library imports ========================
 from numpy import array, arange, \
     Inf, argmax
-# ============= local library imports  ==========================
-from uncertainties import nominal_value
+from pyface.message_dialog import warning
+from traits.api import Array
+from uncertainties import nominal_value, std_dev
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
-from pychron.pipeline.plot.flow_label import FlowPlotLabel
-from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
-from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
-
-from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
-from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.graph.ticks import IntTickGenerator
+from pychron.pipeline.plot.flow_label import FlowPlotLabel
+from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
+from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
+from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
@@ -182,7 +180,7 @@ class Ideogram(BaseArArFigure):
 
     def max_x(self, attr):
         try:
-            return max([ai.nominal_value + ai.std_dev
+            return max([nominal_value(ai) + std_dev(ai)*2
                         for ai in self._unpack_attr(attr) if ai is not None])
         except (AttributeError, ValueError), e:
             print 'max', e, 'attr={}'.format(attr)
@@ -190,7 +188,7 @@ class Ideogram(BaseArArFigure):
 
     def min_x(self, attr):
         try:
-            return min([ai.nominal_value - ai.std_dev
+            return min([nominal_value(ai) - std_dev(ai)*2
                         for ai in self._unpack_attr(attr) if ai is not None])
         except (AttributeError, ValueError), e:
             print 'min', e
