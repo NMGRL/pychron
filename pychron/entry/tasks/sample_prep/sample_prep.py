@@ -351,33 +351,41 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
             return
 
-        host = self.application.preferences.get('pychron.entry.sample_prep.host')
-        username = self.application.preferences.get('pychron.entry.sample_prep.username')
-        password = self.application.preferences.get('pychron.entry.sample_prep.password')
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            ssh.connect(host, username=username, password=password, timeout=2)
-        except (socket.timeout, paramiko.AuthenticationException):
-            self.warning_dialog('Could not connect to Image Server')
+        msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
+        if not msm:
+            self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
             return
 
-        client = ssh.open_sftp()
+        # host = self.application.preferences.get('pychron.entry.sample_prep.host')
+        # username = self.application.preferences.get('pychron.entry.sample_prep.username')
+        # password = self.application.preferences.get('pychron.entry.sample_prep.password')
 
+        # ssh = paramiko.SSHClient()
+        # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # try:
+        #     ssh.connect(host, username=username, password=password, timeout=2)
+        # except (socket.timeout, paramiko.AuthenticationException):
+        #     self.warning_dialog('Could not connect to Image Server')
+        #     return
+        #
+        # client = ssh.open_sftp()
+
+        sessionname = self.session.replace(' ', '_')
         dlg = FileDialog(action='open files')
         if dlg.open() == OK:
             if not dlg.paths:
                 return
 
-            root = self.application.preferences.get('pychron.entry.sample_prep.root')
+            # root = self.application.preferences.get('pychron.entry.sample_prep.root')
             dvc = self.dvc
             for p in dlg.paths:
-                pp = '{}/{}'.format(root, os.path.basename(p))
+                pp = '{}/{}'.format(sessionname, os.path.basename(p))
                 self.debug('putting {} {}'.format(p, pp))
-                client.put(p, pp)
-                dvc.add_sample_prep_image(step.id, host, '{}/{}'.format(username, pp))
+                url = msm.put(p, pp)
+                # client.put(p, pp)
+                dvc.add_sample_prep_image(step.id, msm.get_host(), url)
 
-            client.close()
+                # client.close()
 
     @cached_property
     def _get_sessions(self):

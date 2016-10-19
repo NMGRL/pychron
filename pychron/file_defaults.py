@@ -226,7 +226,7 @@ DEFAULT_INITIALIZATION = '''<root>
     <plugins>
         <general>
             <plugin enabled="false">Processing</plugin>
-            <plugin enabled="false">MediaServer</plugin>
+            <plugin enabled="false">MediaStorage</plugin>
             <plugin enabled="false">PyScript</plugin>
             <plugin enabled="false">Video</plugin>
             <plugin enabled="false">Database</plugin>

@@ -15,24 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import time
+from threading import Thread, Timer
+
 from apptools.preferences.preference_binding import bind_preference
-from pyface.timer.do_later import do_after
+from numpy import copy
 from traits.api import Instance, String, Property, Button, \
     Bool, Event, on_trait_change, Str, Int, Float
 
-# ============= standard library imports ========================
-import time
-import os
-from numpy import copy
-from threading import Thread, Timer
-# ============= local library imports  ==========================
+from pychron.canvas.canvas2D.camera import Camera
 from pychron.core.helpers.filetools import unique_path, unique_path2
+from pychron.core.ui.stage_component_editor import VideoComponentEditor
+from pychron.image.video import Video
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
-from pychron.image.video import Video
-from pychron.canvas.canvas2D.camera import Camera
 from stage_manager import StageManager
-from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
@@ -107,8 +105,8 @@ class VideoStageManager(StageManager):
         bind_preference(self, 'render_with_markup',
                         '{}.render_with_markup'.format(pref_id))
         bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')
-        bind_preference(self, 'use_media_server',
-                        'pychron.media_server.use_media_server')
+        # bind_preference(self, 'use_media_server',
+        #                 'pychron.media_server.use_media_server')
         #        bind_preference(self.pattern_manager,
         #                        'record_patterning',
         #                         '{}.record_patterning'.format(pref_id))
@@ -164,7 +162,8 @@ class VideoStageManager(StageManager):
             self.info('stop video recording')
 
             if self.video.stop_recording(wait=True):
-                self._upload(self.video.output_path)
+                if self.auto_upload:
+                    self._upload(self.video.output_path)
 
         if self.video._recording:
             if delay:
@@ -336,28 +335,32 @@ class VideoStageManager(StageManager):
     #                       kind='sqlite')
     #     return db
 
-    def _upload(self, path):
-        if self.use_media_server and self.auto_upload:
-            srv = 'pychron.media_server.client.MediaClient'
-            client = self.application.get_service(srv)
-            if client is not None:
-                url = client.url()
-                self.info('uploading {} to {}'.format(path, url))
-                if not client.upload(path,
-                                     dest='images/{}'.format(self.parent.name)):
-                    self.warning(
-                        'failed to upload {} to media server at {}'.format(
-                            path,
-                            url))
-                    self.warning_dialog(
-                        'Failed to Upload {}. Media Server at {} unavailable'.format(
-                            path, url))
-                else:
-                    return path
+    def _upload(self, src):
 
-            else:
-                self.warning('Media client unavailable')
-                self.warning_dialog('Media client unavailable')
+        srv = 'pychron.media_storage.manager.MediaStorageManager'
+        msm = self.application.get_service(srv)
+        if msm is not None:
+            dest = os.path.join(self.parent.name, os.path.basename(src))
+            msm.put(src, dest)
+        else:
+            self.warning('Media Storage Plugin not enabled')
+            # url = client.url()
+            # self.info('uploading {} to {}'.format(path, url))
+            # if not client.upload(path,
+            #                      dest='images/{}'.format(self.parent.name)):
+            #     self.warning(
+            #         'failed to upload {} to media server at {}'.format(
+            #             path,
+            #             url))
+            #     self.warning_dialog(
+            #         'Failed to Upload {}. Media Server at {} unavailable'.format(
+            #             path, url))
+            # else:
+            #     return path
+
+            # else:
+            #     self.warning('Media client unavailable')
+            #     self.warning_dialog('Media client unavailable')
 
     def _render_snapshot(self, path):
         from chaco.plot_graphics_context import PlotGraphicsContext

@@ -161,6 +161,8 @@ class Paths(object):
     figure_dir = None
     table_dir = None
 
+    media_storage_dir = None
+
     repository_dataset_dir = None
     project_dir = None
     meta_root = None
@@ -413,6 +415,7 @@ class Paths(object):
         self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
         self.meta_root = join(self.dvc_dir, 'MetaData')
         self.sample_dir = join(self.data_dir, 'sample_entry')
+        self.media_storage_dir = join(self.data_dir, 'media')
         # ==============================================================================
         # processing
         # ==============================================================================

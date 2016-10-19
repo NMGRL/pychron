@@ -50,6 +50,7 @@ PACKAGE_DICT = dict(
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
+    MediaStoragePlugin='pychron.media_storage.tasks.plugin',
     # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
     # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
