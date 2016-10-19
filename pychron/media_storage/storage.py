@@ -13,14 +13,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Str
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
 class Storage(Loggable):
     def put(self, src, dest):
         raise NotImplementedError
+
+
+class AuthenticationStorage(Storage):
+    username = Str
+    password = Str
+
+    def __init__(self, bind=True, *args, **kw):
+        super(AuthenticationStorage, self).__init__(*args, **kw)
+        if bind:
+            self._bind_authentication_preferences()
+
+    def _bind_authentication_preferences(self, prefid=None):
+        if prefid is None:
+            prefid = 'pychron.media_storage'
+        bind_preference(self, 'username', '{}.username'.format(prefid))
+        bind_preference(self, 'password', '{}.password'.format(prefid))
+
+
+class RemoteStorage(AuthenticationStorage):
+    host = Str
+
+    def __init__(self, bind=True, *args, **kw):
+        super(RemoteStorage, self).__init__(bind=bind, *args, **kw)
+        if bind:
+            self._bind_remote_preferences()
+
+    def _bind_remote_preferences(self, prefid=None):
+        if prefid is None:
+            prefid = 'pychron.media_storage'
+        bind_preference(self, 'host', '{}.host'.format(prefid))
 
 # ============= EOF =============================================

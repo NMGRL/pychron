@@ -16,6 +16,6 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-BACKENDS = 'Local', 'FTP', 'HTTP'
+BACKENDS = 'Local', 'SMB', 'FTP', 'HTTP'
 
 # ============= EOF =============================================

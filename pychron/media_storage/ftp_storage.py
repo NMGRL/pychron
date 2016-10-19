@@ -20,23 +20,11 @@ import socket
 from ftplib import FTP
 
 import paramiko
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str
 
-from pychron.media_storage.storage import Storage
+from pychron.media_storage.storage import RemoteStorage
 
 
-class FTPStorage(Storage):
-    host = Str
-    username = Str
-    password = Str
-
-    def __init__(self, *args, **kw):
-        super(FTPStorage, self).__init__(*args, **kw)
-        prefid = 'pychron.media_storage'
-        bind_preference(self, 'host', '{}.host'.format(prefid))
-        bind_preference(self, 'username', '{}.username'.format(prefid))
-        bind_preference(self, 'password', '{}.password'.format(prefid))
+class FTPStorage(RemoteStorage):
 
     def put(self, src, dest):
         client = self._get_client()
