@@ -43,7 +43,7 @@ class BaseLaserManager(Manager):
     stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
 
     requested_power = Any
-    status_text = Str
+    status_text = Property(depends_on='_requested_power, enabled')
     pulse = Any
     laser_controller = Any
     mode = 'normal'
@@ -299,6 +299,15 @@ class BaseLaserManager(Manager):
     # ===============================================================================
     # getter/setters
     # ===============================================================================
+    def _get_status_text(self):
+        s = 'Laser OFF'
+        if self.enabled:
+            s = 'Laser Enabled'
+            if self._requested_power:
+                s = 'Laser ON {}({})'.format(self._requested_power, self.units)
+
+        return s
+
     def _get_enable_label(self):
         """
         """

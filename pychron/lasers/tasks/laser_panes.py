@@ -201,9 +201,13 @@ class ControlPane(TraitsDockPane):
                                style='custom',
                                height=-35),
                          UItem('enable', editor=ButtonEditor(label_value='enable_label')))
-        status_grp = HGroup(UItem('enabled',
-                                  style='custom',
-                                  editor=LaserStatusEditor()), )
+
+        status_grp = HGroup(spring, CustomLabel('status_text',
+                                                weight='bold',
+                                                use_color_background=False,
+                                                # bgcolor='transparent',
+                                                color='orange', size=40),
+                            spring)
         request_grp = HGroup(Item('requested_power',
                                   style='readonly',
                                   format_str='%0.2f',
@@ -212,7 +216,11 @@ class ControlPane(TraitsDockPane):
                              UItem('units', style='readonly'),
                              spring)
 
-        v = View(VGroup(led_grp, status_grp, request_grp, show_border=True))
+        v = View(VGroup(led_grp,
+                        spring,
+                        status_grp,
+                        spring,
+                        request_grp, show_border=True))
         return v
 
 
