@@ -78,7 +78,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             ret = dict(calibration_step='Traverse',
                        clear_corrections=False,
                        rotation=canvas.calibration_item.rotation)
-        elif step == 'Auto Calibration':
+        elif step == 'Auto Calibrate':
             self._alive = True
             t = Thread(target=self._auto_calibrate,
                        args=(canvas.calibration_item,))

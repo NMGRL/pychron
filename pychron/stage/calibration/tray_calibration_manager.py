@@ -77,8 +77,8 @@ class TrayCalibrationManager(Loggable):
     # calibrator = Property(depends_on='style')
 
     cancel_button = Button('Cancel')
-    add_holes_button = Button
-    reset_holes_button = Button
+    add_holes_button = Button('Add Holes')
+    reset_holes_button = Button('Reset Holes')
     holes_list = List
     set_center_button = Button('Set Center Guess')
 

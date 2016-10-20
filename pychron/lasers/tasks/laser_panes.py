@@ -24,6 +24,7 @@ from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     ListStrEditor
 
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.laser_status_editor import LaserStatusEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
@@ -123,40 +124,40 @@ class StageControlPane(TraitsDockPane):
                            style='custom')
             tabs.content.append(pp_grp)
 
-            tc_grp = VGroup(UItem('tray_calibration.style',
-                                  enabled_when='not tray_calibration.isCalibrating()'),
-                            HGroup(UItem('tray_calibration.calibrate',
-                                         enabled_when='tray_calibration.calibration_enabled',
-                                         editor=ButtonEditor(label_value='tray_calibration.calibration_step'),
-                                         width=-125),
-                                   UItem('tray_calibration.cancel_button',
-                                         enabled_when='tray_calibration.isCalibrating()'),
-                                   UItem('tray_calibration.add_holes_button',
-                                         label='Add Holes'),
-                                   UItem('tray_calibration.reset_holes_button',
-                                         label='Reset Holes')),
-                            UItem('tray_calibration.holes_list',
-                                  editor=ListStrEditor()),
-                            VGroup(HGroup(Item('tray_calibration.x',
-                                               format_str='%0.3f',
-                                               style='readonly'),
-                                          Item('tray_calibration.y',
-                                               format_str='%0.3f',
-                                               style='readonly')),
-                                   Item('tray_calibration.rotation',
-                                        format_str='%0.3f', style='readonly'),
-                                   Item('tray_calibration.scale', format_str='%0.4f',
-                                        style='readonly'),
-                                   Item('tray_calibration.error', format_str='%0.2f',
-                                        style='readonly'),
-                                   label='Results', show_border=True),
-                            UItem('tray_calibration.set_center_button'),
-                            # UItem('tray_calibration.calibrator', style='custom',
-                            #       editor=InstanceEditor()),
-                            VGroup(CustomLabel('tray_calibration.calibration_help',
-                                               color='green',
-                                               height=75, width=300),
-                                   label='Help', show_border=True),
+            cal_help_grp = VGroup(CustomLabel('tray_calibration.calibration_help',
+                                              color='green'),
+                                  label='Help', show_border=True)
+            cal_results_grp = VGroup(HGroup(Item('tray_calibration.x',
+                                                 format_str='%0.3f',
+                                                 style='readonly'),
+                                            Item('tray_calibration.y',
+                                                 format_str='%0.3f',
+                                                 style='readonly')),
+                                     Item('tray_calibration.rotation',
+                                          format_str='%0.3f', style='readonly'),
+                                     Item('tray_calibration.scale', format_str='%0.4f',
+                                          style='readonly'),
+                                     Item('tray_calibration.error', format_str='%0.2f',
+                                          style='readonly'),
+                                     label='Results', show_border=True)
+            holes_grp = VGroup(HGroup(UItem('tray_calibration.add_holes_button',
+                                            tooltip='Add Holes'),
+                                      UItem('tray_calibration.reset_holes_button',
+                                            tooltip='Reset Holes')),
+                               UItem('tray_calibration.holes_list',
+                                     editor=ListStrEditor()))
+            cal_grp = HGroup(UItem('tray_calibration.style',
+                                   enabled_when='not tray_calibration.isCalibrating()'),
+                             UItem('tray_calibration.calibrate',
+                                   enabled_when='tray_calibration.calibration_enabled',
+                                   editor=ButtonEditor(label_value='tray_calibration.calibration_step'),
+                                   width=-125),
+                             UItem('tray_calibration.cancel_button',
+                                   enabled_when='tray_calibration.isCalibrating()'),
+                             UItem('tray_calibration.set_center_button'))
+            tc_grp = VGroup(cal_grp,
+                            holes_grp,
+                            HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 
             tabs.content.append(tc_grp)
@@ -195,24 +196,23 @@ class ControlPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                HGroup(
-                    UItem('enabled_led',
-                          editor=LEDEditor(),
-                          style='custom',
-                          height=-35),
-                    UItem('enable', editor=ButtonEditor(
-                        label_value='enable_label'))),
-                HGroup(
-                    Item('requested_power',
-                         style='readonly',
-                         format_str='%0.2f',
-                         width=100),
-                    Spring(springy=False, width=50),
-                    UItem('units', style='readonly'),
-                    spring),
-                show_border=True))
+        led_grp = HGroup(UItem('enabled_led',
+                               editor=LEDEditor(),
+                               style='custom',
+                               height=-35),
+                         UItem('enable', editor=ButtonEditor(label_value='enable_label')))
+        status_grp = HGroup(UItem('enabled',
+                                  style='custom',
+                                  editor=LaserStatusEditor()), )
+        request_grp = HGroup(Item('requested_power',
+                                  style='readonly',
+                                  format_str='%0.2f',
+                                  width=100),
+                             Spring(springy=False, width=50),
+                             UItem('units', style='readonly'),
+                             spring)
+
+        v = View(VGroup(led_grp, status_grp, request_grp, show_border=True))
         return v
 
 
