@@ -44,6 +44,9 @@ class VideoUnderlay(AbstractOverlay):
                 img = self.video.get_image_data(size=(component.width,
                                                       component.height))
                 if img is not None:
-                    gc.draw_image(img)
+                    try:
+                        gc.draw_image(img)
+                    except IndexError:
+                        pass
 
 # ============= EOF ====================================

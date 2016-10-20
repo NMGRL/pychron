@@ -132,11 +132,12 @@ class StageManager(BaseStageManager):
 
     def get_current_hole(self):
         pos = self.get_current_position()
-        if distance_threshold(pos, self._cached_position, self.stage_map.g_dimension / 4):
-            h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.)
-            if h is not None:
-                self._cached_current_hole = h
-                self._cached_position = pos
+        if self.stage_map:
+            if distance_threshold(pos, self._cached_position, self.stage_map.g_dimension / 4):
+                h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.)
+                if h is not None:
+                    self._cached_current_hole = h
+                    self._cached_position = pos
 
         return self._cached_current_hole
 
