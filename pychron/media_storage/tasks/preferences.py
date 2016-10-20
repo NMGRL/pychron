@@ -44,11 +44,12 @@ class MediaStoragePreferencesPane(PreferencesPane):
         local_grp = VGroup(Item('root', editor=DirectoryEditor(root_path=paths.media_storage_dir)),
                            visible_when='backend_kind=="Local"')
         remote_grp = VGroup(Item('host', label='Host'),
-                          Item('username', label='Username'),
-                          Item('password', label='Password'),
-                          visible_when='backend_kind in ("SFTP", "FTP","SMB")')
+                            Item('username', label='Username'),
+                            Item('password', label='Password'),
+                            visible_when='backend_kind in ("SFTP", "FTP", "SMB")')
 
-        smb_grp = VGroup(Item('smb_service_name', label='SMB Root Folder'))
+        smb_grp = VGroup(Item('smb_service_name', label='SMB Root Folder'),
+                         visible_when='backend_kind=="SMB"')
         v = View(VGroup(Item('backend_kind',
                              label='Backend'),
                         local_grp,

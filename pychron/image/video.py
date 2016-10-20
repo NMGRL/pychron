@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Bool, Float, List, Str, Int
-# =============standard library imports ========================
-from threading import Thread, Lock, Event
-import time
 import os
 import shutil
+import time
+from threading import Thread, Lock, Event
+
 from numpy import asarray
-# =============local library imports ===========================
-from pychron.image.image import Image
-from pychron.globals import globalv
-from pychron.consumer_mixin import consumable
+from traits.api import Any, Bool, Float, List, Str, Int
 
 from cv_wrapper import get_capture_device
-from cv_wrapper import swap_rb as cv_swap_rb
+from pychron.globals import globalv
+from pychron.image.image import Image
 
 
 def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
@@ -201,23 +198,31 @@ class Video(Image):
         cnt = 0
 
         if renderer is None:
-            def save(p):
-                frame = self.get_frame()
+            def renderer(p):
+                frame = self.get_cached_frame()
                 if frame is not None:
-                    src = cv_swap_rb(frame)
-                    self.save(p, src)
-        else:
-            save = lambda x: renderer(x)
+                    self.save(p, frame)
+        # else:
+        #     save = lambda x: renderer(x)
 
         fps_1 = 1 / float(fps)
-        with consumable(func=save) as con:
-            while not stop.is_set():
-                st = time.time()
-                pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
-                con.add_consumable(pn)
-                cnt += 1
-                dur = time.time() - st
-                time.sleep(max(0, fps_1 - dur))
+        # with consumable(func=save) as con:
+        #     while not stop.is_set():
+        #         st = time.time()
+        #         pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
+        #         con.add_consumable(pn)
+        #         cnt += 1
+        #         dur = time.time() - st
+        #         time.sleep(max(0, fps_1 - dur))
+        while not stop.is_set():
+            st = time.time()
+            pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
+
+            renderer(pn)
+            # con.add_consumable(pn)
+            cnt += 1
+            dur = time.time() - st
+            time.sleep(max(0, fps_1 - dur))
 
         self._convert_to_video(image_dir, fps, name_filter='image_%05d.jpg', output=path)
 

@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import HasTraits, Any, List, Int, Bool
-# =============standard library imports ========================
 from numpy import asarray, flipud, ndarray
-# =============local library imports  ==========================
+from traits.api import HasTraits, Any, List, Int, Bool
+
+from cv_wrapper import flip as cv_flip
 from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
     save_image, draw_lines
 from cv_wrapper import swap_rb as cv_swap_rb
-from cv_wrapper import flip as cv_flip
 from pychron.globals import globalv
 
 
@@ -174,9 +173,13 @@ class Image(HasTraits):
         except IndexError:
             pass
 
-    def save(self, path, src=None):
+    def save(self, path, src=None, swap=False):
         if src is None:
             src = self.render()
+
+        if swap:
+            src = cv_swap_rb(src)
+
         save_image(src, path)
 
     def _draw_crosshairs(self, src):

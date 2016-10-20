@@ -16,7 +16,9 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class HTTPStorage:
-    pass
+    url_name = 'HTTP'
 
 # ============= EOF =============================================

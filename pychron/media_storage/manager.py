@@ -22,6 +22,10 @@ from pychron.media_storage import BACKENDS
 from pychron.media_storage.file_storage import FileStorage
 from pychron.media_storage.ftp_storage import SFTPStorage, FTPStorage
 from pychron.media_storage.http_storage import HTTPStorage
+from pychron.media_storage.smb_storage import SMBStorage
+
+BACKEND_DICT = {'Local': FileStorage, 'SFTP': SFTPStorage, 'FTP': FTPStorage,
+                'SMB': SMBStorage, 'HTTP': HTTPStorage}
 
 
 class MediaStorageManager(Loggable):
@@ -32,18 +36,15 @@ class MediaStorageManager(Loggable):
 
         prefid = 'pychron.media_storage'
         bind_preference(self, 'backend_kind', '{}.backend_kind'.format(prefid))
+        self._backend_kind_changed(self.backend_kind)
 
     def _backend_kind_changed(self, new):
         if new:
-            if new == 'Local':
-                klass = FileStorage
-            elif new == 'SFTP':
-                klass = SFTPStorage
-            elif new == 'FTP':
-                klass = FTPStorage
-            elif new == 'HTTP':
-                klass = HTTPStorage
+            klass = BACKEND_DICT[new]
             self.storage = klass()
+
+    def get_base_url(self):
+        return self.storage.get_base_url()
 
     def put(self, local_path, remote_path):
         self.storage.put(local_path, remote_path)

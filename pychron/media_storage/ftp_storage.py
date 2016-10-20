@@ -25,6 +25,7 @@ from pychron.media_storage.storage import RemoteStorage
 
 
 class FTPStorage(RemoteStorage):
+    url_name = 'FTP'
 
     def put(self, src, dest):
         client = self._get_client()
@@ -51,6 +52,8 @@ class FTPStorage(RemoteStorage):
 
 
 class SFTPStorage(FTPStorage):
+    url_name = 'SFTP'
+
     def _get_client(self):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

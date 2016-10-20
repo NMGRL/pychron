@@ -23,6 +23,8 @@ import subprocess
 import sys
 from datetime import datetime
 
+import yaml
+
 
 def subdirize(root, name, n=1, l=2, mode='r'):
     for i in xrange(n):
@@ -261,7 +263,7 @@ def unique_path(root, base, extension='.txt'):
 
     """
     if extension:
-        if '.' not in extension:
+        if not extension.startswith('.'):
             extension = '.{}'.format(extension)
     else:
         extension = ''
@@ -275,6 +277,32 @@ def unique_path(root, base, extension='.txt'):
         cnt += 1
 
     return p, cnt
+
+
+def unique_path_from_manifest(root, base, extension='.txt'):
+    if not extension.startswith('.'):
+        extension = '.{}'.format(extension)
+    p = None
+    mp = os.path.join(root, 'manifest.yaml')
+    yd = {}
+    if os.path.isfile(mp):
+        with open(mp, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+        v = yd.get(base, None)
+        if v:
+            cnt = v + 1
+            p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
+            yd[base] = cnt
+
+    if not p:
+        p, cnt = unique_path2(root, base, extension=extension)
+        yd[base] = cnt
+
+    with open(mp, 'w') as wfile:
+        yaml.dump(yd, wfile)
+
+    return p
 
 
 def parse_xy(p, delimiter=','):

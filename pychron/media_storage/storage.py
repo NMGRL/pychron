@@ -20,7 +20,11 @@ from pychron.loggable import Loggable
 
 
 class Storage(Loggable):
+    url_name = Str
     def put(self, src, dest):
+        raise NotImplementedError
+
+    def get_base_url(self):
         raise NotImplementedError
 
 
@@ -53,4 +57,6 @@ class RemoteStorage(AuthenticationStorage):
             prefid = 'pychron.media_storage'
         bind_preference(self, 'host', '{}.host'.format(prefid))
 
+    def get_base_url(self):
+        return '{}://{}'.format(self.url_name, self.host)
 # ============= EOF =============================================

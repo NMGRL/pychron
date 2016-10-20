@@ -15,38 +15,27 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import os
+import time
+
+from numpy import array, asarray
 from traits.api import DelegatesTo, Instance, \
     Button, List, String, Event, Bool
-# from apptools.preferences.preference_binding import bind_preference
-# =============standard library imports =======================
-import os
-# from threading import Thread
-import time
-from numpy import array, asarray
-# =============local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
-from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
-from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
-# from pychron.core.helpers.color_generators import colors8i as colors
 
+from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
+from pychron.core.geometry.convex_hull import convex_hull
+from pychron.core.geometry.geometry import sort_clockwise
+from pychron.core.geometry.polygon_offset import polygon_offset
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
+from pychron.core.ui.thread import Thread
+from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
 from pychron.hardware.motion_controller import MotionController, \
     TargetPositionError, ZeroDisplacementException
-from pychron.paths import paths
-# from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
-# from pychron.core.geometry.scan_line import make_scan_lines
-from pychron.core.geometry.geometry import sort_clockwise
-from pychron.core.geometry.convex_hull import convex_hull
-from pychron.core.geometry.polygon_offset import polygon_offset
-from pychron.core.ui.thread import Thread
-from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
-
 from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
-# from tray_calibration_manager import TrayCalibrationManager
-# from stage_component_editor import LaserComponentEditor
-# from pychron.canvas.canvas2D.markup.markup_items import CalibrationItem
-# from pattern.pattern_manager import PatternManager
+from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
 
 
@@ -62,6 +51,9 @@ def distance_threshold(p1, p2, tol):
 class StageManager(BaseStageManager):
     """
     """
+
+    autocenter_button = Button
+
     stage_controller_klass = String('Newport')
 
     stage_controller = Instance(MotionController)

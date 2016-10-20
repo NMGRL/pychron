@@ -16,12 +16,10 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Str, Enum, File, Int, Directory, \
+from traits.api import Bool, Str, Enum, File, Directory, \
     Color, Range, Float
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -35,9 +33,13 @@ class FusionsLaserPreferences(LaserPreferences):
     ffmpeg_path = File
 
     video_identifier = Str
-    use_video_server = Bool(False)
-    video_server_port = Int(1084)
-    video_server_quality = Range(1, 75, 75)
+
+    use_media_storage = Bool
+    keep_local_copy = Bool
+    auto_upload = Bool
+    # use_video_server = Bool(False)
+    # video_server_port = Int(1084)
+    # video_server_quality = Range(1, 75, 75)
 
     show_grids = Bool(True)
     show_laser_position = Bool(True)
@@ -126,13 +128,9 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                        show_border=True,
                        label='Record')
 
-        vservergrp = VGroup(Item('use_video_server', label='Use Server'),
-                            Item('video_server_port', label='Port',
-                                 enabled_when='use_video_server'),
-                            Item('video_server_quality', label='Quality',
-                                 enabled_when='use_video_server'),
-                            show_border=True,
-                            label='Server')
+        media_storage_grp = VGroup(Item('use_media_storage'),
+                                   Item('keep_local_copy'),
+                                   Item('auto_upload'))
 
         videogrp = VGroup(Item('use_video'),
                           VGroup(Item('video_identifier', label='ID',
@@ -143,7 +141,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                  Item('render_with_markup', label='Render Snapshot with markup'),
                                  recgrp,
                                  archivergrp,
-                                 vservergrp,
+                                 media_storage_grp,
                                  enabled_when='use_video'),
                           label='Video')
 

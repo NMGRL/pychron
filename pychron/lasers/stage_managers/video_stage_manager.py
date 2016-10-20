@@ -16,16 +16,17 @@
 
 # ============= enthought library imports =======================
 import os
+import shutil
 import time
 from threading import Thread, Timer
 
 from apptools.preferences.preference_binding import bind_preference
 from numpy import copy
 from traits.api import Instance, String, Property, Button, \
-    Bool, Event, on_trait_change, Str, Int, Float
+    Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
-from pychron.core.helpers.filetools import unique_path, unique_path2
+from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
 from pychron.mv.lumen_detector import LumenDetector
@@ -77,13 +78,14 @@ class VideoStageManager(StageManager):
     video_archiver = Instance('pychron.core.helpers.archiver.Archiver')
     video_identifier = Str
 
-    use_video_server = Bool(False)
-    video_server_port = Int
-    video_server_quality = Int
-    video_server = Instance('pychron.image.video_server.VideoServer')
+    # use_video_server = Bool(False)
+    # video_server_port = Int
+    # video_server_quality = Int
+    # video_server = Instance('pychron.image.video_server.VideoServer')
 
-    use_media_server = Bool(False)
+    use_media_storage = Bool(False)
     auto_upload = Bool(False)
+    keep_local_copy = Bool(False)
 
     camera = Instance(Camera)
     lumen_detector = Instance(LumenDetector, ())
@@ -104,16 +106,9 @@ class VideoStageManager(StageManager):
 
         bind_preference(self, 'render_with_markup',
                         '{}.render_with_markup'.format(pref_id))
-        bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')
-        # bind_preference(self, 'use_media_server',
-        #                 'pychron.media_server.use_media_server')
-        #        bind_preference(self.pattern_manager,
-        #                        'record_patterning',
-        #                         '{}.record_patterning'.format(pref_id))
-        #
-        #        bind_preference(self.pattern_manager,
-        #                         'show_patterning',
-        #                         '{}.show_patterning'.format(pref_id))
+        bind_preference(self, 'auto_upload', '{}.auto_upload'.format(pref_id))
+        bind_preference(self, 'use_media_storage', '{}.use_media_storage'.format(pref_id))
+        bind_preference(self, 'keep_local_copy', '{}.keep_local_copy'.format(pref_id))
 
         bind_preference(self, 'use_video_archiver',
                         '{}.use_video_archiver'.format(pref_id))
@@ -124,11 +119,6 @@ class VideoStageManager(StageManager):
         bind_preference(self, 'use_video_server',
                         '{}.use_video_server'.format(pref_id))
 
-        if self.use_video_server:
-            bind_preference(self.video_server, 'port',
-                            '{}.video_server_port'.format(pref_id))
-            bind_preference(self.video_server, 'quality',
-                            '{}.video_server_quality'.format(pref_id))
         bind_preference(self.video_archiver, 'archive_months',
                         '{}.video_archive_months'.format(pref_id))
         bind_preference(self.video_archiver, 'archive_days',
@@ -163,7 +153,7 @@ class VideoStageManager(StageManager):
 
             if self.video.stop_recording(wait=True):
                 if self.auto_upload:
-                    self._upload(self.video.output_path)
+                    self._upload(self.video.output_path, inform=False)
 
         if self.video._recording:
             if delay:
@@ -211,12 +201,10 @@ class VideoStageManager(StageManager):
 
                 if name is None:
                     name = 'snapshot'
-                path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
-                                          extension=pic_format)
+                path = unique_path_from_manifest(paths.snapshot_dir, name, pic_format)
             elif name is not None:
                 if not os.path.isdir(os.path.dirname(name)):
-                    path, _ = unique_path2(root=paths.snapshot_dir, base=name,
-                                           extension=pic_format)
+                    path = unique_path_from_manifest(paths.snapshot_dir, name, pic_format)
                 else:
                     path = name
 
@@ -229,15 +217,19 @@ class VideoStageManager(StageManager):
             # play_sound('shutter')
 
             self._render_snapshot(path)
-            upath = self._upload(path)
-            if upath is None:
-                upath = ''
+            if self.auto_upload:
+                upath = self._upload(path, inform=inform)
+                if upath is None:
+                    upath = ''
 
-            if inform:
-                self.information_dialog('Snapshot save to {}. '
-                                        'Uploaded to'.format(path, upath))
+                if inform:
+                    if self.keep_local_copy:
+                        self.information_dialog('Snapshot saved: "{}".\nUploaded  : "{}"'.format(path, upath))
+                    else:
+                        self.information_dialog('Snapshot uploaded to "{}"'.format(upath))
+            else:
+                self.information_dialog('Snapshot saved to "{}"'.format(path))
 
-            # return path, upath
             if return_blob:
                 with open(path, 'rb') as rfile:
                     im = rfile.read()
@@ -313,54 +305,37 @@ class VideoStageManager(StageManager):
     def _stage_map_changed_hook(self):
         self.lumen_detector.hole_radius = self.stage_map.g_dimension
 
-    # def _crop_image(self, src):
-    #     ccx, ccy = 0, 0
-    #     cw_px, ch_px = self.get_frame_size()
-    #     # cw_px = int(cw)# * self.pxpermm)
-    #     # ch_px = int(ch)# * self.pxpermm)
-    #     w, h = get_size(src)
-    #
-    #     x = int((w - cw_px) / 2 + ccx)
-    #     y = int((h - ch_px) / 2 + ccy)
-    #
-    #     r = 4 - cw_px % 4
-    #     cw_px += r
-    #
-    #     return asarray(crop(src, x, y, cw_px, cw_px))
-
-    # def get_video_database(self):
-    # from pychron.database.adapters.video_adapter import VideoAdapter
-    #
-    #     db = VideoAdapter(name=self.parent.dbname,
-    #                       kind='sqlite')
-    #     return db
-
-    def _upload(self, src):
-
-        srv = 'pychron.media_storage.manager.MediaStorageManager'
-        msm = self.application.get_service(srv)
-        if msm is not None:
-            dest = os.path.join(self.parent.name, os.path.basename(src))
-            msm.put(src, dest)
+    def _upload(self, src, inform=True):
+        if not self.use_media_storage:
+            msg = 'Use Media Storage not enabled in Laser preferences'
+            if inform:
+                self.warning_dialog(msg)
+            else:
+                self.warning(msg)
         else:
-            self.warning('Media Storage Plugin not enabled')
-            # url = client.url()
-            # self.info('uploading {} to {}'.format(path, url))
-            # if not client.upload(path,
-            #                      dest='images/{}'.format(self.parent.name)):
-            #     self.warning(
-            #         'failed to upload {} to media server at {}'.format(
-            #             path,
-            #             url))
-            #     self.warning_dialog(
-            #         'Failed to Upload {}. Media Server at {} unavailable'.format(
-            #             path, url))
-            # else:
-            #     return path
+            srv = 'pychron.media_storage.manager.MediaStorageManager'
+            msm = self.parent.application.get_service(srv)
+            if msm is not None:
+                dest = os.path.join(self.parent.name, os.path.basename(src))
+                msm.put(src, dest)
 
-            # else:
-            #     self.warning('Media client unavailable')
-            #     self.warning_dialog('Media client unavailable')
+                if not self.keep_local_copy:
+                    self.debug('removing {}'.format(src))
+                    if src.endswith('.avi'):
+                        head, ext = os.path.splitext(src)
+                        vd = '{}-images'.format(head)
+                        self.debug('removing video build directory {}'.format(vd))
+                        shutil.rmtree(vd)
+
+                    os.remove(src)
+                dest = '{}/{}'.format(msm.get_base_url(), dest)
+                return dest
+            else:
+                msg = 'Media Storage Plugin not enabled'
+                if inform:
+                    self.warning_dialog(msg)
+                else:
+                    self.warning(msg)
 
     def _render_snapshot(self, path):
         from chaco.plot_graphics_context import PlotGraphicsContext
@@ -396,9 +371,10 @@ class VideoStageManager(StageManager):
             else:
                 vd = self.video_archiver.root
                 self.debug('video archiver root {}'.format(vd))
-                if vd is None:
+                if not vd:
                     vd = paths.video_dir
-                path, _ = unique_path(vd, basename, extension='avi')
+
+                path = unique_path_from_manifest(vd, basename, extension='avi')
 
         self.info('start video recording {}'.format(path))
         d = os.path.dirname(path)

@@ -19,14 +19,18 @@ import os
 import socket
 
 from apptools.preferences.preference_binding import bind_preference
-from smb.SMBConnection import SMBConnection
+from smb.SMBConnection import SMBConnection, OperationFailure
 from traits.api import Str
 
-from pychron.media_storage.storage import AuthenticationStorage
+from pychron.media_storage.storage import RemoteStorage
 
 
-class SMBStorage(AuthenticationStorage):
+class SMBStorage(RemoteStorage):
     service_name = Str
+    url_name = 'SMB'
+
+    def get_base_url(self):
+        return 'SMB://{}/{}'.format(self.host, self.service_name)
 
     def __init__(self, bind=True, *args, **kw):
         super(SMBStorage, self).__init__(bind=bind, *args, **kw)
@@ -66,7 +70,10 @@ class SMBStorage(AuthenticationStorage):
             close = True
 
         if conn:
-            conn.createDirectory(self.service_name, dest)
+            try:
+                conn.createDirectory(self.service_name, dest)
+            except OperationFailure:
+                pass
 
             if close:
                 conn.close()

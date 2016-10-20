@@ -27,6 +27,7 @@ from pychron.paths import paths
 
 class FileStorage(Storage):
     root = Str
+    url_name = 'file'
 
     def __init__(self, *args, **kw):
         super(FileStorage, self).__init__(*args, **kw)
