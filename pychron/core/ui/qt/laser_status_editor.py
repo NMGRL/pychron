@@ -24,7 +24,7 @@ from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel, QSizePolicy, QGraphicsView, QGraphicsScene, QBrush, \
-    QPen, QRadialGradient, QVBoxLayout, QGraphicsItem, QPolygon
+    QPen, QRadialGradient, QVBoxLayout, QGraphicsItem, QPolygon, QPainter
 from pyface.qt.QtCore import QPropertyAnimation, QObject, Property as QProperty, QPoint, QParallelAnimationGroup, Qt
 
 # ============= local library imports  ==========================
@@ -35,25 +35,8 @@ QT_COLORS = [QColor(ci) for ci in COLORS]
 
 class _LaserStatusEditor(Editor):
     _state = False
-    bullet1 = Any
-    bullet2 = Any
     animation = Any
     animation_objects = Dict
-
-    # def _get_color(self, state):
-    #     if isinstance(state, str):
-    #         c = QColor(state)
-    #     else:
-    #         c = QT_COLORS[state]
-    #     return c
-    # def get_color(self, state, cx, cy, rad):
-    #     c = self._get_color(state)
-    #
-    #     gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
-    #     gradient.setColorAt(0, Qt.white)
-    #     gradient.setColorAt(1, c)
-    #     brush = QBrush(gradient)
-    #     return brush
 
     def init(self, parent):
         """
@@ -70,6 +53,7 @@ class _LaserStatusEditor(Editor):
 
     def _create_control(self):
         ctrl = QGraphicsView()
+        ctrl.setRenderHints(QPainter.Antialiasing)
         scene = QGraphicsScene()
         ctrl.setScene(scene)
 
@@ -83,64 +67,22 @@ class _LaserStatusEditor(Editor):
 
         cx, cy = w / 2, h / 2.
         ex, ey = cx, cy + 20
-
         pen = QPen()
         pen.setStyle(Qt.NoPen)
         # pen.setColor(QColor(237, 237, 237))
         bounding_rect = scene.addRect(0, 0, w, h, pen=pen)
         bounding_rect.setFlag(QGraphicsItem.ItemClipsChildrenToShape)
 
-        tw = w - 20
-        poly = QPolygon()
-        poly.append(QPoint(cx - tw / 2, h - 10))
-        poly.append(QPoint(cx + tw / 2, h - 10))
-        poly.append(QPoint(cx, 10))
-
-        pen = QPen()
-        pen.setWidth(5)
-        # brush = QBrush()
-        # brush.setStyle(Qt.SolidPattern)
-        # brush.setColor(QColor(255, 255, 0))
-        item = scene.addPolygon(poly, pen=pen)
-        item.setBrush(QColor(255, 255, 0))
-        item.setParentItem(bounding_rect)
-
-        pen = QPen()
-        pen.setWidth(3)
-        item = scene.addLine(cx - 40, ey, cx, ey, pen=pen)
-        item.setParentItem(bounding_rect)
-
         self.animation = QSequentialAnimationGroup()
-        pen = QPen()
-        pen.setColor(QColor('orange'))
-        pen.setWidth(1)
-        # bullet = scene.addLine(-15, ey, -10, ey, pen=pen)
-        bullet = scene.addRect(-16, ey - 5, 15, 10, pen=pen)
-        bullet.setParentItem(bounding_rect)
-        bullet.setBrush(Qt.black)
-        self.bullet1 = Wrapper(bullet)
+        self._add_laser_logo(scene, bounding_rect, ex, ey, cx, cy, w, h)
+        self._add_bullet(scene, bounding_rect,ex, ey, cx, cy)
+        self._add_fragments(scene, bounding_rect, ex, ey)
 
-        anim = QPropertyAnimation(self.bullet1, 'position')
-        anim.setDuration(500)
-        anim.setKeyValueAt(0, bullet.pos())
-        # anim.setKeyValueAt(0.1, bullet.pos())
-        # anim.setKeyValueAt(0.8, QPoint(cx + 10, 0))
-        anim.setKeyValueAt(1, QPoint(cx + 10, 0))
-        self.animation.addAnimation(anim)
+        self.animation.setLoopCount(-1)
 
-        pen = QPen()
-        pen.setColor(Qt.black)
-        pen.setWidth(2)
+        return ctrl
 
-        for l, n in ((25, 12), (17, 24)):
-            s = 360 / n
-            for theta in xrange(n):
-                theta = math.radians(theta * s)
-                x = l * math.cos(theta)
-                y = l * math.sin(theta)
-                ll = scene.addLine(ex, ey, ex + x, ey + y, pen=pen)
-                ll.setParentItem(bounding_rect)
-
+    def _add_fragments(self, scene, bounding_rect, ex, ey):
         pen = QPen()
         pen.setWidth(1)
 
@@ -200,13 +142,41 @@ class _LaserStatusEditor(Editor):
         gg.addAnimation(anim)
 
         ganim.addAnimation(gg)
-
         self.animation.addAnimation(ganim)
-        self.animation.setLoopCount(-1)
 
-        self._scene = scene
+    def _add_laser_logo(self, scene, bounding_rect, ex, ey, cx, cy, w, h):
+        tw = w - 20
+        poly = QPolygon()
+        poly.append(QPoint(cx - tw / 2, h - 10))
+        poly.append(QPoint(cx + tw / 2, h - 10))
+        poly.append(QPoint(cx, 10))
+        pen = QPen()
+        pen.setWidth(5)
+        # brush = QBrush()
+        # brush.setStyle(Qt.SolidPattern)
+        # brush.setColor(QColor(255, 255, 0))
+        item = scene.addPolygon(poly, pen=pen)
+        item.setBrush(QColor(255, 255, 0))
+        item.setParentItem(bounding_rect)
+        pen = QPen()
+        pen.setWidth(3)
+        item = scene.addLine(cx - 40, ey, cx, ey, pen=pen)
+        item.setParentItem(bounding_rect)
 
-        return ctrl
+        pen = QPen()
+        pen.setColor(Qt.black)
+        pen.setWidth(2)
+
+        for l, n in ((25, 12), (17, 24)):
+            s = 360 / n
+            for theta in xrange(n):
+                theta = math.radians(theta * s)
+                x = l * math.cos(theta)
+                y = l * math.sin(theta)
+                ll = scene.addLine(ex, ey, ex + x, ey + y, pen=pen)
+                ll.setParentItem(bounding_rect)
+
+        return bounding_rect
 
     def _start_animation(self):
         self.animation.start()
@@ -214,6 +184,21 @@ class _LaserStatusEditor(Editor):
     def _stop_animation(self):
         self.animation.setCurrentTime(0)
         self.animation.stop()
+
+    def _add_bullet(self, scene, bounding_rect, ex, ey, cx, cy):
+        pen = QPen()
+        pen.setColor(QColor('orange'))
+        pen.setWidth(1)
+        bullet = scene.addRect(-16, ey - 5, 15, 10, pen=pen)
+        bullet.setParentItem(bounding_rect)
+        bullet.setBrush(Qt.black)
+        self.animation_objects['bullet'] = w = Wrapper(bullet)
+
+        anim = QPropertyAnimation(w, 'position')
+        anim.setDuration(500)
+        anim.setKeyValueAt(0, bullet.pos())
+        anim.setKeyValueAt(1, QPoint(cx + 10, 0))
+        self.animation.addAnimation(anim)
 
 
 class Wrapper(QObject):
@@ -241,17 +226,6 @@ class Wrapper(QObject):
 
     def set_radius(self, r):
         rect = self._item.rect()
-        # if not self._ox:
-        #     x, y = rect.x(), rect.y()
-        #     self._ox = x + self.radius
-        #     self._oy = y + self.radius
-        #
-        # if r > self.radius:
-        #     x = self._ox - r
-        #     y = self._oy - r
-        # else:
-        #     x = self._ox
-        #     y = self._oy
         rect.setWidth(r)
         rect.setHeight(r)
         rect.setX(self._ox - (r - self._radius) / 2.)

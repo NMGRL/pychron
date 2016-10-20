@@ -78,9 +78,7 @@ class Camera(ConfigLoadable):
         else:
             ff = 'lambda p,x: {}'.format(self.zoom_fitfunc)
             func = eval(ff, {'exp': exp})
-            print ff
 
-            print func
         if self.zoom_coefficients:
             pxpermm = func(map(float, self.zoom_coefficients.split(',')), zoom)
         else:

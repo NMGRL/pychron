@@ -47,7 +47,6 @@ class LaserManager(BaseLaserManager):
 
     plugin_id = Str
 
-    status_text = Str
     pulse = Instance(Pulse)
 
     auxilary_graph = Instance(Component)
