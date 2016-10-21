@@ -1328,7 +1328,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_principal_investigator_names(self, *args, **kw):
         order = PrincipalInvestigatorTbl.last_name.asc()
-        return self._get_table_names(PrincipalInvestigatorTbl, order=order)
+        return self._get_table_names(PrincipalInvestigatorTbl, order=order, verbose_query=True)
 
     def get_principal_investigators(self, order=None, **kw):
         if order:

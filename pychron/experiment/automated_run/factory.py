@@ -96,6 +96,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     set_repository_identifier_button = Event
     clear_repository_identifier_button = Event
 
+    irradiation_project_prefix = Str
     selected_irradiation = Str('Irradiation')
     irradiations = Property(depends_on='db, db_refresh_needed')
     selected_level = Str('Level')
@@ -253,6 +254,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def __init__(self, *args, **kw):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
         bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
+        bind_preference(self, 'irradiation_project_prefix', 'pychron.entry.irradiation_project_prefix')
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
     def setup_files(self):
@@ -855,7 +857,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         elif project_name != 'REFERENCES':
-                            repo = camel_case(project_name)
+                            if project_name.startswith(self.irradiation_project_prefix):
+                                repo = project_name
+                            else:
+                                repo = camel_case(project_name)
+
                             self.repository_identifier = repo
                             if not db.get_repository(repo):
                                 self.repository_identifier = ''
@@ -918,7 +924,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         ids = ['']
         if db and db.connect():
-            with db.session_ctx():
+            with db.session_ctx(use_parent_session=False):
                 ids.extend(db.get_repository_identifiers())
         return ids
 
@@ -927,7 +933,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         if db is None or not db.connect():
             return []
-        with db.session_ctx():
+        with db.session_ctx(use_parent_session=False):
             irradiations = db.get_irradiation_names()
         return ['Irradiation', LINE_STR] + irradiations
 
@@ -939,7 +945,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return []
 
         if self.selected_irradiation not in ('IRRADIATION', LINE_STR):
-            with db.session_ctx():
+            with db.session_ctx(use_parent_session=False):
                 irrad = db.get_irradiation(self.selected_irradiation)
                 if irrad:
                     levels = sorted([li.name for li in irrad.levels])
@@ -956,7 +962,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             return []
 
         if self.selected_level and self.selected_level not in ('Level', LINE_STR):
-            with db.session_ctx():
+            with db.session_ctx(use_parent_session=False):
                 lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
 
         return lns
@@ -1156,8 +1162,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             if name:
                 a.value = name
 
-            a.available = self.dvc.get_repository_identifiers()
-            a.principal_investigators = self.dvc.get_principal_investigator_names()
+            with self.dvc.session_ctx(use_parent_session=False):
+                a.available = self.dvc.get_repository_identifiers()
+                a.principal_investigators = self.dvc.get_principal_investigator_names()
+            print a, a.principal_investigators
             if a.do():
                 self.repository_identifier_dirty = True
                 self.repository_identifier = a.name

@@ -29,6 +29,7 @@ class IrradiationEntryPreferences(BasePreferencesHelper):
     monitor_name = Str
     monitor_material = Str
     j_multiplier = Float
+    irradiation_project_prefix = Str
 
 
 class LabnumberEntryPreferencesPane(PreferencesPane):
@@ -43,6 +44,7 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
                                        show_border=True, label='Monitor'),
                                 Item('j_multiplier', label='J Multiplier',
                                      tooltip='J units per hour'),
+                                Item('irradiation_project_prefix', label='Irradiation Project Prefix'),
                                 show_border=True,
                                 label='Irradiations')
         v = View(irradiation_grp)

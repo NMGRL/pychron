@@ -29,17 +29,18 @@ class RepositoryIdentifierEntry(BaseEntry):
     value = SpacelessStr
 
     def _add_item(self):
-        if self.dvc.check_restricted_name(self.value, 'repository_identifier'):
-            self.error_message = '{} is a restricted!.'.format(self.value)
-            if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
-                                            'Repository?'.format(self.value)):
-                return
+        with self.dvc.session_ctx(use_parent_session=False):
+            if self.dvc.check_restricted_name(self.value, 'repository_identifier'):
+                self.error_message = '{} is a restricted!.'.format(self.value)
+                if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
+                                                'Repository?'.format(self.value)):
+                    return
 
-        ret = True
-        if not self.dvc.add_repository(self.value, self.principal_investigator):
-            ret = False
-            if not self.confirmation_dialog('Could not add "{}". Try a different name?'.format(self.value)):
-                ret = None
+            ret = True
+            if not self.dvc.add_repository(self.value, self.principal_investigator):
+                ret = False
+                if not self.confirmation_dialog('Could not add "{}". Try a different name?'.format(self.value)):
+                    ret = None
 
         return ret
 
