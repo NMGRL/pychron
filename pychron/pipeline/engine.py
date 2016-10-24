@@ -601,43 +601,47 @@ class PipelineEngine(Loggable):
 
     def _load_predefined_templates(self):
         self.debug('load predefined templates')
-        templates = []
+        # templates = []
+        # for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
+        #                             remove_extension=True):
+        #     templates.append(temp)
+        # self.debug('loaded {} pychron templates'.format(len(templates)))
+
         user_templates = []
-
-        for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
-                                    remove_extension=True):
-            templates.append(temp)
-        self.debug('loaded {} pychron templates'.format(len(templates)))
-
         for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
             user_templates.append(temp)
         self.debug('loaded {} user templates'.format(len(user_templates)))
 
-        # def formatter(t):
-        #     return ' '.join(map(str.capitalize, t.split('_')))
-
-        # ftemplates = map(formatter, templates)
-        # fuser_templates = map(formatter, user_templates)
-
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
 
-        def to_pathname(t):
-            return t.replace(' ','_').lower()
-
         ns = []
-        for name in tnames:
-            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
-            if os.path.isfile(p):
-                with open(p,'r') as rfile:
+
+        def to_pathname(t):
+            return t.replace(' ', '_').lower()
+
+        def add_template(nn, pp):
+            if os.path.isfile(pp):
+                with open(pp, 'r') as rfile:
                     yd = yaml.load(rfile)
                     required = yd['required']
                     if required:
-                        if all((self.application.get_service(ri)for ri in required)):
-                            ns.append(name)
+                        if all((self.application.get_service(ri) for ri in required)):
+                            ns.append(nn)
                     else:
-                        ns.append(name)
+                        ns.append(nn)
+
+        for name in tnames:
+            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
+            add_template(name, p)
+
+        def to_name(t):
+            return ' '.join(map(str.capitalize, t.split('_')))
+
+        for u in user_templates:
+            name = to_name(u)
+            add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
 
         self.available_pipeline_templates = ns
 

@@ -223,8 +223,6 @@ class DVCDatabase(DatabaseAdapter):
             level = dbpos.level.name
             pos = dbpos.position
             irradiation = dbpos.level.irradiation.name
-            # irradiation = '{} {}:{}'.format(level.irradiation.name,
-            #                                 level.name, dbpos.position)
 
         return project, sample, material, irradiation, level, pos
 
@@ -233,6 +231,7 @@ class DVCDatabase(DatabaseAdapter):
         change = an.change
         change.tag = tagname
         change.user = self.save_username
+        self.flush()
         self.commit()
 
     def find_references(self, ans, atypes, hours=10, exclude=None,
