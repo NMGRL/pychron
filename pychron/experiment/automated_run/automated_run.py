@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-# # ============= enthought library imports =======================
+# ============= enthought library imports =======================
 import ast
 import os
 import re
@@ -25,8 +25,7 @@ from threading import Thread, Event as TEvent
 
 import yaml
 from numpy import Inf, polyfit, linspace, polyval
-from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long
+from traits.api import Any, Str, List, Property, Event, Instance, Bool, HasTraits, Float, Int, Long
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.helpers.filetools import add_extension
@@ -1165,17 +1164,18 @@ class AutomatedRun(Loggable):
         # self.persister.pre_extraction_save()
 
         self.info_color = EXTRACTION_COLOR
-        msg = 'Extraction Started {}'.format(self.extraction_script.name)
+        script = self.extraction_script
+        msg = 'Extraction Started {}'.format(script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'extraction'
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
-        self.extraction_script.runner = self.runner
-        self.extraction_script.manager = self.experiment_executor
-        self.extraction_script.set_run_identifier(self.runid)
+        script.runner = self.runner
+        script.manager = self.experiment_executor
+        script.set_run_identifier(self.runid)
 
         syn_extractor = None
-        if self.extraction_script.syntax_ok(warn=False):
+        if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction:
                 p = os.path.join(paths.scripts_dir, 'syn_extraction', self.spec.syn_extraction)
                 p = add_extension(p, '.yaml')
@@ -1183,7 +1183,7 @@ class AutomatedRun(Loggable):
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 
-                    dur = self.extraction_script.calculate_estimated_duration(force=True)
+                    dur = script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
                                                            extraction_duration=dur)
@@ -1192,11 +1192,11 @@ class AutomatedRun(Loggable):
                     self.warning(
                         'Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
         else:
-            self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
+            self.warning('Invalid script syntax for "{}"'.format(script.name))
             return
 
         try:
-            ex_result = self.extraction_script.execute()
+            ex_result = script.execute()
         except ExtractionException, e:
             ex_result = False
             self.debug('extraction exception={}'.format(e))
@@ -1206,21 +1206,23 @@ class AutomatedRun(Loggable):
                 syn_extractor.stop()
 
             # report the extraction results
-            r = self.extraction_script.output_achieved()
+            r = script.output_achieved()
             for ri in r:
                 self.info(ri)
 
-            rblob = self.extraction_script.get_response_blob()
-            oblob = self.extraction_script.get_output_blob()
-            sblob = self.extraction_script.get_setpoint_blob()
-            snapshots = self.extraction_script.snapshots
+            rblob = script.get_response_blob()
+            oblob = script.get_output_blob()
+            sblob = script.get_setpoint_blob()
+            snapshots = script.snapshots
+            videos = script.videos
 
-            pid = self.extraction_script.get_active_pid_parameters()
+            pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
                                         response_blob=rblob,
                                         output_blob=oblob,
                                         setpoint_blob=sblob,
-                                        snapshots=snapshots)
+                                        snapshots=snapshots,
+                                        videos=videos)
 
             self._persister_save_action('post_extraction_save')
             # self.persister.post_extraction_save(rblob, oblob, snapshots)

@@ -37,7 +37,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl, AnalysisGroupTbl, AnalysisGroupSetTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, IRTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, MediaTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -344,6 +344,15 @@ class DVCDatabase(DatabaseAdapter):
     def get_production_name(self, irrad, level):
         dblevel = self.get_irradiation_level(irrad, level)
         return dblevel.production.name
+
+    def add_media(self, u, an):
+        m = MediaTbl(url=u)
+
+        user = self.get_user(self.save_username)
+        if user:
+            m.username = user.name
+        m.analysisID = an.id
+        self._add_item(m)
 
     def add_save_user(self):
         if not self.get_user(self.save_username):

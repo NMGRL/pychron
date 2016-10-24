@@ -77,6 +77,7 @@ class PersistenceSpec(HasTraits):
     output_blob = Str
     setpoint_blob = Str
     snapshots = None
+    videos = None
 
     conditionals = None
     tripped_conditional = None

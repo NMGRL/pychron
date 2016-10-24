@@ -236,11 +236,11 @@ class FusionsLaserManager(LaserManager):
 
     def start_video_recording(self, name='video', *args, **kw):
         if self.use_video:
-            self.stage_manager.start_recording(basename=name)
+            return self.stage_manager.start_recording(basename=name)
 
     def stop_video_recording(self, *args, **kw):
         if self.use_video:
-            self.stage_manager.stop_recording()
+            return self.stage_manager.stop_recording()
 
     def degasser_factory(self):
         from pychron.mv.degas.degasser import Degasser

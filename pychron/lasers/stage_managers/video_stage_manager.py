@@ -22,8 +22,7 @@ from threading import Thread, Timer
 
 from apptools.preferences.preference_binding import bind_preference
 from numpy import copy
-from traits.api import Instance, String, Property, Button, \
-    Bool, Event, on_trait_change, Str, Float
+from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
@@ -133,15 +132,30 @@ class VideoStageManager(StageManager):
         bind_preference(self.video, 'ffmpeg_path',
                         '{}.ffmpeg_path'.format(pref_id))
 
-    def start_recording(self, new_thread=True, **kw):
+    def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
         """
         """
+
+        if path is None:
+            if use_dialog:
+                path = self.save_file_dialog()
+            else:
+                vd = self.video_archiver.root
+                self.debug('video archiver root {}'.format(vd))
+                if not vd:
+                    vd = paths.video_dir
+
+                path = unique_path_from_manifest(vd, basename, extension='avi')
+
+        kw['path'] = path
+        kw['basename'] = basename
         if new_thread:
             t = Thread(target=self._start_recording, kwargs=kw)
             t.start()
         else:
             self._start_recording(**kw)
         self.is_recording = True
+        return path
 
     def stop_recording(self, user='remote', delay=None):
         """
@@ -150,17 +164,18 @@ class VideoStageManager(StageManager):
         def close():
             self.is_recording = False
             self.info('stop video recording')
-
+            p = self.video.output_path
             if self.video.stop_recording(wait=True):
                 if self.auto_upload:
-                    self._upload(self.video.output_path, inform=False)
+                    p = self._upload(p, inform=False)
+            return p
 
-        if self.video._recording:
+        if self.video.is_recording():
             if delay:
                 t = Timer(delay, close)
                 t.start()
             else:
-                close()
+                return close()
 
     def initialize_video(self):
         if self.video:
@@ -363,18 +378,7 @@ class VideoStageManager(StageManager):
         if was_visible:
             c.show_all()
 
-    def _start_recording(self, path=None, basename='vm_recording',
-                         use_dialog=False, user='remote', ):
-        if path is None:
-            if use_dialog:
-                path = self.save_file_dialog()
-            else:
-                vd = self.video_archiver.root
-                self.debug('video archiver root {}'.format(vd))
-                if not vd:
-                    vd = paths.video_dir
-
-                path = unique_path_from_manifest(vd, basename, extension='avi')
+    def _start_recording(self, path, basename):
 
         self.info('start video recording {}'.format(path))
         d = os.path.dirname(path)

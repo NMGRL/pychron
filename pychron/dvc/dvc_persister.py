@@ -96,9 +96,10 @@ class DVCPersister(BasePersister):
 
     def post_extraction_save(self):
 
-        rblob = self.per_spec.response_blob  # time vs measured response
-        oblob = self.per_spec.output_blob  # time vs %output
-        sblob = self.per_spec.setpoint_blob  # time vs requested
+        per_spec = self.per_spec
+        rblob = per_spec.response_blob  # time vs measured response
+        oblob = per_spec.output_blob  # time vs %output
+        sblob = per_spec.setpoint_blob  # time vs requested
 
         if rblob:
             rblob = base64.b64encode(rblob)
@@ -109,18 +110,20 @@ class DVCPersister(BasePersister):
 
         obj = {'request': rblob,  # time vs
                'response': oblob,
-               'sblob': sblob}
+               'sblob': sblob,
+               'snapshots': per_spec.snapshots,
+               'videos': per_spec.videos}
 
-        pid = self.per_spec.pid
+        pid = per_spec.pid
         if pid:
             obj['pid'] = pid
 
         for e in EXTRACTION_ATTRS:
-            v = getattr(self.per_spec.run_spec, e)
+            v = getattr(per_spec.run_spec, e)
             obj[e] = v
 
         ps = []
-        for i, pp in enumerate(self.per_spec.positions):
+        for i, pp in enumerate(per_spec.positions):
             pos, x, y, z = None, None, None, None
             if isinstance(pp, tuple):
                 if len(pp) == 2:
@@ -130,22 +133,22 @@ class DVCPersister(BasePersister):
             else:
                 pos = pp
                 try:
-                    ep = self.per_spec.extraction_positions[i]
+                    ep = per_spec.extraction_positions[i]
                     x = ep[0]
                     y = ep[1]
                     if len(ep) == 3:
                         z = ep[2]
                 except IndexError:
                     self.debug('no extraction position for {}'.format(pp))
-            pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': self.per_spec.run_spec.identifier == 'dg'}
+            pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
             ps.append(pd)
 
         db = self.dvc.db
-        load_name = self.per_spec.load_name
+        load_name = per_spec.load_name
         for p in ps:
             db.add_measured_position(load=load_name, **p)
-
         obj['positions'] = ps
+
         hexsha = self.dvc.get_meta_head()
         obj['commit'] = str(hexsha)
 
@@ -293,6 +296,12 @@ class DVCPersister(BasePersister):
         db = self.dvc.db
         an = db.add_analysis(**d)
 
+        # save media
+        for p in self.per_spec.snapshots:
+            db.add_media(p, an)
+        for p in self.per_spec.videos:
+            db.add_media(p, an)
+
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 
@@ -311,8 +320,6 @@ class DVCPersister(BasePersister):
         change = db.add_analysis_change(tag=t)
         an.change = change
 
-        change = db.add_analysis_change(tag=t)
-        an.change = change
         db.commit()
 
     def _save_analysis(self, timestamp):
@@ -336,8 +343,11 @@ class DVCPersister(BasePersister):
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
-            signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
-            sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
+            for ss, blob in ((signals, sblob), (sniffs, snblob)):
+                d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
+                ss.append(d)
+                # signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
+                # sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
             isod = {'detector': iso.detector}
             if self.use_isotope_classifier:

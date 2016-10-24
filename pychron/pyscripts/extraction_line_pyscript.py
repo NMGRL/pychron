@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import inspect
+import re
+import time
 from threading import Event
 from threading import Thread
 
 from traits.api import List
-# ============= standard library imports ========================
-import time
-import inspect
-import re
-# ============= local library imports  ==========================
+
 from pychron.core.ramper import Ramper
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.hardware.core.exceptions import TimeoutError
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.pyscripts.pyscript import verbose_skip, makeRegistry, calculate_duration
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
+from pychron.pyscripts.pyscript import verbose_skip, makeRegistry, calculate_duration
+from pychron.pyscripts.valve_pyscript import ValvePyScript
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
@@ -64,6 +63,7 @@ class ExtractionPyScript(ValvePyScript):
     _resource_flag = None
     info_color = EXTRACTION_COLOR
     snapshots = List
+    videos = List
 
     _extraction_positions = List
 
@@ -400,8 +400,8 @@ class ExtractionPyScript(ValvePyScript):
         name = '{}{}'.format(prefix, name)
         ps = self._extraction_action([('take_snapshot', (name, pic_format),
                                        {'view_snapshot': view_snapshot})])
-        if ps:
-            self.snapshots.append(ps)
+        if ps and ps[0]:
+            self.snapshots.append(ps[0])
 
     @command_register
     def video_recording(self, name='video'):
@@ -414,8 +414,11 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def stop_video_recording(self):
-        self._extraction_action([('stop_video_recording', (), {})])
+    def stop_video_recording(self, save_db=True):
+        ps = self._extraction_action([('stop_video_recording', (), {})])
+        if save_db:
+            if ps and ps[0]:
+                self.videos.append(ps[0])
 
     @verbose_skip
     @command_register

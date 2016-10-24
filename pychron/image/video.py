@@ -46,9 +46,9 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     if os.path.exists(output):
         return
 
-    frame_rate = '{}'.format(fps)
-    codec = '{}'.format('x264')  # H.264
-    path = '{}'.format(os.path.join(path, name_filter))
+    frame_rate = str(fps)
+    # codec = '{}'.format('x264')  # H.264
+    path = str(os.path.join(path, name_filter))
     if ffmpeg is None or not os.path.isfile(ffmpeg):
         ffmpeg = '/usr/local/bin/ffmpeg'
 
@@ -77,6 +77,9 @@ class Video(Image):
     output_mode = Str('MPEG')
     ffmpeg_path = Str
     fps = Int
+
+    def is_recording(self):
+        return self._recording
 
     def is_open(self):
         return self.cap is not None
@@ -261,50 +264,5 @@ class Video(Image):
     def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
         ffmpeg = self.ffmpeg_path
         convert_to_video(path, fps, name_filter, ffmpeg, output)
-
-        # def _cv_record(self, path, stop, fps, renderer=None):
-        #     """
-        #         use OpenCV VideoWriter to save video file
-        #         !!on mac seems only raw video can saved. playable avi file but
-        #         bad internally. No format
-        #     """
-        #     #        fps = 1 / 8.
-        #     #        if self.cap is None:
-        #     #            self.open()
-        #     #
-        #     #        if self.cap is not None:
-        #     #            self._recording = True
-        #     # #                if self._frame is None:
-        #     frame = self.get_frame()
-        #
-        #     #                size = map(int, self._frame.size())
-        #     w = 300
-        #     h = 300
-        #     size = (w, h)
-        #
-        #     '''
-        #         @todo: change video writing scheme
-        #
-        #         create a new directory
-        #         save jpegs into directory
-        #         use ffmpeg to stitch into a video
-        #     '''
-        #     writer = new_video_writer(path, fps,
-        #                               size
-        #                               )
-        #     sleep = time.sleep
-        #     ctime = time.time
-        #
-        #     fsize = frame.size()
-        #     x = (fsize[0] - size[0]) / 2
-        #     y = (fsize[1] - size[1]) / 2
-        #
-        #     while not stop.is_set():
-        #         st = ctime()
-        #         f = crop(frame.clone(), x, y, w, h)
-        #         #                    write_frame(writer, grayspace(f))
-        #         write_frame(writer, f)
-        #         dur = ctime() - st
-        #         sleep(max(0.001, 1 / fps - dur))
 
 # =================== EOF =================================================
