@@ -330,7 +330,8 @@ class DVCAnalysis(Analysis):
                 try:
                     iso = isos[k]
                     siso = sisos[k]
-                    update(iso, siso)
+                    if siso:
+                        update(iso, siso)
                 except KeyError:
                     pass
 
