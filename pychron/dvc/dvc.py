@@ -605,6 +605,7 @@ class DVC(Loggable):
         if exists:
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress)
+            return True
         else:
             self.debug('getting repository from remote')
             names = self.remote_repository_names()

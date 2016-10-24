@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Array
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from enable.colors import ColorTrait
-from numpy import array, arange, Inf, argmax
 from pyface.message_dialog import warning
-from traits.api import Array
+# ============= standard library imports  ==========================
+from numpy import array, arange, Inf, argmax
 from uncertainties import nominal_value, std_dev
-
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
