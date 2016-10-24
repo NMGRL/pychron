@@ -468,9 +468,9 @@ class Paths(object):
         # =======================================================================
         # pipeline templates
         # =======================================================================
-        self.icfactor_template = join(self.pipeline_template_dir, 'icfactor.yaml')
+        self.icfactor_template = join(self.pipeline_template_dir, 'ic_factor.yaml')
         self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
-        self.iso_evo_template = join(self.pipeline_template_dir, 'iso_evo.yaml')
+        self.iso_evo_template = join(self.pipeline_template_dir, 'isotope_evolutions.yaml')
         self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
         self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
         self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')

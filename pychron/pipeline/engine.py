@@ -25,6 +25,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
+from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
@@ -325,6 +326,10 @@ class PipelineEngine(Loggable):
         node = self._get_last_node(node)
         self.pipeline.add_after(node, newnode)
 
+    def add_review(self, node=None, run=False):
+        newnode = ReviewNode()
+        self._add_node(node, newnode, run)
+
     # preprocess
     def add_filter(self, node=None, run=True):
         newnode = FilterNode()
@@ -609,8 +614,8 @@ class PipelineEngine(Loggable):
             user_templates.append(temp)
         self.debug('loaded {} user templates'.format(len(user_templates)))
 
-        def formatter(t):
-            return ' '.join(map(str.capitalize, t.split('_')))
+        # def formatter(t):
+        #     return ' '.join(map(str.capitalize, t.split('_')))
 
         # ftemplates = map(formatter, templates)
         # fuser_templates = map(formatter, user_templates)
@@ -618,32 +623,21 @@ class PipelineEngine(Loggable):
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
 
+        def to_pathname(t):
+            return t.replace(' ','_').lower()
+
         ns = []
-        for ti in templates:
-            name = formatter(ti)
-            if name not in tnames:
-                continue
-            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ti))
-
-            with open(p,'r') as rfile:
-                yd = yaml.load(rfile)
-                required = yd['required']
-                if required:
-                    if all((self.application.get_service(ri)for ri in required)):
+        for name in tnames:
+            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
+            if os.path.isfile(p):
+                with open(p,'r') as rfile:
+                    yd = yaml.load(rfile)
+                    required = yd['required']
+                    if required:
+                        if all((self.application.get_service(ri)for ri in required)):
+                            ns.append(name)
+                    else:
                         ns.append(name)
-                else:
-                    ns.append(name)
-
-
-        # ns = [pt for pt in tnames if pt in ftemplates]
-        # ns.extend(fuser_templates)
-        # check for requirements
-
-            # p = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format())
-            # if os.path.isfile(p):
-            #     p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ni))
-
-
 
         self.available_pipeline_templates = ns
 
