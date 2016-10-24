@@ -349,7 +349,8 @@ class DVCAnalysis(Analysis):
                     baselines[di] = det
 
                 bs = next((iso.baseline for iso in sisos.itervalues() if iso.detector == di), None)
-                update(det, bs)
+                if bs:
+                    update(det, bs)
 
             self._dump(baselines, path)
 
