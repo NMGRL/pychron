@@ -17,18 +17,18 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Float, Str, List, Instance, Property, cached_property, Button
+from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem
 from traitsui.editors.check_list_editor import CheckListEditor
 
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import DVCNode
 
 
-class FindNode(BaseNode):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class FindNode(DVCNode):
+    pass
 
 
 class BaseFindFluxNode(FindNode):
@@ -88,6 +88,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     monitor_sample_name = Str('FC-2')
 
     level = Str
+    use_browser = Bool(False)
 
     def run(self, state):
         if not self.irradiation or not self.level:
@@ -103,11 +104,15 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
 
             state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
                                                         ip.identifier, ip.sample.name, ip.position,
-                                                        ip.j, ip.j_err) for ip in ips]
+                                                        ip.j, ip.j_err) for ip in ips if ip.identifier]
 
-            ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
-            ans = [aii for ai in ans for aii in ai.record_views]
-            monitors = self.dvc.make_analyses(ans, calculate_f_only=False)
+            if self.use_browser:
+                is_append, monitors = self.get_browser_analyses(irradiation=self.irradiation,
+                                                                level=self.level)
+            else:
+                ans = dvc.get_flux_monitor_analyses(self.irradiation, self.level, self.monitor_sample_name)
+                ans = [aii for ai in ans for aii in ai.record_views]
+                monitors = self.dvc.make_analyses(ans)
 
             state.unknowns = monitors
             state.flux_monitors = monitors
@@ -134,6 +139,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
+                               Item('use_browser'),
                                width=300,
                                title='Select Irradiation and Level')
         return v
