@@ -226,16 +226,31 @@ class SampleBrowserModel(BrowserModel):
 
     # private
     def _find_references_hook(self):
-        m = FindReferencesConfigModel()
+        ans = self.analysis_table.analyses
+        ms = list({a.mass_spectrometer for a in ans})
+
+        m = FindReferencesConfigModel(mass_spectrometers=ms[:],
+                                      available_mass_spectrometers=ms)
         v = FindReferencesConfigView(model=m)
         info = v.edit_traits()
         if info.result:
+            if not m.mass_spectrometers:
+                self.warning_dialog('No Mass Spectrometer selected. Cannot find references. Select one or more Mass '
+                                    'Spectrometers from the "Configure Find References" window')
+                return
+
             atypes = m.formatted_analysis_types
-            refs = self.db.find_references(self.analysis_table.analyses, atypes, hours=m.threshold, make_records=False)
+            refs = self.db.find_references(ans, atypes,
+                                           mass_spectrometer=m.mass_spectrometers,
+                                           hours=m.threshold, make_records=False)
             if refs:
                 self.analysis_table.add_analyses(refs)
             else:
-                self.warning_dialog('No References found.\n\nAnalysis Types {}'.format(','.join(atypes)))
+                atypes=','.join(atypes)
+                ms = ','.join(m.mass_spectrometers)
+                self.warning_dialog('No References found.\n\n'
+                                    'Analysis Types: {}\n'
+                                    'Mass Spectrometers: {}'.format(atypes,ms))
 
     def _project_date_bins(self, identifier):
         db = self.db

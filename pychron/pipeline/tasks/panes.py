@@ -18,6 +18,7 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button
+from traits.has_traits import MetaHasTraits
 from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup, VSplit
 from traitsui.handler import Handler
 from traitsui.menu import Action
@@ -48,16 +49,27 @@ from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, Groupi
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
-def node_adder(func):
+def node_adder(name):
     def wrapper(obj, info, o):
-        name = func.func_name
         f = getattr(info.object, name)
         f(o)
-
     return wrapper
 
 
+class PipelineHandlerMeta(MetaHasTraits):
+    def __new__(cls, *args, **kwargs):
+        klass = MetaHasTraits.__new__(cls, *args, **kwargs)
+        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
+                  'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
+                  'icfactor', 'icfactor'):
+            name = 'add_{}'.format(t)
+            setattr(klass, name, node_adder(name))
+        return klass
+
+
 class PipelineHandler(Handler):
+    __metaclass__ = PipelineHandlerMeta
+
     def review_node(self, info, obj):
         info.object.review_node(obj)
 
@@ -102,65 +114,7 @@ class PipelineHandler(Handler):
         info.object.refresh_all_needed = True
         info.object.update_needed = True
 
-    @node_adder
-    def add_pdf_figure(self, info, obj):
-        pass
 
-    @node_adder
-    def add_iso_evo_persist(self, info, obj):
-        pass
-
-    @node_adder
-    def add_data(self, info, obj):
-        pass
-
-    @node_adder
-    def add_filter(self, info, obj):
-        pass
-
-    @node_adder
-    def add_ideogram(self, info, obj):
-        pass
-
-    @node_adder
-    def add_spectrum(self, info, obj):
-        pass
-
-    @node_adder
-    def add_grouping(self, info, obj):
-        pass
-
-    @node_adder
-    def add_series(self, info, obj):
-        pass
-
-    @node_adder
-    def add_isotope_evolution(self, info, obj):
-        pass
-
-    @node_adder
-    def add_blanks(self, info, obj):
-        pass
-
-    @node_adder
-    def add_detector_ic(self, info, obj):
-        pass
-
-    @node_adder
-    def add_flux(self, info, obj):
-        pass
-
-    @node_adder
-    def add_find_blanks(self, info, obj):
-        pass
-
-    @node_adder
-    def add_find_airs(self, info, obj):
-        pass
-
-    @node_adder
-    def add_icfactor(self, info, obj):
-        pass
 
 
 class PipelinePane(TraitsDockPane):
@@ -212,6 +166,8 @@ class PipelinePane(TraitsDockPane):
                                       action='add_spectrum'),
                                Action(name='Add Series',
                                       action='add_series'),
+                               Action(name='Add Review',
+                                      action='add_review'),
                                name='Add')
 
         def fit_menu_factory():
