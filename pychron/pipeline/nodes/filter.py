@@ -38,6 +38,8 @@ class PipelineFilter(HasTraits):
     chain_operator = Enum('and', 'or')
     show_chain = Bool
 
+    _eval_func = None
+
     def __init__(self, txt=None, *args, **kw):
         super(PipelineFilter, self).__init__(*args, **kw)
         if txt:
