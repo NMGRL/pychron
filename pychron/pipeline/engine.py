@@ -657,6 +657,7 @@ class PipelineEngine(Loggable):
                 self.run_needed = newnode
 
     def _add_node(self, node, new, run=True):
+        print node, new
         if new.configure():
             node = self._get_last_node(node)
 

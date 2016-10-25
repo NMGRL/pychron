@@ -1525,15 +1525,10 @@ class DVCDatabase(DatabaseAdapter):
         q = self.session.query(AnalysisTbl)
         q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl,
                    SampleTbl, AnalysisChangeTbl)
-        # q = q.options(joinedload('experiment_associations'))
-        # q = q.options(joinedload('irradiation_position'))
         q = q.filter(IrradiationTbl.name == irradiation)
         q = q.filter(LevelTbl.name == level)
         q = q.filter(SampleTbl.name == sample)
         q = q.filter(AnalysisChangeTbl.tag != 'invalid')
-        # q = q.filter(not_(IrradiationPositionTbl.identifier.in_(('24061','24062', '24063', '24076'))))
-        # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
-
         return self._query_all(q, verbose_query=True)
 
     def delete_tag(self, name):

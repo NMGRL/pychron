@@ -53,6 +53,7 @@ def node_adder(name):
     def wrapper(obj, info, o):
         f = getattr(info.object, name)
         f(o)
+    return wrapper
 
 
 class PipelineHandlerMeta(MetaHasTraits):

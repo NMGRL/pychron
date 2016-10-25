@@ -20,6 +20,7 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
+# ============= standard library imports ========================
 import pickle
 from hashlib import md5
 from os import path, mkdir, environ
