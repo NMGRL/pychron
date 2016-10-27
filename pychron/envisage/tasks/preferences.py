@@ -19,17 +19,16 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int
 from traitsui.api import View, Item, VGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
     BasePreferencesHelper
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
     preferences_path = 'pychron.general'
-    root_dir = Directory
-    use_login = Bool
-    multi_user = Bool
+    # root_dir = Directory
+    # use_login = Bool
+    # multi_user = Bool
+    environment = Directory
     confirm_quit = Bool
     show_random_tip = Bool
     # use_advanced_ui = Bool
@@ -47,11 +46,14 @@ class GeneralPreferencesPane(PreferencesPane):
     category = 'General'
 
     def traits_view(self):
-        root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
-                          show_border=True, label='Root')
-        login_grp = VGroup(Item('use_login', label='Use Login'),
-                           Item('multi_user', label='Multi User'),
-                           label='Login', show_border=True)
+        # root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
+        #                   show_border=True, label='Root')
+        env_grp = VGroup(Item('environment', label='Directory'),
+                         show_border=True, label='Environment')
+
+        # login_grp = VGroup(Item('use_login', label='Use Login'),
+        #                    Item('multi_user', label='Multi User'),
+        #                    label='Login', show_border=True)
 
         o_grp = VGroup(Item('organization', label='Name'),
                        remote_status_item('Laboratory Repo'),
@@ -65,8 +67,9 @@ class GeneralPreferencesPane(PreferencesPane):
                         Item('default_principal_investigator', label='Default PI'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
-                        root_grp,
-                        login_grp,
+                        # root_grp,
+                        # login_grp,
+                        env_grp,
                         o_grp,
                         label='General',
                         show_border=True))

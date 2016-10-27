@@ -37,8 +37,7 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, SwitchUserAction, KeyBindingsAction, \
-    ChangeLogAction, StartupTestsAction
+    NoteAction, RestartAction, DocumentationAction, CopyPreferencesAction, ChangeLogAction, StartupTestsAction
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -236,8 +235,10 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             DocumentationAction(),
             ChangeLogAction(),
             RestartAction(),
-            KeyBindingsAction(),
-            SwitchUserAction(),
+
+            # KeyBindingsAction(),
+            # SwitchUserAction(),
+
             StartupTestsAction(),
             # DemoAction(),
             id='help.menu',

@@ -15,6 +15,9 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from traits.etsconfig.api import ETSConfig
+
+from pychron.environment.util import set_application_home
+
 ETSConfig.toolkit = "qt4"
 
 from ConfigParser import NoSectionError
@@ -158,8 +161,8 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
 
-    user = initialize_version(modname, debug)
-    if user:
+    env = initialize_version(modname, debug)
+    if env:
         if debug:
             set_commandline_args()
 
@@ -169,7 +172,7 @@ def entry_point(modname, klass, setup_version_id='', debug=False):
             app = getattr(mod, klass)
             from pychron.envisage.pychron_run import launch
 
-            launch(app, user)
+            launch(app, env)
     else:
         logger.critical('Failed to initialize user')
 
@@ -265,50 +268,39 @@ def initialize_version(appname, debug):
     else:
         build_sys_path()
 
-    # can now use pychron.
-    from pychron.envisage.user_login import get_user
-
-    user = get_user()
-    if not user:
-        logger.info('user login failed')
-        return
-
-    if appname.startswith('py'):
-        appname = appname[2:]
-
-    from pychron.paths import paths
-
-    pref_path = os.path.join(paths.base, '.enthought',
-                             'pychron.{}.application.{}'.format(appname, user),
-                             'preferences.ini')
-
-    from ConfigParser import ConfigParser
-
-    cp = ConfigParser()
-    cp.read(pref_path)
-    proot = None
-    try:
-        proot = cp.get('pychron.general', 'root_dir')
-    except BaseException, e:
-        print 'root_dir exception={}'.format(e)
+    from pychron.environment.util import get_environment
+    env = get_environment(appname)
+    if not env:
+        logger.info('no environment available')
         from pyface.directory_dialog import DirectoryDialog
 
-        information(None, 'Pychron root directory not set in Preferences/General. Please select a valid directory')
+        information(None, 'An "environment" directory is not set in Preferences/General. Please select a valid '
+                          'directory')
         dlg = DirectoryDialog(action='open', default_directory=os.path.expanduser('~'))
         result = dlg.open()
         if result == OK:
-            proot = str(dlg.path)
+            env = str(dlg.path)
+            from pychron.environment.util import set_environment
+            set_environment(env, appname)
+    else:
+        set_application_home(env)
 
-    if not proot:
+    if not env:
         return False
 
-    logger.debug('using Pychron root: {}'.format(proot))
-    paths.build(proot)
+    from pychron.paths import paths
+    logger.debug('using Pychron environment: {}'.format(env))
+    paths.build(env)
+
+    from ConfigParser import ConfigParser
+    cp = ConfigParser()
+    pref_path = os.path.join(ETSConfig.application_home, 'preferences.ini')
+    cp.read(pref_path)
     try:
-        cp.set('pychron.general', 'root_dir', proot)
+        cp.set('pychron.general', 'environment', env)
     except NoSectionError:
         cp.add_section('pychron.general')
-        cp.set('pychron.general', 'root_dir', proot)
+        cp.set('pychron.general', 'environment', env)
 
     root = os.path.dirname(pref_path)
     if not os.path.isdir(root):
@@ -334,7 +326,7 @@ def initialize_version(appname, debug):
     set_exception_handler()
     report_issues()
 
-    return user
+    return env
 
 
 def build_sys_path():

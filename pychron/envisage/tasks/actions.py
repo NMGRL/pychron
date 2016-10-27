@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import sys
+
 from pyface.action.action import Action
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -22,12 +25,9 @@ from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import Any, List
-# ============= standard library imports ========================
-import os
-import shutil
-import sys
-# ============= local library imports  ==========================
+
 from pychron.envisage.resources import icon
+
 
 # from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
@@ -35,7 +35,7 @@ from pychron.envisage.resources import icon
 # ===============================================================================
 # help
 # ===============================================================================
-from pychron.envisage.user_login import login_file
+# from pychron.envisage.user_login import login_file
 
 
 def restart():
@@ -156,44 +156,46 @@ class SwitchUserAction(UserAction):
     image = icon('user_suit')
 
     def perform(self, event):
-        from pychron.envisage.user_login import get_user
-
-        base_id, cuser = self._get_current_user(event)
-        user = get_user(current=cuser)
-        if user:
-            # from pychron.paths import paths
-            # set login file
-            with open(login_file, 'w') as wfile:
-                wfile.write(user)
-            restart()
+        pass
+        # from pychron.envisage.user_login import get_user
+        #
+        # base_id, cuser = self._get_current_user(event)
+        # user = get_user(current=cuser)
+        # if user:
+        #     # from pychron.paths import paths
+        #     # set login file
+        #     with open(login_file, 'w') as wfile:
+        #         wfile.write(user)
+        #     restart()
 
 
 class CopyPreferencesAction(UserAction):
     name = 'Copy Preferences'
 
     def perform(self, event):
-        from pychron.envisage.user_login import get_src_dest_user
-
-        base_id, cuser = self._get_current_user(event)
-        src_name, dest_names = get_src_dest_user(cuser)
-
-        if src_name:
-
-            for di in dest_names:
-                dest_id = '{}.{}'.format(base_id, di)
-                src_id = '{}.{}'.format(base_id, src_name)
-
-                root = os.path.join(os.path.expanduser('~'), '.enthought')
-
-                src_dir = os.path.join(root, src_id)
-                dest_dir = os.path.join(root, dest_id)
-                if not os.path.isdir(dest_dir):
-                    os.mkdir(dest_dir)
-
-                name = 'preferences.ini'
-                dest = os.path.join(dest_dir, name)
-                src = os.path.join(src_dir, name)
-                shutil.copyfile(src, dest)
+        pass
+        # from pychron.envisage.user_login import get_src_dest_user
+        #
+        # base_id, cuser = self._get_current_user(event)
+        # src_name, dest_names = get_src_dest_user(cuser)
+        #
+        # if src_name:
+        #
+        #     for di in dest_names:
+        #         dest_id = '{}.{}'.format(base_id, di)
+        #         src_id = '{}.{}'.format(base_id, src_name)
+        #
+        #         root = os.path.join(os.path.expanduser('~'), '.enthought')
+        #
+        #         src_dir = os.path.join(root, src_id)
+        #         dest_dir = os.path.join(root, dest_id)
+        #         if not os.path.isdir(dest_dir):
+        #             os.mkdir(dest_dir)
+        #
+        #         name = 'preferences.ini'
+        #         dest = os.path.join(dest_dir, name)
+        #         src = os.path.join(src_dir, name)
+        #         shutil.copyfile(src, dest)
 
 
 class RestartAction(PAction):
