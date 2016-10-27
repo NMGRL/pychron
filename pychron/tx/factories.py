@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from twisted.internet.protocol import Factory
-# ============= local library imports  ==========================
+
 from pychron.tx.protocols.furnace import FurnaceProtocol
-from pychron.tx.protocols.valve import ValveProtocol
 from pychron.tx.protocols.laser import LaserProtocol
+from pychron.tx.protocols.valve import ValveProtocol
 
 
 class LaserFactory(Factory):
@@ -32,7 +32,7 @@ class LaserFactory(Factory):
     def buildProtocol(self, addr):
         if self._name is None:
             raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr)
+        return LaserProtocol(self._app, self._name, addr, self.logger)
 
 
 class FusionsCO2Factory(LaserFactory):
@@ -49,6 +49,7 @@ class FusionsUVFactory(LaserFactory):
 
 class BaseFactory(Factory):
     protocol_klass = None
+    logger = None
 
     def __init__(self, application=None):
         self._app = application
@@ -57,7 +58,7 @@ class BaseFactory(Factory):
         if self.protocol_klass is None:
             raise NotImplementedError
 
-        return self.protocol_klass(self._app, addr)
+        return self.protocol_klass(self._app, addr, self.logger)
 
 
 class ValveFactory(BaseFactory):

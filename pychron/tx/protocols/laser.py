@@ -26,8 +26,8 @@ from pychron.tx.protocols.service import ServiceProtocol
 
 
 class LaserProtocol(ServiceProtocol):
-    def __init__(self, application, name, addr):
-        ServiceProtocol.__init__(self)
+    def __init__(self, application, name, addr, logger):
+        ServiceProtocol.__init__(self, logger=logger)
         # self._application = application
         man = application.get_service(ILaserManager, 'name=="{}"'.format(name))
         self._manager = man

@@ -25,8 +25,8 @@ from pychron.tx.protocols.service import ServiceProtocol
 class BaseValveProtocol(ServiceProtocol):
     manager_protocol = None
 
-    def __init__(self, application, addr):
-        ServiceProtocol.__init__(self)
+    def __init__(self, application, addr, logger):
+        ServiceProtocol.__init__(self, logger=logger)
 
         self._application = application
         man = None
