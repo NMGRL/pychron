@@ -463,6 +463,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._delay(delay, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
+            self._set_thread_name(exp.name)
             msg = '"{}" started'.format(exp.name)
             self.heading(msg)
             if self.is_alive():
@@ -677,12 +678,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 break
             time.sleep(period)
 
+    def _set_thread_name(self, name):
+        self.debug('Changing Thread name to {}'.format(name))
+        ct = currentThread()
+        ct.name = name
+
     def _join_run(self, spec, run):
         # def _join_run(self, spec, t, run):
         # t.join()
-        self.debug('Changing Thread name to {}'.format(run.runid))
-        ct = currentThread()
-        ct.name = run.runid
 
         self.debug('join run')
         self._do_run(run)
@@ -711,6 +714,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('join run finished')
 
     def _do_run(self, run):
+        self._set_thread_name(run.runid)
+
         st = time.time()
 
         self.debug('do run')
@@ -795,6 +800,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # close conditionals view
         self._close_cv()
+
+        self._set_thread_name(self.experiment_queue.name)
 
     def _close_cv(self):
         if self._cv_info:
@@ -1901,7 +1908,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _extract_conditionals(self, p, term_name, level=RUN, **kw):
         if p and os.path.isfile(p):
-            self.debug('loading condiitonals from {}'.format(p))
+            self.debug('loading conditionals from {}'.format(p))
             return conditionals_from_file(p, name=term_name, level=level, **kw)
 
     def _action_conditionals(self, run, conditionals, message1, message2):
