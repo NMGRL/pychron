@@ -22,7 +22,6 @@ from pyface.message_dialog import warning
 
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.initialization.initialization_parser import InitializationParser
-from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
@@ -127,8 +126,6 @@ def get_plugin(pname):
     if not pname.endswith('Plugin'):
         pname = '{}Plugin'.format(pname)
 
-    # print PACKAGE_DICT.keys()
-    # print pname,pname in PACKAGE_DICT.keys()
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
@@ -155,8 +152,6 @@ def get_plugin(pname):
 def get_user_plugins():
     """
     """
-    # append plugins dir to the sys path
-    #    sys.path.append(plugins_dir)
 
     plugins = []
     ps = InitializationParser().get_plugins()
@@ -184,23 +179,18 @@ def app_factory(klass, user):
     """
     pychron_plugin = PychronTasksPlugin()
 
-    plugins = [
-        CorePlugin(),
-        myTasksPlugin(),
-        pychron_plugin,
-        # FoobotPlugin(),
-        LoggerPlugin(),
-        UsersPlugin()]
-
-    # if UpdatePlugin is not None:
-    #     plugins.append(UpdatePlugin())
+    plugins = [CorePlugin(),
+               myTasksPlugin(),
+               pychron_plugin,
+               LoggerPlugin(),
+               UsersPlugin()]
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
     app = klass(username=user, plugins=plugins)
     # set key bindings
-    update_key_bindings(pychron_plugin.actions)
+    # update_key_bindings(pychron_plugin.actions)
 
     return app
 
@@ -241,7 +231,7 @@ def launch(klass, user):
         gTraceDisplay.add_text(tb)
         gTraceDisplay.edit_traits(kind='livemodal')
 
-    # finally:
-    #     sys.exit(0)
+        # finally:
+        #     sys.exit(0)
 
 # ============= EOF ====================================
