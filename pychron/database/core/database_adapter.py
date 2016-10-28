@@ -400,7 +400,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         Query the AlembicVersionTable
 
         """
-
         q = self.session.query(AlembicVersionTable)
         mv = q.one()
         return mv

@@ -18,6 +18,7 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
+    from pychron.experiment.tests.peak_hop_parse import PeakHopTxtCase
     from pychron.entry.tests.usgs_menlo_file_source import USGSMenloFileSourceUnittest
     from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
@@ -53,7 +54,8 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (USGSMenloFileSourceUnittest,
+    tests = (PeakHopTxtCase,
+             USGSMenloFileSourceUnittest,
              CalibrationObjectTestCase,
              DurationTrackerTestCase,
              SpellCorrectTestCase,

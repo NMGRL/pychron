@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Directory, Bool, String, Float, Int
+from traits.api import Directory, Bool, String, Float, Int, Str, Property
 from traitsui.api import View, Item, VGroup
 
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item, \
     BasePreferencesHelper
+from pychron.envisage.user_login import get_usernames
 
 
 class GeneralPreferences(GitRepoPreferencesHelper):
@@ -28,6 +30,8 @@ class GeneralPreferences(GitRepoPreferencesHelper):
     # root_dir = Directory
     # use_login = Bool
     # multi_user = Bool
+    username = Str
+    _usernames = Property
     environment = Directory
     confirm_quit = Bool
     show_random_tip = Bool
@@ -35,6 +39,9 @@ class GeneralPreferences(GitRepoPreferencesHelper):
 
     organization = String(enter_set=True, auto_set=False)
     default_principal_investigator = String
+
+    def _get__usernames(self):
+        return get_usernames()
 
     def _organization_changed(self, new):
         if not self.remote and new:
@@ -48,6 +55,10 @@ class GeneralPreferencesPane(PreferencesPane):
     def traits_view(self):
         # root_grp = VGroup(Item('root_dir', label='Pychron Directory'),
         #                   show_border=True, label='Root')
+        user_grp = VGroup(Item('username',
+                               editor=ComboboxEditor(name='_usernames'),
+                               label='Name'),
+                          show_border=True, label='User')
         env_grp = VGroup(Item('environment', label='Directory'),
                          show_border=True, label='Environment')
 
@@ -69,6 +80,7 @@ class GeneralPreferencesPane(PreferencesPane):
                         #      tooltip='Display the advanced UI'),
                         # root_grp,
                         # login_grp,
+                        user_grp,
                         env_grp,
                         o_grp,
                         label='General',

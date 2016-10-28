@@ -154,27 +154,27 @@ def monkey_patch_checkbox_render():
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 
-def entry_point(modname, klass, setup_version_id='', debug=False):
+def entry_point(appname, klass, debug=False):
     """
         entry point
     """
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
 
-    env = initialize_version(modname, debug)
+    env = initialize_version(appname, debug)
     if env:
         if debug:
             set_commandline_args()
 
         # import app klass and pass to launch function
         if check_dependencies(debug):
-            mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+            mod = __import__('pychron.applications.{}'.format(appname), fromlist=[klass])
             app = getattr(mod, klass)
             from pychron.envisage.pychron_run import launch
 
-            launch(app, env)
+            launch(app)
     else:
-        logger.critical('Failed to initialize user')
+        logger.critical('Failed to initialize environment')
 
 
 def check_dependencies(debug):
@@ -281,9 +281,9 @@ def initialize_version(appname, debug):
         if result == OK:
             env = str(dlg.path)
             from pychron.environment.util import set_environment
-            set_environment(env, appname)
+            set_environment(appname, env)
     else:
-        set_application_home(env)
+        set_application_home(appname, env)
 
     if not env:
         return False

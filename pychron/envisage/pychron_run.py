@@ -22,6 +22,7 @@ from pyface.message_dialog import warning
 
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.initialization.initialization_parser import InitializationParser
+from pychron.envisage.key_bindings import update_key_bindings
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.tasks_plugin import PychronTasksPlugin, myTasksPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
@@ -172,7 +173,7 @@ def get_user_plugins():
     return plugins
 
 
-def app_factory(klass, user):
+def app_factory(klass):
     """
         assemble the plugins
         return a Pychron TaskApplication
@@ -188,14 +189,15 @@ def app_factory(klass, user):
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()
 
-    app = klass(username=user, plugins=plugins)
+    app = klass(plugins=plugins)
+
     # set key bindings
-    # update_key_bindings(pychron_plugin.actions)
+    update_key_bindings(pychron_plugin.actions)
 
     return app
 
 
-def launch(klass, user):
+def launch(klass):
     """
     """
     # login protection
@@ -210,7 +212,7 @@ def launch(klass, user):
     #         logger.critical('Login failed')
     #         return
 
-    app = app_factory(klass, user)
+    app = app_factory(klass)
 
     try:
 

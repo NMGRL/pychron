@@ -18,7 +18,6 @@
 import os
 import pickle
 
-from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
@@ -129,7 +128,8 @@ class PersistenceMixin(object):
                 pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):
-        return '{}.{}'.format(p, globalv.username)
+        return p
+        # return '{}.{}'.format(p, globalv.username)
 
     def warning(self, *args, **kw):
         pass

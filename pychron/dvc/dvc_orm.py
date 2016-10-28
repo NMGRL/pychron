@@ -363,7 +363,7 @@ class UserTbl(Base, BaseMixin):
     category = stringcolumn(80)
     email = stringcolumn(80)
 
-    media = relationship('MediaTbl.username', backref='user')
+    media = relationship('MediaTbl', backref='user')
 
 
 class LoadTbl(Base, BaseMixin):

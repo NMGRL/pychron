@@ -28,6 +28,7 @@ from pychron.applications.about_dialog import myAboutDialog
 from pychron.environment.util import set_application_home
 from pychron.envisage.resources import splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
+from pychron.globals import globalv
 from pychron.paths import paths
 
 
@@ -57,25 +58,24 @@ def revision_str(rev):
 
 class PychronApplication(BaseTasksApplication):
     about_additions = List
-    username = Str
     shortname = ''
     environment = Str
 
-    def __init__(self, username=None, *args, **kw):
+    def __init__(self, *args, **kw):
         # if username:
-        #     self.id = '{}.{}'.format(self.id, username)
-        #     self.name = '{} - {}'.format(self.name, username)
+        #     self.name = '{} - {}'.format(self.shortname, username)
         #     self.username = username
         #     globalv.username = username
 
         super(PychronApplication, self).__init__(*args, **kw)
-        set_application_home(appname=self.name.lower())
+
+        set_application_home(self.name.lower())
         bind_preference(self, 'environment', 'pychron.general.environment')
 
     def _environment_changed(self, old, new):
         if new:
             from pychron.environment.util import set_environment
-            set_environment(new, self.name.lower())
+            set_environment(self.name.lower(), new)
             if old:
                 if self.confirmation_dialog('Restart for changes to take effect. Restart now?'):
                     os.execl(sys.executable, *([sys.executable] + sys.argv))
@@ -85,15 +85,10 @@ class PychronApplication(BaseTasksApplication):
         super(PychronApplication, self).exit(**kw)
 
     def stop(self):
-        # from pychron.envisage.user_login import set_last_login
-        #
-        # # print 'set last login', self.username, self.use_login, self.multi_user
-        # self.debug('set last login. username={} use_login={} multi_user={}'.format(self.username,
-        #                                                                            self.use_login, self.multi_user))
-        # set_last_login(self.username, self.use_login, self.multi_user)
-        #
-        # if self.multi_user:
-        #     self.dump_user_file()
+        from pychron.envisage.user_login import set_last_login
+
+        self.debug('set last login. username={}'.format(globalv.username))
+        set_last_login(globalv.username, True, True)
 
         import threading
         self.debug('------------------- Alive Threads -------------------')
@@ -102,16 +97,6 @@ class PychronApplication(BaseTasksApplication):
         self.debug('-----------------------------------------------------')
 
         return super(BaseTasksApplication, self).stop()
-
-        # def dump_user_file(self):
-        # self.debug('dumping user file')
-        # from pychron.envisage.user_login import dump_user_file
-        #
-        # man = self.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        # if man:
-        #     names = man.db.get_usernames()
-        #     if names:
-        #         dump_user_file(names=names, last_login_name=self.username)
 
     def set_changes(self, changelist):
         self.about_dialog.changes = changelist
