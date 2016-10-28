@@ -15,16 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from pyface.message_dialog import warning, information
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path
-from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.envisage.view_util import open_view
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.globals import globalv
 from pychron.paths import paths
 
 EXP_ID = 'pychron.experiment.task'
@@ -320,5 +321,30 @@ class LastAnalysisRecoveryAction(Action):
         from pychron.experiment.analysis_recovery import AnalysisRecoverer
         a = AnalysisRecoverer()
         a.recover_last_analysis()
+
+
+class RunnerAction(TaskAction):
+    def _get_runner(self, event):
+        app = event.task.application
+        runner = app.get_service(IPyScriptRunner)
+        if not runner:
+            warning(None, 'No runner available')
+
+        return runner
+
+
+class AcquireSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            if not runner.acquire(globalv.own_spectrometer):
+                warning(None, 'Failed to acquire {}'.format(globalv.spectrometer))
+
+
+class ReleaseSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            runner.release(globalv.own_spectrometer)
 
 # ============= EOF ====================================
