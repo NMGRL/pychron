@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Dict, List, provides
-# ============= standard library imports ========================
 from threading import _Event, Lock
-# ============= local library imports  ==========================
+
+from traits.api import Any, Dict, List, provides
+
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.loggable import Loggable
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.loggable import Loggable
 
 
 class LocalResource(_Event):
@@ -35,6 +35,22 @@ class PyScriptRunner(Loggable):
     resources = Dict
     _resource_lock = Any
     scripts = List
+
+    def acquire(self, name):
+        if self.connect():
+            r = self.get_resource(name)
+            if r:
+                if r.isSet():
+                    return
+                else:
+                    r.set()
+                    return True
+
+    def release(self, name):
+        if self.connect():
+            r = self.get_resource(name)
+            if r:
+                r.clear()
 
     def reset_connection(self):
         pass

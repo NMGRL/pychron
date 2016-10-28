@@ -105,6 +105,8 @@ class Globals(object):
     active_analyses = None
     active_branch = None
 
+    own_spectrometer = None
+
     def build(self, ip):
 
         for attr, func in [('use_ipc', to_bool),
@@ -140,6 +142,7 @@ class Globals(object):
                            ('dev_confirm_exit', to_bool),
                            ('random_tip_enabled', to_bool),
                            ('test_experiment_set', str),
+                           ('own_spectrometer', str),
                            ('system_monitor_debug', to_bool),
                            ('entry_labbook_debug', to_bool),
                            ('irradiation_pdf_debug', to_bool),

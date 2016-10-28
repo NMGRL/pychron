@@ -20,23 +20,20 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-# from pychron.experiment.experiment_executor import ExperimentExecutor
 from pychron.experiment.signal_calculator import SignalCalculator
-# from pychron.experiment.image_browser import ImageBrowser
-from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
-from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
-    SaveAsCurrentExperimentAction, SyncQueueAction
+    SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction
+from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
+    UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
+from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -112,6 +109,14 @@ class ExperimentPlugin(BaseTaskPlugin):
                                                     path='MenuBar/Edit'), )
         if additions:
             extensions.append(TaskExtension(actions=additions, task_id=''))
+
+        sr_actions = [SchemaAddition(id='experiment.acquire_spectrometer',
+                                     factory=AcquireSpectrometerAction,
+                                     path='MenuBar/Tools'),
+                      SchemaAddition(id='experiment.release_spectrometer',
+                                     factory=ReleaseSpectrometerAction,
+                                     path='MenuBar/Tools')]
+        extensions.append(TaskExtension(actions=sr_actions, task_id=''))
         return extensions
 
     def _available_task_extensions_default(self):
@@ -196,43 +201,43 @@ class ExperimentPlugin(BaseTaskPlugin):
         #
         #         return exp
 
-# ============= EOF =============================================
-# factory = lambda: Group(DeselectAction(),
-# ResetQueuesAction(),
-# UndoAction(),
-#                         ConfigureEditorTableAction())
-#
-# return [TaskExtension(task_id='pychron.experiment.task',
-#                       actions=[SchemaAddition(factory=factory,
-#                                               path='MenuBar/Edit')]),
-#         TaskExtension(actions=[
-#             SchemaAddition(id='reset_system_health',
-#                            factory=ResetSystemHealthAction,
-#                            path='MenuBar/file.menu'),
-#             SchemaAddition(id='open_queue_conditionals',
-#                            factory=QueueConditionalsAction,
-#                            path='MenuBar/Edit'),
-#             SchemaAddition(id='open_queue_conditionals',
-#                            factory=SystemConditionalsAction,
-#                            path='MenuBar/Edit'),
-#             SchemaAddition(id='open_experiment',
-#                            factory=OpenExperimentQueueAction,
-#                            path='MenuBar/file.menu/Open'),
-#             SchemaAddition(id='open_last_experiment',
-#                            factory=OpenLastExperimentQueueAction,
-#                            path='MenuBar/file.menu/Open'),
-#             SchemaAddition(id='test_notify',
-#                            factory=SendTestNotificationAction,
-#                            path='MenuBar/file.menu'),
-#             SchemaAddition(id='new_experiment',
-#                            factory=NewExperimentQueueAction,
-#                            path='MenuBar/file.menu/New'),
-#             SchemaAddition(id='signal_calculator',
-#                            factory=SignalCalculatorAction,
-#                            path='MenuBar/Tools'),
-#             SchemaAddition(id='new_pattern',
-#                            factory=NewPatternAction,
-#                            path='MenuBar/file.menu/New'),
-#             SchemaAddition(id='open_pattern',
-#                            factory=OpenPatternAction,
-#                            path='MenuBar/file.menu/Open')])]
+        # ============= EOF =============================================
+        # factory = lambda: Group(DeselectAction(),
+        # ResetQueuesAction(),
+        # UndoAction(),
+        #                         ConfigureEditorTableAction())
+        #
+        # return [TaskExtension(task_id='pychron.experiment.task',
+        #                       actions=[SchemaAddition(factory=factory,
+        #                                               path='MenuBar/Edit')]),
+        #         TaskExtension(actions=[
+        #             SchemaAddition(id='reset_system_health',
+        #                            factory=ResetSystemHealthAction,
+        #                            path='MenuBar/file.menu'),
+        #             SchemaAddition(id='open_queue_conditionals',
+        #                            factory=QueueConditionalsAction,
+        #                            path='MenuBar/Edit'),
+        #             SchemaAddition(id='open_queue_conditionals',
+        #                            factory=SystemConditionalsAction,
+        #                            path='MenuBar/Edit'),
+        #             SchemaAddition(id='open_experiment',
+        #                            factory=OpenExperimentQueueAction,
+        #                            path='MenuBar/file.menu/Open'),
+        #             SchemaAddition(id='open_last_experiment',
+        #                            factory=OpenLastExperimentQueueAction,
+        #                            path='MenuBar/file.menu/Open'),
+        #             SchemaAddition(id='test_notify',
+        #                            factory=SendTestNotificationAction,
+        #                            path='MenuBar/file.menu'),
+        #             SchemaAddition(id='new_experiment',
+        #                            factory=NewExperimentQueueAction,
+        #                            path='MenuBar/file.menu/New'),
+        #             SchemaAddition(id='signal_calculator',
+        #                            factory=SignalCalculatorAction,
+        #                            path='MenuBar/Tools'),
+        #             SchemaAddition(id='new_pattern',
+        #                            factory=NewPatternAction,
+        #                            path='MenuBar/file.menu/New'),
+        #             SchemaAddition(id='open_pattern',
+        #                            factory=OpenPatternAction,
+        #                            path='MenuBar/file.menu/Open')])]
