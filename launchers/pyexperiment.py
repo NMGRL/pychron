@@ -20,6 +20,6 @@
 # ============= local library imports  ==========================
 from helpers import entry_point
 
-entry_point('pyexperiment', 'PyExperiment', '')
+entry_point('pyexperiment', 'PyExperiment')
 
 # ============= EOF =============================================

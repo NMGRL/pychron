@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Int, Instance
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.experiment.automated_run.hop_util import generate_hops
 
@@ -69,11 +68,21 @@ class PeakHopCollector(DataCollector):
         """
         from pychron.core.ui.gui import invoke_in_main_thread
 
-        cycle, is_baselines, dets, isos, defls, settle, count, pdets = self.hop_generator.next()
+        # cycle, is_baselines, dets, isos, defls, settle, count, pdets = self.hop_generator.next()
 
-        detector = dets[0]
+        hop = next(self.hop_generator)
+        cycle = hop['cycle']
+        is_baseline = hop['is_baseline']
+        dets = hop['detectors']
+        isos = hop['isotopes']
+        defls = hop['deflections']
+        settle = hop['settle']
+        count = hop['count']
+        pdets = hop['protect_detectors']
+        active_dets = hop['active_detectors']
+
+        detector = active_dets[0]
         isotope = isos[0]
-        is_baseline = is_baselines[0]
 
         if count == 0:
             self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
@@ -159,7 +168,7 @@ class PeakHopCollector(DataCollector):
             invoke_in_main_thread(self.plot_panel.trait_set,
                                   current_cycle='{} cycle={} count={}'.format(isotope, cycle + 1, count + 1),
                                   current_color=d.color)
-        return is_baseline, dets, isos
+        return is_baseline, active_dets, isos
 
     def _protect_detectors(self, pdets, protect=True):
         for pd in pdets:

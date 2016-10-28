@@ -46,11 +46,20 @@ class DVCPlugin(BaseTaskPlugin):
         if not service:
             self.information_dialog('No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)')
 
-    # def stop(self):
-    #     dvc = self.application.get_service(DVC)
-    #     prog = open_progress(n=2)
-    #     prog.change_message('Pushing changes to meta repository')
-    #     dvc.meta_repo.cmd('push', '-u','origin','master')
+    def stop(self):
+        # dvc = self.application.get_service(DVC)
+        # prog = open_progress(n=2)
+        # prog.change_message('Pushing changes to meta repository')
+        # dvc.meta_repo.cmd('push', '-u','origin','master')
+
+        dvc = self.application.get_service(DVC)
+        with dvc.session_ctx(use_parent_session=False):
+            names = dvc.get_usernames()
+            self.debug('dumping usernames {}'.format(names))
+            if names:
+                from pychron.envisage.user_login import dump_user_file
+                from pychron.globals import globalv
+                dump_user_file(names=names, last_login_name=globalv.username)
 
     def test_database(self):
         ret, err = True, ''

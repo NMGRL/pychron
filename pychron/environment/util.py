@@ -36,20 +36,20 @@ def get_environment(appname):
             return env.strip()
 
 
-def set_environment(env_path, appname):
+def set_environment(appname, env_path):
     p = get_path(appname)
     with open(p, 'w') as wfile:
         wfile.write('{}\n'.format(env_path))
 
-    set_application_home(env_path)
+    set_application_home(appname, env_path)
 
 
-def set_application_home(env=None, appname=None):
-    if env is None and appname:
+def set_application_home(appname, env=None):
+    if env is None:
         env = get_environment(appname)
 
     if env:
-        p = os.path.join(env, '.appdata')
+        p = os.path.join(env, '.appdata', appname)
         print 'setting application home to {}'.format(p)
         ETSConfig.application_home = p
 

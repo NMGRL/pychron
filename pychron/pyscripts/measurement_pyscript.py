@@ -22,14 +22,14 @@ import time
 from ConfigParser import ConfigParser
 
 import yaml
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
-from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 from pychron.pychron_constants import MEASUREMENT_COLOR
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry, CTXObject
 from pychron.pyscripts.valve_pyscript import ValvePyScript
+from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 
 ESTIMATED_DURATION_FF = 1.0
 
@@ -255,7 +255,11 @@ class MeasurementPyScript(ValvePyScript):
 
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
-                hops = [eval(li) for li in fileiter(rfile)]
+                head, ext = os.path.splitext(p)
+                if ext in ('yaml', 'yml'):
+                    hops = yaml.load(rfile)
+                elif ext in ('txt',):
+                    hops = [eval(li) for li in fileiter(rfile)]
                 return hops
 
         else:

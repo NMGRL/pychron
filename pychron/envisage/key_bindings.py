@@ -25,7 +25,6 @@ from traits.api import HasTraits, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
-from pychron.globals import globalv
 from pychron.paths import paths
 # from pychron.core.ui.keybinding_editor import KeyBindingEditor
 
@@ -36,7 +35,8 @@ from pychron.paths import paths
 
 
 def key_bindings_path():
-    return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
+    return os.path.join(paths.appdata_dir, 'key_bindings')
+    # return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
 
 
 def load_key_map():
