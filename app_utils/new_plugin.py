@@ -106,13 +106,13 @@ PREF_TXT = '''
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
-class NMGRLFurnacePreferences(BasePreferencesHelper):
+class GCalPreferencesPreferences(BasePreferencesHelper):
     pass
 
 
-class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
-    model_factory = NMGRLFurnacePreferences
+class GCalPreferencesPreferencesPane(PreferencesPane):
+    category = 'Google Calendar'
+    model_factory = GCalPreferencesPreferences
 
     def traits_view(self):
         v = View()
@@ -127,35 +127,8 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
-class BaseFurnacePlugin(BaseTaskPlugin):
-    id = 'pychron.furnace.base.plugin'
-    managers = List(contributes_to='pychron.hardware.managers')
-    klass = None
-
-    def _manager_factory(self):
-        """
-        """
-        m = self.klass()
-        m.bootstrap()
-        m.plugin_id = self.id
-        m.bind_preferences(self.id)
-
-        return m
-
-    def _task_factory(self):
-        pass
-
-    def _managers_default(self):
-        """
-        """
-        d = []
-
-        if self.klass is not None:
-            d = [dict(name=self.name,
-                      plugin_name=self.name,
-                      manager=self.application.get_service(IFurnaceManager, 'name=="{}"'.format(self.name)))]
-
-        return d
+class GoogleCalendarPlugin(BaseTaskPlugin):
+    id = 'pychron.gcal.plugin'
 
     def _service_offers_default(self):
         """
@@ -169,22 +142,16 @@ class BaseFurnacePlugin(BaseTaskPlugin):
     # def _task_extensions_default(self):
     #
     #     return [TaskExtension(SchemaAddition)]
-
-    def _tasks_default(self):
-        return [TaskFactory(factory=self._task_factory,
-                            protocol=FurnaceTask)]
-
-class NMGRLFurnacePlugin(BaseFurnacePlugin):
-    id = 'pychron.furnace.nmgrl.plugin'
-
-    klass = 'pychron.furnace.nmgrl_furnace.NMGRLFurnaceManager'
+    # def _tasks_default(self):
+    #     return [TaskFactory(factory=self._task_factory,
+    #                         protocol=FurnaceTask)]
 
     def _preferences_panes_default(self):
-        return [NMGRLFurnacePreferencesPane]
+        return [GCalPreferencesPreferencesPane]
 '''
 
 if __name__ == '__main__':
-    root = '/Users/ross/Programming/github/pychron_dev/pychron/furnace'
+    root = '/Users/ross/Programming/github/pychron_dev/pychron/gcal'
     # root = '/Users/ross/Sandbox/furnace'
 
     options = {'plugin_txt': PLUGIN_TXT, 'panes_txt': PANES_TXT,
