@@ -31,18 +31,29 @@ from pychron.user.tasks.plugin import UsersPlugin
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
-    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
     ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
     DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
     DatabasePlugin='pychron.database.tasks.database_plugin',
+    LabspyClientPlugin='pychron.labspy.tasks.plugin',
+    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+
+    # data reduction
+    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
+    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
+    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
+    GitHubPlugin='pychron.git.tasks.github_plugin',
+    PipelinePlugin='pychron.pipeline.tasks.plugin',
+
+    # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
+    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+
+    # hardware
+    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
     ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin',
     ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
-    ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',
-    # GeoPlugin='pychron.geo.tasks.geo_plugin',
-    VideoPlugin='pychron.image.tasks.video_plugin',
     ChromiumCO2Plugin='pychron.lasers.tasks.plugins.chromium_co2',
     ChromiumUVPlugin='pychron.lasers.tasks.plugins.chromium_uv',
     FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
@@ -50,35 +61,34 @@ PACKAGE_DICT = dict(
     FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
     LoadingPlugin='pychron.loading.tasks.loading_plugin',
     CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    MediaStoragePlugin='pychron.media_storage.tasks.plugin',
-    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
-    PipelinePlugin='pychron.pipeline.tasks.plugin',
-    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
+    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
 
     # spectrometers
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.thermo.argus',
     HelixSpectrometerPlugin='pychron.spectrometer.tasks.thermo.helix',
     MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
 
-    EmailPlugin='pychron.social.email.tasks.plugin',
-    MassSpecPlugin='pychron.mass_spec.tasks.plugin',
-    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
-    DVCPlugin='pychron.dvc.tasks.dvc_plugin',
-    GitLabPlugin='pychron.git.tasks.gitlab_plugin',
-    GitHubPlugin='pychron.git.tasks.github_plugin',
-    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
-    LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
-    LabspyClientPlugin='pychron.labspy.tasks.plugin',
-    UpdatePlugin='pychron.updater.tasks.update_plugin',
+    # resources
+    MediaStoragePlugin='pychron.media_storage.tasks.plugin',
     ImagePlugin='pychron.image.tasks.image_plugin',
-    NMGRLFurnacePlugin='pychron.furnace.tasks.furnace_plugin',
-    NMGRLFurnaceControlPlugin='pychron.furnace.tasks.furnace_control_plugin',
-    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+    VideoPlugin='pychron.image.tasks.video_plugin',
 
     # outside database/repositories
     IGSNPlugin='pychron.igsn.tasks.igsn_plugin',
-    GeochronPlugin='pychron.geochron.tasks.geochron_plugin'
+    GeochronPlugin='pychron.geochron.tasks.geochron_plugin',
+
+    # social
+    EmailPlugin='pychron.social.email.tasks.plugin',
+    GoogleCalendarPlugin='pychron.social.gcal.tasks.plugin'
+    # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
+    # UpdatePlugin='pychron.updater.tasks.update_plugin',
+    # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
+    # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
+    # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
+    # MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
+    # ProcessingPlugin='pychron.processing.tasks.processing_plugin',
+
 )
 
 
