@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long
-# ============= standard library imports ========================
+import ast
 import os
 import re
 import time
-import ast
-import yaml
 import weakref
 from itertools import groupby
 from threading import Thread, Event as TEvent
-from uncertainties import ufloat, nominal_value, std_dev
+
+import yaml
 from numpy import Inf, polyfit, linspace, polyval
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import get_path
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long
+from uncertainties import ufloat, nominal_value, std_dev
+
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment import ExtractionException
@@ -827,8 +827,9 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
-            self.spec.state = 'failed'
+        if self.spec:
+            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
+                self.spec.state = 'failed'
 
         self.stop()
 
