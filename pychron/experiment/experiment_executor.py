@@ -550,6 +550,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.warning('pre run check failed')
                     break
 
+                self._aborted = False
                 self.ms_pumptime_start = None
                 # overlapping = self.current_run and self.current_run.isAlive()
                 overlapping = self.measuring_run and self.measuring_run.is_alive()
@@ -2095,7 +2096,7 @@ Use Last "blank_{}"= {}
         if self.is_alive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
             if self.extracting_run:
-                self.extracting_run.is_last = is_last
+                self.extracting_run.is_last = is_lamst
 
     def _stop_button_fired(self):
         self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.is_alive()))
