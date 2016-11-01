@@ -34,6 +34,8 @@ import os
 import math
 from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
 
+POLYGONS = ['triangle', 'diamond', 'pentagon', 'hexagon', 'heptagon', 'octogon', 'nonagon', 'decagon']
+
 
 class DirectionOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
@@ -196,6 +198,12 @@ class Pattern(HasTraits):
     @property
     def kind(self):
         return self.__class__.__name__
+
+    def generate_name(self):
+        return '{}_BR{}'.format(self._basename(), self.beam_radius)
+
+    def _basename(self):
+        return self.kind
 
     def _get_name(self):
         if not self.path:
@@ -497,12 +505,20 @@ class PolygonPattern(Pattern):
     radius = Range(0.0, 4.0, 0.5)
     rotation = Range(0.0, 360.0, 0.0)
     show_overlap = True
+
     # def _get_path_length(self):
     # return (self.nsides * self.radius *
     #             math.sin(math.radians(360 / self.nsides)) + 2 * self.radius)
 
     #     def _get_delay(self):
     #         return 0.1 * self.nsides
+    def _basename(self):
+        nsides = self.nsides
+        if nsides < 11:
+            bn = POLYGONS[nsides]
+        else:
+            bn = '{}gon'.format(nsides)
+        return bn
 
     def get_parameter_group(self):
         return Group(Item('radius'),

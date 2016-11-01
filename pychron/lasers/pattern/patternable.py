@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, DelegatesTo
+from traits.api import Instance, DelegatesTo, List, Str
 # import apptools.sweet_pickle as pickle
 import cPickle as pickle
 # ============= standard library imports ========================
@@ -27,6 +27,8 @@ from pychron.managers.manager import Manager
 class Patternable(Manager):
     pattern = Instance(Pattern)
     pattern_name = DelegatesTo('pattern', prefix='name')
+    selected_pattern_name = Str
+    patterns = List
 
     def _load_pattern(self, fileobj, path):
         """
@@ -36,6 +38,7 @@ class Patternable(Manager):
             obj = pickle.load(fileobj)
             self.pattern = obj
             self.pattern.path = path
+            self.selected_pattern_name = self.pattern_name
             return obj
         except (pickle.PickleError, Exception), e:
             import traceback

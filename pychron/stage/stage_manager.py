@@ -31,6 +31,19 @@ from pychron.stage.maps.laser_stage_map import LaserStageMap
 from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
 
 
+def get_stage_map_names(root=None):
+    if root is None:
+        root = paths.map_dir
+
+    sms = list_directory2(root, '.txt', remove_extension=True)
+    print root, sms
+    sms = [si for si in sms if not si.endswith('.center')]
+    us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
+    if us:
+        sms.extend(us)
+    return sms
+
+
 class BaseStageManager(Manager):
     keyboard_focus = Event
     canvas_editor_klass = LaserComponentEditor
@@ -41,7 +54,7 @@ class BaseStageManager(Manager):
     stage_map = Instance(BaseStageMap)
     canvas = Instance(MapCanvas)
 
-    root = Str(paths.map_dir)
+    # root = Str(paths.map_dir)
     calibrated_position_entry = String(enter_set=True, auto_set=False)
 
     move_thread = None
@@ -54,12 +67,7 @@ class BaseStageManager(Manager):
         raise NotImplementedError
 
     def refresh_stage_map_names(self):
-        sms = list_directory2(self.root, '.txt', remove_extension=True)
-        sms = [si for si in sms if not si.endswith('.center')]
-        us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
-        if us:
-            sms.extend(us)
-
+        sms = get_stage_map_names()
         self.stage_map_names = sms
 
     def load(self):
@@ -162,7 +170,7 @@ class BaseStageManager(Manager):
     def _stage_map_name_changed(self, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
-            path = os.path.join(self.root, add_extension(new, '.txt'))
+            path = os.path.join(paths.map_dir, add_extension(new, '.txt'))
             sm = self.stage_map_klass(file_path=path)
 
             self.tray_calibration_manager.load_calibration(stage_map=new)
