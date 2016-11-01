@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+# # ============= enthought library imports =======================
 import ast
 import os
 import re
@@ -25,7 +25,8 @@ from threading import Thread, Event as TEvent
 
 import yaml
 from numpy import Inf, polyfit, linspace, polyval
-from traits.api import Any, Str, List, Property, Event, Instance, Bool, HasTraits, Float, Int, Long
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.helpers.filetools import add_extension
@@ -826,8 +827,9 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
-            self.spec.state = 'failed'
+        if self.spec:
+            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
+                self.spec.state = 'failed'
 
         self.stop()
 
@@ -840,7 +842,6 @@ class AutomatedRun(Loggable):
         self.debug('----------------- start -----------------')
         self._aborted = False
         self.persistence_spec = PersistenceSpec()
-
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
                 p.per_spec = self.persistence_spec
@@ -1164,18 +1165,17 @@ class AutomatedRun(Loggable):
         # self.persister.pre_extraction_save()
 
         self.info_color = EXTRACTION_COLOR
-        script = self.extraction_script
-        msg = 'Extraction Started {}'.format(script.name)
+        msg = 'Extraction Started {}'.format(self.extraction_script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'extraction'
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
-        script.runner = self.runner
-        script.manager = self.experiment_executor
-        script.set_run_identifier(self.runid)
+        self.extraction_script.runner = self.runner
+        self.extraction_script.manager = self.experiment_executor
+        self.extraction_script.set_run_identifier(self.runid)
 
         syn_extractor = None
-        if script.syntax_ok(warn=False):
+        if self.extraction_script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction:
                 p = os.path.join(paths.scripts_dir, 'syn_extraction', self.spec.syn_extraction)
                 p = add_extension(p, '.yaml')
@@ -1183,7 +1183,7 @@ class AutomatedRun(Loggable):
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 
-                    dur = script.calculate_estimated_duration(force=True)
+                    dur = self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
                                                            extraction_duration=dur)
@@ -1192,11 +1192,11 @@ class AutomatedRun(Loggable):
                     self.warning(
                         'Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
         else:
-            self.warning('Invalid script syntax for "{}"'.format(script.name))
+            self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
             return
 
         try:
-            ex_result = script.execute()
+            ex_result = self.extraction_script.execute()
         except ExtractionException, e:
             ex_result = False
             self.debug('extraction exception={}'.format(e))
@@ -1206,23 +1206,21 @@ class AutomatedRun(Loggable):
                 syn_extractor.stop()
 
             # report the extraction results
-            r = script.output_achieved()
+            r = self.extraction_script.output_achieved()
             for ri in r:
                 self.info(ri)
 
-            rblob = script.get_response_blob()
-            oblob = script.get_output_blob()
-            sblob = script.get_setpoint_blob()
-            snapshots = script.snapshots
-            videos = script.videos
+            rblob = self.extraction_script.get_response_blob()
+            oblob = self.extraction_script.get_output_blob()
+            sblob = self.extraction_script.get_setpoint_blob()
+            snapshots = self.extraction_script.snapshots
 
-            pid = script.get_active_pid_parameters()
+            pid = self.extraction_script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
                                         response_blob=rblob,
                                         output_blob=oblob,
                                         setpoint_blob=sblob,
-                                        snapshots=snapshots,
-                                        videos=videos)
+                                        snapshots=snapshots)
 
             self._persister_save_action('post_extraction_save')
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
@@ -2136,9 +2134,6 @@ anaylsis_type={}
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
 
-            if self.spec.analysis_type in ('unknown', 'cocktail'):
-                invoke_in_main_thread(self._setup_figure_graph)
-
         time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
@@ -2153,9 +2148,6 @@ anaylsis_type={}
             self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
-
-    def _setup_figure_graph(self):
-        self.plot_panel.add_figure_graph(self.spec, self.experiment_executor.experiment_queue.executed_runs)
 
     def _setup_sniff_graph(self, starttime_offset, color):
         graph = self.plot_panel.sniff_graph
