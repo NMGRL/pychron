@@ -16,18 +16,17 @@
 
 # ============= enthought library imports =======================
 
+import logging
+import math
+import re
+
+from numpy import where, delete
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
-# ============= standard library imports ========================
-import re
-import math
-from numpy import where, delete
-# ============= local library imports  ==========================
-from tinv import tinv
+
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS, PLUSMINUS
-
-import logging
+from tinv import tinv
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -297,10 +296,12 @@ class BaseRegressor(HasTraits):
 
     @cached_property
     def _get_clean_xs(self):
+        logger.debug('CLEAN XS={}'.format(self.xs.shape))
         return self._clean_array(self.xs)
 
     @cached_property
     def _get_clean_ys(self):
+        logger.debug('CLEAN YS={}'.format(self.ys.shape))
         return self._clean_array(self.ys)
 
     @cached_property

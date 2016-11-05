@@ -745,7 +745,6 @@ class PipelineEngine(Loggable):
         # self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
         def func(editor):
             vs = self.selected.unknowns
-            print 'asdfasfasf', vs
             editor.set_items(vs)
             self.state.unknowns = vs
             for node in self.pipeline.nodes:
