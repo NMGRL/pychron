@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.orm import object_session
 from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
@@ -310,6 +311,13 @@ class IrradiationPositionTbl(Base, BaseMixin):
 
     analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
+    @property
+    def analysis_count(self):
+        return object_session(self).query(AnalysisTbl).with_parent(self).count()
+
+    @property
+    def analyzed(self):
+        return bool(self.analysis_count)
     # @property
     # def irradiation_position(self):
     #     return self

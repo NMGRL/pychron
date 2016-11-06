@@ -16,18 +16,15 @@
 
 # ============= enthought library imports =======================
 import logging
-
-from traits.api import Property, Dict, Str
-# ============= standard library imports ========================
 import os
 from ConfigParser import ConfigParser
 
+from numpy import append as npappend
+from traits.api import Property, Dict, Str
 from traits.has_traits import HasTraits
 from uncertainties import ufloat
-from numpy import hstack
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.isotope_utils import sort_isotopes
-# from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
 
@@ -210,8 +207,11 @@ class IsotopeGroup(HasTraits):
             if kind == 'sniff':
                 isotope._value = signal
 
-            isotope.xs = hstack((isotope.xs, (x,)))
-            isotope.ys = hstack((isotope.ys, (signal,)))
+            xs = npappend(isotope.xs, x)
+            ys = npappend(isotope.ys, signal)
+            isotope.trait_setq(xs=xs, ys=ys)
+            # isotope.xs = hstack((isotope.xs, (x,)))
+            # isotope.ys = hstack((isotope.ys, (signal,)))
             isotope.dirty = True
 
         isotopes = self.isotopes

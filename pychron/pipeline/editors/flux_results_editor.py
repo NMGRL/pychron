@@ -250,7 +250,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             # self.positions = mon + unk
 
     def predict_values(self, refresh=False):
-        self.debug('preodict values {}'.format(refresh))
+        self.debug('predict values {}'.format(refresh))
         try:
             x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
                                  for pos in self.monitor_positions
@@ -268,7 +268,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
-            self.debug('not enough monitor positions. at least 3 required. Currently only {} active'.format(n))
+            msg = 'Not enough monitor positions. At least 3 required. Currently only {} active'.format(n)
+            self.debug(msg)
+            self.information_dialog(msg)
             return
 
         if self.plotter_options.use_monte_carlo:

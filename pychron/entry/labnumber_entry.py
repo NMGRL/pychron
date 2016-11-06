@@ -137,10 +137,10 @@ class LabnumberEntry(DVCIrradiationable):
         self.updated = True
 
     def import_analyses(self):
-        self.debug('import analyses')
+        self.info('import analyses')
 
     def import_irradiation_load_xls(self, p):
-        self.debug('import irradiation file: {}'.format(p))
+        self.info('import irradiation file: {}'.format(p))
 
         from pychron.entry.dvc_import import do_import_irradiation
         from pychron.entry.xls_irradiation_source import XLSIrradiationSource
@@ -150,7 +150,33 @@ class LabnumberEntry(DVCIrradiationable):
         do_import_irradiation(dvc=self.dvc, sources={xlssource: name}, default_source=name)
         self.updated = True
 
+    def generate_status_report(self):
+        irradname = self.irradiation
+        self.info('generate irradiation status report for {}'.format(irradname))
+
+        dvc = self.dvc
+        with dvc.session_ctx(use_parent_session=False):
+            irrad = dvc.get_irradiation(irradname)
+
+            def factory(li, pp):
+                rri = IrradiatedPosition()
+                self._sync_position(pp, rri, include_canvas=False)
+                rri.level = li
+                rri.irradiation = irradname
+                return rri
+
+            positions = [factory(level.name, p) for level in irrad.levels
+                         for p in level.positions if p.identifier and not p.analyzed]
+
+            from pychron.entry.irradiation_status import IrradiationStatusModel
+            from pychron.entry.irradiation_status import IrradiationStatusView
+
+            sm = IrradiationStatusModel(positions=positions)
+            sv = IrradiationStatusView(model=sm)
+            sv.edit_traits()
+
     def get_igsns(self, igsn_repo):
+        self.info('get igsn')
         items = self.selected
         if not items:
             items = self.irradiated_positions
@@ -160,6 +186,9 @@ class LabnumberEntry(DVCIrradiationable):
                 # need to check for existing IGSN for sample
 
                 self.debug('Get IGSN for sample={}, position={}'.format(item.sample, item.hole))
+
+        self.warning('IGSN Not fully implemented')
+        raise NotImplementedError
 
     def transfer_j(self):
         items = self.selected
@@ -374,20 +403,22 @@ class LabnumberEntry(DVCIrradiationable):
 
             yaml.dump(obj, wfile)
 
-    def _load_canvas_analyses(self, db, level):
-        poss = db.get_analyzed_positions(level)
-        if poss:
-            positions = self.irradiated_positions
-            canvas = self.canvas
-            scene = canvas.scene
-            with dirty_ctx(self):
-                for idx, cnt in poss:
-                    analyzed = bool(cnt)
-                    item = scene.get_item(idx)
-                    if item:
-                        item.measured_indicator = analyzed
-                        irp = positions[idx - 1]
-                        irp.analyzed = analyzed
+    # def _load_canvas_analyses(self, db, level):
+    #     poss = db.get_analyzed_positions(level)
+    #     print 'aa', poss
+    #     if poss:
+    #         positions = self.irradiated_positions
+    #         canvas = self.canvas
+    #         scene = canvas.scene
+    #         with dirty_ctx(self):
+    #             for idx, cnt in poss:
+    #                 analyzed = bool(cnt)
+    #                 item = scene.get_item(idx)
+    #                 print idx, cnt, analyzed, item
+    #                 if item:
+    #                     item.measured_indicator = analyzed
+    #                     irp = positions[idx - 1]
+    #                     irp.analyzed = analyzed
 
     def _load_holder_canvas(self, holes):
         if holes:
@@ -624,7 +655,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                 else:
                     self.debug('extra irradiation position for this tray {}'.format(hi))
 
-    def _sync_position(self, dbpos, ir):
+    def _sync_position(self, dbpos, ir, include_canvas=True):
 
         cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
                                                              (255, 255, 160),
@@ -632,15 +663,18 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                                                              (25, 230, 25)))
 
         def set_color(ii, value):
-            if value:
-                ii.fill_color = next(cgen)
+            if ii is not None:
+                if value:
+                    ii.fill_color = next(cgen)
 
         if dbpos:
             if dbpos.sample:
-                item = self.canvas.scene.get_item(str(ir.hole))
-                item.fill = True
-
                 ir.sample = v = dbpos.sample.name
+                item = None
+                if include_canvas:
+                    item = self.canvas.scene.get_item(str(ir.hole))
+                    item.fill = True
+
                 set_color(item, v)
 
                 if dbpos.sample.material:
@@ -653,7 +687,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     set_color(item, v)
                     if dbpos.sample.project.principal_investigator:
                         ir.principal_investigator = dbpos.sample.project.principal_investigator.name
-                v=''
+                v = ''
                 if dbpos.identifier:
                     v = str(dbpos.identifier)
 
@@ -671,6 +705,8 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
                 ir.note = dbpos.note or ''
                 ir.weight = dbpos.weight or 0
+                ir.nanalyses = dbpos.analysis_count
+                ir.analyzed = dbpos.analyzed
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor

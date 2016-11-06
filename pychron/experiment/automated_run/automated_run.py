@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+# # ============= enthought library imports =======================
 import ast
 import os
 import re
@@ -25,7 +25,8 @@ from threading import Thread, Event as TEvent
 
 import yaml
 from numpy import Inf, polyfit, linspace, polyval
-from traits.api import Any, Str, List, Property, Event, Instance, Bool, HasTraits, Float, Int, Long
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.helpers.filetools import add_extension
@@ -826,8 +827,9 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
-            self.spec.state = 'failed'
+        if self.spec:
+            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
+                self.spec.state = 'failed'
 
         self.stop()
 

@@ -22,8 +22,7 @@ from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.constants import OKColor, ErrorColor
 from traitsui.qt4.enum_editor import SimpleEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
 
@@ -144,8 +143,10 @@ class _ComboboxEditor(SimpleEditor):
                     self.control.button.setEnabled(True)
 
                 if self.factory.use_filter:
-                    if value:
-                        names = fuzzyfinder(value, self._value())
+                    vv = self._value()
+
+                    if value and value not in vv:
+                        names = fuzzyfinder(value, vv)
                     else:
                         names = self.names
 
@@ -155,8 +156,6 @@ class _ComboboxEditor(SimpleEditor):
                         self.control.setEditText(self.str_value)
                     except:
                         self.control.setEditText('')
-                    # self.update_editor()
-                    # self.rebuild_editor()
 
             except TraitError, excp:
                 if self.factory.addable:
@@ -197,6 +196,3 @@ class ComboboxEditor(BasicEditorFactory):
     use_filter = Bool(True)
 
 # ============= EOF =============================================
-
-
-

@@ -368,18 +368,18 @@ class DVCPersister(BasePersister):
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
                                             'filter_outliers_dict': iso.baseline.filter_outliers_dict,
-                                            'value': float(nominal_value(iso.baseline.uvalue)),
-                                            'error': float(std_dev(iso.baseline.uvalue))}
+                                            'value': float(iso.baseline.value),
+                                            'error': float(iso.baseline.error)}
 
             intercepts[iso.name] = {'fit': iso.fit,
                                     'filter_outliers_dict': iso.filter_outliers_dict,
-                                    'value': float(nominal_value(iso.uvalue)),
-                                    'error': float(std_dev(iso.uvalue))}
+                                    'value': float(iso.value),
+                                    'error': float(iso.error)}
             blanks[iso.name] = {'fit': 'previous',
                                 'references': [{'record_id': per_spec.previous_blank_runid,
                                                 'exclude': False}],
-                                'value': float(nominal_value(iso.blank.uvalue)),
-                                'error': float(std_dev(iso.blank.uvalue))}
+                                'value': float(iso.blank.value),
+                                'error': float(iso.blank.error)}
 
         obj = self._make_analysis_dict()
 
