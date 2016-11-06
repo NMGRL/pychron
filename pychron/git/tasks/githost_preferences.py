@@ -20,11 +20,9 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Button, Color
 from traitsui.api import View, Item, VGroup, HGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, test_connection_item
-from pychron.git.hosts import authentication
+from pychron.git.hosts import authorization
 
 
 class GitHostPreferences(BasePreferencesHelper):
@@ -41,7 +39,7 @@ class GitHostPreferences(BasePreferencesHelper):
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
         try:
-            header = authentication(self.username, self.password, self._token)
+            header = authorization(self.username, self.password, self._token)
 
             resp = requests.get(self._url,
                                 headers=header)

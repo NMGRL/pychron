@@ -96,6 +96,7 @@ class DVC(Loggable):
     """
     main interface to DVC backend. Delegates responsibility to DVCDatabase and MetaRepo
     """
+
     db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
 

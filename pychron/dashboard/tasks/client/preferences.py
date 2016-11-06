@@ -18,13 +18,12 @@
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Str, Int
 from traitsui.api import View, Item, VGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ExperimentDashboardClientPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dashboard.client'
+    preferences_path = 'pychron.dashboard.experiment'
     use_dashboard_client = Bool
 
 

@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 import base64
+import json
 
+import requests
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Interface, Password, provides
-# ============= standard library imports ========================
-import json
-import requests
-# ============= local library imports  ==========================
+
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.loggable import Loggable
 
@@ -67,7 +66,7 @@ class CredentialException(BaseException):
         return 'Invalid user/password combination. {}'.format(self._auth)
 
 
-def authentication(username, password, oauth_token):
+def authorization(username, password, oauth_token):
     if oauth_token:
         auth = oauth_token
     else:
@@ -162,7 +161,7 @@ class GitHostService(Loggable):
         token = None
         if self.oauth_token:
             token = self._get_oauth_token()
-        return authentication(self.username, self.password, token)
+        return authorization(self.username, self.password, token)
         # if self.oauth_token:
         #     auth = self._get_oauth_token()
         # else:

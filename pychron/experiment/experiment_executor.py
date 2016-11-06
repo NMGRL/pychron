@@ -22,7 +22,6 @@ from itertools import groupby
 from threading import Thread, Event as Flag, Lock, currentThread
 
 import yaml
-from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
@@ -137,6 +136,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     datahub = Instance(Datahub)
     labspy_client = Instance('pychron.labspy.client.LabspyClient')
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
+    google_calendar_client = Instance('pychron.social.google_calendar.client.GoogleCalendarClient')
 
     scheduler = Instance(ExperimentScheduler)
     # ===========================================================================
@@ -155,6 +155,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
     use_labspy = Bool
+    use_google_calendar = Bool
+    google_calender_run_delay = Int
+
     use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
@@ -174,9 +177,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     # dvc
     use_dvc_persistence = Bool(False)
-    dvc_username = Str
-    dvc_password = Str
-    dvc_organization = Str
     default_principal_investigator = Str
 
     baseline_color = Color
@@ -241,25 +241,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         attrs = ('use_auto_save',
                  'use_autoplot',
                  'auto_save_delay',
-                 'use_labspy',
                  'min_ms_pumptime',
                  'set_integration_time_on_start',
                  'send_config_before_run',
                  'default_integration_time',
-                 'use_dvc_persistence',
                  'use_xls_persistence',
                  'use_db_persistence',
                  'experiment_type')
         self._preference_binder(prefid, attrs)
 
-        if self.use_dvc_persistence:
-            bind_preference(self, 'dvc_organization', 'pychron.dvc.organization')
-            bind_preference(self, 'dvc_password', 'pychron.dvc.github_password')
-            bind_preference(self, 'dvc_username', 'pychron.dvc.github_username')
+        # dashboard
+        self._preference_binder('pychron.dashboard.experiment', ('use_dashboard_client',))
 
-        if self.use_labspy:
-            client = self.application.get_service('pychron.labspy.client.LabspyClient')
-            self.labspy_client = client
+        # labspy
+        self._preference_binder('pychron.labspy.experiment', ('use_labspy',))
+
+        # google calendar
+        self._preference_binder('pychron.google_calendar.experiment', ('use_google_calendar',
+                                                                       'google_calender_run_delay'))
 
         # system health
         self._preference_binder(prefid, ('use_system_health',))
@@ -282,11 +281,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # console
         self.console_bind_preferences(prefid)
         self._preference_binder(prefid, ('use_message_colormapping',))
-
-        # dashboard
-        self._preference_binder('pychron.dashboard.client', ('use_dashboard_client',))
-        if self.use_dashboard_client:
-            self.dashboard_client = self.application.get_service('pychron.dashboard.client.DashboardClient')
 
         # general
         self._preference_binder('pychron.general', ('default_principal_investigator',))
@@ -311,9 +305,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._canceled = False
             self.extraction_state_label = ''
 
-            self.experiment_queue.executed = True
             self.alive = True
-            t = Thread(name='execute_exp',
+            t = Thread(name='Execute Queues',
                        target=self._execute)
             t.start()
             return t
@@ -383,6 +376,27 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _add_event(self):
+        exp = self.experiment_queue
+        if self.use_labspy:
+            self.labspy_client.add_experiment(exp)
+
+        if self.use_google_calendar:
+            if self.stats.nruns_finished >= self.google_calender_run_delay:
+                summary = 'Experiment: {}'.format(exp.name)
+                description = ''
+                self.google_calendar_client.post_event(summary,
+                                                       description,
+                                                       self.stats.etf_iso)
+
+    def _end_event(self):
+        exp = self.experiment_queue
+        if self.use_labspy:
+            self.labspy_client.update_experiment(exp, self._err_message)
+        if self.use_google_calendar:
+            d = {'end': 'now', 'summary': 'Experiment: {} {}'.format(exp.name, self._err_message)}
+            self.google_calendar_client.edit_event(d)
+
     def _reset(self):
         self.alive = True
         self._canceled = False
@@ -465,15 +479,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._delay(delay, message='before')
 
         for i, exp in enumerate(self.experiment_queues):
-            msg = '"{}" started'.format(exp.name)
-            self.heading(msg)
+            self.heading('"{}" started'.format(exp.name))
             if self.is_alive():
                 if self._pre_queue_check(exp):
+                    self.debug('pre queue check failed for {}'.format(exp.name))
                     break
 
                 self._execute_queue(i, exp)
             else:
-                self.debug('No alive. not starting {},{}'.format(i, exp.name))
+                self.debug('Not alive. not starting {},{}'.format(i, exp.name))
 
             if self.end_at_run_completion:
                 self.debug('Previous queue ended at completion. Not continuing to other opened experiments')
@@ -488,16 +502,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             execute experiment queue ``exp``
         """
+
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
+
+        self._add_event()
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
         exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
-        if self.labspy_enabled:
-            self.labspy_client.add_experiment(exp)
-
-        # self.datahub.add_experiment(exp)
 
         # reset conditionals result file
         reset_conditional_results()
@@ -642,8 +655,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
 
-        if self.labspy_enabled:
-            self.labspy_client.update_experiment(exp, self._err_message)
+        self._end_event()
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -783,7 +795,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.autoplot_event = run
 
         self.wait_group.pop()
-        if self.labspy_enabled:
+        if self.use_labspy:
             self.labspy_client.add_run(run, self.experiment_queue)
 
         if self.use_system_health:
@@ -930,10 +942,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_dvc_persistence:
             from pychron.dvc.share import PushExperimentsModel
             from pychron.dvc.share import PushExperimentsView
-            username = self.dvc_username
-            password = self.dvc_password
-            org = self.dvc_organization
-            pm = PushExperimentsModel(org, username, password)
+            # dvc = self.datahub.stores['dvc']
+            from pychron.git.hosts import IGitHost
+            gs = self.application.get_services(IGitHost)
+            pm = PushExperimentsModel(gs.organization,
+                                      gs.username,
+                                      gs.password,
+                                      gs.oauth_token)
             if pm.shareables:
                 if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
                     pv = PushExperimentsView(model=pm)
@@ -1385,10 +1400,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if not self._end_flag.is_set():
                 do_after(t * 1000, self._extraction_state_iter, gen, label, color)
-            # else:
-            #     self.debug('extract state complete2')
-            #     self._complete_flag.set()
-            #     self.trait_set(extraction_state_label='')
+                # else:
+                #     self.debug('extract state complete2')
+                #     self._complete_flag.set()
+                #     self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
         """
@@ -2139,6 +2154,18 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _dashboard_client_default(self):
+        if self.use_dashboard_client:
+            return self.application.get_service('pychron.dashboard.client.DashboardClient')
+
+    def _labspy_client_default(self):
+        if self.use_labspy:
+            return self.application.get_service('pychron.labspy.client.LabspyClient')
+
+    def _google_calendar_client_default(self):
+        if self.use_google_calendar:
+            return self.application.get_service('pychron.social.google_calendar.client.GoogleCalendarClient')
+
     def _scheduler_default(self):
         return ExperimentScheduler()
 
@@ -2173,10 +2200,5 @@ Use Last "blank_{}"= {}
             else:
                 self.warning('no automated run monitor available. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
-
-    @property
-    def labspy_enabled(self):
-        if self.use_labspy:
-            return self.labspy_client is not None
 
 # ============= EOF =============================================

@@ -137,7 +137,6 @@ class Paths(object):
     incremental_heat_template_dir = None
 
     block_dir = None
-    heating_schedule_dir = None
     map_dir = None
     furnace_map_dir = None
     user_points_dir = None
@@ -188,8 +187,6 @@ class Paths(object):
     # ==============================================================================
     # processing
     # ==============================================================================
-    formatting_dir = None
-
     pipeline_dir = None
     pipeline_template_dir = None
 
@@ -607,8 +604,6 @@ def migrate_hidden():
 
     hd = os.path.join(paths.root_dir, '.hidden')
     for root, dirs, files in os.walk(hd):
-        print root, dirs, files
-
         if root == hd:
             droot = paths.appdata_dir
         else:

@@ -18,9 +18,9 @@
 # ============= standard library imports ========================
 import base64
 import json
+from datetime import datetime
 
 import requests
-from datetime import datetime
 
 # ============= local library imports  ==========================
 GITHUB_API_URL = 'https://api.github.com'
@@ -80,15 +80,21 @@ def create_organization_repository(org, name, usr, pwd, **kw):
 
 
 class GithubObject(object):
-    def __init__(self, usr='', pwd=''):
+    def __init__(self, usr='', pwd='', oauth_token=None):
         self._pwd = pwd
         self._usr = usr
+        self._oauth_token = None
 
     def _make_headers(self, auth=True):
         headers = {}
         if auth:
-            auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
-            headers['Authorization'] = 'Basic {}'.format(auth)
+            if self._oauth_token:
+                auth = 'token {}'.format(self._oauth_token)
+            else:
+                auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
+                auth = 'Basic {}'.format(auth)
+            headers['Authorization'] = auth
+
         return headers
 
     def _process_post(self, po):

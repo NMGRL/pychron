@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import on_trait_change
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.labspy.client import LabspyClient
-from pychron.labspy.tasks.preferences import LabspyPreferencesPane
+from pychron.labspy.tasks.preferences import LabspyPreferencesPane, LabspyExperimentPreferencesPane
 
 
 class LabspyClientPlugin(BaseTaskPlugin):
@@ -36,7 +35,7 @@ class LabspyClientPlugin(BaseTaskPlugin):
         return [so]
 
     def _preferences_panes_default(self):
-        return [LabspyPreferencesPane]
+        return [LabspyPreferencesPane, LabspyExperimentPreferencesPane]
 
     def test_communication(self):
         lc = self.application.get_service(LabspyClient)

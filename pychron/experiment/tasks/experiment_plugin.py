@@ -32,7 +32,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    UserNotifierPreferencesPane, LabspyPreferencesPane, DVCPreferencesPane
+    UserNotifierPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 
 
@@ -73,8 +73,8 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
-                LabspyPreferencesPane,
-                DVCPreferencesPane,
+                # LabspyPreferencesPane,
+                # DVCPreferencesPane,
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane]
 

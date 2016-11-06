@@ -20,8 +20,6 @@ from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
@@ -118,38 +116,9 @@ class ConsolePreferences(BaseConsolePreferences):
     use_message_colormapping = Bool
 
 
-# class SysLoggerPreferences(BasePreferencesHelper):
-# use_syslogger = Bool
-#     preferences_path = 'pychron.syslogger'
-#     username = Str
-#     password = Password
-#
-#     host = Str
-
-
 # ======================================================================================================
 # panes
 # ======================================================================================================
-class LabspyPreferencesPane(PreferencesPane):
-    model_factory = LabspyPreferences
-    category = 'Experiment'
-
-    def traits_view(self):
-        v = View(VGroup(Item('use_labspy', label='Use Labspy'),
-                        label='Labspy', show_border=True))
-        return v
-
-
-class DVCPreferencesPane(PreferencesPane):
-    model_factory = DVCPreferences
-    category = 'Experiment'
-
-    def traits_view(self):
-        v = View(VGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
-                        label='DVC', show_border=True))
-        return v
-
-
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'
@@ -292,21 +261,5 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                         show_border=True,
                         label=self.label))
         return v
-
-# class SysLoggerPreferencesPane(PreferencesPane):
-#     model_factory = SysLoggerPreferences
-#     category = 'Experiment'
-#
-#     def traits_view(self):
-#         auth_grp = VGroup(Item('host'),
-#                           Item('username'),
-#                           Item('password'),
-#                           enabled_when='use_syslogger')
-#
-#         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
-#                         auth_grp,
-#                         show_border=True,
-#                         label='SysLogger'))
-#         return v
 
 # ============= EOF =============================================
