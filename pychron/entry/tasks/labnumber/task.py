@@ -94,8 +94,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                           PreviewGenerateIdentifiersAction(),
                           image_size=(16, 16)),
                  SToolBar(ClearSelectionAction()),
-                 SToolBar(RecoverAction())
-                 ]
+                 SToolBar(RecoverAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -122,6 +121,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.manager.activated()
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
+
+    def generate_status_report(self):
+        self.manager.generate_status_report()
 
     def recover(self):
         self.manager.recover()
