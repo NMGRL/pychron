@@ -26,7 +26,8 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     SensitivityEntryAction, AddMolecularWeightAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction
+    TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
+    GenerateStatusReportAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
@@ -113,7 +114,9 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=g2path),
                   SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
                                  path=g2path),
-                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path, ),
+                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.run_report', factory=GenerateStatusReportAction,
+                                 path=gpath),
                   SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction, path=g2path)]),
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
@@ -126,7 +129,7 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=spath, after='pychron.entry1.sample_prep'),
                   SchemaAddition(id='pychron.entry1.project', factory=ProjectAction,
                                  path=gpath),
-                  SchemaAddition(id='pychron.entry2.make_template', factory=MakeIrradiationTemplateAction,
+                  SchemaAddition(id='pychron.entry1.make_template', factory=MakeIrradiationTemplateAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
                                  path=gpath),
