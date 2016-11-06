@@ -21,12 +21,10 @@ import subprocess
 
 from traits.api import HasTraits, Str, Bool, List
 from traitsui.api import View, UItem, VGroup, TableEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
+
 from pychron.core.helpers.filetools import ilist_gits
 from pychron.github import Organization
 from pychron.paths import paths
@@ -45,10 +43,11 @@ remote_re = re.compile(r'\[remote ".+"\]')
 class PushExperimentsModel(HasTraits):
     shareables = List
 
-    def __init__(self, org, usr, pwd, root=None, *args, **kw):
+    def __init__(self, org, usr, pwd, oauth_token, root=None, *args, **kw):
         self._org = org
         self._usr = usr
         self._pwd = pwd
+        self._oauth_token = oauth_token
 
         super(PushExperimentsModel, self).__init__(*args, **kw)
 
@@ -78,7 +77,7 @@ class PushExperimentsModel(HasTraits):
                 # check if url exists
                 if subprocess.call(['git', 'ls-remote'], cwd=root):
                     # add repo to github
-                    org = Organization(self._org, self._usr, self._pwd)
+                    org = Organization(self._org, self._usr, self._pwd, self._oauth_token)
                     # org.create_repo(si.name)
 
 

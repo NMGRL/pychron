@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
 import time
-# ============= local library imports  ==========================
+from datetime import datetime, timedelta
+
+from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
+
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
@@ -66,14 +66,17 @@ class ExperimentStats(Loggable):
         self._total_time = dur
         return self._total_time
 
-    def format_duration(self, dur, post=None):
+    def format_duration(self, dur, post=None, fmt='%H:%M:%S %a %m/%d'):
         if post is None:
             post = self._post
             if not post:
                 post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
-        return dt.strftime('%H:%M:%S %a %m/%d')
+        if fmt == 'iso':
+            return dt.isoformat()
+        else:
+            return dt.strftime(fmt)
 
     def start_timer(self):
         st = time.time()
@@ -279,5 +282,9 @@ class StatsGroup(ExperimentStats):
             self.end_at = self.format_duration(et)
             if st:
                 self.start_at = self.format_duration(st)
+
+    @property
+    def etf_iso(self):
+        return self.format_duration(self._total_time)
 
 # ============= EOF =============================================

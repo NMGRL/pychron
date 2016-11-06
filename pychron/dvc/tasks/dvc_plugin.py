@@ -25,7 +25,7 @@ from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
 from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
-    DVCDBConnectionPreferencesPane
+    DVCDBConnectionPreferencesPane, DVCExperimentPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
@@ -107,7 +107,7 @@ class DVCPlugin(BaseTaskPlugin):
         return self._preferences_factory('dvc')
 
     def _preferences_panes_default(self):
-        return [DVCPreferencesPane, DVCDBConnectionPreferencesPane]
+        return [DVCPreferencesPane, DVCDBConnectionPreferencesPane, DVCExperimentPreferencesPane]
 
     # def _tasks_default(self):
     #     ts = [TaskFactory(id='pychron.canvas_designer',
