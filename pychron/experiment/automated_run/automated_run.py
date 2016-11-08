@@ -1430,6 +1430,8 @@ anaylsis_type={}
             self._add_conditionals()
         except BaseException, e:
             self.warning('Failed adding conditionals {}'.format(e))
+            raise e
+
             return
 
         # add queue conditionals
