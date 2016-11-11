@@ -69,9 +69,9 @@ class FusionsUVManager(FusionsLaserManager):
     _cancel_tracing = False
 
     add_reference_mark_button = Button
-    reset_reference_marks_button = Button
+    reset_reference_marks_button = Button('Reset')
     reference_marks = Instance(ReferenceMarks, ())
-
+    save_reference_marks_canvas_button = Button('Save')
     # dbname = paths.uvlaser_db
     # db_root = paths.uvlaser_db_root
 
@@ -337,7 +337,6 @@ class FusionsUVManager(FusionsLaserManager):
         self.debug('Making reference mark "{}":{}'.format(refmarks.mark, refmarks.get_mark()))
         for x, y in refmarks.make_mark():
             self.debug('mark x={}, y={}'.format(x, y))
-            time.sleep(1)
             sm.linear_move(cx + x, cy - y, use_calibration=False, block=True)
             time.sleep(0.25)
             ret = self.fire_laser('burst')
@@ -349,13 +348,20 @@ class FusionsUVManager(FusionsLaserManager):
                 time.sleep(0.1)
         else:
             self.info('mark mark complete')
-            refmarks.set_made()
+            refmarks.set_made((cx, cy))
+
+    def _save_reference_marks_canvas(self):
+        pass
 
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _save_reference_marks_canvas_button_fired(self):
+        self._save_reference_marks_canvas()
+
     def _add_reference_mark_button_fired(self):
-        self._add_reference_mark()
+        t = Thread(target=self._add_reference_mark)
+        t.start()
 
     def _reset_reference_marks_button_fired(self):
         if self.confirmation_dialog('Are you sure you want to continue?'):

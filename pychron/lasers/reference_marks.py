@@ -44,14 +44,14 @@ class ReferenceMarks(HasTraits):
     mark = Str
     mark_display = Str
     mark_ids = Dict(KEYS)
-    spacing = Float(0.75)
+    spacing = Float(0.075)
     _made_marks = List
 
     def get_mark(self):
         return self.marks[self.mark]
 
-    def set_made(self):
-        self._made_marks.append(self.mark)
+    def set_made(self, pos):
+        self._made_marks[self.mark] = pos
 
     def check_mark(self):
         return self.mark not in self._made_marks
@@ -65,7 +65,7 @@ class ReferenceMarks(HasTraits):
             for j in range(3):
                 idx = i * 3 + j
                 if m[idx] == '1':
-                    yield i * sp, j * sp
+                    yield j * sp, i * sp
 
     def reset(self):
         self._made_marks = []
