@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List
-from traitsui.api import View, Item
-# ============= standard library imports ========================
+from datetime import timedelta, datetime
+
+from sqlalchemy import not_, func, distinct, or_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
-from datetime import timedelta, datetime
-from sqlalchemy import not_, func, distinct, or_
-# ============= local library imports  ==========================
+from traits.api import HasTraits, Str, List
+from traitsui.api import View, Item
+
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query, in_func
@@ -36,6 +36,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
+
 
 def principal_investigator_filter(q, principal_investigator):
     if ',' in principal_investigator:
