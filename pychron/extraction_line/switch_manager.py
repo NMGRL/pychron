@@ -15,26 +15,26 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Dict, List, Bool, Event, Str
-# =============standard library imports ========================
 import binascii
-from pickle import PickleError
-from itertools import groupby
 import os
 import pickle
 import time
-# =============local library imports  ==========================
+from itertools import groupby
+from pickle import PickleError
+
+from traits.api import Any, Dict, List, Bool, Event, Str
+
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
+from pychron.extraction_line.explanation.explanable_item import ExplanableValve
+from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch, ManualSwitch
-from pychron.managers.manager import Manager
-from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.hardware.valve import HardwareValve
+from pychron.managers.manager import Manager
 from pychron.paths import paths
-from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from switch_parser import SwitchParser
 
 

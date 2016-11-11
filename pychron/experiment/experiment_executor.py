@@ -2111,7 +2111,7 @@ Use Last "blank_{}"= {}
         if self.is_alive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
             if self.extracting_run:
-                self.extracting_run.is_last = is_lamst
+                self.extracting_run.is_last = is_last
 
     def _stop_button_fired(self):
         self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.is_alive()))

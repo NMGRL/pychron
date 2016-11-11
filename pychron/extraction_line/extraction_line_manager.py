@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import time
+from socket import gethostbyname, gethostname
+from threading import Thread
+
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 
-# =============standard library imports ========================
-import time
-from threading import Thread
-from socket import gethostbyname, gethostname
-# =============local library imports  ==========================
 from pychron.core.file_listener import FileListener
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
+from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
-from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.pychron_constants import NULL_STR
 from pychron.wait.wait_group import WaitGroup
 
