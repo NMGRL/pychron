@@ -194,6 +194,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         """
         cmd = 'R', '07'
         re = self.repeat_command(cmd)
+        self.debug('read input type {}'.format(re))
         if re is not None:
             re = re.strip()
             re = make_bitarray(int(re, 16))
