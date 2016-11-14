@@ -19,6 +19,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 def parse_hop(args):
     if isinstance(args, dict):
         counts = args['counts']
@@ -30,6 +31,7 @@ def parse_hop(args):
         pdets = [ci['detector'] for ci in cc if ci['protect']]
         is_baselines = [ci['is_baseline'] for ci in cc]
         active_detectors = [ci['detector'] for ci in cc if ci['active']]
+        pos = args['positioning']
     else:
         if len(args) == 3:
             hopstr, counts, settle = args
@@ -39,6 +41,7 @@ def parse_hop(args):
             # for hopstr, counts, settle, pdets in hops:
         is_baselines, isos, dets, defls = zip(*split_hopstr(hopstr))
         active_detectors = dets
+        pos = {'detector': active_detectors[0], 'isotope': isos[0]}
 
     d = {'is_baselines': is_baselines,
          'isotopes': isos,
@@ -46,7 +49,8 @@ def parse_hop(args):
          'active_detectors': active_detectors,
          'deflections': defls,
          'settle': settle, 'counts': counts,
-         'protect_detectors': pdets}
+         'protect_detectors': pdets,
+         'positioning': pos}
 
     return d
 

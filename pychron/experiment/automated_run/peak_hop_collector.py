@@ -81,8 +81,19 @@ class PeakHopCollector(DataCollector):
         pdets = hop['protect_detectors']
         active_dets = hop['active_detectors']
 
-        detector = active_dets[0]
-        isotope = isos[0]
+        use_dac = False
+        positioning = hop['positioning']
+        if positioning:
+            if 'dac' in positioning:
+                use_dac = True
+                isotope = positioning['dac']
+                detector = ''
+            else:
+                detector = positioning['detector']
+                isotope = positioning['isotope']
+        else:
+            detector = active_dets[0]
+            isotope = isos[0]
 
         if count == 0:
             self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
@@ -102,6 +113,7 @@ class PeakHopCollector(DataCollector):
             self.parent.measurement_script.increment_series_count(-2, -1)
 
             change = self.parent.set_magnet_position(isotope, detector,
+                                                     use_dac=use_dac,
                                                      update_detectors=False, update_labels=False,
                                                      update_isotopes=True,
                                                      remove_non_active=False)
