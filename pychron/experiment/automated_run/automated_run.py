@@ -248,10 +248,10 @@ class AutomatedRun(Loggable):
     def py_define_detectors(self, isotope, det):
         self._define_detectors(isotope, det)
 
-    def py_position_magnet(self, pos, detector, dac=False):
+    def py_position_magnet(self, pos, detector, use_dac=False):
         if not self._alive:
             return
-        self._set_magnet_position(pos, detector, dac=dac)
+        self._set_magnet_position(pos, detector, use_dac=use_dac)
 
     def py_activate_detectors(self, dets, peak_center=False):
         if not self._alive:
@@ -1948,13 +1948,13 @@ anaylsis_type={}
             self.isotope_group.set_isotope_detector(det)
 
     def _set_magnet_position(self, pos, detector,
-                             dac=False, update_detectors=True,
+                             use_dac=False, update_detectors=True,
                              update_labels=True, update_isotopes=True,
                              remove_non_active=True):
         change = False
         ion = self.ion_optics_manager
         if ion is not None:
-            change = ion.position(pos, detector, dac, update_isotopes=update_isotopes)
+            change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
         if update_labels:
             self._update_labels()
