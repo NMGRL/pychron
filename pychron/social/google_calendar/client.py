@@ -47,7 +47,7 @@ class GoogleCalendarClient(Loggable):
             self.bind_preferences()
 
     def bind_preferences(self):
-        prefid = 'pychron.gcal'
+        prefid = 'pychron.google_calendar'
         bind_preference(self, 'calendar', '{}.calendar'.format(prefid))
         bind_preference(self, 'client_secret_path', '{}.client_secret_path'.format(prefid))
 
