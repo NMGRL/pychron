@@ -117,7 +117,7 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
                 # make a default molecular_weights.csv file
                 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mw
 
-                with open(p, 'U') as f:
+                with open(p, 'U' if os.path.isfile(p) else 'w') as f:
                     writer = csv.writer(f, delimiter='\t')
                     data = [a for a in mw.itervalues()]
                     data = sorted(data, key=lambda x: x[1])

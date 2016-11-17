@@ -37,9 +37,12 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
 
     deflection_correction_sign = Int(1)
     _deflection_correction_factors = None
+    deflection_name = None
 
     def load(self):
         self.read_deflection()
+
+
 
     def load_deflection_coefficients(self):
         if self.use_deflection:
@@ -56,7 +59,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
 
     def read_deflection(self):
         if self.use_deflection or self.kind in ('IonCounter',):
-            r = self.ask('GetDeflection {}'.format(self.name))
+            r = self.ask('GetDeflection {}'.format(self.deflection_name))
             try:
                 if r is None:
                     self.warning('Failed reading {} deflection. Error=No response. '
@@ -105,7 +108,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 self.spectrometer.update_config(Deflections=[(self.name, v)])
 
             self._deflection = v
-            self.ask('SetDeflection {},{}'.format(self.name, v))
+            self.ask('SetDeflection {},{}'.format(self.deflection_name, v))
 
     def _get_deflection(self):
         return self._deflection

@@ -98,6 +98,9 @@ class MeasurementPyScript(ValvePyScript):
         self._series_count += s
         self._fit_series_count += f
 
+    def reset_series(self):
+        self._series_count = 0
+        self._fit_series_count = 0
     # ===============================================================================
     # commands
     # ===============================================================================
@@ -195,6 +198,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def baselines(self, ncounts=1, mass=None, detector='',
+                  use_dac=False,
                   integration_time=1.04,
                   settling_time=4, calc_time=False):
         """
@@ -206,6 +210,8 @@ class MeasurementPyScript(ValvePyScript):
         :type mass: float
         :param detector: name of detector
         :type detector: str
+        :param use_dac: If True interpret mass as a DAC value instead of amu
+        :type use_dac: bool
         :param integration_time: integration time in seconds
         :type integration_time: float
         :param settling_time: delay between magnet positioning and measurement in seconds
@@ -232,6 +238,7 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero_offset,
                                         mass,
                                         detector,
+                                        use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
                                         series=series):
@@ -256,9 +263,9 @@ class MeasurementPyScript(ValvePyScript):
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 head, ext = os.path.splitext(p)
-                if ext in ('yaml', 'yml'):
+                if ext in ('.yaml', '.yml'):
                     hops = yaml.load(rfile)
-                elif ext in ('txt',):
+                elif ext in ('.txt',):
                     hops = [eval(li) for li in fileiter(rfile)]
                 return hops
 
@@ -295,7 +302,7 @@ class MeasurementPyScript(ValvePyScript):
 
         integration_time = 1.1
 
-        counts = sum([ci * integration_time + s for _h, ci, s in hops]) * ncycles
+        counts = sum([h['counts'] * integration_time + h['settle'] for h in hops]) * ncycles
         if calc_time:
             # counts = sum of counts for each hop
             self._estimated_duration += (counts * ESTIMATED_DURATION_FF)

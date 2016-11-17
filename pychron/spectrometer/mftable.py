@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property
+from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property, Event
 # from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import shutil
 import csv
 import os
 import hashlib
-from numpy import asarray, array, nonzero
+from numpy import asarray, array, nonzero, poly1d
 from scipy.optimize import leastsq
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
@@ -38,7 +38,10 @@ def get_detector_name(det):
 
 
 def mass_cal_func(p, x):
-    return p[0]*x**2+p[1]*x+p[2]
+    return poly1d(p)(x)
+
+
+    # return p[0]*x**3+p[1]*x**2+p[2]*x+p[3]
 
 
 def least_squares(func, xs, ys, initial_guess):
@@ -69,7 +72,8 @@ class MagnetFieldTable(Loggable):
     spectrometer_name = Str
     use_local_archive = Bool
     use_db_archive = Bool
-    path = Property
+    path = Property(depends_on='_path_dirty')
+    _path_dirty = Event
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
@@ -128,7 +132,7 @@ class MagnetFieldTable(Loggable):
             # ys += delta
             for k, (iso, xx, yy, _) in d.iteritems():
                 ny = yy + delta
-                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
+                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0, 0])
                 d[k] = iso, xx, ny, p
 
             self.dump(isos, d, message)
@@ -219,13 +223,13 @@ class MagnetFieldTable(Loggable):
         with open(p, 'U') as f:
             reader = csv.reader(f)
             table = []
-            detectors = map(str.strip, reader.next()[1:])
+            detectors = map(str.strip, next(reader)[1:])
             for line in reader:
                 iso = line[0]
                 try:
                     mw = mws[iso]
                 except KeyError, e:
-                    self.warning('"{}" not in molweights {}'.formamolweights(iso, mw))
+                    self.warning('"{}" not in molweights {}'.format(iso, mw))
                     continue
 
                 dacs = map(float, line[1:])
@@ -249,9 +253,9 @@ class MagnetFieldTable(Loggable):
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
                 try:
-                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
+                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0, 0])
                 except TypeError:
-                    c = (0, 1, ys[0])
+                    c = (0, 0, 1, ys[0])
 
                 d[k] = (isos, mws, ys, c)
 
@@ -269,6 +273,7 @@ class MagnetFieldTable(Loggable):
         self.debug('================================')
 
     def _get_mftable(self):
+        self.debug('using mftable at {}'.format(self.path))
         if not self._mftable or not self._check_mftable_hash():
             self.load_mftable()
 
@@ -317,7 +322,7 @@ class MagnetFieldTable(Loggable):
     def _set_path(self, name):
         set_mftable_name(name)
 
-    @cached_property
+    # @cached_property
     def _get_path(self):
         name = get_mftable_name()
         return os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
@@ -326,17 +331,15 @@ class MagnetFieldTable(Loggable):
         if name:
             name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
         return name or ''
-    #
-    # def _set_path(self, v):
-    #     self._path = self._name_to_path(v)
-    #
-    # def _get_path(self):
-    #     if self._path:
-    #         p = self._path
-    #     else:
-    #         p = paths.mftable
-    #     return p
-
+        #
+        # def _set_path(self, v):
+        #     self._path = self._name_to_path(v)
+        #
+        # def _get_path(self):
+        #     if self._path:
+        #         p = self._path
+        #     else:
+        #         p = paths.mftable
+        #     return p
 
 # ============= EOF =============================================
-

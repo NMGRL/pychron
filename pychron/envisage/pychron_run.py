@@ -80,7 +80,7 @@ PACKAGE_DICT = dict(
 
     # social
     EmailPlugin='pychron.social.email.tasks.plugin',
-    GoogleCalendarPlugin='pychron.social.gcal.tasks.plugin'
+    GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin'
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     # UpdatePlugin='pychron.updater.tasks.update_plugin',
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',

@@ -42,7 +42,7 @@ class BaseDetector(HasTraits):
 
     isotopes = Property
 
-    index = Int
+    index = Float
 
     def set_intensity(self, v):
         if v is not None:
@@ -79,7 +79,8 @@ class BaseDetector(HasTraits):
 
     def _get_isotopes(self):
         molweights = self.spectrometer.molecular_weights
-        return sorted(molweights.keys(), key=lambda x: int(x[2:]))
+        return sorted(molweights.keys())
+        # return sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def __repr__(self):
         return 'Detector({})'.format(self.name)

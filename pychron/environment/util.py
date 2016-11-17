@@ -38,6 +38,9 @@ def get_environment(appname):
 
 def set_environment(appname, env_path):
     p = get_path(appname)
+    if not os.path.isdir(os.path.dirname(p)):
+        os.mkdir(os.path.dirname(p))
+
     with open(p, 'w') as wfile:
         wfile.write('{}\n'.format(env_path))
 

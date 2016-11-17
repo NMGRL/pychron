@@ -327,7 +327,12 @@ class IsotopicMeasurement(BaseMeasurement):
     @property
     def regressor(self):
         # print self.name, self.fit, self.__class__.__name__
-        is_mean = 'average' in self.fit.lower()
+        fit = self.fit
+        if fit is None:
+            print 'no fit for {} ({} {})'.format(self.name, self.__class__.__name__, id(self))
+            fit = 'linear'
+
+        is_mean = 'average' in fit.lower()
         reg = self._regressor
         if reg is None:
             if is_mean:
@@ -348,7 +353,7 @@ class IsotopicMeasurement(BaseMeasurement):
             reg = self._mean_regressor_factory()
 
         if not is_mean:
-            reg.set_degree(fit_to_degree(self.fit), refresh=False)
+            reg.set_degree(fit_to_degree(fit), refresh=False)
         reg.filter_outliers_dict = self.filter_outliers_dict
 
         reg.trait_set(xs=self.offset_xs, ys=self.ys)

@@ -284,6 +284,7 @@ class Graph(ContextMenuMixin):
         else:
             is_equal = lambda x: x.__eq__(txt)
 
+        # print 'plot titles {}'.format([po.y_axis.title for po in self.plots])
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
@@ -601,8 +602,8 @@ class Graph(ContextMenuMixin):
         try:
             p.showplot(series) if v else p.hideplot(series)
             self.plotcontainer.invalidate_and_redraw()
-        except KeyError:
-            pass
+        except KeyError, e:
+            print 'set series visibility', e, p.series
 
     def get_x_limits(self, plotid=0):
         """
@@ -972,7 +973,7 @@ class Graph(ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except IndexError:
-            print 'adding data', plotid, series, self.series[plotid]
+            print 'adding datum', plotid, series, self.series[plotid]
             return
 
         plot = self.plots[plotid]

@@ -296,12 +296,12 @@ class BaseRegressor(HasTraits):
 
     @cached_property
     def _get_clean_xs(self):
-        logger.debug('CLEAN XS={}'.format(self.xs.shape))
+        # logger.debug('CLEAN XS={}'.format(self.xs.shape))
         return self._clean_array(self.xs)
 
     @cached_property
     def _get_clean_ys(self):
-        logger.debug('CLEAN YS={}'.format(self.ys.shape))
+        # logger.debug('CLEAN YS={}'.format(self.ys.shape))
         return self._clean_array(self.ys)
 
     @cached_property

@@ -25,6 +25,7 @@ from pychron.social.google_calendar.tasks.preferences import GoogleCalendarPrefe
 
 class GoogleCalendarPlugin(BaseTaskPlugin):
     id = 'pychron.google_calendar.plugin'
+    name = 'GoogleCalendar'
 
     def _service_offers_default(self):
         """
@@ -32,6 +33,10 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
         so = self.service_offer_factory(protocol='pychron.social.google_calendar.client.GoogleCalendarClient',
                                         factory=GoogleCalendarClient)
         return [so]
+
+    def test_api(self):
+        s = GoogleCalendarClient()
+        return s.test_api()
 
     # def _preferences_default(self):
     #     return ['file://{}'.format('')]
