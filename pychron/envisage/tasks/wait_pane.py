@@ -40,6 +40,7 @@ class WaitPane(TraitsDockPane):
                    CustomLabel('current_time',
                                size=14,
                                weight='bold'),
+                   UItem('pause_button'),
                    UItem('continue_button')),
             HGroup(Spring(width=-5, springy=False),
                    Item('current_time', show_label=False,

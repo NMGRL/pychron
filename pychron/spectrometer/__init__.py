@@ -30,7 +30,8 @@ def get_mftable_name():
     p = os.path.join(paths.hidden_dir, 'mftable_name')
     if os.path.isfile(p):
         with open(p) as rfile:
-            return rfile.read().strip()
+            n = rfile.read().strip()
+            return n
     else:
         return 'mftable.csv'
 

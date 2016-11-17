@@ -59,11 +59,12 @@ def generate_hops(hops):
     # for c in xrange(self.ncycles):
     c = 0
     while 1:
-        for args in hops:
+        for i, args in enumerate(hops):
             d = parse_hop(args)
+            d['idx'] = i
             d['cycle'] = c
-
-            if any(d['is_baselines']):
+            d['is_baseline'] = is_baseline = any(d['is_baselines'])
+            if is_baseline:
                 yield d
                 # yield c, is_baselines, dets, isos, defls, settle, counts
             else:
@@ -93,7 +94,7 @@ def parse_hops(hops, ret=None):
 
         for is_baseline, iso, det, defl in zip(d['is_baselines'],
                                                d['isotopes'],
-                                               d['detectors'],
+                                               d['active_detectors'],
                                                d['deflections']):
             if ret:
                 loc = locals()

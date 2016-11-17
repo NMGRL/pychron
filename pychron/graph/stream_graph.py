@@ -165,6 +165,7 @@ class StreamGraph(Graph):
                           plotid=plotid)
 
     def record(self, y, x=None, series=0, plotid=0, track_x=True, track_y=True):
+
         xn, yn = self.series[plotid][series]
 
         plot = self.plots[plotid]
@@ -214,14 +215,18 @@ class StreamGraph(Graph):
         self.cur_min[plotid] = min(self.cur_min[plotid], min(new_yd))
         return nx
 
-    def record_multiple(self, ys, plotid=0, track_y=True):
+    def record_multiple(self, ys, plotid=0, series=None, track_y=True):
         tg = self.global_time_generator
         if tg is None:
             tg = time_generator(0)
             self.global_time_generator = tg
 
         x = tg.next()
-        for i, yi in enumerate(ys):
+
+        if series is None:
+            series = xrange(len(ys))
+
+        for i, yi in zip(series, ys):
             self.record(yi, x=x, series=i, track_x=False, track_y=track_y)
 
         ma = max(ys)

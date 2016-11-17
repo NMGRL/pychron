@@ -28,7 +28,7 @@ from pychron.core.progress import open_progress
 from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.spectrometer import get_spectrometer_config_path, \
-    get_spectrometer_config_name, set_spectrometer_config_name
+    get_spectrometer_config_name, set_spectrometer_config_name, set_mftable_name
 from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     DEFAULT_INTEGRATION_TIME, NULL_STR
@@ -260,6 +260,13 @@ class ThermoSpectrometer(SpectrometerDevice):
             d.microcontroller = m
             d.load()
 
+    def set_deflection(self, name, value):
+        det = self.get_detector(name)
+        if det:
+            det.deflection = value
+        else:
+            self.warning('Could not find detector "{}". Deflection Not Possible'.format(name))
+
     def get_deflection(self, name, current=False):
         """
         get deflection by detector name
@@ -296,6 +303,32 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             return next((det for det in self.detectors if det.name == name), None)
 
+    def map_isotope(self, mass):
+        """
+        map a mass to an isotope
+        @param mass:
+        @return:
+        """
+        molweights = self.molecular_weights
+        # for k, v in molweights.iteritems():
+        #     print '\t',k,v,mass, v-mass
+        #     if abs(v-mass) < 0.05:
+        #         print 'found'
+        #         break
+
+        return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.1), 'Iso{:0.4f}'.format(mass))
+
+    def map_mass(self, isotope):
+        """
+        map an isotope to a mass
+        @param isotope:
+        @return:
+        """
+        try:
+            return self.molecular_weights[isotope]
+        except KeyError:
+            self.warning('Invalid isotope. Cannot map to a mass. {} not in molecular_weights'.format(isotope))
+
     def update_isotopes(self, isotope, detector):
         """
         update the isotope name for each detector
@@ -312,13 +345,20 @@ class ThermoSpectrometer(SpectrometerDevice):
                 self.debug('cannot update detector "{}"'.format(detector))
             else:
                 det.isotope = isotope
-                # index = self.detectors.index(det)
-                # index = self.detectors[det].index
+
                 index = det.index
-                nmass = int(isotope[2:])
-                for di in self.detectors:
-                    mass = nmass - (di.index - index)
-                    di.isotope = 'Ar{}'.format(mass)
+                try:
+                    # nmass = int(isotope[2:])
+                    nmass = self.map_mass(isotope)
+                    for di in self.detectors:
+                        mass = nmass - (di.index - index)
+
+                        isotope = self.map_isotope(mass)
+                        self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
+                        di.isotope = isotope
+
+                except BaseException, e:
+                    self.warning('Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
 
     def get_deflection_word(self, keys):
         if self.simulation:
@@ -493,7 +533,7 @@ class ThermoSpectrometer(SpectrometerDevice):
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
 
-            index = self.config_get(config, name, 'index', cast='int')
+            index = self.config_get(config, name, 'index', cast='float')
             if index is None:
                 index = i
 
@@ -505,11 +545,14 @@ class ThermoSpectrometer(SpectrometerDevice):
             if use_deflection:
                 deflection_correction_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
+            deflection_name = self.config_get(config, name, 'deflection_name', optional=True, default=name)
+
             self._add_detector(name=name,
                                index=index,
                                use_deflection=use_deflection,
                                protection_threshold=pt,
                                deflection_correction_sign=deflection_correction_sign,
+                               deflection_name=deflection_name,
                                color=color,
                                active=default_state,
                                isotope=isotope,
@@ -773,12 +816,13 @@ class ThermoSpectrometer(SpectrometerDevice):
                 if not self._ramp_trap_current(v, step, period, use_ramp, tol):
                     self.set_parameter('SetParameter',
                                        'Trap Current Set,{}'.format(v))
-
             # set the mftable
             mftable_name = magnet.get('mftable')
             if mftable_name:
+                self.debug('updating mftable name {}'.format(mftable_name))
                 self.magnet.mftable.path = mftable_name
                 self.magnet.mftable.load_mftable(load_items=True)
+
             self.debug('======== Configuration Finished ========')
             self.source.sync_parameters()
 
@@ -840,7 +884,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
     @cached_property
     def _get_isotopes(self):
-        return sorted(self.molecular_weights.keys(), key=lambda x: int(x[2:]))
+        return sorted(self.molecular_weights.keys())#, key=lambda x: int(x[2:]))
 
     @property
     def detector_names(self):

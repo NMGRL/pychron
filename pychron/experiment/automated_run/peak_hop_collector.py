@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Int, Instance
 
+from pychron.core.helpers.color_generators import colornames
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.experiment.automated_run.hop_util import generate_hops
 
@@ -71,6 +72,7 @@ class PeakHopCollector(DataCollector):
         # cycle, is_baselines, dets, isos, defls, settle, count, pdets = self.hop_generator.next()
 
         hop = next(self.hop_generator)
+        hop_idx = hop['idx']
         cycle = hop['cycle']
         is_baseline = hop['is_baseline']
         dets = hop['detectors']
@@ -80,6 +82,8 @@ class PeakHopCollector(DataCollector):
         count = hop['count']
         pdets = hop['protect_detectors']
         active_dets = hop['active_detectors']
+
+        current_color = colornames[hop_idx]
 
         use_dac = False
         positioning = hop['positioning']
@@ -118,9 +122,12 @@ class PeakHopCollector(DataCollector):
                                                      update_isotopes=True,
                                                      remove_non_active=False)
             if change:
+                # self.parent.update_detector_isotope_pairing(dets, isos)
+
                 msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
                 self.parent.wait(settle, msg)
                 self.debug(msg)
+
             self.plot_panel._ncounts = pocounts
             self.measurement_script.ncounts = ocounts
             self.plot_panel.ncycles = ocycles
@@ -139,10 +146,12 @@ class PeakHopCollector(DataCollector):
 
             if count == 0:
                 self._protect_detectors(pdets)
-
+                self.debug('----------------------- HOP {} {}'.format(isotope, detector))
                 change = self.parent.set_magnet_position(isotope, detector,
-                                                         update_detectors=False, update_labels=False,
-                                                         update_isotopes=not is_baseline,
+                                                         update_detectors=False,
+                                                         update_labels=False,
+                                                         update_isotopes = False,
+                                                         # update_isotopes=not is_baseline,
                                                          remove_non_active=False)
 
                 self._protect_detectors(pdets, False)
@@ -160,9 +169,22 @@ class PeakHopCollector(DataCollector):
                         else:
                             self._was_deflected = True
 
-                        self.measurement_script.set_deflection(det, defl)
+                        self.automated_run.set_deflection(det, defl)
 
                 if change:
+                    self.parent.update_detector_isotope_pairing(active_dets, isos)
+
+                    g = self.plot_panel.isotope_graph
+                    for d in active_dets:
+                        det = self.parent.get_detector(d)
+                        plot = g.get_plot_by_ytitle(det.isotope)
+                        if plot:
+                            scatter = plot.plots['data{}'.format(self.series_idx)][0]
+                            scatter.color = current_color
+                            scatter.outline_color = current_color
+                        else:
+                            self.debug('could not locate det={} iso={}'.format(d, det.isotope))
+
                     try:
                         self.automated_run.plot_panel.counts += int(settle)
                     except AttributeError:
@@ -172,14 +194,14 @@ class PeakHopCollector(DataCollector):
                     self.parent.wait(settle, msg)
                     self.debug(msg)
 
-            d = self.parent.get_detector(detector)
             # self.debug('cycle {} count {} {}'.format(cycle, count, id(self)))
             if self.plot_panel.is_baseline:
                 isotope = '{}bs'.format(isotope)
 
+            dac = self.parent.get_current_dac()
             invoke_in_main_thread(self.plot_panel.trait_set,
-                                  current_cycle='{} cycle={} count={}'.format(isotope, cycle + 1, count + 1),
-                                  current_color=d.color)
+                                  current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector, cycle + 1, count + 1),
+                                  current_color=current_color)
         return is_baseline, active_dets, isos
 
     def _protect_detectors(self, pdets, protect=True):

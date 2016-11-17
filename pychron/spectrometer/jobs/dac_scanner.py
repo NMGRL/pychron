@@ -275,7 +275,12 @@ class DACScanner(BaseScanner):
 
     def _use_mftable_limits_fired(self):
         mft = self.spectrometer.magnet.mftable.get_table()
-        isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
+        try:
+            isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
+        except KeyError:
+            self.warning('{} not in mftable'.format(mft))
+            return
+
         mi = min(dacs)
         ma = max(dacs)
 

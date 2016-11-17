@@ -40,7 +40,8 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-
+    pause_button = Button('Pause')
+    _paused = Bool
     _continued = Bool
     _canceled = Bool
     _no_update = False
@@ -115,12 +116,14 @@ class WaitControl(Loggable):
         with no_update(self, fire_update_needed=False):
             self.high = self.duration
             self.current_time = self.duration
+            self._paused = False
 
     # ===============================================================================
     # private
     # ===============================================================================
 
     def _continue(self):
+        self._paused = False
         self._continued = True
         self._end()
         self.current_time = 0
@@ -134,6 +137,9 @@ class WaitControl(Loggable):
             self.end_evt.set()
 
     def _update_time(self):
+        if self._paused:
+            return
+
         ct = self.current_time
         if self.timer and self.timer.isActive():
             self.current_time -= 1
@@ -153,6 +159,9 @@ class WaitControl(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _pause_button_fired(self):
+        self._paused = not self._paused
+
     def _continue_button_fired(self):
         self._continue()
 

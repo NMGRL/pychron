@@ -51,6 +51,13 @@ class GoogleCalendarClient(Loggable):
         bind_preference(self, 'calendar', '{}.calendar'.format(prefid))
         bind_preference(self, 'client_secret_path', '{}.client_secret_path'.format(prefid))
 
+    def test_api(self):
+        try:
+            return bool(self.get_calendars()), ''
+        except BaseException, e:
+            self.warning('test_api {}'.format(e))
+            return False, str(e)
+
     def post_event(self, summary, description, end, start=None, calendar=None):
         if calendar is None:
             calendar = self.calendar
@@ -76,7 +83,7 @@ class GoogleCalendarClient(Loggable):
         self._active_event_id = event.get('id')
         self.debug('active event= {}'.format(self._active_event_id))
 
-    def edit_event(self, event_info, end=None, calendar=None, event_id=None):
+    def edit_event(self, event_info, calendar=None, event_id=None):
         if calendar is None:
             calendar = self.calendar
 
@@ -96,7 +103,7 @@ class GoogleCalendarClient(Loggable):
 
             body.update(**event_info)
 
-            if end == 'now':
+            if body['end'] == 'now':
                 body['end'] = {'dateTime': datetime.now().isoformat(),
                                'timeZone': TZ}
 
@@ -136,6 +143,9 @@ class GoogleCalendarClient(Loggable):
     def print_calendar_names(self):
         for c in self.get_calendars():
             print c['summary']
+
+    def get_calendar_names(self):
+        return [c['summary'] for c in self.get_calendars()]
 
     def get_calendar(self, name):
         cal_objs = self.get_calendars()

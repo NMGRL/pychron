@@ -134,6 +134,7 @@ class PlotPanel(Loggable):
     hops = List
 
     info_func = None
+    integration_time = 1.1
 
     def set_peak_center_graph(self, graph):
         graph.page_name = 'Peak Center'
@@ -294,8 +295,9 @@ class PlotPanel(Loggable):
 
         if self.hops:
             # update ncounts
-            integration_time = 1.1
-            counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
+            integration_time = self.integration_time
+            counts = sum([h['counts'] * integration_time + h['settle'] for h in self.hops]) * v
+            # counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
             self._ncounts = counts
 
     def _get_display_counts(self):
