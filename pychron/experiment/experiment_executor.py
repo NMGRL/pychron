@@ -156,7 +156,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     use_auto_save = Bool(True)
     use_labspy = Bool
     use_google_calendar = Bool
-    google_calender_run_delay = Int
+    google_calendar_run_delay = Int
 
     use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
@@ -258,7 +258,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # google calendar
         self._preference_binder('pychron.google_calendar.experiment', ('use_google_calendar',
-                                                                       'google_calender_run_delay'))
+                                                                       'google_calendar_run_delay'))
 
         # system health
         self._preference_binder(prefid, ('use_system_health',))
@@ -381,8 +381,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_labspy:
             self.labspy_client.add_experiment(exp)
 
-        if self.use_google_calendar:
-            if self.stats.nruns_finished >= self.google_calender_run_delay:
+        self.debug('$$$$$$$$$$$$$$ Google Calendar, {}, {}'.format(self.use_google_calendar, self.google_calendar_run_delay))
+        if self.use_google_calendar and self.google_calendar_client:
+            if self.stats.nruns_finished >= self.google_calendar_run_delay:
                 summary = 'Experiment: {}'.format(exp.name)
                 description = ''
                 self.google_calendar_client.post_event(summary,
@@ -393,7 +394,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         exp = self.experiment_queue
         if self.use_labspy:
             self.labspy_client.update_experiment(exp, self._err_message)
-        if self.use_google_calendar:
+        if self.use_google_calendar and self.google_calendar_client:
             d = {'end': 'now', 'summary': 'Experiment: {} {}'.format(exp.name, self._err_message)}
             self.google_calendar_client.edit_event(d)
 
@@ -791,8 +792,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         run.finish()
         if self.experiment_type == AR_AR and run.spec.state in ('success', 'truncated'):
-            run.spec.uage = self.run.isotope_group.uage
-            run.spec.k39 = self.run.isotope_group.get_computed_value('k39')
+            run.spec.uage = run.isotope_group.uage
+            run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
         if run.spec.state not in ('canceled', 'failed', 'aborted'):
             self._retroactive_repository_identifiers(run.spec)

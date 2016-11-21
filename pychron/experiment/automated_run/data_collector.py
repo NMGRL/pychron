@@ -231,15 +231,20 @@ class DataCollector(Consoleable):
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
         for k, v in self.isotope_group.isotopes.iteritems():
             signal = signals[keys.index(v.detector)]
-            self._set_plot_data(i, k, v.detector, x, signal)
+            self._set_plot_data(i, None, v.detector, x, signal)
 
     def _plot_data_(self, cnt, x, keys, signals):
-        for i, dn in enumerate(keys):
-            dn = self._get_detector(dn)
-            if dn:
-                iso = dn.isotope
-                signal = signals[keys.index(dn.name)]
-                self._set_plot_data(cnt, iso, dn.name, x, signal)
+        # for i, dn in enumerate(keys):
+        #     dn = self._get_detector(dn)
+        #     if dn:
+        #         iso = dn.isotope
+        #         signal = signals[keys.index(dn.name)]
+        #         self._set_plot_data(cnt, iso, dn.name, x, signal)
+
+        for dn, signal in zip(keys, signals):
+            det = self._get_detector(dn)
+            if det:
+                self._set_plot_data(cnt, det.isotope, det.name, x, signal)
 
     def _get_fit(self, cnt, det, iso):
 
@@ -264,17 +269,34 @@ class DataCollector(Consoleable):
         """
             if is_baseline than use detector to get isotope
         """
-        try:
-            # get fit and name
-            fit, name = self._get_fit(cnt, det, iso)
-        except AttributeError, e:
-            self.debug('set_plot_data, get_fit {}'.format(e))
-            return
-
-        # print fit, name, det, iso
         graph = self.plot_panel.isotope_graph
-        pid = graph.get_plotid_by_ytitle(name)
-        if pid is not None:
+        if iso is None:
+            pids = []
+            for isotope in self.isotope_group.isotopes.itervalues():
+                # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
+                if isotope.detector == det:
+                    pid = graph.get_plotid_by_ytitle(isotope.name)
+                    if pid is not None:
+                        try:
+                            fit, name = self._get_fit(cnt, det, isotope.name)
+                        except BaseException, e:
+                            self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
+                                                                                                 det, e))
+                            continue
+                        pids.append((pid, fit))
+        else:
+            try:
+                # get fit and name
+                fit, name = self._get_fit(cnt, det, iso)
+            except AttributeError, e:
+                self.debug('set_plot_data, get_fit {}'.format(e))
+
+            pids = [(graph.get_plotid_by_ytitle(name), fit)]
+
+        if self.is_baseline:
+            print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
+
+        for pid, fit in pids:
             # print self.series_idx, self.fit_series_idx
             # print graph.plots[pid].plots
             graph.add_datum((x, signal),

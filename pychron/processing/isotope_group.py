@@ -209,7 +209,9 @@ class IsotopeGroup(HasTraits):
 
             xs = npappend(isotope.xs, x)
             ys = npappend(isotope.ys, signal)
-            isotope.trait_setq(xs=xs, ys=ys)
+            isotope.xs = xs
+            isotope.ys = ys
+            # isotope.trait_setq(xs=xs, ys=ys)
             # isotope.xs = hstack((isotope.xs, (x,)))
             # isotope.ys = hstack((isotope.ys, (signal,)))
             isotope.dirty = True

@@ -257,7 +257,10 @@ class GitRepoManager(Loggable):
             # prog.close()
 
     def clone(self, url, path):
-        self._repo = Repo.clone_from(url, path)
+        try:
+            self._repo = Repo.clone_from(url, path)
+        except GitCommandError, e:
+            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e,url, path))
 
     def unpack_blob(self, hexsha, p):
         """
@@ -626,7 +629,8 @@ class GitRepoManager(Loggable):
         return True
 
     def fetch(self, remote='origin'):
-        return self._repo.git.fetch(remote)
+        if self._repo:
+            return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
         ahead = 0

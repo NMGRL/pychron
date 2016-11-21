@@ -245,6 +245,7 @@ class AutomatedRunPersister(BasePersister):
                            ('grouping_suffix', str)):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
+        set_preference(preferences, self, 'use_massspec_database', 'pychron.massspec.database.enabled', to_bool)
     # ===============================================================================
     # data writing
     # ===============================================================================

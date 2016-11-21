@@ -285,6 +285,6 @@ class StatsGroup(ExperimentStats):
 
     @property
     def etf_iso(self):
-        return self.format_duration(self._total_time)
+        return self.format_duration(self._total_time, fmt='iso')
 
 # ============= EOF =============================================

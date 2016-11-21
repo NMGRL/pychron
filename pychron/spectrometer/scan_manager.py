@@ -43,7 +43,7 @@ from pychron.spectrometer.readout_view import ReadoutView
 class ScanManager(StreamGraphManager):
     spectrometer = Any
     ion_optics_manager = Instance(
-            'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
+        'pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
 
     readout_view = Instance(ReadoutView)
 
@@ -236,12 +236,12 @@ class ScanManager(StreamGraphManager):
             if self.use_log_events:
                 if iso == NULL_STR:
                     self.add_spec_event_marker(
-                            'DAC={:0.5f}'.format(self.magnet.dac),
-                            bgcolor='red')
+                        'DAC={:0.5f}'.format(self.magnet.dac),
+                        bgcolor='red')
                 else:
                     self.add_spec_event_marker(
-                            '{}:{} ({:0.5f})'.format(self.detector,
-                                                     iso, self.magnet.dac))
+                        '{}:{} ({:0.5f})'.format(self.detector,
+                                                 iso, self.magnet.dac))
 
             self.debug('setting isotope: {}'.format(iso))
             self._suppress_isotope_change = True
@@ -284,11 +284,15 @@ class ScanManager(StreamGraphManager):
             if self._check_intensity_no_change(signals):
                 return
 
+            series, idxs = zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys))
+            signals = [signals[idx] for idx in idxs]
+
             x = self.graph.record_multiple(signals,
+                                           series=series,
                                            track_y=False)
 
             if self.graph_y_auto:
-                mi,ma = self._get_graph_y_min_max()
+                mi, ma = self._get_graph_y_min_max()
 
                 self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
@@ -352,13 +356,13 @@ class ScanManager(StreamGraphManager):
                         if not self.confirmation_dialog(
                                 'Are you sure you want to make this move.\n'
                                 'This will place {} fA on {}'.format(
-                                        det.intensity,
-                                        self.detector)):
+                                    det.intensity,
+                                    self.detector)):
 
                             self.debug(
-                                    'aborting magnet move {} intensity {} > {}'.format(
-                                            det, det.intensity,
-                                            threshold))
+                                'aborting magnet move {} intensity {} > {}'.format(
+                                    det, det.intensity,
+                                    threshold))
                             if is_detector:
                                 do_later(self.trait_set, detector=prev)
                             else:
@@ -503,6 +507,7 @@ class ScanManager(StreamGraphManager):
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
+            print 'adding det {} {}'.format(i, det.name)
             g.new_series(visible=det.active,
                          color=det.color)
             g.set_series_label(det.name)
@@ -514,8 +519,8 @@ class ScanManager(StreamGraphManager):
                           normalize_time=True,
                           use_date_str=False)
             dto = DataToolOverlay(
-                    component=plot,
-                    tool=dt)
+                component=plot,
+                tool=dt)
             plot.tools.append(dt)
             plot.overlays.append(dto)
 
@@ -562,4 +567,5 @@ class ScanManager(StreamGraphManager):
         ms = MassScanner(spectrometer=self.spectrometer)
         ms.load()
         return ms
+
 # ============= EOF =====================================

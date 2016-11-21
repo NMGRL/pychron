@@ -144,7 +144,8 @@ class BaseMagnet(HasTraits):
 
         dac = mass_cal_func(p, mass)
 
-        self.debug('map mass to dac {} >> {}'.format(mass, dac))
+        self.debug('{} map mass coeffs = {}'.format(detname, p))
+        self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
 
         return dac
 
@@ -168,8 +169,11 @@ class BaseMagnet(HasTraits):
 
         m = self.map_dac_to_mass(dac, det.name)
         if m is not None:
-            molweights = self.spectrometer.molecular_weights
-            return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
+            return self.spectrometer.map_isotope(m)
+            # molweights = self.spectrometer.molecular_weights
+            # return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
+
+
 
     def mass_change(self, m):
         """
