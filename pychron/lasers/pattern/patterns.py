@@ -15,24 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from chaco.api import AbstractOverlay
-from traits.api import Bool, Float, Button, Instance, Range, Str, Property
-from traits.has_traits import HasTraits
-from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
+import math
+import os
 
-# ============= standard library imports ========================
-from numpy import array, transpose
-# ============= local library imports  ==========================
+from chaco.api import AbstractOverlay
+from numpy import array, transpose, linspace, sin, pi, append, arange, asarray, diff, roll, \
+    gradient, sign, hstack
+from scipy import signal
+from traits.api import Bool, Float, Button, Instance, Range, Str, Property, Enum, on_trait_change
+from traits.has_traits import HasTraits
+from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring, VGroup, Tabbed, UItem
+
 from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
     polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
-
 from pychron.graph.graph import Graph
-import os
-# from pychron.image.image import Image
-# from chaco.data_range_1d import DataRange1D
-# from chaco.linear_mapper import LinearMapper
-import math
 from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
+from pychron.pychron_constants import NULL_STR
 
 POLYGONS = ['triangle', 'diamond', 'pentagon', 'hexagon', 'heptagon', 'octogon', 'nonagon', 'decagon']
 
@@ -174,8 +172,12 @@ class OverlapOverlay(AbstractOverlay):
                 # gc.restore_state()
 
 
+AMPLITUDE_PATTERNS = (NULL_STR, 'Sine', 'Square', 'Saw')
+
+
 class Pattern(HasTraits):
     graph = Instance(Graph, (), transient=True)
+    amplitude_graph = Instance(Graph, (), transient=True)
     cx = Float(transient=True)
     cy = Float(transient=True)
     target_radius = Range(0.0, 3.0, 1)
@@ -194,26 +196,53 @@ class Pattern(HasTraits):
 
     niterations = Range(1, 200)
     disable_at_end = Bool(False)
+    xy_pattern_enabled = Bool(True)
+
+    z_duration = Float
+    power_duration = Float
+
+    z_period = Float(1)
+    z_duty = Float
+    z_min = Float
+    z_max = Float(10)
+    z_offset = Float(10)
+    z_sample = Float
+    z_func = Enum(AMPLITUDE_PATTERNS)
+    z_pattern_enabled = Bool
+    z_use_transit_time = Bool
+
+    power_period = Float
+    power_duty = Float
+    power_min = Float(1)
+    power_max = Float(10)
+    power_offset = Float(10)
+    power_func = Enum(AMPLITUDE_PATTERNS)
+    power_sample = Float
+    power_pattern_enabled = Bool
+    power_use_transit_time = Bool
+
+    def __init__(self, *args, **kw):
+        super(Pattern, self).__init__(*args, **kw)
+
+        self.z_func = 'Saw'
+
+        self.z_duration = 5
+        self.z_sample = 0.5
 
     @property
     def kind(self):
         return self.__class__.__name__
 
+    @property
+    def power_pattern(self):
+        return self.power_func != NULL_STR and self.power_pattern_enabled
+
+    @property
+    def z_pattern(self):
+        return self.z_func != NULL_STR and self.z_pattern_enabled
+
     def generate_name(self):
         return '{}_BR{}'.format(self._basename(), self.beam_radius)
-
-    def _basename(self):
-        return self.kind
-
-    def _get_name(self):
-        if not self.path:
-            return 'New Pattern'
-        return os.path.basename(self.path).split('.')[0]
-
-    def _anytrait_changed(self, name, new):
-        if name != 'calculated_transit_time':
-            self.replot()
-            self.calculate_transit_time()
 
     def calculate_transit_time(self):
         try:
@@ -221,32 +250,12 @@ class Pattern(HasTraits):
         except ZeroDivisionError:
             pass
 
-    def _get_path_length(self):
-        pts = self.points_factory()
-        p1 = (self.cx, self.cy)
-        s = 0
-        for p in pts + [p1, ]:
-            d = ((p1[0] - p[0]) ** 2 + (p1[1] - p[1]) ** 2) ** 0.5
-            s += d
-            p1 = p
+        if self.power_use_transit_time:
+            self.power_duration = self.calculated_transit_time
+        if self.z_use_transit_time:
+            self.z_duration = self.calculated_transit_time
 
-        return s
-
-    def _get_delay(self):
-        return 0
-
-    def _beam_radius_changed(self):
-        oo = self.graph.plots[0].plots['plot0'][0].overlays[1]
-        oo.beam_radius = self.beam_radius
-        self.replot()
-
-    def _show_overlap_changed(self):
-        oo = self.graph.plots[0].plots['plot0'][0].overlays[1]
-        oo.visible = self.show_overlap
-        oo.request_redraw()
-
-    def _target_radius_changed(self):
-        self.graph.plots[0].plots['plot0'][0].overlays[0].target_radius = self.target_radius
+        return self.calculated_transit_time
 
     def set_stage_values(self, sm):
         pass
@@ -256,6 +265,21 @@ class Pattern(HasTraits):
 
     def replot(self):
         self.plot()
+
+    def replot_power_amplitude(self):
+        x, y, sx, sy = self._calculate_power_series()
+        self.amplitude_graph.set_data(x)
+        self.amplitude_graph.set_data(y, axis=1)
+
+        self.amplitude_graph.set_data(sx, series=2)
+        self.amplitude_graph.set_data(sy, series=2, axis=1)
+
+    def replot_z_amplitude(self):
+        x, y, sx, sy = self._calculate_z_series()
+        self.amplitude_graph.set_data(x, series=1)
+        self.amplitude_graph.set_data(y, series=1, axis=1)
+        self.amplitude_graph.set_data(sx, series=3)
+        self.amplitude_graph.set_data(sy, series=3, axis=1)
 
     def plot(self):
         pgen_out = self.pattern_generator_factory()
@@ -273,8 +297,7 @@ class Pattern(HasTraits):
         return list(gen_out)
 
     def graph_view(self):
-        v = View(Item('graph',
-                      style='custom', show_label=False),
+        v = View(UItem('graph', style='custom'),
                  handler=self.handler_klass,
                  title=self.name)
         return v
@@ -289,6 +312,167 @@ class Pattern(HasTraits):
     def reset_graph(self, **kw):
         self.graph = self._graph_factory(**kw)
 
+    def power_values(self):
+        x, y, sx, sy = self._calculate_power_series()
+        return sy
+
+    def z_values(self):
+        x, y, sx, sy = self._calculate_z_series()
+        return sy
+
+    # private
+    def _basename(self):
+        return self.kind
+
+    def _get_name(self):
+        if not self.path:
+            return 'New Pattern'
+        return os.path.basename(self.path).split('.')[0]
+
+    def _get_path_length(self):
+        pts = self.points_factory()
+        p1 = (self.cx, self.cy)
+        s = 0
+        for p in pts + [p1, ]:
+            d = ((p1[0] - p[0]) ** 2 + (p1[1] - p[1]) ** 2) ** 0.5
+            s += d
+            p1 = p
+
+        return s
+
+    def _get_delay(self):
+        return 0
+
+    def _calculate_power_series(self):
+        # x, y, sx, sy = [], [], [], []
+        # if self.power_func != NULL_STR:
+        #     mi = self.power_min
+        #     amp = self.power_max - self.power_min
+        #     x, y, sx, sy = self._calculate_series(self.power_func, self.power_period, amp, mi, self.power_offset,
+        #                                           self.power_sample, self.power_duty, self.power_duration)
+        # return x, y, sx, sy
+        return self._calculate_series('power')
+
+    def _calculate_z_series(self):
+        # x, y, sx, sy = [], [], [], []
+        # if self.z_func != NULL_STR:
+        #     mi = self.z_min
+        #     amp = self.z_max - mi
+        #     x, y, sx, sy = self._calculate_series(self.z_func, self.z_period, amp, mi, self.z_offset,
+        #                                           self.z_sample, self.z_duty, self.z_duration)
+        # return x, y, sx, sy
+        return self._calculate_series('z')
+
+    def _calculate_series(self, attr):
+        mi = getattr(self, '{}_min'.format(attr))
+        amp = getattr(self, '{}_max'.format(attr)) - mi
+
+        funcname = getattr(self, '{}_func'.format(attr))
+        period = getattr(self, '{}_period'.format(attr))
+        offset = getattr(self, '{}_offset'.format(attr))
+        speriod = getattr(self, '{}_sample'.format(attr))
+        duty = getattr(self, '{}_duty'.format(attr))
+        duration = getattr(self, '{}_duration'.format(attr))
+
+        x, y, sx, sy = [], [], [], []
+        if funcname != NULL_STR:
+            if self.xy_pattern_enabled and getattr(self, '{}_use_transit_time'.format(attr)):
+                t = self.calculate_transit_time()
+            else:
+                t = duration
+
+            t = t or 1
+            x = linspace(0, t, 500)
+
+            speriod = speriod or 1
+            sx = arange(0, t, speriod)
+            if sx[-1] < t:
+                sx = append(sx, t)
+
+            if funcname == 'Sine':
+                def func(xx):
+                    return (mi + amp) + amp * sin(period * xx + offset)
+
+                y = func(x)
+
+            elif funcname == 'Square':
+                def func(xx):
+                    return 0.5 * amp * (signal.square(period * xx * 2 * pi + offset, duty=duty / 100.) + 1) + mi
+
+                y = func(x)
+
+                bx = asarray(diff(y), dtype=bool)
+                bx = roll(bx, 1)
+
+                sx = x[bx]
+                sx = append(asarray([0]), sx)
+                sx = append(sx, asarray([t]))
+
+            elif funcname == 'Saw':
+                def func(xx):
+                    return 0.5 * amp * (signal.sawtooth(period * xx * 2 * pi + offset) + 1) + mi
+
+                y = func(x)
+
+                asign = sign(gradient(y))
+                signchange = ((roll(asign, 1) - asign) != 0).astype(bool)
+                signchange[0] = False
+                nsx = x[signchange]
+                sx = hstack((sx, nsx))
+
+            sy = func(sx)
+
+        return x, y, sx, sy
+
+    # handlers
+    def _beam_radius_changed(self):
+        oo = self.graph.plots[0].plots['plot0'][0].overlays[1]
+        oo.beam_radius = self.beam_radius
+        self.replot()
+
+    def _show_overlap_changed(self):
+        oo = self.graph.plots[0].plots['plot0'][0].overlays[1]
+        oo.visible = self.show_overlap
+        oo.request_redraw()
+
+    def _target_radius_changed(self):
+        self.graph.plots[0].plots['plot0'][0].overlays[0].target_radius = self.target_radius
+
+    @on_trait_change('z_+,p_+')
+    def _handle_amplitude_change(self, obj, name, new):
+        if name in ('z_sample', 'p_sample') and not new:
+            return
+
+        if name.startswith('z'):
+            self.replot_z_amplitude()
+        else:
+            self.replot_power_amplitude()
+
+    def _anytrait_changed(self, name, new):
+        if name != 'calculated_transit_time':
+            self.replot()
+            self.calculate_transit_time()
+
+    # factories
+    def _amplitude_graph_factory(self):
+        g = Graph()
+        p = g.new_plot(show_legend='ul')
+        p.index_range.tight_bounds = False
+        p.value_range.tight_bounds = False
+
+        x, y, spx, spy = self._calculate_power_series()
+        g.new_series(x, y, type='line', color='red')
+        g.set_series_label('Power')
+        x, y, szx, szy = self._calculate_z_series()
+        g.new_series(x, y, type='line', color='blue')
+        g.set_series_label('Z')
+
+        g.new_series(spx, spy, type='scatter', color='red')
+        g.new_series(szx, szy, type='scatter', color='blue')
+
+        # g.new_series(type='scatter', marker='circle')
+        return g
+
     def _graph_factory(self, **kw):
         g = Graph(
             window_height=250,
@@ -296,8 +480,8 @@ class Pattern(HasTraits):
             container_dict=dict(padding=0))
         g.new_plot(
             bounds=[250, 250],
-            resizable='',
-            padding=[30, 0, 0, 30])
+            aspect_ratio=1,
+            resizable='', padding=[30, 0, 0, 30])
 
         cx = self.cx
         cy = self.cy
@@ -331,29 +515,61 @@ class Pattern(HasTraits):
     def _graph_factory_hook(self, lp):
         pass
 
+    # defaults
+    def _amplitude_graph_default(self):
+        return self._amplitude_graph_factory()
+
     def _graph_default(self):
         return self._graph_factory()
 
+    # views
     def maker_group(self):
-        return Group(
-            self.get_parameter_group(),
-            Item('disable_at_end', tooltip='Disable Laser at end of patterning'),
-            Item('niterations'),
-            HGroup(Item('velocity'),
-                   Item('calculated_transit_time',
-                        label='Time (s)',
-                        style='readonly',
-                        format_str='%0.1f')),
-            Item('target_radius'),
-            Item('show_overlap'),
-            Item('beam_radius', enabled_when='show_overlap'),
+        para_grp = Group(self.get_parameter_group(),
+                         show_border=True,
+                         label='Parameters')
+        pattern_grp = VGroup(HGroup(Item('disable_at_end', label='Disable at End',
+                                         tooltip='Disable Laser at end of patterning'),
+                                    Item('niterations', label='N. Iterations')),
+                             HGroup(Item('velocity'),
+                                    Item('calculated_transit_time',
+                                         label='Time (s)',
+                                         style='readonly',
+                                         format_str='%0.1f')),
+                             label='XY Pattern', show_border=True)
 
-            show_border=True,
-            label='Pattern')
+        display_grp = Group(Item('target_radius'),
+                            Item('show_overlap'),
+                            Item('beam_radius', enabled_when='show_overlap'),
+                            show_border=True, label='Display')
+
+        z_grp = self._get_amplitude_group('z', 'Z')
+        power_grp = self._get_amplitude_group('power', 'Power')
+
+        return Tabbed(VGroup(Item('xy_pattern_enabled'),
+                             para_grp, pattern_grp, display_grp,
+                             label='Pattern'), z_grp, power_grp)
+
+    def _get_amplitude_group(self, tag, label):
+        grp = VGroup(Item('{}_pattern_enabled'.format(tag), label='Enabled'),
+                     VGroup(HGroup(Item('{}_use_transit_time'.format(tag)),
+                                   Item('{}_duration'.format(tag), enabled_when='not {}_use_transit_time'.format(tag))),
+                            HGroup(Item('{}_period'.format(tag)),
+                                   Item('{}_duty'.format(tag), visible_when='{}_func=="Square"'.format(tag))),
+
+                            Item('{}_offset'.format(tag)),
+                            Item('{}_min'.format(tag)),
+                            Item('{}_max'.format(tag)),
+                            Item('{}_func'.format(tag)),
+                            Item('{}_sample'.format(tag), visible_when='{}_func!="Square"'.format(tag)),
+                            enabled_when='{}_pattern_enabled'.format(tag)),
+                     # show_border=True,
+                     label=label)
+        return grp
 
     def maker_view(self):
         v = View(HGroup(self.maker_group(),
-                        Item('graph', show_label=False, style='custom')),
+                        Tabbed(UItem('graph', style='custom'),
+                               UItem('amplitude_graph', style='custom'))),
                  resizable=True)
         return v
 
