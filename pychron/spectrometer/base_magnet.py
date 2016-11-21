@@ -18,7 +18,6 @@
 from traits.api import HasTraits, Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 # ============= standard library imports ========================
-from scipy import optimize
 # ============= local library imports  ==========================
 # from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
 
@@ -109,23 +108,7 @@ class BaseMagnet(HasTraits):
         :param detname: str, name of a detector, e.g H1
         :return: float, mass
         """
-        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
-        detname = get_detector_name(detname)
-
-        d = self.mftable.get_table()
-
-        _, xs, ys, p = d[detname]
-
-        def func(x, *args):
-            c = list(p)
-            c[-1] -= dac
-            return mass_cal_func(c, x)
-        try:
-            mass = optimize.brentq(func, 0, 200)
-            return mass
-
-        except ValueError, e:
-            self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+        return self.mftable.map_dac_to_mass(dac, detname)
 
     def map_mass_to_dac(self, mass, detname):
         """
@@ -136,15 +119,7 @@ class BaseMagnet(HasTraits):
         :return: float, dac voltage
         """
 
-        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
-
-        detname = get_detector_name(detname)
-        d = self.mftable.get_table()
-        _, xs, ys, p = d[detname]
-
-        dac = mass_cal_func(p, mass)
-
-        self.debug('{} map mass coeffs = {}'.format(detname, p))
+        dac = self.mftable.map_mass_to_dac(mass, detname)
         self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
 
         return dac

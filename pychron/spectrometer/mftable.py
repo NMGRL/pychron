@@ -15,16 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property, Event
-# from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
-import shutil
 import csv
-import os
 import hashlib
-from numpy import asarray, array, nonzero, poly1d
-from scipy.optimize import leastsq
-# ============= local library imports  ==========================
+import os
+import shutil
+
+from numpy import asarray, array, nonzero, polyval
+from scipy.optimize import leastsq, optimize
+from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, Event
+
 from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -35,13 +34,6 @@ def get_detector_name(det):
     if not isinstance(det, (str, unicode)):
         det = det.name
     return det
-
-
-def mass_cal_func(p, x):
-    return poly1d(p)(x)
-
-
-    # return p[0]*x**3+p[1]*x**2+p[2]*x+p[3]
 
 
 def least_squares(func, xs, ys, initial_guess):
@@ -74,6 +66,7 @@ class MagnetFieldTable(Loggable):
     use_db_archive = Bool
     path = Property(depends_on='_path_dirty')
     _path_dirty = Event
+    mass_cal_func = 'cubic'
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
@@ -104,12 +97,56 @@ class MagnetFieldTable(Loggable):
         bind_preference(self, 'use_db_archive',
                         '{}.use_db_mftable_archive'.format(prefid))
 
+    def map_dac_to_mass(self, dac, detname):
+        detname = get_detector_name(detname)
+
+        d = self.mftable.get_table()
+
+        _, xs, ys, p = d[detname]
+        if self.polynominal_mass_func:
+            def func(x, *args):
+                c = list(p)
+                c[-1] -= dac
+                return polyval(c, x)
+
+            try:
+                mass = optimize.brentq(func, 0, 200)
+                return mass
+            except ValueError, e:
+                self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+        else:
+            try:
+                idx = ys.index(dac)
+                return xs[idx]
+            except IndexError:
+                self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+
+    def map_mass_to_dac(self, mass, detname):
+
+        self.debug('Mapping mass to dac mass func: "{}"'.format(self.mass_cal_func))
+        detname = get_detector_name(detname)
+        d = self.mftable.get_table()
+        _, xs, ys, p = d[detname]
+
+        if self.polynominal_mass_func:
+            self.debug('{} map mass coeffs = {}'.format(detname, p))
+            dac = polyval(p, mass)
+        else:
+            self.debug('using discrete mass mapping')
+            dac = self.get_dac(detname, mass)
+
+        return dac
+
     def get_dac(self, det, isotope):
         det = get_detector_name(det)
         d = self._get_mftable()
         isos, xs, ys = map(array, d[det][:3])
         refindex = min(nonzero(isos == isotope)[0])
         return ys[refindex]
+
+    @property
+    def polynominal_mass_func(self):
+        return self.mass_cal_func in ('linear', 'parabolic', 'cubic')
 
     def update_field_table(self, det, isotope, dac, message):
         """
@@ -132,7 +169,11 @@ class MagnetFieldTable(Loggable):
             # ys += delta
             for k, (iso, xx, yy, _) in d.iteritems():
                 ny = yy + delta
-                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0, 0])
+                initial_guess = self._get_initial_guess(ny, xx)
+                if initial_guess:
+                    p = least_squares(polyval, xx, ny, initial_guess)
+                else:
+                    p = None
                 d[k] = iso, xx, ny, p
 
             self.dump(isos, d, message)
@@ -223,7 +264,17 @@ class MagnetFieldTable(Loggable):
         with open(p, 'U') as f:
             reader = csv.reader(f)
             table = []
-            detectors = map(str.strip, next(reader)[1:])
+
+            line0 = next(reader)
+            if line0[0].strip() == 'iso':
+                detline = line0
+                mass_func = 'cubic'
+            else:
+                mass_func = line0[0].strip()
+                detline = next(reader)
+            detectors = map(str.strip, detline[1:])
+
+            self.mass_cal_func = mass_func
             for line in reader:
                 iso = line[0]
                 try:
@@ -250,12 +301,17 @@ class MagnetFieldTable(Loggable):
             isos, mws = list(table[0]), list(table[1])
 
             d = {}
+
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
-                try:
-                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0, 0])
-                except TypeError:
-                    c = (0, 0, 1, ys[0])
+                initial_guess = self._get_initial_guess(ys, mws)
+                if initial_guess:
+                    try:
+                        c = least_squares(polyval, mws, ys, initial_guess=initial_guess)
+                    except TypeError:
+                        c = (0, 1, ys[0])
+                else:
+                    c = None
 
                 d[k] = (isos, mws, ys, c)
 
@@ -263,6 +319,17 @@ class MagnetFieldTable(Loggable):
             # self._mftable={k: (isos, mws, table[2 + i], )
             # for i, k in enumerate(detectors)}
             self._detectors = detectors
+
+    def _get_initial_guess(self, y, x):
+        initial_guess = None
+        mass_func = self.mass_cal_func
+        if mass_func == 'linear':
+            initial_guess = [y[0], x[0]]
+        elif mass_func == 'parabolic':
+            initial_guess = [y[0], x[0], 0]
+        elif mass_func == 'cubic':
+            initial_guess = [y[0], x[0], 0, 0]
+        return initial_guess
 
     def _report_mftable(self, detectors, items):
         self.debug('============ MFtable ===========')
