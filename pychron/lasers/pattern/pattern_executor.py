@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import cStringIO
+import os
+import time
+from threading import Thread, current_thread, Event
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
-from traits.api import Any, Bool, List
-# ============= standard library imports ========================
-import os
-import cStringIO
-import time
 from numpy import polyfit, linspace, hstack, array, average, zeros_like
-from threading import Thread, current_thread, Event
-# ============= local library imports  ==========================
+from traits.api import Any, Bool, List
+
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
 from pychron.lasers.pattern.dragonfly_pattern import dragonfly
-from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
+from pychron.paths import paths
 
 
 class PeriodCTX:
@@ -171,6 +171,9 @@ class PatternExecutor(Patternable):
             if block is true wait for patterning to finish
             before returning
         """
+        if not self.pattern:
+            return
+
         self.start(show=self.show_patterning)
         evt = None
         if current_thread().name != 'MainThread':
@@ -181,12 +184,35 @@ class PatternExecutor(Patternable):
         else:
             self._pre_execute(evt)
 
-        self.debug('execute')
-        t = Thread(target=self._execute)
-        t.start()
+        self.debug('execute xy pattern')
+
+        xyp = self.pattern.xy_pattern_enabled
+        t = None
+        if xyp:
+            t = Thread(target=self._execute_xy_pattern)
+            t.start()
+
+        pp = self.pattern.power_pattern
+        pt = None
+        if pp:
+            self.debug('execute power pattern')
+            pt = Thread(target=self._execute_power_pattern)
+            pt.start()
+
+        zp = self.pattern.z_pattern
+        zt = None
+        if zp:
+            self.debug('execute z pattern')
+            zt = Thread(target=self._execute_z_pattern)
+            zt.start()
 
         if block:
-            t.join()
+            if t:
+                t.join()
+            if zt:
+                zt.join()
+            if pt:
+                pt.join()
 
             self.finish()
 
@@ -206,31 +232,58 @@ class PatternExecutor(Patternable):
             evt.set()
         self.debug('pre execute finished')
 
-    def _execute(self):
+    def _execute_power_pattern(self):
         pat = self.pattern
-        if pat:
-            self.info('starting pattern {}'.format(pat.name))
+        self.info('starting power pattern {}'.format(pat.name))
+
+        def func(v):
+            self.laser_manager.set_laser_power(v)
+
+        self._execute_(func, pat.power_values(), pat.power_sample, 'power pattern setpoint={value}')
+
+    def _execute_z_pattern(self):
+        pat = self.pattern
+        self.info('starting power pattern {}'.format(pat.name))
+
+        def func(v):
+            self.controller.set_z(v)
+
+        self._execute_(func, pat.z_values(), pat.z_sample, 'z pattern z={value}')
+
+    def _execute_(self, func, vs, period, msg):
+        for v in vs:
             st = time.time()
-            pat.cx, pat.cy = self.controller.x, self.controller.y
-            try:
-                for ni in xrange(pat.niterations):
-                    if not self.isPatterning():
-                        break
+            self.debug(msg.format(value=v))
+            func(v)
 
-                    self.info('doing pattern iteration {}'.format(ni))
-                    self._execute_iteration()
+            et = st - time.time()
+            p = period - et
+            time.sleep(p)
 
-                self.controller.linear_move(pat.cx, pat.cy, block=True)
-                if pat.disable_at_end:
-                    self.laser_manager.disable_device()
+    def _execute_xy_pattern(self):
+        pat = self.pattern
+        self.info('starting pattern {}'.format(pat.name))
+        st = time.time()
+        pat.cx, pat.cy = self.controller.x, self.controller.y
+        try:
+            for ni in xrange(pat.niterations):
+                if not self.isPatterning():
+                    break
 
-                self.finish()
-                self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+                self.info('doing pattern iteration {}'.format(ni))
+                self._execute_iteration()
 
-            except PositionError, e:
-                self.finish()
-                self.controller.stop()
-                self.laser_manager.emergency_shutoff(str(e))
+            self.controller.linear_move(pat.cx, pat.cy, block=True)
+            if pat.disable_at_end:
+                self.laser_manager.disable_device()
+
+            self.finish()
+            self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+
+        except PositionError, e:
+            self.finish()
+            self.controller.stop()
+            self.laser_manager.emergency_shutoff(str(e))
 
     def _execute_iteration(self):
         controller = self.controller
