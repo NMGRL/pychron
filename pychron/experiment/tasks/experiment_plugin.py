@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List
 
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.experiment.events import ExperimentEventAddition
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
@@ -39,6 +41,7 @@ from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
 
+    events = ExtensionPoint(List(ExperimentEventAddition), id='pychron.experiment.events')
     # def start(self):
     #     super(ExperimentPlugin, self).start()
     #     # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
@@ -66,7 +69,8 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         # return ExperimentEditorTask(manager=self.experimentor)
-        return ExperimentEditorTask(application=self.application)
+        return ExperimentEditorTask(application=self.application,
+                                    events=self.events)
 
     def _preferences_default(self):
         return self._preferences_factory('experiment')
