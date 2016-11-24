@@ -55,8 +55,8 @@ class GoogleCalendarPreferencesPane(PreferencesPane):
 
 class GoogleCalendarExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.google_calendar.experiment'
-    use_google_calendar = Bool
-    google_calendar_run_delay = Int
+    enabled = Bool
+    run_delay = Int
 
 
 class GoogleCalendarExperimentPreferencesPane(PreferencesPane):
@@ -64,8 +64,8 @@ class GoogleCalendarExperimentPreferencesPane(PreferencesPane):
     model_factory = GoogleCalendarExperimentPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('use_google_calendar'),
-                        Item('google_calendar_run_delay',
+        v = View(VGroup(Item('enabled', Label='Enabled', tooltip='Post experiment events to Google Calendar'),
+                        Item('run_delay',
                              tooltip='Only post an event after at least "Run Delay" runs have been completed',
                              label='Run Delay')))
         return v

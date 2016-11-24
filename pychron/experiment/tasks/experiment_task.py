@@ -79,6 +79,7 @@ class ExperimentEditorTask(EditorTask):
     load_pane = Instance('pychron.loading.tasks.panes.LoadDockPane')
     load_table_pane = Instance('pychron.loading.tasks.panes.LoadTablePane')
     laser_control_client_pane = None
+    events = None
 
     def save_as_current_experiment(self):
         self.debug('save as current experiment')
@@ -790,6 +791,7 @@ class ExperimentEditorTask(EditorTask):
 
         experimentor.executor.set_managers()
         experimentor.executor.bind_preferences()
+        experimentor.executor.events = self.events
 
         return experimentor
 

@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance, Bool, Int
-# ============= standard library imports ========================
+import hashlib
+import os
+import time
 from datetime import datetime
 from threading import Thread, Lock
-import os
-import hashlib
-import time
+
 import yaml
-# ============= local library imports  ==========================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, Bool, Int
+
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
-from pychron.pychron_constants import SCRIPT_NAMES
 from pychron.paths import paths
+from pychron.pychron_constants import SCRIPT_NAMES
 
 
 def auto_connect(func):
@@ -152,14 +152,11 @@ class LabspyClient(Loggable):
             time.sleep(max(0, period - et))
 
     @auto_connect
-    def add_experiment(self, exp):
+    def add_experiment(self, name, starttime, mass_spectrometer, username):
         # if self.db.connected:
         # with self.db.session_ctx():
-        hid = self._generate_hid(exp)
-        self.db.add_experiment(name=exp.name,
-                               start_time=exp.starttime,
-                               system=exp.mass_spectrometer,
-                               user=exp.username)
+        # hid = self._generate_hid(exp)
+        self.db.add_experiment(name, starttime, mass_spectrometer, username)
         # ExtractionDevice=exp.extract_device,
         # HashID=hid)
 

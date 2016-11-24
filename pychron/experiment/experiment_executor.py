@@ -38,6 +38,7 @@ from pychron.core.ui.led_editor import LED
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
+from pychron.experiment import events
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
@@ -134,9 +135,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
-    labspy_client = Instance('pychron.labspy.client.LabspyClient')
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
-    google_calendar_client = Instance('pychron.social.google_calendar.client.GoogleCalendarClient')
 
     scheduler = Instance(ExperimentScheduler)
     # ===========================================================================
@@ -154,9 +153,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
-    use_labspy = Bool
-    use_google_calendar = Bool
-    google_calendar_run_delay = Int
 
     use_dashboard_client = Bool
     min_ms_pumptime = Int(30)
@@ -252,13 +248,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # dashboard
         self._preference_binder('pychron.dashboard.experiment', ('use_dashboard_client',))
-
-        # labspy
-        self._preference_binder('pychron.labspy.experiment', ('use_labspy',))
-
-        # google calendar
-        self._preference_binder('pychron.google_calendar.experiment', ('use_google_calendar',
-                                                                       'google_calendar_run_delay'))
 
         # system health
         self._preference_binder(prefid, ('use_system_health',))
@@ -376,27 +365,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # private
     # ===============================================================================
-    def _add_event(self):
-        exp = self.experiment_queue
-        if self.use_labspy:
-            self.labspy_client.add_experiment(exp)
+    def _do_event(self, level, **kw):
+        self.debug('doing event level: {}'.format(level))
+        ctx = self._make_event_context()
+        ctx.update(**kw)
+        for evt in self.events:
+            if evt.level == level:
+                try:
+                    evt.do(ctx)
+                except BaseException, e:
+                    self.warning('Event {} failed. exception: {}'.format(evt.id, e))
+                    import traceback
+                    self.debug(traceback.format_exc())
 
-        self.debug('$$$$$$$$$$$$$$ Google Calendar, {}, {}'.format(self.use_google_calendar, self.google_calendar_run_delay))
-        if self.use_google_calendar and self.google_calendar_client:
-            if self.stats.nruns_finished >= self.google_calendar_run_delay:
-                summary = 'Experiment: {}'.format(exp.name)
-                description = ''
-                self.google_calendar_client.post_event(summary,
-                                                       description,
-                                                       self.stats.etf_iso)
+    def _make_event_context(self, exp=None):
+        if exp is None:
+            exp = self.experiment_queue
 
-    def _end_event(self):
-        exp = self.experiment_queue
-        if self.use_labspy:
-            self.labspy_client.update_experiment(exp, self._err_message)
-        if self.use_google_calendar and self.google_calendar_client:
-            d = {'end': 'now', 'summary': 'Experiment: {} {}'.format(exp.name, self._err_message)}
-            self.google_calendar_client.edit_event(d)
+        ctx = {'etf_iso': self.stats.etf_iso,
+               'err_message': self._err_message,
+               'experiment_name': exp.name,
+               'starttime': exp.starttime,
+               'mass_spectrometer': exp.mass_spectrometer,
+               'username': exp.username,
+               'nruns_finished': self.stats.nruns_finished}
+        return ctx
 
     def _reset(self):
         self.alive = True
@@ -508,7 +501,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
 
-        self._add_event()
+        self._do_event(events.EXECUTE_QUEUE)
+        # self._add_event()
 
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
@@ -658,7 +652,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.info('Notifying user group names={}'.format(','.join(names)))
                 self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
 
-        self._end_event()
+        self._do_event(events.END_QUEUE)
+        # self._end_event()
 
     def _get_group_emails(self, email):
         names, addrs = None, None
@@ -739,6 +734,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.stats:
             self.stats.start_run(run)
 
+        self._do_event(events.START_RUN)
         run.spec.state = 'not run'
 
         q = self.experiment_queue
@@ -802,8 +798,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.autoplot_event = run
 
         self.wait_group.pop()
-        if self.use_labspy:
-            self.labspy_client.add_run(run, self.experiment_queue)
+        # if self.use_labspy:
+        #     self.labspy_client.add_run(run, self.experiment_queue)
 
         if self.use_system_health:
             self._add_system_health(run)
@@ -821,6 +817,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         self._close_cv()
 
+        self._do_event(events.END_RUN,
+                       run=run,
+                       experiment_queue=self.experiment_queue)
         self._set_thread_name(self.experiment_queue.name)
 
     def _close_cv(self):
@@ -2166,14 +2165,6 @@ Use Last "blank_{}"= {}
     def _dashboard_client_default(self):
         if self.use_dashboard_client:
             return self.application.get_service('pychron.dashboard.client.DashboardClient')
-
-    def _labspy_client_default(self):
-        if self.use_labspy:
-            return self.application.get_service('pychron.labspy.client.LabspyClient')
-
-    def _google_calendar_client_default(self):
-        if self.use_google_calendar:
-            return self.application.get_service('pychron.social.google_calendar.client.GoogleCalendarClient')
 
     def _scheduler_default(self):
         return ExperimentScheduler()

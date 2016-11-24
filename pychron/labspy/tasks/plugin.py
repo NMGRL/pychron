@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import on_trait_change
+from traits.api import on_trait_change, List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.experiment.events import ExperimentEventAddition
 from pychron.labspy.client import LabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane, LabspyExperimentPreferencesPane
 
@@ -25,6 +26,30 @@ from pychron.labspy.tasks.preferences import LabspyPreferencesPane, LabspyExperi
 class LabspyClientPlugin(BaseTaskPlugin):
     name = 'LabspyClient'
     id = 'pychron.labspy_client.plugin'
+
+    events = List(contributes_to='pychron.experiment.events')
+
+    def _events_default(self):
+        e1 = ExperimentEventAddition(id='pychron.labspy.add_run',
+                                     action=self._add_run)
+        e2 = ExperimentEventAddition(id='pychron.labspy.add_experiment',
+                                     action=self._add_experiment)
+        return [e1, e2]
+
+    def _add_run(self, ctx):
+        self.debug('add run')
+        if self.application.get_boolean_preference('pychron.labspy.experiment.enabled'):
+            client = self.application.get_service(LabspyClient)
+            client.add_run(ctx['run'], ctx['experiment_queue'])
+
+    def _add_experiment(self, ctx):
+        self.debug('add experiment')
+        if self.application.get_boolean_preference('pychron.labspy.experiment.enabled'):
+            client = self.application.get_service(LabspyClient)
+            client.add_experiment(ctx['experiment_name'],
+                                  ctx['starttime'],
+                                  ctx['mass_spectrometer'],
+                                  ctx['username'])
 
     def _labspy_client_factory(self, *args, **kw):
         return LabspyClient(application=self.application)

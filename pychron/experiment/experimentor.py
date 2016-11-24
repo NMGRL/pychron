@@ -334,11 +334,9 @@ class Experimentor(DVCIrradiationable):
         rf.suppress_update = False
 
     def _executor_factory(self):
-        e = ExperimentExecutor(
-            mode=self.mode,
-            application=self.application)
+        e = ExperimentExecutor(mode=self.mode,
+                               application=self.application)
         e.bind_preferences()
-
         return e
 
     # ===============================================================================

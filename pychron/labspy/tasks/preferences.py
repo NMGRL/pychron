@@ -81,7 +81,7 @@ class LabspyPreferencesPane(PreferencesPane):
 
 class LabspyExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.labspy.experiment'
-    use_labspy = Bool
+    enabled = Bool
 
 
 class LabspyExperimentPreferencesPane(PreferencesPane):
@@ -89,7 +89,7 @@ class LabspyExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        v = View(VGroup(Item('use_labspy', label='Use Labspy'),
+        v = View(VGroup(Item('enabled', label='Use Labspy'),
                         label='Labspy', show_border=True))
         return v
 
