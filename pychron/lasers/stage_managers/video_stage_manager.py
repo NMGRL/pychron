@@ -65,7 +65,6 @@ class VideoStageManager(StageManager):
 
     snapshot_button = Button('Snapshot')
     auto_save_snapshot = Bool(True)
-    keep_images_open = Bool(False)
 
     record = Event
     record_label = Property(depends_on='is_recording')

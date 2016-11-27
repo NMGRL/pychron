@@ -174,10 +174,14 @@ class Video(Image):
         return src.clone()
 
     # private
-    def _ready_to_save(self):
+    def _ready_to_save(self, timeout=120):
         if self._save_ok_event:
+            st = time.time()
             while not self._save_ok_event.is_set():
                 time.sleep(0.5)
+                if timeout and time.time()-st>timeout:
+                    return
+
             return True
 
     def _ffmpeg_record(self, path, stop, fps, renderer=None):
@@ -262,6 +266,8 @@ class Video(Image):
                 return img
 
     def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
+        print 'convert to video. FFmpeg={}'.format(self.ffmpeg_path)
+
         ffmpeg = self.ffmpeg_path
         convert_to_video(path, fps, name_filter, ffmpeg, output)
 

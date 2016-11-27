@@ -23,6 +23,7 @@ from pychron.media_storage.tasks.task import MediaStorageTask
 
 
 class MediaStoragePlugin(BaseTaskPlugin):
+    name = 'Media Storage'
     id = 'pychron.media_storage.plugin'
 
     def _media_storage_factory(self):
@@ -43,6 +44,7 @@ class MediaStoragePlugin(BaseTaskPlugin):
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.media_storage.task_factory',
+                            include_view_menu=False,
                             factory=self._media_storage_factory)]
 
 # ============= EOF =============================================

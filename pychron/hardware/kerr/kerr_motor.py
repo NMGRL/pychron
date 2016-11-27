@@ -344,10 +344,11 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             return self._hexstr_to_float(pos)
 
     def _test_status_byte(self, status, setbits):
-        b = '{:08b}'.format(int(status[:2], 16))
-        bb = [bool(int(b[7 - si])) for si in setbits]
+        if status:
+            b = '{:08b}'.format(int(status[:2], 16))
+            bb = [bool(int(b[7 - si])) for si in setbits]
 
-        return all(bb)
+            return all(bb)
 
     def _moving(self, verbose=True):
         status_byte = self.read_defined_status(verbose=verbose)
