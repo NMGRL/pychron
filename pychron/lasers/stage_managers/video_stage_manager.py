@@ -27,7 +27,7 @@ from traits.api import Instance, String, Property, Button, Bool, Event, on_trait
 from pychron.canvas.canvas2D.camera import Camera
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
-from pychron.image.video import Video
+from pychron.image.video import Video, pil_save
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from stage_manager import StageManager
@@ -281,8 +281,8 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
-    crop_width = 2
-    crop_height = 2
+    crop_width = 5
+    crop_height = 5
 
     def get_scores(self, **kw):
         ld = self.lumen_detector
@@ -398,7 +398,15 @@ class VideoStageManager(StageManager):
         #     self.info('saving {} to database'.format(basename))
         #     db.commit()
 
-        renderer = None
+        video = self.video
+
+        def renderer(p):
+            cw, ch = self.get_frame_size()
+            frame = video.get_cached_frame()
+            frame = video.crop(frame, 0, 0, cw, ch)
+            if frame is not None:
+                pil_save(frame, p)
+
         if self.render_with_markup:
             renderer = self._render_snapshot
 
