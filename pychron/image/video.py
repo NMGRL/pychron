@@ -20,10 +20,12 @@ import shutil
 import time
 from threading import Thread, Lock, Event
 
+from PIL import Image as PImage
 from numpy import asarray
 from traits.api import Any, Bool, Float, List, Str, Int
 
 from cv_wrapper import get_capture_device
+from pychron.core.helpers.filetools import add_extension
 from pychron.globals import globalv
 from pychron.image.image import Image
 
@@ -53,6 +55,12 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
         ffmpeg = '/usr/local/bin/ffmpeg'
 
     subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output])
+
+
+def pil_save(src, p, ext='.jpg'):
+    im = PImage.fromarray(src)
+    p = add_extension(p, ext=ext)
+    im.save(p)
 
 
 class Video(Image):
@@ -208,7 +216,9 @@ class Video(Image):
             def renderer(p):
                 frame = self.get_cached_frame()
                 if frame is not None:
-                    self.save(p, frame)
+                    pil_save(frame, p)
+
+                    # self.save(p, frame)
         # else:
         #     save = lambda x: renderer(x)
 
