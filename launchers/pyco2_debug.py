@@ -20,5 +20,5 @@
 # ============= local library imports  ==========================
 from helpers import entry_point
 
-entry_point('pyco2', 'PyCO2', '_co2', debug=True)
+entry_point('pyco2', 'PyCO2', debug=True)
 # ============= EOF =============================================

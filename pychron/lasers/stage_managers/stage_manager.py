@@ -87,6 +87,7 @@ class StageManager(BaseStageManager):
     linear_move_history = List
 
     use_autocenter = Bool
+    keep_images_open = Bool(False)
 
     _default_z = 0
     _cached_position = None
