@@ -83,6 +83,7 @@ class SMBStorage(RemoteStorage):
         remotename = 'agustin'
         conn = SMBConnection(self.username, self.password,
                              localname, remotename)
+        self.debug('get connection {}'.format(self.host))
         if conn.connect(self.host):
             return conn
         else:

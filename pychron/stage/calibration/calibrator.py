@@ -60,7 +60,7 @@ class BaseCalibrator(Loggable):
                 try:
                     obj = pickle.load(f)
                     return obj
-                except (pickle.PickleError, EOFError), e:
+                except (pickle.PickleError, EOFError, AttributeError), e:
                     pass
                     #                    cls.debug(e)
 

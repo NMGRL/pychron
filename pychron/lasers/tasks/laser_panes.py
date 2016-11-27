@@ -24,7 +24,7 @@ from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     ListStrEditor
 
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.core.ui.laser_status_editor import LaserStatusEditor
+# from pychron.core.ui.laser_status_editor import LaserStatusEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
@@ -86,10 +86,13 @@ class StageControlPane(TraitsDockPane):
                                    show_border=True),
                             label='Canvas')
 
-        mode = self.model.mode
-        camera_grp = VGroup(visible_when='use_video', label='Camera')
+        tabs = Group(UItem('stage_manager.stage_controller', style='custom',
+                           label='Axes'),
+                     canvas_grp,
+                     layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
+            camera_grp = VGroup(visible_when='use_video', label='Camera')
             mvgrp = VGroup(
                 UItem('stage_manager.autocenter_manager', style='custom'),
                 UItem('stage_manager.zoom_calibration_manager',
@@ -112,13 +115,9 @@ class StageControlPane(TraitsDockPane):
             cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
                                  label='Zoom Coefficients'))
             camera_grp.content.extend((cfggrp, recgrp, mvgrp))
+            tabs.content.append(camera_grp)
 
-        tabs = Group(UItem('stage_manager.stage_controller', style='custom',
-                           label='Axes'),
-                     canvas_grp,
-                     camera_grp,
-                     layout='tabbed')
-
+        mode = self.model.mode
         if mode != 'client':
             pp_grp = UItem('stage_manager.points_programmer',
                            label='Points',
@@ -185,7 +184,7 @@ class StageControlPane(TraitsDockPane):
                                 name='stage_manager.home_options')))
         tabs = self._get_tabs()
         v = View(VGroup(hgrp, pgrp, tabs))
-
+        # v = View(VGroup(hgrp, pgrp))
         return v
 
 
