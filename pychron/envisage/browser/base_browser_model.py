@@ -759,6 +759,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     _warned = False
 
+    @cached_property
     def _get_db(self):
         if self.use_workspace:
             db = self.workspace.index_db
