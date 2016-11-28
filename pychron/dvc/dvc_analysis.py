@@ -191,7 +191,7 @@ class DVCAnalysis(Analysis):
         except ValueError:
             self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
-        self.collection_version = jd['collection_version']
+        # self.collection_version = jd['collection_version']
         self._set_isotopes(jd)
 
         self.timestamp = self.timestampf = make_timef(self.rundate)

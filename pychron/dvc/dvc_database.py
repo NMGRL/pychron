@@ -932,16 +932,17 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(LevelTbl.name.asc())
             return self._query_all(q)
 
-    def get_labnumbers(self, principal_investigator=None,
+    def get_labnumbers(self, principal_investigators=None,
                        projects=None, repositories=None,
                        mass_spectrometers=None,
                        irradiation=None, level=None,
                        analysis_types=None,
                        high_post=None,
-                       low_post=None):
+                       low_post=None,
+                       filter_non_run=False):
 
         self.debug('------- Get Labnumbers -------')
-        self.debug('------- principal_investigator: {}'.format(principal_investigator))
+        self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
         self.debug('------- experiments: {}'.format(repositories))
         self.debug('------- mass_spectrometers: {}'.format(mass_spectrometers))
@@ -962,7 +963,7 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl, RepositoryAssociationTbl, RepositoryTbl)
 
-            if principal_investigator:
+            if principal_investigators:
                 q = q.join(PrincipalInvestigatorTbl)
 
             if projects:
@@ -980,6 +981,10 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl)
 
+            if filter_non_run and not at:
+                at = True
+                q = q.join(AnalysisTbl)
+
             if irradiation:
                 if not at:
                     q = q.join(AnalysisTbl)
@@ -988,8 +993,11 @@ class DVCDatabase(DatabaseAdapter):
             # filters
             if repositories:
                 q = q.filter(RepositoryTbl.name.in_(repositories))
-            if principal_investigator:
-                q = q.filter(PrincipalInvestigatorTbl.name == principal_investigator)
+            if principal_investigators:
+                # q = q.filter(PrincipalInvestigatorTbl.name == principal_investigator)
+                for p in principal_investigators:
+                    q = principal_investigator_filter(q, p)
+
             if projects:
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
@@ -1010,6 +1018,10 @@ class DVCDatabase(DatabaseAdapter):
             if irradiation:
                 q = q.filter(IrradiationTbl.name == irradiation)
                 q = q.filter(LevelTbl.name == level)
+
+            if filter_non_run:
+                q = q.group_by(IrradiationPositionTbl.id)
+                q = q.having(count(AnalysisTbl.id) > 0)
 
             return self._query_all(q, verbose_query=True)
 
@@ -1423,6 +1435,11 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_mass_spectrometers(self):
         return self._retrieve_items(MassSpectrometerTbl)
+
+    def get_active_mass_spectrometer_names(self):
+        with self.session_ctx():
+            ms = self.get_mass_spectrometers()
+            return [mi.name for mi in ms if mi.active]
 
     def get_repository_identifiers(self):
         return self._get_table_names(RepositoryTbl)

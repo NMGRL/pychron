@@ -133,7 +133,7 @@ class PipelineTask(BaseBrowserTask):
     # toolbar actions
     def pipeline_recall(self):
         if self._browser_info:
-            if self._browser.info.control:
+            if self._browser_info.control:
                 self._browser_info.control.raise_()
                 return
 

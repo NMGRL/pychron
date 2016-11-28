@@ -337,7 +337,7 @@ class MassSpectrometerTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
     kind = stringcolumn(45)
     # active = Column(Bool)
-
+    active = True
 
 class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
