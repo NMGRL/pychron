@@ -302,6 +302,9 @@ class MainView(HasTraits):
         attrs = (('40/39', 'Ar40/Ar39_decay_corrected'),
                  ('40/37', 'Ar40/Ar37_decay_corrected'),
                  ('40/36', 'Ar40/Ar36'),
+                 ('40/38', 'Ar40/Ar38'),
+                 ('(40/36)non_ic', 'uAr40_Ar36'),
+                 ('(40/38)non_ic', 'uAr40_Ar38'),
                  ('38/39', 'Ar38/Ar39_decay_corrected'),
                  ('37/39', 'Ar37_decay_corrected/Ar39_decay_corrected'),
                  ('36/39', 'Ar36/Ar39_decay_corrected'))

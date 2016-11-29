@@ -109,7 +109,11 @@ class IsotopeGroup(HasTraits):
         return iso.ys[-1]
 
     def get_ratio(self, r, non_ic_corr=False):
-        n, d = r.split('/')
+        if '/' in r:
+            n, d = r.split('/')
+        else:
+            n,d = r.split('_')
+
         isos = self.isotopes
 
         if non_ic_corr:
@@ -341,6 +345,8 @@ class IsotopeGroup(HasTraits):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
+        elif attr.startswith('u'):
+            return self.get_value(attr)
         else:
             raise AttributeError(attr)
 
