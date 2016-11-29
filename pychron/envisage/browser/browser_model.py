@@ -252,7 +252,7 @@ class BrowserModel(BaseBrowserModel):
                 ms = self.mass_spectrometer_includes
 
         principal_investigators = None
-        if self.principal_investigator_enabled:
+        if self.principal_investigator_enabled and self.selected_principal_investigators:
             principal_investigators = [p.name for p in self.selected_principal_investigators]
 
         # if self.repository_enabled:
