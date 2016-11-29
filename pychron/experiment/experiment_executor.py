@@ -38,7 +38,7 @@ from pychron.core.ui.led_editor import LED
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
-from pychron.experiment import events
+from pychron.experiment import events, PreExecuteCheckException
 from pychron.experiment.automated_run.persistence import ExcelPersister
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
@@ -284,7 +284,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return
         prog = open_progress(100, position=(100, 100))
 
-        if self._pre_execute_check(prog):
+        pre_execute_result = False
+        try:
+            pre_execute_result = self._pre_execute_check(prog)
+        except PreExecuteCheckException, e:
+            self.warning_dialog(e)
+
+        # if self._pre_execute_check(prog):
+        if pre_execute_result:
             self.info('pre execute check successful')
             prog.close()
             # reset executor
@@ -1758,7 +1765,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arv = runs[0]
         if not self._set_run_aliquot(arv):
             if inform:
-                self.warning_dialog('Failed setting aliquot')
+                raise PreExecuteCheckException('Setting aliquot')
+                # self.warning_dialog('Failed setting aliquot')
             return
 
         if self.use_dvc_persistence:
@@ -1791,21 +1799,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             prog.change_message('Checking Experiment Identifiers')
 
         if not self._check_repository_identifiers():
-            return
+            raise PreExecuteCheckException('Checking Repositories')
 
         if prog:
             prog.change_message('Syncing repositories')
         if not self._sync_repositories(prog):
-            return
+            raise PreExecuteCheckException('Syncing Repositories')
 
         if self._check_dashboard(prog):
-            return
+            raise PreExecuteCheckException('Checking Dashboard')
 
         if self._check_memory(prog):
-            return
+            raise PreExecuteCheckException('Checking Memory')
 
         if not self._check_managers(inform=inform):
-            return
+            raise PreExecuteCheckException('Checking Managers')
 
         if self.use_automated_run_monitor:
             self.monitor = self._monitor_factory()
@@ -1816,7 +1824,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.monitor.clear_errors()
                 if not self.monitor.check():
                     if inform:
-                        self.warning_dialog('Automated Run Monitor Failed')
+                        raise PreExecuteCheckException('Checking Automated Run Monitor')
                     return
 
         if prog:
@@ -1835,13 +1843,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 except TraitError:
                     self.debug_exception()
                     self.warning('failed loading previous blank')
+                    raise PreExecuteCheckException('Loading Previous Blank')
                     return
         if prog:
             prog.change_message('Checking PyScript Runner')
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
-            msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
-            invoke_in_main_thread(self.warning_dialog, msg)
+            raise PreExecuteCheckException('Connect to PyScript Runner')
+            # invoke_in_main_thread(self.warning_dialog, msg)
             return
 
         if prog:

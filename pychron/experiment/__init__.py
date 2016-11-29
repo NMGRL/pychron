@@ -21,3 +21,20 @@ class ExtractionException(BaseException):
     def __init__(self, m):
         self._msg = m
 
+
+class CheckException(BaseException):
+    tag = None
+
+    def __init__(self, msg):
+        self._msg = msg
+
+    def __str__(self):
+        return '{}: {} Failed'.format(self.tag, self._msg)
+
+
+class PreExtractionCheckException(CheckException):
+    tag = 'PreExtraction'
+
+
+class PreExecuteCheckException(CheckException):
+    tag = 'PreExecute'
