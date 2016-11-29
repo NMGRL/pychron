@@ -67,23 +67,24 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     # context menu handlers
     # ===============================================================================
     def cm_linear(self):
-        self.set_fit('linear')
+        self.set_fit('linear', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_parabolic(self):
-        self.set_fit('parabolic')
+        print self.selected_plotid
+        self.set_fit('parabolic', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_cubic(self):
-        self.set_fit('cubic')
+        self.set_fit('cubic', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_std(self):
-        self.set_fit('average_std')
+        self.set_fit('average_std', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_sem(self):
-        self.set_fit('average_sem')
+        self.set_fit('average_sem', plotid=self.selected_plotid)
         self._update_graph()
 
     # ===============================================================================

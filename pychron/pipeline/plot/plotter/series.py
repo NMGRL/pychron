@@ -20,12 +20,9 @@ import time
 from chaco.array_data_source import ArrayDataSource
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
+from numpy import array, Inf
 from traits.api import Array
 
-
-# ============= standard library imports ========================
-from numpy import array, Inf
-# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.plotter.ticks import TICKS
@@ -157,7 +154,9 @@ class Series(BaseSeries):
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
                                     plotid=pid,
-                                    add_inspector=False,
+                                    add_tools=True,
+                                    add_inspector=True,
+                                    add_point_inspector=False,
                                     marker=po.marker,
                                     marker_size=po.marker_size,
                                     **kw)
