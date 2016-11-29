@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List
 from traitsui.api import View, UItem, CheckListEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -26,13 +28,11 @@ class SelectAttrView(HasTraits):
 
     def traits_view(self):
         v = View(UItem('attributes', style='custom',
-                      editor=CheckListEditor(name='available_attributes',
-                                             cols=3)),
+                       editor=CheckListEditor(name='available_attributes',
+                                              cols=3)),
+                 title='Select Attributes',
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')
         return v
 
 # ============= EOF =============================================
-
-
-
