@@ -1520,12 +1520,12 @@ class DVCDatabase(DatabaseAdapter):
                 self._add_item(obj)
                 return True
 
-    def update_sample_prep_session(self, name, worker, **kw):
-        with self.session_ctx():
-            s = self.get_sample_prep_session(name, worker)
-            if s:
-                for k, v in kw.iteritems():
-                    setattr(s, k, v)
+    def update_sample_prep_session(self, oname, worker, **kw):
+        s = self.get_sample_prep_session(oname, worker)
+        if s:
+            for k, v in kw.iteritems():
+                setattr(s, k, v)
+            self.commit()
 
     def move_sample_to_session(self, current, sample, session, worker):
         with self.session_ctx() as sess:
