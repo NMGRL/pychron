@@ -214,6 +214,9 @@ class SeriesNode(FigureNode):
                     if 'Ar36' in iso_keys:
                         names.append('Ar40/Ar36')
                         names.append('uAr40/Ar36')
+                    if 'Ar38' in iso_keys:
+                        names.append('Ar40/Ar38')
+                        names.append('uAr40/Ar38')
 
             names.append('Peak Center')
             names.append('AnalysisType')
