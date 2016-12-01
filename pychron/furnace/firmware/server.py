@@ -20,7 +20,7 @@ from traits.api import Instance
 # ============= local library imports  ==========================
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, Protocol
 
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.tx.protocols.service import ServiceProtocol
@@ -32,49 +32,55 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         self._addr = addr
         ServiceProtocol.__init__(self)
 
-        misc_services = (('GetLabTemperature', self._manager.get_lab_temperature),
-                         ('GetLabHumidity', self._manager.get_lab_humidity),
-                         ('SetFrameRate', self._manager.set_frame_rate),
-                         ('GetVersion', self._manager.get_version),
-                         ('GetDIState', self._manager.get_di_state))
+        misc_services = (('GetLabTemperature', manager.get_lab_temperature),
+                         ('GetLabHumidity', manager.get_lab_humidity),
+                         ('SetFrameRate', manager.set_frame_rate),
+                         ('GetVersion', manager.get_version),
+                         ('GetDIState', manager.get_di_state),
+                         ('GetHeartBeat', manager.get_heartbeat),
+                         ('GetFullSummary', manager.get_full_summary))
 
-        controller_services = (('GetTemperature', self._manager.get_temperature),
-                               ('GetSetpoint', self._manager.get_setpoint),
-                               ('SetSetpoint', self._manager.set_setpoint),
-                               ('GetProcessValue', self._manager.get_process_value),
-                               ('GetPercentOutput', self._manager.get_percent_output),
-                               ('GetFurnaceSummary', self._manager.get_furnace_summary),
-                               ('SetPID', self._manager.set_pid))
+        controller_services = (('GetTemperature', manager.get_temperature),
+                               ('GetSetpoint', manager.get_setpoint),
+                               ('SetSetpoint', manager.set_setpoint),
+                               ('GetProcessValue', manager.get_process_value),
+                               ('GetPercentOutput', manager.get_percent_output),
+                               ('GetFurnaceSummary', manager.get_furnace_summary),
+                               ('SetPID', manager.set_pid))
 
-        valve_services = (('Open', self._manager.open_switch),
-                          ('Close', self._manager.close_switch),
-                          ('GetChannelState', self._manager.get_channel_state),
-                          ('GetChannelDOState', self._manager.get_channel_do_state),
-                          ('GetIndicatorState', self._manager.get_indicator_state),
-                          ('GetChannelState', self._manager.get_channel_state))
+        valve_services = (('Open', manager.open_switch),
+                          ('Close', manager.close_switch),
+                          ('GetIndicatorState', manager.get_indicator_state),
+                          ('GetChannelDOState', manager.get_channel_do_state),
+                          ('GetChannelState', manager.get_channel_state),
+                          ('GetIndicatorComponentStates', manager.get_indicator_component_states))
 
-        dump_services = (('LowerFunnel', self._manager.lower_funnel),
-                         ('RaiseFunnel', self._manager.raise_funnel),
-                         ('InUpPosition', self._manager.is_funnel_up),
-                         ('InDownPosition', self._manager.is_funnel_down),
-                         ('EnergizeMagnets', self._manager.energize_magnets),
-                         ('IsEnergized', self._manager.is_energized),
-                         ('DenergizeMagnets', self._manager.denergize_magnets),
-                         ('MoveAbsolute', self._manager.move_absolute),
-                         ('MoveRelative', self._manager.move_relative),
-                         ('GetPosition', self._manager.get_position),
-                         ('Slew', self._manager.slew),
-                         ('Stalled', self._manager.stalled),
-                         ('SetHome', self._manager.set_home),
-                         ('StopDrive', self._manager.stop_drive),
-                         ('Moving', self._manager.moving),
-                         ('StartJitter', self._manager.start_jitter),
-                         ('StopJitter', self._manager.stop_jitter))
+        dump_services = (('LowerFunnel', manager.lower_funnel),
+                         ('RaiseFunnel', manager.raise_funnel),
+                         ('InUpPosition', manager.is_funnel_up),
+                         ('InDownPosition', manager.is_funnel_down),
+                         ('EnergizeMagnets', manager.energize_magnets),
+                         ('IsEnergized', manager.is_energized),
+                         ('DenergizeMagnets', manager.denergize_magnets),
+                         ('MoveAbsolute', manager.move_absolute),
+                         ('MoveRelative', manager.move_relative),
+                         ('GetPosition', manager.get_position),
+                         ('Slew', manager.slew),
+                         ('Stalled', manager.stalled),
+                         ('SetHome', manager.set_home),
+                         ('StopDrive', manager.stop_drive),
+                         ('Moving', manager.moving),
+                         ('StartJitter', manager.start_jitter),
+                         ('StopJitter', manager.stop_jitter))
 
-        self._register_services(misc_services)
-        self._register_services(controller_services)
-        self._register_services(valve_services)
-        self._register_services(dump_services)
+        bakeout_services = (('GetSetpoint', manager.get_bakeout_setpoint),
+                            ('SetSetpoint', manager.set_bakeout_setpoint),
+                            ('GetTempPower', manager.get_bakeout_temp_and_power))
+
+        gauge_services = (('GetPressure', manager.get_gauge_pressure),)
+        for s in (misc_services, controller_services, valve_services, dump_services,
+                  bakeout_services, gauge_services):
+            self._register_services(s)
 
 
 class FirmwareFactory(Factory):

@@ -49,7 +49,11 @@ class NMGRLCamera(ConfigLoadable):
     _session = None
 
     def close(self):
-        pass
+        self._session.close()
+
+    def initialize(self, *args, **kw):
+        self._session = requests.Session()
+        return True
 
     def initialize(self, *args, **kw):
         self._session = requests.Session()
