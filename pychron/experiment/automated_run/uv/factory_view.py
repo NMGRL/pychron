@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance
-from traitsui.api import Item, VGroup, Spring, HGroup, EnumEditor, UItem
+from traitsui.api import Item, VGroup, Spring, HGroup, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.experiment.automated_run.factory_view import FactoryView, POSITION_TOOLTIP
 
 
@@ -35,13 +34,13 @@ class UVFactoryView(FactoryView):
                         enabled_when='extractable'),
                    Item('extract_units',
                         show_label=False,
-                        editor=EnumEditor(name='extract_units_names'))),
+                        editor=myEnumEditor(name='extract_units_names'))),
 
             HGroup(
                 Item('cleanup', label='Cleanup (s)',
                      tooltip='Set the number of seconds to getter the sample gas')),
             HGroup(
-                Item('mask', editor=EnumEditor(name='masks')),
+                Item('mask', editor=myEnumEditor(name='masks')),
                 UItem('mask'),
                 Item('attenuator'),
                 Item('reprate')),

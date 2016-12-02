@@ -18,10 +18,9 @@
 import os
 
 from traits.api import Str, Int, Bool, List
-from traitsui.api import View, VGroup, Item, EnumEditor, HGroup
+from traitsui.api import View, VGroup, Item, HGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 
@@ -79,7 +78,7 @@ class AutoGenConfig(PersistenceLoggable):
                       Item('cocktail_freq', label='Cocktail'),
                       HGroup(Item('run_block',
                                   label='Run Block',
-                                  editor=EnumEditor(name='run_blocks')),
+                                  editor=myEnumEditor(name='run_blocks')),
                              Item('run_block_freq')),
                       label='Frequency', show_border=True)
 
