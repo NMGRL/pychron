@@ -17,18 +17,17 @@
 from traits.api import HasTraits, List, Any, \
     Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
 from traitsui.api import View, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, HSplit
+    TabularEditor, VGroup, Item, HGroup, HSplit
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.experiment.conditional.tabular_adapters import EActionConditionalsAdapter, EPRConditionalsAdapter, \
-    EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.conditional.conditional import conditional_from_dict, BaseConditional, MODIFICATION_ACTIONS, \
     ExtractionStr
 from pychron.experiment.conditional.regexes import CP_REGEX, STD_REGEX, ACTIVE_REGEX, BASELINECOR_REGEX, BASELINE_REGEX, \
     MAX_REGEX, MIN_REGEX, AVG_REGEX, COMP_REGEX, ARGS_REGEX, BETWEEN_REGEX, SLOPE_REGEX
+from pychron.experiment.conditional.tabular_adapters import EActionConditionalsAdapter, EPRConditionalsAdapter, \
+    EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
 
 FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
@@ -256,7 +255,7 @@ class ConditionalGroup(HasTraits):
 
     def _get_opt_grp(self):
         opt_grp = VGroup(Item('function',
-                              editor=EnumEditor(values=FUNCTIONS),
+                              editor=myEnumEditor(values=FUNCTIONS),
                               tooltip='Optional. Apply a predefined function to this attribute. '
                                       'Functions include {}'.format(','.join(FUNCTIONS[1:]))),
                          Item('modifier',
@@ -264,7 +263,7 @@ class ConditionalGroup(HasTraits):
                               tooltip='Optional. Apply a modifier to this attribute.'
                                       'For example to check if CDD is active use '
                                       'Atttribute=CDD, Modifier=Inactive',
-                              editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
+                              editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                         'Baseline', 'BaselineCorrected'])),
                          show_border=True,
                          label='Optional')
@@ -303,7 +302,7 @@ class ConditionalGroup(HasTraits):
 
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
-                               editor=EnumEditor(name='available_attrs')),
+                               editor=myEnumEditor(name='available_attrs')),
                           opt_grp,
                           VGroup(cmp_grp,
                                  cnt_grp,
@@ -337,7 +336,7 @@ class ActionConditionalGroup(ConditionalGroup):
                          label='Action')
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
-                               editor=EnumEditor(name='available_attrs')),
+                               editor=myEnumEditor(name='available_attrs')),
                           opt_grp,
                           VGroup(cmp_grp,
                                  cnt_grp,
@@ -356,12 +355,12 @@ class PostRunGroup(ConditionalGroup):
     def _get_edit_group(self):
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
-                               editor=EnumEditor(name='available_attrs')),
+                               editor=myEnumEditor(name='available_attrs')),
                           VGroup(Item('function',
-                                      editor=EnumEditor(values=FUNCTIONS)),
+                                      editor=myEnumEditor(values=FUNCTIONS)),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
+                                      editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                                 'Baseline', 'BaselineCorrected'])),
                                  Item('comparator', label='Operation',
                                       enabled_when='not function=="Between"'),
@@ -378,10 +377,10 @@ class PreRunGroup(ConditionalGroup):
 
     def _get_edit_group(self):
         edit_grp = VGroup(UItem('attr',
-                                editor=EnumEditor(name='available_attrs')),
+                                editor=myEnumEditor(name='available_attrs')),
                           Item('modifier',
                                enabled_when='modifier_enabled',
-                               editor=EnumEditor(values=['', 'Inactive'])))
+                               editor=myEnumEditor(values=['', 'Inactive'])))
         return edit_grp
 
 
@@ -436,7 +435,7 @@ class ModificationGroup(ConditionalGroup):
                          label='Modification')
         edit_grp = VGroup(Item('attr',
                                label='Attribute',
-                               editor=EnumEditor(name='available_attrs')),
+                               editor=myEnumEditor(name='available_attrs')),
                           opt_grp,
                           VGroup(cmp_grp,
                                  cnt_grp,

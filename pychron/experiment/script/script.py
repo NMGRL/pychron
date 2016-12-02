@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.core.ui import set_qt
+from pychron.core.ui.enum_editor import myEnumEditor
 
 set_qt()
 # ============= enthought library imports =======================
 from traits.api import Str, Property, Button, cached_property, \
     String, HasTraits, Event, List
-from traitsui.api import View, HGroup, Label, spring, EnumEditor, UItem
+from traitsui.api import View, HGroup, Label, spring, UItem
 # ============= standard library imports ========================
 import os
 import yaml
@@ -46,7 +47,7 @@ class ScriptOptions(HasTraits):
             spring,
             UItem('name',
                   width=-200,
-                  editor=EnumEditor(name='names')),
+                  editor=myEnumEditor(name='names')),
             UItem('edit',
                   enabled_when='name and name!="---" and name is not "None"')))
 
@@ -128,10 +129,10 @@ class Script(Loggable):
             spring,
             UItem('directory',
                   width=-100,
-                  editor=EnumEditor(name='directories')),
+                  editor=myEnumEditor(name='directories')),
             UItem('name',
                   width=-200,
-                  editor=EnumEditor(name='names')),
+                  editor=myEnumEditor(name='names')),
             UItem('edit',
                   enabled_when='name and name!="---" and name is not "None"')))
 

@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Instance
-from traitsui.api import View, UItem, Item, EnumEditor, TableEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traitsui.api import View, UItem, Item, TableEditor
 from traitsui.table_column import ObjectColumn
+
+from pychron.core.ui.enum_editor import myEnumEditor
 
 
 class Conflict(HasTraits):
@@ -54,7 +54,7 @@ class ConflictResolver(HasTraits):
         cols = [ObjectColumn(name='queue_name', editable=False),
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
-                ObjectColumn(name='repository_identifier', editor=EnumEditor(name='available_ids')),
+                ObjectColumn(name='repository_identifier', editor=myEnumEditor(name='available_ids')),
                 ObjectColumn(name='repository_ids', editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),

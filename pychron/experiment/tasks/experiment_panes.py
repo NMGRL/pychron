@@ -18,7 +18,7 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
+    Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
 from traitsui.editors import TableEditor
 from traitsui.table_column import ObjectColumn
@@ -26,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -116,15 +117,16 @@ class ExperimentFactoryPane(TraitsDockPane):
 
         ms_ed_grp = VGroup(HGroup(queue_factory_item('mass_spectrometer',
                                                      show_label=False,
-                                                     editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
+                                                     editor=myEnumEditor(
+                                                         name=queue_factory_name('mass_spectrometers'))),
                                   queue_factory_item('extract_device',
                                                      show_label=False,
-                                                     editor=EnumEditor(name=queue_factory_name('extract_devices')))),
+                                                     editor=myEnumEditor(name=queue_factory_name('extract_devices')))),
                            lgrp,
 
                            HGroup(queue_factory_item('queue_conditionals_name',
                                                      label='Queue Conditionals',
-                                                     editor=EnumEditor(
+                                                     editor=myEnumEditor(
                                                          name=queue_factory_name('available_conditionals')))),
                            label='Spectrometer/Extract Device',
                            show_border=True)
@@ -165,15 +167,15 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_info_group(self):
         grp = Group(HGroup(run_factory_item('selected_irradiation',
                                             show_label=False,
-                                            editor=EnumEditor(name=run_factory_name('irradiations'))),
+                                            editor=myEnumEditor(name=run_factory_name('irradiations'))),
                            run_factory_item('selected_level',
                                             show_label=False,
-                                            editor=EnumEditor(name=run_factory_name('levels')))),
+                                            editor=myEnumEditor(name=run_factory_name('levels')))),
                     HGroup(run_factory_item('special_labnumber',
                                             show_label=False,
-                                            editor=EnumEditor(values=SPECIAL_NAMES)),
+                                            editor=myEnumEditor(values=SPECIAL_NAMES)),
                            run_factory_item('run_block', show_label=False,
-                                            editor=EnumEditor(name=run_factory_name('run_blocks'))),
+                                            editor=myEnumEditor(name=run_factory_name('run_blocks'))),
                            icon_button_editor(run_factory_name('edit_run_blocks'), 'cog'),
                            run_factory_item('frequency_model.frequency_int', width=50),
                            icon_button_editor(run_factory_name('edit_frequency_button'), 'cog'),
@@ -185,13 +187,13 @@ class ExperimentFactoryPane(TraitsDockPane):
                                             tooltip='Enter a Labnumber',
                                             width=100,
                                             enabled_when='object.run_factory.special_labnumber == "Special Labnumber"',
-                                            editor=EnumEditor(name=run_factory_name('labnumbers'))),
+                                            editor=myEnumEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),
                            spring),
                     HGroup(run_factory_item('repository_identifier',
                                             label='Repository ID',
-                                            editor=EnumEditor(name=run_factory_name('repository_identifiers'))),
+                                            editor=myEnumEditor(name=run_factory_name('repository_identifiers'))),
                            icon_button_editor(run_factory_name('add_repository_identifier'), 'add',
                                               tooltip='Add a new repository'),
                            icon_button_editor(run_factory_name('set_repository_identifier_button'), 'arrow_left',
@@ -227,7 +229,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                'delete',
                                                tooltip='Clear Conditionals from selected runs')),
                      HGroup(run_factory_item('trunc_attr',
-                                             editor=EnumEditor(name=run_factory_name('trunc_attrs')),
+                                             editor=myEnumEditor(name=run_factory_name('trunc_attrs')),
                                              show_label=False),
                             run_factory_item('trunc_comp', show_label=False),
                             run_factory_item('trunc_crit', show_label=False),
@@ -236,7 +238,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                             show_border=True,
                             label='Simple'),
                      HGroup(run_factory_item('conditionals_path',
-                                             editor=EnumEditor(name=run_factory_name('conditionals')),
+                                             editor=myEnumEditor(name=run_factory_name('conditionals')),
                                              label='Path'),
 
                             icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',

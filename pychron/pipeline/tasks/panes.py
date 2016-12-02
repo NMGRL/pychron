@@ -19,7 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, EnumEditor, InstanceEditor, HGroup, VSplit
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
@@ -27,6 +27,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tree_editor import PipelineEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.sample_view import BaseBrowserSampleView
@@ -250,7 +251,7 @@ class PipelinePane(TraitsDockPane):
                                 refresh_all_icons='refresh_all_needed',
                                 update='update_needed')
         v = View(VGroup(UItem('selected_pipeline_template',
-                              editor=EnumEditor(name='available_pipeline_templates')),
+                              editor=myEnumEditor(name='available_pipeline_templates')),
                         UItem('pipeline',
                               editor=editor)), handler=PipelineHandler())
         return v
@@ -399,7 +400,7 @@ class SearcherPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('search_entry'),
-                               UItem('search_entry', editor=EnumEditor(name='search_entries'), width=-35),
+                               UItem('search_entry', editor=myEnumEditor(name='search_entries'), width=-35),
                                icon_button_editor('pane.add_search_entry_button', 'add')),
                         UItem('object.analysis_table.analyses',
                               editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
