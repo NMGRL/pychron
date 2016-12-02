@@ -394,7 +394,7 @@ class DVCPersister(BasePersister):
         obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
         obj['laboratory'] = per_spec.run_spec.laboratory
         obj['analyst_name'] = per_spec.run_spec.username
-
+        obj['whiff_result'] = per_spec.whiff_result
         obj['detectors'] = dets
         obj['isotopes'] = isos
         obj['spec_sha'] = self._get_spectrometer_sha()
@@ -408,7 +408,7 @@ class DVCPersister(BasePersister):
 
         # save the scripts
         ms = per_spec.run_spec.mass_spectrometer
-        for si in ('measurement', 'extraction'):
+        for si in ('measurement', 'extraction', 'post_measurement', 'post_equilibration'):
             name = getattr(per_spec, '{}_name'.format(si))
             blob = getattr(per_spec, '{}_blob'.format(si))
             self.dvc.meta_repo.update_script(ms, name, blob)
