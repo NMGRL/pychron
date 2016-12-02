@@ -1132,18 +1132,26 @@ class AutomatedRun(Loggable):
         auto_save_detector_ic = queue.auto_save_detector_ic
         self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
 
-        ext_name, ext_blob, ext_path = '', '', ''
+        ext_name, ext_blob = '', ''
         if self.extraction_script:
             ext_name = self.extraction_script.name
             ext_blob = self._assemble_extraction_blob()
-            # ext_path = self.extraction_script.script_path()
 
-        ms_name, ms_blob, ms_path, sfods, bsfods = '', '', '', {}, {}
+        ms_name, ms_blob, sfods, bsfods = '', '', {}, {}
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
-            # ms_path = self.measurement_script.script_path()
             sfods, bsfods = self._get_default_fods()
+
+        pe_name, pe_blob = '', ''
+        if self.post_equilibration_script:
+            pe_name = self.post_equilibration_script.name
+            pe_blob = self.post_equilibration_script.toblob()
+
+        pm_name, pm_blob = '', ''
+        if self.post_measurement_script:
+            pm_name = self.post_measurement_script.name
+            pm_blob = self.post_measurement_script.toblob()
 
         ext_pos = []
         if self.extraction_script:
@@ -1162,6 +1170,10 @@ class AutomatedRun(Loggable):
                                     extraction_blob=ext_blob,
                                     measurement_name=ms_name,
                                     measurement_blob=ms_blob,
+                                    post_measurement_name=pm_name,
+                                    post_measurement_blob=pm_blob,
+                                    post_equilibration_name=pe_name,
+                                    post_equilibration_blob=pe_blob,
                                     previous_blank_id=pb[0],
                                     previous_blanks=pb[1],
                                     previous_blank_runid=pb[2],
