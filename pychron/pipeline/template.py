@@ -55,6 +55,7 @@ class PipelineTemplate(HasTraits):
             yd = yaml.load(rfile)
 
         nodes = yd['nodes']
+
         # print 'fafa', nodes
         for i, ni in enumerate(nodes):
             # print i, ni
