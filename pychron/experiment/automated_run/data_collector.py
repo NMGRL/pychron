@@ -293,8 +293,8 @@ class DataCollector(Consoleable):
 
             pids = [(graph.get_plotid_by_ytitle(name), fit)]
 
-        if self.is_baseline:
-            print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
+        # if self.is_baseline:
+        # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
 
         for pid, fit in pids:
             # print self.series_idx, self.fit_series_idx

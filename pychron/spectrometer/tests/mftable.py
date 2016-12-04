@@ -4,6 +4,29 @@ import unittest
 from pychron.spectrometer.mftable import MagnetFieldTable
 
 
+class Argon2CDDMFTableTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mftable = MagnetFieldTable(bind=False)
+        self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Ar38':38, 'PHHCbs': 1}
+
+        p = './data/argon_2CDD.csv'
+        if not os.path.isfile(p):
+            p = 'spectrometer/tests/data/argon_2CDD.csv'
+
+        self.mftable._test_path = p
+        self.mftable.load_mftable(path=p)
+
+    def test_update(self):
+        self.mftable.update_field_table('L2(CDD)', 'Ar36', 3.76439824048, report=True, save=False)
+        dac = self.mftable.get_dac('L2(CDD)', 36)
+        self.assertEqual(dac, 3.76439824048)
+
+    def test_update2(self):
+        self.mftable.update_field_table('H2', 'Ar40', 3.76439824048, report=True, save=False)
+        dac = self.mftable.get_dac('AX(CDD)', 38)
+        self.assertEqual(dac, 3.79185704008)
+
+
 class DiscreteMFTableTestCase(unittest.TestCase):
     def setUp(self):
         self.mftable = MagnetFieldTable(bind=False)

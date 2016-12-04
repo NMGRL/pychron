@@ -2223,6 +2223,8 @@ anaylsis_type={}
         return not m.canceled
 
     def _setup_figure_graph(self):
+        return
+
         self.plot_panel.add_figure_graph(self.spec, self.experiment_executor.experiment_queue.executed_runs)
 
     def _setup_sniff_graph(self, starttime_offset, color):

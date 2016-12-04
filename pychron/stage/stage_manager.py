@@ -60,14 +60,14 @@ class BaseStageManager(Manager):
     move_thread = None
     temp_position = None
     temp_hole = None
-
+    root = Str
     # use_modified = Bool(True)  # set true to use modified affine calculation
 
     def goto_position(self, pos):
         raise NotImplementedError
 
     def refresh_stage_map_names(self):
-        sms = get_stage_map_names()
+        sms = get_stage_map_names(root=self.root)
         self.stage_map_names = sms
 
     def load(self):
@@ -170,7 +170,8 @@ class BaseStageManager(Manager):
     def _stage_map_name_changed(self, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
-            path = os.path.join(paths.map_dir, add_extension(new, '.txt'))
+            root = self.root
+            path = os.path.join(root, add_extension(new, '.txt'))
             sm = self.stage_map_klass(file_path=path)
 
             self.tray_calibration_manager.load_calibration(stage_map=new)
@@ -183,6 +184,9 @@ class BaseStageManager(Manager):
             self._stage_map_changed_hook()
 
     # defaults
+    def _root_default(self):
+        return paths.map_dir
+
     def _tray_calibration_manager_default(self):
         t = TrayCalibrationManager(parent=self,
                                    canvas=self.canvas)

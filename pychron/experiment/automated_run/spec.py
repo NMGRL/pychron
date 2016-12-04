@@ -137,6 +137,19 @@ class AutomatedRunSpec(HasTraits):
 
     _step_heat = False
 
+    @property
+    def acquisition_software(self):
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
+        from pychron import __version__
+        return 'Pychron{}(Exp{},DVC{})'.format(__version__, eversion, dversion)
+
+    @property
+    def data_reduction_software(self):
+        from pychron import __version__
+        from pychron.dvc import __version__ as dversion
+        return 'Pychron{}(DVC{})'.format(__version__, dversion)
+
     def new_result(self, arun):
         klass = AutomatedRunResult
         if self.analysis_type == 'air':

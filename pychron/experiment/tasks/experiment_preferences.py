@@ -27,14 +27,14 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 
 
-class LabspyPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.experiment'
-    use_labspy = Bool
-
-
-class DVCPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.experiment'
-    use_dvc_persistence = Bool
+# class LabspyPreferences(BasePreferencesHelper):
+#     preferences_path = 'pychron.experiment.labspy'
+#     use_labspy = Bool
+#
+#
+# class DVCPreferences(BasePreferencesHelper):
+#     preferences_path = 'pychron.experiment.dvc'
+#     use_dvc_persistence = Bool
 
 
 class ExperimentPreferences(BasePreferencesHelper):

@@ -55,7 +55,6 @@ class Feeder(LinearAxis):
 
 
 class BaseFurnaceStageManager(BaseStageManager):
-    root = paths.furnace_map_dir
     stage_map_klass = FurnaceStageMap
 
     def __init__(self, *args, **kw):
@@ -64,6 +63,9 @@ class BaseFurnaceStageManager(BaseStageManager):
 
     def get_sample_states(self):
         return [h.id for h in self.stage_map.sample_holes if h.analyzed]
+
+    def _root_default(self):
+        return paths.furnace_map_dir
 
 
 class NMGRLFurnaceStageManager(BaseFurnaceStageManager):

@@ -246,29 +246,30 @@ class DVCDatabase(DatabaseAdapter):
     def retrieve_blank(self, kind, ms, ed, last, repository):
         self.debug('retrieve blank. kind={}, ms={}, '
                    'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
-        with self.session_ctx() as sess:
-            q = sess.query(AnalysisTbl)
+        # with self.session_ctx() as sess:
+        sess =self.session
+        q = sess.query(AnalysisTbl)
 
-            if repository:
-                q = q.join(RepositoryAssociationTbl)
-                q = q.join(RepositoryTbl)
+        if repository:
+            q = q.join(RepositoryAssociationTbl)
+            q = q.join(RepositoryTbl)
 
-            if last:
-                q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
-            else:
-                q = q.filter(AnalysisTbl.analysis_type.startswith('blank'))
+        if last:
+            q = q.filter(AnalysisTbl.analysis_type == 'blank_{}'.format(kind))
+        else:
+            q = q.filter(AnalysisTbl.analysis_type.startswith('blank'))
 
-            if ms:
-                q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
+        if ms:
+            q = q.filter(func.lower(AnalysisTbl.mass_spectrometer) == ms.lower())
 
-            if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
-                q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
+        if ed and ed not in ('Extract Device', NULL_STR) and kind == 'unknown':
+            q = q.filter(func.lower(AnalysisTbl.extract_device) == ed.lower())
 
-            if repository:
-                q = q.filter(RepositoryTbl.name == repository)
+        if repository:
+            q = q.filter(RepositoryTbl.name == repository)
 
-            q = q.order_by(AnalysisTbl.timestamp.desc())
-            return self._query_one(q, verbose_query=True)
+        q = q.order_by(AnalysisTbl.timestamp.desc())
+        return self._query_one(q, verbose_query=True)
 
     # def get_analyses_data_range(self, low, high, atypes, exclude=None, exclude_uuids=None):
     #     with self.session_ctx() as sess:

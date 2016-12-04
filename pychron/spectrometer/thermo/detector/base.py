@@ -43,7 +43,6 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         self.read_deflection()
 
 
-
     def load_deflection_coefficients(self):
         if self.use_deflection:
             # load deflection correction table
