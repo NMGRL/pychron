@@ -19,7 +19,7 @@ import os
 import time
 from datetime import datetime
 from itertools import groupby
-from threading import Thread, Event as Flag, Lock, currentThread
+from threading import Thread, Lock, currentThread
 
 import yaml
 from pyface.constant import CANCEL, YES, NO
@@ -44,6 +44,7 @@ from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
+from pychron.experiment.experiment_status import ExperimentStatus
 from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
@@ -98,8 +99,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     executing_led = Instance(LED, ())
     delaying_between_runs = Bool
 
-    extraction_state_label = String
-    extraction_state_color = Color
+    # extraction_state_label = String
+    # extraction_state_color = Color
+
+    experiment_status = Instance(ExperimentStatus, ())
 
     end_at_run_completion = Bool(False)
     abort_run_button = Button('Abort Run')
@@ -299,7 +302,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._aborted = False
             self._canceled = False
-            self.extraction_state_label = ''
+            self.experiment_status.reset()
+            # self.extraction_state_label = ''
 
             self.alive = True
             t = Thread(name='Execute Queues',
@@ -405,7 +409,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._err_message = ''
         self.end_at_run_completion = False
-        self.extraction_state_label = ''
+        self.experiment_status.reset()
+        # self.extraction_state_label = ''
         self.experiment_queue.executed = True
 
         if self.stats:
@@ -1094,7 +1099,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         else:
             ret = ai.is_alive()
 
-        self.trait_set(extraction_state_label='', extracting=False)
+        self.extracting = False
+        self.experiment_status.reset()
+        # self.trait_set(extraction_state_label='', extracting=False)
         self.extracting_run = None
         return ret
 
@@ -1336,89 +1343,91 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         self.debug('set extraction state {} {}'.format(state, args))
         if state:
-            self._extraction_state_on(state, *args)
+            self.experiment_status.set_state(state, *args)
+            # self._extraction_state_on(state, *args)
         else:
-            self._extraction_state_off()
+            self.experiment_status.end()
 
-    def _extraction_state_on(self, state, flash, color, period):
-        """
-            flash: float (0.0 - 1.0) percent of period to be on. e.g if flash=0.75 and period=4,
-                    state displayed for 3 secs, then off for 1 sec
-            color: str
-            period: float
-        """
-        label = state.upper()
-        if flash:
-            if self._end_flag:
-                self._end_flag.set()
-
-                # wait until previous loop finished.
-                cf = self._complete_flag
-                while not cf.is_set():
-                    time.sleep(0.05)
-
-            else:
-                self._end_flag = Flag()
-                self._complete_flag = Flag()
-
-            def pattern_gen():
-                """
-                    infinite generator
-                """
-                pattern = ((flash * period, True), ((1 - flash) * period, False))
-                i = 0
-                while 1:
-                    try:
-                        yield pattern[i]
-                        i += 1
-                    except IndexError:
-                        yield pattern[0]
-                        i = 1
-
-            self._end_flag.clear()
-            self._complete_flag.clear()
-
-            invoke_in_main_thread(self._extraction_state_iter, pattern_gen(), label, color)
-        else:
-            invoke_in_main_thread(self.trait_set, extraction_state_label=label,
-                                  extraction_state_color=color)
-
-    def _extraction_state_off(self):
-        """
-            clear extraction state label
-        """
-        if self._end_flag:
-            self._end_flag.set()
-
-        invoke_in_main_thread(self.trait_set, extraction_state_label='')
-
-    def _extraction_state_iter(self, gen, label, color):
-        """
-            iterator for extraction state label.
-            used to flash label
-        """
-
-        if self._end_flag.is_set():
-            self.debug('extract state complete1')
-            self._complete_flag.set()
-            self.trait_set(extraction_state_label='')
-        else:
-
-            t, state = gen.next()
-            if state:
-                self.debug('set state label={}, color={}'.format(label, color))
-                self.trait_set(extraction_state_label=label,
-                               extraction_state_color=color)
-            else:
-                self.debug('clear extraction_state_label')
-                self.trait_set(extraction_state_label='')
-
-            if not self._end_flag.is_set():
-                do_after(t * 1000, self._extraction_state_iter, gen, label, color)
-                # else:
-                #     self.debug('extract state complete2')
-                #     self._complete_flag.set()
-                #     self.trait_set(extraction_state_label='')
+    #
+    # def _extraction_state_on(self, state, flash, color, period):
+    #     """
+    #         flash: float (0.0 - 1.0) percent of period to be on. e.g if flash=0.75 and period=4,
+    #                 state displayed for 3 secs, then off for 1 sec
+    #         color: str
+    #         period: float
+    #     """
+    #     label = state.upper()
+    #     if flash:
+    #         if self._end_flag:
+    #             self._end_flag.set()
+    #
+    #             # wait until previous loop finished.
+    #             cf = self._complete_flag
+    #             while not cf.is_set():
+    #                 time.sleep(0.05)
+    #
+    #         else:
+    #             self._end_flag = Flag()
+    #             self._complete_flag = Flag()
+    #
+    #         def pattern_gen():
+    #             """
+    #                 infinite generator
+    #             """
+    #             pattern = ((flash * period, True), ((1 - flash) * period, False))
+    #             i = 0
+    #             while 1:
+    #                 try:
+    #                     yield pattern[i]
+    #                     i += 1
+    #                 except IndexError:
+    #                     yield pattern[0]
+    #                     i = 1
+    #
+    #         self._end_flag.clear()
+    #         self._complete_flag.clear()
+    #
+    #         invoke_in_main_thread(self._extraction_state_iter, pattern_gen(), label, color)
+    #     else:
+    #         invoke_in_main_thread(self.trait_set, extraction_state_label=label,
+    #                               extraction_state_color=color)
+    #
+    # def _extraction_state_off(self):
+    #     """
+    #         clear extraction state label
+    #     """
+    #     if self._end_flag:
+    #         self._end_flag.set()
+    #
+    #     invoke_in_main_thread(self.trait_set, extraction_state_label='')
+    #
+    # def _extraction_state_iter(self, gen, label, color):
+    #     """
+    #         iterator for extraction state label.
+    #         used to flash label
+    #     """
+    #
+    #     if self._end_flag.is_set():
+    #         self.debug('extract state complete1')
+    #         self._complete_flag.set()
+    #         self.trait_set(extraction_state_label='')
+    #     else:
+    #
+    #         t, state = gen.next()
+    #         if state:
+    #             self.debug('set state label={}, color={}'.format(label, color))
+    #             self.trait_set(extraction_state_label=label,
+    #                            extraction_state_color=color)
+    #         else:
+    #             self.debug('clear extraction_state_label')
+    #             self.trait_set(extraction_state_label='')
+    #
+    #         if not self._end_flag.is_set():
+    #             do_after(t * 1000, self._extraction_state_iter, gen, label, color)
+    #             # else:
+    #             #     self.debug('extract state complete2')
+    #             #     self._complete_flag.set()
+    #             #     self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
         """
@@ -2092,8 +2101,9 @@ Use Last "blank_{}"= {}
 
     def _set_message(self, msg, color='black'):
         self.heading(msg)
-        invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
-                              extraction_state_color=color)
+        self.experiment_status.set_state(msg, False, color)
+        # invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
+        #                       extraction_state_color=color)
 
     # ===============================================================================
     # handlers
