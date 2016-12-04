@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Array
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from enable.colors import ColorTrait
-from pyface.message_dialog import warning
-# ============= standard library imports  ==========================
 from numpy import array, arange, Inf, argmax
+from pyface.message_dialog import warning
+from traits.api import Array
 from uncertainties import nominal_value, std_dev
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
@@ -80,11 +79,13 @@ class Ideogram(BaseArArFigure):
         graph = self.graph
 
         try:
-            self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
+            self.xs, self.xes = array([(nominal_value(ai), std_dev(ai))
                                        for ai in self._get_xs(key=index_attr)]).T
 
         except (ValueError, AttributeError), e:
             print 'asdfasdf', e, index_attr
+            import traceback
+            traceback.print_exc()
             return
 
         if self.options.omit_by_tag:

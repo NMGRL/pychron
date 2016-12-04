@@ -403,7 +403,7 @@ class DVCAnalysis(Analysis):
 
     # private
     def _load_tags(self, jd):
-        self.set_tag(jd)
+        self.set_tag(jd[0])
 
     def _load_blanks(self, jd):
         for key, v in jd.iteritems():
