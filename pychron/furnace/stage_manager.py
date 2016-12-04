@@ -83,8 +83,8 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
         if self.feeder.is_slewing() and not self.feeder.is_stalled():
             do_after(self.slew_period * 1000, self._slew_inprogress)
 
-    def refresh(self):
-        self._update_axes()
+    def refresh(self, warn=False):
+        self._update_axes(warn=warn)
 
     def jitter(self, *args, **kw):
         self.feeder.jitter(*args, **kw)
@@ -169,10 +169,17 @@ class NMGRLFurnaceStageManager(BaseFurnaceStageManager):
                 cnt = 0
             time.sleep(0.5)
 
-    def _update_axes(self):
+    def _update_axes(self, warn=False):
         pos = self.feeder.get_position(units='mm')
         self.debug('update feeder position={}'.format(pos))
-        if pos is not None:
+        if pos is None:
+            if warn:
+                self.warning_dialog('Could not read Feeder position. '
+                                    'Check that the furnace firmware computer is running and accessible')
+        elif pos == 'No Response':
+            if warn:
+                self.warning_dialog('Could not read Feeder position. Check that the Feeder motor is plugged in')
+        elif pos is not None:
             self.canvas.set_stage_position(pos, 0)
 
     def _canvas_factory(self):
