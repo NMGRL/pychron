@@ -383,15 +383,16 @@ class DVCPersister(BasePersister):
 
         obj = self._make_analysis_dict()
 
-        from pychron.version import __version__ as pversion
-        from pychron.experiment import __version__ as eversion
-        from pychron.dvc import __version__ as dversion
+        # from pychron.version import __version__ as pversion
+        # from pychron.experiment import __version__ as eversion
+        # from pychron.dvc import __version__ as dversion
 
         obj['timestamp'] = timestamp.isoformat()
 
-        obj['collection_version'] = '{}:{}'.format(eversion, dversion)
-        obj['acquisition_software'] = 'pychron version={}'.format(pversion)
-        obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+        # obj['collection_version'] = '{}:{}'.format(eversion, dversion)
+        # obj['acquisition_software'] = 'pychron version={}'.format(pversion)
+        # obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+
         obj['laboratory'] = per_spec.run_spec.laboratory
         obj['analyst_name'] = per_spec.run_spec.username
         obj['whiff_result'] = per_spec.whiff_result

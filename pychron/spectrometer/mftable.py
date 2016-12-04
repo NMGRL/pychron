@@ -103,7 +103,7 @@ class MagnetFieldTable(Loggable):
     def map_dac_to_mass(self, dac, detname):
         detname = get_detector_name(detname)
 
-        d = self.mftable.get_table()
+        d = self._get_table()
 
         _, xs, ys, p = d[detname]
         if self.polynominal_mass_func:
@@ -131,7 +131,7 @@ class MagnetFieldTable(Loggable):
 
         self.debug('Mapping mass to dac mass func: "{}"'.format(self.mass_cal_func))
         detname = get_detector_name(detname)
-        d = self.get_table()
+        d = self._get_mftable()
         _, xs, ys, p = d[detname]
 
         if self.polynominal_mass_func:
@@ -161,7 +161,7 @@ class MagnetFieldTable(Loggable):
     def polynominal_mass_func(self):
         return self.mass_cal_func in ('linear', 'parabolic', 'cubic')
 
-    def update_field_table(self, det, isotope, dac, message):
+    def update_field_table(self, det, isotope, dac, message='', save=True, report=False):
         """
 
             dac needs to be in axial units
@@ -171,31 +171,38 @@ class MagnetFieldTable(Loggable):
         self.info('update mftable {} {} {} message={}'.format(det, isotope, dac, message))
         d = self._get_mftable()
 
-        isos, xs, ys = map(array, d[det][:3])
+        # isos, xs, ys = map(array, d[det][:3])
+        isos, xs, ys = d[det][:3]
 
+        isos = array(isos)
         try:
             refindex = min(nonzero(isos == isotope)[0])
-
             delta = dac - ys[refindex]
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
             for k, (iso, xx, yy, _) in d.iteritems():
-                ny = yy + delta
-                initial_guess = self._get_initial_guess(ny, xx)
+                # ny = yy + delta
+                ndacs = [yi + delta if yi != NULL_STR else NULL_STR for yi in yy]
+                xs, ny = self._clean_dacs(xx, ndacs)
+                initial_guess = self._get_initial_guess(ny, xs)
                 if initial_guess:
-                    p = least_squares(polyval, xx, ny, initial_guess)
+                    p = least_squares(polyval, xs, ny, initial_guess)
                 else:
                     p = None
-                d[k] = iso, xx, ny, p
+                d[k] = iso, xx, ndacs, p
+            if save:
+                self.dump(isos, d, message)
 
-            self.dump(isos, d, message)
-            # self._mftable = isos, xs, ys
+            if report:
+                self.print_table(isos, d)
+                # self._mftable = isos, xs, ys
 
         except ValueError:
             import traceback
 
             e = traceback.format_exc()
+            print e
             self.debug('Magnet update field table {}'.format(e))
 
     def set_path_name(self, name):
@@ -218,6 +225,7 @@ class MagnetFieldTable(Loggable):
         fmt = lambda x: '{:0.5f}'.format(x)
         with open(p, 'w') as f:
             writer = csv.writer(f)
+            writer.writerow([self.mass_cal_func])
             writer.writerow(['iso'] + detectors)
             for fi in self.items:
                 writer.writerow(fi.to_csv(detectors, fmt))
@@ -230,13 +238,16 @@ class MagnetFieldTable(Loggable):
         p = self.path
         with open(p, 'w') as f:
             writer = csv.writer(f)
+            writer.writerow([self.mass_cal_func])
             writer.writerow(['iso'] + detectors)
 
             for i, iso in enumerate(isos):
                 a = [iso]
                 for hi in detectors:
                     iso, xs, ys, _ = d[hi]
-                    a.append('{:0.5f}'.format(ys[i]))
+
+                    fdac = self._format_dac(ys[i])
+                    a.append(fdac)
 
                 writer.writerow(a)
 
@@ -246,6 +257,16 @@ class MagnetFieldTable(Loggable):
     # @property
     # def mftable_path(self):
     # return os.path.join(paths.spectrometer_dir, 'mftable.csv')
+    def print_table(self, isos, d):
+        detectors = self._detectors
+        for i, iso in enumerate(isos):
+            a = [iso]
+            for hi in detectors:
+                iso, xs, ys, _ = d[hi]
+
+                a.append(self._format_dac(ys[i]))
+
+            print a
 
     @property
     def mftable_archive_path(self):
@@ -326,24 +347,35 @@ class MagnetFieldTable(Loggable):
 
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
-                idx, ys = zip(*((i, y) for i, y in enumerate(ys) if y != NULL_STR))
-                xs = [mws[i] for i in idx]
 
-                initial_guess = self._get_initial_guess(ys, xs)
+                xs, dacs = self._clean_dacs(mws, ys)
+                initial_guess = self._get_initial_guess(dacs, xs)
                 if initial_guess:
                     try:
-                        c = least_squares(polyval, xs, ys, initial_guess=initial_guess)
+                        c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
                     except TypeError:
                         c = (0, 1, ys[0])
                 else:
                     c = None
 
-                d[k] = (isos, xs, ys, c)
+                d[k] = (isos, mws, ys, c)
 
             self._mftable = d
             # self._mftable={k: (isos, mws, table[2 + i], )
             # for i, k in enumerate(detectors)}
             self._detectors = detectors
+
+    def _format_dac(self, dac):
+        return '{:0.5f}'.format(dac) if dac != NULL_STR else ''
+
+    def _clean_dacs(self, xx, dacs):
+        """
+        return xs, clean_dacs
+        @param dacs:
+        @return:
+        """
+        xs, dacs = zip(*((xx[i], y) for i, y in enumerate(dacs) if y != NULL_STR))
+        return xs, dacs
 
     def _get_initial_guess(self, y, x):
         initial_guess = None
@@ -360,7 +392,8 @@ class MagnetFieldTable(Loggable):
         self.debug('============ MFtable ===========')
         self.debug('{:<8s} {}'.format('Isotope', ''.join(['{:<7s}'.format(di) for di in detectors])))
         for it in items:
-            vs = ['{:0.4f}'.format(getattr(it, di)) for di in detectors]
+            dd = [getattr(it, di) for di in detectors]
+            vs = ['{:0.4f}'.format(di) if di != NULL_STR else NULL_STR for di in dd]
             self.debug('{:<8s} {}'.format(it.isotope, ' '.join(vs)))
         self.debug('================================')
 

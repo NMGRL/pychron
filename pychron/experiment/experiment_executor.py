@@ -249,6 +249,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'experiment_type')
         self._preference_binder(prefid, attrs)
 
+        # dvc
+
+        self._preference_binder('pychron.dvc.experiment', ('use_dvc_persistence',))
         # dashboard
         self._preference_binder('pychron.dashboard.experiment', ('use_dashboard_client',))
 
@@ -965,14 +968,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # dvc = self.datahub.stores['dvc']
             from pychron.git.hosts import IGitHost
             gs = self.application.get_services(IGitHost)
-            pm = PushExperimentsModel(gs.organization,
-                                      gs.username,
-                                      gs.password,
-                                      gs.oauth_token)
-            if pm.shareables:
-                if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
-                    pv = PushExperimentsView(model=pm)
-                    open_view(pv)
+            org = self.application.preferences.get('pychron.dvc.organization')
+            for gi in gs:
+                pm = PushExperimentsModel(org,
+                                          gi.username,
+                                          gi.password,
+                                          gi.oauth_token)
+                if pm.shareables:
+                    if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
+                        pv = PushExperimentsView(model=pm)
+                        open_view(pv)
 
     def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
         try:
@@ -1839,28 +1844,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if prog:
             prog.change_message('Get preceding blank')
 
-        an = self._get_preceding_blank_or_background(inform=inform)
-        if an is not True:
-            if an is None:
-                return
-            else:
-                self.info('using {} as the previous blank'.format(an.record_id))
-                try:
-                    # self._prev_blank_id = an.meas_analysis_id
-                    self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                    self._prev_baselines = an.get_baseline_dict()
-                except TraitError:
-                    self.debug_exception()
-                    self.warning('failed loading previous blank')
-                    raise PreExecuteCheckException('Loading Previous Blank')
+        mainstore = self.datahub.mainstore
+        with mainstore.session_ctx(use_parent_session=False):
+            an = self._get_preceding_blank_or_background(inform=inform)
+            if an is not True:
+                if an is None:
                     return
-        if prog:
-            prog.change_message('Checking PyScript Runner')
-        if not self.pyscript_runner.connect():
-            self.info('Failed connecting to pyscript_runner')
-            raise PreExecuteCheckException('Connect to PyScript Runner')
-            # invoke_in_main_thread(self.warning_dialog, msg)
-            return
+                else:
+                    self.info('using {} as the previous blank'.format(an.record_id))
+                    try:
+                        # self._prev_blank_id = an.meas_analysis_id
+                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
+                        self._prev_baselines = an.get_baseline_dict()
+                    except TraitError:
+                        self.debug_exception()
+                        self.warning('failed loading previous blank')
+                        return
+            if prog:
+                prog.change_message('Checking PyScript Runner')
+            if not self.pyscript_runner.connect():
+                self.info('Failed connecting to pyscript_runner')
+                msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+                invoke_in_main_thread(self.warning_dialog, msg)
+                return
 
         if prog:
             prog.change_message('Pre execute check complete')
@@ -2078,24 +2084,24 @@ Use Last "blank_{}"= {}
 
     def _get_blank(self, kind, ms, ed, last=False, repository=None):
         mainstore = self.datahub.mainstore
+
         db = mainstore.db
         selected = False
         dbr = None
-        with db.session_ctx(use_parent_session=False):
-            if last:
-                dbr = db.retrieve_blank(kind, ms, ed, last, repository)
+        if last:
+            dbr = db.retrieve_blank(kind, ms, ed, last, repository)
 
-            if dbr is None:
-                selected = True
-                from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
-                selector = ReferenceAnalysisSelector()
-                info = selector.edit_traits(kind='livemodal')
-                dbs = db.get_blanks(ms)
-                selector.init('Select Default Blank', dbs)
-                if info.result:
-                    dbr = selector.selected
-            if dbr:
-                dbr = mainstore.make_analysis(dbr.make_record_view(repository))
+        if dbr is None:
+            selected = True
+            from pychron.experiment.utilities.reference_analysis_selector import ReferenceAnalysisSelector
+            selector = ReferenceAnalysisSelector()
+            info = selector.edit_traits(kind='livemodal')
+            dbs = db.get_blanks(ms)
+            selector.init('Select Default Blank', dbs)
+            if info.result:
+                dbr = selector.selected
+        if dbr:
+            dbr = mainstore.make_analysis(dbr.make_record_view(repository))
 
         return dbr, selected
 

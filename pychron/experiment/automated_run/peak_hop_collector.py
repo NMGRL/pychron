@@ -145,6 +145,25 @@ class PeakHopCollector(DataCollector):
                 return
 
             if count == 0:
+                zd = zip(dets, defls)
+                self.debug('Peak hop Detectors={}'.format(dets))
+                self.debug('Peak hop Deflections={}'.format(defls))
+                self.debug('Peak hop DeflectionsPairs={}'.format(zd))
+                # set deflections
+                # only set deflections deflections were changed or need changing
+                deflect = len([d for d in defls if d is not None])
+                if deflect or self._was_deflected:
+                    self._was_deflected = False
+                    for det, defl in zd:
+                        # use the measurement script to set the deflections
+                        # this way defaults from the config can be used
+                        if defl is None:
+                            defl = ''
+                        else:
+                            self._was_deflected = True
+
+                        self.automated_run.set_deflection(det, defl)
+
                 self._protect_detectors(pdets)
                 self.debug('----------------------- HOP {} {}'.format(isotope, detector))
                 change = self.parent.set_magnet_position(isotope, detector,
@@ -156,23 +175,8 @@ class PeakHopCollector(DataCollector):
 
                 self._protect_detectors(pdets, False)
 
-                # set deflections
-                # only set deflections deflections were changed or need changing
-                deflect = len([d for d in defls if d is not None])
-                if deflect or self._was_deflected:
-                    self._was_deflected = False
-                    for det, defl in zip(dets, defls):
-                        # use the measurement script to set the deflections
-                        # this way defaults from the config can be used
-                        if defl is None:
-                            defl = ''
-                        else:
-                            self._was_deflected = True
-
-                        self.automated_run.set_deflection(det, defl)
-
+                self.parent.update_detector_isotope_pairing(active_dets, isos)
                 if change:
-                    self.parent.update_detector_isotope_pairing(active_dets, isos)
 
                     g = self.plot_panel.isotope_graph
                     for d in active_dets:

@@ -714,6 +714,9 @@ class ThermoSpectrometer(SpectrometerDevice):
         p = get_spectrometer_config_path()
         config = self.get_configuration_writer(p)
         for k, v in kw.items():
+            if not config.has_section(k):
+                config.add_section(k)
+
             for option, value in v:
                 config.set(k, option, value)
 

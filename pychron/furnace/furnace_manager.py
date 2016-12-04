@@ -433,10 +433,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 states = yaml.load(rfile)
-
+                self.debug('states={}'.format(states))
                 for si in states:
                     hole = self.stage_manager.stage_map.get_hole(si)
-                    hole.analyzed = True
+                    self.debug('si={} hole={}'.format(si, hole))
+                    if hole:
+                        hole.analyzed = True
 
     def _dump_sample_states(self, states=None):
         if states is None:
