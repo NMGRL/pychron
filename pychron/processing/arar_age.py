@@ -122,22 +122,22 @@ class ArArAge(IsotopeGroup):
         if self.weight:
             k40_k = 0.0001167
             k40 = self.non_ar_isotopes['k40']
-            moles_k = k40/k40_k*self.sensitivity
+            moles_k = k40 / k40_k * self.sensitivity
             mw_k2o = 94.2
-            k2o = (moles_k * mw_k2o*100)/(2*self.weight*0.001)
+            k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
         return k2o
 
     @property
     def isochron3940(self):
         a = self.get_interference_corrected_value('Ar39')
         b = self.get_interference_corrected_value('Ar40')
-        return a/b
+        return a / b
 
     @property
     def isochron3640(self):
         a = self.get_interference_corrected_value('Ar36')
         b = self.get_interference_corrected_value('Ar40')
-        return a/b
+        return a / b
 
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
@@ -202,11 +202,11 @@ class ArArAge(IsotopeGroup):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.uvalue
-        elif attr.startswith('u'):
+        elif attr.startswith('u') and attr != 'uage':
 
-        # elif '/' in attr:
-        #     non_ic_corr = attr.startswith('u')
-        #     if non_ic_corr:
+            # elif '/' in attr:
+            #     non_ic_corr = attr.startswith('u')
+            #     if non_ic_corr:
             attr = attr[1:]
             r = self.get_ratio(attr, non_ic_corr=True)
         elif attr == 'icf_40_36':
@@ -504,44 +504,44 @@ class ArArAge(IsotopeGroup):
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
-    # def __getattr__(self, attr):
-    #     if '/' in attr:
-    #         # treat as ratio
-    #         n, d = attr.split('/')
-    #         try:
-    #             return self.get_value(n) / self.get_value(d)
-    #         except (ZeroDivisionError, TypeError):
-    #             return ufloat(0, 1e-20)
-    #     else:
-    #         raise AttributeError(attr)
-            # ===============================================================================
-            #
-            # ===============================================================================
+        # def __getattr__(self, attr):
+        #     if '/' in attr:
+        #         # treat as ratio
+        #         n, d = attr.split('/')
+        #         try:
+        #             return self.get_value(n) / self.get_value(d)
+        #         except (ZeroDivisionError, TypeError):
+        #             return ufloat(0, 1e-20)
+        #     else:
+        #         raise AttributeError(attr)
+        # ===============================================================================
+        #
+        # ===============================================================================
 
-            # def _arar_constants_default(self):
-            #     """
-            #         use a global shared arar_constants
-            #     """
-            #
-            #     global arar_constants
-            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-            #     #print 'asdf', arar_constants
-            #     if arar_constants is None:
-            #         arar_constants = ArArConstants()
-            #         #return ArArConstants()
-            #     return arar_constants
+        # def _arar_constants_default(self):
+        #     """
+        #         use a global shared arar_constants
+        #     """
+        #
+        #     global arar_constants
+        #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+        #     #print 'asdf', arar_constants
+        #     if arar_constants is None:
+        #         arar_constants = ArArConstants()
+        #         #return ArArConstants()
+        #     return arar_constants
 
-            # def _arar_constants_default(self):
-            #     """
-            #         use a global shared arar_constants
-            #     """
-            #
-            #     global arar_constants
-            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-            #     #print 'asdf', arar_constants
-            #     if arar_constants is None:
-            #         arar_constants = ArArConstants()
-            #         #return ArArConstants()
-            #     return arar_constants
+        # def _arar_constants_default(self):
+        #     """
+        #         use a global shared arar_constants
+        #     """
+        #
+        #     global arar_constants
+        #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+        #     #print 'asdf', arar_constants
+        #     if arar_constants is None:
+        #         arar_constants = ArArConstants()
+        #         #return ArArConstants()
+        #     return arar_constants
 
-            # ============= EOF =============================================
+        # ============= EOF =============================================
