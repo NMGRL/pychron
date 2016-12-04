@@ -84,8 +84,13 @@ class NMGRLFurnaceDrive(CoreDevice):
     def get_position(self, units='steps'):
         pos = self.ask(self._build_command('GetPosition', units=units))
         if pos:
-            pos = float(pos)
-            pos *= self.drive_sign
+            if pos != 'No Response':
+                try:
+                    pos = float(pos)
+                    pos *= self.drive_sign
+                except ValueError:
+                    pos = None
+
             return pos
 
     def start_jitter(self, turns=None, p1=None, p2=None, **kw):
