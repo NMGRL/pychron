@@ -15,7 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
@@ -142,7 +146,7 @@ class BrowserAction(Action):
 class RecallAction(PipelineAction):
     name = 'Recall...'
     action = 'pipeline_recall'
-    
+
     # def perform(self, event):
     #     self._get_task(event)
 
@@ -201,6 +205,19 @@ class AnalysisTableAction(PipelineAction):
 class PipelineRecallAction(TaskAction):
     name = 'Recall'
     method = 'pipeline_recall'
+
+
+class ClearAnalysisSetsAction(Action):
+    name = 'Clear Analysis Sets'
+
+    def perform(self, event):
+        from pychron.paths import paths
+        p = paths.hidden_path('analysis_sets')
+        if os.path.isfile(p):
+            if confirm(None, 'Are you sure you want to clear the Analysis Sets?') == YES:
+                os.remove(p)
+        else:
+            information(None, 'No Analysis Sets to remove')
 
 
 # ============= Plotting Actions =============================================
@@ -266,6 +283,7 @@ class ExtractionAction(Action):
                 if task and task.id == tid:
                     getattr(task, 'show_extraction_graph')()
                     break
+
 
 # ============= Quick Series ====================================
 class LastNAnalysesSeriesAction(PipelineAction):

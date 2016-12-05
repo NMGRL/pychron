@@ -27,7 +27,7 @@ from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, FluxAction, FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
-    AnalysisTableAction
+    AnalysisTableAction, ClearAnalysisSetsAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 from pychron.pipeline.tasks.task import PipelineTask
 
@@ -154,6 +154,8 @@ class PipelinePlugin(BaseTaskPlugin):
                                             path=rg)]
 
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
+                                       path='MenuBar/help.menu'),
+                        SchemaAddition(factory=ClearAnalysisSetsAction,
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
