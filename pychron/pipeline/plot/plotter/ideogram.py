@@ -19,6 +19,7 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
+from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
 from numpy import array, arange, Inf, argmax
 from pyface.message_dialog import warning
@@ -40,7 +41,59 @@ N = 500
 
 
 class PeakLabel(DataLabel):
-    pass
+    show_label_coords = False
+    border_visible = False
+
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        # if self.clip_to_plot:
+        #     gc.save_state()
+        #     c = component
+        #     gc.clip_to_rect(c.x, c.y, c.width, c.height)
+
+        self.do_layout()
+
+        # if self.label_style == 'box':
+        self._render_box(component, gc, view_bounds=view_bounds,
+                         mode=mode)
+        # else:
+        #     self._render_bubble(component, gc, view_bounds=view_bounds,
+        #                         mode=mode)
+
+    def _render_box(self, component, gc, view_bounds=None, mode='normal'):
+        # draw the arrow if necessary
+        # if self.arrow_visible:
+        #     if self._cached_arrow is None:
+        #         if self.arrow_root in self._root_positions:
+        #             ox, oy = self._root_positions[self.arrow_root]
+        #         else:
+        #             if self.arrow_root == "auto":
+        #                 arrow_root = self.label_position
+        #             else:
+        #                 arrow_root = self.arrow_root
+        #             pos = self._position_root_map.get(arrow_root, "DUMMY")
+        #             ox, oy = self._root_positions.get(pos,
+        #                                 (self.x + self.width / 2,
+        #                                  self.y + self.height / 2))
+        #
+        #         if type(ox) == str:
+        #             ox = getattr(self, ox)
+        #             oy = getattr(self, oy)
+        #         self._cached_arrow = draw_arrow(gc, (ox, oy),
+        #                                     self._screen_coords,
+        #                                     self.arrow_color_,
+        #                                     arrowhead_size=self.arrow_size,
+        #                                     offset1=3,
+        #                                     offset2=self.marker_size + 3,
+        #                                     minlen=self.arrow_min_length,
+        #                                     maxlen=self.arrow_max_length)
+        #     else:
+        #         draw_arrow(gc, None, None, self.arrow_color_,
+        #                    arrow=self._cached_arrow,
+        #                    minlen=self.arrow_min_length,
+        #                    maxlen=self.arrow_max_length)
+
+        # layout and render the label itself
+        ToolTip.overlay(self, component, gc, view_bounds, mode)
 
 
 class LatestOverlay(AbstractOverlay):
@@ -400,9 +453,12 @@ class Ideogram(BaseArArFigure):
             label = PeakLabel(line,
                               data_point=(xi, yi),
                               label_text=floatfmt(xi, n=3),
-                              border_visible=False,
-                              marker_visible=False,
-                              show_label_coords=False)
+                              # label_style='bubble',
+
+                              # border_visible=False,
+                              # marker_visible=False,
+                              # show_label_coords=False
+                              )
             line.overlays.append(label)
             # try:
             #     maxp, minp = find_peaks(ys, xs, lookahead=1)
