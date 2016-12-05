@@ -114,6 +114,11 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def move_to_row(self, info, obj):
         obj.move_selected_to_row()
 
+    def copy_to_start(self, info, obj):
+        obj.copy_selected_first()
+
+    def copy_to_end(self, info, obj):
+        obj.copy_selected_last()
 
 class ItemDelegate(_ItemDelegate):
     pass

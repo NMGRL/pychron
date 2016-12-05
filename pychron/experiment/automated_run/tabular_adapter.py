@@ -377,6 +377,9 @@ class AutomatedRunMixin(object):
                            Action(name='Move to End', action='move_to_end'),
                            Action(name='Move to ...', action='move_to_row'),
                            name='Move')
+        copy = MenuManager(Action(name='Copy to Start', action='copy_to_start'),
+                           Action(name='Copy to End', action='copy_to_end'),
+                           name='Copy')
 
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
@@ -386,7 +389,7 @@ class AutomatedRunMixin(object):
                               Action(name='Select Same Attributes...', action='select_same_attr'),
                               name='Select')
 
-        return MenuManager(move, jump, blocks, selects,
+        return MenuManager(move, copy, jump, blocks, selects,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
                            Action(name='Toggle Skip', action='toggle_skip'))

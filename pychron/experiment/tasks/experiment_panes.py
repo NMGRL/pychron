@@ -375,8 +375,8 @@ Quick=   measure_iteration stopped at current step
                               tooltip=truncate_style_tt),
                         UItem('show_conditionals_button'),
                         spacer(-75),
-                        CustomLabel('object.extraction_status.label',
-                                    color_name='object.extraction_status.color',
+                        CustomLabel('object.experiment_status.label',
+                                    color_name='object.experiment_status.color',
                                     size=24,
                                     weight='bold'), spring))
         return v

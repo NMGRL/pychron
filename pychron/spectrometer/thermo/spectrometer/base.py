@@ -316,7 +316,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         #         print 'found'
         #         break
 
-        return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.1), 'Iso{:0.4f}'.format(mass))
+        return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.15), 'Iso{:0.4f}'.format(mass))
 
     def map_mass(self, isotope):
         """

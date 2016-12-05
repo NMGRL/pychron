@@ -297,10 +297,13 @@ class DVCPersister(BasePersister):
         an = db.add_analysis(**d)
 
         # save media
-        for p in self.per_spec.snapshots:
-            db.add_media(p, an)
-        for p in self.per_spec.videos:
-            db.add_media(p, an)
+        if self.per_spec.snapshots:
+            for p in self.per_spec.snapshots:
+                db.add_media(p, an)
+
+        if self.per_spec.videos:
+            for p in self.per_spec.videos:
+                db.add_media(p, an)
 
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***

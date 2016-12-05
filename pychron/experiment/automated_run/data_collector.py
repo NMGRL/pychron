@@ -134,9 +134,10 @@ class DataCollector(Consoleable):
             dets = self.detectors
             writer = self.data_writer
             while not q.empty() or not evt.is_set():
-                x, keys, signals = q.get()
-                writer(dets, x, keys, signals)
-                time.sleep(5)
+                while not q.empty():
+                    x, keys, signals = q.get()
+                    writer(dets, x, keys, signals)
+                time.sleep(1)
 
         # only write to file every 5 seconds and not on main thread
         t = Thread(target=writefunc)

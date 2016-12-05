@@ -399,7 +399,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ctx = {'etf_iso': self.stats.etf_iso,
                'err_message': self._err_message,
                'experiment_name': exp.name,
-               'starttime': exp.starttime,
+               'starttime': exp.start_timestamp,
                'mass_spectrometer': exp.mass_spectrometer,
                'username': exp.username,
                'nruns_finished': self.stats.nruns_finished}
@@ -516,7 +516,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
 
-        self._do_event(events.EXECUTE_QUEUE)
+        self._do_event(events.START_QUEUE)
         # self._add_event()
 
         # save experiment to database
