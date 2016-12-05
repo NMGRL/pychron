@@ -19,12 +19,10 @@ from threading import Thread
 
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, spring, \
     ButtonEditor, Tabbed
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
@@ -36,8 +34,8 @@ class ControlPane(TraitsDockPane):
     name = 'Controls'
     id = 'pychron.nmgrlfurnace.controls'
 
-    dump_sample_button = Button('Dump')
-    fire_magnets_button = Button('Magnets')
+    dump_sample_button = Button('Load')
+    fire_magnets_button = Button('Dump')
     jitter_button = Button
     jitter_label = Str('Start')
     jittering = Bool
@@ -163,7 +161,7 @@ class ControlPane(TraitsDockPane):
                             show_border=True, label='Jitter')
 
         dump_grp = HGroup(UItem('pane.dump_sample_button',
-                                tooltip='Complete sample dumping procedure'),
+                                tooltip='Execute the complete sample loading procedure'),
                           UItem('pane.fire_magnets_button',
                                 enabled_when='not magnets_firing',
                                 tooltip='Execute the magnet sequence'),
