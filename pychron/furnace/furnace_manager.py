@@ -21,6 +21,7 @@ import time
 from threading import Thread
 
 import yaml
+from pyface.timer.do_later import do_later
 from traits.api import TraitError, Instance, Float, provides, Bool
 
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
@@ -230,10 +231,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 return self._dump_sample()
             else:
                 self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
-                self._magnets_thread.setDaemon(True)
+                self._dumper_thread.setDaemon(True)
                 self._dumper_thread.start()
         else:
-            self.warning('dump already in progress')
+            self.warning_dialog('dump already in progress')
 
     def fire_magnets(self):
         self.debug('fire magnets')
@@ -377,6 +378,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def open_valve(self, name, **kw):
         if not self._open_logic(name):
             self.debug('logic failed')
+            do_later(self.warning_dialog, 'Open Valve Failed. Prevented by safety logic')
             return False, False
 
         if self.switch_manager:
@@ -385,6 +387,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def close_valve(self, name, **kw):
         if not self._close_logic(name):
             self.debug('logic failed')
+            do_later(self.warning_dialog, 'Close Valve Failed. Prevented by safety logic')
             return False, False
 
         if self.switch_manager:
