@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 import time
-from threading import Event
+from Queue import Queue
+from threading import Event, Thread
 
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 
@@ -59,6 +60,7 @@ class DataCollector(Consoleable):
     _data = None
     _temp_conds = None
     _result = None
+    _queue = None
 
     err_message = Str
 
@@ -124,7 +126,22 @@ class DataCollector(Consoleable):
         self._temp_conds = None
 
     def _measure(self, evt):
-        self.debug('starting measurment')
+        self.debug('starting measurement')
+
+        self._queue = q = Queue()
+
+        def writefunc():
+            dets = self.detectors
+            writer = self.data_writer
+            while not q.empty() or not evt.is_set():
+                x, keys, signals = q.get()
+                writer(dets, x, keys, signals)
+                time.sleep(5)
+
+        # only write to file every 5 seconds and not on main thread
+        t = Thread(target=writefunc)
+        t.setDaemon(True)
+        t.start()
 
         period = self.period_ms * 0.001
         i = 1
@@ -177,7 +194,9 @@ class DataCollector(Consoleable):
             return data
 
     def _save_data(self, x, keys, signals):
-        self.data_writer(self.detectors, x, keys, signals)
+        # self.data_writer(self.detectors, x, keys, signals)
+
+        self._queue.put((x, keys, signals))
 
         # update arar_age
         if self.is_baseline and self.for_peak_hop:
