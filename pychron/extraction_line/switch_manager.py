@@ -196,7 +196,7 @@ class SwitchManager(Manager):
                          for k, v in self.switches.iteritems()])
 
     @add_checksum
-    def get_states(self, timeout=0.25):
+    def get_states(self, query=False, timeout=0.25):
         """
             get as many valves states before time expires
             remember last set of valves returned.
@@ -226,7 +226,11 @@ class SwitchManager(Manager):
                 continue
 
             keys.append(k)
-            state = '{}{}'.format(k, int(self._get_state_by(v)))
+            if query:
+                state = '{}{}'.format(k, int(self._get_state_by(v)))
+            else:
+                # don't query valves
+                state = '{}{}'.format(k, int(v.state))
 
             states.append(state)
             if time.time() - st > timeout:

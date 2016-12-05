@@ -278,14 +278,15 @@ class ExtractionLineManager(Manager, Consoleable):
                     vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+        self.debug(
+            'update switch state {} {} args={} kw={} ncanvase={}'.format(name, state, args, kw, len(self.canvases)))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state)
+            c.update_switch_state(name, state, **kw)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
@@ -343,7 +344,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def get_valve_states(self):
         if self.switch_manager is not None:
-            return self.switch_manager.get_states()
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_states(query=not self.use_hardware_update)
 
     def get_valve_by_name(self, name):
         if self.switch_manager is not None:
@@ -708,7 +711,12 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _handle_state(self, new):
         self.debug('handle state {}'.format(new))
-        self.update_switch_state(*new)
+        if isinstance(new, tuple):
+            self.update_switch_state(*new)
+        else:
+            n = len(new)
+            for i, ni in enumerate(new):
+                self.update_switch_state(refresh=i != n - 1, *ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))

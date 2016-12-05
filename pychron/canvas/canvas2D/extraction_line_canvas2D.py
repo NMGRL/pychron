@@ -15,22 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from pyface.action.menu_manager import MenuManager
 from pyface.qt.QtGui import QToolTip
 from traits.api import Any, Str, on_trait_change, Bool
 from traitsui.menu import Action
 
-# ============= standard library imports ========================`
-import os
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
+from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
-from pychron.canvas.scene_viewer import SceneCanvas
-from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
+from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.globals import globalv
 
 W = 2
@@ -99,6 +98,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.state = nstate
         self.draw_valid = False
 
+        print name, nstate, refresh, mode
         if refresh:
             self.invalidate_and_redraw()
 
