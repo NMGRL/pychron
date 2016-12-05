@@ -21,7 +21,7 @@ from pychron.loggable import Loggable
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR
+from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
 
 
 class HumanErrorChecker(Loggable):
@@ -45,8 +45,8 @@ class HumanErrorChecker(Loggable):
                 return msg
 
     def check_runs_non_fatal(self, runs):
-        for r in runs:
-            ret = self._check_run_non_fatal(r)
+        for i, r in enumerate(runs):
+            ret = self._check_run_non_fatal(i, r)
             if ret:
                 return ret
 
@@ -80,10 +80,16 @@ class HumanErrorChecker(Loggable):
     def check_run(self, run, inform=True, test=False):
         return self._check_run(run, inform, test)
 
-    def _check_run_non_fatal(self, run):
+    def _check_run_non_fatal(self, idx, run):
         es = run.extraction_script
         if es:
             es = es.lower()
+
+        # check for all scripts
+        for s in SCRIPT_NAMES:
+            ss = getattr(run, s)
+            if not ss or ss == NULL_STR:
+                return 'Missing "{}" for run={}'.format(s.upper(), idx + 1)
 
         ed = run.extract_device
         if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
