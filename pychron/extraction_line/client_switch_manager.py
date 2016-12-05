@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from socket import gethostbyname, gethostname
-# ============= local library imports  ==========================
+
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.globals import globalv
 
@@ -36,27 +36,31 @@ class ClientSwitchManager(SwitchManager):
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')
         word = self.get_state_word()
-        changed = False
+        # changed = False
+        states = []
         if word:
             for k, v in self.switches.iteritems():
                 try:
                     s = word[k]
                     if s != v.state or force_network_change:
-                        changed = True
+                        # changed = True
                         v.set_state(s)
-                        self.refresh_state = (k, s)
+                        # self.refresh_state = (k, s)
                         self.set_child_state(k, s)
+                        states.append((k, s))
 
                 except KeyError:
                     pass
 
         elif force_network_change:
-            changed = True
+            # changed = True
             for k, v in self.switches.iteritems():
-                self.refresh_state = (k, v.state)
+                states.append(k, v.state)
+                # self.refresh_state = (k, v.state)
                 # elm.update_valve_state(k, v.state)
 
-        if refresh and changed:
+        if refresh and states:
+            self.refresh_state = states
             self.refresh_canvas_needed = True
             # elm.refresh_canvas()
 
