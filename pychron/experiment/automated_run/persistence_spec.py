@@ -82,9 +82,9 @@ class PersistenceSpec(HasTraits):
     response_blob = Str
     output_blob = Str
     setpoint_blob = Str
-    snapshots = None
-    videos = None
+    snapshots = List
+    videos = List
 
-    conditionals = None
+    conditionals = List
     tripped_conditional = None
 # ============= EOF =============================================

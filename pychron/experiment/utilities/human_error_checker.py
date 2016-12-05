@@ -89,7 +89,7 @@ class HumanErrorChecker(Loggable):
         for s in SCRIPT_NAMES:
             ss = getattr(run, s)
             if not ss or ss == NULL_STR:
-                return 'Missing "{}" for run={}'.format(s.upper(), idx + 1)
+                return 'Missing "{}" for run={} {} pos={}'.format(s.upper(), idx + 1, run.runid, run.position)
 
         ed = run.extract_device
         if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:

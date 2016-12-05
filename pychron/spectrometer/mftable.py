@@ -21,7 +21,9 @@ import os
 import shutil
 
 from numpy import asarray, array, nonzero, polyval
-from scipy.optimize import leastsq, optimize
+
+from scipy.optimize import leastsq, brentq
+
 from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
 
 from pychron.core.helpers.filetools import add_extension
@@ -103,7 +105,7 @@ class MagnetFieldTable(Loggable):
     def map_dac_to_mass(self, dac, detname):
         detname = get_detector_name(detname)
 
-        d = self._get_table()
+        d = self._get_mftable()
 
         _, xs, ys, p = d[detname]
         if self.polynominal_mass_func:
@@ -113,7 +115,7 @@ class MagnetFieldTable(Loggable):
                 return polyval(c, x)
 
             try:
-                mass = optimize.brentq(func, 0, 200)
+                mass = brentq(func, 0, 200)
                 return mass
             except ValueError, e:
                 self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
@@ -146,7 +148,7 @@ class MagnetFieldTable(Loggable):
     def get_dac(self, det, mass):
         det = get_detector_name(det)
         d = self._get_mftable()
-        dac = next((d for i, m, d in zip(*d[det][:3]) if abs(m - mass) < 1e-5), None)
+        dac = next((d for i, m, d in zip(*d[det][:3]) if abs(m - mass) < 0.15), None)
         return dac
 
         # isotope = next((i for i, m in self.molweights.iteritems() if abs(m-mass)<1e-5), None)

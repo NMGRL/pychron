@@ -152,6 +152,12 @@ class ExperimentQueue(BaseExperimentQueue):
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
 
+    def copy_selected_first(self):
+        self._copy_selected(0)
+
+    def copy_selected_last(self):
+        self.information_dialog('"Copy to End" Not Implemented')
+
     def jump_to_end(self):
         self.automated_runs_scroll_to_row = len(self.automated_runs) - 1
 
@@ -350,6 +356,11 @@ class ExperimentQueue(BaseExperimentQueue):
         ex = len(self.executed_runs)
         tc = len(self.cleaned_automated_runs) + ex
         return '{}/{}'.format(ex, tc)
+
+    def _copy_selected(self, idx):
+        with no_update(self):
+            for si in reversed(self.selected):
+                self.automated_runs.insert(idx, si.tocopy())
 
     def _move_selected(self, idx):
         with no_update(self):
