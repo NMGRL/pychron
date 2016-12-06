@@ -87,4 +87,6 @@ class PersistenceSpec(HasTraits):
 
     conditionals = List
     tripped_conditional = None
+
+    power_achieved = Float
 # ============= EOF =============================================
