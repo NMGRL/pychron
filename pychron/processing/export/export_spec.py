@@ -88,7 +88,7 @@ class MassSpecExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'),
                  ('power_requested', 'extract_value'),
-                 ('power_achieved', 'extract_value'),
+                 # ('power_achieved', 'extract_value'),
                  ('extract_value', 'extract_value'),
                  ('duration', 'duration'),
                  ('duration_at_request', 'duration'),

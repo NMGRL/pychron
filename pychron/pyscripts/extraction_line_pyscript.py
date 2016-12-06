@@ -147,8 +147,7 @@ class ExtractionPyScript(ValvePyScript):
         except (ValueError, TypeError):
             ach = 0
 
-        return ('Requested Output= {:0.3f}'.format(request),
-                'Achieved Output=  {:0.3f}'.format(ach))
+        return ach, request
 
     def get_active_pid_parameters(self):
         result = self._extraction_action([('get_active_pid_parameters', (), {})])

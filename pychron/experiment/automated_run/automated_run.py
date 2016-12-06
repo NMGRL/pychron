@@ -1242,9 +1242,9 @@ class AutomatedRun(Loggable):
                 syn_extractor.stop()
 
             # report the extraction results
-            r = script.output_achieved()
-            for ri in r:
-                self.info(ri)
+            ach, req = script.output_achieved()
+            self.info('Requested Output= {:0.3f}'.format(req))
+            self.info('Achieved Output=  {:0.3f}'.format(ach))
 
             rblob = script.get_response_blob()
             oblob = script.get_output_blob()
@@ -1254,6 +1254,7 @@ class AutomatedRun(Loggable):
 
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
+                                        power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,
                                         setpoint_blob=sblob,

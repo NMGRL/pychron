@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import math
-from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
-# ============= standard library imports ========================
 import binascii
-import time
+import math
 import os
+import time
+
+from traits.api import Instance, Bool, Interface, provides, Long, Str, Float
 from xlwt import Workbook, struct
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.helpers.filetools import subdirize
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
-
 from pychron.loggable import Loggable
-# from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.processing.export.export_spec import MassSpecExportSpec
 from pychron.pychron_constants import NULL_STR
@@ -958,6 +956,7 @@ class AutomatedRunPersister(BasePersister):
                                  mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
                                  # blanks=blanks,
                                  # data_path=p,
+                                 power_achieved=self.per_spec.power_achieved,
                                  isotopes=self.per_spec.isotope_group.isotopes,
                                  # signal_intercepts=si,
                                  # signal_intercepts=self._processed_signals_dict,
