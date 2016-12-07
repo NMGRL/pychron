@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property
+from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property, cached_property, Event
 # from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 import shutil
@@ -69,7 +69,8 @@ class MagnetFieldTable(Loggable):
     spectrometer_name = Str
     use_local_archive = Bool
     use_db_archive = Bool
-    path = Property
+    path = Property(depends_on='dirty')
+    dirty = Event
 
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
@@ -219,13 +220,14 @@ class MagnetFieldTable(Loggable):
         with open(p, 'U') as f:
             reader = csv.reader(f)
             table = []
-            detectors = map(str.strip, reader.next()[1:])
+            detectors = map(str.strip, next(reader)[1:])
+
             for line in reader:
                 iso = line[0]
                 try:
                     mw = mws[iso]
                 except KeyError, e:
-                    self.warning('"{}" not in molweights {}'.formamolweights(iso, mw))
+                    self.warning('"{}" not in molweights {}'.format(iso, mws))
                     continue
 
                 dacs = map(float, line[1:])
@@ -239,19 +241,24 @@ class MagnetFieldTable(Loggable):
                 row = [iso, mw] + dacs
                 table.append(row)
 
+            npoints = len(table)
             self._report_mftable(detectors, items)
             self.items = items
 
             table = zip(*table)
             isos, mws = list(table[0]), list(table[1])
 
+
             d = {}
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
-                try:
-                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
-                except TypeError:
-                    c = (0, 1, ys[0])
+                if npoints > 1:
+                    try:
+                        c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
+                    except TypeError:
+                        c = (0, 1, ys[0])
+                else:
+                    c = (0,0, ys[0])
 
                 d[k] = (isos, mws, ys, c)
 
@@ -316,6 +323,7 @@ class MagnetFieldTable(Loggable):
 
     def _set_path(self, name):
         set_mftable_name(name)
+        self.dirty = True
 
     @cached_property
     def _get_path(self):

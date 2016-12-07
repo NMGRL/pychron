@@ -436,8 +436,8 @@ class Paths(object):
         self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
         self.last_experiment = join(self.hidden_dir, 'last_experiment')
-        self.mftable = join(self.spectrometer_dir, 'mftable.csv')
-        self.ic_mftable = join(self.spectrometer_dir, 'ic_mftable.csv')
+        self.mftable = join(self.spectrometer_dir, 'mftables', 'mftable.csv')
+        self.ic_mftable = join(self.spectrometer_dir, 'mftables', 'ic_mftable.csv')
 
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
