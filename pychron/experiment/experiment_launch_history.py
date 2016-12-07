@@ -13,19 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.ui import set_qt
-
-set_qt()
 # ============= enthought library imports =======================
+import os
+import time
+
 from pyface.timer.do_later import do_later
 from traits.api import HasTraits, Str, Int, List, Event, Instance
 from traitsui.api import View, UItem, Handler
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-import os
-import time
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
@@ -94,7 +90,7 @@ class ExperimentLaunchHistory(HasTraits):
 
         with open(paths.experiment_launch_history, 'r') as rfile:
             items = [factory(line) for line in rfile]
-            self.items = [i for i in items if i]
+            self.items = sorted((i for i in items if i), key=lambda x: x.last_run_time, reverse=True)
 
     def traits_view(self):
         v = View(UItem('items', editor=myTabularEditor(adapter=ELHAdapter(),

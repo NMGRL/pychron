@@ -358,9 +358,9 @@ class ArArAge(IsotopeGroup):
                                                                                   fixed_k3739=self.fixed_k3739)
 
             self.uF = f
-            self.F = f.nominal_value
-            self.F_err = f.std_dev
-            self.F_err_wo_irrad = f_wo_irrad.std_dev
+            self.F = nominal_value(f)
+            self.F_err = std_dev(std_dev)
+            self.F_err_wo_irrad = std_dev(f_wo_irrad)
             return f, f_wo_irrad, non_ar, computed, interference_corrected
 
     def _assemble_isotope_intensities(self):
