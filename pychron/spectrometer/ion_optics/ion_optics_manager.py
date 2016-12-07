@@ -187,6 +187,7 @@ class IonOpticsManager(Manager):
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
 
+        use_dac_offset = False
         if dac_offset is not None:
             use_dac_offset = True
 

@@ -20,10 +20,7 @@ Global path structure
 add a path verification function
 make sure directory exists and build if not
 """
-# ============= standard library imports ========================
-import os
 import pickle
-import shutil
 from hashlib import md5
 from os import path, mkdir, environ
 
@@ -86,18 +83,12 @@ class Paths(object):
     backup_device_dir = None
     plugins_dir = None
     hidden_dir = None
-    appdata_dir = None
     labspy_dir = None
     labspy_context_dir = None
     # users_file = None
     global_hidden = None
     build_repo = None
-
-    # login
     login_file = None
-    last_login_file = None
-    users_file = None
-
     preferences_dir = None
     comment_templates_dir = None
     plotter_options_dir = None
@@ -137,6 +128,7 @@ class Paths(object):
     incremental_heat_template_dir = None
 
     block_dir = None
+    heating_schedule_dir = None
     map_dir = None
     furnace_map_dir = None
     user_points_dir = None
@@ -169,8 +161,6 @@ class Paths(object):
     figure_dir = None
     table_dir = None
 
-    media_storage_dir = None
-
     repository_dataset_dir = None
     project_dir = None
     meta_root = None
@@ -187,6 +177,8 @@ class Paths(object):
     # ==============================================================================
     # processing
     # ==============================================================================
+    formatting_dir = None
+
     pipeline_dir = None
     pipeline_template_dir = None
 
@@ -346,29 +338,22 @@ class Paths(object):
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
 
-        # self.hidden_dir = join(root, '.hidden')
+        self.hidden_dir = join(root, '.hidden')
+
         self.preferences_dir = join(root, 'preferences')
         self.template_dir = join(root, 'templates')
         self.queue_conditionals_dir = join(root, 'queue_conditionals')
         # ==============================================================================
         # hidden
         # ==============================================================================
-        self.appdata_dir = join(root, '.appdata')
-        self.hidden_dir = self.appdata_dir
-
-        self.labspy_dir = join(self.appdata_dir, 'labspy')
+        self.labspy_dir = join(self.hidden_dir, 'labspy')
         self.labspy_context_dir = join(self.labspy_dir, 'context')
 
-        self.plotter_options_dir = join(self.appdata_dir, 'plotter_options')
-        self.comment_templates_dir = join(self.appdata_dir, 'comment_templates')
+        self.plotter_options_dir = join(self.hidden_dir, 'plotter_options')
+        self.comment_templates_dir = join(self.hidden_dir, 'comment_templates')
         self.global_hidden = join(self.base, '.pychron')
         self.build_repo = join(self.global_hidden, 'updates')
-        self.peak_center_config_dir = join(self.appdata_dir, 'peak_center_configs')
-
-        # login
-        self.login_file = join(self.appdata_dir, 'login')
-        self.last_login_file = join(self.appdata_dir, 'last_login')
-        self.users_file = join(self.appdata_dir, 'users')
+        self.peak_center_config_dir = join(self.hidden_dir, 'peak_center_configs')
         # ==============================================================================
         # setup
         # ==============================================================================
@@ -428,7 +413,6 @@ class Paths(object):
         self.repository_dataset_dir = join(self.dvc_dir, 'repositories')
         self.meta_root = join(self.dvc_dir, 'MetaData')
         self.sample_dir = join(self.data_dir, 'sample_entry')
-        self.media_storage_dir = join(self.data_dir, 'media')
         # ==============================================================================
         # processing
         # ==============================================================================
@@ -436,7 +420,7 @@ class Paths(object):
         self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
         self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
 
-        self.pipeline_dir = join(self.appdata_dir, 'pipeline')
+        self.pipeline_dir = join(self.hidden_dir, 'pipeline')
         self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
         # ==============================================================================
         # lovera exectuables
@@ -448,45 +432,45 @@ class Paths(object):
         labspy_client_config = join(self.setup_dir, 'labspy_client.yaml')
         self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
         self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
-        self.identifiers_file = join(self.appdata_dir, 'identifiers.yaml')
+        self.identifiers_file = join(self.hidden_dir, 'identifiers.yaml')
         self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
-        self.backup_recovery_file = join(self.appdata_dir, 'backup_recovery')
-        self.last_experiment = join(self.appdata_dir, 'last_experiment')
-        self.mftable = join(self.spectrometer_dir, 'mftable.csv')
-        self.ic_mftable = join(self.spectrometer_dir, 'ic_mftable.csv')
+        self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
+        self.last_experiment = join(self.hidden_dir, 'last_experiment')
+        self.mftable = join(self.spectrometer_dir, 'mftables', 'mftable.csv')
+        self.ic_mftable = join(self.spectrometer_dir, 'mftables', 'ic_mftable.csv')
 
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
         self.set_search_paths()
         self.system_conditionals = join(self.spectrometer_dir, 'system_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
-        self.ideogram_defaults = join(self.appdata_dir, 'ideogram_defaults.yaml')
-        self.spectrum_defaults = join(self.appdata_dir, 'spectrum_defaults.yaml')
-        self.inverse_isochron_defaults = join(self.appdata_dir, 'inverse_isochron_defaults.yaml')
-        self.composites_defaults = join(self.appdata_dir, 'composite_defaults.yaml')
+        self.ideogram_defaults = join(self.hidden_dir, 'ideogram_defaults.yaml')
+        self.spectrum_defaults = join(self.hidden_dir, 'spectrum_defaults.yaml')
+        self.inverse_isochron_defaults = join(self.hidden_dir, 'inverse_isochron_defaults.yaml')
+        self.composites_defaults = join(self.hidden_dir, 'composite_defaults.yaml')
         self.system_health = join(self.setup_dir, 'system_health.yaml')
         # self.screen_formatting_options = join(self.formatting_dir, 'screen.yaml')
         # self.presentation_formatting_options = join(self.formatting_dir, 'presentation.yaml')
         # self.display_formatting_options = join(self.formatting_dir, 'display.yaml')
         self.plotter_options = join(self.plotter_options_dir, 'plotter_options.p')
-        self.task_extensions_file = join(self.appdata_dir, 'task_extensions.yaml')
-        self.simple_ui_file = join(self.appdata_dir, 'simple_ui.yaml')
-        self.edit_ui_defaults = join(self.appdata_dir, 'edit_ui.yaml')
+        self.task_extensions_file = join(self.hidden_dir, 'task_extensions.yaml')
+        self.simple_ui_file = join(self.hidden_dir, 'simple_ui.yaml')
+        self.edit_ui_defaults = join(self.hidden_dir, 'edit_ui.yaml')
 
-        self.duration_tracker = join(self.appdata_dir, 'duration_tracker.txt')
-        self.duration_tracker_frequencies = join(self.appdata_dir, 'duration_tracker_frequencies.txt')
-        self.experiment_launch_history = join(self.appdata_dir, 'experiment_launch_history.txt')
+        self.duration_tracker = join(self.hidden_dir, 'duration_tracker.txt')
+        self.duration_tracker_frequencies = join(self.hidden_dir, 'duration_tracker_frequencies.txt')
+        self.experiment_launch_history = join(self.hidden_dir, 'experiment_launch_history.txt')
         self.notification_triggers = join(self.setup_dir, 'notification_triggers.yaml')
 
         self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
-        self.furnace_sample_states = join(self.appdata_dir, 'furnace_sample_states.yaml')
+        self.furnace_sample_states = join(self.hidden_dir, 'furnace_sample_states.yaml')
 
         # =======================================================================
         # pipeline templates
         # =======================================================================
-        self.icfactor_template = join(self.pipeline_template_dir, 'ic_factor.yaml')
+        self.icfactor_template = join(self.pipeline_template_dir, 'icfactor.yaml')
         self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
-        self.iso_evo_template = join(self.pipeline_template_dir, 'isotope_evolutions.yaml')
+        self.iso_evo_template = join(self.pipeline_template_dir, 'iso_evo.yaml')
         self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
         self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
         self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
@@ -502,8 +486,6 @@ class Paths(object):
         self.geochron_template = join(self.pipeline_template_dir, 'geochron.yaml')
         self.yield_template = join(self.pipeline_template_dir, 'yield.yaml')
         build_directories()
-
-        migrate_hidden()
 
     def set_template_manifest(self, files):
         # open the manifest file to set the overwrite flag
@@ -535,9 +517,9 @@ class Paths(object):
         return manifest
 
     def hidden_path(self, basename):
-        # from pychron.globals import globalv
-        # basename = '{}.{}'.format(basename, globalv.username)
-        return path.join(self.appdata_dir, basename)
+        from pychron.globals import globalv
+        basename = '{}.{}'.format(basename, globalv.username)
+        return path.join(self.hidden_dir, basename)
 
     def write_defaults(self):
         if environ.get('TRAVIS_CI', 'False') == 'False' and environ.get('RTD', 'False') == 'False':
@@ -597,28 +579,6 @@ def build_directories():
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))
-
-
-def migrate_hidden():
-    print 'migrating hidden directory'
-
-    hd = os.path.join(paths.root_dir, '.hidden')
-    for root, dirs, files in os.walk(hd):
-        if root == hd:
-            droot = paths.appdata_dir
-        else:
-            droot = os.path.join(paths.appdata_dir, os.path.basename(root))
-
-        if not os.path.isdir(droot):
-            os.makedirs(droot)
-
-        for f in files:
-            if f not in ('.DS_Store',):
-                src = os.path.join(root, f)
-                dst = os.path.join(droot, f)
-                if not os.path.isfile(dst):
-                    print 'moving {} to {}'.format(src, dst)
-                    shutil.move(src, dst)
 
 
 paths = Paths()
