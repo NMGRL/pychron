@@ -339,11 +339,13 @@ class MagnetFieldTable(Loggable):
                 row = [iso, mw] + dacs
                 table.append(row)
 
+            npoints = len(table)
             self._report_mftable(detectors, items)
             self.items = items
 
             table = zip(*table)
             isos, mws = list(table[0]), list(table[1])
+
 
             d = {}
 
@@ -448,6 +450,7 @@ class MagnetFieldTable(Loggable):
 
     def _set_path(self, name):
         set_mftable_name(name)
+        self.dirty = True
 
     # @cached_property
     def _get_path(self):
