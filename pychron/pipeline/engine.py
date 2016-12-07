@@ -25,6 +25,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
+from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
@@ -325,6 +326,10 @@ class PipelineEngine(Loggable):
         node = self._get_last_node(node)
         self.pipeline.add_after(node, newnode)
 
+    def add_review(self, node=None, run=False):
+        newnode = ReviewNode()
+        self._add_node(node, newnode, run)
+
     # preprocess
     def add_filter(self, node=None, run=True):
         newnode = FilterNode()
@@ -596,54 +601,47 @@ class PipelineEngine(Loggable):
 
     def _load_predefined_templates(self):
         self.debug('load predefined templates')
-        templates = []
+        # templates = []
+        # for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
+        #                             remove_extension=True):
+        #     templates.append(temp)
+        # self.debug('loaded {} pychron templates'.format(len(templates)))
+
         user_templates = []
-
-        for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
-                                    remove_extension=True):
-            templates.append(temp)
-        self.debug('loaded {} pychron templates'.format(len(templates)))
-
         for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
             user_templates.append(temp)
         self.debug('loaded {} user templates'.format(len(user_templates)))
 
-        def formatter(t):
-            return ' '.join(map(str.capitalize, t.split('_')))
-
-        # ftemplates = map(formatter, templates)
-        # fuser_templates = map(formatter, user_templates)
-
         with open(paths.pipeline_template_file, 'r') as rfile:
             tnames = yaml.load(rfile)
 
         ns = []
-        for ti in templates:
-            name = formatter(ti)
-            if name not in tnames:
-                continue
-            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ti))
 
-            with open(p,'r') as rfile:
-                yd = yaml.load(rfile)
-                required = yd['required']
-                if required:
-                    if all((self.application.get_service(ri)for ri in required)):
-                        ns.append(name)
-                else:
-                    ns.append(name)
+        def to_pathname(t):
+            return t.replace(' ', '_').lower()
 
+        def add_template(nn, pp):
+            if os.path.isfile(pp):
+                with open(pp, 'r') as rfile:
+                    yd = yaml.load(rfile)
+                    required = yd['required']
+                    if required:
+                        if all((self.application.get_service(ri) for ri in required)):
+                            ns.append(nn)
+                    else:
+                        ns.append(nn)
 
-        # ns = [pt for pt in tnames if pt in ftemplates]
-        # ns.extend(fuser_templates)
-        # check for requirements
+        for name in tnames:
+            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
+            add_template(name, p)
 
-            # p = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format())
-            # if os.path.isfile(p):
-            #     p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(ni))
+        def to_name(t):
+            return ' '.join(map(str.capitalize, t.split('_')))
 
-
+        for u in user_templates:
+            name = to_name(u)
+            add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
 
         self.available_pipeline_templates = ns
 
@@ -659,6 +657,7 @@ class PipelineEngine(Loggable):
                 self.run_needed = newnode
 
     def _add_node(self, node, new, run=True):
+        print node, new
         if new.configure():
             node = self._get_last_node(node)
 
@@ -746,7 +745,6 @@ class PipelineEngine(Loggable):
         # self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
         def func(editor):
             vs = self.selected.unknowns
-            print 'asdfasfasf', vs
             editor.set_items(vs)
             self.state.unknowns = vs
             for node in self.pipeline.nodes:

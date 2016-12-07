@@ -18,10 +18,6 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-
-# ============= EOF =============================================
-
-
 def camel_case(name, delimiters=None):
     if delimiters is None:
         delimiters = ('_', '/', ' ')
@@ -60,10 +56,12 @@ def to_bool(a):
     tks = ['true', 't', 'yes', 'y', '1', 'ok']
     fks = ['false', 'f', 'no', 'n', '0']
 
-    if a is not None:
-        a = str(a).strip().lower()
+    # if a is not None:
+    #     a = str(a).strip().lower()
 
+    a = str(a).strip().lower()
     if a in tks:
         return True
     elif a in fks:
         return False
+# ============= EOF =============================================

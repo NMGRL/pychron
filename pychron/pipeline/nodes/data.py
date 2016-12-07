@@ -35,6 +35,40 @@ class DVCNode(BaseNode):
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
+    def get_browser_analyses(self, irradiation=None, level=None):
+        from pychron.envisage.browser.view import BrowserView
+
+        self.browser_model.activated()
+
+        if irradiation:
+            self.browser_model.irradiation_enabled = True
+            self.browser_model.irradiation = irradiation
+            if level:
+                self.browser_model.level = level
+
+        browser_view = BrowserView(model=self.browser_model)
+        info = browser_view.edit_traits(kind='livemodal')
+        records = None
+        if info.result:
+            self.browser_model.add_analysis_set()
+            self.browser_model.dump_browser()
+
+            records = self.browser_model.get_analysis_records()
+            if records:
+                records = self.dvc.make_analyses(records)
+        return browser_view.is_append, records
+
+    def set_browser_analyses(self):
+        is_append, analyses = self.get_browser_analyses()
+        if analyses:
+            if is_append:
+                ans = getattr(self, self.analysis_kind)
+                ans.extend(analyses)
+            else:
+                self.trait_set(**{self.analysis_kind: analyses})
+
+        return True
+
 
 class InterpretedAgeNode(DVCNode):
     name = 'Interpreted Ages'
@@ -85,27 +119,7 @@ class DataNode(DVCNode):
         if not pre_run:
             self._manual_configured = True
 
-        from pychron.envisage.browser.view import BrowserView
-
-        self.browser_model.activated()
-
-        browser_view = BrowserView(model=self.browser_model)
-        info = browser_view.edit_traits(kind='livemodal')
-
-        if info.result:
-            self.browser_model.add_analysis_set()
-            self.browser_model.dump_browser()
-
-            records = self.browser_model.get_analysis_records()
-            if records:
-                analyses = self.dvc.make_analyses(records)
-                if browser_view.is_append:
-                    ans = getattr(self, self.analysis_kind)
-                    ans.extend(analyses)
-                else:
-                    self.trait_set(**{self.analysis_kind: analyses})
-
-                return True
+        return self.set_browser_analyses()
 
 
 class CSVNode(BaseNode):

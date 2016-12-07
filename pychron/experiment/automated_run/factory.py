@@ -255,6 +255,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         bind_preference(self, 'use_name_prefix', 'pychron.pyscript.use_name_prefix')
         bind_preference(self, 'name_prefix', 'pychron.pyscript.name_prefix')
         bind_preference(self, 'irradiation_project_prefix', 'pychron.entry.irradiation_project_prefix')
+
+        if not self.irradiation_project_prefix:
+            self.warning_dialog('Please Set "Irradiation Project Prefix in Preferences/Entry')
+
         super(AutomatedRunFactory, self).__init__(*args, **kw)
 
     def setup_files(self):
@@ -853,11 +857,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                         project = ip.sample.project
                         project_name = project.name
+
+                        ipp = self.irradiation_project_prefix
                         if project_name == 'J-Curve':
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = 'Irradiation-{}'.format(irrad)
                         elif project_name != 'REFERENCES':
-                            if project_name.startswith(self.irradiation_project_prefix):
+                            if ipp and project_name.startswith(ipp):
                                 repo = project_name
                             else:
                                 repo = camel_case(project_name)

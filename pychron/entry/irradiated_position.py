@@ -32,6 +32,8 @@ class BaseIrradiatedPosition(HasTraits):
     alt_hole = Int
     project = Str
     principal_investigator = Str
+    level = Str
+    irradiation = Str
 
     j = Float(0)
     j_err = Float(0)
@@ -64,6 +66,8 @@ class IrradiatedPosition(BaseIrradiatedPosition):
     weight = CStr
     note = Str
     analyzed = Bool
+    nanalyses = Int
+
 
 
 class BaseIrradiatedPositionAdapter(TabularAdapter):
@@ -82,6 +86,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
 
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
+        ('', 'analyzed'),
         ('Hole', 'hole'),
         ('Identifier', 'identifier'),
         ('Sample', 'sample'),
@@ -106,6 +111,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
     j_width = Int(75)
     j_err_width = Int(75)
 
+    analyzed_text = Property
     j_text = Property
     j_err_text = Property
 
@@ -115,6 +121,19 @@ class IrradiatedPositionAdapter(TabularAdapter):
 
     #    def _get_hole_width(self):
     #        return 35
+
+    def get_tooltip(self, obj, trait, row, column):
+        name = self.column_map[column]
+
+        if name == 'analyzed':
+            item = getattr(obj, trait)[row]
+            return 'N Analyses: {}'.format(item.nanalyses)
+
+    def _get_analyzed_text(self):
+        return 'X' if self.item.analyzed else ''
+
+    def _set_analyzed_text(self):
+        pass
 
     def _set_j_text(self, t):
         self.item.j = float(t)

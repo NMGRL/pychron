@@ -66,9 +66,9 @@ class PipelineTemplate(HasTraits):
             node = self._node_factory(klass, ni)
             if isinstance(node, InterpretedAgeNode):
                 node.trait_set(browser_model=iabmodel, dvc=dvc)
-            elif isinstance(node, DVCNode):
+            elif isinstance(node, (DVCNode, FindNode)):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
-            elif isinstance(node, (FindNode, PersistNode, GainCalibrationNode)):
+            elif isinstance(node, (PersistNode, GainCalibrationNode)):
                 node.trait_set(dvc=dvc)
             elif isinstance(node, DiffNode):
                 recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')

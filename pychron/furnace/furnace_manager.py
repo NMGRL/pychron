@@ -117,7 +117,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.load_settings()
         self.start_update()
 
-        self.stage_manager.refresh()
+        self.stage_manager.refresh(warn=True)
 
         self.loader_logic.manager = self
 

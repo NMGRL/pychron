@@ -247,4 +247,9 @@ class GetIGSNAction(TaskAction):
     dname = 'Get IGSNs'
     method = 'get_igsns'
 
+
+class GenerateStatusReportAction(TaskAction):
+    name = 'Status Report...'
+    dname = 'Status Report...'
+    method = 'generate_status_report'
 # ============= EOF =============================================

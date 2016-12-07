@@ -15,23 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import ast
+import os
+
+import yaml
 from traits.api import Str, Button, List
 from traitsui.api import View, HGroup, UItem, VGroup, EnumEditor, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 
-# ============= standard library imports ========================
-import ast
-import os
-import yaml
-# ============= local library imports  ==========================
-from pychron.paths import paths
-from pychron.core.ui.table_editor import myTableEditor
-# from pychron.processing.fits.filter_fit_selector import FilterFitSelector, FilterFit
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.paths import paths
+from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 from pychron.processing.fits.fit import FilterFit
 
 

@@ -223,8 +223,6 @@ class DVCDatabase(DatabaseAdapter):
             level = dbpos.level.name
             pos = dbpos.position
             irradiation = dbpos.level.irradiation.name
-            # irradiation = '{} {}:{}'.format(level.irradiation.name,
-            #                                 level.name, dbpos.position)
 
         return project, sample, material, irradiation, level, pos
 
@@ -233,6 +231,7 @@ class DVCDatabase(DatabaseAdapter):
         change = an.change
         change.tag = tagname
         change.user = self.save_username
+        self.flush()
         self.commit()
 
     def find_references(self, ans, atypes, hours=10, exclude=None,
@@ -1526,15 +1525,10 @@ class DVCDatabase(DatabaseAdapter):
         q = self.session.query(AnalysisTbl)
         q = q.join(IrradiationPositionTbl, LevelTbl, IrradiationTbl,
                    SampleTbl, AnalysisChangeTbl)
-        # q = q.options(joinedload('experiment_associations'))
-        # q = q.options(joinedload('irradiation_position'))
         q = q.filter(IrradiationTbl.name == irradiation)
         q = q.filter(LevelTbl.name == level)
         q = q.filter(SampleTbl.name == sample)
         q = q.filter(AnalysisChangeTbl.tag != 'invalid')
-        # q = q.filter(not_(IrradiationPositionTbl.identifier.in_(('24061','24062', '24063', '24076'))))
-        # q = q.filter(SampleTbl.name.in_(('BW-2014-3', 'BW-2014-4')))
-
         return self._query_all(q, verbose_query=True)
 
     def delete_tag(self, name):
@@ -1574,8 +1568,8 @@ class DVCDatabase(DatabaseAdapter):
             self._add_item(obj)
             return True
 
-    def update_sample_prep_session(self, name, worker, **kw):
-        s = self.get_sample_prep_session(name, worker)
+    def update_sample_prep_session(self, oname, worker, **kw):
+        s = self.get_sample_prep_session(oname, worker)
         if s:
             for k, v in kw.iteritems():
                 setattr(s, k, v)
