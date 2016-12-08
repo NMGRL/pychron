@@ -83,7 +83,7 @@ class GoogleCalendarClient(Loggable):
         self._active_event_id = event.get('id')
         self.debug('active event= {}'.format(self._active_event_id))
 
-    def edit_event(self, event_info, calendar=None, event_id=None):
+    def edit_event(self, event_info, calendar=None, event_id=None, warn=True):
         if calendar is None:
             calendar = self.calendar
 
@@ -117,7 +117,8 @@ class GoogleCalendarClient(Loggable):
 
             self.debug('Edit event resp:{}'.format(resp['updated']))
         else:
-            self.warning_dialog('Invalid event id. Cannot edit event')
+            if warn:
+                self.warning_dialog('Invalid event id. Cannot edit event')
 
     def _get_events(self):
         service = self.get_service()
