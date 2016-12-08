@@ -44,27 +44,28 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
 
     def _end_experiment_event(self, ctx):
         self.debug('end experiment event')
-        client = self.client
         d = {'end': 'now',
              'summary': 'Experiment: {} {}'.format(ctx['experiment_name'],
                                                    ctx['err_message'])}
-        client.edit_event(d)
+
+        enabled = self.application.get_boolean_preference('pychron.google_calendar.experiment.enabled')
+        if enabled:
+            run_delay = self.application.preferences.get('pychron.google_calendar.experiment.run_delay')
+            if ctx['nruns_finished'] >= run_delay:
+                self.client.edit_event(d)
 
     def _start_experiment_event(self, ctx):
         self.debug('start experiment event')
-        client = GoogleCalendarClient()
 
-        run_delay = self.application.preferences.get('pychron.google_calendar.experiment.run_delay')
         enabled = self.application.get_boolean_preference('pychron.google_calendar.experiment.enabled')
         if enabled:
+            run_delay = self.application.preferences.get('pychron.google_calendar.experiment.run_delay')
             self.debug('calendar enabled')
             nfinished = ctx['nruns_finished']
             if nfinished >= run_delay:
                 summary = 'Experiment: {}'.format(ctx['experiment_name'])
                 description = ''
-                client.post_event(summary,
-                                  description,
-                                  ctx['etf_iso'])
+                self.client.post_event(summary, description, ctx['etf_iso'])
 
     def _client_default(self):
         return GoogleCalendarClient()
