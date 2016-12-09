@@ -598,9 +598,11 @@ class PipelineEngine(Loggable):
 
     def _get_template_path(self, name):
         pname = name.replace(' ', '_').lower()
+        if pname == 'iso_evo':
+            pname = 'isotope_evolutions'
+
         pname = add_extension(pname, '.yaml')
         path = os.path.join(paths.pipeline_template_dir, pname)
-        print 'asfda', path, os.path.isfile(path)
         user_path = False
         if not os.path.isfile(path):
             path = os.path.join(paths.user_pipeline_template_dir, pname)
