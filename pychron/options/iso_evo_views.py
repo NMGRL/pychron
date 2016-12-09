@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Bool, Enum, on_trait_change
 from traitsui.api import EnumEditor, Item, HGroup, UItem
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import FIT_TYPES, ERROR_TYPES
 
@@ -44,7 +43,8 @@ class IsoEvoMainOptions(MainOptions):
                    Item('controller.save_enabled', label='Save'),
                    Item('controller.fit'),
                    UItem('controller.error_type', width=-75),
-                   Item('controller.filter_outliers', label='Filter Outliers'))
+                   Item('controller.filter_outliers', label='Filter Outliers'),
+                   Item('show_sniff'))
         return g
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers')

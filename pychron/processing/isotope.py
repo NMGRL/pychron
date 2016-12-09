@@ -331,6 +331,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if fit is None:
             print 'no fit for {} ({} {})'.format(self.name, self.__class__.__name__, id(self))
             fit = 'linear'
+            self.fit = fit
 
         is_mean = 'average' in fit.lower()
         reg = self._regressor

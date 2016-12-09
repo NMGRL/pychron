@@ -227,7 +227,7 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         return jd
 
-    def load_raw_data(self, keys=None, n_only=False):
+    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
         def format_blob(blob):
             return base64.b64decode(blob)
 
@@ -241,16 +241,27 @@ class DVCAnalysis(Analysis):
 
         for sd in signals:
             isok = sd['isotope']
-            if keys and isok not in keys:
+            det = sd['detector']
+            # print isok, keys
+            key = isok
+            if use_name_pairs:
+                key = '{}{}'.format(isok, det)
+
+            if keys and key not in keys:
                 continue
-            try:
-                iso = isotopes[isok]
-            except KeyError:
+            #
+            # try:
+            #     iso = isotopes[isok]
+            # except KeyError, e:
+            #     print e, isotopes.keys()
+            #     continue
+            iso = next((i for i in isotopes.itervalues() if i.detector == det and i.name == isok), None)
+            if not iso:
                 continue
 
             iso.unpack_data(format_blob(sd['blob']), n_only)
 
-            det = sd['detector']
+            # det = sd['detector']
             bd = next((b for b in baselines if b['detector'] == det), None)
             if bd:
                 iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
@@ -306,6 +317,7 @@ class DVCAnalysis(Analysis):
             try:
                 iso = isos[fi.name]
             except KeyError:
+                print 'set fits {} {}'.format(fi.name, isos.keys())
                 # name is a detector
                 for i in isos.itervalues():
                     if i.detector == fi.name:
@@ -325,9 +337,11 @@ class DVCAnalysis(Analysis):
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
                      include_baseline_error=i.include_baseline_error,
-                     filter_outliers=fd.get('filter_outliers', False),
-                     iterations=fd.get('iterations', 0),
-                     std_devs=fd.get('std_devs', 0))
+                     filter_outliers_dict=fd
+                     # filter_outliers=fd.get('filter_outliers', False),
+                     # iterations=fd.get('iterations', 0),
+                     # std_devs=fd.get('std_devs', 0)
+                     )
 
         # save intercepts
         if isoks:
@@ -481,7 +495,18 @@ class DVCAnalysis(Analysis):
         if not isos:
             return
 
-        isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
+        # this is a hack for some bad IC data
+        # if self.identifier == 'ic-01-F' and self.aliquot == 11:
+        #     isos = {'Ar40H2': Isotope('Ar40', 'H2'),
+        #             'Ar40H1': Isotope('Ar40', 'H1'),
+        #             'Ar40AX': Isotope('Ar40', 'AX'),
+        #             'Ar40L1': Isotope('Ar40', 'L1')}
+
+        try:
+            isos = {k: Isotope(v['name'], v['detector']) for k, v in isos.iteritems()}
+        except KeyError:
+            isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
+
         self.isotopes = isos
 
         # set mass

@@ -22,7 +22,7 @@ from copy import copy
 
 from uncertainties import ufloat, std_dev, nominal_value
 
-from pychron.core.helpers.isotope_utils import sort_isotopes, sort_detectors
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor, calculate_flux
@@ -482,10 +482,10 @@ class ArArAge(IsotopeGroup):
     def detector_keys(self):
         return sort_detectors(set((d.detector for d in self.isotopes.values())))
 
-    @property
-    def isotope_keys(self):
-        keys = self.isotopes.keys()
-        return sort_isotopes(keys)
+    # @property
+    # def isotope_keys(self):
+    #     keys = self.isotopes.keys()
+    #     return sort_isotopes(keys)
 
     @property
     def irradiation_label(self):

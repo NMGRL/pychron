@@ -67,6 +67,8 @@ class MainView(HasTraits):
 
     def _load(self, an):
         # self.isotopes = an.isotopes
+        print an.isotope_keys
+
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)

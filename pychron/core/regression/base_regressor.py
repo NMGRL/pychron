@@ -75,7 +75,7 @@ class BaseRegressor(HasTraits):
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
     degrees_of_freedom = Property
-    integrity_warning=False
+    integrity_warning = False
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -86,10 +86,13 @@ class BaseRegressor(HasTraits):
             for _ in range(fod.get('iterations', 1)):
                 self.calculate(filtering=True)
 
+                self.dirty = True
                 outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
-                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
 
-        self.dirty = True
+                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
+                self.dirty = True
+
+        # self.dirty = True
         return self.clean_xs, self.clean_ys
 
     def get_excluded(self):
@@ -136,12 +139,14 @@ class BaseRegressor(HasTraits):
         return r
 
     def calculate_outliers(self, nsigma=2):
-        res = self.calculate_residuals()
-        cd = abs(res)
         s = self.calculate_standard_error_fit()
-        return where(cd > (s * nsigma))[0]
 
-    def calculate_standard_error_fit(self):
+        # calculate residuals for every point not just cleaned arrays
+        residuals = abs(self.ys - self.predict(self.xs))
+
+        return where(residuals >= (s * nsigma))[0]
+
+    def calculate_standard_error_fit(self, residuals=None):
         """
             mass spec calculates error in fit as
             see LeastSquares.CalcResidualsAndFitError
@@ -151,12 +156,15 @@ class BaseRegressor(HasTraits):
             NP = number of points
             q= number of fit params... parabolic =3
         """
-        res = self.calculate_residuals()
-        ss_res = (res ** 2).sum()
+        if residuals is None:
+            residuals = self.calculate_residuals()
 
-        n = res.shape[0]
+        ss_res = (residuals ** 2).sum()
+
+        n = residuals.shape[0]
         q = len(self.coefficients)
         s = (ss_res / (n - q)) ** 0.5
+        # print 'cccc', s
         return s
 
     def calculate_residuals(self):
