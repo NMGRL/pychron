@@ -19,8 +19,8 @@
 # ============= local library imports  ==========================
 from numpy import Inf
 
-from pychron.graph.tools.point_inspector import PointInspector
-from pychron.graph.tools.regression_inspector import RegressionInspectorTool
+from pychron.graph.tools.point_inspector import PointInspector, PointInspectorOverlay
+from pychron.graph.tools.regression_inspector import RegressionInspectorTool, RegressionInspectorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
@@ -31,7 +31,7 @@ def min_max(a, b, vs):
 class IsoEvo(BaseArArFigure):
     ytitle = ''
     xtitle = 'Time (s)'
-    show_sniff = True
+    # show_sniff = False
     show_baseline = False
 
     def plot(self, plots, legend):
@@ -57,11 +57,13 @@ class IsoEvo(BaseArArFigure):
 
         ymi, yma = Inf, -Inf
         xmi, xma = 0, -Inf
+        inspectors = []
         if is_baseline:
             xma, xmi, yma, ymi = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
             # print xma, xmi, yma, ymi
         else:
-            if self.show_sniff:
+            if self.options.show_sniff:
+                # if self.show_sniff:
                 xs, ys = iso.sniff.xs, iso.sniff.ys
                 scatter, _ = self.graph.new_series(xs, ys,
                                                    marker=p.marker,
@@ -72,6 +74,11 @@ class IsoEvo(BaseArArFigure):
                                                    add_inspector=False,
                                                    color='red')
                 psinspector = PointInspector(scatter)
+                pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                           tool=psinspector)
+                scatter.overlays.append(pinspector_overlay)
+                inspectors.append(psinspector)
+
                 ymi, yma = min_max(ymi, yma, iso.sniff.ys)
                 xmi, xma = min_max(xmi, xma, iso.sniff.xs)
 
@@ -89,11 +96,19 @@ class IsoEvo(BaseArArFigure):
                                                         add_inspector=False)
 
             pinspector = PointInspector(scatter, use_pane=False)
+            pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                       tool=pinspector)
+            scatter.overlays.append(pinspector_overlay)
+            inspectors.append(pinspector)
+
             linspector = RegressionInspectorTool(component=line, use_pane=False)
-            if psinspector:
-                inspectors = [linspector, pinspector, psinspector]
-            else:
-                inspectors = [linspector, pinspector]
+            scatter.overlays.append(RegressionInspectorOverlay(component=line, tool=linspector))
+            inspectors.append(linspector)
+
+            # if psinspector:
+            #     inspectors = [linspector, pinspector, psinspector]
+            # else:
+            #     inspectors = [linspector, pinspector]
 
             ymi, yma = min_max(ymi, yma, iso.ys)
             xmi, xma = min_max(xmi, xma, iso.xs)
@@ -102,7 +117,8 @@ class IsoEvo(BaseArArFigure):
                 xma, xmi, yma, ymi, ins = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
                 inspectors.append(ins)
 
-            self._add_scatter_inspector(scatter, inspectors)
+            self._add_scatter_inspector(scatter, inspector=inspectors)
+
         self.graph.set_x_limits(min_=xmi, max_=xma * 1.05, plotid=i)
         self.graph.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
         self.graph.refresh()
@@ -121,7 +137,9 @@ class IsoEvo(BaseArArFigure):
                                            color='black')
 
         pinspector = PointInspector(scatter, use_pane=False)
-
+        pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                   tool=pinspector)
+        scatter.overlays.append(pinspector_overlay)
         xmi, xma = min_max(xmi, xma, xs)
         ymi, yma = min_max(ymi, yma, ys)
         return xma, xmi, yma, ymi, pinspector

@@ -218,6 +218,7 @@ class FitIsotopeEvolutionNode(FitNode):
         isotopes = xi.isotopes
         for f in fits:
             k = f.name
+            print k, isotopes.keys()
             if k in isotopes:
                 iso = isotopes[k]
             else:

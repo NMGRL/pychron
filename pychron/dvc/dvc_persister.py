@@ -342,6 +342,7 @@ class DVCPersister(BasePersister):
 
         endianness = '>'
         per_spec = self.per_spec
+        keys = []
         for iso in per_spec.isotope_group.isotopes.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
@@ -352,13 +353,22 @@ class DVCPersister(BasePersister):
                 # signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
                 # sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
-            isod = {'detector': iso.detector}
+            isod = {'detector': iso.detector,
+                    'name': iso.name}
             if self.use_isotope_classifier:
                 klass, prob = clf.predict_isotope(iso)
                 isod.update(classification=klass,
                             classification_probability=prob)
+            key = iso.name
+            if key in keys:
+                d = isos[key]
+                isos['{}{}'.format(d.name, d.detector)] = d
+                key = '{}{}'.format(key, iso.detector)
+                # isos['{}{}'.format(key, iso.detector)] = iso
 
-            isos[iso.name] = isod
+            # else:
+            isos[key] = isod
+
             if iso.detector not in dets:
                 bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
@@ -374,15 +384,16 @@ class DVCPersister(BasePersister):
                                             'value': float(iso.baseline.value),
                                             'error': float(iso.baseline.error)}
 
-            intercepts[iso.name] = {'fit': iso.fit,
+            intercepts[key] = {'fit': iso.fit,
                                     'filter_outliers_dict': iso.filter_outliers_dict,
                                     'value': float(iso.value),
                                     'error': float(iso.error)}
-            blanks[iso.name] = {'fit': 'previous',
+            blanks[key] = {'fit': 'previous',
                                 'references': [{'record_id': per_spec.previous_blank_runid,
                                                 'exclude': False}],
                                 'value': float(iso.blank.value),
                                 'error': float(iso.blank.error)}
+            keys.append(iso.name)
 
         obj = self._make_analysis_dict()
 

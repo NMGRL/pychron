@@ -15,23 +15,12 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
-from traits.api import Int, Property
-# ============= standard library imports ========================
+import logging
+
 from numpy import asarray, column_stack, ones, \
     matrix, sqrt, dot, linalg, zeros_like, hstack
-
 from statsmodels.api import OLS
-# try:
-#
-# except ImportError:
-#     try:
-#         from scikits.statsmodels.api import OLS
-#     except ImportError:
-#         from pyface.message_dialog import warning
-#
-#         warning(None, 'statsmodels is required but was not found')
-
-import logging
+from traits.api import Int, Property
 
 logger = logging.getLogger('Regressor')
 
@@ -84,8 +73,8 @@ class OLSRegressor(BaseRegressor):
         return dot(exog, beta)
 
     def calculate(self, filtering=False):
-        cxs = self.pre_clean_xs
-        cys = self.pre_clean_ys
+        cxs = self.clean_xs
+        cys = self.clean_ys
 
         integrity_check = True
         if not self._check_integrity(cxs, cys):
@@ -123,7 +112,6 @@ class OLSRegressor(BaseRegressor):
                 ols = self._engine_factory(fy, X, check_integrity=integrity_check)
                 self._ols = ols
                 self._result = ols.fit()
-
             except Exception, e:
                 import traceback
 

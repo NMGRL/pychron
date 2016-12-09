@@ -104,6 +104,9 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
             xmi, xma = min_max(xmi, xma, sniff.xs)
 
         if show_evo:
+            if iso.fit is None:
+                iso.fit = 'linear'
+
             g.new_series(iso.xs, iso.ys,
                          fit=iso.fit,
                          filter_outliers_dict=iso.filter_outliers_dict,
@@ -270,15 +273,17 @@ class Analysis(ArArAge):
         self.tag = tag
 
     def show_isotope_evolutions(self, isotopes=None, **kw):
+        print isotopes
         if isotopes:
             if isinstance(isotopes[0], (str, unicode)):
                 isotopes = [self.isotopes[i] for i in isotopes]
         else:
             isotopes = self.isotopes.values()
 
-        keys = [k.name for k in isotopes]
+        keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
 
-        self.load_raw_data(keys)
+        self.load_raw_data(keys=keys)
+
         g = show_evolutions_factory(self.record_id, isotopes, **kw)
         if g:
             open_view(g, handler=CloseHandler())

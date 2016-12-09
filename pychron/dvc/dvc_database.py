@@ -1372,19 +1372,19 @@ class DVCDatabase(DatabaseAdapter):
 
         return self._retrieve_items(IrradiationTbl, order=order, **kw)
 
-    def get_projects(self, principal_investigator=None,
+    def get_projects(self, principal_investigators=None,
                      irradiation=None, level=None,
                      mass_spectrometers=None, order=None):
 
         if order:
             order = getattr(ProjectTbl.name, order)()
 
-        if principal_investigator or irradiation or mass_spectrometers:
+        if principal_investigators or irradiation or mass_spectrometers:
             with self.session_ctx() as sess:
                 q = sess.query(ProjectTbl)
 
                 # joins
-                if principal_investigator:
+                if principal_investigators:
                     q = q.join(PrincipalInvestigatorTbl)
 
                 if irradiation:
@@ -1396,8 +1396,9 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.join(SampleTbl, IrradiationPositionTbl, AnalysisTbl)
 
                 # filters
-                if principal_investigator:
-                    q = principal_investigator_filter(q, principal_investigator)
+                if principal_investigators:
+                    for p in principal_investigators:
+                        q = principal_investigator_filter(q, p)
 
                 if irradiation:
                     if level:

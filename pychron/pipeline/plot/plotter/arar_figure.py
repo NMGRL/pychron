@@ -619,13 +619,16 @@ class BaseArArFigure(HasTraits, SelectionFigure):
                                                    value_format=value_format,
                                                    additional_info=additional_info)
 
-            pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                       tool=inspector)
-            scatter.overlays.append(pinspector_overlay)
-            broadcaster.tools.append(inspector)
-            # if not isinstance(inspector, (list, tuple)):
-            #     inspector = (inspector,)
-            #
+                pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                           tool=inspector)
+                scatter.overlays.append(pinspector_overlay)
+                broadcaster.tools.append(inspector)
+            else:
+                if not isinstance(inspector, (list, tuple)):
+                    inspector = (inspector,)
+
+                for i in inspector:
+                    broadcaster.tools.append(i)
             # # pinspector_overlay = PointInspectorOverlay(component=scatter,
             # #                                            tool=point_inspector)
             # # print 'fff', inspector

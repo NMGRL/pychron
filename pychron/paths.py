@@ -437,7 +437,7 @@ class Paths(object):
         self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
 
         self.pipeline_dir = join(self.appdata_dir, 'pipeline')
-        self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
+        self.pipeline_template_dir = join(self.appdata_dir, 'templates')
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================

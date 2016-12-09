@@ -575,7 +575,12 @@ class PipelineEngine(Loggable):
     # private
     def _set_template(self, name):
         self.reset_event = True
-        path, _ = self._get_template_path(name)
+        args = self._get_template_path(name)
+        if args is None:
+            return
+
+        path = args[0]
+
         pt = PipelineTemplate(name, path)
         try:
             pt.render(self.application, self.pipeline,
@@ -595,12 +600,13 @@ class PipelineEngine(Loggable):
         pname = name.replace(' ', '_').lower()
         pname = add_extension(pname, '.yaml')
         path = os.path.join(paths.pipeline_template_dir, pname)
+        print 'asfda', path, os.path.isfile(path)
         user_path = False
         if not os.path.isfile(path):
             path = os.path.join(paths.user_pipeline_template_dir, pname)
             user_path = True
             if not os.path.isfile(path):
-                self.warning('Invalid template name "{}". {} does not exist'.format(name, path))
+                self.warning_dialog('Invalid template name "{}". {} does not exist'.format(name, path))
                 return
 
         return path, user_path
