@@ -15,11 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Float, Event, Instance
+import os
+import time
+from math import pi
+
+import yaml
+from numpy import arange, sin
+from traits.api import Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-# from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
+
+from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 def get_float(func):
@@ -32,7 +38,7 @@ def get_float(func):
     return dec
 
 
-class BaseMagnet(HasTraits):
+class BaseMagnet(Loggable):
     dac = Property(Float, depends_on='_dac')
     mass = Float
 
@@ -53,6 +59,7 @@ class BaseMagnet(HasTraits):
     mftable = Instance('pychron.spectrometer.mftable.MagnetFieldTable', ())
     confirmation_threshold_mass = Float
     use_deflection_correction = True
+    use_af_demagnetization = False
 
     _suppress_mass_update = False
 
@@ -148,8 +155,6 @@ class BaseMagnet(HasTraits):
             # molweights = self.spectrometer.molecular_weights
             # return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
-
-
     def mass_change(self, m):
         """
         set the self.mass attribute
@@ -165,6 +170,48 @@ class BaseMagnet(HasTraits):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _do_af_demagnetization(self, target, setfunc):
+        p = os.path.join(paths.spectrometer_dir, 'af_demagnetization.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    yd = yaml.load(rfile)
+                except BaseException, e:
+                    self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                    return
+
+            period = yd.get('period', None)
+            if period is None:
+                frequency = yd.get('frequency')
+                if frequency is None:
+                    self.warning('AF Demagnetization unavailable. '
+                                 'Need to specify "period" or "frequency" in {}'.format(p))
+                    return
+                else:
+                    period = 1 / float(frequency)
+            else:
+                frequency = 1 / float(period)
+
+            duration = yd.get('duration')
+            slope = yd.get('slope')
+            if duration is None:
+                duration = 5
+                self.debug('defaulting to duration={}'.format(duration))
+            if slope is None:
+                slope = 1
+                self.debug('defaulting to slope={}'.format(slope))
+
+            sx = arange(pi * 0.5 * period, duration, pi * period)
+            dacs = slope * sx * sin(frequency * sx)
+            self.info('Doing AF Demagnetization around target={}. '
+                      'duration={}, slope={}, period={}'.format(target, duration, slope, period))
+            for dac in reversed(dacs):
+                self.debug('set af dac raw:{} dac:{}'.format(dac, target + dac))
+                setfunc(target + dac)
+                time.sleep(period)
+        else:
+            self.warning('AF Demagnetization unavailable. {} not a valid file'.format(p))
+
     def _validate_mass_change(self, cm, m):
         ct = self.confirmation_threshold_mass
 
@@ -268,6 +315,3 @@ class BaseMagnet(HasTraits):
         return v
 
 # ============= EOF =============================================
-
-
-
