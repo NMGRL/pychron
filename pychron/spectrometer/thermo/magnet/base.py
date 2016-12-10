@@ -69,7 +69,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 unblank = True
 
         if self.use_af_demagnetization:
-            self._do_af_demagnetization(lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
+            self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
 
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
         st = time.time()
