@@ -446,9 +446,9 @@ class DVCAnalysis(Analysis):
                 self._load_value_error(i, v)
 
                 i.set_fit(v['fit'], notify=False)
-                i.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
-                                           iterations=v.get('iterations', 0),
-                                           std_devs=v.get('std_devs', 0))
+                fod = v.get('filter_outliers_dict')
+                if fod:
+                    i.filter_outliers_dict = fod
 
     def _load_value_error(self, item, obj):
         item.use_manual_value = obj.get('use_manual_value', False)
@@ -474,9 +474,9 @@ class DVCAnalysis(Analysis):
                     self._load_value_error(iso.baseline, v)
 
                     iso.baseline.set_fit(v['fit'], notify=False)
-                    iso.baseline.set_filter_outliers_dict(filter_outliers=v.get('filter_outliers', False),
-                                                          iterations=v.get('iterations', 0),
-                                                          std_devs=v.get('std_devs', 0))
+                    fod = v.get('filter_outliers_dict')
+                    if fod:
+                        iso.baseline.filter_outliers_dict = fod
 
     def _load_icfactors(self, jd):
         for key, v in jd.iteritems():
