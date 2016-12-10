@@ -71,6 +71,9 @@ class PipelineHandlerMeta(MetaHasTraits):
 class PipelineHandler(Handler):
     __metaclass__ = PipelineHandlerMeta
 
+    def save_template(self, info, obj):
+        info.object.save_pipeline_template()
+
     def review_node(self, info, obj):
         info.object.review_node(obj)
 
@@ -152,6 +155,7 @@ class PipelinePane(TraitsDockPane):
                                Action(name='Move Up', action='move_up'),
                                Action(name='Move Down', action='move_down'),
                                Action(name='Delete', action='delete_node'),
+                               Action(name='Save Template', action='save_template'),
                                *actions)
 
         def add_menu_factory():

@@ -19,8 +19,6 @@ from numpy import array, array_split
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.processing.utils.grouping import group_analyses_by_key
@@ -36,6 +34,9 @@ class GroupingNode(BaseNode):
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
+
+    def _to_template(self, d):
+        d['key'] = self.by_key
 
     def _generate_key(self):
         if self.by_key == 'Aliquot':

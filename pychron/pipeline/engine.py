@@ -38,7 +38,7 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.template import PipelineTemplate
+from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView
 
 
 class ActiveCTX(object):
@@ -104,7 +104,9 @@ class Pipeline(HasTraits):
 
     def to_template(self):
         nodes = [ni.to_template() for ni in self.nodes]
-        return nodes
+        required = [r for ni in self.nodes for r in ni.required]
+
+        return {'required': required, 'nodes': nodes}
 
     def iternodes(self, start_node=None, run_to=None):
         if run_to:
@@ -415,12 +417,17 @@ class PipelineEngine(Loggable):
         self._add_node(node, newnode, run=run)
 
     # ============================================================================================================
-    def save_pipeline_template(self, path):
-        self.info('Saving pipeline to {}'.format(path))
-        with open(path, 'w') as wfile:
-            obj = self.pipeline.to_template()
-            yaml.dump(obj, wfile, default_flow_style=False)
-
+    def save_pipeline_template(self):
+        # self.info('Saving pipeline to {}'.format(path))
+        v = PipelineTemplateSaveView()
+        info = v.edit_traits()
+        if info.result and v.path:
+            path = add_extension(v.path, '.yaml')
+            with open(path, 'w') as wfile:
+                obj = self.pipeline.to_template()
+                yaml.dump(obj, wfile, default_flow_style=False)
+            self._load_predefined_templates()
+            self.selected_pipeline_template = v.name
     # def run_persist(self, state):
     #     for node in self.pipeline.iternodes():
     #         if not isinstance(node, (FitNode, PersistNode)):
