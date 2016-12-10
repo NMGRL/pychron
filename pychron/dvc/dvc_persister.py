@@ -25,8 +25,8 @@ from git.exc import GitCommandError
 from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
-from pychron.dvc import dvc_dump
-from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, analysis_path, PATH_MODIFIERS
+from pychron.dvc import dvc_dump, analysis_path
+from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -203,12 +203,25 @@ class DVCPersister(BasePersister):
         self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
+        dvc = self.dvc
         if self.stage_files:
             if commit:
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    # default commits
+                    # commit the reset of the files
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+
+                    for p in paths:
+                        if os.path.isfile(p):
+                            ar.add(p, commit=False)
+                        else:
+                            self.debug('not at valid file {}'.format(p))
+
+                    # commit files
+                    ar.commit('<{}>'.format(commit_tag))
+
+                    # commit default data reduction
                     add = False
                     p = self._make_path('intercepts')
                     if os.path.isfile(p):
@@ -231,26 +244,16 @@ class DVCPersister(BasePersister):
                             ar.add(p, commit=False)
                             ar.commit('<{}> {}'.format(tag, msg))
 
-                    # commit the reset of the files
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
-
-                    for p in paths:
-                        if os.path.isfile(p):
-                            ar.add(p, commit=False)
-                        else:
-                            self.debug('not at valid file {}'.format(p))
-
-                    # commit files
-                    ar.commit('<{}>'.format(commit_tag))
-                    self.dvc.push_repository(ar)
+                    # push changes
+                    dvc.push_repository(ar)
 
                     # update meta
-                    self.dvc.meta_pull(accept_our=True)
+                    dvc.meta_pull(accept_our=True)
 
-                    self.dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
+                    dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
                     # push commit
-                    self.dvc.meta_push()
+                    dvc.meta_push()
                 except GitCommandError, e:
                     self.warning(e)
                     if not self.confirmation_dialog('DVC/Git Failed. Do you want to continue the experiment?',
@@ -258,7 +261,7 @@ class DVCPersister(BasePersister):
                                                     timeout=30):
                         ret = False
 
-        with self.dvc.session_ctx():
+        with dvc.session_ctx():
             self._save_analysis_db(timestamp)
         self.debug('================= post measurement finished')
         return ret

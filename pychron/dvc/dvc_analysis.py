@@ -24,9 +24,9 @@ import time
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.datetime_tools import make_timef
-from pychron.core.helpers.filetools import add_extension, subdirize
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
-from pychron.dvc import dvc_dump, dvc_load
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
@@ -51,65 +51,6 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
 
 PATH_MODIFIERS = (
     None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
-
-
-class AnalysisNotAnvailableError(BaseException):
-    def __init__(self, root, runid):
-        self._root = root
-        self._runid = runid
-
-    def __str__(self):
-        return 'Analysis Not Available. {} - {}'.format(self._root, self._runid)
-
-
-def analysis_path(runid, repository, modifier=None, extension='.json', mode='r'):
-    root = os.path.join(paths.repository_dataset_dir, repository)
-
-    l = 3
-    if runid.count('-') > 1:
-        args = runid.split('-')[:-1]
-        if len(args[0]) == 1:
-            l = 4
-        else:
-            l = 5
-
-    try:
-        root, tail = subdirize(root, runid, l=l, mode=mode)
-    except TypeError:
-        raise AnalysisNotAnvailableError(root, runid)
-
-    # head, tail = runid[:3], runid[3:]
-    # # if modifier:
-    # #     tail = '{}{}'.format(tail, modifier)
-    # root = os.path.join(paths.experiment_dataset_dir, experiment, head)
-    # if not os.path.isdir(root):
-    #     os.mkdir(root)
-
-    if modifier:
-        d = os.path.join(root, modifier)
-        if not os.path.isdir(d):
-            if mode == 'r':
-                return
-
-            os.mkdir(d)
-
-        root = d
-        fmt = '{}.{}'
-        if modifier.startswith('.'):
-            fmt = '{}{}'
-        tail = fmt.format(tail, modifier[:4])
-
-    name = add_extension(tail, extension)
-
-    return os.path.join(root, name)
-
-
-def repository_path(project):
-    return os.path.join(paths.dvc_dir, 'repositories', project)
-
-
-def make_ref_list(refs):
-    return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
 
 
 class Blank:
@@ -212,9 +153,9 @@ class DVCAnalysis(Analysis):
                 func(jd)
 
     def load_spectrometer_parameters(self, spec_sha):
-        p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, '{}.json'.format(spec_sha))
-        sd = dvc_load(p)
-
+        name = add_extension(spec_sha, '.json')
+        p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, name)
+        sd = get_spec_sha(p)
         self.source_parameters = sd['spectrometer']
         self.gains = sd['gains']
         self.deflections = sd['deflections']
@@ -509,9 +450,8 @@ class DVCAnalysis(Analysis):
 
         self.isotopes = isos
 
+        masses = get_masses()
         # set mass
-        path = os.path.join(paths.meta_root, 'molecular_weights.json')
-        masses = dvc_load(path)
         for k, v in isos.items():
             v.mass = masses.get(k, 0)
 

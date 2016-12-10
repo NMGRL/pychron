@@ -20,36 +20,35 @@
 import glob
 import json
 import os
-
 from datetime import datetime
-# ============= local library imports  ==========================
 
-from pychron.dvc.dvc_analysis import analysis_path
-from pychron.git_archive.repo_manager import GitRepoManager
+from git import Repo
+
+from pychron.dvc import analysis_path
 from pychron.paths import paths
 
 
-def repository_has_staged(ps):
+def repository_has_staged(ps, remote='origin', branch='master'):
     if not hasattr(ps, '__iter__'):
         ps = (ps,)
 
     changed = []
-    repo = GitRepoManager()
+    # repo = GitRepoManager()
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        if repo.has_unpushed_commits():
+        repo = Repo(pp)
+
+        if repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline'):
             changed.append(p)
 
     return changed
 
 
-def push_repositories(ps, remote=None):
-    repo = GitRepoManager()
+def push_repositories(ps, remote='origin', branch='master'):
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
-        repo.open_repo(pp)
-        repo.push(remote=remote)
+        repo = Repo(pp)
+        repo.git.push(remote, branch)
 
 
 def get_review_status(record):

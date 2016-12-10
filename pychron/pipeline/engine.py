@@ -25,6 +25,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
+from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
@@ -407,6 +408,10 @@ class PipelineEngine(Loggable):
 
     def add_pdf_figure(self, node=None, run=True):
         newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+        self._add_node(node, newnode, run=run)
+
+    def add_push(self, node=None, run=True):
+        newnode = PushNode()
         self._add_node(node, newnode, run=run)
 
     # ============================================================================================================
