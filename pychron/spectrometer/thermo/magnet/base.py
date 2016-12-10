@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Float, Bool
-# ============= standard library imports ========================
 import time
-# ============= local library imports  ==========================
+
+from traits.api import List, Float, Bool
+
 from pychron.core.helpers.strtools import to_bool
 from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
@@ -67,6 +67,9 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
             if dv > self.beam_blank_threshold:
                 self.ask('BlankBeam True', verbose=verbose)
                 unblank = True
+
+        if self.use_af_demagnetization:
+            self._do_af_demagnetization(lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
 
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
         st = time.time()
