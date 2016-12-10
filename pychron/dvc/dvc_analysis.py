@@ -247,7 +247,7 @@ class DVCAnalysis(Analysis):
             if use_name_pairs:
                 key = '{}{}'.format(isok, det)
 
-            if keys and key not in keys:
+            if keys and key not in keys and isok not in keys:
                 continue
             #
             # try:
