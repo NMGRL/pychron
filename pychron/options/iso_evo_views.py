@@ -24,7 +24,9 @@ from pychron.pychron_constants import FIT_TYPES, ERROR_TYPES
 
 class IsoEvoSubOptions(SubOptions):
     def traits_view(self):
-        return self._make_view(Item('goodness_threshold'))
+        return self._make_view(Item('goodness_threshold', label='Goodness',
+                                    tooltip='If % error is greater than "Goodness Threshold" '
+                                            'mark regression as "Bad"'))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):

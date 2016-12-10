@@ -127,15 +127,15 @@ class IsoEvo(BaseArArFigure):
     def _plot_baseline(self, i, iso, p, xma, xmi, yma, ymi):
         xs = iso.baseline.xs
         ys = iso.baseline.ys
-        scatter, _ = self.graph.new_series(xs, ys,
-                                           marker=p.marker,
-                                           marker_size=p.marker_size,
-                                           type='scatter',
-                                           plotid=i,
-                                           fit=iso.baseline.fit,
-                                           filter_outliers_dict=iso.baseline.filter_outliers_dict,
-                                           add_tools=False,
-                                           color='black')
+        plot, scatter, line = self.graph.new_series(xs, ys,
+                                                    marker=p.marker,
+                                                    marker_size=p.marker_size,
+                                                    type='scatter',
+                                                    plotid=i,
+                                                    fit=iso.baseline.fit,
+                                                    filter_outliers_dict=iso.baseline.filter_outliers_dict,
+                                                    add_tools=False,
+                                                    color='black')
 
         pinspector = PointInspector(scatter, use_pane=False)
         pinspector_overlay = PointInspectorOverlay(component=scatter,
