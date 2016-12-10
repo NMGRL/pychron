@@ -19,6 +19,7 @@
 import yaml
 from traits.api import HasTraits
 
+from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.find import FindNode
@@ -69,7 +70,7 @@ class PipelineTemplate(HasTraits):
                 node.trait_set(browser_model=iabmodel, dvc=dvc)
             elif isinstance(node, (DVCNode, FindNode)):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
-            elif isinstance(node, (PersistNode, GainCalibrationNode)):
+            elif isinstance(node, (PersistNode, GainCalibrationNode, PushNode)):
                 node.trait_set(dvc=dvc)
             elif isinstance(node, DiffNode):
                 recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')

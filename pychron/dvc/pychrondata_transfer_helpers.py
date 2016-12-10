@@ -25,8 +25,7 @@ from numpy import array, array_split
 
 from pychron.core.helpers.datetime_tools import bin_timestamps, make_timef, get_datetime
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.dvc import dvc_dump, dvc_load
-from pychron.dvc.dvc_analysis import analysis_path
+from pychron.dvc import dvc_dump, dvc_load, analysis_path
 from pychron.dvc.dvc_persister import spectrometer_sha
 from pychron.github import Organization
 from pychron.pychron_constants import QTEGRA_SOURCE_KEYS

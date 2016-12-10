@@ -31,10 +31,9 @@ from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.dvc import dvc_dump, dvc_load
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
-from pychron.dvc.dvc_analysis import DVCAnalysis, repository_path, analysis_path, PATH_MODIFIERS, \
-    AnalysisNotAnvailableError
+from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, Production

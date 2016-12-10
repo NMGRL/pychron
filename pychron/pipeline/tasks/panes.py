@@ -62,7 +62,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
-                  'icfactor', 'icfactor'):
+                  'icfactor', 'push'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
         return klass
@@ -116,8 +116,6 @@ class PipelineHandler(Handler):
         info.object.update_needed = True
 
 
-
-
 class PipelinePane(TraitsDockPane):
     name = 'Pipeline'
     id = 'pychron.pipeline.pane'
@@ -169,6 +167,7 @@ class PipelinePane(TraitsDockPane):
                                       action='add_series'),
                                Action(name='Add Review',
                                       action='add_review'),
+                               Action(name='Add Push'),
                                name='Add')
 
         def fit_menu_factory():

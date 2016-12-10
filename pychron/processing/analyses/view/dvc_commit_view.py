@@ -26,7 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.dvc.dvc_analysis import analysis_path
+from pychron.dvc import analysis_path
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
