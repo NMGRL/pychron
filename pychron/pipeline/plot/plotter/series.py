@@ -22,6 +22,7 @@ from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from numpy import array, Inf
 from traits.api import Array
+from uncertainties import nominal_value, std_dev
 
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
@@ -74,7 +75,7 @@ class Series(BaseSeries):
     _omit_key = 'omit_series'
 
     def _has_attr(self, name):
-        a = name in ('AnalysisType', 'Peak Center')
+        a = name in ('AnalysisType', 'Peak Center', 'Age', 'RadiogenicYield')
         if not a:
             if self.sorted_analyses:
                 ai = self.sorted_analyses[0]
@@ -84,7 +85,8 @@ class Series(BaseSeries):
     def build(self, plots):
 
         graph = self.graph
-        plots = (pp for pp in plots if self._has_attr(pp.name))
+        # plots = (pp for pp in plots if self._has_attr(pp.name))
+
         for i, po in enumerate(plots):
 
             p = graph.new_plot(
@@ -111,6 +113,7 @@ class Series(BaseSeries):
         """
             plot data on plots
         """
+        # plots = (pp for pp in plots if self._has_attr(pp.name))
 
         omits = self._get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
@@ -143,8 +146,9 @@ class Series(BaseSeries):
             else:
                 set_ylimits = True
                 value_format = None
-                ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
-                yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
+                ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
+                yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
+                print ys, yerr
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
                           filter_outliers_dict=po.filter_outliers_dict)
@@ -196,47 +200,17 @@ class Series(BaseSeries):
             print 'Series', e
 
     def _unpack_attr(self, attr):
-        # if attr.endswith('bs'):
-        #     # f=lambda x: x.baseline.uvalue
-        #     return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
         if attr == 'AnalysisType':
-            # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
             f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
             return (f(ai.analysis_type) for ai in self.sorted_analyses)
         elif attr == 'Peak Center':
             return (ai.peak_center for ai in self.sorted_analyses)
+        elif attr == 'RadiogenicYield':
+            return (ai.rad40_percent for ai in self.sorted_analyses)
+        elif attr == 'Age':
+            return (ai.uage for ai in self.sorted_analyses)
         else:
             return super(Series, self)._unpack_attr(attr)
-
-            # def update_graph_metadata(self, obj, name, old, new):
-            #     sorted_ans = self.sorted_analyses
-            #     if obj:
-            #         hover = obj.metadata.get('hover')
-            #         if hover:
-            #             hoverid = hover[0]
-            #             try:
-            #                 self.selected_analysis = sorted_ans[hoverid]
-            #
-            #             except IndexError, e:
-            #                 print 'asaaaaa', e
-            #                 return
-            #         else:
-            #             self.selected_analysis = None
-            #
-            #         sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
-            #         print 'ssss', sel
-            # self._set_renderer_selection()
-            # self._set_selected(sorted_ans, sel)
-            # set the temp_status for all the analyses
-            # for i, a in enumerate(sorted_ans):
-            #    a.temp_status = 1 if i in sel else 0
-            # else:
-            # sel = [i for i, a in enumerate(sorted_ans)
-            #            if a.temp_status]
-            # sel = self._get_omitted(sorted_ans, omit='omit_ideo')
-            # print 'update graph meta'
-            # self._rebuild_ideo(sel)
-            # self.
 
     def update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old,new

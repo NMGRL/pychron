@@ -185,6 +185,7 @@ class Analysis(ArArAge):
     pattern = ''
     ramp_duration = 0
     ramp_rate = 0
+    peak_center = 0
     peak_center_data = None
     collection_version = ''
     source_parameters = Dict
