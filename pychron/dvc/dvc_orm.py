@@ -214,8 +214,6 @@ class AnalysisTbl(Base, BaseMixin):
 
     @property
     def record_views(self):
-        # iv = self._record_view
-        # if not iv:
         repos = self.repository_associations
         if len(repos) == 1:
             return self._make_record_view(repos[0].repository),

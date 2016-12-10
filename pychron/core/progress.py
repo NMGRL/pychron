@@ -59,9 +59,11 @@ def progress_loader(xs, func, threshold=50, progress=None,
     """
     if n is None:
         n = len(xs)
-    n /= step
+
     if not progress and use_progress and n >= threshold:
-        progress = open_progress(n, busy=busy)
+        progress = open_progress(n / step, busy=busy)
+
+    n /= step
 
     def gen():
         if use_progress and (n > threshold or progress):
@@ -72,7 +74,10 @@ def progress_loader(xs, func, threshold=50, progress=None,
                 elif progress.accepted:
                     break
 
-                prog = None if i % step else progress
+                if i == 0 or i == n - 1:
+                    prog = progress
+                else:
+                    prog = None if i % step else progress
 
                 r = func(x, prog, i, n)
                 if r:
