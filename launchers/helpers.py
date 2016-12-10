@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from traits.etsconfig.api import ETSConfig
+from traitsui.qt4.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
 
@@ -27,7 +28,6 @@ from pyface.constant import OK
 from pyface.message_dialog import information, warning
 
 from traitsui.qt4.table_editor import TableDelegate
-from traitsui.qt4.extra import checkbox_renderer
 from pyface.qt import QtGui, QtCore
 import traits.has_traits
 # ============= standard library imports ========================
@@ -36,6 +36,7 @@ import logging
 import subprocess
 import warnings
 import os
+
 # ============= local library imports  ==========================
 
 traits.has_traits.CHECK_INTERFACES = 1
@@ -68,6 +69,139 @@ def monkey_patch_preferences():
 
     from apptools.preferences.preferences import Preferences
     Preferences._set = setfunc
+
+
+def monkey_patch_panel():
+    from traitsui.qt4.ui_base import BasePanel
+    from traitsui.menu import UndoButton, RevertButton, HelpButton
+    from traitsui.qt4.ui_panel import panel, _size_hint_wrapper
+    from traitsui.undo import UndoHistory
+
+    class myQTabBar(QtGui.QTabBar):
+        def wheelEvent(self, *args, **kwargs):
+            pass
+
+    class myPanel(BasePanel):
+        """PyQt user interface panel for Traits-based user interfaces.
+        """
+
+        def __init__(self, ui, parent, is_subpanel):
+            """Initialise the object.
+            """
+            self.ui = ui
+            history = ui.history
+            view = ui.view
+
+            # Reset any existing history listeners.
+            if history is not None:
+                history.on_trait_change(self._on_undoable, 'undoable', remove=True)
+                history.on_trait_change(self._on_redoable, 'redoable', remove=True)
+                history.on_trait_change(self._on_revertable, 'undoable',
+                                        remove=True)
+
+            # Determine if we need any buttons or an 'undo' history.
+            buttons = [self.coerce_button(button) for button in view.buttons]
+            nr_buttons = len(buttons)
+            has_buttons = (not is_subpanel and (nr_buttons != 1 or
+                                                not self.is_button(buttons[0], '')))
+
+            if nr_buttons == 0:
+                if view.undo:
+                    self.check_button(buttons, UndoButton)
+                if view.revert:
+                    self.check_button(buttons, RevertButton)
+                if view.help:
+                    self.check_button(buttons, HelpButton)
+
+            if not is_subpanel and history is None:
+                for button in buttons:
+                    if self.is_button(button, 'Undo') or self.is_button(button, 'Revert'):
+                        history = ui.history = UndoHistory()
+                        break
+
+            # Create the panel.
+            self.control = panel(ui)
+
+            # Suppress the title if this is a subpanel or if we think it should be
+            # superceded by the title of an "outer" widget (eg. a dock widget).
+            title = view.title
+            if (is_subpanel or (isinstance(parent, QtGui.QMainWindow) and
+                                    not isinstance(parent.parent(), QtGui.QDialog)) or
+                    isinstance(parent, QtGui.QTabWidget)):
+                title = ""
+
+            # ============ Monkey Patch ===============
+            if isinstance(parent, QtGui.QTabWidget):
+                bar = parent.tabBar()
+                if not isinstance(bar, myQTabBar):
+                    bar = myQTabBar()
+                    parent.setTabBar(bar)
+            # =========================================
+
+            # Panels must be widgets as it is only the TraitsUI PyQt code that can
+            # handle them being layouts as well.  Therefore create a widget if the
+            # panel is not a widget or if we need a title or buttons.
+            if not isinstance(self.control, QtGui.QWidget) or title != "" or has_buttons:
+                w = QtGui.QWidget()
+                layout = QtGui.QVBoxLayout(w)
+                layout.setContentsMargins(0, 0, 0, 0)
+
+                # Handle any view title.
+                if title != "":
+                    layout.addWidget(heading_text(None, text=view.title).control)
+
+                if isinstance(self.control, QtGui.QWidget):
+                    layout.addWidget(self.control)
+                elif isinstance(self.control, QtGui.QLayout):
+                    layout.addLayout(self.control)
+
+                self.control = w
+
+                # Add any buttons.
+                if has_buttons:
+
+                    # Add the horizontal separator
+                    separator = QtGui.QFrame()
+                    separator.setFrameStyle(QtGui.QFrame.Sunken |
+                                            QtGui.QFrame.HLine)
+                    separator.setFixedHeight(2)
+                    layout.addWidget(separator)
+
+                    # Add the special function buttons
+                    bbox = QtGui.QDialogButtonBox(QtCore.Qt.Horizontal)
+                    for button in buttons:
+                        role = QtGui.QDialogButtonBox.ActionRole
+                        if self.is_button(button, 'Undo'):
+                            self.undo = self.add_button(button, bbox, role,
+                                                        self._on_undo, False,
+                                                        'Undo')
+                            self.redo = self.add_button(button, bbox, role,
+                                                        self._on_redo, False,
+                                                        'Redo')
+                            history.on_trait_change(self._on_undoable, 'undoable',
+                                                    dispatch='ui')
+                            history.on_trait_change(self._on_redoable, 'redoable',
+                                                    dispatch='ui')
+                        elif self.is_button(button, 'Revert'):
+                            role = QtGui.QDialogButtonBox.ResetRole
+                            self.revert = self.add_button(button, bbox, role,
+                                                          self._on_revert, False)
+                            history.on_trait_change(self._on_revertable, 'undoable',
+                                                    dispatch='ui')
+                        elif self.is_button(button, 'Help'):
+                            role = QtGui.QDialogButtonBox.HelpRole
+                            self.add_button(button, bbox, role, self._on_help)
+                        elif not self.is_button(button, ''):
+                            self.add_button(button, bbox, role)
+                    layout.addWidget(bbox)
+
+            # Ensure the control has a size hint reflecting the View specification.
+            # Yes, this is a hack, but it's too late to repair this convoluted
+            # control building process, so we do what we have to...
+            self.control.sizeHint = _size_hint_wrapper(self.control.sizeHint, ui)
+
+    from traitsui.qt4 import ui_panel
+    ui_panel._Panel = myPanel
 
 
 def monkey_patch_checkbox_render():
@@ -151,6 +285,8 @@ def monkey_patch_checkbox_render():
             return style.sizeFromContents(QtGui.QStyle.CT_CheckBox, box,
                                           QtCore.QSize(), None)
 
+    from traitsui.qt4.extra import checkbox_renderer
+
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 
@@ -160,6 +296,7 @@ def entry_point(appname, klass, debug=False):
     """
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
+    monkey_patch_panel()
 
     env = initialize_version(appname, debug)
     if env:
