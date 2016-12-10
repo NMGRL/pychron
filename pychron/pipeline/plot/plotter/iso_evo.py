@@ -59,7 +59,8 @@ class IsoEvo(BaseArArFigure):
         xmi, xma = 0, -Inf
         inspectors = []
         if is_baseline:
-            xma, xmi, yma, ymi = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+            xma, xmi, yma, ymi, scatter, ins = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+            self._add_scatter_inspector(scatter, inspector=inspectors)
             # print xma, xmi, yma, ymi
         else:
             if self.options.show_sniff:
@@ -114,7 +115,7 @@ class IsoEvo(BaseArArFigure):
             xmi, xma = min_max(xmi, xma, iso.xs)
 
             if self.show_baseline:
-                xma, xmi, yma, ymi, ins = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
+                xma, xmi, yma, ymi, scatter, ins = self._plot_baseline(i, iso, p, xma, xmi, yma, ymi)
                 inspectors.append(ins)
 
             self._add_scatter_inspector(scatter, inspector=inspectors)
@@ -142,6 +143,6 @@ class IsoEvo(BaseArArFigure):
         scatter.overlays.append(pinspector_overlay)
         xmi, xma = min_max(xmi, xma, xs)
         ymi, yma = min_max(ymi, yma, ys)
-        return xma, xmi, yma, ymi, pinspector
+        return xma, xmi, yma, ymi, scatter, pinspector
 
 # ============= EOF =============================================
