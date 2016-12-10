@@ -512,14 +512,24 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _make_records(self, ans):
         self.debug('make records')
+        import time
+        st = time.time()
 
         def func(xi, prog, i, n):
             if prog:
-                # if prog and i % 25 == 0:
-                prog.change_message('Loading {}'.format(xi.record_id))
+                if i == 0:
+                    prog.change_message('Loading')
+                elif i == n - 1:
+                    prog.change_message('Finished')
+                    # if prog and i % 25 == 0:
+                else:
+                    prog.change_message('Loading {}'.format(xi.record_id))
+
             return xi.record_views
 
-        return progress_loader(ans, func, threshold=25, step=25)
+        ret = progress_loader(ans, func, threshold=25, step=50)
+        self.debug('make records {}'.format(time.time() - st))
+        return ret
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter
