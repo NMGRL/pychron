@@ -15,10 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 
 import yaml
 from traits.api import HasTraits
+from traitsui.api import View, UItem
 
+from pychron.core.ui.strings import PascalCase
+from pychron.paths import paths
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode
 from pychron.pipeline.nodes.diff import DiffNode
@@ -26,6 +30,22 @@ from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
 from pychron.pipeline.nodes.persist import PersistNode
+
+
+class PipelineTemplateSaveView(HasTraits):
+    name = PascalCase()
+
+    @property
+    def path(self):
+        if self.name:
+            return os.path.join(paths.user_pipeline_template_dir, self.name)
+
+    def traits_view(self):
+        v = View(UItem('name'),
+                 kind='livemodal', title='New Template Name',
+                 resizable=True,
+                 buttons=['OK', 'Cancel'])
+        return v
 
 
 class PipelineTemplate(HasTraits):

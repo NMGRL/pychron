@@ -15,24 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Bool, BaseStr, Directory, Int, Str
-from traitsui.api import View, HGroup, VGroup, Item, UItem
-# ============= standard library imports ========================
-import re
 import os
-# ============= local library imports  ==========================
+
+from traits.api import HasTraits, Bool, Directory, Int, Str
+from traitsui.api import View, HGroup, VGroup, Item, UItem
+
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.ui.strings import PascalCase
 from pychron.entry.entry_views.entry import SpacelessStr
-
-pascalcase_regex = re.compile(r'^[A-Z0-9]{1}\w*$')
-
-
-class PascalCase(BaseStr):
-    def validate(self, obj, name, value):
-        if not value or not pascalcase_regex.match(value):
-            self.error(obj, name, value)
-        else:
-            return value
 
 
 class BaseSaveDialog(HasTraits):

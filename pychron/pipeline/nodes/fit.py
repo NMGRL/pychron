@@ -126,6 +126,13 @@ class FitICFactorNode(FitReferencesNode):
         self.plotter_options = pom.selected_options
         self.plotter_options.set_aux_plots(fits)
 
+    def _to_template(self, d):
+        d['fits'] = [{'numerator': a.numerator,
+                      'denominator': a.denominatior,
+                      'standard_ratio': a.standard_ratio,
+                      'analysis_type': a.analysis_type}
+                     for a in self.plotter_options.aux_plots]
+
 
 class IsoEvoResult(HasTraits):
     # record_id = Str

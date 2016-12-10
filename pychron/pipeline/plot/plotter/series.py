@@ -148,7 +148,6 @@ class Series(BaseSeries):
                 value_format = None
                 ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
                 yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
-                print ys, yerr
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
                           filter_outliers_dict=po.filter_outliers_dict)

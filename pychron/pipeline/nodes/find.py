@@ -44,6 +44,9 @@ class BaseFindFluxNode(FindNode):
     def _load_hook(self, nodedict):
         pass
 
+    def _to_template(self, d):
+        d['irradiation'] = self.irradiation
+
     @cached_property
     def _get_levels(self):
         if self.irradiation:
@@ -136,6 +139,10 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     def _load_hook(self, nodedict):
         self.level = nodedict.get('level', '')
 
+    def _to_template(self, d):
+        super(FindFluxMonitorsNode, self)._to_template(d)
+        d['level'] = self.level
+
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
@@ -176,6 +183,9 @@ class FindReferencesNode(FindNode):
 
     # def dump(self, obj):
     #     obj['threshold'] = self.threshold
+    def _to_template(self, d):
+        d['threshold'] = self.threshold
+        d['analysis_type'] = self.analysis_type
 
     def _analysis_type_changed(self, new):
         if new == 'Blank Unknown':

@@ -307,11 +307,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.reset()
 
     def save_pipeline_template(self):
-        path = self.save_file_dialog(default_directory=paths.user_pipeline_template_dir)
-        # path = '/Users/ross/Sandbox/template.yaml'
-        # path = os.path.join(paths.pipeline_template_dir, 'test.yaml')
-        if path:
-            self.engine.save_pipeline_template(path)
+        self.engine.save_pipeline_template()
 
     # action handlers
     def freeze_flux(self):
