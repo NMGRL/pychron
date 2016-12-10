@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Bool, List, Instance
 from traitsui.api import View
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_editor import grouped_name
-from pychron.options.views import view
-from pychron.pipeline.nodes.base import BaseNode
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager
+from pychron.options.views import view
+from pychron.pipeline.nodes.base import BaseNode
 
 
 class NoAnalysesError(BaseException):
@@ -217,6 +216,10 @@ class SeriesNode(FigureNode):
                     if 'Ar38' in iso_keys:
                         names.append('Ar40/Ar38')
                         names.append('uAr40/Ar38')
+
+            if unk.analysis_type in ('unknown', 'cocktail'):
+                names.append('Age')
+                names.append('RadiogenicYield')
 
             names.append('Peak Center')
             names.append('AnalysisType')

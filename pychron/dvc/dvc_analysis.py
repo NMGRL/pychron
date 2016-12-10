@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import base64
 import datetime
 import os
 import time
 
 from uncertainties import ufloat, std_dev, nominal_value
 
+from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
@@ -143,7 +143,7 @@ class DVCAnalysis(Analysis):
 
     def load_paths(self, modifiers=None):
         if modifiers is None:
-            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags')
+            modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags', 'peakcenter')
 
         for modifier in modifiers:
             path = self._analysis_path(modifier=modifier)
@@ -169,8 +169,7 @@ class DVCAnalysis(Analysis):
         return jd
 
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
-        def format_blob(blob):
-            return base64.b64decode(blob)
+
 
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
@@ -357,6 +356,14 @@ class DVCAnalysis(Analysis):
         return self._analysis_path(modifier=modifier)
 
     # private
+    def _load_peakcenter(self, jd):
+        refdet = jd['reference_detector']
+        pd = jd[refdet]
+
+        self.peak_center = pd['center_dac']
+
+        self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
+
     def _load_tags(self, jd):
         self.set_tag(jd[0])
 
