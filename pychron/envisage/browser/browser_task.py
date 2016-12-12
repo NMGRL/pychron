@@ -24,6 +24,7 @@ from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
+from pychron.pychron_constants import DVC_PROTOCOL
 
 '''
 add toolbar action to open another editor tab
@@ -85,7 +86,7 @@ class BaseBrowserTask(BaseEditorTask):
         self.dvc.db.close_session()
 
     def activated(self):
-        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.dvc = self.application.get_service(DVC_PROTOCOL)
         self.dvc.create_session()
 
     def edit_analysis(self):

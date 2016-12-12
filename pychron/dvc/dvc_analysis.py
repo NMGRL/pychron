@@ -357,12 +357,16 @@ class DVCAnalysis(Analysis):
 
     # private
     def _load_peakcenter(self, jd):
-        refdet = jd['reference_detector']
-        pd = jd[refdet]
+
+        refdet = jd.get('reference_detector')
+        if refdet is None:
+            pd = jd
+            self.peak_center_data = unpack(pd['data'], jd['fmt'], decode=True)
+        else:
+            pd = jd[refdet]
+            self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
         self.peak_center = pd['center_dac']
-
-        self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
     def _load_tags(self, jd):
         self.set_tag(jd[0])

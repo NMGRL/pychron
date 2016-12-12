@@ -19,12 +19,10 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem, VSplitter
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
 from pychron.entry.tasks.sample_prep.panes import SamplePrepPane, SamplePrepFilterPane, SamplePrepSessionPane
 from pychron.entry.tasks.sample_prep.sample_prep import SamplePrep
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class LocateSampleAction(TaskAction):
@@ -57,7 +55,7 @@ class SamplePrepTask(BaseManagerTask):
         self.manager.locate_sample()
 
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return SamplePrep(application=self.application, dvc=dvc)
 

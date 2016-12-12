@@ -19,6 +19,7 @@
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class AddMolecularWeightAction(Action):
@@ -209,7 +210,7 @@ class GenerateIrradiationTableAction(TaskAction):
         # a.make()
 
         from pychron.entry.irradiation_xls_writer import IrradiationXLSTableWriter
-        dvc = self.task.window.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.task.window.application.get_service(DVC_PROTOCOL)
         if dvc is not None:
             if dvc.db.connect():
                 names = dvc.get_irradiation_names()

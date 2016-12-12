@@ -43,7 +43,7 @@ from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL
+from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
 
 
 class ExperimentEditorTask(EditorTask):
@@ -710,7 +710,7 @@ class ExperimentEditorTask(EditorTask):
                 self.close_editor(fs[0])
 
     def _get_autoplot_analyses(self, new):
-        dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.window.application.get_service(DVC_PROTOCOL)
         db = dvc.db
         ans, _ = db.get_labnumber_analyses(new.identifier)
         return dvc.make_analyses(ans)
@@ -803,7 +803,7 @@ class ExperimentEditorTask(EditorTask):
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
-            dvc = self.window.application.get_service('pychron.dvc.dvc.DVC')
+            dvc = self.window.application.get_service(DVC_PROTOCOL)
             lm.trait_set(db=dvc.db,
                          show_group_positions=True)
             return lm

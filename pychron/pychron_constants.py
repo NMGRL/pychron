@@ -61,6 +61,10 @@ AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
 
 OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 
+UNKNOWN = 'unknown'
+COCKTAIL = 'cocktail'
+BLANK = 'blank'
+
 import string
 
 seeds = string.ascii_uppercase
@@ -88,8 +92,13 @@ def alphas(idx):
 INTERFERENCE_KEYS = ('K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638')
 RATIO_KEYS = ('Ca_K', 'Cl_K')
 
-ARGON_KEYS = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36')
+AR40 = 'Ar40'
+AR39 = 'Ar39'
+AR38 = 'Ar38'
+AR37 = 'Ar37'
+AR36 = 'Ar36'
 
+ARGON_KEYS = (AR40, AR39, AR38, AR37, AR36)
 ISOTOPES = ARGON_KEYS
 
 

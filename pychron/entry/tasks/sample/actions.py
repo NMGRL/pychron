@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class SampleEditAction(Action):
@@ -32,7 +31,7 @@ class SampleEditAction(Action):
         from pychron.entry.tasks.sample.sample_edit_view import SampleEditView, SampleEditModel
 
         app = event.task.window.application
-        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        dvc = app.get_service(DVC_PROTOCOL)
         sem = SampleEditModel(dvc=dvc)
         sem.init()
         sev = SampleEditView(model=sem)

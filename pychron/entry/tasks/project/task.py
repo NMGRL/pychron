@@ -21,6 +21,7 @@
 from pychron.entry.tasks.project.panes import ProjectPane
 from pychron.entry.tasks.project.project_manager import ProjectManager
 from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class ProjectTask(BaseManagerTask):
@@ -34,7 +35,7 @@ class ProjectTask(BaseManagerTask):
         return ProjectPane(model=self.manager)
 
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return ProjectManager(application=self.application, dvc=dvc)
 

@@ -30,6 +30,22 @@ from pychron.pipeline.plot.plotter.ticks import TICKS
 
 N = 500
 
+ATTR_MAPPING = {'Peak Center': 'peak_center',
+                'Age': 'uage',
+                'RadiogenicYield': 'rad40_percent'}
+
+PEAK_CENTER = 'Peak Center'
+ANALYSIS_TYPE = 'Analysis Type'
+RADIOGENIC_YIELD = 'RadiogenicYield'
+AGE = 'Age'
+
+AR4039 = 'Ar40/Ar39'
+UAR4039 = 'uAr40/Ar39'
+AR4038 = 'Ar40/Ar38'
+UAR4038 = 'uAr40/Ar38'
+AR4036 = 'Ar40/Ar36'
+UAR4036 = 'uAr40/Ar36'
+
 
 class BaseSeries(BaseArArFigure):
     xs = Array
@@ -88,14 +104,15 @@ class Series(BaseSeries):
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 
         for i, po in enumerate(plots):
+            ytitle = po.name
+            if po.use_dev:
+                ytitle = '{} Dev'.format(ytitle)
+            elif po.use_percent_dev:
+                ytitle = '{} Dev %'.format(ytitle)
 
-            p = graph.new_plot(
-                # padding=self.padding,
-                ytitle=po.name,
-                xtitle='Time (hrs)')
-            # self._add_limit_tool(p, 'y')
+            p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
 
-            if po.name == 'AnalysisType':
+            if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
 
                 p.y_axis.tick_label_formatter = tick_formatter
@@ -104,8 +121,6 @@ class Series(BaseSeries):
                 graph.set_y_limits(-0.5, len(TICKS) - 0.5, plotid=i)
                 # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
-            # p.value_scale = po.scale
-            # p.padding_left = 75
             p.value_range.tight_bounds = False
             self._setup_plot(i, p, po)
 
@@ -132,7 +147,7 @@ class Series(BaseSeries):
     def _plot_series(self, po, pid, omits):
         graph = self.graph
         try:
-            if po.name == 'AnalysisType':
+            if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import analysis_type_formatter
 
                 ys = list(self._unpack_attr(po.name))
@@ -148,11 +163,19 @@ class Series(BaseSeries):
                 value_format = None
                 ys = array([nominal_value(ai) for ai in self._unpack_attr(po.name)])
                 yerr = array([std_dev(ai) for ai in self._unpack_attr(po.name)])
+
+                if po.use_dev or po.use_percent_dev:
+                    graph.add_horizontal_rule(0, plotid=pid, color='black', line_style='solid')
+                    m = ys.mean()
+                    ys = ys - m
+                    if po.use_percent_dev:
+                        ys /= m * 100
+                        yerr /= m * 100
+
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
                           filter_outliers_dict=po.filter_outliers_dict)
 
-            # print ys
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
@@ -183,7 +206,6 @@ class Series(BaseSeries):
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
-            # p.value_scale = po.scale
             end_caps = True
             if po.y_error and yerr is not None:
                 self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
@@ -199,23 +221,24 @@ class Series(BaseSeries):
             print 'Series', e
 
     def _unpack_attr(self, attr):
-        if attr == 'AnalysisType':
-            f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
-            return (f(ai.analysis_type) for ai in self.sorted_analyses)
-        elif attr == 'Peak Center':
-            return (ai.peak_center for ai in self.sorted_analyses)
-        elif attr == 'RadiogenicYield':
-            return (ai.rad40_percent for ai in self.sorted_analyses)
-        elif attr == 'Age':
-            return (ai.uage for ai in self.sorted_analyses)
-        else:
-            return super(Series, self)._unpack_attr(attr)
+        if attr == ANALYSIS_TYPE:
+            def f(x):
+                x = x.analysis_type
+                return ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
+
+            return (f(ai) for ai in self.sorted_analyses)
+
+        elif attr in ATTR_MAPPING:
+            attr = ATTR_MAPPING[attr]
+
+        return super(Series, self)._unpack_attr(attr)
+
 
     def update_graph_metadata(self, obj, name, old, new):
-        # print obj, name, old,new
         sorted_ans = self.sorted_analyses
         if obj:
             self._filter_metadata_changes(obj, sorted_ans)
+
 # ===============================================================================
 # plotters
 # ===============================================================================
