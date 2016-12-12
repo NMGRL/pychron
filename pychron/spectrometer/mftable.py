@@ -339,13 +339,12 @@ class MagnetFieldTable(Loggable):
                 row = [iso, mw] + dacs
                 table.append(row)
 
-            npoints = len(table)
-            self._report_mftable(detectors, items)
-            self.items = items
+            if load_items:
+                self._report_mftable(detectors, items)
+                self.items = items
 
             table = zip(*table)
             isos, mws = list(table[0]), list(table[1])
-
 
             d = {}
 
@@ -357,8 +356,10 @@ class MagnetFieldTable(Loggable):
                 if initial_guess:
                     try:
                         c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
-                    except TypeError:
-                        c = (0, 1, ys[0])
+                    except TypeError, e:
+                        import traceback
+                        traceback.print_exc()
+                        c = (0, 0, ys[0])
                 else:
                     c = None
 
@@ -384,12 +385,13 @@ class MagnetFieldTable(Loggable):
     def _get_initial_guess(self, y, x):
         initial_guess = None
         mass_func = self.mass_cal_func
+        self.debug('get initial guess {}'.format(mass_func))
         if mass_func == 'linear':
-            initial_guess = [y[0], x[0]]
+            initial_guess = [0, y[0]]
         elif mass_func == 'parabolic':
-            initial_guess = [y[0], x[0], 0]
+            initial_guess = [0, 0, y[0]]
         elif mass_func == 'cubic':
-            initial_guess = [y[0], x[0], 0, 0]
+            initial_guess = [0, 0, 0, y[0]]
         return initial_guess
 
     def _report_mftable(self, detectors, items):

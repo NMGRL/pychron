@@ -18,7 +18,7 @@
 from traits.api import on_trait_change, List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.experiment.events import ExperimentEventAddition
+from pychron.experiment.events import ExperimentEventAddition, END_RUN, START_QUEUE
 from pychron.labspy.client import LabspyClient
 from pychron.labspy.tasks.preferences import LabspyPreferencesPane, LabspyExperimentPreferencesPane
 
@@ -31,8 +31,10 @@ class LabspyClientPlugin(BaseTaskPlugin):
 
     def _events_default(self):
         e1 = ExperimentEventAddition(id='pychron.labspy.add_run',
-                                     action=self._add_run)
+                                     action=self._add_run,
+                                     level=END_RUN)
         e2 = ExperimentEventAddition(id='pychron.labspy.add_experiment',
+                                     level=START_QUEUE,
                                      action=self._add_experiment)
         return [e1, e2]
 

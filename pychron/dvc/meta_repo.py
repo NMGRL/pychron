@@ -688,7 +688,7 @@ class MetaRepo(GitRepoManager):
         if isinstance(obj, list):
             positions = obj
         else:
-            positions = obj['positions']
+            positions = obj.get('positions', [])
         return positions
 
     def _chron_name(self, name):

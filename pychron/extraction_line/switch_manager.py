@@ -155,7 +155,9 @@ class SwitchManager(Manager):
     def refresh_network(self):
         self.debug('refresh network')
         for k, v in self.switches.iteritems():
-            self.refresh_state = (k, v.state)
+            self.refresh_state = (k, v.state, False)
+
+        self.refresh_canvas_needed = True
 
     @add_checksum
     def get_owners(self):
