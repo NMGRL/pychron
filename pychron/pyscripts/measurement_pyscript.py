@@ -266,7 +266,20 @@ class MeasurementPyScript(ValvePyScript):
                 if ext in ('.yaml', '.yml'):
                     hops = yaml.load(rfile)
                 elif ext in ('.txt',):
-                    hops = [eval(li) for li in fileiter(rfile)]
+                    def hop_factory(l):
+                        pairs, counts, settle = eval(l)
+
+                        # isos, dets = zip(*(p.split(':') for p in pairs.split(',')))
+                        items = (p.split(':') for p in pairs.split(','))
+                        # n = len(isos)
+                        cc = [{'isotope': i, 'detector': d, 'active': True, 'deflection': 0, 'is_baseline': False, 'protect': False} for i,d in items]
+
+                        h = {'counts': counts, 'settle': settle,
+                             'cup_configuration': cc,
+                             'positioning': {'detector': cc[0]['detector'], 'isotope': cc[0]['isotope']}}
+                        return h
+
+                    hops = [hop_factory(li) for li in fileiter(rfile)]
                 return hops
 
         else:

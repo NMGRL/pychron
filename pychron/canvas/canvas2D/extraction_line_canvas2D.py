@@ -98,7 +98,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.state = nstate
         self.draw_valid = False
 
-        print name, nstate, refresh, mode
         if refresh:
             self.invalidate_and_redraw()
 

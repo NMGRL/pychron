@@ -601,6 +601,8 @@ class DVCDatabase(DatabaseAdapter):
                 result = self._query_one(q, verbose_query=True)
                 if result:
                     return int(result[0])
+                else:
+                    return 0
 
     def get_greatest_step(self, ln, aliquot):
         """

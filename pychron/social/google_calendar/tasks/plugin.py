@@ -18,7 +18,7 @@
 from traits.api import List, Instance
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.experiment.events import ExperimentEventAddition
+from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE
 from pychron.social.google_calendar.client import GoogleCalendarClient
 from pychron.social.google_calendar.tasks.preferences import GoogleCalendarPreferencesPane, \
     GoogleCalendarExperimentPreferencesPane
@@ -72,8 +72,10 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
 
     def _events_default(self):
         e1 = ExperimentEventAddition(id='pychron.google_calendar.start_event',
+                                     level=START_QUEUE,
                                      action=self._start_experiment_event)
         e2 = ExperimentEventAddition(id='pychron.google_calendar.end_event',
+                                     level=END_QUEUE,
                                      action=self._end_experiment_event)
         return [e1, e2]
 

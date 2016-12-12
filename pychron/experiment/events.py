@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Callable
+from traits.api import HasTraits, Str, Callable, Enum
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -30,6 +30,7 @@ END_QUEUE = 20
 class ExperimentEventAddition(HasTraits):
     id = Str
     action = Callable
+    level = Enum(0, START_QUEUE, START_RUN, END_QUEUE, END_RUN)
 
     def do(self, ctx):
         if self.action is not None:

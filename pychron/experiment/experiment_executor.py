@@ -294,7 +294,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         try:
             pre_execute_result = self._pre_execute_check(prog)
         except PreExecuteCheckException, e:
-            self.warning_dialog(e)
+            self.warning_dialog(str(e))
 
         # if self._pre_execute_check(prog):
         if pre_execute_result:
@@ -1731,9 +1731,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if prog:
                 prog.change_message('Syncing {}'.format(e))
                 if not self.datahub.mainstore.sync_repo(e, use_progress=False):
-                    break
-        else:
-            return True
+                    return e
 
     def _pre_execute_check(self, prog=None, inform=True):
         if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
@@ -1817,8 +1815,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if prog:
             prog.change_message('Syncing repositories')
-        if not self._sync_repositories(prog):
-            raise PreExecuteCheckException('Syncing Repositories')
+
+        e = self._sync_repositories(prog)
+        if e:
+            raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
 
         if self._check_dashboard(prog):
             raise PreExecuteCheckException('Checking Dashboard')
