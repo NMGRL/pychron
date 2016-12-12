@@ -19,7 +19,7 @@ from traits.api import Bool, Enum, on_trait_change
 from traitsui.api import EnumEditor, Item, HGroup, UItem
 
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
-from pychron.pychron_constants import FIT_TYPES, ERROR_TYPES
+from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class IsoEvoSubOptions(SubOptions):
@@ -37,7 +37,7 @@ class IsoEvoMainOptions(MainOptions):
     plot_enabled = Bool
     save_enabled = Bool
     fit = Enum(FIT_TYPES)
-    error_type = Enum(ERROR_TYPES)
+    error_type = Enum(FIT_ERROR_TYPES)
     filter_outliers = Bool
 
     def _get_global_group(self):

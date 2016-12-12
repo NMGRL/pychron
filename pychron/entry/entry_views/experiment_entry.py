@@ -17,9 +17,8 @@
 from traits.api import Str
 from traitsui.api import Item, VGroup, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.entry.entry_views.entry import BaseEntry, SpacelessStr
+from pychron.core.ui.strings import SpacelessStr
+from pychron.entry.entry_views.entry import BaseEntry
 
 
 class ExperimentIdentifierEntry(BaseEntry):

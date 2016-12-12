@@ -26,6 +26,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
@@ -174,7 +175,7 @@ class IrradiationPane(TraitsDockPane):
             spacer(),
             Item('irradiation',
                  width=-150,
-                 editor=EnumEditor(name='irradiations')),
+                 editor=myEnumEditor(name='irradiations')),
             icon_button_editor('edit_irradiation_button', 'database_edit',
                                enabled_when='edit_irradiation_enabled',
                                tooltip='Edit irradiation'),
@@ -189,7 +190,7 @@ class IrradiationPane(TraitsDockPane):
             spacer(-23),
             UItem('level',
                   width=-150,
-                  editor=EnumEditor(name='levels')),
+                  editor=myEnumEditor(name='levels')),
             icon_button_editor('edit_level_button', 'database_edit',
                                tooltip='Edit level',
                                enabled_when='edit_level_enabled'),
