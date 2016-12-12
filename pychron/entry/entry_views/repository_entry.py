@@ -16,10 +16,10 @@
 # ============= enthought library imports =======================
 from traits.api import Str, List
 from traitsui.api import VGroup, UItem, Item
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET, SpacelessStr
+from pychron.core.ui.strings import SpacelessStr
+from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
 
 class RepositoryIdentifierEntry(BaseEntry):

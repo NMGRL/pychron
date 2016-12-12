@@ -21,8 +21,7 @@ from traits.api import HasTraits, Bool, Directory, Int, Str
 from traitsui.api import View, HGroup, VGroup, Item, UItem
 
 from pychron.core.helpers.filetools import add_extension
-from pychron.core.ui.strings import PascalCase
-from pychron.entry.entry_views.entry import SpacelessStr
+from pychron.core.ui.strings import PascalCase, SpacelessStr
 
 
 class BaseSaveDialog(HasTraits):

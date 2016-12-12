@@ -16,11 +16,9 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Property, Str
-from traits.trait_types import BaseStr
 from traitsui.api import View, VGroup, UItem
 from traitsui.menu import Action
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.dvc.dvc_irradiationable import DVCAble
 
 
@@ -30,14 +28,6 @@ class OKButton(Action):
 
 
 STYLESHEET = 'QLabel {font-size: 14px; color: red}'
-
-
-class SpacelessStr(BaseStr):
-    def validate(self, object, name, value):
-        if isinstance(value, basestring) and ' ' not in value:
-            return value
-
-        self.error(object, name, value)
 
 
 class BaseEntry(DVCAble):

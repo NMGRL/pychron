@@ -31,4 +31,11 @@ class PascalCase(BaseStr):
         else:
             return value
 
+
+class SpacelessStr(BaseStr):
+    def validate(self, object, name, value):
+        if isinstance(value, basestring) and ' ' not in value:
+            return value
+
+        self.error(object, name, value)
 # ============= EOF =============================================
