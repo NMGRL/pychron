@@ -150,7 +150,10 @@ class DVCAnalysis(Analysis):
             if path and os.path.isfile(path):
                 jd = dvc_load(path)
                 func = getattr(self, '_load_{}'.format(modifier))
-                func(jd)
+                try:
+                    func(jd)
+                except BaseException, e:
+                    self.warning('Failed loading {}. error={}'.format(modifier, e))
 
     def load_spectrometer_parameters(self, spec_sha):
         name = add_extension(spec_sha, '.json')
