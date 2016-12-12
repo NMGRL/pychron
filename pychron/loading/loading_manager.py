@@ -36,6 +36,7 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 def make_bound(st):
@@ -166,7 +167,7 @@ class LoadingManager(DVCIrradiationable):
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
-        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.dvc = self.application.get_service(DVC_PROTOCOL)
 
     def load(self):
         if self.canvas:

@@ -50,7 +50,7 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -1506,7 +1506,7 @@ post_equilibration_script:name''')
 
     def _datahub_default(self):
         dh = Datahub()
-        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+        dh.mainstore = self.application.get_service(DVC_PROTOCOL)
         dh.bind_preferences()
         return dh
 

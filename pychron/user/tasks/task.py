@@ -15,18 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
+import os
+
+import yaml
 from pyface.tasks.task_layout import TaskLayout
 from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
 from traits.api import Instance
 
-# ============= standard library imports ========================
-import hashlib
-import os
-import yaml
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 from pychron.user.tasks.panes import UsersPane
 
 
@@ -56,7 +55,7 @@ class UsersTask(BaseTask):
 
     def _db_default(self):
         app = self.application
-        d = app.get_service('pychron.dvc.dvc.DVC')
+        d = app.get_service(DVC_PROTOCOL)
         d.db.create_session()
         return d.db
 

@@ -23,6 +23,9 @@ from pychron.options.options_manager import IdeogramOptionsManager, OptionsContr
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager
 from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
+    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039
+from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38
 
 
 class NoAnalysesError(BaseException):
@@ -206,23 +209,19 @@ class SeriesNode(FigureNode):
                 names.extend(iso_keys)
                 names.extend(['{}bs'.format(ki) for ki in iso_keys])
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
-                if 'Ar40' in iso_keys:
-                    if 'Ar39' in iso_keys:
-                        names.append('Ar40/Ar39')
-                        names.append('uAr40/Ar39')
-                    if 'Ar36' in iso_keys:
-                        names.append('Ar40/Ar36')
-                        names.append('uAr40/Ar36')
-                    if 'Ar38' in iso_keys:
-                        names.append('Ar40/Ar38')
-                        names.append('uAr40/Ar38')
+                if AR40 in iso_keys:
+                    if AR39 in iso_keys:
+                        names.extend([AR4039, UAR4039])
+                    if AR36 in iso_keys:
+                        names.extend([AR4036, UAR4036])
+                    if AR38 in iso_keys:
+                        names.extend([AR4038, UAR4038])
 
-            if unk.analysis_type in ('unknown', 'cocktail'):
-                names.append('Age')
-                names.append('RadiogenicYield')
+            if unk.analysis_type in (UNKNOWN, COCKTAIL):
+                names.append(AGE)
+                names.append(RADIOGENIC_YIELD)
 
-            names.append('Peak Center')
-            names.append('AnalysisType')
+            names.extend([PEAK_CENTER, ANALYSIS_TYPE])
             pom.set_names(names)
 
 

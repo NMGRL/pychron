@@ -30,6 +30,7 @@ from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
+from pychron.pychron_constants import DVC_PROTOCOL
 
 ATTRS = (('sample', ''),
          ('material', ''),
@@ -280,7 +281,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 do_export(self.manager.dvc, es.export_type, es.destination_dict, es.selected)
 
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return LabnumberEntry(application=self.application, dvc=dvc)
 

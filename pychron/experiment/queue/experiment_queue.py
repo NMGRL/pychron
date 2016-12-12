@@ -35,6 +35,7 @@ from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class RepeatRunBlockView(HasTraits):
@@ -213,7 +214,7 @@ class ExperimentQueue(BaseExperimentQueue):
 
     def show_evolutions(self, isotopes=None, **kw):
         if self.executed_selected:
-            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            dvc = self.application.get_service(DVC_PROTOCOL)
             if dvc:
                 spec = self.executed_selected[0]
 

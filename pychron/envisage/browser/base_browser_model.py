@@ -36,6 +36,7 @@ from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRe
     PrincipalInvestigatorRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class IdentifierStr(BaseStr):
@@ -774,7 +775,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self.use_workspace:
             db = self.workspace.index_db
         else:
-            db = self.application.get_service('pychron.dvc.dvc.DVC')
+            db = self.application.get_service(DVC_PROTOCOL)
 
         if db is None:
             if not self._warned:

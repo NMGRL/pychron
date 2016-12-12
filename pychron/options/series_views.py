@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.options.options import SubOptions, AppearanceSubOptions
+from traitsui.api import View, UItem, VGroup, EnumEditor
+
+from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 
 
 class SeriesSubOptions(SubOptions):
@@ -39,11 +38,31 @@ class SeriesAppearance(AppearanceSubOptions):
         return self._make_view(VGroup(g, fgrp))
 
 
+class SeriesMainOptions(MainOptions):
+    def _get_columns(self):
+        cols = [checkbox_column(name='plot_enabled', label='Use'),
+                object_column(name='name',
+                              width=130,
+                              editor=EnumEditor(name='names')),
+                object_column(name='scale'),
+                object_column(name='height',
+                              format_func=lambda x: str(x) if x else ''),
+                checkbox_column(name='show_labels', label='Labels'),
+                checkbox_column(name='x_error', label='X Err.'),
+                checkbox_column(name='y_error', label='Y Err.'),
+                checkbox_column(name='ytick_visible', label='Y Tick'),
+                checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='use_dev', label='Dev'),
+                checkbox_column(name='use_percent_dev', label='Dev %')
+                # checkbox_column(name='has_filter', label='Filter', editable=False)
+                ]
+
+        return cols
 # ===============================================================
 # ===============================================================
-VIEWS = {}
-VIEWS['series'] = SeriesSubOptions
-VIEWS['appearance'] = SeriesAppearance
+VIEWS = {'main': SeriesMainOptions, 'series': SeriesSubOptions, 'appearance': SeriesAppearance}
+# VIEWS['series'] = SeriesSubOptions
+# VIEWS['appearance'] = SeriesAppearance
 
 
 # ===============================================================

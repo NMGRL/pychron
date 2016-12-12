@@ -19,6 +19,7 @@
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.processing.analyses.analysis_group import AnalysisGroup
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class UploadAction(TaskAction):
@@ -28,7 +29,7 @@ class UploadAction(TaskAction):
         app = event.task.application
         geochron_service = app.get_service('pychron.geochron.geochron_service.GeochronService')
 
-        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        dvc = app.get_service(DVC_PROTOCOL)
         with dvc.session_ctx():
             ai = dvc.get_analysis('c038c72a-cf21-49f9-a5b5-1e43bb4a6b93')
             ans = dvc.make_analyses(ai)

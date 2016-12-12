@@ -57,7 +57,7 @@ from pychron.experiment.utilities.repository_identifier import retroactive_repos
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -227,7 +227,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return
 
         dh = self.datahub
-        dh.mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+        dh.mainstore = self.application.get_service(DVC_PROTOCOL)
         dh.mainstore.precedence = 1
 
         return True

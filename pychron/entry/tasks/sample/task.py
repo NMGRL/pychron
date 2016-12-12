@@ -27,6 +27,7 @@ from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
 from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class SampleEntryTask(BaseManagerTask):
@@ -69,7 +70,7 @@ class SampleEntryTask(BaseManagerTask):
 
     # defaults
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return SampleEntry(application=self.application, dvc=dvc)
 

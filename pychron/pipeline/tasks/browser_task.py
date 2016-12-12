@@ -29,6 +29,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, ConfigureAnaly
     LoadReviewStatusAction, EditAnalysisAction, DiffViewAction, ConfigureSampleTableAction
 from pychron.pipeline.tasks.analysis_range_selector import AnalysisRangeSelector
 from pychron.pipeline.tasks.panes import BrowserPane, SearcherPane, AnalysisGroupsPane
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class BrowserTask(BaseBrowserTask):
@@ -172,7 +173,7 @@ class BrowserTask(BaseBrowserTask):
                 AnalysisGroupsPane(model=self.browser_model)]
 
     def _searcher_default(self):
-        db = self.application.get_service('pychron.dvc.dvc.DVC')
+        db = self.application.get_service(DVC_PROTOCOL)
         s = Searcher(db=db,
                      analysis_table=self.browser_model.analysis_table)
         return s

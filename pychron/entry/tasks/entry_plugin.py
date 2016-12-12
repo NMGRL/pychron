@@ -34,6 +34,7 @@ from pychron.entry.tasks.project.actions import ProjectAction
 from pychron.entry.tasks.sample.actions import SampleEntryAction, SampleEditAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class EntryPlugin(BaseTaskPlugin):
@@ -54,12 +55,12 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _service_offers_default(self):
         def factory():
-            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            dvc = self.application.get_service(DVC_PROTOCOL)
             e = MolecularWeightEditor(dvc=dvc)
             return e
 
         def factory2():
-            dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+            dvc = self.application.get_service(DVC_PROTOCOL)
             e = FluxMonitorEditor(dvc=dvc)
             return e
 

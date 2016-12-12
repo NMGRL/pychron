@@ -22,6 +22,7 @@ from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class LocalRepositoryAction(TaskAction):
@@ -103,7 +104,7 @@ class WorkOfflineAction(Action):
 
     def perform(self, event):
         app = event.task.window.application
-        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        dvc = app.get_service(DVC_PROTOCOL)
 
         if dvc.db.kind != 'mysql':
             warning(None, 'Your are not using a centralized MySQL database')
