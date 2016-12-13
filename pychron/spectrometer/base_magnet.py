@@ -185,7 +185,7 @@ class BaseMagnet(Loggable):
                 frequency = yd.get('frequency')
                 if frequency is None:
                     self.warning('AF Demagnetization unavailable. '
-                                 'Need to specify "period" or "frequency" in {}'.format(p))
+                                 'Need to specify "period" or "frequency" in "{}"'.format(p))
                     return
                 else:
                     period = 1 / float(frequency)
@@ -193,18 +193,21 @@ class BaseMagnet(Loggable):
                 frequency = 1 / float(period)
 
             duration = yd.get('duration')
-            slope = yd.get('slope')
             if duration is None:
                 duration = 5
                 self.debug('defaulting to duration={}'.format(duration))
-            if slope is None:
-                slope = 1
-                self.debug('defaulting to slope={}'.format(slope))
+
+            start_amplitude = yd.get('start_amplitude')
+            if start_amplitude is None:
+                self.warning('AF Demagnetization unavailable. '
+                             'Need to specify "start_amplitude" in "{}"'.format(p))
+                return
 
             sx = arange(pi * 0.5 * period, duration, pi * period)
+            slope = start_amplitude / float(duration)
             dacs = slope * sx * sin(frequency * sx)
             self.info('Doing AF Demagnetization around target={}. '
-                      'duration={}, slope={}, period={}'.format(target, duration, slope, period))
+                      'duration={}, start_amplitude={}, period={}'.format(target, duration, start_amplitude, period))
             for dac in reversed(dacs):
                 self.debug('set af dac raw:{} dac:{}'.format(dac, target + dac))
                 setfunc(target + dac)
