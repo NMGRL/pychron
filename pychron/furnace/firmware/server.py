@@ -74,7 +74,9 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('StopJitter', manager.stop_jitter))
 
         bakeout_services = (('GetSetpoint', manager.get_bakeout_setpoint),
-                            ('SetSetpoint', manager.set_bakeout_setpoint),
+                            ('SetControlMode', manager.set_bakeout_control_mode),
+                            ('GetTemperature', manager.get_bakeout_temperature),
+                            ('SetClosedLoopSetpoint', manager.set_bakeout_setpoint),
                             ('GetTempPower', manager.get_bakeout_temp_and_power))
 
         gauge_services = (('GetPressure', manager.get_gauge_pressure),)

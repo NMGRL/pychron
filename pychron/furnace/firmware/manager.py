@@ -31,6 +31,7 @@ from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
+from pychron.hardware.watlow.headless_ezzone import HeadlessWatlowEZZone
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.image.rpi_camera import RPiCamera
 from pychron.messaging.broadcaster import Broadcaster
@@ -41,7 +42,9 @@ DEVICES = {'controller': HeadlessEurotherm,
            'funnel': HeadlessMDrive,
            'feeder': HeadlessMDrive,
            'temp_hum': DHT11,
-           'camera': RPiCamera}
+           'camera': RPiCamera,
+           'backout1': HeadlessWatlowEZZone,
+           'backout2': HeadlessWatlowEZZone}
 
 
 def debug(func):
@@ -153,8 +156,6 @@ class FirmwareManager(HeadlessLoggable):
         return 'Not yet implemented'
 
     def get_full_summary(self):
-        # encoding = '<f'
-        # s = {'encoding': encoding}
         s = {'version': __version__}
         for attr in ('furnace_env_humidity', 'furnace_env_temperature',
                      'furnace_setpoint', 'furnace_process_value',
@@ -162,13 +163,15 @@ class FirmwareManager(HeadlessLoggable):
             addr = PARAMETER_REGISTRY.get(attr)
             if addr:
                 v = getattr(self, attr)
-                # try:
-                #     # convert float to binary hex
-                #     v = hex(struct.pack(encoding, v))
-                # except ValueError:
-                #     pass
                 s[addr] = v
 
+        ss = []
+        for k in self._switch_mapping:
+            _, o, c = self.get_indicator_component_states(k)
+            rs = self.get_channel_state(k)
+            ss.append('{},s{},o{},c{}'.format(k, rs, o, c))
+
+        s[PARAMETER_REGISTRY.get('switch_status')] = ';'.join(ss)
         return dumps(s)
 
     @debug
@@ -390,7 +393,7 @@ class FirmwareManager(HeadlessLoggable):
             value = data['setpoint']
             ret = controller.set_closed_loop_setpoint(value)
 
-            # set_closed_loop_setpoint returns true of request and actual setpoints are greater than 0.01 different,
+            # set_closed_loop_setpoint returns true if request and actual setpoints are greater than 0.01 different,
             # True == Failed to set setpoint
             # None == Succeeded to setpoint
             return 'OK' if not ret else 'Fail'
@@ -401,10 +404,27 @@ class FirmwareManager(HeadlessLoggable):
         if controller:
             return controller.read_closed_loop_setpoint()
 
+    @debug
     def get_bakeout_temp_and_power(self, data):
         controller = self._get_bakeout_controller(data)
         if controller:
             return controller.get_temp_and_power()
+
+    @debug
+    def set_bakeout_control_mode(self, data):
+        controller = self._get_bakeout_controller(data)
+        if controller:
+            if isinstance(data, dict):
+                mode = data['mode']
+            else:
+                mode = data
+            return controller.set_control_mode(mode)
+
+    @debug
+    def get_bakeout_temperature(self, data):
+        controller = self._get_bakeout_controller(data)
+        if controller:
+            return controller.get_temperature()
 
     @debug
     def get_gauge_pressure(self, data):
