@@ -259,6 +259,7 @@ class Paths(object):
     series_template = None
     geochron_template = None
     yield_template = None
+    csv_analyses_export_template = None
 
     furnace_sample_states = None
 
@@ -484,23 +485,26 @@ class Paths(object):
         # =======================================================================
         # pipeline templates
         # =======================================================================
-        self.icfactor_template = join(self.pipeline_template_dir, 'ic_factor.yaml')
-        self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
-        self.iso_evo_template = join(self.pipeline_template_dir, 'isotope_evolutions.yaml')
-        self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
-        self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
-        self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
-        self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
-        self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
-        self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
-        self.xy_scatter_template = join(self.pipeline_template_dir, 'xy_scatter.yaml')
-        self.flux_template = join(self.pipeline_template_dir, 'flux.yaml')
-        self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
-        self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
-        self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
-        self.series_template = join(self.pipeline_template_dir, 'series.yaml')
-        self.geochron_template = join(self.pipeline_template_dir, 'geochron.yaml')
-        self.yield_template = join(self.pipeline_template_dir, 'yield.yaml')
+        # self.icfactor_template = join(self.pipeline_template_dir, 'ic_factor.yaml')
+        # self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
+        # self.iso_evo_template = join(self.pipeline_template_dir, 'isotope_evolutions.yaml')
+        # self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
+        # self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
+        # self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
+        # self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
+        # self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
+        # self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
+        # self.xy_scatter_template = join(self.pipeline_template_dir, 'xy_scatter.yaml')
+        # self.flux_template = join(self.pipeline_template_dir, 'flux.yaml')
+        # self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
+        # self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
+        # self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
+        # self.series_template = join(self.pipeline_template_dir, 'series.yaml')
+        # self.geochron_template = join(self.pipeline_template_dir, 'geochron.yaml')
+        # self.yield_template = join(self.pipeline_template_dir, 'yield.yaml')
+        #
+        self._build_templates(self.pipeline_template_dir)
+
         build_directories()
 
         migrate_hidden()
@@ -579,6 +583,12 @@ class Paths(object):
             with open(p, 'w') as wfile:
                 wfile.write(default)
                 return True
+
+    def _build_templates(self, root):
+        for attr in dir(self):
+            if attr.endswith('_template') and getattr(self, attr) is None:
+                v = path.join(root, '{}.yaml'.format(attr[:-9]))
+                setattr(self, attr, v)
 
 
 def r_mkdir(p):

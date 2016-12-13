@@ -42,6 +42,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Xy Scatter
 - Geochron
 - Yield
+- CSV Analyses Export
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -529,6 +530,13 @@ nodes:
   - klass: FitFluxNode
   - klass: ReviewNode
   - klass: FluxPersistNode
+"""
+
+CSV_ANALYSES_EXPORT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CSVAnalysesExportNode
 """
 # SYSTEM_HEALTH = '''
 # values:
