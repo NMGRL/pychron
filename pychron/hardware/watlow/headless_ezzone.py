@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2016 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,18 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-__version__ = '1.0'
+from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
+from pychron.hardware.watlow.base_ezzone import BaseWatlowEZZone
 
-PARAMETER_REGISTRY = {'furnace_env_humidity': '001',
-                      'furnace_env_temperature': '002',
-                      'furnace_setpoint': '003',
-                      'furnace_process_value': '004',
 
-                      'feeder_position': '021',
-
-                      'funnel_position': '031',
-
-                      'switch_status': '041',
-                      }
-
+class HeadlessWatlowEZZone(BaseWatlowEZZone, HeadlessCoreDevice):
+    pass
 # ============= EOF =============================================
