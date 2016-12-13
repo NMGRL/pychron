@@ -17,14 +17,15 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import Str, Instance
+from traits.api import Str, Instance, List
 from traitsui.api import Item
-from traitsui.editors import DirectoryEditor
-from uncertainties import ufloat
+from traitsui.editors import DirectoryEditor, CheckListEditor
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.progress import progress_iterator
+from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
@@ -222,7 +223,89 @@ class XLSXTablePersistNode(BaseNode):
             writer = XLSXTableWriter()
             writer.build(**table)
 
-#
+
+class CSVAnalysesExportNode(BaseNode):
+    name = 'Save CSV'
+    pathname = SpacelessStr
+    available_attributes = List(['record_id',
+                                 'mass_spectrometer',
+                                 'intercepts'])
+    selected_attributes = List(['record_id',
+                                'mass_spectrometer',
+                                'intercepts'])
+
+    def traits_view(self):
+        return self._view_factory(Item('pathname'),
+                                  Item('selected_attributes',
+                                       style='custom',
+                                       editor=CheckListEditor(cols=4,
+                                                              name='available_attributes'),
+                                       width=200))
+
+    def run(self, state):
+        import csv
+        p = os.path.join(paths.data_dir, add_extension(self.pathname, '.csv'))
+
+        with open(p, 'w') as wfile:
+            writer = csv.writer(wfile)
+            for ans in (state.unknowns, state.references):
+                if ans:
+                    header = self._get_header(ans[0])
+                    writer.writerow(header)
+                    for ai in ans:
+                        row = self._get_row(header, ai)
+                        writer.writerow(row)
+
+    def _get_header(self, ai):
+        header = []
+        for attr in self.selected_attributes:
+            if attr == 'intercepts':
+                for k in ai.isotope_keys:
+                    k = 'intercept{}.({})'.format(k, ai.isotopes[k].detector)
+                    ke = 'error'
+                    header.append(k)
+                    header.append(ke)
+            else:
+                header.append(attr)
+
+        return header
+
+    def _get_row(self, header, ai):
+
+        row = []
+        for attr in header:
+            if attr == 'error':
+                continue
+
+            if attr.startswith('intercept'):
+                attr = attr[9:]
+                iso, det = attr.split('.')
+                det = det[1:-1]
+                iso = ai.get_isotope(iso, detector=det)
+                vs = ('', '')
+                if iso is not None:
+                    v = iso.get_baseline_corrected_value()
+                    vs = (nominal_value(v), std_dev(v))
+                row.extend(vs)
+            elif attr.startswith('detector'):
+                iso = ai.get_isotope(attr[8:])
+                det = ''
+                if iso is not None:
+                    det = iso.detector
+                row.append(det)
+            else:
+                try:
+                    if attr.endswith('err'):
+                        v = std_dev(ai.get_value(attr[-3:]))
+                    else:
+                        v = nominal_value(ai.get_value(attr))
+                except BaseException:
+                    v = ''
+
+                row.append(v)
+
+        return row
+
 # class TablePersistNode(FileNode):
 #     pass
 #
