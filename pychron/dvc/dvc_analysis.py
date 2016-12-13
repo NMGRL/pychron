@@ -260,7 +260,7 @@ class DVCAnalysis(Analysis):
             try:
                 iso = isos[fi.name]
             except KeyError:
-                print 'set fits {} {}'.format(fi.name, isos.keys())
+                # print 'set fits {} {}'.format(fi.name, isos.keys())
                 # name is a detector
                 for i in isos.itervalues():
                     if i.detector == fi.name:

@@ -277,7 +277,16 @@ class Analysis(ArArAge):
         print isotopes
         if isotopes:
             if isinstance(isotopes[0], (str, unicode)):
-                isotopes = [self.isotopes[i] for i in isotopes]
+                nisotopes = []
+                for i in isotopes:
+                    try:
+                        iso = self.isotopes[i]
+                    except KeyError:
+                        iso = next((i.baseline for i in self.isotopes.itervalues() if i.detector == i), None)
+                    if iso:
+                        nisotopes.append(iso)
+                isotopes = nisotopes
+                # isotopes = [self.isotopes[i] for i in isotopes]
         else:
             isotopes = self.isotopes.values()
 

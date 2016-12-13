@@ -41,8 +41,9 @@ class IsoEvoMainOptions(MainOptions):
     filter_outliers = Bool
 
     def _get_global_group(self):
-        g = HGroup(Item('controller.plot_enabled', label='Plot'),
-                   Item('controller.save_enabled', label='Save'),
+        g = HGroup(
+            # Item('controller.plot_enabled', label='Plot'),
+            Item('controller.save_enabled', label='Enabled'),
                    Item('controller.fit'),
                    UItem('controller.error_type', width=-75),
                    Item('controller.filter_outliers', label='Filter Outliers'),
@@ -63,8 +64,8 @@ class IsoEvoMainOptions(MainOptions):
 
     def _get_columns(self):
         cols = [object_column(name='name', editable=False),
-                checkbox_column(name='plot_enabled', label='Plot'),
-                checkbox_column(name='save_enabled', label='Save'),
+                # checkbox_column(name='plot_enabled', label='Plot'),
+                checkbox_column(name='save_enabled', label='Enabled'),
                 object_column(name='fit',
                               editor=EnumEditor(name='fit_types'),
                               width=75),
