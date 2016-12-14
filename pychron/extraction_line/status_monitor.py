@@ -46,10 +46,12 @@ class StatusMonitor(Loggable):
                        'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(p, s, c, l, o))
             if self._stop_evt:
                 self._stop_evt.set()
-                self._stop_evt.wait(self.update_period)
+                time.sleep(1.5*self.update_period)
+                # self._stop_evt.wait(self.update_period)
 
             self._stop_evt = Event()
             t = Thread(target=self._run, args=(vm,))
+            t.setName('StatusMonitor({})'.format(oid))
             t.setDaemon(True)
             t.start()
         else:
@@ -62,7 +64,7 @@ class StatusMonitor(Loggable):
         if self._stop_evt:
             return not self._stop_evt.isSet()
 
-    def stop(self, oid, block=False):
+    def stop(self, oid, block=True):
         self.debug('stop {}'.format(oid))
         try:
             self._clients.remove(oid)
@@ -74,7 +76,8 @@ class StatusMonitor(Loggable):
             self.debug('Status monitor stopped')
 
             if block:
-                self._stop_evt.wait(self.update_period)
+                time.sleep(1.5*self.update_period)
+                # self._stop_evt.wait(2*self.update_period)
 
         else:
             self.debug('Alive clients {}'.format(self._clients))
@@ -89,7 +92,8 @@ class StatusMonitor(Loggable):
                 if self._stop_evt.is_set():
                     break
 
-                self._iter(i, vm)
+                if self._iter(i, vm):
+                    break
 
                 if i > 100:
                     i = 0
@@ -102,7 +106,7 @@ class StatusMonitor(Loggable):
             self.debug('status monitor iteration i={}'.format(i))
         if self._stop_evt.is_set():
             self.debug('stop_event set. no more iterations')
-            return
+            return True
 
         if self.state_freq and not i % self.state_freq:
             if globalv.valve_debug:
@@ -123,7 +127,7 @@ class StatusMonitor(Loggable):
             if not vm.state_checksum:
                 self.debug('State checksum failed')
 
-        # return not self._stop_evt.is_set()
+        return self._stop_evt.is_set()
 
         # if i > 100:
         #     i = 0

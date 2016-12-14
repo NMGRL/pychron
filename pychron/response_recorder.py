@@ -18,6 +18,7 @@
 import time
 from threading import Thread
 
+import struct
 from numpy import array, vstack
 from traits.api import Array, Any, Instance, Float
 

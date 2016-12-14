@@ -41,10 +41,11 @@ class WaitPane(TraitsDockPane):
                                size=14,
                                weight='bold'),
                    UItem('pause_button'),
-                   UItem('continue_button')),
-            HGroup(Spring(width=-5, springy=False),
-                   Item('current_time', show_label=False,
-                        editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
+                   UItem('continue_button'))))
+
+        # HGroup(Spring(width=-5, springy=False),
+        #        Item('current_time', show_label=False,
+        #             editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
 
         v = View(UItem('active_control',
                        style='custom',
