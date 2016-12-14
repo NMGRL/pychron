@@ -216,7 +216,7 @@ def ignored_exceptions(exctype, value, tb):
     # if exception was not generated from pychron. This should obviate the subsequent if statements
     tb = traceback.extract_tb(tb)
 
-    if 'pychron' not in tb[0][0] and 'pychron' not in tb[-1][0]:
+    if 'pychron.' not in tb[0][0] and 'pychron.' not in tb[-1][0]:
         print 'ignore exception'
         return True
 
@@ -224,7 +224,8 @@ def ignored_exceptions(exctype, value, tb):
         return True
 
     if value in ("'NoneType' object has no attribute 'text'",
-                 "'NoneType' object has no attribute 'size'"):
+                 "'NoneType' object has no attribute 'size'",
+                 "too many indices for array"):
         return True
 
 
