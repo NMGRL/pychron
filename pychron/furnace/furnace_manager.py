@@ -154,12 +154,17 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
 
-        self.funnel_down_enabled = True
-        self.funnel_up_enabled = False
         if self.funnel_down():
             self.dumper_canvas.set_item_state('Funnel', True)
             self.funnel_down_enabled = False
             self.funnel_up_enabled = True
+        elif self.funnel_up():
+            self.dumper_canvas.set_item_state('Funnel', False)
+            self.funnel_down_enabled = True
+            self.funnel_up_enabled = False
+        else:
+            self.funnel_up_enabled = True
+            self.funnel_down_enabled = True
 
         self.dumper_canvas.invalidate_and_redraw()
 
@@ -303,9 +308,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
-    def raise_funnel(self):
-        self.debug('raise funnel')
-        if self.loader_logic.check('FU'):
+    def raise_funnel(self, force=False):
+        self.debug('raise funnel. force={}'.format(force))
+        if self.loader_logic.check('FU') or force:
             self.funnel_up_enabled = False
             self.funnel.raise_()
             self.funnel_down_enabled = True

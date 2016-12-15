@@ -485,6 +485,38 @@ class DVCDatabase(DatabaseAdapter):
             a.analysis = analysis
             return self._add_item(a)
 
+    # fuzzy getters
+    def get_fuzzy_projects(self, search_str):
+        with self.session_ctx() as sess:
+            q = sess.query(ProjectTbl)
+
+            f = or_(ProjectTbl.name.like('{}%'.format(search_str)), ProjectTbl.id.like('{}%'.format(search_str)))
+            q = q.filter(f)
+            return self._query_all(q, verbose_query=True)
+
+    def get_fuzzy_labnumbers(self, search_str):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(SampleTbl)
+            q = q.join(ProjectTbl)
+
+            q = q.distinct(IrradiationPositionTbl.id)
+            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                    SampleTbl.name.like('{}%'.format(search_str)),
+                    ProjectTbl.name == search_str,
+                    ProjectTbl.id == search_str)
+            q = q.filter(f)
+            ips = self._query_all(q, verbose_query=True)
+
+            q = sess.query(ProjectTbl)
+            q = q.join(SampleTbl)
+            q = q.join(IrradiationPositionTbl)
+            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                    SampleTbl.name.like('{}%'.format(search_str)), )
+            q = q.filter(f)
+            ps = self._query_all(q)
+            return ips, ps
+
     # special getters
     def get_flux_value(self, identifier, attr):
         j = 0
