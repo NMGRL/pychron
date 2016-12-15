@@ -79,6 +79,7 @@ class BaseBrowserSampleView(PaneModelView):
                                   editor=FilterTabularEditor(editable=False,
                                                              enabled_cb='project_enabled',
                                                              use_fuzzy=True,
+                                                             column_index=-1,
                                                              refresh='refresh_needed',
                                                              selected='selected_projects',
                                                              adapter=ProjectAdapter(),
