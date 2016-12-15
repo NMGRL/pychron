@@ -166,6 +166,7 @@ class FitIsotopeEvolutionNode(FitNode):
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'
     _fits = List
+    _keys = List
 
     def _options_view_default(self):
         return view('Iso Evo Options')
@@ -182,12 +183,15 @@ class FitIsotopeEvolutionNode(FitNode):
                 pom.set_names(names)
 
     def run(self, state):
-        # super(FitIsotopeEvolutionNode, self).run(state)
+        super(FitIsotopeEvolutionNode, self).run(state)
 
         po = self.plotter_options
 
         self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
-        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1)
+        self._keys = [fi.name for fi in self._fits]
+
+        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1,
+                             step=10)
 
         if self.editor:
             self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
@@ -196,20 +200,8 @@ class FitIsotopeEvolutionNode(FitNode):
             ai.graph_id = 0
 
         self._set_saveable(state)
-        # self.name = '{} Fit IsoEvo'.format(self.name)
-        # if self.has_save_node and po.confirm_save:
-        #     if confirmation_dialog('Would you like to review the iso fits before saving?'):
-        #         state.veto = self
 
         if fs:
-            # k = lambda an: an.isotope
-            # fs = sort_isotopes(fs, key=k)
-            # # fs = [a for _, gs in groupby(fs, key=k)
-            # #         for a in gs]
-            # _, gs = groupby(fs, key=k)
-            # fs = list(gs)[:-1]
-            # for x in (gs, (IsoEvoResult(),))
-            # for a in x][:-1]
             e = IsoEvolutionResultsEditor(fs)
             state.editors.append(e)
 
@@ -220,21 +212,21 @@ class FitIsotopeEvolutionNode(FitNode):
             prog.change_message('Load raw data {}'.format(xi.record_id))
 
         fits = self._fits
-        keys = [fi.name for fi in fits]
-        xi.load_raw_data(keys)
+        xi.load_raw_data(self._keys)
 
         xi.set_fits(fits)
         isotopes = xi.isotopes
         for f in fits:
             k = f.name
+            print k, isotopes.keys()
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = next((i.baseline for i in isotopes.values() if i.detector == k), None)
+                iso = next((i.baseline for i in isotopes.itervalues() if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error
-                pe = abs(e / i * 100)
+                pe = e / i * 100
                 goodness_threshold = po.goodness_threshold
                 goodness = True
                 if goodness_threshold:

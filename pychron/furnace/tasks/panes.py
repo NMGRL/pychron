@@ -45,6 +45,8 @@ class ControlPane(TraitsDockPane):
 
     funnel_up_button = Button
     funnel_down_button = Button
+    force_funnel_up_button = Button
+
     feeder_set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
     _advanced_view_state = Bool(False)
@@ -71,6 +73,13 @@ class ControlPane(TraitsDockPane):
 
     def _disable_button_fired(self):
         self.model.setpoint = 0
+
+    def _force_funnel_up_fired(self):
+        def func():
+            self.model.raise_funnel(force=True)
+
+        t = Thread(target=func)
+        t.start()
 
     def _funnel_up_button_fired(self):
         def func():
@@ -153,6 +162,7 @@ class ControlPane(TraitsDockPane):
 
         funnel_grp = VGroup(HGroup(icon_button_editor('pane.funnel_up_button', 'arrow_up',
                                                       enabled_when='funnel_up_enabled', tooltip='Raise Funnel'),
+                                   UItem('pane.force_funnel_up_button', tooltip='Force funnel to raise'),
                                    icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
                                                       enabled_when='funnel_down_enabled')),
                             show_border=True, label='Funnel')
