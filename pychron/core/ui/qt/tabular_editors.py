@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.qt import QtCore
 from pyface.qt.QtCore import QRegExp, Qt
 from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
     QSortFilterProxyModel, QItemSelectionModel
-from pyface.qt import QtCore
-from traits.trait_types import Str, Bool, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.trait_types import Str, Bool, Any, Int
+
 from pychron.core.ui.qt.tabular_editor import myTabularEditor, _TableView, _TabularEditor
 from pychron.envisage.resources import icon
 
@@ -172,6 +171,7 @@ class _FilterTabularEditor(_TabularEditor):
         self.proxyModel = proxyModel = mQSortFilterProxyModel()
         # print 'afasd',self.use_fuzzy
         self.use_fuzzy = self.factory.use_fuzzy
+        proxyModel.setFilterKeyColumn(self.factory.column_index)
         proxyModel.use_fuzzy = self.use_fuzzy
         proxyModel.setSourceModel(self.model)
         self.control.setSortingEnabled(True)
@@ -271,6 +271,7 @@ class _EnableFilterTabularEditor(_FilterTabularEditor):
 class FilterTabularEditor(myTabularEditor):
     enabled_cb = Str
     use_fuzzy = Bool
+    column_index = Int(0)
 
     def _get_klass(self):
         if self.enabled_cb:

@@ -36,7 +36,8 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
 
 
 class ProjectAdapter(BrowserAdapter):
-    columns = [('Name', 'name')]
+    columns = [('Name', 'name'),
+               ('IR', 'unique_id')]
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Unselect', action='unselect_projects'))
