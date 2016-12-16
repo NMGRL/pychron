@@ -131,11 +131,21 @@ def monkey_patch_panel():
                 title = ""
 
             # ============ Monkey Patch ===============
+
             if isinstance(parent, QtGui.QTabWidget):
                 bar = parent.tabBar()
                 if not isinstance(bar, myQTabBar):
                     bar = myQTabBar()
                     parent.setTabBar(bar)
+
+            # p = parent
+            # while p is not None:
+            #     try:
+            #         bar = p.tabBar()
+            #     except AttributeError:
+            #         bar = None
+            #     print p, bar
+            #     p = p.parent()
             # =========================================
 
             # Panels must be widgets as it is only the TraitsUI PyQt code that can
@@ -202,6 +212,7 @@ def monkey_patch_panel():
 
     from traitsui.qt4 import ui_panel
     ui_panel._Panel = myPanel
+    print ui_panel._Panel
 
 
 def monkey_patch_checkbox_render():
