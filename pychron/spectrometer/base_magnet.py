@@ -128,6 +128,9 @@ class BaseMagnet(Loggable):
 
         dac = self.mftable.map_mass_to_dac(mass, detname)
         self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
+        if dac is None:
+            self.warning('Could not map mass to dac. Returning current DAC {}'.format(self._dac))
+            dac = self._dac
 
         return dac
 

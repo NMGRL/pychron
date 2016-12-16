@@ -69,7 +69,7 @@ class MagnetFieldTable(Loggable):
     use_db_archive = Bool
     path = Property(depends_on='_path_dirty')
     _path_dirty = Event
-    mass_cal_func = 'cubic'
+    mass_cal_func = 'parabolic'
     _test_path = None
 
     def __init__(self, bind=True, *args, **kw):
