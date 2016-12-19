@@ -75,22 +75,6 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
 
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
-        st = time.time()
-
-        if unprotect or unblank:
-            for i in xrange(50):
-                if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
-                    break
-                time.sleep(0.25)
-
-            st = time.time()
-            if unprotect:
-                for d in unprotect:
-                    self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(d), verbose=verbose)
-
-            if unblank:
-                self.ask('BlankBeam False', verbose=verbose)
 
         change = dv > 1e-7
         if change:
@@ -98,15 +82,27 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
             if use_dac_changed:
                 self.dac_changed = True
 
-            et = time.time() - st
             if not self.simulation:
                 if settling_time is None:
                     settling_time = self.settling_time
 
-                st = settling_time - et
-                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(settling_time, st))
-                if st > 0:
-                    time.sleep(st)
+                self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
+                if settling_time > 0:
+                    time.sleep(settling_time)
+
+            if unprotect or unblank:
+                for i in xrange(50):
+                    if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
+                        break
+                    time.sleep(0.25)
+
+                if unprotect:
+                    for d in unprotect:
+                        self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
+                        self.ask('GetDeflection {}'.format(d), verbose=verbose)
+
+                if unblank:
+                    self.ask('BlankBeam False', verbose=verbose)
 
         return change
 
