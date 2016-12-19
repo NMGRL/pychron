@@ -423,16 +423,16 @@ class DVCDatabase(DatabaseAdapter):
             pi = self._add_item(pi)
         return pi
 
-    def add_project(self, name, pi=None):
+    def add_project(self, name, principal_investigator=None):
         with self.session_ctx():
-            a = self.get_project(name, pi)
+            a = self.get_project(name, principal_investigator)
             if a is None:
-                self.debug('Adding project {} {}'.format(name, pi))
+                self.debug('Adding project {} {}'.format(name, principal_investigator))
                 a = ProjectTbl(name=name)
-                if pi:
-                    dbpi = self.get_principal_investigator(pi)
+                if principal_investigator:
+                    dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
-                        a.principal_investigator = pi
+                        a.principal_investigator = principal_investigator
 
                 a = self._add_item(a)
             return a
@@ -1001,7 +1001,7 @@ class DVCDatabase(DatabaseAdapter):
             if principal_investigators:
                 q = q.join(PrincipalInvestigatorTbl)
 
-            if projects:
+            if projects or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
 
             if mass_spectrometers and not at:

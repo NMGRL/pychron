@@ -665,6 +665,7 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)
+        print 'new production id={}, irrad={}, level={}'.format(id(ip), irrad, level)
         return pname, ip
 
     @cached('clear_cache')

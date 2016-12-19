@@ -103,6 +103,9 @@ class BaseMagnet(Loggable):
         if d is not None:
             self._dac = d
 
+        # load af demag
+        self._load_af_demag_configuration()
+
     # ===============================================================================
     # mapping
     # ===============================================================================
@@ -173,8 +176,24 @@ class BaseMagnet(Loggable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _load_af_demag_configuration(self):
+        self.use_af_demagnetization = False
+
+        p = paths.af_demagnetization
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    yd = yaml.load(rfile)
+                except BaseException, e:
+                    self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                    return
+
+            self.use_af_demagnetization = yd.get('enabled', True)
+            self.af_demag_threshold = yd.get('threshold', 1)
+
     def _do_af_demagnetization(self, target, setfunc):
-        p = os.path.join(paths.spectrometer_dir, 'af_demagnetization.yaml')
+
+        p = paths.af_demagnetization
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 try:

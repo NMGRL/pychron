@@ -41,7 +41,8 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True):
+    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
+                use_af_demag=True):
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -68,8 +69,10 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self.ask('BlankBeam True', verbose=verbose)
                 unblank = True
 
-        if self.use_af_demagnetization:
-            self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
+        if self.use_af_demagnetization and use_af_demag:
+            if dv > self.af_demag_threshold:
+                self.debug('Move {}>{}. Do AF Demag'.format(dv, self.af_demag_threshold))
+                self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
 
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
         st = time.time()

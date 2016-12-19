@@ -275,6 +275,7 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, MaterialTbl, mats)
                 self.debug('--------- db clone finished')
                 progress.close()
+                return True
 
     def _copy_records(self, progress, dest, table, records):
 

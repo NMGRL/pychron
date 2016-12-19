@@ -54,6 +54,7 @@ def node_adder(name):
     def wrapper(obj, info, o):
         f = getattr(info.object, name)
         f(o)
+
     return wrapper
 
 
@@ -253,8 +254,9 @@ class PipelinePane(TraitsDockPane):
                                 show_disabled=True,
                                 refresh_all_icons='refresh_all_needed',
                                 update='update_needed')
-        v = View(VGroup(UItem('selected_pipeline_template',
-                              editor=myEnumEditor(name='available_pipeline_templates')),
+        v = View(VGroup(HGroup(UItem('selected_pipeline_template',
+                                     editor=myEnumEditor(name='available_pipeline_templates')),
+                               icon_button_editor('run_needed', 'start')),
                         UItem('pipeline',
                               editor=editor)), handler=PipelineHandler())
         return v
@@ -265,6 +267,7 @@ class UnknownsAdapter(TabularAdapter):
                ('Sample', 'sample'),
                ('Age', 'age'),
                (PLUSMINUS_ONE_SIGMA, 'error'),
+               ('Comment', 'comment'),
                ('Tag', 'tag'),
                ('GroupID', 'group_id'),
                ('GID', 'graph_id')]
@@ -357,6 +360,7 @@ class AnalysesPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(VGroup(UItem('object.selected.unknowns',
+                              width=200,
                               editor=myTabularEditor(adapter=UnknownsAdapter(),
                                                      update='refresh_table_needed',
                                                      multi_select=True,
