@@ -101,6 +101,7 @@ class MeasurementPyScript(ValvePyScript):
     def reset_series(self):
         self._series_count = 0
         self._fit_series_count = 0
+
     # ===============================================================================
     # commands
     # ===============================================================================
@@ -116,7 +117,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config=None, calc_time=False):
         """
         Generate an IC MFTable. Use this when doing a Detector Intercalibration.
         peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
@@ -133,7 +134,7 @@ class MeasurementPyScript(ValvePyScript):
             self._estimated_duration += len(detectors) * 30
             return
 
-        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso):
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config):
             self.cancel()
 
     @verbose_skip
@@ -270,9 +271,16 @@ class MeasurementPyScript(ValvePyScript):
                         pairs, counts, settle = eval(l)
 
                         # isos, dets = zip(*(p.split(':') for p in pairs.split(',')))
-                        items = (p.split(':') for p in pairs.split(','))
+                        # items = (p.split(':') for p in pairs.split(','))
+                        items = []
+                        for p in pairs.split(','):
+                            args = p.split(':')
+                            defl = args[2] if len(args) == 3 else None
+                            items.append((args[0], args[1], defl))
+
                         # n = len(isos)
-                        cc = [{'isotope': i, 'detector': d, 'active': True, 'deflection': 0, 'is_baseline': False, 'protect': False} for i,d in items]
+                        cc = [{'isotope': i, 'detector': d, 'active': True,
+                               'deflection': de, 'is_baseline': False, 'protect': False} for i, d, de in items]
 
                         h = {'counts': counts, 'settle': settle,
                              'cup_configuration': cc,
@@ -829,7 +837,7 @@ class MeasurementPyScript(ValvePyScript):
         """
         if self.automated_run:
             return self.automated_run.spec.use_cdd_warming
-        # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
+            # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
     # private
     def _get_deflection_from_file(self, name):
@@ -907,6 +915,5 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
-
 
 # ============= EOF =============================================
