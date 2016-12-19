@@ -463,7 +463,7 @@ class PipelineTask(BaseBrowserTask):
         self._run('resume pipeline', 'resume_pipeline')
 
     def _run_pipeline(self):
-        self._run('run pipeline', 'run_pipeline', close_all=True)
+        self._run('run pipeline', 'run_pipeline')
 
     def _toggle_run(self, v):
         self.resume_enabled = v
@@ -502,6 +502,10 @@ class PipelineTask(BaseBrowserTask):
                 ]
 
     # handlers
+    @on_trait_change('editor_area:editors[]')
+    def _handle_editors(self):
+        self.engine.editors = self.editor_area.editors
+
     @on_trait_change('engine:reset_event')
     def _handle_reset(self):
         self.reset()
