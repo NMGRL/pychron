@@ -24,13 +24,29 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 
+def aliquot(x):
+    return x.aliquot
+
+
+def identifier(x):
+    return x.identifier
+
+
+def increment(x):
+    return x.increment
+
+
+def comment(x):
+    return x.comment
+
+
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step')
+    keys = ('Aliquot', 'Identifier', 'Step', 'Comment')
     analysis_kind = 'unknowns'
     name = 'Grouping'
 
-    auto_configure = False
+    # auto_configure = False
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -40,11 +56,14 @@ class GroupingNode(BaseNode):
 
     def _generate_key(self):
         if self.by_key == 'Aliquot':
-            key = lambda x: x.aliquot
+            key = aliquot
         elif self.by_key == 'Identifier':
-            key = lambda x: x.identifier
+            key = identifier
         elif self.by_key == 'Step':
-            key = lambda x: x.increment
+            key = increment
+        elif self.by_key == 'Comment':
+            key = comment
+
         return key
 
     def run(self, state):

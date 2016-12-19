@@ -83,11 +83,12 @@ class BaseBrowserTask(BaseEditorTask):
 
             self._destroy_browser_model()
 
-        self.dvc.db.close_session()
+            # self.dvc.db.close_session()
 
     def activated(self):
         self.dvc = self.application.get_service(DVC_PROTOCOL)
-        self.dvc.create_session()
+
+    #     self.dvc.create_session()
 
     def edit_analysis(self):
         self.debug('Edit analysis data')

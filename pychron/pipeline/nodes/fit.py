@@ -167,6 +167,7 @@ class FitIsotopeEvolutionNode(FitNode):
     name = 'Fit IsoEvo'
     _fits = List
     _keys = List
+    use_plotting = False
 
     def _options_view_default(self):
         return view('Iso Evo Options')
@@ -218,7 +219,6 @@ class FitIsotopeEvolutionNode(FitNode):
         isotopes = xi.isotopes
         for f in fits:
             k = f.name
-            print k, isotopes.keys()
             if k in isotopes:
                 iso = isotopes[k]
             else:

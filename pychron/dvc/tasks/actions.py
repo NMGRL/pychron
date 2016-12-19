@@ -17,11 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pyface.message_dialog import information, warning
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
+from pyface.message_dialog import warning
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import restart
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
@@ -122,6 +125,8 @@ class UseOfflineDatabase(Action):
         from pychron.dvc.work_offline import switch_to_offline_database
         app = event.task.window.application
         switch_to_offline_database(app.preferences)
-        information(None, 'You are now using the offline database. Restart for changes to take effect')
+        ret = confirm(None, 'You are now using the offline database. Restart now for changes to take effect')
+        if ret == YES:
+            restart()
 
 # ============= EOF =============================================
