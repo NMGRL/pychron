@@ -15,23 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import random
+import time
+
+from numpy import array, argmin
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError, cached_property
-# ============= standard library imports ========================
-from numpy import array, argmin
-import random
-import os
-import time
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.progress import open_progress
+from pychron.core.ramper import StepRamper
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.spectrometer import get_spectrometer_config_path, \
-    get_spectrometer_config_name, set_spectrometer_config_name, set_mftable_name
-from pychron.core.ramper import StepRamper
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     DEFAULT_INTEGRATION_TIME, NULL_STR
+from pychron.spectrometer import get_spectrometer_config_path, \
+    get_spectrometer_config_name, set_spectrometer_config_name
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.thermo.detector.base import ThermoDetector
 from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
@@ -838,8 +838,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             if v - current >= tol:
                 if self.confirmation_dialog('Would you like to ramp up the '
-                                            'Trap current from {} to {}'.format(
-                    current, v)):
+                                            'Trap current from {} to {}'.format(current, v)):
                     prog = open_progress(1)
 
                     def func(x):

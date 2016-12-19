@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
-# ============= standard library imports ========================
 import time
-# ============= local library imports  ==========================
+
+from traits.api import Any
+
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR
 from pychron.pyscripts.pyscript import PyScript, verbose_skip, makeRegistry, \
@@ -33,6 +33,7 @@ named_register = makeNamedRegistry(command_register)
 class ValvePyScript(PyScript):
     runner = Any
     allow_lock = False
+    retry_actuation = True
 
     def get_command_register(self):
         return command_register.commands.items()
@@ -87,6 +88,7 @@ class ValvePyScript(PyScript):
         et = time.time() - st
         self.debug('---------------------------------------- open {} ({}) result={}, '
                    'time={:0.2f} sec'.format(name, description, result, et))
+
         if result is not None:
             self._finish_valve_change('open', result, name, description)
 
@@ -125,7 +127,7 @@ class ValvePyScript(PyScript):
             return r
 
     # private
-    def _finish_valve_change(self, action, result, name, description):
+    def _finish_valve_change(self, action, result, name, description, retry=True):
         ok, changed = result[0]
         if changed:
             time.sleep(0.25)
@@ -133,8 +135,16 @@ class ValvePyScript(PyScript):
         locked = self._manager_action([('get_software_lock', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
-        if not ok and not locked:
+        self.debug('locked={}'.format(locked))
+        if not ok and not locked[0]:
             self.console_info('Failed to {} valve {} {}'.format(action, name, description))
+
+            if self.retry_actuation and retry:
+                result = self._manager_action([('{}_valve'.format(action), (name,), dict(
+                    mode='script',
+                    description=description))], protocol=ELPROTOCOL)
+                if result is not None:
+                    self._finish_valve_change('close', result, name, description, retry=False)
 
             if not globalv.experiment_debug:
                 self.cancel()
