@@ -16,15 +16,14 @@
 
 # ============= enthought library imports =======================
 import csv
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 import time
+
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, arun, detectors, refiso):
+    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop'):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -44,7 +43,10 @@ class ICMFTableGenerator(Loggable):
                 return False
 
             self.info('Peak centering {}@{}'.format(di, refiso))
-            ion.setup_peak_center(detector=[di], isotope=refiso, plot_panel=plot_panel, show_label=True)
+            ion.setup_peak_center(detector=[di], isotope=refiso,
+                                  config_name=peak_center_config,
+                                  plot_panel=plot_panel, show_label=True)
+
             arun.peak_center = ion.peak_center
             ion.do_peak_center(new_thread=False, save=False, warn=False)
             pc = ion.peak_center_result
