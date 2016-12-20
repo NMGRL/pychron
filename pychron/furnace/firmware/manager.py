@@ -243,7 +243,7 @@ class FirmwareManager(HeadlessLoggable):
     def get_indicator_state(self, data):
         if self.switch_controller:
             args = self._get_indicator_info(data)
-            return args[0]
+            return 'open' if args[0] else 'closed'
 
     @debug
     def get_indicator_component_states(self, data):
