@@ -21,9 +21,6 @@ from traits.api import HasTraits, Enum, Float, Event, Property, Int, Button, Boo
 import os
 import time
 
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
-
 from pychron.graph.plot_record import PlotRecord
 from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.core.helpers.filetools import parse_file
