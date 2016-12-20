@@ -248,6 +248,15 @@ class FirmwareManager(HeadlessLoggable):
             return ','.join(args)
 
     @debug
+    def get_di_state(self, data):
+        if self.switch_controller:
+            if isinstance(data, dict):
+                di = data['name']
+            else:
+                di = data
+            return self.switch_controller.get_channel_state(di)
+
+    @debug
     def get_version(self, data):
         return __version__
 
