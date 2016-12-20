@@ -149,7 +149,7 @@ class FirmwareManager(HeadlessLoggable):
     #             imstr = im.dumps()
     #             return '{:08X}{}'.format(len(imstr), imstr)
 
-    def get_heart_beat(self):
+    def get_heartbeat(self):
         return '{},{}'.format(time.time(), self._start_time)
 
     def get_furnace_summary(self):
