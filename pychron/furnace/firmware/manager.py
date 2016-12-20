@@ -483,36 +483,52 @@ class FirmwareManager(HeadlessLoggable):
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
 
-            oresult = None
-            cresult = None
-            if action == 'open' and open_ch is None:
-                result = self.get_channel_state(alt_ch)
-            else:
-                oresult = False if action != 'open' else True
-                if open_ch:
-                    oresult = self.switch_controller.get_channel_state(open_ch)
+            if open_ch is None:
+                open_ch = alt_ch
 
-                cresult = True if action != 'open' else False
-                if close_ch:
-                    cresult = self.switch_controller.get_channel_state(close_ch)
-
-                if action == 'open':
-                    result = oresult and not cresult
-                else:
-                    result = not oresult and cresult
-
-            # if ch is None:
-            #     result = self.get_channel_state(alt_ch)
-            # else:
-            #     result = self.switch_controller.get_channel_state(ch)
-
-            self.debug('indicator state {}, invert={} Open Indicator={}, Close Indicator={}'.format(result, inverted,
-                                                                                                    oresult,
-                                                                                                    cresult))
-            if inverted:
-                result = not result
+            oresult = self.get_channel_state(open_ch)
+            cresult = self.get_channel_state(close_ch)
+            result = not cresult
+            if oresult == cresult:
+                result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
 
             return result, oresult, cresult
+
+            # oresult = None
+            # cresult = None
+            # if action == 'open' and open_ch is None:
+            #     result = self.get_channel_state(alt_ch)
+            # else:
+            #     oresult = False if action != 'open' else True
+            #     if open_ch:
+            #         oresult = self.switch_controller.get_channel_state(open_ch)
+            #
+            #     cresult = True if action != 'open' else False
+            #     if close_ch:
+            #         cresult = self.switch_controller.get_channel_state(close_ch)
+            #
+            #     if action == 'open':
+            #         result = oresult and not cresult
+            #     else:
+            #         result = not oresult and cresult
+            #
+            # # if ch is None:
+            # #     result = self.get_channel_state(alt_ch)
+            # # else:
+            # #     result = self.switch_controller.get_channel_state(ch)
+            #
+            # self.debug('indicator state {}, invert={} Open Indicator={}, Close Indicator={}'.format(result, inverted,
+            #                                                                                         oresult,
+            #                                                                                         cresult))
+            # if inverted:
+            #     result = not result
+            #
+            # if action == 'open' and result:
+            #     result = 'open'
+            # else:
+            #     result = 'closed'
+            #
+            # return result, oresult, cresult
 
     def _get_drive(self, data):
         drive = data.get('drive')
