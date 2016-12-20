@@ -486,8 +486,8 @@ class FirmwareManager(HeadlessLoggable):
             if open_ch is None:
                 open_ch = alt_ch
 
-            oresult = self.get_channel_state(open_ch)
-            cresult = self.get_channel_state(close_ch)
+            oresult = self.switch_controller.get_channel_state(open_ch)
+            cresult = self.switch_controller.get_channel_state(close_ch)
             result = not cresult
             if oresult == cresult:
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
