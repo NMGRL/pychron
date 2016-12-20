@@ -51,7 +51,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         valve_services = (('Open', manager.open_switch),
                           ('Close', manager.close_switch),
                           ('GetIndicatorState', manager.get_indicator_state),
-                          ('GetChannelDOState', manager.get_channel_do_state),
+                          # ('GetChannelDOState', manager.get_channel_do_state),
                           ('GetChannelState', manager.get_channel_state),
                           ('GetIndicatorComponentStates', manager.get_indicator_component_states))
 
