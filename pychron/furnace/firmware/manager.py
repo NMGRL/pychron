@@ -369,6 +369,18 @@ class FirmwareManager(HeadlessLoggable):
             return drive.stop_drive()
 
     @debug
+    def set_home(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.set_home()
+
+    @debug
+    def stalled(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stalled()
+
+    @debug
     def slew(self, data):
         drive = self._get_drive(data)
         if drive:
