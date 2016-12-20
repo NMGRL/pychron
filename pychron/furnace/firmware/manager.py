@@ -243,7 +243,7 @@ class FirmwareManager(HeadlessLoggable):
     def get_indicator_state(self, data):
         if self.switch_controller:
             args = self._get_indicator_info(data)
-            return 'open' if args[0] else 'closed'
+            return args[0]
 
     @debug
     def get_indicator_component_states(self, data):
@@ -491,6 +491,8 @@ class FirmwareManager(HeadlessLoggable):
             result = not cresult
             if oresult == cresult:
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
+            else:
+                result = 'open' if result else 'closed'
 
             return result, oresult, cresult
 
