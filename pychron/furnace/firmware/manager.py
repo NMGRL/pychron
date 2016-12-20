@@ -482,7 +482,7 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
-
+            #print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
             if open_ch is None:
                 oresult = self.get_channel_state(alt_ch)
                 if inverted:
@@ -492,15 +492,16 @@ class FirmwareManager(HeadlessLoggable):
                 if open_ch.startswith('i'):
                     open_ch = open_ch[1:]
                     invert = True
-
                 oresult = self.switch_controller.get_channel_state(open_ch)
+                #print 'gggggg {} {} {}'.format(invert, open_ch, oresult)
                 if invert:
                     oresult = not oresult
 
             if close_ch is None:
-                cresult = self.get_channel_state(alt_ch)
-                if inverted:
-                    cresult = not cresult
+                #cresult = self.get_channel_state(alt_ch)
+                #if inverted:
+                #    cresult = not cresult
+                cresult = None
             else:
                 invert = False
                 if close_ch.startswith('i'):
@@ -515,11 +516,11 @@ class FirmwareManager(HeadlessLoggable):
             if oresult == cresult:
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
             else:
-                if inverted:
-                    result = not result
+                #if inverted:
+                #    result = not result
 
                 result = 'open' if result else 'closed'
-
+            #print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
             return result, oresult, cresult
 
             # oresult = None
