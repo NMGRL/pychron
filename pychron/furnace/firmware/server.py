@@ -43,7 +43,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
         controller_services = (('GetTemperature', manager.get_temperature),
                                ('GetSetpoint', manager.get_setpoint),
                                ('SetSetpoint', manager.set_setpoint),
-                               ('GetProcessValue', manager.get_process_value),
+                               ('GetProcessValue', manager.get_temperature),
                                ('GetPercentOutput', manager.get_percent_output),
                                ('GetFurnaceSummary', manager.get_furnace_summary),
                                ('SetPID', manager.set_pid))

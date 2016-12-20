@@ -155,6 +155,10 @@ class FirmwareManager(HeadlessLoggable):
     def get_furnace_summary(self):
         return 'Not yet implemented'
 
+    def get_percent_output(self):
+        if self.controller:
+            return self.controller.get_output()
+
     def get_full_summary(self):
         s = {'version': __version__}
         for attr in ('furnace_env_humidity', 'furnace_env_temperature',
