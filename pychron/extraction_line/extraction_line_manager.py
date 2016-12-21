@@ -123,7 +123,7 @@ class ExtractionLineManager(Manager, Consoleable):
             try:
                 bind_preference(self, attr, '{}.{}'.format(prefid, attr))
             except BaseException, e:
-                print attr, e
+                print 'fffffffff', attr, e
         # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
         # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
         # bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
