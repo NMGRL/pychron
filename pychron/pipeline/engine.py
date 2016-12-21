@@ -356,6 +356,21 @@ class PipelineEngine(Loggable):
         newnode = ReviewNode()
         self._add_node(node, newnode, run)
 
+    def chain_ideogram(self, node):
+        self._set_template('ideogram', clear=False)
+
+    def chain_spectrum(self, node):
+        self._set_template('spectrum', clear=False)
+
+    def chain_blanks(self, node):
+        self._set_template('blanks', clear=False)
+
+    def chain_icfactors(self, node):
+        self._set_template('icfactors', clear=False)
+
+    def chain_isotope_evolution(self, node):
+        self._set_template('isotope_evolution', clear=False)
+
     # preprocess
     def add_filter(self, node=None, run=True):
         newnode = FilterNode()
@@ -609,7 +624,7 @@ class PipelineEngine(Loggable):
                     break
 
     # private
-    def _set_template(self, name):
+    def _set_template(self, name, clear=True):
         self.reset_event = True
         args = self._get_template_path(name)
         if args is None:
@@ -622,7 +637,8 @@ class PipelineEngine(Loggable):
             pt.render(self.application, self.pipeline,
                       self.browser_model,
                       self.interpreted_age_browser_model,
-                      self.dvc)
+                      self.dvc,
+                      clear=clear)
         except BaseException, e:
             self.debug('Invalid Template: {}'.format(e))
             self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))

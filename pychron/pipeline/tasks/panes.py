@@ -52,6 +52,7 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 def node_adder(name):
     def wrapper(obj, info, o):
+        print name, info.object
         f = getattr(info.object, name)
         f(o)
 
@@ -66,6 +67,11 @@ class PipelineHandlerMeta(MetaHasTraits):
                   'icfactor', 'push'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
+
+        for c in ('isotope_evolution', 'blanks', 'ideogram', 'spectrum', 'icfactors'):
+            name = 'chain_{}'.format(c)
+            setattr(klass, name, node_adder(name))
+
         return klass
 
 
@@ -208,27 +214,47 @@ class PipelinePane(TraitsDockPane):
                                       action='add_find_airs'),
                                name='Find')
 
+        def chain_menu_factory():
+            return MenuManager(Action(name='Chain Ideogram',
+                                      action='chain_ideogram'),
+                               Action(name='Chain Isotope Evolution',
+                                      action='chain_isotope_evolution'),
+                               Action(name='Chain Spectrum',
+                                      action='chain_spectrum'),
+                               Action(name='Chain Blanks',
+                                      action='chain_blanks'),
+                               Action(name='Chain ICFactors',
+                                      action='chain_icfactors'),
+                               name='Chain')
+
+        # ------------------------------------------------
+
         def data_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory(), find_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory(), find_menu_factory())
 
         def filter_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory())
 
         def figure_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory(), save_menu_factory())
+            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory(), save_menu_factory())
 
         def ffind_menu_factory():
             return menu_factory(Action(name='Review',
                                        action='review_node'),
                                 add_menu_factory(), fit_menu_factory())
 
+        # def default_menu():
+        #     return MenuManager(Action(name='Add Data',
+        #                        action='add_data'),
+        #                        chain_menu_factory())
+
         nodes = [PipelineTreeNode(node_for=[Pipeline],
                                   children='nodes',
                                   icon_open='',
                                   label='name',
                                   auto_open=True,
-                                  menu=MenuManager(Action(name='Add Data',
-                                                          action='add_data'))),
+                                  # menu=default_menu()
+                                  ),
                  DataTreeNode(node_for=[DataNode], menu=data_menu_factory()),
                  FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
