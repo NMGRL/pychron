@@ -383,6 +383,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         return x
 
     def get_configuration_value(self, key):
+
         for d in self._get_cached_config():
             try:
                 return d[key]
@@ -397,8 +398,7 @@ class ThermoSpectrometer(SpectrometerDevice):
     def set_debug_configuration_values(self):
         if self.simulation:
             d, _, _ = self._get_cached_config()
-            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry',
-                    'ZFocus', 'IonRepeller', 'ExtractionLens')
+            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
             ds = [0] + [d[k.lower()] for k in keys]
             self._debug_values = ds
 
@@ -437,10 +437,8 @@ class ThermoSpectrometer(SpectrometerDevice):
         self.load_detectors()
 
         # load local configurations
-        self.spectrometer_configurations = list_directory2(
-            paths.spectrometer_config_dir,
-            remove_extension=True,
-            extension='.cfg')
+        self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir, remove_extension=True,
+                                                           extension='.cfg')
 
         name = get_spectrometer_config_name()
         sc, _ = os.path.splitext(name)
@@ -452,16 +450,13 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         if config.has_section(pd):
 
-            self.magnet.use_beam_blank = self.config_get(config, pd,
-                                                         'use_beam_blank',
+            self.magnet.use_beam_blank = self.config_get(config, pd, 'use_beam_blank',
                                                          cast='boolean',
                                                          default=False)
-            self.magnet.use_detector_protection = self.config_get(config, pd,
-                                                                  'use_detector_protection',
+            self.magnet.use_detector_protection = self.config_get(config, pd, 'use_detector_protection',
                                                                   cast='boolean',
                                                                   default=False)
-            self.magnet.beam_blank_threshold = self.config_get(config, pd,
-                                                               'beam_blank_threshold',
+            self.magnet.beam_blank_threshold = self.config_get(config, pd, 'beam_blank_threshold',
                                                                cast='float',
                                                                default=0.1)
 
@@ -473,9 +468,7 @@ class ThermoSpectrometer(SpectrometerDevice):
                 ds = ds.split(',')
                 self.magnet.protected_detectors = ds
                 for di in ds:
-                    self.info(
-                        'Making protection available for detector "{}"'.format(
-                            di))
+                    self.info('Making protection available for detector "{}"'.format(di))
 
         if config.has_section('Deflections'):
             if config.has_option('Deflections', 'max'):
@@ -506,9 +499,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         # self._send_configuration()
 
     def start(self):
-        self.debug(
-            '********** Spectrometer start. send configuration: {}'.format(
-                self.send_config_on_startup))
+        self.debug('********** Spectrometer start. send configuration: {}'.format(self.send_config_on_startup))
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
@@ -518,8 +509,7 @@ class ThermoSpectrometer(SpectrometerDevice):
         populates self.detectors
         :return:
         """
-        config = self.get_configuration(
-            path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
+        config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
 
         for i, name in enumerate(config.sections()):
             # relative_position = self.config_get(config, name, 'relative_position', cast='float')
@@ -692,20 +682,6 @@ class ThermoSpectrometer(SpectrometerDevice):
             ndac -= det.get_deflection_correction(current=current)
         return ndac
 
-    # ===============================================================================
-    # private
-    # ===============================================================================
-    def _spectrometer_configuration_changed(self, new):
-        if new:
-            set_spectrometer_config_name(new)
-
-    def _parse_word(self, word):
-        try:
-            x = [float(v) for v in word.split(',')]
-        except (AttributeError, ValueError):
-            x = []
-        return x
-
     def clear_cached_config(self):
         self._config = None
 
@@ -725,6 +701,20 @@ class ThermoSpectrometer(SpectrometerDevice):
 
         self.clear_cached_config()
 
+    # ===============================================================================
+    # private
+    # ===============================================================================
+    def _spectrometer_configuration_changed(self, new):
+        if new:
+            set_spectrometer_config_name(new)
+
+    def _parse_word(self, word):
+        try:
+            x = [float(v) for v in word.split(',')]
+        except (AttributeError, ValueError):
+            x = []
+        return x
+
     def _get_cached_config(self):
         if self._config is None:
             p = get_spectrometer_config_path()
@@ -738,8 +728,7 @@ class ThermoSpectrometer(SpectrometerDevice):
             defl = {}
             trap = {}
             for section in config.sections():
-                if section in ['Default', 'Protection', 'General', 'Trap',
-                               'Magnet']:
+                if section in ('Default', 'Protection', 'General', 'Trap', 'Magnet'):
                     continue
 
                 for attr in config.options(section):
@@ -752,9 +741,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
             section = 'Trap'
             if config.has_section(section):
-                for attr in (
-                        'current', 'ramp_step', 'ramp_period',
-                        'ramp_tolerance'):
+                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
 
@@ -777,7 +764,6 @@ class ThermoSpectrometer(SpectrometerDevice):
         self.detectors.append(d)
 
     def _get_simulation_data(self):
-
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
         keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         return keys, signals
@@ -871,12 +857,6 @@ class ThermoSpectrometer(SpectrometerDevice):
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    # def _get_detectors(self):
-    # ds = []
-    #     for di in DETECTOR_ORDER:
-    #         ds.append(self._detectors[di])
-    #     return ds
-
     def _get_sub_cup_configuration(self):
         return self._sub_cup_configuration
 
@@ -886,7 +866,7 @@ class ThermoSpectrometer(SpectrometerDevice):
 
     @cached_property
     def _get_isotopes(self):
-        return sorted(self.molecular_weights.keys())#, key=lambda x: int(x[2:]))
+        return sorted(self.molecular_weights.keys())
 
     @property
     def detector_names(self):
