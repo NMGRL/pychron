@@ -255,9 +255,9 @@ class BaseMagnet(Loggable):
                              'Need to specify "start_amplitude" in "{}"'.format(p))
                 return
 
-            sx = pi * arange(0.5 * period, duration, period)
+            sx = arange(0.5 * period, duration, period)
             slope = start_amplitude / float(duration)
-            dacs = slope * sx * sin(frequency * sx)
+            dacs = slope * sx * sin(frequency * pi * sx)
             self.info('Doing AF Demagnetization around target={}. '
                       'duration={}, start_amplitude={}, period={}'.format(target, duration, start_amplitude, period))
             for dac in reversed(dacs):

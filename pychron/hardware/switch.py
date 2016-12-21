@@ -96,6 +96,7 @@ class Switch(BaseSwitch):
         return '{}{}{}'.format(self.name, self.state, self.software_lock)
 
     def get_hardware_indicator_state(self, verbose=True):
+
         result = None
         if self.actuator is not None:
             # action = 'open' if self.state else 'closed'

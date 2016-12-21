@@ -157,6 +157,11 @@ class SwitchManager(Manager):
         for k, v in self.switches.iteritems():
             self.refresh_state = (k, v.state)
 
+    def get_indicator_state(self, name):
+        v = self.get_switch_by_name(name)
+        if v is not None:
+            return v.get_hardware_indicator_state()
+
     @add_checksum
     def get_owners(self):
         """
@@ -431,8 +436,7 @@ class SwitchManager(Manager):
         return state
 
     def _get_valve_by(self, a, attr):
-        return next((valve for valve in self.switches.itervalues() \
-                     if getattr(valve, attr) == a), None)
+        return next((valve for valve in self.switches.itervalues() if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
         if word is not None:
