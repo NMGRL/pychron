@@ -16,8 +16,29 @@
 
 # ============= enthought library imports =======================
 import json
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+# ===============================================================================
+# Copyright 2011 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ========== standard library imports ==========
 import time
 
+# ========== local library imports =============
 from gp_actuator import GPActuator
 from pychron.core.communication_helper import trim_bool
 from pychron.core.helpers.strtools import to_bool
@@ -75,15 +96,33 @@ class NMGRLFurnaceActuator(GPActuator):
         cmd = json.dumps({'command': 'GetIndicatorState',
                           'name': get_valve_address(obj),
                           'action': action})
-        resp = self.ask(cmd, verbose=verbose)
+        resp = self.ask(cmd, verbose=True)
+
+        # if action == 'open':
+        # print 'aa', resp, action
         if resp:
-            resp = to_bool(resp.strip())
+            resp = resp.strip()
+            if resp == 'open':
+                return True
+            elif resp == 'closed':
+                return False
+            # resp = to_bool(resp.strip())
+            # resp = resp.strip()
+            # if action == 'open' and resp == 'open':
+            #     return True
+            # elif action == 'closed' and resp == 'closed':
+            #     return False
+            # elif action == 'closed' and resp == 'open':
+            #     return True
+            # elif action == 'open' and resp == 'closed':
+            #     return False
 
-        # if close indicator is True and checking for closed return False
-        if resp and action != 'open':
-            resp = False
-
-        return resp
+                # print 'bb', resp
+                # # # if close indicator is True and checking for closed return False
+                # if resp and action != 'open':
+                # #     resp = False
+                # # print 'cc', obj, resp
+                # return resp
 
     def close_channel(self, obj, excl=False):
         """
@@ -127,7 +166,7 @@ class NMGRLFurnaceActuator(GPActuator):
             time.sleep(obj.check_actuation_delay)
 
         # state = action == 'Open'
-        result = self.get_channel_state(obj, action)
+        result = self.get_indicator_state(obj, action)
         self.debug('check actuate action={}, result={}'.format(action, result))
 
         if action == 'Close':

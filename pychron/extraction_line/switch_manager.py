@@ -15,26 +15,26 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from traits.api import Any, Dict, List, Bool, Event, Str
+# =============standard library imports ========================
 import binascii
+from pickle import PickleError
+from itertools import groupby
 import os
 import pickle
 import time
-from itertools import groupby
-from pickle import PickleError
-
-from traits.api import Any, Dict, List, Bool, Event, Str
-
+# =============local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
-from pychron.extraction_line.explanation.explanable_item import ExplanableValve
-from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch, ManualSwitch
-from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
+from pychron.extraction_line.explanation.explanable_item import ExplanableValve
+from pychron.hardware.valve import HardwareValve
 from pychron.paths import paths
+from pychron.extraction_line.pipettes.tracking import PipetteTracker
 from switch_parser import SwitchParser
 
 
@@ -155,9 +155,7 @@ class SwitchManager(Manager):
     def refresh_network(self):
         self.debug('refresh network')
         for k, v in self.switches.iteritems():
-            self.refresh_state = (k, v.state, False)
-
-        self.refresh_canvas_needed = True
+            self.refresh_state = (k, v.state)
 
     @add_checksum
     def get_owners(self):
@@ -198,7 +196,7 @@ class SwitchManager(Manager):
                          for k, v in self.switches.iteritems()])
 
     @add_checksum
-    def get_states(self, query=False, timeout=0.25):
+    def get_states(self, timeout=0.25):
         """
             get as many valves states before time expires
             remember last set of valves returned.
@@ -228,15 +226,11 @@ class SwitchManager(Manager):
                 continue
 
             keys.append(k)
-            if query:
-                state = '{}{}'.format(k, int(self._get_state_by(v)))
-            else:
-                # don't query valves
-                state = '{}{}'.format(k, int(v.state))
-
+            #             state = '{}{}'.format(k, int(self._get_state_by(v)))
+            state = '{}{}'.format(k, int(v.state))
             states.append(state)
             if time.time() - st > timeout:
-                self.debug('get states timeout')
+                self.debug('get states timeout. timeout={}'.format(timeout))
                 break
         else:
             # if loop completes before timeout dont save keys
@@ -426,7 +420,7 @@ class SwitchManager(Manager):
         state = None
         if (self.query_valve_state and v.query_state) or force:
             state = v.get_hardware_state(verbose=False)
-            if v.actuator.simulation:
+            if not v.actuator or v.actuator.simulation:
                 state = None
 
         if state is None:
@@ -485,13 +479,16 @@ class SwitchManager(Manager):
 
     def load_hardware_states(self):
         self.debug('load hardware states')
+        update = False
         for k, v in self.switches.iteritems():
             if v.query_state:
+                ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
-                if v.state != s:
+                if ostate != s:
                     self.refresh_state = (k, s, False)
-
-        self.refresh_canvas_needed = True
+                    update = True
+        if update:
+            self.refresh_canvas_needed = True
 
     def load_indicator_states(self):
         self.debug('load indicator states')
@@ -505,7 +502,7 @@ class SwitchManager(Manager):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         for k, v in self.switches.iteritems():
             s = v.get_hardware_state()
-            self.debug('hardware state {},{},{}'.format(k,v,s))
+            self.debug('hardware state {},{},{}'.format(k, v, s))
             if v.state != s:
                 self.refresh_state = (k, s, False)
 
@@ -548,14 +545,14 @@ class SwitchManager(Manager):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
         self.info('saving manual states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k:v.state for k, v in self.switches.iteritems() if isinstance(v, ManualSwitch)}
+            obj = {k: v.state for k, v in self.switches.iteritems() if isinstance(v, ManualSwitch)}
             pickle.dump(obj, f)
 
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k:v.software_lock for k,v in self.switches.iteritems()}
+            obj = {k: v.software_lock for k, v in self.switches.iteritems()}
             # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)
