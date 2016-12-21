@@ -17,9 +17,8 @@
 # ============= enthought library imports =======================
 import os
 import time
-from math import pi
-
 import yaml
+from math import pi
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
@@ -36,6 +35,10 @@ def get_float(func):
             return 0.0
 
     return dec
+
+
+import threading
+import time
 
 
 class BaseMagnet(Loggable):
@@ -62,6 +65,11 @@ class BaseMagnet(Loggable):
     use_af_demagnetization = False
 
     _suppress_mass_update = False
+
+    def __init__(self, *args, **kw):
+        super(BaseMagnet, self).__init__(*args, **kw)
+        self._lock = threading.Lock()
+        self._cond = threading.Condition((threading.Lock()))
 
     def reload_mftable(self):
         self.mftable.load_mftable()
@@ -95,7 +103,7 @@ class BaseMagnet(Loggable):
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
 
             name = ''
-        # self.mftable.molweights = molweights
+
         self.mftable.initialize(molweights)
         self.mftable.spectrometer_name = name.lower()
 
@@ -158,8 +166,6 @@ class BaseMagnet(Loggable):
         m = self.map_dac_to_mass(dac, det.name)
         if m is not None:
             return self.spectrometer.map_isotope(m)
-            # molweights = self.spectrometer.molecular_weights
-            # return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
     def mass_change(self, m):
         """
@@ -176,6 +182,26 @@ class BaseMagnet(Loggable):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _wait_release(self):
+        self._lock.release()
+        # self._cond.notify()
+
+    def _wait_lock(self, timeout):
+        """
+        http://stackoverflow.com/questions/8392640/how-to-implement-a-lock-with-a-timeout-in-python-2-7
+        @param timeout:
+        @return:
+        """
+        with self._cond:
+            current_time = start_time = time.time()
+            while current_time < start_time + timeout:
+                if self._lock.acquire(False):
+                    return True
+                else:
+                    self._cond.wait(timeout - current_time + start_time)
+                    current_time = time.time()
+        return False
+
     def _load_af_demag_configuration(self):
         self.use_af_demagnetization = False
 
@@ -185,8 +211,12 @@ class BaseMagnet(Loggable):
                 try:
                     yd = yaml.load(rfile)
                 except BaseException, e:
-                    self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                    self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
                     return
+
+            if not isinstance(yd, dict):
+                self.warning_dialog('AF Demagnetization unavailable. Syntax error in file')
+                return
 
             self.use_af_demagnetization = yd.get('enabled', True)
             self.af_demag_threshold = yd.get('threshold', 1)
@@ -225,7 +255,7 @@ class BaseMagnet(Loggable):
                              'Need to specify "start_amplitude" in "{}"'.format(p))
                 return
 
-            sx = arange(pi * 0.5 * period, duration, pi * period)
+            sx = pi * arange(0.5 * period, duration, period)
             slope = start_amplitude / float(duration)
             dacs = slope * sx * sin(frequency * sx)
             self.info('Doing AF Demagnetization around target={}. '
@@ -317,25 +347,22 @@ class BaseMagnet(Loggable):
     # views
     # ===============================================================================
     def traits_view(self):
-        v = View(
-            VGroup(
-                VGroup(
-                    Item('dac', editor=RangeEditor(low_name='dacmin',
-                                                   high_name='dacmax',
-                                                   format='%0.5f')),
+        v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
+                                                              high_name='dacmax',
+                                                              format='%0.5f')),
 
-                    Item('mass', editor=RangeEditor(mode='slider', low_name='massmin',
-                                                    high_name='massmax',
-                                                    format='%0.3f')),
-                    HGroup(Spring(springy=False,
-                                  width=48),
-                           Item('massmin', width=-40), Spring(springy=False,
-                                                              width=138),
-                           Item('massmax', width=-55),
+                               Item('mass', editor=RangeEditor(mode='slider', low_name='massmin',
+                                                               high_name='massmax',
+                                                               format='%0.3f')),
+                               HGroup(Spring(springy=False,
+                                             width=48),
+                                      Item('massmin', width=-40), Spring(springy=False,
+                                                                         width=138),
+                                      Item('massmax', width=-55),
 
-                           show_labels=False),
-                    show_border=True,
-                    label='Control')))
+                                      show_labels=False),
+                               show_border=True,
+                               label='Control')))
 
         return v
 

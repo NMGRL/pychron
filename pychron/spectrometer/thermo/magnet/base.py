@@ -43,6 +43,11 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
                 use_af_demag=True):
+
+        if not self._wait_lock(2):
+            self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
+            return
+
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -104,6 +109,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 if unblank:
                     self.ask('BlankBeam False', verbose=verbose)
 
+        self._wait_release()
         return change
 
     @get_float
