@@ -40,8 +40,9 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.hardware.actuators import get_valve_address
 from pychron.core.communication_helper import trim_bool
+from pychron.core.helpers.strtools import to_bool
+from pychron.hardware.actuators import get_valve_address
 
 
 class NMGRLFurnaceActuator(GPActuator):
@@ -83,12 +84,45 @@ class NMGRLFurnaceActuator(GPActuator):
         cmd = 'GetChannelState {}'.format(get_valve_address(obj))
         return self.ask(cmd, verbose=verbose)
 
-    @trim_bool
     def get_indicator_state(self, obj, action='open', verbose=True):
+        """
+        returns True if open and False if closed.
+
+        :param obj:
+        :param action:
+        :param verbose:
+        :return:
+        """
         cmd = json.dumps({'command': 'GetIndicatorState',
                           'name': get_valve_address(obj),
                           'action': action})
-        return self.ask(cmd, verbose=verbose)
+        resp = self.ask(cmd, verbose=True)
+
+        # if action == 'open':
+        # print 'aa', resp, action
+        if resp:
+            resp = resp.strip()
+            if resp == 'open':
+                return True
+            elif resp == 'closed':
+                return False
+            # resp = to_bool(resp.strip())
+            # resp = resp.strip()
+            # if action == 'open' and resp == 'open':
+            #     return True
+            # elif action == 'closed' and resp == 'closed':
+            #     return False
+            # elif action == 'closed' and resp == 'open':
+            #     return True
+            # elif action == 'open' and resp == 'closed':
+            #     return False
+
+                # print 'bb', resp
+                # # # if close indicator is True and checking for closed return False
+                # if resp and action != 'open':
+                # #     resp = False
+                # # print 'cc', obj, resp
+                # return resp
 
     def close_channel(self, obj, excl=False):
         """
@@ -132,7 +166,7 @@ class NMGRLFurnaceActuator(GPActuator):
             time.sleep(obj.check_actuation_delay)
 
         # state = action == 'Open'
-        result = self.get_channel_state(obj, action)
+        result = self.get_indicator_state(obj, action)
         self.debug('check actuate action={}, result={}'.format(action, result))
 
         if action == 'Close':

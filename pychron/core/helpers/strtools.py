@@ -54,8 +54,8 @@ def to_bool(a):
     elif isinstance(a, (int, float)):
         return bool(a)
 
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
+    tks = ['true', 't', 'yes', 'y', '1', 'ok', 'open']
+    fks = ['false', 'f', 'no', 'n', '0', 'closed']
 
     if a is not None:
         a = str(a).strip().lower()

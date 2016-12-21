@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Float
 # ============= standard library imports ========================
 import socket
 import time
@@ -175,6 +176,7 @@ class EthernetCommunicator(Communicator):
     verbose = False
     error_mode = False
     message_frame = ''
+    timeout = Float(1.0)
 
     @property
     def address(self):
@@ -188,7 +190,7 @@ class EthernetCommunicator(Communicator):
         self.host = self.config_get(config, 'Communications', 'host')
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
-
+        self.timeout = self.config_get(config, 'Communications', 'timeout', cast='float', optional=True, default=1.0)
         self.kind = self.config_get(config, 'Communications', 'kind', optional=True)
         self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='')
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
@@ -235,7 +237,10 @@ class EthernetCommunicator(Communicator):
         ret = not self.simulation and handler is not None
         return ret
 
-    def get_handler(self, timeout=1):
+    def get_handler(self, timeout=None):
+        if  timeout is None:
+            timeout = self.timeout
+
         try:
             h = self.handler
             if h is None:

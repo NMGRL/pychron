@@ -97,10 +97,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.state = nstate
-        self.draw_valid = False
+            self.draw_valid = False
 
-        if refresh:
-            self.invalidate_and_redraw()
+            if refresh:
+                self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
@@ -289,7 +289,11 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.request_redraw()
 
     def _get_switch_by_name(self, name):
-        return next((i for i in self.iter_valves() if i.name == name), None)
+        s = next((i for i in self.iter_valves() if i.name == name), None)
+        if s is None:
+            names = [i.name for i in self.iter_valves()]
+            self.debug('No switch with name "{}". Names={}'.format(name, names))
+        return s
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)
