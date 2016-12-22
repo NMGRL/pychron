@@ -43,6 +43,7 @@ class ProjectManager(Loggable):
     # lab_contacts = List
 
     scroll_to_row = Int
+    project_name = String
     comment = String
     selected = List
     save_button = Button
@@ -69,6 +70,19 @@ class ProjectManager(Loggable):
     #
     #     self.oitems = self.dvc.get_irs()
     #     self._filter()
+    def _project_name_changed(self, new):
+        if self.selected:
+            if len(self.selected) == 1:
+                p = self.selected[0]
+                p.name = new
+                if new != p.db_name:
+                    p.dirty = True
+                else:
+                    p.dirty = False
+                self.refresh = True
+            else:
+                self.warning_dialog('Can only edit the name of one project at a time')
+
     def _comment_changed(self, new):
         if self.selected:
             for i in self.selected:
@@ -84,11 +98,22 @@ class ProjectManager(Loggable):
         self.debug('Apply changes')
         dvc = self.dvc
         with dvc.session_ctx(use_parent_session=False):
+            commit = False
             for item in self.oitems:
+
                 if item.dirty:
                     pr = dvc.get_project_by_id(item.unique_id)
+                    pr.name = item.name
                     pr.comment = item.comment
+
+                    item.db_comment = item.comment
+                    item.db_name = item.name
+
                     item.dirty = False
+                    commit = True
+
+            if commit:
+                dvc.commit()
 
     def _filter(self):
         if self.filter_str:
