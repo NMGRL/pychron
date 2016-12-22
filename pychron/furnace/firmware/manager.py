@@ -407,6 +407,9 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def set_pid(self, data):
+        if isinstance(data, dict):
+            data = data['pid']
+
         controller = self.controller
         if controller:
             return controller.set_pid_str(data)
