@@ -149,13 +149,24 @@ class FirmwareManager(HeadlessLoggable):
     #             imstr = im.dumps()
     #             return '{:08X}{}'.format(len(imstr), imstr)
 
-    def get_heartbeat(self):
+    def get_heartbeat(self, data):
         return '{},{}'.format(time.time(), self._start_time)
 
-    def get_furnace_summary(self):
-        return 'Not yet implemented'
+    def get_furnace_summary(self, data):
+        h2o_channel = None
+        if isinstance(data, dict):
+            h2o_channel = data.get('h2o_channel')
 
-    def get_percent_output(self):
+        s={}
+        if h2o_channel is not None:
+            s['h2o_state'] = self.switch_controller.get_channel_state(h2o_channel)
+
+        s['setpoint'] = self.get_setpoint(None)
+        s['response'] = self.get_temperature(None)
+        s['output'] = self.get_percent_output(None)
+        return json.dumps(s)
+
+    def get_percent_output(self, data):
         if self.controller:
             return self.controller.get_output()
 
@@ -176,7 +187,7 @@ class FirmwareManager(HeadlessLoggable):
             ss.append('{},s{},o{},c{}'.format(k, rs, o, c))
 
         s[PARAMETER_REGISTRY.get('switch_status')] = ';'.join(ss)
-        return dumps(s)
+        return json.dumps(s)
 
     @debug
     def get_lab_humidity(self, data):
