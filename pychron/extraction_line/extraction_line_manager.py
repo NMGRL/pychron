@@ -286,7 +286,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state, **kw)
+            c.update_switch_state(name, state, *args)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
