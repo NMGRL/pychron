@@ -197,6 +197,7 @@ class ProjectRecordView(RecordView, NameView):
     institution = Str
     comment = Str
     db_comment = Str
+    db_name = Str
     dirty = Bool(False)
 
     def _create(self, dbrecord):
@@ -212,6 +213,7 @@ class ProjectRecordView(RecordView, NameView):
 
         else:
             self.name = dbrecord
+        self.db_name = self.name
 
 
 class RepositoryRecordView(NameView):

@@ -247,7 +247,7 @@ class DVCDatabase(DatabaseAdapter):
         self.debug('retrieve blank. kind={}, ms={}, '
                    'ed={}, last={}, repository={}'.format(kind, ms, ed, last, repository))
         # with self.session_ctx() as sess:
-        sess =self.session
+        sess = self.session
         q = sess.query(AnalysisTbl)
 
         if repository:
@@ -1114,6 +1114,12 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_production(self, name):
         return self._retrieve_item(ProductionTbl, name)
+
+    def get_project_by_id(self, pid):
+        with self.session_ctx() as sess:
+            q = sess.query(ProjectTbl)
+            q = q.filter(ProjectTbl.id == pid)
+            return self._query_one(q)
 
     def get_project(self, name, pi=None):
         if pi:
