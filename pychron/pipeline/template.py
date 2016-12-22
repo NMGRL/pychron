@@ -55,7 +55,7 @@ class PipelineTemplate(HasTraits):
         self.name = name
         self.path = path
 
-    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=False):
+    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True):
         # if first node is an unknowns node
         # render into template
 
@@ -71,7 +71,9 @@ class PipelineTemplate(HasTraits):
         if not datanode:
             datanode = UnknownNode(browser_model=bmodel, dvc=dvc)
 
-        pipeline.nodes = []
+        if clear:
+            pipeline.nodes = []
+
         with open(self.path, 'r') as rfile:
             yd = yaml.load(rfile)
 

@@ -27,6 +27,7 @@ from traits.api import TraitError, Instance, Float, provides, Bool
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
+from pychron.core.progress import open_progress
 from pychron.core.ui.led_editor import LED
 from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
@@ -154,12 +155,17 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def refresh_states(self):
         self.switch_manager.load_indicator_states()
 
-        self.funnel_down_enabled = True
-        self.funnel_up_enabled = False
         if self.funnel_down():
             self.dumper_canvas.set_item_state('Funnel', True)
             self.funnel_down_enabled = False
             self.funnel_up_enabled = True
+        elif self.funnel_up():
+            self.dumper_canvas.set_item_state('Funnel', False)
+            self.funnel_down_enabled = True
+            self.funnel_up_enabled = False
+        else:
+            self.funnel_up_enabled = True
+            self.funnel_down_enabled = True
 
         self.dumper_canvas.invalidate_and_redraw()
 
@@ -227,10 +233,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def dump_sample(self, block=False):
         self.debug('dump sample')
         if self._dumper_thread is None:
+            progress = open_progress(n=100)
+
             if block:
-                return self._dump_sample()
+                return self._dump_sample(progress)
             else:
-                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample)
+                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress, ))
                 self._dumper_thread.setDaemon(True)
                 self._dumper_thread.start()
         else:
@@ -303,9 +311,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
 
-    def raise_funnel(self):
-        self.debug('raise funnel')
-        if self.loader_logic.check('FU'):
+    def raise_funnel(self, force=False):
+        self.debug('raise funnel. force={}'.format(force))
+        if self.loader_logic.check('FU') or force:
             self.funnel_up_enabled = False
             self.funnel.raise_()
             self.funnel_down_enabled = True
@@ -399,7 +407,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     # logic
     def get_switch_state(self, name):
         if self.switch_manager:
-            return self.switch_manager.get_state_by_name(name, force=True)
+            return self.switch_manager.get_indicator_state(name)
 
     def get_flag_state(self, flag):
         self.debug('get_flag_state {}'.format(flag))
@@ -572,7 +580,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         return g
 
-    def _dump_sample(self):
+    def _dump_sample(self, progress):
         """
         1. open gate valve
         2. open shutters
@@ -583,15 +591,25 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         7. close gate valve
         :return:
         """
+
         ret = True
         self.debug('dump sample started')
-        for line in self._load_dump_script():
+        lines = self._load_dump_script()
+        progress.max = len(lines)
+        for i, line in enumerate(lines):
+
             self.debug(line)
-            if not self._execute_script_line(line):
+            if not self._execute_script_line(line, progress):
                 self.debug('FAILED: {}'.format(line))
                 ret = False
                 break
 
+        if not ret:
+            self.warning_dialog('Sample dump failed at line {}: {}'.format(i, line))
+        else:
+            self.information_dialog('Dump Successful')
+
+        progress.close()
         self._dumper_thread = None
         return ret
 
@@ -599,11 +617,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
         return pathtolist(p)
 
-    def _execute_script_line(self, line):
+    def _execute_script_line(self, line, progress):
         if ' ' in line:
             cmd, args = line.split(' ')
         else:
             cmd, args = line, None
+
+        progress.change_message('Dump Sequence: Command={}, Parameters={}'.format(cmd, args))
+        time.sleep(0.5)
 
         success = True
         if cmd == 'sleep':

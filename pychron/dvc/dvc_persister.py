@@ -364,12 +364,19 @@ class DVCPersister(BasePersister):
                             classification_probability=prob)
             key = iso.name
             if key in keys:
-                d = isos[key]
-                isos['{}{}'.format(d.name, d.detector)] = d
-                key = '{}{}'.format(key, iso.detector)
-                # isos['{}{}'.format(key, iso.detector)] = iso
+                if key in isos:
+                    nd = isos.pop(key)
+                    nkey = '{}{}'.format(nd['name'], nd['detector'])
+                    isos[nkey] = nd
 
-            # else:
+                    nd = intercepts.pop(key)
+                    intercepts[nkey] = nd
+
+                    nd = blanks.pop(key)
+                    blanks[nkey] = nd
+
+                key = '{}{}'.format(key, iso.detector)
+
             isos[key] = isod
 
             if iso.detector not in dets:
@@ -388,14 +395,16 @@ class DVCPersister(BasePersister):
                                             'error': float(iso.baseline.error)}
 
             intercepts[key] = {'fit': iso.fit,
-                                    'filter_outliers_dict': iso.filter_outliers_dict,
-                                    'value': float(iso.value),
-                                    'error': float(iso.error)}
+                               'filter_outliers_dict': iso.filter_outliers_dict,
+                               'value': float(iso.value),
+                               'error': float(iso.error)}
+
             blanks[key] = {'fit': 'previous',
-                                'references': [{'record_id': per_spec.previous_blank_runid,
-                                                'exclude': False}],
-                                'value': float(iso.blank.value),
-                                'error': float(iso.blank.error)}
+                           'references': [{'record_id': per_spec.previous_blank_runid,
+                                           'exclude': False}],
+                           'value': float(iso.blank.value),
+                           'error': float(iso.blank.error)}
+
             keys.append(iso.name)
 
         obj = self._make_analysis_dict()

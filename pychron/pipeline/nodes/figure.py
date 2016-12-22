@@ -42,6 +42,7 @@ class FigureNode(BaseNode):
     no_analyses_warning = Bool(False)
     editors = List
     auto_set_items = True
+    use_plotting = True
 
     def refresh(self):
         if self.editor:
@@ -65,7 +66,7 @@ class FigureNode(BaseNode):
         self.unknowns = state.unknowns
         self.references = state.references
 
-        if use_plotting:
+        if use_plotting and self.use_plotting:
             editor = self.editor
             if not editor:
                 editor = self._editor_factory()
@@ -92,7 +93,7 @@ class FigureNode(BaseNode):
                 cnt += 1
 
         # self.name = new_name
-        if use_plotting:
+        if self.editor:
             self.editor.name = new_name
 
         return self.editor

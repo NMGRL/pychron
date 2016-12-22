@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from apptools import sweet_pickle as pickle
 from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
 from traitsui.api import View, Item, HGroup, Handler, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
@@ -129,6 +129,7 @@ class ItemConfigurer(HasTraits):
 
     new_name = Str
     add_button = Button
+    root = Str
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -139,12 +140,12 @@ class ItemConfigurer(HasTraits):
         self.dump_item(self.active_item)
 
     def load(self, **kw):
-        names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+        names = list_directory2(self.root, remove_extension=True, extension='.p')
         if 'Default' not in names:
             item = self.item_klass()
             item.name = 'Default'
             self.dump_item(item)
-            names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+            names = list_directory2(self.root, remove_extension=True, extension='.p')
 
         name = 'Default'
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -160,12 +161,12 @@ class ItemConfigurer(HasTraits):
 
     def dump_item(self, item):
         name = item.name
-        p = os.path.join(paths.peak_center_config_dir, add_extension(name, '.p'))
+        p = os.path.join(self.root, add_extension(name, '.p'))
         with open(p, 'wb') as wfile:
             pickle.dump(item, wfile)
 
     def get(self, name):
-        p = os.path.join(paths.peak_center_config_dir, add_extension(name, '.p'))
+        p = os.path.join(self.root, add_extension(name, '.p'))
         if os.path.isfile(p):
             with open(p, 'rb') as rfile:
                 obj = pickle.load(rfile)
@@ -175,7 +176,7 @@ class ItemConfigurer(HasTraits):
         return obj
 
     def _load_names(self):
-        names = list_directory2(paths.peak_center_config_dir, remove_extension=True, extension='.p')
+        names = list_directory2(self.root, remove_extension=True, extension='.p')
         self.names = names
 
     def _active_name_changed(self, name):
@@ -218,6 +219,9 @@ class PeakCenterConfigurer(ItemConfigurer):
     detectors = List
     isotopes = List
     available_detectors = List
+
+    def _root_default(self):
+        return paths.peak_center_config_dir
 
     def load(self, **kw):
         kw['detectors'] = self.detectors

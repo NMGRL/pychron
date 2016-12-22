@@ -79,6 +79,7 @@ class BaseBrowserSampleView(PaneModelView):
                                   editor=FilterTabularEditor(editable=False,
                                                              enabled_cb='project_enabled',
                                                              use_fuzzy=True,
+                                                             column_index=-1,
                                                              refresh='refresh_needed',
                                                              selected='selected_projects',
                                                              adapter=ProjectAdapter(),
@@ -205,7 +206,7 @@ class BaseBrowserSampleView(PaneModelView):
         simple_date_grp = self._get_simple_date_group()
         simple_mass_spectrometer_grp = self._get_simple_mass_spectrometer_group()
 
-        ln_grp = self._get_identifier_group()
+        # ln_grp = self._get_identifier_group()
         pi_grp = self._get_pi_group()
 
         top_level_filter_grp = VGroup(
@@ -213,7 +214,11 @@ class BaseBrowserSampleView(PaneModelView):
             #             style='custom',
             #             width=-1.0,
             #             visible_when='not filter_focus'),
-            HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
+            HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest.'),
+                   label='Search',
+                   show_border=True),
+            # HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
+            HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp),
             HGroup(pi_grp, project_grp, irrad_grp))
         # analysis_type_group,
         # date_grp)

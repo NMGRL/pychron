@@ -274,17 +274,24 @@ class Analysis(ArArAge):
         self.tag = tag
 
     def show_isotope_evolutions(self, isotopes=None, **kw):
-        print isotopes
         if isotopes:
             if isinstance(isotopes[0], (str, unicode)):
-                isotopes = [self.isotopes[i] for i in isotopes]
+                nisotopes = []
+                for i in isotopes:
+                    try:
+                        iso = self.isotopes[i]
+                    except KeyError:
+                        iso = next((ii.baseline for ii in self.isotopes.itervalues() if ii.detector == i), None)
+                    if iso:
+                        nisotopes.append(iso)
+                isotopes = nisotopes
+                # isotopes = [self.isotopes[i] for i in isotopes]
         else:
             isotopes = self.isotopes.values()
 
         keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
 
         self.load_raw_data(keys=keys)
-
         g = show_evolutions_factory(self.record_id, isotopes, **kw)
         if g:
             open_view(g, handler=CloseHandler())

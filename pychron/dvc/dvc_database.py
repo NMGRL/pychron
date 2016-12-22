@@ -423,16 +423,16 @@ class DVCDatabase(DatabaseAdapter):
             pi = self._add_item(pi)
         return pi
 
-    def add_project(self, name, pi=None):
+    def add_project(self, name, principal_investigator=None):
         with self.session_ctx():
-            a = self.get_project(name, pi)
+            a = self.get_project(name, principal_investigator)
             if a is None:
-                self.debug('Adding project {} {}'.format(name, pi))
+                self.debug('Adding project {} {}'.format(name, principal_investigator))
                 a = ProjectTbl(name=name)
-                if pi:
-                    dbpi = self.get_principal_investigator(pi)
+                if principal_investigator:
+                    dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
-                        a.principal_investigator = pi
+                        a.principal_investigator = principal_investigator
 
                 a = self._add_item(a)
             return a
@@ -484,6 +484,38 @@ class DVCDatabase(DatabaseAdapter):
             a.interpreted_age = interpreted_age
             a.analysis = analysis
             return self._add_item(a)
+
+    # fuzzy getters
+    def get_fuzzy_projects(self, search_str):
+        with self.session_ctx() as sess:
+            q = sess.query(ProjectTbl)
+
+            f = or_(ProjectTbl.name.like('{}%'.format(search_str)), ProjectTbl.id.like('{}%'.format(search_str)))
+            q = q.filter(f)
+            return self._query_all(q, verbose_query=True)
+
+    def get_fuzzy_labnumbers(self, search_str):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationPositionTbl)
+            q = q.join(SampleTbl)
+            q = q.join(ProjectTbl)
+
+            q = q.distinct(IrradiationPositionTbl.id)
+            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                    SampleTbl.name.like('{}%'.format(search_str)),
+                    ProjectTbl.name == search_str,
+                    ProjectTbl.id == search_str)
+            q = q.filter(f)
+            ips = self._query_all(q, verbose_query=True)
+
+            q = sess.query(ProjectTbl)
+            q = q.join(SampleTbl)
+            q = q.join(IrradiationPositionTbl)
+            f = or_(IrradiationPositionTbl.identifier.like('{}%'.format(search_str)),
+                    SampleTbl.name.like('{}%'.format(search_str)), )
+            q = q.filter(f)
+            ps = self._query_all(q)
+            return ips, ps
 
     # special getters
     def get_flux_value(self, identifier, attr):
@@ -969,7 +1001,7 @@ class DVCDatabase(DatabaseAdapter):
             if principal_investigators:
                 q = q.join(PrincipalInvestigatorTbl)
 
-            if projects:
+            if projects or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
 
             if mass_spectrometers and not at:

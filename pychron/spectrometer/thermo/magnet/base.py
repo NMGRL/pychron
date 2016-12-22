@@ -41,7 +41,13 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ===============================================================================
     # ##positioning
     # ===============================================================================
-    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True):
+    def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
+                use_af_demag=True):
+
+        if not self._wait_lock(2):
+            self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
+            return
+
         self.debug('setting magnet DAC')
         self.debug('current  : {:0.6f}'.format(self._dac))
         self.debug('requested: {:0.6f}'.format(v))
@@ -68,26 +74,12 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self.ask('BlankBeam True', verbose=verbose)
                 unblank = True
 
-        if self.use_af_demagnetization:
-            self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
+        if self.use_af_demagnetization and use_af_demag:
+            if dv > self.af_demag_threshold:
+                self.debug('Move {}>{}. Do AF Demag'.format(dv, self.af_demag_threshold))
+                self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
 
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
-        st = time.time()
-
-        if unprotect or unblank:
-            for i in xrange(50):
-                if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
-                    break
-                time.sleep(0.25)
-
-            st = time.time()
-            if unprotect:
-                for d in unprotect:
-                    self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(d), verbose=verbose)
-
-            if unblank:
-                self.ask('BlankBeam False', verbose=verbose)
 
         change = dv > 1e-7
         if change:
@@ -95,16 +87,29 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
             if use_dac_changed:
                 self.dac_changed = True
 
-            et = time.time() - st
             if not self.simulation:
                 if settling_time is None:
                     settling_time = self.settling_time
 
-                st = settling_time - et
-                self.debug('Magnet settling time: {:0.3f}, actual time: {:0.3f}'.format(settling_time, st))
-                if st > 0:
-                    time.sleep(st)
+                self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
+                if settling_time > 0:
+                    time.sleep(settling_time)
 
+            if unprotect or unblank:
+                for i in xrange(50):
+                    if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
+                        break
+                    time.sleep(0.25)
+
+                if unprotect:
+                    for d in unprotect:
+                        self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
+                        self.ask('GetDeflection {}'.format(d), verbose=verbose)
+
+                if unblank:
+                    self.ask('BlankBeam False', verbose=verbose)
+
+        self._wait_release()
         return change
 
     @get_float

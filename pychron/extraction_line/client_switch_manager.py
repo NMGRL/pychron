@@ -198,41 +198,41 @@ class ClientSwitchManager(SwitchManager):
         else:
             self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))
 
-            if remote is None:
-                return
-
-            if self.actuators:
-
-                state_word = self.get_state_word()
-                lock_word = self.get_lock_word()
-                act = self.actuators[0]
-                # report valves stats
-                self.debug('========================= Valve Stats =========================')
-                tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<10s}{:<10s}{:<10s}'
-                self.debug(tmpl.format('Key', 'State', 'Lock', 'Failure', 'StateWord', 'LockWord', 'FailureWord'))
-                for vi in vkeys:
-                    v = valves[vi]
-                    rvstate = act.get_channel_state(v)
-                    if rvstate is not None:
-                        rvstate = int(rvstate)
-
-                    s1, s2, s3 = int(v.state), rvstate, int(state_word.get(vi, -1))
-                    state = '{}{}'.format(s1, s2)
-                    statew = '{}{}'.format(s1, s3)
-
-                    rvlock = act.get_lock_state(v)
-                    if rvlock is not None:
-                        rvlock = int(rvlock)
-
-                    l1, l2, l3 = int(v.software_lock), rvlock, int(lock_word.get(vi, -1))
-                    lock = '{}{}'.format(l1, l2)
-                    lockw = '{}{}'.format(l1, l3)
-
-                    fail = 'X' if s1 != s2 or l1 != l2 else ''
-                    failw = 'X' if s1 != s3 or l1 != l3 else ''
-
-                    self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
-                self.debug('===============================================================')
+            # if remote is None:
+            #     return
+            #
+            # if self.actuators:
+            #
+            #     state_word = self.get_state_word()
+            #     lock_word = self.get_lock_word()
+            #     act = self.actuators[0]
+            #     # report valves stats
+            #     self.debug('========================= Valve Stats =========================')
+            #     tmpl = '{:<8s}{:<8s}{:<8s}{:<8s}{:<10s}{:<10s}{:<10s}'
+            #     self.debug(tmpl.format('Key', 'State', 'Lock', 'Failure', 'StateWord', 'LockWord', 'FailureWord'))
+            #     for vi in vkeys:
+            #         v = valves[vi]
+            #         rvstate = act.get_channel_state(v)
+            #         if rvstate is not None:
+            #             rvstate = int(rvstate)
+            #
+            #         s1, s2, s3 = int(v.state), rvstate, int(state_word.get(vi, -1))
+            #         state = '{}{}'.format(s1, s2)
+            #         statew = '{}{}'.format(s1, s3)
+            #
+            #         rvlock = act.get_lock_state(v)
+            #         if rvlock is not None:
+            #             rvlock = int(rvlock)
+            #
+            #         l1, l2, l3 = int(v.software_lock), rvlock, int(lock_word.get(vi, -1))
+            #         lock = '{}{}'.format(l1, l2)
+            #         lockw = '{}{}'.format(l1, l3)
+            #
+            #         fail = 'X' if s1 != s2 or l1 != l2 else ''
+            #         failw = 'X' if s1 != s3 or l1 != l3 else ''
+            #
+            #         self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
+            #     self.debug('===============================================================')
 
 # ============= EOF =============================================
 

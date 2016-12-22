@@ -85,6 +85,8 @@ class LabnumberEntry(DVCIrradiationable):
     level_production_name = Str
     chronology_items = List
     estimated_j_value = Str
+
+    default_principal_investigator = Str
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -121,6 +123,8 @@ class LabnumberEntry(DVCIrradiationable):
         for key in ('irradiation_prefix', 'monitor_name',
                     'monitor_material', 'j_multiplier'):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
+
+        bind_preference(self, 'default_principal_investigator', 'pychron.general.default_principal_investigator')
 
     def activated(self):
         pass

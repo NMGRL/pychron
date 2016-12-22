@@ -173,7 +173,6 @@ class DVCAnalysis(Analysis):
 
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
 
-
         path = self._analysis_path(modifier='.data')
         isotopes = self.isotopes
 
@@ -181,7 +180,6 @@ class DVCAnalysis(Analysis):
         signals = jd['signals']
         baselines = jd['baselines']
         sniffs = jd['sniffs']
-
         for sd in signals:
             isok = sd['isotope']
             det = sd['detector']
@@ -260,7 +258,7 @@ class DVCAnalysis(Analysis):
             try:
                 iso = isos[fi.name]
             except KeyError:
-                print 'set fits {} {}'.format(fi.name, isos.keys())
+                # print 'set fits {} {}'.format(fi.name, isos.keys())
                 # name is a detector
                 for i in isos.itervalues():
                     if i.detector == fi.name:

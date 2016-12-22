@@ -234,6 +234,8 @@ class Paths(object):
     notification_triggers = None
     furnace_firmware = None
 
+    af_demagnetization = None
+
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -453,8 +455,8 @@ class Paths(object):
         self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
         self.backup_recovery_file = join(self.appdata_dir, 'backup_recovery')
         self.last_experiment = join(self.appdata_dir, 'last_experiment')
-        self.mftable = join(self.spectrometer_dir, 'mftable.csv')
-        self.ic_mftable = join(self.spectrometer_dir, 'ic_mftable.csv')
+        self.mftable = join(self.spectrometer_dir, 'mftables', 'mftable.csv')
+        self.ic_mftable = join(self.spectrometer_dir, 'mftables', 'ic_mftable.csv')
 
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
@@ -485,25 +487,9 @@ class Paths(object):
         # =======================================================================
         # pipeline templates
         # =======================================================================
-        # self.icfactor_template = join(self.pipeline_template_dir, 'ic_factor.yaml')
-        # self.blanks_template = join(self.pipeline_template_dir, 'blanks.yaml')
-        # self.iso_evo_template = join(self.pipeline_template_dir, 'isotope_evolutions.yaml')
-        # self.ideogram_template = join(self.pipeline_template_dir, 'ideogram.yaml')
-        # self.csv_ideogram_template = join(self.pipeline_template_dir, 'csv_ideogram.yaml')
-        # self.spectrum_template = join(self.pipeline_template_dir, 'spectrum.yaml')
-        # self.isochron_template = join(self.pipeline_template_dir, 'isochron.yaml')
-        # self.inverse_isochron_template = join(self.pipeline_template_dir, 'inverse_isochron.yaml')
-        # self.vertical_flux_template = join(self.pipeline_template_dir, 'vertical_flux.yaml')
-        # self.xy_scatter_template = join(self.pipeline_template_dir, 'xy_scatter.yaml')
-        # self.flux_template = join(self.pipeline_template_dir, 'flux.yaml')
-        # self.analysis_table_template = join(self.pipeline_template_dir, 'analysis_table.yaml')
-        # self.interpreted_age_table_template = join(self.pipeline_template_dir, 'interpreted_age_table.yaml')
-        # self.auto_ideogram_template = join(self.pipeline_template_dir, 'auto_ideogram.yaml')
-        # self.series_template = join(self.pipeline_template_dir, 'series.yaml')
-        # self.geochron_template = join(self.pipeline_template_dir, 'geochron.yaml')
-        # self.yield_template = join(self.pipeline_template_dir, 'yield.yaml')
-        #
         self._build_templates(self.pipeline_template_dir)
+
+        self.af_demagnetization = join(paths.spectrometer_dir, 'af_demagnetization.yaml')
 
         build_directories()
 

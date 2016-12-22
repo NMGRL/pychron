@@ -37,7 +37,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
-N = 500
+N = 1000
 
 
 class PeakLabel(DataLabel):

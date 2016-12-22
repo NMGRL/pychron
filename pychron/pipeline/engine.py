@@ -21,6 +21,7 @@ import time
 import yaml
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
 
+from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -36,6 +37,7 @@ from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView
@@ -136,6 +138,7 @@ class PipelineEngine(Loggable):
 
     # unknowns = List
     # references = List
+
     run_needed = Event
     refresh_all_needed = Event
     update_needed = Event
@@ -160,9 +163,11 @@ class PipelineEngine(Loggable):
     omit_event = Event
 
     state = Instance(EngineState)
+    editors = List
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
+        self._confirmation_cache = {}
 
         self._load_predefined_templates()
 
@@ -173,7 +178,7 @@ class PipelineEngine(Loggable):
     def reset(self):
         # for ni in self.pipeline.nodes:
         #     ni.visited = False
-        self.pipeline.reset()
+        self.pipeline.reset(clear_data=True)
         self.update_needed = True
 
     def update_detectors(self):
@@ -237,10 +242,28 @@ class PipelineEngine(Loggable):
         #     self.run_needed = True
 
     def configure(self, node):
-        node.configure()
-        osel = self.selected
-        self.update_needed = True
-        self.selected = osel
+        if node.configure():
+            if isinstance(node, IdeogramNode):
+                e = node.editor
+                es = [ei for ei in self.editors if isinstance(ei, IdeogramEditor) and ei != node.editor]
+                if es:
+                    memory = self._confirmation_cache.get('Ideogram', None)
+                    if memory is None:
+                        yes, remember = remember_confirmation_dialog(
+                            'Would you like to apply these changes to all open '
+                            'Ideograms?')
+
+                    if yes:
+                        for ni in es:
+                            ni.plotter_options = e.plotter_options
+                            ni.refresh_needed = True
+
+                    if remember:
+                        self._confirmation_cache['Ideogram'] = yes
+
+            osel = self.selected
+            self.update_needed = True
+            self.selected = osel
 
     def remove_node(self, node):
         self.pipeline.nodes.remove(node)
@@ -332,6 +355,21 @@ class PipelineEngine(Loggable):
     def add_review(self, node=None, run=False):
         newnode = ReviewNode()
         self._add_node(node, newnode, run)
+
+    def chain_ideogram(self, node):
+        self._set_template('ideogram', clear=False)
+
+    def chain_spectrum(self, node):
+        self._set_template('spectrum', clear=False)
+
+    def chain_blanks(self, node):
+        self._set_template('blanks', clear=False)
+
+    def chain_icfactors(self, node):
+        self._set_template('icfactors', clear=False)
+
+    def chain_isotope_evolution(self, node):
+        self._set_template('isotope_evolution', clear=False)
 
     # preprocess
     def add_filter(self, node=None, run=True):
@@ -428,6 +466,7 @@ class PipelineEngine(Loggable):
                 yaml.dump(obj, wfile, default_flow_style=False)
             self._load_predefined_templates()
             self.selected_pipeline_template = v.name
+
     # def run_persist(self, state):
     #     for node in self.pipeline.iternodes():
     #         if not isinstance(node, (FitNode, PersistNode)):
@@ -585,7 +624,7 @@ class PipelineEngine(Loggable):
                     break
 
     # private
-    def _set_template(self, name):
+    def _set_template(self, name, clear=True):
         self.reset_event = True
         args = self._get_template_path(name)
         if args is None:
@@ -598,7 +637,8 @@ class PipelineEngine(Loggable):
             pt.render(self.application, self.pipeline,
                       self.browser_model,
                       self.interpreted_age_browser_model,
-                      self.dvc)
+                      self.dvc,
+                      clear=clear)
         except BaseException, e:
             self.debug('Invalid Template: {}'.format(e))
             self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))

@@ -9,3 +9,4 @@ htmlcov
 *.project
 *.pydevproject
 .DS_Store
+notes

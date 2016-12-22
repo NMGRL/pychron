@@ -19,7 +19,6 @@ from itertools import groupby
 
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
-from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
@@ -167,6 +166,8 @@ class FitIsotopeEvolutionNode(FitNode):
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'
     _fits = List
+    _keys = List
+    use_plotting = False
 
     def _options_view_default(self):
         return view('Iso Evo Options')
@@ -187,8 +188,11 @@ class FitIsotopeEvolutionNode(FitNode):
 
         po = self.plotter_options
 
-        self._fits = [pi for pi in po.get_loadable_aux_plots()]
-        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1)
+        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._keys = [fi.name for fi in self._fits]
+
+        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1,
+                             step=10)
 
         if self.editor:
             self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
@@ -197,17 +201,8 @@ class FitIsotopeEvolutionNode(FitNode):
             ai.graph_id = 0
 
         self._set_saveable(state)
-        # self.name = '{} Fit IsoEvo'.format(self.name)
-        # if self.has_save_node and po.confirm_save:
-        #     if confirmation_dialog('Would you like to review the iso fits before saving?'):
-        #         state.veto = self
 
         if fs:
-            k = lambda an: an.isotope
-            fs = sort_isotopes(fs, key=k)
-            fs = [a for _, gs in groupby(fs, key=k)
-                  for x in (gs, (IsoEvoResult(),))
-                  for a in x][:-1]
             e = IsoEvolutionResultsEditor(fs)
             state.editors.append(e)
 
@@ -218,18 +213,16 @@ class FitIsotopeEvolutionNode(FitNode):
             prog.change_message('Load raw data {}'.format(xi.record_id))
 
         fits = self._fits
-        keys = [fi.name for fi in fits]
-        xi.load_raw_data(keys)
+        xi.load_raw_data(self._keys)
 
         xi.set_fits(fits)
         isotopes = xi.isotopes
         for f in fits:
             k = f.name
-            print k, isotopes.keys()
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = next((i.baseline for i in isotopes.values() if i.detector == k), None)
+                iso = next((i.baseline for i in isotopes.itervalues() if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error

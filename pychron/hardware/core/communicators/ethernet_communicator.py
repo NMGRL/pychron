@@ -176,6 +176,8 @@ class EthernetCommunicator(Communicator):
     error_mode = False
     message_frame = ''
 
+    default_timeout = 3
+
     @property
     def address(self):
         return '{}://{}:{}'.format(self.kind, self.host, self.port)
@@ -194,6 +196,8 @@ class EthernetCommunicator(Communicator):
         self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
                                        default=False)
         self.message_frame = self.config_get(config, 'Communications', 'message_frame', optional=True, default='')
+        self.default_timeout = self.config_get(config, 'Communications', 'default_timeout', cast='int',
+                                               optional=True, default=3)
 
         if self.kind is None:
             self.kind = 'UDP'
@@ -331,7 +335,7 @@ class EthernetCommunicator(Communicator):
             timeout = 0.25
 
         if timeout is None:
-            timeout = 1
+            timeout = self.default_timeout
 
         self.error_mode = False
         handler = self.get_handler(timeout)

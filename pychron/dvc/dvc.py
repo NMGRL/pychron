@@ -991,7 +991,6 @@ class DVC(Loggable):
                 if frozen_production:
                     pname, prod = frozen_production.name, frozen_production
                 else:
-                    print a.irradiation, a.irradiation_label
                     pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
                 a.set_production(pname, prod)
 
