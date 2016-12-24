@@ -24,6 +24,7 @@ from traits.api import Button, Bool, Str
 from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, spring, \
     ButtonEditor, Tabbed
 
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
@@ -40,6 +41,7 @@ class ControlPane(TraitsDockPane):
     jitter_label = Str('Start')
     jittering = Bool
     configure_jitter_button = Button
+    configure_dump_button = Button
 
     refresh_states_button = Button('Refresh')
 
@@ -110,6 +112,9 @@ class ControlPane(TraitsDockPane):
             self.jitter_label = 'Start'
         self.jittering = not self.jittering
 
+    def _configure_dump_button_fired(self):
+        self.model.configure_dump()
+
     def _configure_jitter_button_fired(self):
         self.model.configure_jitter_feeder()
 
@@ -171,14 +176,17 @@ class ControlPane(TraitsDockPane):
                             show_border=True, label='Jitter')
 
         dump_grp = HGroup(UItem('pane.dump_sample_button',
+                                enabled_when='dump_sample_enabled',
                                 tooltip='Execute the complete sample loading procedure'),
                           UItem('pane.fire_magnets_button',
                                 enabled_when='not magnets_firing',
                                 tooltip='Execute the magnet sequence'),
                           UItem('pane.clear_sample_states_button'),
+                          icon_button_editor('pane.configure_dump_button', 'cog', tooltip='Configure Dumping'),
                           show_border=True, label='Dump')
-
-        d1 = VGroup(feeder_grp, funnel_grp, jitter_grp, dump_grp)
+        status_grp = HGroup(CustomLabel('status_txt', size=14))
+        d1 = VGroup(status_grp,
+                    feeder_grp, funnel_grp, jitter_grp, dump_grp)
         d2 = VGroup(
             # UItem('pane.refresh_states_button'),
             UItem('dumper_canvas', editor=ComponentEditor()))
