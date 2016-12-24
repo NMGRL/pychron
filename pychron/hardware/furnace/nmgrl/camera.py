@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from requests.exceptions import ConnectTimeout
-from requests.packages.urllib3.exceptions import ConnectTimeoutError
-from traits.api import provides, Str
-# ============= standard library imports ========================
 import logging
+from cStringIO import StringIO
 
-from numpy import array
 import requests
 from PIL import Image
-from cStringIO import StringIO
-# ============= local library imports  ==========================
+from numpy import array
+from requests.exceptions import ConnectTimeout, ReadTimeout
+from traits.api import provides, Str
+
 from pychron.config_loadable import ConfigLoadable
 from pychron.hardware.core.i_core_device import ICoreDevice
 
@@ -36,7 +34,7 @@ def timeout(func):
     def wrapper(obj, *args, **kw):
         try:
             return func(obj, *args, **kw)
-        except ConnectTimeout:
+        except (ConnectTimeout, ReadTimeout):
             return False
 
     return wrapper
@@ -53,11 +51,6 @@ class NMGRLCamera(ConfigLoadable):
 
     def initialize(self, *args, **kw):
         self._session = requests.Session()
-        return True
-
-    def initialize(self, *args, **kw):
-        self._session = requests.Session()
-
         return True
 
     @timeout
