@@ -22,7 +22,7 @@ from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
-from traits.api import TraitError, Instance, Float, provides, Bool
+from traits.api import TraitError, Instance, Float, provides, Bool, Str, Property
 
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
@@ -31,6 +31,7 @@ from pychron.core.progress import open_progress
 from pychron.core.ui.led_editor import LED
 from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
+from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
@@ -105,6 +106,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     funnel_down_enabled = Bool(True)
     funnel_up_enabled = Bool(False)
     settings_name = 'furnace_settings'
+    status_txt = Str
+
+    dump_sample_enabled = Property(depends_on='dump_funnel_safety_override, funnel_up_enabled')
+    dump_funnel_safety_override = Bool
 
     _alive = False
     _dumper_thread = None
@@ -264,6 +269,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.debug('configure jitter')
         self.stage_manager.feeder.configure()
 
+    def configure_dump(self):
+        self.debug('configure dump')
+        v = ConfigureDump(model=self)
+        v.edit_traits()
+
     def is_dump_complete(self):
         ret = self._dumper_thread is None
         return ret
@@ -271,10 +281,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def actuate_magnets(self, check_logic=True):
         self.debug('actuate magnets check_logic={}'.format(check_logic))
         check = True
-        if check_logic:
+        if check_logic and not self.dump_funnel_safety_override:
             check = self.loader_logic.check('AM')
 
         if check:
+            self.status_txt = 'Actuating Magnets'
 
             self.stage_manager.feeder.start_jitter()
             self.magnets.energize()
@@ -292,6 +303,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             time.sleep(5)
 
             self.stage_manager.feeder.stop_jitter()
+            self.status_txt = ''
         else:
             cm = self.loader_logic.get_check_message()
             self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
@@ -302,10 +314,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def lower_funnel(self):
         self.debug('lower funnel')
         if self.loader_logic.check('FD'):
+            self.status_txt = 'Lowering Funnel'
             self.funnel_down_enabled = False
             self.funnel.lower()
             self.funnel_up_enabled = True
             self.dumper_canvas.set_item_state('Funnel', True)
+            self.status_txt = ''
             return True
         else:
             cm = self.loader_logic.get_check_message()
@@ -314,10 +328,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def raise_funnel(self, force=False):
         self.debug('raise funnel. force={}'.format(force))
         if self.loader_logic.check('FU') or force:
+            self.status_txt = 'Raising Funnel'
             self.funnel_up_enabled = False
             self.funnel.raise_()
             self.funnel_down_enabled = True
             self.dumper_canvas.set_item_state('Funnel', False)
+            self.status_txt = ''
             return True
         else:
             cm = self.loader_logic.get_check_message()
@@ -648,6 +664,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
         self.dumper_canvas.request_redraw()
         return success
+
+    def _get_dump_sample_enabled(self):
+        return self.funnel_up_enabled or self.dump_funnel_safety_override
 
     # handlers
     def _setpoint_changed(self, new):
