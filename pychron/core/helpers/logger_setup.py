@@ -97,7 +97,6 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     #     warnings.simplefilter('default')
     bdir = paths.log_dir if root is None else root
 
-
     # make sure we have a log directory
     # if not os.path.isdir(bdir):
     #     os.mkdir(bdir)
@@ -137,13 +136,35 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     handlers = [shandler]
     if use_file:
         rhandler = RotatingFileHandler(
-                logpath, maxBytes=1e7, backupCount=50)
+            logpath, maxBytes=1e7, backupCount=50)
         handlers.append(rhandler)
 
+    fmt = logging.Formatter(gFORMAT)
     for hi in handlers:
         hi.setLevel(gLEVEL)
-        hi.setFormatter(logging.Formatter(gFORMAT))
+        hi.setFormatter(fmt)
         root.addHandler(hi)
+
+
+def add_root_handler(path, level=None, strformat=None, **kw):
+    if level is None:
+        level = gLEVEL
+    if format is None:
+        strformat = gFORMAT
+
+    root = logging.getLogger()
+    handler = logging.FileHandler(path, **kw)
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter(strformat))
+    root.addHandler(handler)
+
+    return handler
+
+
+def remove_root_handler(handler):
+    root = logging.getLogger()
+    root.removeHandler(handler)
+
 
 
 def new_logger(name):

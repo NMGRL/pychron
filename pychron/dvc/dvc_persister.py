@@ -18,6 +18,7 @@
 import base64
 import hashlib
 import os
+import shutil
 import struct
 from datetime import datetime
 
@@ -265,6 +266,15 @@ class DVCPersister(BasePersister):
             self._save_analysis_db(timestamp)
         self.debug('================= post measurement finished')
         return ret
+
+    def save_run_log_file(self, path):
+        npath = self._make_path('logs', '.log')
+        shutil.copyfile(path, npath)
+        ar = self.active_repository
+        ar.smart_pull(accept_their=True)
+        ar.add(npath, commit=False)
+        ar.commit('<COLLECTION> log')
+        self.dvc.push_repository(ar)
 
     # private
     def _check_repository_identifier(self):
