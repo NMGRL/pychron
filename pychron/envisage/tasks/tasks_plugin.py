@@ -35,7 +35,6 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
-from pychron.envisage.user_login import get_user
 from pychron.globals import globalv
 from pychron.paths import paths
 
@@ -70,14 +69,8 @@ class PychronTasksPlugin(BasePlugin):
         self._random_tip()
 
     def _set_user(self):
-        user = get_user()
-        if not user:
-            import os
-            os._exit(0)
-        else:
-            globalv.username = user
-            self.application.preferences.set('pychron.general.username', user)
-            self.application.preferences.save()
+        self.application.preferences.set('pychron.general.username', globalv.username)
+        self.application.preferences.save()
 
     def _random_tip(self):
         if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):

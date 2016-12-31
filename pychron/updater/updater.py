@@ -23,11 +23,9 @@ from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
 from traits.api import Bool, Str
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.loggable import Loggable
-from pychron.paths import paths
+from pychron.paths import build_repo
 from pychron.paths import r_mkdir
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
@@ -437,7 +435,7 @@ class Updater(Loggable):
         if not self._repo:
             from git import Repo
 
-            p = paths.build_repo
+            p = build_repo
             if not os.path.isdir(p):
                 r_mkdir(p)
                 url = 'https://github.com/{}.git'.format(self.remote)

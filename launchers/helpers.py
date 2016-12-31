@@ -212,7 +212,6 @@ def monkey_patch_panel():
 
     from traitsui.qt4 import ui_panel
     ui_panel._Panel = myPanel
-    print ui_panel._Panel
 
 
 def monkey_patch_checkbox_render():
@@ -416,8 +415,15 @@ def initialize_version(appname, debug):
     else:
         build_sys_path()
 
-    from pychron.environment.util import get_environment
-    env = get_environment(appname)
+    # from pychron.environment.util import get_environment
+    # env = get_environment(appname)
+    from pychron.envisage.user_login import get_user
+    args = get_user()
+    if args is None:
+        return False
+    else:
+        user, env = args
+
     if not env:
         logger.info('no environment available')
         from pyface.directory_dialog import DirectoryDialog
@@ -458,7 +464,7 @@ def initialize_version(appname, debug):
         cp.write(wfile)
 
     # build globals
-    build_globals(debug)
+    build_globals(user, debug)
 
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories
@@ -499,7 +505,7 @@ def add_eggs(root):
                 print os.path.join(root, egg_name)
 
 
-def build_globals(debug):
+def build_globals(user, debug):
     try:
         from pychron.envisage.initialization.initialization_parser import InitializationParser
     except ImportError, e:
@@ -513,5 +519,5 @@ def build_globals(debug):
 
     globalv.build(ip)
     globalv.debug = debug
-
+    globalv.username = user
 # ============= EOF =============================================

@@ -41,19 +41,39 @@ def get_file_text(d):
     return txt
 
 
+HOME = path.expanduser('~')
+global_hidden = os.path.join(HOME, '.pychron.{}'.format(os.environ.get('APPLICATION_ID', 0)))
+if not os.path.isdir(global_hidden):
+    mkdir(global_hidden)
+
+build_repo = os.path.join(global_hidden, 'updates')
+users_file = os.path.join(global_hidden, 'users')
+environments_file = os.path.join(global_hidden, 'environments')
+
+resources = os.path.join(path.dirname(path.dirname(__file__)), 'resources')
+icons = os.path.join(resources, 'icons')
+images = os.path.join(resources, 'images')
+splashes = os.path.join(resources, 'splashes')
+labspy_templates = os.path.join(resources, 'labspy_templates')
+abouts = os.path.join(resources, 'abouts')
+sounds = os.path.join(resources, 'sounds')
+
+image_search_path = [images]
+icon_search_path = [icons]
+splash_search_path = [splashes]
+about_search_path = [abouts]
+sounds_search_path = [sounds]
+
+
 class Paths(object):
     github_url = 'https://github.com'
     github_api_url = 'https://api.github.com'
     dissertation = '/Users/ross/Programming/git/dissertation'
-    # enthought = path.join(path.expanduser('~'), '.enthought')
-    # users_file = path.join(enthought, 'users')
-    base = path.expanduser('~')
 
     # version = None
     root = None
     bundle_root = None
-    # pychron_src_root = None
-    # doc_html_root = None
+
     icons = ''
     images = ''
     splashes = None
@@ -89,14 +109,10 @@ class Paths(object):
     appdata_dir = None
     labspy_dir = None
     labspy_context_dir = None
-    # users_file = None
-    global_hidden = None
-    build_repo = None
 
     # login
     login_file = None
     last_login_file = None
-    users_file = None
 
     preferences_dir = None
     comment_templates_dir = None
@@ -268,40 +284,6 @@ class Paths(object):
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
 
-    def set_search_paths(self, app_rec=None):
-        self.app_resources = app_rec
-        self.set_icon_search_path()
-        self.set_splash_search_path()
-        self.set_about_search_path()
-        self.set_image_search_path()
-        self.set_sound_search_path()
-        self.set_labspy_template_search_path()
-
-    def set_image_search_path(self):
-        self.image_search_path = [self.images,
-                                  self.app_resources]
-
-    def set_icon_search_path(self):
-        ps = [self.icons, self.app_resources]
-        if self.app_resources:
-            ps.append(path.join(self.app_resources, 'icons'))
-
-        self.icon_search_path = ps
-
-    def set_splash_search_path(self):
-        self.splash_search_path = [self.splashes, self.app_resources]
-
-    def set_about_search_path(self):
-        self.about_search_path = [self.abouts, self.app_resources]
-
-    def set_sound_search_path(self):
-        self.sound_search_path = [self.sounds,
-                                  self.app_resources]
-
-    def set_labspy_template_search_path(self):
-        self.labspy_template_search_path = [self.labspy_templates,
-                                            self.app_resources]
-
     def build(self, root):
         join = path.join
         # self.version = version
@@ -320,14 +302,6 @@ class Paths(object):
 
         self.root_dir = root
         self.log_dir = join(root, 'logs')
-
-        self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
-        self.icons = join(self.resources, 'icons')
-        self.images = join(self.resources, 'images')
-        self.splashes = join(self.resources, 'splashes')
-        self.labspy_templates = join(self.resources, 'labspy_templates')
-        self.abouts = join(self.resources, 'abouts')
-        self.sounds = join(self.resources, 'sounds')
 
         # ==============================================================================
         # root
@@ -364,14 +338,12 @@ class Paths(object):
 
         self.plotter_options_dir = join(self.appdata_dir, 'plotter_options')
         self.comment_templates_dir = join(self.appdata_dir, 'comment_templates')
-        self.global_hidden = join(self.base, '.pychron')
-        self.build_repo = join(self.global_hidden, 'updates')
+
         self.peak_center_config_dir = join(self.appdata_dir, 'peak_center_configs')
 
         # login
         self.login_file = join(self.appdata_dir, 'login')
         self.last_login_file = join(self.appdata_dir, 'last_login')
-        self.users_file = join(self.appdata_dir, 'users')
         # ==============================================================================
         # setup
         # ==============================================================================
@@ -460,7 +432,7 @@ class Paths(object):
 
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
-        self.set_search_paths()
+        # self.set_search_paths()
         self.system_conditionals = join(self.spectrometer_dir, 'system_conditionals.yaml')
         self.experiment_defaults = join(setup_dir, 'experiment_defaults.yaml')
         self.ideogram_defaults = join(self.appdata_dir, 'ideogram_defaults.yaml')
