@@ -30,7 +30,8 @@ from traits.trait_errors import TraitError
 
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
-from pychron.core.helpers.filetools import add_extension, get_path
+from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
+from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.notification_manager import NotificationManager
 from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -141,6 +142,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     dashboard_client = Instance('pychron.dashboard.client.DashboardClient')
 
     scheduler = Instance(ExperimentScheduler)
+
+    events = List
     # ===========================================================================
     #
     # ===========================================================================
@@ -279,6 +282,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # general
         self._preference_binder('pychron.general', ('default_principal_investigator',))
+
+    def add_event(self, *events):
+        self.events.extend(events)
 
     def execute(self):
 
@@ -741,6 +747,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _do_run(self, run):
         self._set_thread_name(run.runid)
+        # add a new log handler
+        p, _ = unique_path2(paths.log_dir, run.runid, extension='.log')
+        handler = add_root_handler(p)
+        run.log_path = p
 
         st = time.time()
 
@@ -835,6 +845,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._do_event(events.END_RUN,
                        run=run,
                        experiment_queue=self.experiment_queue)
+
+        remove_root_handler(handler)
+        run.post_finish()
         self._set_thread_name(self.experiment_queue.name)
 
     def _close_cv(self):

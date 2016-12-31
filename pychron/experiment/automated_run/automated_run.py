@@ -192,6 +192,8 @@ class AutomatedRun(Loggable):
     intensity_scalar = Float
     _intensities = None
 
+    log_path = Str
+
     def set_preferences(self, preferences):
         self.debug('set preferences')
 
@@ -1015,31 +1017,12 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-    def _set_filtering(self):
-        self.debug('Set filtering')
-
-        def _get_filter_outlier_dict(iso, kind):
-            if kind == 'baseline':
-                fods = self.persistence_spec.baseline_fods
-                key = iso.detector
+    def post_finish(self):
+        if self.use_dvc_persistence:
+            if self.log_path:
+                self.dvc_persister.save_run_log_file(self.log_path)
             else:
-                fods = self.persistence_spec.signal_fods
-                key = iso.name
-
-            try:
-                fod = fods[key]
-            except KeyError:
-                fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
-            return fod
-
-        for i in self.isotope_group.isotopes.itervalues():
-            fod = _get_filter_outlier_dict(i, 'signal')
-            self.debug('setting fod for {}= {}'.format(i.name, fod))
-            i.set_filtering(fod)
-
-            fod = _get_filter_outlier_dict(i, 'baseline')
-            i.baseline.set_filtering(fod)
-            self.debug('setting fod for {}= {}'.format(i.detector, fod))
+                self.debug('no log path to save')
 
     def save(self):
         self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
@@ -1527,6 +1510,32 @@ anaylsis_type={}
         self.setup_persister()
 
         return True
+
+    def _set_filtering(self):
+        self.debug('Set filtering')
+
+        def _get_filter_outlier_dict(iso, kind):
+            if kind == 'baseline':
+                fods = self.persistence_spec.baseline_fods
+                key = iso.detector
+            else:
+                fods = self.persistence_spec.signal_fods
+                key = iso.name
+
+            try:
+                fod = fods[key]
+            except KeyError:
+                fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
+            return fod
+
+        for i in self.isotope_group.isotopes.itervalues():
+            fod = _get_filter_outlier_dict(i, 'signal')
+            self.debug('setting fod for {}= {}'.format(i.name, fod))
+            i.set_filtering(fod)
+
+            fod = _get_filter_outlier_dict(i, 'baseline')
+            i.baseline.set_filtering(fod)
+            self.debug('setting fod for {}= {}'.format(i.detector, fod))
 
     def _update_persister_spec(self, **kw):
         self.persistence_spec.trait_set(**kw)

@@ -791,7 +791,7 @@ class ExperimentEditorTask(EditorTask):
 
         experimentor.executor.set_managers()
         experimentor.executor.bind_preferences()
-        experimentor.executor.events = self.events
+        experimentor.executor.add_event(*self.events)
 
         return experimentor
 
