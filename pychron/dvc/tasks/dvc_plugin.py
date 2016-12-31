@@ -58,8 +58,7 @@ class DVCPlugin(BaseTaskPlugin):
             self.debug('dumping usernames {}'.format(names))
             if names:
                 from pychron.envisage.user_login import dump_user_file
-                from pychron.globals import globalv
-                dump_user_file(names=names, last_login_name=globalv.username)
+                dump_user_file(names)
 
     def test_database(self):
         ret, err = True, ''

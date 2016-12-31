@@ -25,11 +25,9 @@ from pyface.image_resource import ImageResource
 from traits.api import List, Str
 
 from pychron.applications.about_dialog import myAboutDialog
-from pychron.environment.util import set_application_home
 from pychron.envisage.resources import splash_icon
 from pychron.envisage.tasks.base_tasks_application import BaseTasksApplication
-from pychron.globals import globalv
-from pychron.paths import paths
+from pychron.paths import about_search_path
 
 
 def get_resource_root():
@@ -42,7 +40,7 @@ def get_resource_root():
     return path
 
 
-paths.set_search_paths(get_resource_root())
+# paths.set_search_paths(get_resource_root())
 
 
 def revision_str(rev):
@@ -62,15 +60,16 @@ class PychronApplication(BaseTasksApplication):
     environment = Str
 
     def __init__(self, *args, **kw):
-        # if username:
-        #     self.name = '{} - {}'.format(self.shortname, username)
-        #     self.username = username
-        #     globalv.username = username
-
         super(PychronApplication, self).__init__(*args, **kw)
 
-        set_application_home(self.name.lower())
         bind_preference(self, 'environment', 'pychron.general.environment')
+
+    def _initialize_application_home(self):
+        """
+        override from envisage.application.Application because ETSConfig.application_home is already set
+        :return:
+        """
+        pass
 
     def _environment_changed(self, old, new):
         if new:
@@ -85,10 +84,9 @@ class PychronApplication(BaseTasksApplication):
         super(PychronApplication, self).exit(**kw)
 
     def stop(self):
-        from pychron.envisage.user_login import set_last_login
-
-        self.debug('set last login. username={}'.format(globalv.username))
-        set_last_login(globalv.username, True, True)
+        # from pychron.envisage.user_login import set_last_login
+        # self.debug('set last login. username={}'.format(globalv.username))
+        # set_last_login(globalv.username)
 
         import threading
         self.debug('------------------- Alive Threads -------------------')
@@ -111,7 +109,7 @@ class PychronApplication(BaseTasksApplication):
     def _about_dialog_default(self):
         about_dialog = myAboutDialog(
             image=ImageResource(name='about.png',
-                                search_path=paths.about_search_path))
+                                search_path=about_search_path))
 
         about_dialog.version_info = self.get_version_info()
         about_dialog.additions = self.about_additions

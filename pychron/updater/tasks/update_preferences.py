@@ -24,12 +24,10 @@ from pyface.message_dialog import warning
 from traits.api import Str, Bool, List, Button, Instance
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
-from pychron.paths import paths
+from pychron.paths import build_repo
 from pychron.pychron_constants import LINE_STR
 
 
@@ -65,12 +63,12 @@ class Updater:
     def _get_working_repo(self, inform):
         if not self._repo:
             try:
-                self._repo = Repo(paths.build_repo)
+                self._repo = Repo(build_repo)
             except InvalidGitRepositoryError:
                 if inform:
                     warning(None, 'Invalid Build repository {}.\n'
                                   'Pychron not properly configured for update. \n\n'
-                                  'Contact developer'.format(paths.build_repo))
+                                  'Contact developer'.format(build_repo))
         return self._repo
 
 
@@ -106,8 +104,8 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
             remotes = [bi for bi in bs if bi.startswith('release') or bi in ('develop', 'master')]
 
             localbranches = []
-            if os.path.isdir(os.path.join(paths.build_repo, '.git')):
-                repo = Repo(paths.build_repo)
+            if os.path.isdir(os.path.join(build_repo, '.git')):
+                repo = Repo(build_repo)
                 localbranches = [b.name for b in repo.branches if b.name not in remotes]
 
             if localbranches:

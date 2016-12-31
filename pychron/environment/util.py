@@ -21,11 +21,11 @@ import os
 
 from traits.etsconfig.etsconfig import ETSConfig
 
-ROOT = os.path.join(os.path.expanduser('~'), '.pychron')
+from pychron.paths import global_hidden
 
 
 def get_path(appname):
-    return os.path.join(ROOT, '{}.active_env'.format(appname))
+    return os.path.join(global_hidden, '{}.active_env'.format(appname))
 
 
 def get_environment(appname):
