@@ -20,5 +20,5 @@
 # ============= local library imports  ==========================
 from helpers import entry_point
 
-entry_point('pyvalve', 'PyValve', '_valve', debug=True)
+entry_point('pyvalve', 'PyValve', debug=True)
 # ============= EOF =============================================
