@@ -123,7 +123,7 @@ class ExtractionLineManager(Manager, Consoleable):
             try:
                 bind_preference(self, attr, '{}.{}'.format(prefid, attr))
             except BaseException, e:
-                print attr, e
+                print 'fffffffff', attr, e
         # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
         # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
         # bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
@@ -285,7 +285,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state, **kw)
+            c.update_switch_state(name, state, *args)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
