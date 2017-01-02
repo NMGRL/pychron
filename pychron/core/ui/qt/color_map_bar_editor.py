@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from chaco.default_colormaps import color_map_dict
+from chaco.data_range_1d import DataRange1D
+from chaco.default_colormaps import color_map_dict, color_map_name_dict
 from pyface.qt.QtGui import QPainter, QColor, QFrame
 from traits.api import Float, Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
-
+from numpy import array
 
 # ============= local library imports  ==========================
 # from matplotlib.cm import get_cmap
@@ -62,7 +63,7 @@ class Bar(QFrame):
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
-        vs = self.cmap(nv)[:3]
+        vs = self.cmap.map_screen(array([nv,]))[0][:3]
         self.value = map(lambda x: x * 255, vs)
         self.update()
 
@@ -75,8 +76,7 @@ class _BarGaugeEditor(Editor):
         self.control.color_scalar = self.factory.color_scalar
         self.control.bar_width = self.factory.width
         self.control.scale = self.factory.scale
-        self.control.cmap = color_map_dict[self.factory.colormap]
-
+        self.control.cmap = color_map_name_dict[self.factory.colormap](DataRange1D(low_setting=0, high_setting=255))
 
     def update_editor(self):
         if self.control:
