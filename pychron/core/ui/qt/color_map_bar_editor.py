@@ -71,12 +71,16 @@ class Bar(QFrame):
 class _BarGaugeEditor(Editor):
     def init(self, parent):
         self.control = Bar()
-        self.control.low = self.factory.low
-        self.control.high = self.factory.high
+        self.control.low = low = self.factory.low
+        self.control.high = high = self.factory.high
         self.control.color_scalar = self.factory.color_scalar
         self.control.bar_width = self.factory.width
         self.control.scale = self.factory.scale
-        self.control.cmap = color_map_name_dict[self.factory.colormap](DataRange1D(low_setting=0, high_setting=255))
+
+        # if self.factory.scale == 'power':
+        #     high = N = 1 / float(self.color_scalar)
+        #     A = 1 / self.high ** N
+        self.control.cmap = color_map_name_dict[self.factory.colormap](DataRange1D(low_setting=0, high_setting=1))
 
     def update_editor(self):
         if self.control:
