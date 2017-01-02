@@ -499,9 +499,10 @@ class SwitchManager(Manager):
             if v.query_state:
                 ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
-                if ostate != s:
-                    self.refresh_state = (k, s, False)
-                    update = True
+                self.refresh_state = (k, s, False)
+                # if ostate != s:
+                update = update or ostate != s
+
         if update:
             self.refresh_canvas_needed = True
 
@@ -515,13 +516,17 @@ class SwitchManager(Manager):
 
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
+        update = False
         for k, v in self.switches.iteritems():
+            ostate = v.state
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
             if v.state != s:
-                self.refresh_state = (k, s, False)
+                update = update or ostate !=s
+            self.refresh_state = (k, s, False)
 
-        self.refresh_canvas_needed = True
+        if update:
+            self.refresh_canvas_needed = True
 
     def _load_manual_states(self):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))

@@ -288,11 +288,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.request_redraw()
 
     def _get_switch_by_name(self, name):
-        s = next((i for i in self.iter_valves() if i.name == name), None)
-        if s is None:
-            names = [i.name for i in self.iter_valves()]
-            self.debug('No switch with name "{}". Names={}'.format(name, names))
-        return s
+        if self.scene and self.scene.valves:
+            s = next((i for i in self.iter_valves() if i.name == name), None)
+            if s is None:
+                names = [i.name for i in self.iter_valves()]
+                print 'No switch with name "{}". Names={}'.format(name, names)
+
+            return s
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)
