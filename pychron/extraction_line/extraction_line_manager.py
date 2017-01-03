@@ -474,7 +474,7 @@ class ExtractionLineManager(Manager, Consoleable):
             do_after(self.hardware_update_period * 1000, self._update_states)
 
     def _update_states(self):
-        self.switch_manager.load_hardware_states()
+        self.switch_manager.load_indicator_states()
         self._trigger_update()
 
     def _refresh_canvas(self):

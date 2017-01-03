@@ -157,19 +157,16 @@ class PeakHopCollector(DataCollector):
                     for det, defl in zd:
                         # use the measurement script to set the deflections
                         # this way defaults from the config can be used
-                        if defl is None:
-                            defl = ''
-                        else:
+                        if defl is not None:
                             self._was_deflected = True
-
-                        self.automated_run.set_deflection(det, defl)
+                            self.automated_run.set_deflection(det, defl)
 
                 self._protect_detectors(pdets)
                 self.debug('----------------------- HOP {} {}'.format(isotope, detector))
                 change = self.parent.set_magnet_position(isotope, detector,
                                                          update_detectors=False,
                                                          update_labels=False,
-                                                         update_isotopes = False,
+                                                         update_isotopes=False,
                                                          # update_isotopes=not is_baseline,
                                                          remove_non_active=False)
 
@@ -204,7 +201,8 @@ class PeakHopCollector(DataCollector):
 
             dac = self.parent.get_current_dac()
             invoke_in_main_thread(self.plot_panel.trait_set,
-                                  current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector, cycle + 1, count + 1),
+                                  current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
+                                                                                        cycle + 1, count + 1),
                                   current_color=current_color)
         return is_baseline, active_dets, isos
 

@@ -68,7 +68,7 @@ class ServiceProtocol(Protocol):
         self._cmd_delim = ' '
         self._arg_delim = ','
 
-        if logger:
+        if logger is None:
             logger = MockLogger()
 
         self.debug = logger.debug

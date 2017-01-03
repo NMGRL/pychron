@@ -24,8 +24,7 @@ ETSConfig.toolkit = "qt4"
 from ConfigParser import NoSectionError
 
 from pyface.confirmation_dialog import confirm
-from pyface.constant import OK
-from pyface.message_dialog import information, warning
+from pyface.message_dialog import warning
 
 from traitsui.qt4.table_editor import TableDelegate
 from pyface.qt import QtGui, QtCore
@@ -424,23 +423,24 @@ def initialize_version(appname, debug):
     else:
         user, env = args
 
-    if not env:
-        logger.info('no environment available')
-        from pyface.directory_dialog import DirectoryDialog
-
-        information(None, 'An "environment" directory is not set in Preferences/General. Please select a valid '
-                          'directory')
-        dlg = DirectoryDialog(action='open', default_directory=os.path.expanduser('~'))
-        result = dlg.open()
-        if result == OK:
-            env = str(dlg.path)
-            from pychron.environment.util import set_environment
-            set_environment(appname, env)
-    else:
-        set_application_home(appname, env)
+    # if not env:
+    #     logger.info('no environment available')
+    #     from pyface.directory_dialog import DirectoryDialog
+    #
+    #     information(None, 'An "environment" directory is not set in Preferences/General. Please select a valid '
+    #                       'directory')
+    #     dlg = DirectoryDialog(action='open', default_directory=os.path.expanduser('~'))
+    #     result = dlg.open()
+    #     if result == OK:
+    #         env = str(dlg.path)
+    #         from pychron.environment.util import set_environment
+    #         set_environment(appname, env)
+    # else:
 
     if not env:
         return False
+
+    set_application_home(appname, env)
 
     from pychron.paths import paths
     logger.debug('using Pychron environment: {}'.format(env))
