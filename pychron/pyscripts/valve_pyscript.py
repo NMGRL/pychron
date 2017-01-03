@@ -136,20 +136,30 @@ class ValvePyScript(PyScript):
             mode='script',
             description=description))], protocol=ELPROTOCOL)
         self.debug('locked={}'.format(locked))
-        if not ok and not locked[0]:
-            self.console_info('Failed to {} valve {} {}'.format(action, name, description))
 
+        if action == 'close':
+            ok = not ok
+
+        if not ok and not locked[0]:
+            msg = 'Failed to {} valve {} {}'.format(action, name, description)
+            self.console_info(msg)
+
+            cancel = True
             if self.retry_actuation and retry:
                 result = self._manager_action([('{}_valve'.format(action), (name,), dict(
                     mode='script',
                     description=description))], protocol=ELPROTOCOL)
                 if result is not None:
-                    self._finish_valve_change('close', result, name, description, retry=False)
+                    cancel = not self._finish_valve_change('close', result, name, description, retry=False)
 
-            if not globalv.experiment_debug:
-                self.cancel()
-            else:
-                self.debug('Experiment debug mode. not canceling')
+            if cancel:
+                if not globalv.experiment_debug:
+                    self.warning_dialog(msg)
+                    self.cancel()
+                else:
+                   self.debug('Experiment debug mode. not canceling')
+        else:
+            return True
 
     def _get_valve_state(self, name, description):
         return self._manager_action([('get_valve_state', (name,), dict(
