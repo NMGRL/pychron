@@ -16,7 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import io
+import os
+
 from twisted.internet.protocol import Factory
+from twisted.logger import Logger
+from twisted.logger import jsonFileLogObserver
 
 from pychron.tx.protocols.furnace import FurnaceProtocol
 from pychron.tx.protocols.laser import LaserProtocol
@@ -47,9 +52,15 @@ class FusionsUVFactory(LaserFactory):
     _name = 'FusionsUV'
 
 
+from pychron.paths import paths
+
+path = os.path.join(paths.log_dir, 'pps.log.json')
+
+logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
+
+
 class BaseFactory(Factory):
     protocol_klass = None
-    logger = None
 
     def __init__(self, application=None):
         self._app = application
@@ -58,7 +69,7 @@ class BaseFactory(Factory):
         if self.protocol_klass is None:
             raise NotImplementedError
 
-        return self.protocol_klass(self._app, addr, self.logger)
+        return self.protocol_klass(self._app, addr, logger)
 
 
 class ValveFactory(BaseFactory):
