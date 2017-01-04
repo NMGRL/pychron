@@ -570,7 +570,7 @@ class ThermoSpectrometer(SpectrometerDevice):
             # if self.microcontroller.simulation and globalv.communication_simulation:
             # keys, signals = self._get_simulation_data()
             # else:
-            datastr = self.ask('GetData', verbose=False, quiet=True)
+            datastr = self.ask('GetData', verbose=True, quiet=True)
             if datastr:
                 if 'ERROR' not in datastr:
                     data = datastr.split(',')
