@@ -469,6 +469,7 @@ class AutomatedRun(Loggable):
         correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
                              not self.spec.analysis_type.startswith('background'))
 
+        print hops
         for mass, dets in groupby(hops, key=key):
             dets = list(dets)
             iso = dets[0][1]
@@ -476,7 +477,7 @@ class AutomatedRun(Loggable):
                 continue
 
             add_detector = len(dets) > 1
-
+            print dets
             for _, _, di, _ in dets:
                 self._add_active_detector(di)
                 name = iso

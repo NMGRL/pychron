@@ -267,7 +267,9 @@ class ScanManager(StreamGraphManager):
         elif self._prev_signals is not None:
             try:
                 test = (signals == self._prev_signals).all()
-            except TypeError:
+            except (AttributeError, TypeError):
+                print 'signals', signals
+                print 'prev_signals', self._prev_signals
                 test = True
 
             if test:
@@ -281,6 +283,7 @@ class ScanManager(StreamGraphManager):
     def _update(self, data):
         keys, signals = data
         if keys:
+            self._signal_failed_cnt = 0
             if self._check_intensity_no_change(signals):
                 return
 
@@ -298,6 +301,14 @@ class ScanManager(StreamGraphManager):
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
+        else:
+            self._signal_failed_cnt+=1
+            if self._signal_failed_cnt > 3:
+                self.warning_dialog('Something appears to be wrong.\n\n'
+                                    'The detector intensities have not changed in 5 iterations. '
+                                    'Check Qtegra and RemoteControlServer.\n\n'
+                                    'Scan is stopped! Close and reopen window to restart')
+                self._stop_timer()
 
     def _update_scan_graph(self):
         if self.scan_enabled:

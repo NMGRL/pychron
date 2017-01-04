@@ -19,6 +19,7 @@
 import os
 import pickle
 
+from pyface.constant import OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import HasTraits, List, Str, Bool, Button
 from traitsui.api import View, Item, HGroup, UItem, Label, Handler, VGroup, EnumEditor
@@ -109,7 +110,7 @@ class Login(HasTraits):
 
     def _directory_select_button_fired(self):
         dlg = DirectoryDialog(default_path=HOME)
-        if dlg.open() and dlg.path:
+        if dlg.open() == OK and dlg.path:
             self.environments.append(dlg.path)
             self.environment = dlg.path
 

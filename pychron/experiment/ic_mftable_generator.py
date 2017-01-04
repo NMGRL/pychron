@@ -22,6 +22,9 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
+ARGON_IC_MFTABLE = True
+
+
 class ICMFTableGenerator(Loggable):
     def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop'):
         """
@@ -45,7 +48,7 @@ class ICMFTableGenerator(Loggable):
             self.info('Peak centering {}@{}'.format(di, refiso))
             ion.setup_peak_center(detector=[di], isotope=refiso,
                                   config_name=peak_center_config,
-                                  plot_panel=plot_panel, show_label=True)
+                                  plot_panel=plot_panel, show_label=True, use_configuration_dac=False)
 
             arun.peak_center = ion.peak_center
             ion.do_peak_center(new_thread=False, save=False, warn=False)
@@ -76,6 +79,17 @@ class ICMFTableGenerator(Loggable):
             # w.writerow(['{}{}'.format(iso, m - 1)] + results)
             # w.writerow(['{}{}'.format(iso, m - 1)] + results)
 
+            # temporary hack to full write the ic mf table
+            if ARGON_IC_MFTABLE and refiso == 'Ar40' and detectors[0] == 'H1':
+                row = ['Ar39', results[0]-0.1]
+                row.extend(results[1:])
+
+                w.writerow(row)
+
+                row = ['Ar36', results[0]-0.4]
+                row.extend(results[1:])
+
+                w.writerow(row)
 
 # ============= EOF =============================================
 

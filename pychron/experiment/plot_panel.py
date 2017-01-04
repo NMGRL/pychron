@@ -170,7 +170,7 @@ class PlotPanel(Loggable):
         """
             dets: list of Detector instances
         """
-
+        self.debug('create graphs')
         self.detectors = dets
 
         evt = Event()
@@ -342,6 +342,7 @@ class PlotPanel(Loggable):
 
     def _isotope_graph_default(self):
         g = self._graph_factory()
+        print 'default',g
         g.page_name = 'Ar'
         return g
 
