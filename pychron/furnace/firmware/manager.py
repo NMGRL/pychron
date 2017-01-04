@@ -49,9 +49,9 @@ DEVICES = {'controller': HeadlessEurotherm,
 
 def debug(func):
     def wrapper(obj, data):
-        obj.debug('------ {}, data={}'.format(func.__name__, data))
+ #       obj.debug('------ {}, data={}'.format(func.__name__, data))
         r = func(obj, data)
-        obj.debug('------ result={}'.format(r))
+#        obj.debug('------ result={}'.format(r))
         return r
 
     return wrapper
@@ -88,7 +88,7 @@ class FirmwareManager(HeadlessLoggable):
         self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
-
+        print 'asdfasfdasdfasdfasfasdfasdfadsfa', yd['magnets']
         if self._use_broadcast_service:
             self._broadcaster = Broadcaster()
             self._broadcaster.setup(self._broadcaster_port)
@@ -320,6 +320,7 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def energize_magnets(self, data):
+        print '---------------------------- aasdfasdf', self._magnet_channels
         if self.switch_controller:
             period = 3
             if data:
@@ -347,7 +348,7 @@ class FirmwareManager(HeadlessLoggable):
             return True
 
     @debug
-    def is_energized(self):
+    def is_energized(self, data):
         return self._is_energized
 
     @debug
@@ -497,10 +498,9 @@ class FirmwareManager(HeadlessLoggable):
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
             #print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
-            if open_ch is None:
-                oresult = self.get_channel_state(alt_ch)
-                if inverted:
-                    oresult = not oresult
+            if open_ch=='inverted':
+                oresult = self.switch_controller.get_channel_state(alt_ch)
+                oresult = not oresult
             else:
                 invert = False
                 if open_ch.startswith('i'):
@@ -586,14 +586,14 @@ class FirmwareManager(HeadlessLoggable):
             name = data['name']
         else:
             name = data
-
+        name = str(name)
         ch = self._switch_mapping.get(name, '')
         inverted = False
         if ',' in str(ch):
             ch, inverted = ch.split(',')
             inverted = to_bool(inverted)
 
-        self.debug('get switch channel {} {}'.format(name, ch))
+        #self.debug('get switch channel {} {}'.format(name, ch))
         return ch, inverted
 
     def _get_switch_indicator(self, data):
@@ -605,7 +605,9 @@ class FirmwareManager(HeadlessLoggable):
 
         close_ch = None
         open_ch = self._switch_indicator_mapping.get(name)
-        self.debug('get switch indicator channel {} {}'.format(name, open_ch))
+        #self.debug('get switch indicator channel {} {}'.format(name, open_ch))
+        if open_ch == 'inverted':
+            return open_ch, None, None 
 
         if ',' in str(open_ch):
             def prep(ch):
