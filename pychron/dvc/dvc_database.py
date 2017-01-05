@@ -1129,15 +1129,22 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(PrincipalInvestigatorTbl)
                 q = q.filter(ProjectTbl.name == name)
 
+                # principal_investigator_filter()
+                pi = self.get_principal_investigator(pi)
                 if pi:
-                    pi = self.get_principal_investigator(pi)
-                q = q.filter(PrincipalInvestigatorTbl.name == pi.name)
+                    q = q.filter(PrincipalInvestigatorTbl.name == pi.name)
+
                 return self._query_one(q)
         else:
             return self._retrieve_item(ProjectTbl, name)
 
     def get_principal_investigator(self, name):
-        return self._retrieve_item(PrincipalInvestigatorTbl, name)
+        with self.session_ctx() as sess:
+            q = sess.query(PrincipalInvestigatorTbl)
+            q = principal_investigator_filter(q, name)
+            return self._query_one(q)
+
+            # return self._retrieve_item(PrincipalInvestigatorTbl, name)
 
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
