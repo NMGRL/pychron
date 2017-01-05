@@ -93,7 +93,7 @@ class SampleEditModel(HasTraits):
                 dbsam = db.get_sample_id(si.id)
                 dbsam.name = si.name
                 dbsam.note = si.note
-
+                print extract_names(si.project), si.project
                 dbproj = db.get_project(*extract_names(si.project))
                 if dbproj:
                     dbsam.projectID = dbproj.id
