@@ -69,7 +69,7 @@ class ICMFTableGenerator(Loggable):
         self.info('Writing new IC MFTable to {}'.format(p))
         with open(p, 'w') as wfile:
             w = csv.writer(wfile)
-            w.writerow(['discrete'])
+            w.writerow(['parabolic'])
             header = ['iso'] + list(detectors)
             w.writerow(header)
             w.writerow([refiso] + results)
@@ -80,7 +80,7 @@ class ICMFTableGenerator(Loggable):
             # w.writerow(['{}{}'.format(iso, m - 1)] + results)
 
             # temporary hack to full write the ic mf table
-            if ARGON_IC_MFTABLE and refiso == 'Ar40' and detectors[0] == 'H1':
+            if ARGON_IC_MFTABLE and refiso == 'Ar40' and detectors[0] in ('H1', 'H2'):
                 row = ['Ar39', results[0]-0.1]
                 row.extend(results[1:])
 
