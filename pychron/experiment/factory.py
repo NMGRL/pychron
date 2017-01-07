@@ -448,10 +448,10 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
     def _dvc_changed(self):
         self.queue_factory.dvc = self.dvc
         self.run_factory.dvc = self.dvc
-    #
-    # def _application_changed(self):
-    #     self.run_factory.application = self.application
-    #     self.queue_factory.application = self.application
+
+    def _application_changed(self):
+        self.run_factory.application = self.application
+        self.queue_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
         self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))

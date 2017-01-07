@@ -238,6 +238,7 @@ class MagnetFieldTable(Loggable):
     def dump(self, isos, d, message):
         detectors = self._detectors
         p = self.path
+        self.debug('dump mftable to {}'.format(p))
         with open(p, 'w') as f:
             writer = csv.writer(f)
             writer.writerow([self.mass_cal_func])
