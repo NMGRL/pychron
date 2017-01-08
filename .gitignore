@@ -1,6 +1,7 @@
 *.hg
 *.idea
 *.pyc
+*.pyo
 zobs/
 docs/_build
 sandbox/

@@ -66,6 +66,8 @@ class PeakCenterConfig(HasTraits):
     dac_offset = Float
     calculate_all_peaks = Bool
 
+    update_others = Bool(True)
+
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
@@ -105,6 +107,9 @@ class PeakCenterConfig(HasTraits):
                         HGroup(Item('use_dac_offset', label='DAC Offset'),
                                UItem('dac_offset', enabled_when='use_dac_offset')),
                         Item('calculate_all_peaks'),
+                        Item('update_others', label='Update All Detectors', tooltip='Update all the detectors in the '
+                                                                                    'mftable not only the reference '
+                                                                                    'detector'),
                         show_border=True, label='Post Process')
 
         v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),

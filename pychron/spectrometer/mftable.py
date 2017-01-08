@@ -21,9 +21,7 @@ import os
 import shutil
 
 from numpy import asarray, array, nonzero, polyval
-
 from scipy.optimize import leastsq, brentq
-
 from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
 
 from pychron.core.helpers.filetools import add_extension
@@ -163,10 +161,13 @@ class MagnetFieldTable(Loggable):
     def polynominal_mass_func(self):
         return self.mass_cal_func in ('linear', 'parabolic', 'cubic')
 
-    def update_field_table(self, det, isotope, dac, message='', save=True, report=False):
+    def update_field_table(self, det, isotope, dac, message='', save=True, report=False, update_others=True):
         """
 
             dac needs to be in axial units
+
+
+            update_others.  If false only
         """
         det = get_detector_name(det)
 
@@ -183,22 +184,24 @@ class MagnetFieldTable(Loggable):
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
-            for k, (iso, xx, yy, _) in d.iteritems():
-                # ny = yy + delta
-                ndacs = [yi + delta if yi != NULL_STR else NULL_STR for yi in yy]
-                xs, ny = self._clean_dacs(xx, ndacs)
+            for k, (isoks, mws, dacs, _) in d.iteritems():
+                if not update_others and k != det:
+                    continue
+
+                ndacs = [yi + delta if yi != NULL_STR else NULL_STR for yi in dacs]
+                xs, ny = self._clean_dacs(mws, ndacs)
                 initial_guess = self._get_initial_guess(ny, xs)
                 if initial_guess:
                     p = least_squares(polyval, xs, ny, initial_guess)
                 else:
                     p = None
-                d[k] = iso, xx, ndacs, p
+                d[k] = isoks, mws, ndacs, p
+
             if save:
                 self.dump(isos, d, message)
 
             if report:
                 self.print_table(isos, d)
-                # self._mftable = isos, xs, ys
 
         except ValueError:
             import traceback
