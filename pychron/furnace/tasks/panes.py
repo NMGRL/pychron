@@ -48,6 +48,7 @@ class ControlPane(TraitsDockPane):
     funnel_up_button = Button
     funnel_down_button = Button
     force_funnel_up_button = Button
+    funnel_set_home_button = Button('Set Home')
 
     feeder_set_home_button = Button('Set Home')
     toggle_advanced_view_button = Button
@@ -75,6 +76,9 @@ class ControlPane(TraitsDockPane):
 
     def _disable_button_fired(self):
         self.model.setpoint = 0
+
+    def _funnel_set_home_button_fired(self):
+        self.model.funnel.set_home()
 
     def _force_funnel_up_fired(self):
         def func():
@@ -170,6 +174,7 @@ class ControlPane(TraitsDockPane):
                                    UItem('pane.force_funnel_up_button', tooltip='Force funnel to raise'),
                                    icon_button_editor('pane.funnel_down_button', 'arrow_down', tooltip='Lower Funnel',
                                                       enabled_when='funnel_down_enabled')),
+                            UItem('pane.funnel_set_home_button'),
                             show_border=True, label='Funnel')
         jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
                             icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
