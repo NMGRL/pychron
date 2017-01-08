@@ -15,26 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Range, Instance, Bool, \
-    Button, Any
-# ============= standard library imports ========================
-from threading import Event
 import cPickle as pickle
 import os
 import time
-# ============= local library imports  ==========================
+from threading import Event
+
+from traits.api import Range, Instance, Bool, \
+    Button, Any
+
+from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.ui.thread import Thread
 from pychron.envisage.view_util import open_view
-from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
+from pychron.managers.manager import Manager
+from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfigurer
 from pychron.spectrometer.jobs.coincidence import Coincidence
 from pychron.spectrometer.jobs.peak_center import PeakCenter
-from pychron.pychron_constants import NULL_STR
-from pychron.core.ui.thread import Thread
-from pychron.paths import paths
-from pychron.core.helpers.isotope_utils import sort_isotopes
 
 
 class IonOpticsManager(Manager):
@@ -182,7 +182,8 @@ class IonOpticsManager(Manager):
                           interpolation_kind='linear',
                           dac_offset=None, calculate_all_peaks=False,
                           config_name=None,
-                          use_configuration_dac=True):
+                          use_configuration_dac=True,
+                          update_others=True):
 
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
@@ -199,6 +200,7 @@ class IonOpticsManager(Manager):
         self._setup_config()
 
         pcc = None
+
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
@@ -239,6 +241,8 @@ class IonOpticsManager(Manager):
             use_dac_offset = pcc.use_dac_offset
             dac_offset = pcc.dac_offset
             calculate_all_peaks = pcc.calculate_all_peaks
+            update_others = pcc.update_others
+
             if center_dac is None and use_configuration_dac:
                 center_dac = pcc.dac
 
@@ -283,7 +287,8 @@ class IonOpticsManager(Manager):
                      select_peak=select_peak,
                      use_dac_offset=use_dac_offset,
                      dac_offset=dac_offset,
-                     calculate_all_peaks=calculate_all_peaks)
+                     calculate_all_peaks=calculate_all_peaks,
+                     update_others=update_others)
 
         self.peak_center = pc
         graph = pc.graph
@@ -367,7 +372,8 @@ class IonOpticsManager(Manager):
                     save = self.confirmation_dialog(msg)
 
                 if save:
-                    spec.magnet.update_field_table(det, isotope, dac_a, message)
+                    spec.magnet.update_field_table(det, isotope, dac_a, message,
+                                                   update_others=pc.update_others)
                     spec.magnet.set_dac(dac_d)
 
         elif not self.canceled:
