@@ -218,6 +218,18 @@ class ArArAge(IsotopeGroup):
                 r = self.isotopes[isok].ic_factor
             except KeyError:
                 r = ufloat(0, 0)
+        elif attr.endswith('DetIC'):
+            r = ufloat(0, 0)
+            ratio = attr.split(' ')[0]
+            numkey, denkey = ratio.split('/')
+            num, den = None, None
+            for iso in self.isotopes.values():
+                if iso.detector == numkey:
+                    num = iso.get_non_detector_corrected_value()
+                elif iso.detector == denkey:
+                    den = iso.get_non_detector_corrected_value()
+            if num and den:
+                r = num / den
 
         elif attr in self.computed:
             r = self.computed[attr]

@@ -29,6 +29,7 @@ from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
+from pychron.pychron_constants import DETECTOR_IC, COCKTAIL, UNKNOWN
 
 
 class AnalysisViewHandler(Handler):
@@ -139,11 +140,11 @@ class AnalysisView(HasTraits):
             snapshot_view = SnapshotView(an.snapshots)
             self.snapshot_view = snapshot_view
 
-        if an.analysis_type == 'detector_ic':
+        if an.analysis_type == DETECTOR_IC:
             det_view = DetectorICView(an)
             self.detector_ic_view = det_view
 
-        if an.analysis_type in ('unknown', 'cocktail'):
+        if an.analysis_type in (UNKNOWN, COCKTAIL):
             self.error_comp_view = ErrorComponentsView(an)
 
         pch = PeakCenterView()

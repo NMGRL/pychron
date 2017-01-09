@@ -25,7 +25,7 @@ from pychron.options.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039
-from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38
+from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC
 
 
 class NoAnalysesError(BaseException):
@@ -218,9 +218,18 @@ class SeriesNode(FigureNode):
                     if AR38 in iso_keys:
                         names.extend([AR4038, UAR4038])
 
-            if unk.analysis_type in (UNKNOWN, COCKTAIL):
-                names.append(AGE)
-                names.append(RADIOGENIC_YIELD)
+                if unk.analysis_type in (UNKNOWN, COCKTAIL):
+                    names.append(AGE)
+                    names.append(RADIOGENIC_YIELD)
+
+                if unk.analysis_type in (DETECTOR_IC,):
+                    isotopes = unk.isotopes
+                    for vi in isotopes.values():
+                        for vj in isotopes.values():
+                            if vi == vj:
+                                continue
+
+                            names.append('{}/{} DetIC'.format(vj.detector, vi.detector))
 
             names.extend([PEAK_CENTER, ANALYSIS_TYPE])
             pom.set_names(names)

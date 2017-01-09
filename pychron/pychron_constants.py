@@ -64,6 +64,7 @@ OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 UNKNOWN = 'unknown'
 COCKTAIL = 'cocktail'
 BLANK = 'blank'
+DETECTOR_IC = 'detector_ic'
 
 import string
 

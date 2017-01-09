@@ -233,7 +233,6 @@ class Series(BaseSeries):
 
         return super(Series, self)._unpack_attr(attr)
 
-
     def update_graph_metadata(self, obj, name, old, new):
         sorted_ans = self.sorted_analyses
         if obj:

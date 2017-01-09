@@ -32,7 +32,7 @@ from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.export.export_spec import MassSpecExportSpec
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, DETECTOR_IC
 
 DEBUG = False
 
@@ -580,7 +580,7 @@ class AutomatedRunPersister(BasePersister):
         from pychron.experiment.utilities.detector_ic import make_items, save_csv
         from pychron.experiment.utilities.identifier import get_analysis_type
 
-        if get_analysis_type(self.per_spec.run_spec.identifier) == 'detector_ic':
+        if get_analysis_type(self.per_spec.run_spec.identifier) == DETECTOR_IC:
             items = make_items(self.per_spec.isotope_group.isotopes)
 
             save_csv(self.per_spec.run_spec.record_id, items)
