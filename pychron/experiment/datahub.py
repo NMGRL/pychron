@@ -17,15 +17,12 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Bool, Dict
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
+
 from pychron.dvc.dvc import DVC
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
 from pychron.loggable import Loggable
-
-
-# http://stackoverflow.com/q/3844931/
+from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
+from pychron.pychron_constants import DETECTOR_IC
 
 
 def check_list(lst):
@@ -40,7 +37,7 @@ def check_massspec_database_save(identifier):
     ret = True
     if identifier == 'bu-debug':
         ret = False
-    elif get_analysis_type(identifier) == 'detector_ic':
+    elif get_analysis_type(identifier) == DETECTOR_IC:
         ret = False
     return ret
 

@@ -28,7 +28,7 @@ from pychron.experiment.automated_run.result import AutomatedRunResult, AirResul
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
-from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
+from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -167,7 +167,7 @@ class AutomatedRunSpec(HasTraits):
         self.result = result
 
     def is_detector_ic(self):
-        return self.analysis_type == 'detector_ic'
+        return self.analysis_type == DETECTOR_IC
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()

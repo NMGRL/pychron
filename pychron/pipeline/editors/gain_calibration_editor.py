@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, List, Instance, Dict
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, TabularEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.experiment.utilities.detector_ic import make_items, get_columns
 from pychron.processing.analyses.view.detector_ic_view import DetectorICTabularAdapter
-from pychron.pychron_constants import DETECTOR_ORDER
+from pychron.pychron_constants import DETECTOR_ORDER, DETECTOR_IC
 
 
 class ResultsAdapter(TabularAdapter):
@@ -158,7 +157,7 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     def _get_runids(self, ms):
         db = self.dvc.db
-        ans = db.get_analyses(analysis_type='detector_ic',
+        ans = db.get_analyses(analysis_type=DETECTOR_IC,
                               mass_spectrometer=ms,
                               reverse_order=True
                               )
