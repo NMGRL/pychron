@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import Any, Str, List, Bool, Int, CInt, Instance
 from traitsui.api import View
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.item import Item
 
 from pychron.core.progress import open_progress
@@ -128,7 +126,6 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
         irradiation = self.irradiation
 
-        print offset, level_offset
         mongen, unkgen, n = self._position_generator(offset, level_offset)
 
         if n:
