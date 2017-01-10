@@ -23,7 +23,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
-from pychron.pychron_constants import AR_AR
+from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
 
 
 class DataCollector(Consoleable):
@@ -55,7 +55,7 @@ class DataCollector(Consoleable):
     _warned_no_fit = None
     _warned_no_det = None
 
-    collection_kind = Enum(('sniff', 'signal', 'baseline', 'whiff'))
+    collection_kind = Enum((SNIFF, WHIFF, BASELINE, SIGNAL))
     refresh_age = False
     _data = None
     _temp_conds = None
@@ -325,9 +325,16 @@ class DataCollector(Consoleable):
                             update_y_limits=True,
                             ypadding='0.1')
 
-            if self.collection_kind == 'sniff':
+            if self.collection_kind == SNIFF:
                 sgraph = self.plot_panel.sniff_graph
                 sgraph.add_datum((x, signal),
+                                 series=self.series_idx,
+                                 plotid=pid,
+                                 update_y_limits=True,
+                                 ypadding='0.1')
+            elif self.collection_kind == BASELINE:
+                bgraph = self.plot_panel.baseline_graph
+                bgraph.add_datum((x, signal),
                                  series=self.series_idx,
                                  plotid=pid,
                                  update_y_limits=True,

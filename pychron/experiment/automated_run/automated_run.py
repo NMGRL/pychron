@@ -228,8 +228,8 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel.add_isotope_graph(name)
 
-    def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None):
-        return self._generate_ic_mftable(detectors, refiso, peak_center_config)
+    def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None, update_existing=True):
+        return self._generate_ic_mftable(detectors, refiso, peak_center_config, update_existing)
 
     def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
@@ -1590,12 +1590,12 @@ anaylsis_type={}
         else:
             self.heading('Post Equilibration Finished unsuccessfully')
 
-    def _generate_ic_mftable(self, detectors, refiso, peak_center_config):
+    def _generate_ic_mftable(self, detectors, refiso, peak_center_config, update_existing):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self, detectors, refiso, peak_center_config):
+        if not e.make_mftable(self, detectors, refiso, peak_center_config, update_existing):
             ret = False
         return ret
 

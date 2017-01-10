@@ -26,7 +26,7 @@ ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop'):
+    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop', update_existing=True):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -61,13 +61,21 @@ class ICMFTableGenerator(Loggable):
                 pc = ion.peak_center_result
                 if pc:
                     self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, pc))
-                    results.append(pc)
+                    results.append((di, pc))
                     time.sleep(0.25)
                 else:
                     return False
 
-        self._write_table(detectors, refiso, results)
+        if update_existing:
+            self._update_table(arun, refiso, results)
+        else:
+            self._write_table(detectors, refiso, results)
         return True
+
+    def _update_table(self, arun, refiso, results):
+        magnet = arun.ion_optics_manager.spectrometer.magnet
+        for det, pc in results:
+            magnet.update_field_table(det, refiso, pc, 'ic_generator', update_others=False)
 
     def _write_table(self, detectors, refiso, results):
         p = paths.ic_mftable
