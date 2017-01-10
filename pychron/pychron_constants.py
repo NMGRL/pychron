@@ -66,6 +66,11 @@ COCKTAIL = 'cocktail'
 BLANK = 'blank'
 DETECTOR_IC = 'detector_ic'
 
+SNIFF = 'sniff'
+SIGNAL = 'signal'
+BASELINE = 'baseline'
+WHIFF = 'whiff'
+
 import string
 
 seeds = string.ascii_uppercase

@@ -101,6 +101,7 @@ class PlotPanel(Loggable):
 
     sniff_graph = Instance(Graph)
     isotope_graph = Instance(Graph)
+    baseline_graph = Instance(Graph)
     peak_center_graph = Instance(Graph)
     selected_graph = Any
     figure = Any
@@ -251,7 +252,7 @@ class PlotPanel(Loggable):
 
     # private
     def _new_plot(self, **kw):
-        for g in (self.sniff_graph, self.isotope_graph):
+        for g in (self.sniff_graph, self.isotope_graph, self.baseline_graph):
             plot = g.new_plot(xtitle='time (s)', padding_left=70,
                               padding_right=10,
                               **kw)
@@ -342,7 +343,6 @@ class PlotPanel(Loggable):
 
     def _isotope_graph_default(self):
         g = self._graph_factory()
-        print 'default',g
         g.page_name = 'Ar'
         return g
 
@@ -356,10 +356,15 @@ class PlotPanel(Loggable):
         g.page_name = 'Equil.'
         return g
 
+    def _baseline_graph_default(self):
+        g = self._graph_factory()
+        g.page_name = 'Baselines'
+        return g
+
     def _graph_container_default(self):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph]
+        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph, self.baseline_graph]
 
 # ============= EOF =============================================
