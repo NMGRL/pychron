@@ -275,8 +275,8 @@ class LabbookPDFWriter(IrradiationPDFWriter):
 
         for irrad in irrads:
             self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
-            fs, _ = self._make_levels(irrad, progress)
-            flowables.extend(self._make_summary(irrad))
+            fs = self._make_levels(irrad, progress)
+            # flowables.extend(self._make_summary(irrad))
 
             flowables.extend(fs)
 
@@ -326,6 +326,6 @@ class LabbookPDFWriter(IrradiationPDFWriter):
                                 textColor=colors.green,
                                 alignment=TA_CENTER)
 
-        return p, self._page_break()
+        return p
 
 # ============= EOF =============================================
