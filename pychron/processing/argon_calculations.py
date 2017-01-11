@@ -139,7 +139,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     k39 = asarray(k39)
 
     fixed_steps = options.get('fixed_steps', False)
-    if fixed_steps:
+    if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:

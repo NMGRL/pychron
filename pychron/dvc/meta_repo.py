@@ -360,9 +360,10 @@ class MetaRepo(GitRepoManager):
     def update_level_production(self, irrad, name, prname):
         prname = prname.replace(' ', '_')
 
-        src = os.path.join(paths.meta_root, 'productions', '{}.json'.format(prname))
+        pathname = add_extension(prname, '.json')
+        src = os.path.join(paths.meta_root, 'productions', pathname)
         if os.path.isfile(src):
-            dest = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(prname))
+            dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
             if not os.path.isfile(dest):
                 shutil.copyfile(src, dest)
             self.update_productions(irrad, name, prname)

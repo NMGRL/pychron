@@ -236,7 +236,7 @@ class FitIsotopeEvolutionNode(FitNode):
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
-                                   goodness=goodness,
+                                   goodness=bool(goodness),
                                    regression_str=iso.regressor.tostring(),
                                    fit=f.fit,
                                    isotope=k)
