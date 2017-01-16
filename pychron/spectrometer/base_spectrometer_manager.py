@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, DelegatesTo
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.managers.manager import Manager
 
 
@@ -35,6 +34,12 @@ class BaseSpectrometerManager(Manager):
 
     def reload_mftable(self):
         self.spectrometer.reload_mftable()
+
+    def protect_detector(self, det, protect):
+        pass
+
+    def set_deflection(self, det, defl):
+        pass
 # ============= EOF =============================================
 
 

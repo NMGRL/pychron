@@ -15,14 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import date, time
+from datetime import date, time, timedelta, datetime
 
 from traits.api import HasTraits, List, Date, Time, Float, Button
-from traitsui.api import View, UItem, HGroup, VGroup, TableEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traitsui.api import View, UItem, HGroup, VGroup, TableEditor, Item
 from traitsui.table_column import ObjectColumn
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -89,8 +87,14 @@ class IrradiationChronology(HasTraits):
     add_button = Button
     remove_button = Button
     selected_dosage = IrradiationDosage
+    duration = Float(8)
+    apply_duration_button = Button
 
     def set_dosages(self, ds):
+        """
+        :param ds: list of 3-tuples (power, start, end)
+        :return:
+        """
         def dose_factory(di):
             p, s, e = di
             return IrradiationDosage(start_date=s.date(),
@@ -101,6 +105,10 @@ class IrradiationChronology(HasTraits):
         self.dosages = map(dose_factory, ds)
 
     def get_doses(self):
+        """
+        return a list of 3-tuples (power, start, end)
+        :return:
+        """
         return [ci.to_tuple() for ci in self.dosages]
 
     def make_blob(self):
@@ -126,22 +134,37 @@ class IrradiationChronology(HasTraits):
                 if self.dosages:
                     self.selected_dosage = self.dosages[idx - 1]
 
+    def _apply_duration_button_fired(self):
+        sd = self.selected_dosage
+        if sd and self.duration:
+            nt = datetime.combine(sd.start_date, sd.start_time) + timedelta(hours=self.duration)
+            self.selected_dosage.end_date = nt.date()
+            self.selected_dosage.end_time = nt.time()
+
     def traits_view(self):
-
         tb = HGroup(icon_button_editor('add_button', 'add'),
-                    icon_button_editor('remove_button', 'delete'), )
+                    icon_button_editor('remove_button', 'delete'),
+                    Item('duration'),
+                    icon_button_editor('apply_duration_button', 'arrow_right',
+                                       tooltip='Apply "Duration" to selected row. i.e EndDateTime = StartDateTime + '
+                                               'Duration'))
 
-        cols = [ObjectColumn(name='start_date', ),
-                ObjectColumn(name='start_time', ),
-                ObjectColumn(name='end_date', ),
-                ObjectColumn(name='end_time'),
-                ObjectColumn(name='power')]
+        cols = [ObjectColumn(name='start_date', width=100),
+                ObjectColumn(name='start_time', width=100),
+                ObjectColumn(name='end_date', width=100),
+                ObjectColumn(name='end_time', width=100),
+                ObjectColumn(name='power', width=50)]
         table = UItem('dosages', editor=TableEditor(columns=cols,
                                                     edit_on_first_click=False,
                                                     selected='selected_dosage',
-                                                    sortable=False))
+                                                    sortable=False),
+                      width=450)
         v = View(VGroup(tb, table))
         return v
 
+
+if __name__ == '__main__':
+    c = IrradiationChronology()
+    c.configure_traits()
 # ============= EOF =============================================
 
