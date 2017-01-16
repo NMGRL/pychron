@@ -538,9 +538,12 @@ class DVC(Loggable):
 
         def func(*args):
             # t = time.time()
-            r = make_record(calculate_f_only=calculate_f_only, *args)
-            # print 'make time {}'.format(time.time()-t)
-            return r
+            try:
+                r = make_record(calculate_f_only=calculate_f_only, *args)
+                # print 'make time {}'.format(time.time()-t)
+                return r
+            except BaseException:
+                pass
 
         ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
