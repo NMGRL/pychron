@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
@@ -35,8 +34,8 @@ class HopsEditorAction(Action):
 
         m = HopEditorModel(detectors=dets)
         h = HopEditorView(model=m)
-        self._perform(m)
-        h.edit_traits(kind='livemodal')
+        if self._perform(m):
+            h.edit_traits(kind='livemodal')
 
     def _perform(self, h):
         pass
@@ -48,7 +47,7 @@ class OpenHopsEditorAction(HopsEditorAction):
     image = icon('document-open')
 
     def _perform(self, m):
-        m.open()
+        return m.open()
 
 
 class NewHopsEditorAction(HopsEditorAction):
@@ -57,7 +56,7 @@ class NewHopsEditorAction(HopsEditorAction):
     # image = icon('document-new')
 
     def _perform(self, m):
-        m.new()
+        return m.new()
 
 
 class OpenPyScriptAction(FileOpenAction):
