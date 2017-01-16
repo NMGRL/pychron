@@ -252,7 +252,10 @@ class PlotPanel(Loggable):
 
     # private
     def _new_plot(self, **kw):
-        for g in (self.sniff_graph, self.isotope_graph, self.baseline_graph):
+        plots = {}
+        for k, g in (('sniff', self.sniff_graph),
+                     ('isotope', self.isotope_graph),
+                     ('baseline', self.baseline_graph)):
             plot = g.new_plot(xtitle='time (s)', padding_left=70,
                               padding_right=10,
                               **kw)
@@ -260,8 +263,9 @@ class PlotPanel(Loggable):
             plot.y_axis.title_spacing = 50
             g.add_axis_tool(plot, plot.x_axis)
             g.add_axis_tool(plot, plot.y_axis)
+            plots[k] = plot
 
-        return plot
+        return plots
 
     def _create(self, evt):
         self.reset()

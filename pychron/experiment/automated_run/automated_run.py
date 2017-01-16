@@ -498,7 +498,8 @@ class AutomatedRun(Loggable):
                 plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
                 # print 'get plot {}, {}{}. plot={}'.format(iso, iso, di, plot)
                 if plot is None:
-                    plot = self.plot_panel.new_plot()
+                    plots = self.plot_panel.new_plot()
+                    plot = plots['isotope']
                     pid = g.plots.index(plot)
 
                     # this is a hack
@@ -575,17 +576,21 @@ class AutomatedRun(Loggable):
 
         if ion is not None:
             if self.isotope_group and check_intensity:
-                iso = self.isotope_group.get_isotope(isotope)
-                # v = iso.get_intensity()
-                # if v < self.peak_center_threshold1:
-                #     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                ys = iso.ys[-peak_center_threshold_window:]
-                ym = ys.mean()
-                self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
-                if ym < peak_center_threshold:
-                    self.warning(
-                        'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold))
-                    return
+                iso = self.isotope_group.get_isotope(isotope, detector)
+                if iso:
+                    # v = iso.get_intensity()
+                    # if v < self.peak_center_threshold1:
+                    #     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
+                    ys = iso.ys[-peak_center_threshold_window:]
+                    ym = ys.mean()
+                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
+                    if ym < peak_center_threshold:
+                        self.warning(
+                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold))
+                        return
+                else:
+                    self.debug('No isotope="{}", Det="{}" in isotope group. {}'.format(isotope, detector,
+                                                                                       self.isotope_group.isotope_keys))
 
             if not self.plot_panel:
                 p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
