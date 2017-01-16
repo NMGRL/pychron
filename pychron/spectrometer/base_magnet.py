@@ -80,8 +80,8 @@ class BaseMagnet(Loggable):
     def set_mftable(self, name):
         self.mftable.set_path_name(name)
 
-    def update_field_table(self, *args):
-        self.mftable.update_field_table(*args)
+    def update_field_table(self, *args, **kw):
+        self.mftable.update_field_table(*args, **kw)
 
     # ===============================================================================
     # persistence

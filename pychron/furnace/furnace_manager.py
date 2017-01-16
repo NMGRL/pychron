@@ -513,6 +513,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             else:
                 self.water_flow_led.state = 1
 
+            with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
+                wfile.write('{},{}\n'.format(time.time(), state))
+
             response = d.get('response')
             output = d.get('output')
             if response is not None:

@@ -112,7 +112,7 @@ class IsotopeGroup(HasTraits):
         if '/' in r:
             n, d = r.split('/')
         else:
-            n,d = r.split('_')
+            n, d = r.split('_')
 
         isos = self.isotopes
 
@@ -292,7 +292,13 @@ class IsotopeGroup(HasTraits):
                     iso = iso.baseline
                 return iso
             except KeyError:
-                pass
+                if detector:
+                    try:
+                        return self.isotopes['{}{}'.format(name, detector)]
+                    except KeyError:
+                        pass
+
+                return next((i for i in self.isotopes.itervalues() if i.isotope == name), None)
         else:
             attr = 'detector'
             value = detector
