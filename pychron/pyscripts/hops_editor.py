@@ -13,32 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.core.ui import set_qt
-from pychron.envisage.icon_button_editor import icon_button_editor
+import os
 
-set_qt()
-
+import yaml
 from pyface.confirmation_dialog import ConfirmationDialog
-
-# ============= enthought library imports =======================
-from traitsui.handler import Controller
-from traitsui.table_column import ObjectColumn
 from pyface.constant import OK, CANCEL, YES
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_change, Instance
-from traitsui.menu import Action
 from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor
+from traitsui.handler import Controller
+from traitsui.menu import Action
+from traitsui.table_column import ObjectColumn
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
-from pychron.core.ui.text_editor import myTextEditor
-from pychron.paths import paths
-from pychron.envisage.resources import icon
 from pychron.core.helpers.filetools import fileiter, add_extension
+from pychron.core.ui.table_editor import myTableEditor
+from pychron.core.ui.text_editor import myTextEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.resources import icon
 from pychron.experiment.automated_run.hop_util import split_hopstr
 from pychron.loggable import Loggable
-from pychron.core.ui.table_editor import myTableEditor
+from pychron.paths import paths
+
 
 # class NullInt(Int):
 #     default_value = None
@@ -48,6 +43,7 @@ class Position(HasTraits):
     isotope = Str
     deflection = Int
     name = Str
+
     # available_isotopes=Property(depends_on='isotope')
     #
     # def _get_available_isotopes(self):
@@ -55,6 +51,9 @@ class Position(HasTraits):
     #     isos=list(ISOTOPES)
     #     isos.remove(self.isotope)
     #     return isos
+    def to_yaml(self):
+        return {'detector': self.detector, 'isotope': self.isotope,
+                'active': True, 'deflection': self.deflection, 'protect': False, 'is_baseline': False}
 
     def to_string(self):
         s = '{}:{}'.format(self.isotope, self.detector)
@@ -69,7 +68,7 @@ class Hop(HasTraits):
     settle = Int
     isotope_label = Str
     name = Str
-    detectors = List(['A, B'])
+    detectors = List(['A', 'B'])
     add_position_button = Button
     remove_position_button = Button
     selected = Any
@@ -81,6 +80,16 @@ class Hop(HasTraits):
                                       if p.isotope and p.detector]))
 
         return '({}, {})'.format(hs, ', '.join(vs))
+
+    def to_yaml(self):
+        obj = {'counts': self.counts, 'settle': self.settle}
+        poss = [p for p in self.positions if p.isotope and p.detector]
+        if poss:
+            obj['cup_configuration'] = [p.to_yaml() for p in poss]
+            pp = poss[0]
+            obj['positioning'] = {'detector': pp.detector, 'isotope': pp.isotope}
+
+        return obj
 
     def parse_hopstr(self, hs):
         for is_baseline, iso, det, defl in split_hopstr(hs):
@@ -174,6 +183,9 @@ class HopSequence(HasTraits):
     def to_string(self):
         return '\n'.join([hi.to_string() for hi in self.hops])
 
+    def to_yaml(self):
+        return [hi.to_yaml() for hi in self.hops]
+
     def add_hop(self, idx):
         if idx is not None:
             h = self.hops[idx]
@@ -211,9 +223,11 @@ class HopEditorModel(Loggable):
     # saveasable = Bool
     text = Str
     dirty = Bool
+    use_yaml = True
 
     def new(self):
         self.hop_sequence = HopSequence()
+        return True
 
     def open(self, p=None):
         if p is None:
@@ -229,7 +243,7 @@ class HopEditorModel(Loggable):
             self.path = p
             # self.saveable = True
             # self.saveasable = True
-            self._load(p)
+            return self._load(p)
 
     def save(self):
         if self.path:
@@ -243,25 +257,53 @@ class HopEditorModel(Loggable):
             dialog = FileDialog(action='save as', default_directory=paths.hops_dir)
             if dialog.open() == OK:
                 p = dialog.path
-                p = add_extension(p, '.txt')
+                p = add_extension(p, '.yaml' if self.use_yaml else '.txt')
                 self._save_file(p)
                 self.path = p
 
     def _load(self, p):
-        with open(p, 'r') as rfile:
-            hops = [eval(l) for l in fileiter(rfile)]
-            self.hop_sequence = hs = HopSequence()
-            for i, (hopstr, cnt, settle) in enumerate(hops):
-                h = Hop(name=str(i + 1),
-                        counts=cnt, settle=settle, detectors=self.detectors)
-                h.parse_hopstr(hopstr)
-                hs.hops.append(h)
-            hs.label_hops()
+        self.hop_sequence = hs = HopSequence()
+        if p.endswith('.txt'):
+            self.use_yaml = False
+            with open(p, 'r') as rfile:
+                hops = [eval(l) for l in fileiter(rfile)]
 
-        self.selected = hs.hops[0]
+                for i, (hopstr, cnt, settle) in enumerate(hops):
+                    h = Hop(name=str(i + 1),
+                            counts=cnt, settle=settle, detectors=self.detectors)
+                    h.parse_hopstr(hopstr)
+                    hs.hops.append(h)
+                hs.label_hops()
 
-        with open(p, 'r') as rfile:
-            self.text = rfile.read()
+            self.selected = hs.hops[0]
+
+            with open(p, 'r') as rfile:
+                self.text = rfile.read()
+        else:
+            self.use_yaml = True
+            with open(p, 'r') as rfile:
+                self.text = rfile.read()
+                rfile.seek(0)
+                try:
+                    for i, hop in enumerate(yaml.load(rfile)):
+                        h = Hop(name=str(i + 1),
+                                counts=hop.get('counts', 0),
+                                settle=hop.get('settle', 0),
+                                detectors=self.detectors)
+                        for p in hop.get('cup_configurations'):
+                            pos = Position(detector=p.get('detector', ''),
+                                           isotope=p.get('isotope', ''),
+                                           active=p.get('active', True),
+                                           is_baseline=p.get('is_baseline', False),
+                                           protect=p.get('protect', False),
+                                           deflection=p.get('deflection', ''))
+                            h.positions.append(pos)
+                        hs.hops.append(h)
+
+                    hs.label_hops()
+                    return True
+                except yaml.YAMLError:
+                    pass
 
     def _validate_sequence(self):
         hs = []
@@ -274,26 +316,33 @@ class HopEditorModel(Loggable):
             return True
 
     def _save_file(self, p):
-
-        # header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
-        # txt = self.hop_sequence.to_string()
         self.info('saving hop to {}'.format(p))
         with open(p, 'w') as wfile:
-            wfile.write(self.to_string())
-            # wfile.write(header)
-            # wfile.write(txt)
+            if self.use_yaml:
+                yaml.dump(self.to_yaml(), wfile, default_flow_style=False)
+            else:
+                # header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
+                # txt = self.hop_sequence.to_string()
+                txt = self.to_string()
+                wfile.write(txt)
+                self.text = txt
 
-        # self.saveable = True
-
-        with open(p, 'r') as rfile:
-            self.text = rfile.read()
         self.dirty = False
+
+    def to_yaml(self):
+        return self.hop_sequence.to_yaml()
 
     def to_string(self):
         header1 = "#hopstr ('iso:det[:defl][,iso:det....]', count, settle)"
         header2 = "#e.g ('Ar40:H1, Ar41:H2, Ar38:L1, Ar37:L2, Ar36:CDD:110', 15, 3)"
 
         return '\n'.join((header1, header2, self.hop_sequence.to_string()))
+
+    def to_text(self):
+        if self.use_yaml:
+            return yaml.dump(self.to_yaml(), default_flow_style=False)
+        else:
+            return self.to_string()
 
     def _add_hop_button_fired(self):
         idx = None
@@ -337,7 +386,7 @@ class HopEditorView(Controller):
     @on_trait_change('model:hop_sequence:hops:[counts,settle, positions:[isotope,detector,deflection]]')
     def _handle_edit(self):
         self.model.dirty = True
-        self.model.text = self.model.to_string()
+        self.model.text = self.model.to_text()
 
     @on_trait_change('model.[path,dirty]')
     def _handle_path_change(self):
@@ -415,9 +464,12 @@ class HopEditorView(Controller):
 
 
 if __name__ == '__main__':
+    root = os.path.join(os.path.expanduser('~'), 'PychronDev')
+    paths.build(root)
     m = HopEditorModel()
     m.detectors = ['H2', 'H1', 'CDD']
-    m.open()
+    # m.open()
+    m.new()
     h = HopEditorView(model=m)
     # m.new()
     h.configure_traits()

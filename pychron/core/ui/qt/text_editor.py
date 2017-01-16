@@ -91,16 +91,18 @@ class _TextEditor(Editor):
     def update_object(self):
         """ Handles the user changing the contents of the edit control.
         """
-        try:
+        if isinstance(self.control, QtGui.QLineEdit):
             self.value = unicode(self.control.text())
-        except TraitError, excp:
-            print 'mytexteditor {}'.format(excp)
+        else:
+            try:
+                self.value = unicode(self.control.document().toPlainText())
+            except TraitError, excp:
+                print 'mytexteditor {}'.format(excp)
 
     def update_editor(self):
         new_value = self.str_value
         ctrl = self.control
         if isinstance(ctrl, QtGui.QLineEdit):
-
             self.control.setText(new_value)
         else:
             if self.control.toPlainText() != new_value:
