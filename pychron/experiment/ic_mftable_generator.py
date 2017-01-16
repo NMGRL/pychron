@@ -58,10 +58,10 @@ class ICMFTableGenerator(Loggable):
 
                 arun.peak_center = ion.peak_center
                 ion.do_peak_center(new_thread=False, save=False, warn=False)
-                pc = ion.peak_center_result
-                if pc:
-                    self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, pc))
-                    results.append((di, pc))
+                apc = ion.adjusted_peak_center_result
+                if apc:
+                    self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, apc))
+                    results.append((di, apc))
                     time.sleep(0.25)
                 else:
                     return False
@@ -74,8 +74,8 @@ class ICMFTableGenerator(Loggable):
 
     def _update_table(self, arun, refiso, results):
         magnet = arun.ion_optics_manager.spectrometer.magnet
-        for det, pc in results:
-            magnet.update_field_table(det, refiso, pc, 'ic_generator', update_others=False)
+        for det, apc in results:
+            magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
 
     def _write_table(self, detectors, refiso, results):
         p = paths.ic_mftable

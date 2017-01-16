@@ -15,18 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Property
-# ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
+
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Any, Property
+
 from pychron.envisage.view_util import open_view
 from pychron.paths import paths
-from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
-from apptools.preferences.preference_binding import bind_preference
+from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
 from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
     SpectrometerParametersView
-from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 
 
 class ThermoSpectrometerManager(BaseSpectrometerManager):
@@ -45,6 +45,13 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
 
     def test_intensity(self, **kw):
         return self.spectrometer.test_intensity(**kw)
+
+    def protect_detector(self, det, protect):
+        protect = 'On' if protect else 'Off'
+        self.spectrometer.set_parameter('ProtectDetector', '{},{}'.format(det, protect))
+
+    def set_deflection(self, det, defl):
+        self.spectrometer.set_deflection(det, defl)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)

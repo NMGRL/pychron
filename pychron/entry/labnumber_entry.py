@@ -85,6 +85,7 @@ class LabnumberEntry(DVCIrradiationable):
     level_production_name = Str
     chronology_items = List
     estimated_j_value = Str
+    total_irradiation_hours = Str
 
     default_principal_investigator = Str
     # ===========================================================================
@@ -229,7 +230,17 @@ class LabnumberEntry(DVCIrradiationable):
             pos = self.irradiated_positions
 
         for ip in pos:
-            ip.trait_set(j=j, j_err=j * 1e-3)
+            if ip.identifier:
+                ip.trait_set(j=j, j_err=j * 1e-3)
+
+        if not self.selected and self.confirmation_dialog('Would you like to set default J for entire irradiation'):
+            db = self.dvc
+            with db.session_ctx(use_parent_session=False):
+                dbirrad = db.get_irradiation(self.irradiation)
+                for level in dbirrad.levels:
+                    db.update_fluxes(self.irradiation, level.name, j, j * 1e-3)
+            self.save()
+
         self.refresh_table = True
 
     def select_positions(self, freq, eoflag):
@@ -303,12 +314,12 @@ class LabnumberEntry(DVCIrradiationable):
                 w.build(out, irrad)
                 return True
 
-    def save(self, level=None, update=True):
+    def save(self, level=None, update=True, irradiation=None):
         if level is None:
             level = self.level
 
         if self._validate_save():
-            self._save_to_db(level, update)
+            self._save_to_db(level, update, irradiation)
             self._inform_save()
             return True
 
@@ -601,11 +612,9 @@ THIS CHANGE CANNOT BE UNDONE')
         db = self.dvc.db
 
         def f(table):
-            return (table.name.startswith(self.irradiation_prefix),)
+            return table.name.startswith(self.irradiation_prefix),
 
-        dbirrad = db.get_irradiations(names=f,
-                                      order_func='desc',
-                                      limit=1)
+        dbirrad = db.get_irradiations(names=f, order_func='desc', limit=1)
         if dbirrad:
             lastname = dbirrad[0].name
             # try to increment lastname
@@ -805,7 +814,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
         self._suppress_auto_select_irradiation = False
 
         olevel = self.level
-        self._irradiation_changed()
+        self._irradiation_changed(None, None)
         self.level = olevel
 
     def _edit_level_button_fired(self):
@@ -834,6 +843,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
             chron = self.dvc.meta_repo.get_chronology(self.irradiation)
             j = chron.duration * self.j_multiplier
+            self.total_irradiation_hours = '{:0.1f}'.format(chron.duration)
             self._estimated_j_value = j
             self.estimated_j_value = u'{} {}{}'.format(floatfmt(j),
                                                        PLUSMINUS,

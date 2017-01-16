@@ -865,7 +865,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         ipp = self.irradiation_project_prefix
                         if project_name == 'J-Curve':
                             irrad = ip.level.irradiation.name
-                            self.repository_identifier = 'Irradiation-{}'.format(irrad)
+                            self.repository_identifier = '{}{}'.format(ipp, irrad)
                         elif project_name != 'REFERENCES':
                             if ipp and project_name.startswith(ipp):
                                 repo = project_name

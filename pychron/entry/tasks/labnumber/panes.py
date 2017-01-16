@@ -67,14 +67,20 @@ class ChronologyPane(TraitsDockPane):
     name = 'Chronology'
 
     def traits_view(self):
-        v = View(VGroup(VGroup(Item('estimated_j_value',
-                                    style='readonly',
-                                    label='Est. J')),
-                        VGroup(UItem('chronology_items',
-                                     editor=TabularEditor(editable=False,
-                                                          adapter=ChronologyAdapter())))))
+        v = View(VGroup(HGroup(Item('estimated_j_value',
+                                    style='readonly', label='Est. J'),
+                               Item('total_irradiation_hours',
+                                    style='readonly', label='Hours')),
+                        UItem('chronology_items', editor=TabularEditor(editable=False,
+                                                                       adapter=ChronologyAdapter()))))
         return v
-
+        # v = View(VGroup(VGroup(Item('estimated_j_value',
+        #                             style='readonly',
+        #                             label='Est. J')),
+        #                 VGroup(UItem('chronology_items',
+        #                              editor=TabularEditor(editable=False,
+        #                                                   adapter=ChronologyAdapter())))))
+        # return v
 
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'

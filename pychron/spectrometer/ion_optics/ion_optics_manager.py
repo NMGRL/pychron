@@ -366,6 +366,7 @@ class IonOpticsManager(Manager):
 
             dac_a = spec.uncorrect_dac(det, dac_d)
             self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
+            self.adjusted_peak_center_result = dac_a
             if save:
                 if confirm_save:
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)

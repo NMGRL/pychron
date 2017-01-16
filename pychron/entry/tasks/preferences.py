@@ -18,8 +18,7 @@
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Float, Password
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -38,13 +37,16 @@ class LabnumberEntryPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         irradiation_grp = Group(Item('irradiation_prefix',
-                                     label='Irradiation Prefix'),
-                                HGroup(UItem('monitor_name'),
-                                       UItem('monitor_name'),
+                                     label='Irradiation Prefix',
+                                     tooltip='Irradiation Prefix e.g., NM-'),
+                                HGroup(UItem('monitor_name', label='Name'),
+                                       UItem('monitor_material', label='Material'),
                                        show_border=True, label='Monitor'),
                                 Item('j_multiplier', label='J Multiplier',
                                      tooltip='J units per hour'),
-                                Item('irradiation_project_prefix', label='Irradiation Project Prefix'),
+                                Item('irradiation_project_prefix',
+                                     tooltip='Project Prefix for Irradiations e.g., Irradiation-',
+                                     label='Irradiation Project Prefix'),
                                 show_border=True,
                                 label='Irradiations')
         v = View(irradiation_grp)

@@ -542,6 +542,25 @@ class MetaRepo(GitRepoManager):
         dvc_dump(obj, p)
         self.add(p, commit=False)
 
+    def update_fluxes(self, irradiation, level, j, e, add=True):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        print p
+        print jd
+        if isinstance(jd, list):
+            positions = jd
+        else:
+            positions = jd.get('positions')
+
+        if positions:
+            for ip in positions:
+                ip['j'] = j
+                ip['j_err'] = e
+
+            dvc_dump(jd, p)
+            if add:
+                self.add(p, commit=False)
+
     def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
         if decay is None:
             decay = {}

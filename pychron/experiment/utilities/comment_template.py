@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Dict
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.templater.base_templater import BaseTemplater
 
 
@@ -38,17 +37,8 @@ class CommentTemplater(BaseTemplater):
     def _generate_context(self, obj):
         ctx = {}
         for ai in self.attributes:
-            v = ' ' if ai=='<SPACE>' else getattr(obj, ai)
-            ctx[ai] = v
+            v = ' ' if ai == '<SPACE>' else getattr(obj, ai)
+            ctx[ai] = str(v)
         return ctx
 
-
-# if __name__ == '__main__':
-#     c = CommentTemplater()
-#     cv = CommentTemplateView(model=c)
-#     cv.configure_traits()
-
 # ============= EOF =============================================
-
-
-
