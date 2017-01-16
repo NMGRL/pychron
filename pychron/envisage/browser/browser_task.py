@@ -365,8 +365,11 @@ class BaseBrowserTask(BaseEditorTask):
     @on_trait_change('browser_model:[analysis_table:dclicked]')
     def _handle_dclicked(self, new):
         if new:
-            if self.editor_area.control:
+            # if self.editor_area.control:
+            try:
                 self._recall_item(new.item)
+            except BaseException, e:
+                self.critical('analysis_table:dclicked error {}'.format(str(e)))
 
     # @on_trait_change('analysis_table:selected')
     # def _selected_analysis_changed(self, new):
