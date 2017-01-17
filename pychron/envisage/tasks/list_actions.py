@@ -27,7 +27,7 @@ from traitsui.menu import Action
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.experiment.automated_run.hop_util import parse_hops, parse_hop
+from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 
@@ -138,11 +138,11 @@ class HopsAction(ListAction):
                 positioning = hop['positioning']
                 if 'dac' in positioning:
                     use_dac = True
-                    isotope = positioning['dac']
+                    pos = positioning['dac']
                     detector = ''
                 else:
                     detector = positioning['detector']
-                    isotope = positioning['isotope']
+                    pos = positioning['isotope']
 
                 zd = zip(dets, defls)
 
@@ -155,14 +155,14 @@ class HopsAction(ListAction):
                 for pd in pdets:
                     spec.protect_detector(pd, True)
 
-                msg_queue.put('Position {} {}'.format(isotope, detector))
-                ion.position(isotope, detector, use_dac=use_dac, update_isotopes=False)
+                msg_queue.put('Position {} {}'.format(pos, detector))
+                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False)
 
                 for pd in pdets:
                     spec.protect_detector(pd, False)
 
                 for i in xrange(settle):
-                    msg_queue.put('Position {} {}. Settle {}'.format(isotope, detector, settle - i))
+                    msg_queue.put('Position {} {}. Settle {}'.format(pos, detector, settle - i))
                     time.sleep(1)
 
         self._alive = False

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -27,7 +27,6 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.enum_editor import myEnumEditor
-from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.stylesheets import load_stylesheet
@@ -506,25 +505,6 @@ class LoggerPane(TraitsDockPane):
                                          selected='selected'),
                        style='custom'))
 
-        return v
-
-
-class ExperimentFurnacePane(TraitsDockPane):
-    name = 'Furnace'
-    id = 'pychron.experiment.furnace'
-    disable_button = Button
-
-    def _disable_button_fired(self):
-        self.model.setpoint = 0
-
-    def traits_view(self):
-        c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
-                              spring, icon_button_editor('pane.disable_button', 'cancel')),
-                       VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),
-                       label='Controller', show_border=True)
-
-        v = View(c_grp)
         return v
 
 # ============= EOF =============================================
