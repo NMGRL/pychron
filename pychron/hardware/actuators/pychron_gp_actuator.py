@@ -83,9 +83,7 @@ class PychronGPActuator(GPActuator):
     def actuate(self, obj, action):
         if self._actuate(obj, action):
             time.sleep(0.05)
-            if self._check_actuate(obj, action):
-                return True if action=='Open' else False
-            # return self._check_actuate(obj, action)
+            return self._check_actuate(obj, action)
 
     @trim_bool
     def _actuate(self, obj, action):

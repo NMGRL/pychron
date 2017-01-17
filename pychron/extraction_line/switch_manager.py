@@ -322,6 +322,8 @@ class SwitchManager(Manager):
 
         if v is not None:
             return v.software_lock
+        else:
+            self.critical('failed to located valve name="{}", description="{}"'.formnat(name, description))
 
     def open_switch(self, *args, **kw):
         return self.open_by_name(*args, **kw)

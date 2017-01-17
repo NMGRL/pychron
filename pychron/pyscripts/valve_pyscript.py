@@ -135,13 +135,13 @@ class ValvePyScript(PyScript):
         locked = self._manager_action([('get_software_lock', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
-        self.debug('locked={}'.format(locked))
 
-        if action == 'close':
-            ok = not ok
+        # if action == 'close':
+            # ok = not ok
 
+        self.debug('action={}, ok={}, locked={}'.format(action, ok, locked))
         if not ok and not locked[0]:
-            msg = 'Failed to {} valve {} {}'.format(action, name, description)
+            msg = 'Failed to {} valve Name="{}", Description="{}"'.format(action, name or '', description or '')
             self.console_info(msg)
 
             cancel = True
@@ -150,7 +150,7 @@ class ValvePyScript(PyScript):
                     mode='script',
                     description=description))], protocol=ELPROTOCOL)
                 if result is not None:
-                    cancel = not self._finish_valve_change('close', result, name, description, retry=False)
+                    cancel = not self._finish_valve_change(action, result, name, description, retry=False)
 
             if cancel:
                 if not globalv.experiment_debug:

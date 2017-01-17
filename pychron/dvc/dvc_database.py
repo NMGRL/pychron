@@ -147,7 +147,7 @@ class DVCDatabase(DatabaseAdapter):
     #                      omit_iso=v,
     #                      omit_series=v)
     #         return self._add_item(tag)
-    def check_restricted_name(self, name, category, check_principal_investigator=True):
+    def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
         return True is name is restricted
 
@@ -162,8 +162,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = sess.query(PrincipalInvestigatorTbl)
                 lname = func.lower(PrincipalInvestigatorTbl.name)
                 name = name.lower()
-
-                # q = q.filter(func.substring(lname, 2) == name)
+                q = q.filter(func.substring(lname, 2) == name)
                 q = q.filter(or_(lname == name))
 
                 print q
