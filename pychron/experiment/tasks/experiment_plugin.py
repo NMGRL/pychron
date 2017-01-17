@@ -14,13 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
-from traits.api import List
+from traits.api import List, Callable
 
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -42,14 +41,9 @@ class ExperimentPlugin(BaseTaskPlugin):
     id = 'pychron.experiment.plugin'
 
     events = ExtensionPoint(List(ExperimentEventAddition), id='pychron.experiment.events')
-    # def start(self):
-    #     super(ExperimentPlugin, self).start()
-    #     # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-    #     dvc = self.application.get_service('pychron.dvc.dvc.DVC')
-    #     self.experimentor.dvc = dvc
-    #     # self.experimentor.iso_db_manager = manager
-    #     self.experimentor.executor.set_managers()
-    #     self.experimentor.executor.bind_preferences()
+    dock_pane_factories = ExtensionPoint(List, id='pychron.experiment.dock_pane_factories')
+    activations = ExtensionPoint(List(Callable), id='pychron.experiment.activations')
+    deactivations = ExtensionPoint(List(Callable), id='pychron.experiment.deactivations')
 
     def _signal_calculator_factory(self, *args, **kw):
         return SignalCalculator()
@@ -68,17 +62,17 @@ class ExperimentPlugin(BaseTaskPlugin):
                             task_group='experiment')]
 
     def _task_factory(self):
-        # return ExperimentEditorTask(manager=self.experimentor)
         return ExperimentEditorTask(application=self.application,
-                                    events=self.events)
+                                    events=self.events,
+                                    dock_pane_factories=self.dock_pane_factories,
+                                    activations=self.activations,
+                                    deactivations=self.deactivations)
 
     def _preferences_default(self):
         return self._preferences_factory('experiment')
 
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
-                # LabspyPreferencesPane,
-                # DVCPreferencesPane,
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane]
 
@@ -94,7 +88,7 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _help_tips_default(self):
         return ['You can set the Analysis State colors in Preferences>Experiment',
                 'You can set the color for Sniff, Signal, and Baseline datapoints in Preferences>Experiment',
-                'The current version of Pychron contains over 140K lines of code',
+                'The current version of Pychron contains over 147K lines of code',
                 'If the last analysis fails to save you can recover it using Tools/Recover Last Analysis']
 
     def _task_extensions_default(self):
@@ -165,8 +159,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/Edit/experiment.group'),
                   SchemaAddition(id='pychron.experiment.save_as_current_experiment',
                                  factory=SaveAsCurrentExperimentAction,
-                                 path='MenuBar/file.menu/Save')
-                  ])]
+                                 path='MenuBar/file.menu/Save')])]
 
     def _service_offers_default(self):
         so_signal_calculator = self.service_offer_factory(
@@ -185,63 +178,4 @@ class ExperimentPlugin(BaseTaskPlugin):
                 # so_image_browser,
                 so_sens_selector]
 
-        #     def _experimentor_default(self):
-        #         return self._experimentor_factory()
-        #
-        #     def _experimentor_factory(self):
-        #         # from pychron.experiment.experimentor import Experimentor
-        #         # from pychron.initialization_parser import InitializationParser
-        #         from pychron.envisage.initialization.initialization_parser import InitializationParser
-        #
-        #         ip = InitializationParser()
-        #         plugin = ip.get_plugin('Experiment', category='general')
-        #         mode = ip.get_parameter(plugin, 'mode')
-        # # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-        #
-        #         # manager = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        #
-        #         exp = Experimentor(application=self.application,
-        #                            mode=mode)
-        #
-        #         return exp
-
-        # ============= EOF =============================================
-        # factory = lambda: Group(DeselectAction(),
-        # ResetQueuesAction(),
-        # UndoAction(),
-        #                         ConfigureEditorTableAction())
-        #
-        # return [TaskExtension(task_id='pychron.experiment.task',
-        #                       actions=[SchemaAddition(factory=factory,
-        #                                               path='MenuBar/Edit')]),
-        #         TaskExtension(actions=[
-        #             SchemaAddition(id='reset_system_health',
-        #                            factory=ResetSystemHealthAction,
-        #                            path='MenuBar/file.menu'),
-        #             SchemaAddition(id='open_queue_conditionals',
-        #                            factory=QueueConditionalsAction,
-        #                            path='MenuBar/Edit'),
-        #             SchemaAddition(id='open_queue_conditionals',
-        #                            factory=SystemConditionalsAction,
-        #                            path='MenuBar/Edit'),
-        #             SchemaAddition(id='open_experiment',
-        #                            factory=OpenExperimentQueueAction,
-        #                            path='MenuBar/file.menu/Open'),
-        #             SchemaAddition(id='open_last_experiment',
-        #                            factory=OpenLastExperimentQueueAction,
-        #                            path='MenuBar/file.menu/Open'),
-        #             SchemaAddition(id='test_notify',
-        #                            factory=SendTestNotificationAction,
-        #                            path='MenuBar/file.menu'),
-        #             SchemaAddition(id='new_experiment',
-        #                            factory=NewExperimentQueueAction,
-        #                            path='MenuBar/file.menu/New'),
-        #             SchemaAddition(id='signal_calculator',
-        #                            factory=SignalCalculatorAction,
-        #                            path='MenuBar/Tools'),
-        #             SchemaAddition(id='new_pattern',
-        #                            factory=NewPatternAction,
-        #                            path='MenuBar/file.menu/New'),
-        #             SchemaAddition(id='open_pattern',
-        #                            factory=OpenPatternAction,
-        #                            path='MenuBar/file.menu/Open')])]
+# ============= EOF =============================================

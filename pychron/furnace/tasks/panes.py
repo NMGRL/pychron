@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 from threading import Thread
 
 from enable.component_editor import ComponentEditor
@@ -241,6 +240,26 @@ class FurnacePane(TraitsTaskPane):
             UItem('stage_manager.canvas', style='custom', editor=ComponentEditor()))
 
         v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
+        return v
+
+
+class ExperimentFurnacePane(TraitsDockPane):
+    name = 'Furnace'
+    id = 'pychron.experiment.furnace'
+    disable_button = Button
+
+    def _disable_button_fired(self):
+        self.model.setpoint = 0
+
+    def traits_view(self):
+        c_grp = VGroup(HGroup(Item('setpoint'),
+                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
+                              spring, icon_button_editor('pane.disable_button', 'cancel'),
+                              Item('verbose_scan', label='Verbose Logging')),
+                       VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),
+                       label='Controller', show_border=True)
+
+        v = View(c_grp)
         return v
 
 # ============= EOF =============================================

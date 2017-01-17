@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import os
 import shutil
 import time
@@ -55,6 +54,7 @@ class BaseFurnaceManager(StreamGraphManager):
     response_recorder = Instance(ResponseRecorder)
 
     use_network = False
+    verbose_scan = Bool(False)
 
     def check_heating(self):
         pass
@@ -505,7 +505,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.loader_logic.close(name)
 
     def _update_scan(self):
-        d = self.controller.get_summary(verbose=False)
+        d = self.controller.get_summary(verbose=self.verbose_scan)
         if d:
             state = d.get('h2o_state')
             if state in (0, 1):
@@ -528,6 +528,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _stop_update(self):
         self.debug('stop update')
         self._alive = False
+        self.timer.stop()
 
     def _update_scan_graph(self, response, output, setpoint):
         x = None
