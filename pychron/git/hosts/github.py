@@ -23,6 +23,7 @@ from pychron.paths import paths
 
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
+    name = 'GitHub'
 
     @property
     def remote_url(self):
