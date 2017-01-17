@@ -163,10 +163,11 @@ class DVCDatabase(DatabaseAdapter):
                 lname = func.lower(PrincipalInvestigatorTbl.name)
                 name = name.lower()
 
-                q = q.filter(func.substring(lname, 2) == name)
+                # q = q.filter(func.substring(lname, 2) == name)
                 q = q.filter(or_(lname == name))
 
-                pret = bool(self._query_one(q))
+                print q
+                pret = bool(self._query_one(q, verbose_query=True))
                 ret = pret or ret
 
             return ret
@@ -470,7 +471,8 @@ class DVCDatabase(DatabaseAdapter):
                 principal_investigator = self.add_principal_investigator(principal_investigator)
                 self.flush()
 
-            a = RepositoryTbl(name=name, principal_investigator=principal_investigator.name, **kw)
+            a = RepositoryTbl(name=name, **kw)
+            a.principal_investigator = principal_investigator
             return self._add_item(a)
 
     def add_interpreted_age(self, **kw):

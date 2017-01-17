@@ -861,6 +861,10 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
                         project = ip.sample.project
                         project_name = project.name
+                        try:
+                            pi_name = project.principal_investigator.name
+                        except (AttributeError, TypeError):
+                            pass
 
                         ipp = self.irradiation_project_prefix
                         if project_name == 'J-Curve':
@@ -877,8 +881,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 self.repository_identifier = ''
                                 if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
                                                             'like to add it?'.format(repo)):
+
+                                    m = 'Repository "{}({})"'.format(repo, pi_name)
                                     # this will set self.repository_identifier
-                                    self._add_repository(repo)
+                                    if self._add_repository(repo, pi_name):
+                                        self.information_dialog('{} added successfully'.format(m))
+                                    else:
+                                        self.warning_dialog('Failed to add {}.'
+                                                            '\nResolve issue before proceeding!!'.format(m))
 
                     except AttributeError, e:
                         print e
@@ -1166,19 +1176,23 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def _iter_scripts(self):
         return (getattr(self, s) for s in SCRIPT_NAMES)
 
-    def _add_repository(self, name=None):
+    def _add_repository(self, name=None, pi_name=None):
         if self.dvc:
             a = RepositoryIdentifierEntry(dvc=self.dvc)
-            if name:
-                a.value = name
 
             with self.dvc.session_ctx(use_parent_session=False):
                 a.available = self.dvc.get_repository_identifiers()
                 a.principal_investigators = self.dvc.get_principal_investigator_names()
-            print a, a.principal_investigators
+
+            if name:
+                a.value = name
+            if pi_name:
+                a.principal_investigator = pi_name
+
             if a.do():
+                self.debug('set repo identifier to ="{}"'.format(a.value))
                 self.repository_identifier_dirty = True
-                self.repository_identifier = a.name
+                self.repository_identifier = a.value
                 return True
         else:
             self.warning_dialog('DVC Plugin not enabled')

@@ -13,11 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# ============= enthought library imports =======================
 from traits.api import Str, List
-from traitsui.api import VGroup, UItem, Item
+from traitsui.api import VGroup, UItem, Item, EnumEditor
 
-from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.strings import SpacelessStr
 from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
@@ -30,7 +28,7 @@ class RepositoryIdentifierEntry(BaseEntry):
 
     def _add_item(self):
         with self.dvc.session_ctx(use_parent_session=False):
-            if self.dvc.check_restricted_name(self.value, 'repository_identifier'):
+            if self.dvc.check_restricted_name(self.value, 'repository_identifier', check_principal_investigator=False):
                 self.error_message = '{} is a restricted!.'.format(self.value)
                 if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
                                                 'Repository?'.format(self.value)):
@@ -48,7 +46,7 @@ class RepositoryIdentifierEntry(BaseEntry):
         # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'
 
         a = VGroup(Item('value', label='Repository Name'),
-                   Item('principal_investigator', editor=ComboboxEditor(name='principal_investigators')),
+                   Item('principal_investigator', editor=EnumEditor(name='principal_investigators')),
                    UItem('error_message', style='readonly', style_sheet=STYLESHEET))
         buttons = [OKButton(), 'Cancel']
         return self._new_view(a,

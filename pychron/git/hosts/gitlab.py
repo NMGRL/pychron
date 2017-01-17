@@ -26,6 +26,7 @@ from pychron.git.hosts import GitHostService
 class GitLabService(GitHostService):
     host = Str
     preference_path = 'pychron.gitlab'
+    name = 'GitLab'
 
     @property
     def remote_url(self):
