@@ -55,6 +55,14 @@ class PychronGPActuator(GPActuator):
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
+    def get_indicator_state(self, obj, verbose=True):
+        """
+            Query the hardware for the channel state
+        """
+        cmd = 'GetIndicatorState {}'.format(get_valve_name(obj))
+        return self.ask(cmd, verbose=verbose)
+
+    @trim_bool
     def get_channel_state(self, obj, verbose=True):
         """
             Query the hardware for the channel state
@@ -99,6 +107,6 @@ class PychronGPActuator(GPActuator):
 
     def _check_actuate(self, obj, action):
         state = action == 'Open'
-        return self.get_channel_state(obj) == state
+        return self.get_indicator_state(obj) == state
 
 # ============= EOF =====================================
