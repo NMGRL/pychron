@@ -35,7 +35,6 @@ class SampleEntryTask(BaseManagerTask):
     id = 'pychron.entry.sample.task'
     tool_bars = [SToolBar(SaveAction()),
                  SToolBar(DumpAction(), LoadAction(), RecoverAction())]
-    wildcard = '*.yml|*.yaml'
 
     def activated(self):
         self.manager.activated()
@@ -54,7 +53,7 @@ class SampleEntryTask(BaseManagerTask):
         self.manager.save()
 
     def load(self):
-        p = self.open_directory_dialog(default_directory=paths.sample_dir)
+        p = self.open_file_dialog(default_directory=paths.sample_dir)
         if p:
             self.manager.load(p)
 
