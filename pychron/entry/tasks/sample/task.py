@@ -35,6 +35,7 @@ class SampleEntryTask(BaseManagerTask):
     id = 'pychron.entry.sample.task'
     tool_bars = [SToolBar(SaveAction()),
                  SToolBar(DumpAction(), LoadAction(), RecoverAction())]
+    wildcard = '*.yml|*.yaml'
 
     def activated(self):
         self.manager.activated()
