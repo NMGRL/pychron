@@ -197,7 +197,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                                               tooltip='Add a new repository'),
                            icon_button_editor(run_factory_name('set_repository_identifier_button'), 'arrow_right',
                                               tooltip='Set select runs repository_identifier to current value'),
-                           icon_button_editor(run_factory_name('clear_repository_identifier_button'), 'clear')),
+                           icon_button_editor(run_factory_name('clear_repository_identifier_button'), 'clear'),
+                           UItem('use_project_based_repository_identifier', tooltip='Use repository identifier based '
+                                                                                    'on project name')),
                     HGroup(run_factory_item('weight',
                                             label='Weight (mg)',
                                             tooltip='(Optional) Enter the weight of the sample in mg. '

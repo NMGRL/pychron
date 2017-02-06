@@ -66,6 +66,8 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_selected = Any
     dclicked = Any
     database_identifier = Long
+    display_executed_runs = Property(depends_on='executed_runs[]')
+    n_executed_display = Int(5)
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
@@ -285,8 +287,10 @@ class ExperimentQueue(BaseExperimentQueue):
 
         self._no_update = True
         if run is not None:
+
             self.automated_runs.remove(run)
             self.executed_runs.append(run)
+
             idx = len(self.executed_runs) - 1
             invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
             # self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
@@ -352,6 +356,9 @@ class ExperimentQueue(BaseExperimentQueue):
         bool_default = lambda x: bool(x) if x else False
         self._set_meta_param('auto_save_detector_ic', meta, bool_default)
         self.debug('$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
+
+    def _get_display_executed_runs(self):
+        return self.executed_runs[-self.n_executed_display:]
 
     def _get_execution_ratio(self):
         ex = len(self.executed_runs)

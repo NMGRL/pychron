@@ -419,7 +419,11 @@ class DVCDatabase(DatabaseAdapter):
     def add_principal_investigator(self, name):
         pi = self.get_principal_investigator(name)
         if pi is None:
-            pi = PrincipalInvestigatorTbl(last_name=name)
+            if ',' in name:
+                last_name, fi = name.split(',')
+                pi = PrincipalInvestigatorTbl(last_name=name.strip(), first_initial=fi.strip())
+            else:
+                pi = PrincipalInvestigatorTbl(last_name=name)
             pi = self._add_item(pi)
         return pi
 

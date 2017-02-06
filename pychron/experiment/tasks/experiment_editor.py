@@ -15,20 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
 
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.utilities.repository_identifier import get_curtag, populate_repository_identifiers
 
 
@@ -181,10 +180,9 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 scroll_to_row='automated_runs_scroll_to_row',
                                                 # copy_cache='linked_copy_cache',
                                                 stretch_last_section=False,
-                                                multi_select=True),
-                         height=200)
+                                                multi_select=True))
 
-        executed_grp = UItem('executed_runs',
+        executed_grp = UItem('display_executed_runs',
                              editor=myTabularEditor(adapter=self.executed_tabular_adapter,
                                                     bgcolor=self.bgcolor,
                                                     editable=False,
@@ -199,7 +197,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                     multi_select=True,
                                                     stretch_last_section=False,
                                                     scroll_to_row='executed_runs_scroll_to_row'),
-                             height=500,
+                             height=-300,
                              visible_when='executed')
 
         v = View(

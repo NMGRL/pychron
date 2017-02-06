@@ -94,6 +94,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     peak_center_threshold = Float(3)
     peak_center_threshold_window = Int(10)
 
+    n_executed_display = Int
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -218,6 +220,9 @@ class ExperimentPreferencesPane(PreferencesPane):
                                           label='Set Integration Time on Start'),
                                      Item('default_integration_time',
                                           enabled_when='set_integration_time_on_start'),
+                                     Item('n_executed_display',
+                                          label='N. Executed',
+                                          tooltip='Number of analyses to display in the "Executed" table'),
                                      pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),
