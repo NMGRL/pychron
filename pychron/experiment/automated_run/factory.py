@@ -89,6 +89,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     labnumbers = Property(depends_on='project, selected_level')
 
+    use_project_based_repository_identifier = Bool
     repository_identifier = Str
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
     add_repository_identifier = Event
@@ -871,24 +872,25 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = '{}{}'.format(ipp, irrad)
                         elif project_name != 'REFERENCES':
-                            if ipp and project_name.startswith(ipp):
-                                repo = project_name
-                            else:
-                                repo = camel_case(project_name)
+                            if self.use_project_based_repository_identifier:
+                                if ipp and project_name.startswith(ipp):
+                                    repo = project_name
+                                else:
+                                    repo = camel_case(project_name)
 
-                            self.repository_identifier = repo
-                            if not db.get_repository(repo):
-                                self.repository_identifier = ''
-                                if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
-                                                            'like to add it?'.format(repo)):
+                                self.repository_identifier = repo
+                                if not db.get_repository(repo):
+                                    self.repository_identifier = ''
+                                    if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
+                                                                'like to add it?'.format(repo)):
 
-                                    m = 'Repository "{}({})"'.format(repo, pi_name)
-                                    # this will set self.repository_identifier
-                                    if self._add_repository(repo, pi_name):
-                                        self.information_dialog('{} added successfully'.format(m))
-                                    else:
-                                        self.warning_dialog('Failed to add {}.'
-                                                            '\nResolve issue before proceeding!!'.format(m))
+                                        m = 'Repository "{}({})"'.format(repo, pi_name)
+                                        # this will set self.repository_identifier
+                                        if self._add_repository(repo, pi_name):
+                                            self.information_dialog('{} added successfully'.format(m))
+                                        else:
+                                            self.warning_dialog('Failed to add {}.'
+                                                                '\nResolve issue before proceeding!!'.format(m))
 
                     except AttributeError, e:
                         print e

@@ -529,6 +529,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('saving experiment "{}" to database'.format(exp.name))
         exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
 
+        exp.n_executed_display = int(self.application.preferences.get('pychron.experiment.n_executed_display', 5))
+
         # reset conditionals result file
         reset_conditional_results()
 
