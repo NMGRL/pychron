@@ -27,11 +27,11 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             actuator = self.actuators[0]
             word = actuator.get_state_checksum(vkeys)
-            self.debug('Get Checksum: {}'.format(word))
+            # self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
-            except BaseException:
-                self.warning('invalid checksum "{}"'.format(word))
+            except (ValueError, TypeError), e:
+                self.warning('invalid checksum "{}". error={}'.format(word, e))
 
     def load_valve_states(self, refresh=True, force_network_change=False):
         # self.debug('Load valve states')

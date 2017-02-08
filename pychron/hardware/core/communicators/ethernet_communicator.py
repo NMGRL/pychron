@@ -229,20 +229,20 @@ class EthernetCommunicator(Communicator):
             if r is None:
                 self.simulation = True
 
-            # if handler:
-            #     if handler.send_packet(cmd):
-            #         r = handler.get_packet(cmd)
-            #         if r is None:
-            #             self.simulation = True
-            #     else:
-            #         self.simulation = True
-            # else:
-            #     self.simulation = True
+                # if handler:
+                #     if handler.send_packet(cmd):
+                #         r = handler.get_packet(cmd)
+                #         if r is None:
+                #             self.simulation = True
+                #     else:
+                #         self.simulation = True
+                # else:
+                #     self.simulation = True
         ret = not self.simulation and handler is not None
         return ret
 
     def get_handler(self, timeout=None):
-        if  timeout is None:
+        if timeout is None:
             timeout = self.timeout
 
         try:
@@ -265,8 +265,16 @@ class EthernetCommunicator(Communicator):
             self.handler = None
 
     def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, timeout=None,
-            message_frame = None, delay=None, *args, **kw):
+            message_frame=None, delay=None, *args, **kw):
         """
+        @param cmd: ASCII text to send
+        @param retries: number of retries if command fails
+        @param verbose: add to log
+        @param quiet: if true do not log the response
+        @param info: str to add to response
+        @param timeout: timeout in seconds
+        @param message_frame: MessageFrame object
+        @param delay: delay in seconds to wait before a `cmd` is sent
 
         """
 
@@ -289,8 +297,8 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     time.sleep(0.025)
-                # else:
-                #     self._reset_connection()
+                    # else:
+                    #     self._reset_connection()
 
             if r is not None:
                 re = process_response(r)

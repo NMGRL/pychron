@@ -178,8 +178,12 @@ class PlotPanel(Loggable):
         invoke_in_main_thread(self._create, evt)
 
         # wait here until _create finishes
-        while not evt.is_set():
-            time.sleep(0.05)
+        while not evt.wait(0.05):
+            pass
+
+        time.sleep(0.1)
+        # while not evt.is_set():
+        #     time.sleep(0.05)
 
     def update(self):
         self.isotope_graph.refresh()
@@ -275,6 +279,7 @@ class PlotPanel(Loggable):
 
         for _ in self.detectors:
             self._new_plot()
+
         evt.set()
 
     def _get_ncounts(self):
