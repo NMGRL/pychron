@@ -66,8 +66,9 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self.debug('Checking detector "{}". Protection Threshold: {} (V)'.format(pd, det.protection_threshold))
                 if det.protection_threshold and dv > det.protection_threshold:
                     self.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
-                    self.ask('GetDeflection {}'.format(pd), verbose=verbose)
+                    resp = self.ask('GetDeflection {}'.format(pd), verbose=verbose)
                     unprotect.append(pd)
+                    self.debug('Protected = {}'.format(resp))
 
         if self.use_beam_blank:
             if dv > self.beam_blank_threshold:

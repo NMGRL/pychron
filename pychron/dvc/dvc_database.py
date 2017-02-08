@@ -635,7 +635,7 @@ class DVCDatabase(DatabaseAdapter):
 
                 q = q.filter(IrradiationPositionTbl.identifier == identifier)
                 q = q.order_by(AnalysisTbl.aliquot.desc())
-                result = self._query_one(q, verbose_query=True)
+                result = self._query_one(q)
                 if result:
                     return int(result[0])
                 else:

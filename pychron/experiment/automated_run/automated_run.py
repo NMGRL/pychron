@@ -371,6 +371,7 @@ class AutomatedRun(Loggable):
                                delay=delay,
                                close_inlet=close_inlet,
                                do_post_equilibration=do_post_equilibration))
+        t.setDaemon(True)
         t.start()
 
         return evt
@@ -379,7 +380,10 @@ class AutomatedRun(Loggable):
         if block:
             return self._sniff(ncounts, starttime, starttime_offset, series)
         else:
-            t = Thread(target=self._sniff, args=(ncounts, starttime, starttime_offset, series))
+            t = Thread(target=self._sniff,
+                       name='sniff',
+                       args=(ncounts, starttime, starttime_offset, series))
+            t.setDaemon(True)
             t.start()
             return True
 
@@ -1361,7 +1365,9 @@ class AutomatedRun(Loggable):
         if block:
             self._post_equilibration()
         else:
-            t = Thread(target=self._post_equilibration)
+            t = Thread(target=self._post_equilibration,
+                       name='post_equil')
+            t.setDaemon(True)
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
@@ -1990,9 +1996,11 @@ anaylsis_type={}
             g.redraw()
 
     def _update_labels(self):
+        self.debug('update labels {}'.format(self.plot_panel))
         if self.plot_panel:
             for g in (self.plot_panel.isotope_graph, self.plot_panel.sniff_graph):
                 if g:
+                    self.debug('update labels "{}"'.format(g))
                     # update the plot_panel labels
                     plots = g.plots
                     n = len(plots)
@@ -2005,8 +2013,10 @@ anaylsis_type={}
                                 name = '{}({})'.format(name, det.name)
 
                             plots[i].y_axis.title = name
-                            print 'setting label {} {} {}'.format(i, det.name, name)
+                            self.debug('setting label {} {} {}'.format(i, det.name, name))
                             names.append(name)
+
+                    g.refresh()
 
     def _update_detectors(self):
         for det in self._active_detectors:
@@ -2022,7 +2032,9 @@ anaylsis_type={}
             change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
         if update_labels:
-            self._update_labels()
+            from pychron.core.ui.gui import invoke_in_main_thread
+            invoke_in_main_thread(self._update_labels)
+
         if update_detectors:
             self._update_detectors()
         if remove_non_active:
@@ -2324,7 +2336,8 @@ anaylsis_type={}
 
         regressing = grpname != 'sniff'
         scnt, fcnt = (2, 1) if regressing else (1, 0)
-        print '{} increment series count {} {} {}'.format(grpname, scnt, fcnt, regressing)
+        self.debug('"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
+
         self.measurement_script.increment_series_counts(scnt, fcnt)
 
     def _wait_for(self, predicate, msg):

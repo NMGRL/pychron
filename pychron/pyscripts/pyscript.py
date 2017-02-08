@@ -168,9 +168,6 @@ named_register = makeNamedRegistry(command_register)
 '''
 
 
-# __CACHED_DURATIONS__ = {}
-
-
 class PyScript(Loggable):
     text = Property
     syntax_checked = Bool
@@ -210,9 +207,6 @@ class PyScript(Loggable):
     interpolation_path = Str
 
     _interpolation_context = None
-    # def __init__(self, *args, **kw):
-    # super(PyScript, self).__init__(*args, **kw)
-    # self._block_lock = Lock()
 
     def is_aborted(self):
         return self._aborted
@@ -247,29 +241,11 @@ class PyScript(Loggable):
             self.test()
             # self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
 
-        # if not ctx:
-        # calc_dur()
-        # return self.get_estimated_duration()
-
-        # h = self._generate_ctx_hash(ctx)
-        # calc_dur()
-
         # self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
         if force or not self.syntax_checked or not ctx:
             calc_dur()
 
         return self.get_estimated_duration()
-
-        #     try:
-        #         self._get_cached_duration(h)
-        #         # self.debug('current context in the cached durations')
-        #     except KeyError:
-        #         calc_dur()
-
-        # d = self.get_estimated_duration()
-        # print 'get estafsdas {}'.format(d)
-        # self._update_cached_duration(h, d)
-        # return d
 
     def traceit(self, frame, event, arg):
         if event == "line":
@@ -335,15 +311,6 @@ class PyScript(Loggable):
 
             self.testing_syntax = False
 
-    # def compile_snippet(self, snippet):
-    #     try:
-    #         code = compile(snippet, '<string>', 'exec')
-    #     except Exception, e:
-    #         self.debug(traceback.format_exc())
-    #         return e
-    #     else:
-    #         return code
-
     def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
         if snippet is None:
@@ -388,30 +355,13 @@ class PyScript(Loggable):
             try:
                 if argv is None:
                     argv = tuple()
+
+                st = time.time()
                 func(*argv)
-                self.debug('executed {}'.format(self._estimated_duration))
+                self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
+                                                                                        time.time() - st))
             except Exception, e:
                 return traceback.format_exc()
-
-                # sys.settrace(self._tracer)
-                # code_or_err = self.compile_snippet(snippet)
-                # if not isinstance(code_or_err, Exception):
-                #     try:
-                #         exec code_or_err in safe_dict
-                #         func = safe_dict['main']
-                #     except KeyError, e:
-                #         print 'exception', e, safe_dict.keys()
-                #         self.debug('{} {}'.format(e, traceback.format_exc()))
-                #         return MainError()
-                #
-                #     try:
-                #         if argv is None:
-                #             argv = tuple()
-                #         func(*argv)
-                #     except Exception, e:
-                #         return traceback.format_exc()
-                # else:
-                #     return code_or_err
 
     def syntax_ok(self, warn=True):
         try:
