@@ -1924,7 +1924,17 @@ anaylsis_type={}
             if outlet:
                 # close mass spec ion pump
                 for o in outlet:
-                    elm.close_valve(o, mode='script')
+                    for i in range(3):
+                        ok, changed = elm.close_valve(o, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Close "{}"'.format(o))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
@@ -1932,7 +1942,17 @@ anaylsis_type={}
 
                 # open inlet
                 for i in inlet:
-                    elm.open_valve(i, mode='script')
+                    for j in range(3):
+                        ok, changed = elm.open_valve(i, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Open "{}"'.format(i))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
 
         # set the passed in event
         evt.set()
