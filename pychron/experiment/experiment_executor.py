@@ -789,7 +789,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             f = getattr(self, step)
             if not f(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
-                run.spec.state = 'failed'
+                if step != '_post_measurement':  # save data even if post measurement fails
+                    run.spec.state = 'failed'
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
