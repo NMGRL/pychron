@@ -56,7 +56,7 @@ class ActiveCTX(object):
 
 
 class Pipeline(HasTraits):
-    name = Str('Pipeline')
+    name = Str('Pipeline 1')
     nodes = List
 
     def reset(self, clear_data=False):
@@ -125,12 +125,36 @@ class Pipeline(HasTraits):
                 return []
 
 
+class PipelineGroup(HasTraits):
+    pipelines = List
+    count = 1
+
+    def add(self):
+        self.count += 1
+        p = Pipeline(name='Pipeline {}'.format(self.count))
+        self.pipelines.append(p)
+        return p
+
+    def remove(self, idx):
+        self.pipelines.pop(idx)
+
+    def get_pipeline_by_node(self, node):
+        return next((p for p in self.pipelines if node in p.nodes), None)
+
+    def _pipelines_default(self):
+        return [Pipeline()]
+
+
 class PipelineEngine(Loggable):
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
     interpreted_age_browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
-    pipeline = Instance(Pipeline, ())
-    selected = Instance(BaseNode, ())
+    pipeline = Instance(Pipeline)
+    pipeline_group = Instance(PipelineGroup, ())
+
+    selected = Any
+    selected_node = Instance(BaseNode, ())
+
     dclicked = Event
     active_editor = Event
     active_inspector_item = Instance(BaseInspectorItem, ())
@@ -138,7 +162,7 @@ class PipelineEngine(Loggable):
 
     # unknowns = List
     # references = List
-
+    add_pipeline = Event
     run_needed = Event
     refresh_all_needed = Event
     update_needed = Event
@@ -218,14 +242,6 @@ class PipelineEngine(Loggable):
         max_gid = max([si.group_id for si in items]) + 1
 
         self._set_grouping(self.selected_unknowns, max_gid)
-
-    def _set_grouping(self, items, gid):
-        for si in items:
-            si.group_id = gid
-
-        if hasattr(self.selected, 'editor') and self.selected.editor:
-            self.selected.editor.refresh_needed = True
-        self.refresh_table_needed = True
 
     def recall_unknowns(self):
         self.debug('recall unks')
@@ -624,8 +640,16 @@ class PipelineEngine(Loggable):
                     break
 
     # private
+    def _set_grouping(self, items, gid):
+        for si in items:
+            si.group_id = gid
+
+        if hasattr(self.selected, 'editor') and self.selected.editor:
+            self.selected.editor.refresh_needed = True
+        self.refresh_table_needed = True
+
     def _set_template(self, name, clear=True):
-        self.reset_event = True
+        # self.reset_event = True
         args = self._get_template_path(name)
         if args is None:
             return
@@ -723,7 +747,6 @@ class PipelineEngine(Loggable):
                 self.run_needed = newnode
 
     def _add_node(self, node, new, run=True):
-        print node, new
         if new.configure():
             node = self._get_last_node(node)
 
@@ -740,6 +763,11 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+    def _add_pipeline_fired(self):
+        p = self.pipeline_group.add()
+        self.pipeline = p
+        self.selected_pipeline_template = ''
+
     def _dclicked_unknowns_changed(self):
         if self.selected_unknowns:
             self.recall_unknowns()
@@ -754,32 +782,42 @@ class PipelineEngine(Loggable):
             self._set_template(new)
 
     def _selected_changed(self, old, new):
-        if old:
-            old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
-            old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event', remove=True)
-            old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
-            old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
-            old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
-            old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
-            old.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
+        if isinstance(new, Pipeline):
+            self.pipeline = new
 
-        if new:
-            new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
-            new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
-            new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
-            new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
-            new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
-            new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
-            new.on_trait_change(self._handle_len_references, 'references_items')
-            # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
+        else:
+            self.selected_node = new
+            if old:
+                old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
+                old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',
+                                    remove=True)
+                old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
+                old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
+                old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
+                old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
+                old.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
+                # self.pipeline = self.pipeline_group.get_pipeline_by_node(old)
 
-        # self.show_group_colors = False
-        if isinstance(new, FigureNode):
-            # self.show_group_colors = True
-            if new.editor:
-                editor = new.editor
-                self.selected_editor = editor
-                self.active_editor = editor
+            if new:
+                new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
+                new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+                new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
+                new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
+                new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
+                new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
+                new.on_trait_change(self._handle_len_references, 'references_items')
+
+                # self.pipeline = self.pipeline_group.get_pipeline_by_node(new)
+
+                # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
+
+            # self.show_group_colors = False
+            if isinstance(new, FigureNode):
+                # self.show_group_colors = True
+                if new.editor:
+                    editor = new.editor
+                    self.selected_editor = editor
+                    self.active_editor = editor
 
     # _suppress_handle_unknowns = False
     # def _handle_unknowns(self, obj, name, new):
@@ -873,6 +911,12 @@ class PipelineEngine(Loggable):
 
     def _dclicked_changed(self, new):
         self.configure(new)
+
+    def _pipeline_default(self):
+        return self.pipeline_group.pipelines[0]
+
+        # def _selected_default(self):
+        #     return BaseNode()
         # self.update_needed = True
 
         # @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')

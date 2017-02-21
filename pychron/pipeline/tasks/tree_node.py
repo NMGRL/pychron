@@ -18,11 +18,15 @@
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor
 from traitsui.tree_node import TreeNode
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.envisage.resources import icon
 
+from pychron.envisage.resources import icon
+from pychron.pipeline.engine import Pipeline
 from pychron.pipeline.nodes import ReviewNode
+
+
+class PipelineGroupTreeNode(TreeNode):
+    icon_name = ''
+    label = 'name'
 
 
 class PipelineTreeNode(TreeNode):
@@ -30,36 +34,43 @@ class PipelineTreeNode(TreeNode):
     label = 'name'
 
     def get_background(self, obj):
-        if isinstance(obj, ReviewNode):
-            if not obj.enabled:
+        if isinstance(obj, Pipeline):
+            c = QColor(Qt.white)
+        else:
+            if isinstance(obj, ReviewNode):
+                if not obj.enabled:
+                    c = QColor('#ff8080')  # light red
+                else:
+                    c = QColor(Qt.cyan)
+            elif obj.skip_configure:
+                c = QColor('#D05BFF')
+            elif not obj.enabled:
                 c = QColor('#ff8080')  # light red
             else:
-                c = QColor(Qt.cyan)
-        elif obj.skip_configure:
-            c = QColor('#D05BFF')
-        elif not obj.enabled:
-            c = QColor('#ff8080')  # light red
-        else:
-            c = super(PipelineTreeNode, self).get_background(obj)
+                c = super(PipelineTreeNode, self).get_background(obj)
         return c
 
     def get_status_color(self, obj):
-        c = QColor(Qt.lightGray)
+        c = QColor(Qt.white)
+        if not isinstance(obj, Pipeline):
+            c = QColor(Qt.lightGray)
 
-        if obj.visited:
-            c = QColor(Qt.green)
-        elif obj.active:
-            c = QColor('orange')
+            if obj.visited:
+                c = QColor(Qt.green)
+            elif obj.active:
+                c = QColor('orange')
         # if obj.status == 'ran':
         #     c = QColor('green')
         # elif obj.status == 'paused':
         #     c = QColor('orange')
         return c
 
-    def get_icon(self, object, is_expanded):
+    def get_icon(self, obj, is_expanded):
         name = self.icon_name
-        if not object.enabled:
-            name = 'cancel'
+        if not isinstance(obj, Pipeline):
+
+            if not object.enabled:
+                name = 'cancel'
 
         return icon(name)
 
@@ -110,4 +121,5 @@ class FitTreeNode(PipelineTreeNode):
 
 class ReviewTreeNode(PipelineTreeNode):
     pass
+
 # ============= EOF =============================================

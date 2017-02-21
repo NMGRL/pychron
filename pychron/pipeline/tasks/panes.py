@@ -33,7 +33,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.sample_view import BaseBrowserSampleView
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pipeline.engine import Pipeline
+from pychron.pipeline.engine import Pipeline, PipelineGroup
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode
@@ -46,13 +46,13 @@ from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
-    ReviewTreeNode
+    ReviewTreeNode, PipelineGroupTreeNode
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 def node_adder(name):
     def wrapper(obj, info, o):
-        print name, info.object
+        # print name, info.object
         f = getattr(info.object, name)
         f(o)
 
@@ -248,7 +248,11 @@ class PipelinePane(TraitsDockPane):
         #                        action='add_data'),
         #                        chain_menu_factory())
 
-        nodes = [PipelineTreeNode(node_for=[Pipeline],
+        nodes = [PipelineGroupTreeNode(node_for=[PipelineGroup],
+                                       children='pipelines',
+                                       auto_open=True),
+
+                 PipelineTreeNode(node_for=[Pipeline],
                                   children='nodes',
                                   icon_open='',
                                   label='name',
@@ -282,8 +286,9 @@ class PipelinePane(TraitsDockPane):
                                 update='update_needed')
         v = View(VGroup(HGroup(UItem('selected_pipeline_template',
                                      editor=myEnumEditor(name='available_pipeline_templates')),
-                               icon_button_editor('run_needed', 'start')),
-                        UItem('pipeline',
+                               icon_button_editor('run_needed', 'start'),
+                               icon_button_editor('add_pipeline', 'add')),
+                        UItem('pipeline_group',
                               editor=editor)), handler=PipelineHandler())
         return v
 
@@ -385,7 +390,7 @@ class AnalysesPane(TraitsDockPane):
     id = 'pychron.pipeline.analyses'
 
     def traits_view(self):
-        v = View(VGroup(UItem('object.selected.unknowns',
+        v = View(VGroup(UItem('object.selected_node.unknowns',
                               width=200,
                               editor=myTabularEditor(adapter=UnknownsAdapter(),
                                                      update='refresh_table_needed',
@@ -395,8 +400,8 @@ class AnalysesPane(TraitsDockPane):
                                                      dclicked='dclicked_unknowns',
                                                      selected='selected_unknowns',
                                                      operations=['delete'])),
-                        UItem('object.selected.references',
-                              visible_when='object.selected.references',
+                        UItem('object.selected_node.references',
+                              visible_when='object.selected_node.references',
                               editor=myTabularEditor(adapter=ReferencesAdapter(),
                                                      update='refresh_table_needed',
                                                      drag_external=True,

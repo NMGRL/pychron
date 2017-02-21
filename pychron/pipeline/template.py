@@ -58,7 +58,6 @@ class PipelineTemplate(HasTraits):
     def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True):
         # if first node is an unknowns node
         # render into template
-
         datanode = None
         try:
             node = pipeline.nodes[0]
