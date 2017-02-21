@@ -19,6 +19,7 @@ import time
 from Queue import Queue
 from threading import Event, Thread
 
+from pyface.timer.do_later import do_later
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 
 from pychron.envisage.consoleable import Consoleable
@@ -133,11 +134,10 @@ class DataCollector(Consoleable):
         def writefunc():
             dets = self.detectors
             writer = self.data_writer
-            while not q.empty() or not evt.is_set():
+            while not q.empty() or not evt.wait(5):
                 while not q.empty():
                     x, keys, signals = q.get()
                     writer(dets, x, keys, signals)
-                time.sleep(1)
 
         # only write to file every 5 seconds and not on main thread
         t = Thread(target=writefunc)
@@ -152,8 +152,8 @@ class DataCollector(Consoleable):
                 break
 
             i += 1
-            et = time.time() - st
-            time.sleep(max(0, period - et))
+            evt.wait(max(0, period - time.time() + st))
+            # time.sleep(max(0, period - et))
 
         self.debug('measurement finished')
 
@@ -172,6 +172,7 @@ class DataCollector(Consoleable):
                 # evt.set()
                 return
 
+            self._post_iter_hook(i)
             return True
         else:
             if result == 'cancel':
@@ -179,6 +180,10 @@ class DataCollector(Consoleable):
             elif result == 'terminate':
                 self.terminated = True
                 # evt.set()
+
+    def _post_iter_hook(self, i):
+        if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
+            do_later(self.isotope_group.calculate_age, force=True)
 
     def _iter_hook(self, i):
         return True
@@ -194,7 +199,7 @@ class DataCollector(Consoleable):
             self._data = data
             return data
 
-    def _save_data(self, x, keys, signals):
+    def _save_data(self, i, x, keys, signals):
         # self.data_writer(self.detectors, x, keys, signals)
 
         self._queue.put((x, keys, signals))
@@ -204,10 +209,6 @@ class DataCollector(Consoleable):
             self._update_baseline_peak_hop(x, keys, signals)
         else:
             self._update_isotopes(x, keys, signals)
-
-        if self.experiment_type == AR_AR:
-            if self.refresh_age:
-                self.isotope_group.calculate_age(force=True)
 
     def _update_baseline_peak_hop(self, x, keys, signals):
         ig = self.isotope_group
