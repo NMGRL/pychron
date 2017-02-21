@@ -46,7 +46,7 @@ class MultiCollector(DataCollector):
 
         x = self._get_time()
         # save the data
-        self._save_data(x, *data)
+        self._save_data(i, x, *data)
         # plot the data
         self.plot_data(i, x, *data)
 

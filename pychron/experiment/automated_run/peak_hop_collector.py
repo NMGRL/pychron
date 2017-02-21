@@ -58,7 +58,7 @@ class PeakHopCollector(DataCollector):
                     return
 
                 x = self._get_time()
-                self._save_data(x, *data)
+                self._save_data(i, x, *data)
                 self._plot_data(i, x, *data)
 
             return True
