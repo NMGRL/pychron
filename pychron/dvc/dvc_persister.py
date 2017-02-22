@@ -257,9 +257,11 @@ class DVCPersister(BasePersister):
                     dvc.meta_push()
                 except GitCommandError, e:
                     self.warning(e)
-                    if not self.confirmation_dialog('DVC/Git Failed. Do you want to continue the experiment?',
-                                                    timeout_ret=True,
-                                                    timeout=30):
+                    if self.confirmation_dialog('NON FATAL\n\n'
+                                                'DVC/Git upload of analysis not successful.'
+                                                'Do you want to CANCEL the experiment?\n',
+                                                timeout_ret=False,
+                                                timeout=30):
                         ret = False
 
         with dvc.session_ctx():
@@ -268,13 +270,16 @@ class DVCPersister(BasePersister):
         return ret
 
     def save_run_log_file(self, path):
-        npath = self._make_path('logs', '.log')
-        shutil.copyfile(path, npath)
-        ar = self.active_repository
-        ar.smart_pull(accept_their=True)
-        ar.add(npath, commit=False)
-        ar.commit('<COLLECTION> log')
-        self.dvc.push_repository(ar)
+        if self.save_enabled:
+            self.debug('saving run log file')
+
+            npath = self._make_path('logs', '.log')
+            shutil.copyfile(path, npath)
+            ar = self.active_repository
+            ar.smart_pull(accept_their=True)
+            ar.add(npath, commit=False)
+            ar.commit('<COLLECTION> log')
+            self.dvc.push_repository(ar)
 
     # private
     def _check_repository_identifier(self):
