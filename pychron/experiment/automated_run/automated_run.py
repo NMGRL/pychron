@@ -331,6 +331,7 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             self.plot_panel.is_baseline = False
+            self.plot_panel.show_isotope_graph()
 
         self.persister.build_tables(group, self._active_detectors, ncounts)
 
@@ -416,6 +417,7 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.is_baseline = True
+            self.plot_panel.show_baseline_graph()
 
         self.multi_collector.is_baseline = True
         self.multi_collector.fit_series_idx = fit_series
@@ -427,6 +429,9 @@ class AutomatedRun(Loggable):
             sc = self.experiment_executor.baseline_color
         else:
             sc = 'green'
+
+
+
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime,
@@ -539,6 +544,7 @@ class AutomatedRun(Loggable):
             self.plot_panel.trait_set(is_baseline=is_baseline,
                                       _ncycles=cycles,
                                       hops=hops)
+            self.plot_panel.show_isotope_graph()
 
         # required for mass spec
         self.persister.save_as_peak_hop = True
@@ -1731,7 +1737,7 @@ anaylsis_type={}
     def _add_active_detector(self, di):
         spec = self.spectrometer_manager.spectrometer
         det = spec.get_detector(di)
-        if not det in self._active_detectors:
+        if det not in self._active_detectors:
             self._active_detectors.append(det)
 
     def _set_active_detectors(self, dets):
@@ -2180,7 +2186,8 @@ anaylsis_type={}
         if p:
             p._ncounts = ncounts
             p.is_baseline = False
-            p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
+            # p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
+            self.plot_panel.show_sniff_graph()
 
         gn = 'sniff'
 
@@ -2252,6 +2259,8 @@ anaylsis_type={}
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
             if grpname == 'sniff':
                 invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
+            elif grpname == 'baseline':
+                invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
             if self.spec.analysis_type in ('unknown', 'cocktail'):
                 invoke_in_main_thread(self._setup_figure_graph)
@@ -2276,6 +2285,37 @@ anaylsis_type={}
 
         self.plot_panel.add_figure_graph(self.spec, self.experiment_executor.experiment_queue.executed_runs)
 
+    def _setup_baseline_graph(self, starttime_offset, color):
+        graph = self.plot_panel.baseline_graph
+        mi, ma = graph.get_x_limits()
+
+        max_ = ma
+        min_ = mi
+        tc = self.plot_panel.total_counts
+        if tc > ma or ma == Inf:
+            max_ = tc * 1.1
+
+        if starttime_offset > mi:
+            min_ = -starttime_offset
+
+        graph.set_x_limits(min_=min_, max_=max_)
+        series = 0
+        for k, iso in self.isotope_group.isotopes.iteritems():
+            idx = graph.get_plotid_by_ytitle(iso.detector)
+            print k, iso.detector, idx
+            if idx is not None:
+                try:
+                    graph.series[idx][series]
+                except IndexError, e:
+                    graph.new_series(marker='circle',
+                                     color=color,
+                                     type='scatter',
+                                     marker_size=1.25,
+                                     fit='linear',
+                                     plotid=idx,
+                                     add_inspector=False,
+                                     add_tools=False)
+
     def _setup_sniff_graph(self, starttime_offset, color):
         graph = self.plot_panel.sniff_graph
         mi, ma = graph.get_x_limits()
@@ -2291,7 +2331,8 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_)
 
-        series = self.collector.series_idx
+        # series = self.collector.series_idx
+        series = 0
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
             if idx is not None:

@@ -571,9 +571,15 @@ class GitRepoManager(Loggable):
         repo = self._repo
         rr = self._get_remote(remote)
         if rr:
-            repo.git.push(remote, branch)
+            self._git_command(lambda: repo.git.push(remote, branch), tag='GitRepoManager.push')
         else:
             self.warning('No remote called "{}"'.format(remote))
+
+    def _git_command(self, func, tag):
+        try:
+            return func()
+        except GitCommandError, e:
+            self.warning('Git command failed. {}, {}'.format(e, tag))
 
     def smart_pull(self, branch='master', remote='origin',
                    quiet=True,
@@ -596,10 +602,11 @@ class GitRepoManager(Loggable):
                 # potentially conflicts
 
                 # do merge
-                try:
-                    repo.git.merge('FETCH_HEAD')
-                except BaseException:
-                    pass
+                self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/ahead')
+                # try:
+                #     repo.git.merge('FETCH_HEAD')
+                # except BaseException:
+                #     pass
 
                 # get conflicted files
                 out, err = grep('<<<<<<<', self.path)
@@ -620,7 +627,8 @@ class GitRepoManager(Loggable):
 
             else:
                 self.debug('merging {} commits'.format(behind))
-                repo.git.merge('FETCH_HEAD')
+                self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')
+                # repo.git.merge('FETCH_HEAD')
         else:
             self.debug('Up-to-date with {}'.format(remote))
             if not quiet:
@@ -630,7 +638,8 @@ class GitRepoManager(Loggable):
 
     def fetch(self, remote='origin'):
         if self._repo:
-            return self._repo.git.fetch(remote)
+            return self._git_command(lambda: self._repo.git.fetch(remote), 'GitRepoManager.fetch')
+            # return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
         ahead = 0
@@ -639,7 +648,9 @@ class GitRepoManager(Loggable):
 
         # repo.git.rev_list('origin..')
         self.fetch(remote)
-        status = repo.git.status('-sb')
+        # status = repo.git.status('-sb')
+        status = self._git_command(lambda: repo.git.status('-sb'), 'GitRepoManager.ahead_behind')
+
         ma = aregex.search(status)
         mb = bregex.search(status)
         if ma:
@@ -655,7 +666,8 @@ class GitRepoManager(Loggable):
         dest.checkout()
 
         src = getattr(repo.branches, src)
-        repo.git.merge(src.commit)
+        # repo.git.merge(src.commit)
+        self._git_command(lambda: repo.git.merge(src.commit), 'GitRepoManager.merge')
 
     def commit(self, msg):
         self.debug('commit message={}'.format(msg))

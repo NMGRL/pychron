@@ -134,14 +134,14 @@ class DataCollector(Consoleable):
         def writefunc():
             dets = self.detectors
             writer = self.data_writer
-            while not q.empty() or not evt.wait(5):
+            while not q.empty() or not evt.wait(2):
                 while not q.empty():
                     x, keys, signals = q.get()
                     writer(dets, x, keys, signals)
 
         # only write to file every 5 seconds and not on main thread
         t = Thread(target=writefunc)
-        t.setDaemon(True)
+        # t.setDaemon(True)
         t.start()
 
         period = self.period_ms * 0.001
@@ -155,10 +155,17 @@ class DataCollector(Consoleable):
             evt.wait(max(0, period - time.time() + st))
             # time.sleep(max(0, period - et))
 
+        evt.set()
+        self.debug('waiting for write to finish')
+        t.join()
+
         self.debug('measurement finished')
 
     def _iter(self, i):
+        st = time.time()
         result = self._check_iteration(i)
+        self.debug('check iteration duration={}'.format(time.time() - st))
+
         if not result:
             try:
                 if i <= 1:
@@ -317,32 +324,26 @@ class DataCollector(Consoleable):
         # if self.is_baseline:
         # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
 
-        for pid, fit in pids:
-            # print self.series_idx, self.fit_series_idx
-            # print graph.plots[pid].plots
-            graph.add_datum((x, signal),
-                            series=self.series_idx,
-                            plotid=pid,
-                            update_y_limits=True,
-                            ypadding='0.1')
+        def update_graph(g, p, f, sidx, fidx):
+            g.add_datum((x, signal),
+                        series=sidx,
+                        plotid=p,
+                        update_y_limits=True,
+                        ypadding='0.1')
+            if f:
+                g.set_fit(f, plotid=p, series=fidx)
 
+        for pid, fit in pids:
             if self.collection_kind == SNIFF:
+                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+
                 sgraph = self.plot_panel.sniff_graph
-                sgraph.add_datum((x, signal),
-                                 series=self.series_idx,
-                                 plotid=pid,
-                                 update_y_limits=True,
-                                 ypadding='0.1')
+                update_graph(sgraph, pid, None, 0, 0)
             elif self.collection_kind == BASELINE:
                 bgraph = self.plot_panel.baseline_graph
-                bgraph.add_datum((x, signal),
-                                 series=self.series_idx,
-                                 plotid=pid,
-                                 update_y_limits=True,
-                                 ypadding='0.1')
-
-            if fit:
-                graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
+                update_graph(bgraph, pid, fit, 0, 0)
+            else:
+                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:

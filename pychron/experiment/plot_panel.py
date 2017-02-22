@@ -150,6 +150,12 @@ class PlotPanel(Loggable):
     def show_graph(self, g):
         invoke_in_main_thread(self.trait_set, selected_graph=g)
 
+    def show_sniff_graph(self):
+        self.show_graph(self.sniff_graph)
+
+    def show_baseline_graph(self):
+        self.show_graph(self.baseline_graph)
+
     def show_isotope_graph(self):
         self.show_graph(self.isotope_graph)
 
@@ -277,8 +283,8 @@ class PlotPanel(Loggable):
         g = self.isotope_graph
         self.selected_graph = g
 
-        for _ in self.detectors:
-            self._new_plot()
+        for det in self.detectors:
+            self._new_plot(ytitle=det.name)
 
         evt.set()
 
@@ -374,6 +380,6 @@ class PlotPanel(Loggable):
         return GraphContainer(model=self)
 
     def _graphs_default(self):
-        return [self.isotope_graph, self.sniff_graph, self.peak_center_graph, self.baseline_graph]
+        return [self.sniff_graph, self.isotope_graph, self.baseline_graph, self.peak_center_graph]
 
 # ============= EOF =============================================
