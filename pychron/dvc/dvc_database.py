@@ -436,7 +436,7 @@ class DVCDatabase(DatabaseAdapter):
                 if principal_investigator:
                     dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
-                        a.principal_investigator = principal_investigator
+                        a.principal_investigator = dbpi
 
                 a = self._add_item(a)
             return a
