@@ -194,6 +194,9 @@ class BaseBrowserSampleView(PaneModelView):
                        label='PI')
         return pi_grp
 
+    def _get_load_group(self):
+        load_grp = Group(UItem('selected_load'))
+
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
@@ -208,6 +211,7 @@ class BaseBrowserSampleView(PaneModelView):
 
         # ln_grp = self._get_identifier_group()
         pi_grp = self._get_pi_group()
+        load_grp = self._get_load_group()
 
         top_level_filter_grp = VGroup(
             # CustomLabel('filter_label',
@@ -219,7 +223,7 @@ class BaseBrowserSampleView(PaneModelView):
                    show_border=True),
             # HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
             HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp),
-            HGroup(pi_grp, project_grp, irrad_grp))
+            HGroup(pi_grp, project_grp, irrad_grp, load_grp))
         # analysis_type_group,
         # date_grp)
 

@@ -310,6 +310,16 @@ def entry_point(appname, klass, debug=False):
     monkey_patch_checkbox_render()
     # monkey_patch_panel()
 
+    # set stylesheet
+
+    from pyface.util.guisupport import get_app_qt4
+    qapp = get_app_qt4()
+
+    import os
+    print os.getcwd()
+    with open('darkorange.css', 'r') as rfile:
+        qapp.setStyleSheet(rfile.read())
+
     env = initialize_version(appname, debug)
     if env:
         if debug:

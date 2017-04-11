@@ -107,6 +107,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
+    selected_load = Str
+    loads = List
+
     include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
@@ -261,6 +264,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.samples = s
         self.osamples = s
         self.trait_set(selected_samples=sel)
+
+    def load_loads(self):
+        db = self.db
+        self.loads = db.get_measured_load_names()
 
     def load_repositories(self):
         db = self.db
