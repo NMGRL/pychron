@@ -1003,11 +1003,10 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl, RepositoryAssociationTbl, RepositoryTbl)
 
-            if principal_investigators:
-                q = q.join(PrincipalInvestigatorTbl)
-
             if projects or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
+                if principal_investigators:
+                    q = q.join(PrincipalInvestigatorTbl)
 
             if mass_spectrometers and not at:
                 at = True
@@ -1260,6 +1259,13 @@ class DVCDatabase(DatabaseAdapter):
     # def get_load_holders(self):
     #     with self.session_ctx():
     #         return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
+    def get_measured_load_names(self):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(MeasuredPositionTbl.loadName))
+            q = q.order_by(MeasuredPositionTbl.loadName)
+            s = self._query_all(q)
+            return [si[0] for si in s]
+
     def get_measured_positions(self, loadname, pos):
         with self.session_ctx() as sess:
             q = sess.query(MeasuredPositionTbl)
