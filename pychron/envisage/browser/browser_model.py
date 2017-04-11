@@ -91,6 +91,7 @@ class BrowserModel(BaseBrowserModel):
             self.load_principal_investigators()
             self.load_projects()
             self.load_repositories()
+            self.load_loads()
             self._suppress_load_labnumbers = False
 
             self._load_projects_and_irradiations()

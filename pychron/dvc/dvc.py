@@ -775,9 +775,6 @@ class DVC(Loggable):
         else:
             self.warning('{} not in the database {}'.format(runspec.runid, self.db.name))
 
-    def add_measured_position(self, *args, **kw):
-        self.db.add_measured_position(*args, **kw)
-
     def add_material(self, name, grainsize=None):
         db = self.db
         added = False
