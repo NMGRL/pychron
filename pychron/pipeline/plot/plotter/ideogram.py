@@ -350,8 +350,7 @@ class Ideogram(BaseArArFigure):
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
 
-        if self.options.label_all_peaks:
-            self._add_peak_labels(line, self.xs, self.xes)
+        self._add_peak_labels(line, self.xs, self.xes)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -445,41 +444,22 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_peak_labels(self, line, ages, errors):
-        xs = line.index.get_data()
-        ys = line.value.get_data()
+        if self.options.label_all_peaks:
+            xs = line.index.get_data()
+            ys = line.value.get_data()
 
-        xp, yp = fast_find_peaks(ys, xs)
-        for xi, yi in zip(xp, yp):
-            label = PeakLabel(line,
-                              data_point=(xi, yi),
-                              label_text=floatfmt(xi, n=3),
-                              # label_style='bubble',
+            xp, yp = fast_find_peaks(ys, xs)
+            for xi, yi in zip(xp, yp):
+                label = PeakLabel(line,
+                                  data_point=(xi, yi),
+                                  label_text=floatfmt(xi, n=3),
+                                  # label_style='bubble',
 
-                              # border_visible=False,
-                              # marker_visible=False,
-                              # show_label_coords=False
-                              )
-            line.overlays.append(label)
-            # try:
-            #     maxp, minp = find_peaks(ys, xs, lookahead=1)
-            # except IndexError:
-            #     return
-            #
-            # for age, relative_prob in maxp:
-            #     func = lambda mi, ma: cumulative_probability(ages, errors, mi, ma, n=N)
-            #     limits = (age * 0.99, age * 1.01)
-            #     try:
-            #         p = find_fine_peak(func=func, initial_limits=limits, tol=0.001, lookahead=1)
-            #     except IndexError:
-            #         continue
-            #
-            #     label = PeakLabel(line,
-            #                       data_point=(p, relative_prob),
-            #                       label_text=floatfmt(p, n=3),
-            #                       border_visible=False,
-            #                       marker_visible=False,
-            #                       show_label_coords=False)
-            #     line.overlays.append(label)
+                                  # border_visible=False,
+                                  # marker_visible=False,
+                                  # show_label_coords=False
+                                  )
+                line.overlays.append(label)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
