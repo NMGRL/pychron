@@ -28,6 +28,7 @@ from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
+from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import BrowserView
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -37,9 +38,10 @@ from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeE
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
-    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, SetFilteringTagAction, \
+    ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
+    SetFilteringTagAction, \
     EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
-    InverseIsochronAction
+    InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
@@ -80,6 +82,9 @@ class PipelineTask(BaseBrowserTask):
                           name='Save'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit'),
+                 SToolBar(LoadReviewStatusAction(),
+                          DiffViewAction(),
+                          name='View'),
                  # SToolBar(GitRollbackAction(), label='Git Toolbar'),
                  SToolBar(TagAction(),
                           SetInvalidAction(),
@@ -97,9 +102,13 @@ class PipelineTask(BaseBrowserTask):
     modified = False
     projects = None
     _browser_info = None
+    diff_enabled = Bool
 
     def activated(self):
         super(PipelineTask, self).activated()
+
+        if self.application.get_plugin('pychron.mass_spec.plugin'):
+            self.diff_enabled = True
 
         self.engine.dvc = self.dvc
         self.engine.browser_model = self.browser_model
@@ -131,6 +140,41 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def diff_analysis(self):
+        self.debug('diff analysis')
+        if not self.has_active_editor():
+            return
+
+        active_editor = self.active_editor
+        if not isinstance(active_editor, RecallEditor):
+            self.warning_dialog('Active tab must be a Recall tab')
+            return
+
+        left = active_editor.analysis
+
+        recaller = self.application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+        if recaller is None:
+            self.warning_dialog('Could not access MassSpec database')
+            return
+
+        if not recaller.connect():
+            self.warning_dialog('Could not connect to MassSpec database. {}'.format(recaller.db.datasource_url))
+            return
+
+        from pychron.pipeline.editors.diff_editor import DiffEditor
+        editor = DiffEditor(recaller=recaller)
+        # left.set_stored_value_states(True, save=True)
+
+        if not left.check_has_n():
+            left.load_raw_data(n_only=True)
+
+        if editor.setup(left):
+            editor.set_diff(left)
+            self._open_editor(editor)
+        else:
+            self.warning_dialog('Failed to locate analysis {} in MassSpec database'.format(left.record_id))
+            # left.revert_use_stored_values()
+
     def pipeline_recall(self):
         if self._browser_info:
             if self._browser_info.control:
