@@ -214,6 +214,7 @@ class DiffEditor(BaseTraitsEditor):
 
     record_id = ''
     is_blank = False
+    is_air = False
     diff_tags = List
     edit_configuration_button = Button
     select_all_button = Button('Select All')
@@ -222,6 +223,7 @@ class DiffEditor(BaseTraitsEditor):
     def setup(self, left):
         self.record_id = left.record_id
         self.is_blank = self.record_id.startswith('b')
+        self.is_air = self.record_id.startswith('a')
 
         right = self._find_right(left)
         self.adapter = ValueTabularAdapter()
@@ -260,7 +262,7 @@ class DiffEditor(BaseTraitsEditor):
         vs = []
         pfunc = lambda x: lambda n: u'{} {}'.format(x, n)
 
-        if not self.is_blank:
+        if not self.is_blank and not self.is_air: 
             vs.append(Value(name='J',
                             lvalue=nominal_value(left.j or 0),
                             rvalue=nominal_value(right.j or 0)))
@@ -348,10 +350,10 @@ class DiffEditor(BaseTraitsEditor):
 
             vs.append(StrValue(name=func('Fit'), lvalue=iso.fit.lower(), rvalue=riso.fit.lower()))
             vs.append(StrValue(name=func('Filter'), lvalue=filter_str(iso), rvalue=filter_str(iso)))
-            vs.append(Value(name=func('Filter Iter'), lvalue=iso.filter_outliers_dict.get('iterations'),
-                            rvalue=riso.filter_outliers_dict.get('iterations')))
-            vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs'),
-                            rvalue=riso.filter_outliers_dict.get('std_devs')))
+            vs.append(Value(name=func('Filter Iter'), lvalue=iso.filter_outliers_dict.get('iterations', 0),
+                            rvalue=riso.filter_outliers_dict.get('iterations', 0)))
+            vs.append(Value(name=func('Filter SD'), lvalue=iso.filter_outliers_dict.get('std_devs', 0),
+                            rvalue=riso.filter_outliers_dict.get('std_devs', 0)))
             vs.append(Value(name=func('IC'), lvalue=nominal_value(iso.ic_factor),
                             rvalue=nominal_value(riso.ic_factor)))
             vs.append(Value(name=func(u'IC {}'.format(PLUSMINUS_ONE_SIGMA)), lvalue=std_dev(iso.ic_factor),
