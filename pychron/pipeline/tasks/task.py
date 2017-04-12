@@ -233,11 +233,11 @@ class PipelineTask(BaseBrowserTask):
                 if a:
                     tag, items, use_filter = a
 
-            # tags stored as lowercase
-            tag = tag.lower()
-
             # set tags for items
             if tag and items:
+                # tags stored as lowercase
+                tag = tag.lower()
+
                 dvc = self.dvc
                 db = dvc.db
                 key = lambda x: x.repository_identifier

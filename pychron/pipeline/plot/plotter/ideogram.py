@@ -175,7 +175,6 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_visible = False
 
         if selection:
-            print 'selection {}'.format(selection)
             self._rebuild_ideo(selection)
 
             # if omit:

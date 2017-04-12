@@ -370,7 +370,7 @@ class DVCAnalysis(Analysis):
         self.peak_center = pd['center_dac']
 
     def _load_tags(self, jd):
-        self.set_tag(jd[0])
+        self.set_tag(jd.get('name'))
 
     def _load_blanks(self, jd):
         for key, v in jd.iteritems():

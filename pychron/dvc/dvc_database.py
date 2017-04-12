@@ -202,11 +202,14 @@ class DVCDatabase(DatabaseAdapter):
             return project, sample, material, irradiation, level, pos
 
     def set_analysis_tag(self, uuid, tagname):
-        with self.session_ctx():
+        with self.session_ctx() as sess:
             an = self.get_analysis_uuid(uuid)
             change = an.change
+            # print 'asdfasdf', change, an.id, change.idanalysischangeTbl, tagname, self.save_username
             change.tag = tagname
             change.user = self.save_username
+            sess.add(change)
+            sess.commit()
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         exclude_invalid=True):
