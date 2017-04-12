@@ -1,4 +1,6 @@
-/*http://www.yasinuludag.com/darkorange.stylesheet*/
+/*http://tech-artists.org/forum/showthread.php?2359-Release-Qt-dark-orange-stylesheet&s=71ef10b0d0926f22b357821c13944701&p=14381&viewfull=1#post14381*/
+/*adapted from http://www.yasinuludag.com/darkorange.stylesheet*/
+
 QToolTip {
     border: 1px solid black;
     background-color: #ffa02f;
@@ -198,7 +200,7 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: url(:/down_arrow.png);
+    image: url(images/down_arrow.png);
 }
 
 QGroupBox:focus {
@@ -434,6 +436,10 @@ QMainWindow::separator:hover {
     border: 1px solid #6c6c6c;
     spacing: 3px; /* spacing between items in the tool bar */
 }
+
+/*QToolBar{*/
+/*background: green;*/
+/*}*/
 
 QToolBar::handle {
     spacing: 3px; /* spacing between items in the tool bar */

@@ -196,6 +196,7 @@ class BaseBrowserSampleView(PaneModelView):
 
     def _get_load_group(self):
         load_grp = Group(UItem('selected_load'))
+        return load_grp
 
     def _get_sample_group(self):
         irrad_grp = self._get_irrad_group()

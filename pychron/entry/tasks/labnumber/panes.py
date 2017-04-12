@@ -31,7 +31,6 @@ from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
 from pychron.envisage.browser.adapters import SampleAdapter, BrowserAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.stylesheets import load_stylesheet
 from pychron.envisage.tasks.pane_helpers import spacer
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
@@ -146,7 +145,8 @@ class IrradiationEditorPane(TraitsDockPane):
                                pi_grp,
                                project_grp),
                         sample_grp,
-                        style_sheet=load_stylesheet('labnumber_entry')))
+                        # style_sheet=load_stylesheet('labnumber_entry')
+                        ))
         return v
 
 

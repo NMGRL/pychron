@@ -326,11 +326,12 @@ class UnknownsAdapter(TabularAdapter):
                            Action(name='Clear All Group', action='unknowns_clear_all_grouping'))
 
     def get_bg_color(self, obj, trait, row, column=0):
-        c = 'white'
         if self.item.tag == 'invalid':
             c = '#C9C5C5'
         elif self.item.is_omitted():
             c = '#FAC0C0'
+        else:
+            c = super(UnknownsAdapter, self).get_bg_color(obj, trait, row, column)
         return c
 
     def _get_age_text(self):

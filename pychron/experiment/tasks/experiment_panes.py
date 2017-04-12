@@ -29,7 +29,6 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.stylesheets import load_stylesheet
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
@@ -158,7 +157,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
                         edit_grp,
-                        style_sheet=load_stylesheet('experiment_factory')),
+                        # style_sheet=load_stylesheet('experiment_factory')
+                        ),
                  kind='live',
                  width=225)
         return v
