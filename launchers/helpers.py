@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from pyface.util.guisupport import get_app_qt4
 from traits.etsconfig.api import ETSConfig
 from traitsui.qt4.ui_panel import heading_text
 
@@ -42,6 +43,24 @@ traits.has_traits.CHECK_INTERFACES = 1
 
 warnings.simplefilter("ignore")
 logger = logging.getLogger()
+
+
+def set_stylesheet(path):
+    app = get_app_qt4()
+    app.setStyle('plastique')
+
+    if path is None:
+        from pychron.paths import paths
+        import shutil
+
+        force = True
+        default_css = 'darkorange.css'
+        path = paths.hidden_path(default_css)
+        if not os.path.isfile(path) or force:
+            shutil.copyfile(default_css, path)
+
+    with open(path, 'r') as rfile:
+        app.setStyleSheet(rfile.read())
 
 
 def monkey_patch_preferences():
@@ -121,8 +140,8 @@ class myPanel(BasePanel):
 
         # Create the panel.
         self.control = panel(ui)
-        if self.control.isinstance(QtGui.QTabWidget):
-            self.control.setTabBar(myQTabBar())
+        # if self.control.isinstance(QtGui.QTabWidget):
+        #     self.control.setTabBar(myQTabBar())
 
         # Suppress the title if this is a subpanel or if we think it should be
         # superceded by the title of an "outer" widget (eg. a dock widget).
@@ -306,9 +325,10 @@ def entry_point(appname, klass, debug=False):
     """
         entry point
     """
+
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
-    # monkey_patch_panel()
+    monkey_patch_panel()
 
     # set stylesheet
 
@@ -322,6 +342,9 @@ def entry_point(appname, klass, debug=False):
 
     env = initialize_version(appname, debug)
     if env:
+
+        set_stylesheet(None)
+
         if debug:
             set_commandline_args()
 

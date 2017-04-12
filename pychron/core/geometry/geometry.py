@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack
+from numpy import array, vstack, mean, average, hstack, zeros
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
@@ -172,6 +172,37 @@ def find_arc_center(p1, p2, r):
     from scipy.optimize import fsolve
     cx, cy = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r))
     return cx, cy
+
+
+def approximage_polygon_center2(pts, r, weight=True):
+    """
+    weight by angle between p0-p1.
+
+
+    :param pts:
+    :param r:
+    :param weight:
+    :return:
+    """
+
+    n = len(pts)
+    cs = zeros(n ** 2)
+
+    for i, p0 in enumerate(pts):
+        for j, p1 in enumerate(pts):
+            cx, cy = find_arc_center(p0, p1, r)
+
+            x0, y0 = p0[0] - cx, p0[1] - cy
+            x1, y1 = p1[0] - cx, p1[1] - cy
+
+            wi = abs(math.atan2(y1 - y0, x1 - x0) / math.pi)
+
+            cs[i * n + j] = (cx, cy, wi)
+
+    xs, ys, wi = cs.T
+    weights = wi if weight else None
+
+    return average(xs, weights=weights), average(ys, weights=weights)
 
 
 def approximate_polygon_center(pts, r, weight=True):

@@ -133,6 +133,7 @@ class AnalysisTable(ColumnSorterMixin):
         items.extend(ans)
         self.oanalyses = self.analyses = sort_items(items)
         self.calculate_dts(self.analyses)
+        self.scroll_to_row = len(self.analyses) - 1
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:
@@ -151,6 +152,7 @@ class AnalysisTable(ColumnSorterMixin):
         self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)
+        self.scroll_to_row = len(self.analyses) - 1
 
     def calculate_dts(self, ans):
         if ans and len(ans) > 1:

@@ -52,6 +52,9 @@ class myTabularEditor(TabularEditor):
 
     # scroll_to_row_hint = 'top'
 
+    def _bgcolor_default(self):
+        return '#646464'
+
     def _get_klass(self):
         return _TabularEditor
 
