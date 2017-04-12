@@ -25,7 +25,6 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.database.orms import stringcolumn, primary_key
 from pychron.database.records.isotope_record import DVCIsotopeRecordView
 from pychron.experiment.utilities.identifier import make_runid
-from pychron.pychron_constants import OMIT_KEYS
 
 Base = declarative_base()
 
@@ -182,8 +181,12 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.position
 
     @property
-    def tag_dict(self):
-        return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
+    def tag(self):
+        return self.change.tag
+
+    # @property
+    # def tag_dict(self):
+    #     return {k: getattr(self.change.tag_item, k) for k in ('name',) + OMIT_KEYS}
 
     # @property
     # def labnumber(self):

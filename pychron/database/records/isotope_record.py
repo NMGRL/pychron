@@ -127,6 +127,7 @@ class DVCIsotopeRecordView:
         if self.use_repository_suffix:
             rid = '{}-{}'.format(rid, self.repository_identifier)
         self.record_id = rid
+        self.tag = self.dbrecord.tag
 
     def set_tag(self, tag):
         self.tag = tag
