@@ -90,7 +90,12 @@ class ValvePyScript(PyScript):
                    'time={:0.2f} sec'.format(name, description, result, et))
 
         if result is not None:
-            self._finish_valve_change('open', result, name, description)
+            if not self._finish_valve_change('open', result, name, description):
+                if not globalv.experiment_debug:
+                    self.warning_dialog('Failed to Open valve name={}, description={}'.format(name, description))
+                    self.cancel()
+                else:
+                    self.debug('Experiment debug mode. not canceling')
 
     @verbose_skip
     @command_register
@@ -106,7 +111,12 @@ class ValvePyScript(PyScript):
 
         self.debug('---------------------------------------- close {} ({}) result={}'.format(name, description, result))
         if result is not None:
-            self._finish_valve_change('close', result, name, description)
+            if not self._finish_valve_change('close', result, name, description):
+                if not globalv.experiment_debug:
+                    self.warning_dialog('Failed to Close valve name={}, description={}'.format(name, description))
+                    self.cancel()
+                else:
+                    self.debug('Experiment debug mode. not canceling')
 
     @verbose_skip
     @command_register
@@ -128,6 +138,14 @@ class ValvePyScript(PyScript):
 
     # private
     def _finish_valve_change(self, action, result, name, description, retry=1):
+        """
+        :param action: 
+        :param result: 
+        :param name: 
+        :param description: 
+        :param retry: 
+        :return: 
+        """
         ok, changed = result[0]
         if changed:
             time.sleep(0.25)
@@ -138,13 +156,12 @@ class ValvePyScript(PyScript):
 
         # if action == 'close':
         # ok = not ok
-
         self.debug('action={}, ok={}, locked={}'.format(action, ok, locked))
+        change_ok = True
         if not ok and not locked[0]:
             msg = 'Failed to {} valve Name="{}", Description="{}"'.format(action, name or '', description or '')
             self.console_info(msg)
-
-            cancel = True
+            change_ok = False
             if self.retry_actuation and retry < 100:
                 time.sleep(0.1)
                 msg = 'Retry actuation. i={} Action="{}", Name="{}", Description="{}"'.format(retry, action, name or '',
@@ -156,16 +173,19 @@ class ValvePyScript(PyScript):
                     description=description))], protocol=ELPROTOCOL)
 
                 if result is not None:
-                    cancel = not self._finish_valve_change(action, result, name, description, retry=retry + 1)
+                    change_ok = self._finish_valve_change(action, result, name, description, retry=retry + 1)
 
-            if cancel:
-                if not globalv.experiment_debug:
-                    self.warning_dialog(msg)
-                    self.cancel()
-                else:
-                    self.debug('Experiment debug mode. not canceling')
-        else:
-            return True
+        return change_ok
+
+        # return not cancel
+        # if cancel:
+        #     if not globalv.experiment_debug:
+        #         # self.warning_dialog(msg)
+        #         self.cancel()
+        #     else:
+        #         self.debug('Experiment debug mode. not canceling')
+        # else:
+        #     return True
 
     def _get_valve_state(self, name, description):
         return self._manager_action([('get_valve_state', (name,), dict(
