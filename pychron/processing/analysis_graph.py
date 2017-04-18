@@ -24,25 +24,6 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class AnalysisGraph(Graph):
-    pass
-    # tag = Event
-    # save_db_figure = Event
-    # invalid = Event
-
-    # def get_contextual_menu_save_actions(self):
-    #     s = super(AnalysisGraph, self).get_contextual_menu_save_actions()
-    #     s.extend([('Database', '_save_to_database', {})])
-    #     return s
-    #
-    # def get_child_context_menu_actions(self):
-    #     return [self.action_factory('Set tag', '_set_tag'),
-    #             self.action_factory('Set INVALID', '_set_invalid')]
-    #
-    # def _save_to_database(self):
-    #     print 'save to database'
-    #     self.save_db_figure = True
-    #
-
     def _set_tag(self):
         """
         open the tag dialog

@@ -50,10 +50,9 @@ class SelectionFigure(object):
     def _set_selected(self, ans, sel):
         for i, a in enumerate(ans):
             if i in sel:
-                ts = a.otemp_status if a.otemp_status else 'omit'
-                a.temp_status = ts
+                a.set_temp_status(a.otemp_status if a.otemp_status else 'omit')
             else:
-                a.temp_status = 'ok'
+                a.set_temp_status('ok')
 
     def _filter_metadata_changes(self, obj, ans, func=None):
         sel = obj.metadata.get('selections', [])

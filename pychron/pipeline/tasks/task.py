@@ -611,8 +611,17 @@ class PipelineTask(BaseBrowserTask):
         items = self.engine.selected.unknowns
         items.extend(self.engine.selected.references)
         items = [i for i in items if i.temp_selected]
-        items.extend(self.engine.selected_unknowns)
-        items.extend(self.engine.selected_references)
+
+        uuids = [i.uuid for i in items]
+        for ans in (self.engine.selected_unknowns,
+                    self.engine.selected_references):
+            for i in ans:
+                if i.uuid not in uuids:
+                    items.append(i)
+
+        # items.extend(self.engine.selected_unknowns)
+        # items.extend(self.engine.selected_references)
+
         return items
 
     def _get_tagname(self, items):

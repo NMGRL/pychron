@@ -273,7 +273,7 @@ class ReferencesSeries(BaseSeries):
 
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
-                    r.temp_status = 'omit' if i in excluded else 'ok'
+                    r.set_temp_status('omit' if i in excluded else 'ok')
 
                 self._set_values(plotobj, reg, key)
 

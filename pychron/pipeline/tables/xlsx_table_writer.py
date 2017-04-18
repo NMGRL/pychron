@@ -746,7 +746,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_analysis(self, sh, cols, item, last):
-        status = 'X' if item.tag != 'ok' else ''
+        status = 'X' if item.tag.lower() != 'ok' else ''
         row = self._current_row
 
         border = self._workbook.add_format({'bottom': 1})
