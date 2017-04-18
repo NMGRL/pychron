@@ -80,6 +80,8 @@ class AnalysisGroup(HasTraits):
     percent_39Ar = AGProperty()
     dirty = Event
 
+    total_n = AGProperty()
+
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
@@ -220,6 +222,10 @@ class AnalysisGroup(HasTraits):
             v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
         e = self._modify_error(v, e, self.arith_age_error_kind)
         return ufloat(v, e)
+
+    @cached_property
+    def _get_total_n(self):
+        return len(self.analyses)
 
     @cached_property
     def _get_nanalyses(self):

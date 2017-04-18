@@ -746,7 +746,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_analysis(self, sh, cols, item, last):
-        status = 'X' if item.tag.lower() != 'ok' else ''
+        status = 'X' if item.is_omitted() else ''
         row = self._current_row
 
         border = self._workbook.add_format({'bottom': 1})
@@ -789,6 +789,8 @@ class XLSXTableWriter(BaseTableWriter):
         sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
         sh.write(self._current_row, idx, nominal_value(group.weighted_age))
         sh.write(self._current_row, idx + 1, std_dev(group.weighted_age))
+
+        sh.write(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n))
 
         self._current_row += 1
 
