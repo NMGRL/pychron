@@ -599,6 +599,7 @@ class GitRepoManager(Loggable):
                                                     'Their is potential for conflicts that you will have to resolve.'
                                                     'Would you like to Continue?'.format(behind, ahead)):
                         return
+
                 # potentially conflicts
 
                 # do merge
