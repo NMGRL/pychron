@@ -37,7 +37,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
-N = 1000
+N = 5000
 
 
 class PeakLabel(DataLabel):
@@ -562,7 +562,10 @@ class Ideogram(BaseArArFigure):
             # print 'update graph meta'
             # self._rebuild_ideo(sel)
 
-    def _rebuild_ideo(self, sel):
+    def _rebuild_ideo(self, sel=None):
+        if sel is None:
+            sel = []
+
         graph = self.graph
 
         if len(graph.plots) > 1:
@@ -813,4 +816,6 @@ class Ideogram(BaseArArFigure):
 
         return wm, we, mswd, valid_mswd
 
+    def _handle_limits(self):
+        self._rebuild_ideo()
 # ============= EOF =============================================
