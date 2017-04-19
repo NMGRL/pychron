@@ -26,7 +26,6 @@ from numpy import linspace, zeros, ones, exp
 
 
 def cumulative_probability(ages, errors, xmi, xma, n=100):
-    print 'cumulative prob mi={},ma={}, n={}'.format(xmi, xma, n)
     bins = linspace(xmi, xma, n)
     probs = zeros(n)
 

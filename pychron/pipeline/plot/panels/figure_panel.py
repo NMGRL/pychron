@@ -142,6 +142,8 @@ class FigurePanel(HasTraits):
                         mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
+                g.plots[i].value_scale = p.scale
+
                 if p.has_ylimits():
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
