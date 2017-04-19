@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, UItem, Item, HGroup, VGroup, spring, Spring, \
-    RangeEditor, ListEditor, InstanceEditor
+    ListEditor, InstanceEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -38,7 +39,7 @@ class WaitPane(TraitsDockPane):
                    Item('high', label='Set Max. Seconds'),
                    spring,
                    CustomLabel('current_time',
-                               size=14,
+                               size=24,
                                weight='bold'),
                    UItem('pause_button'),
                    UItem('continue_button'))))
