@@ -224,7 +224,6 @@ class BaseArArFigure(HasTraits, SelectionFigure):
             pp.padding_bottom = options.padding_bottom
 
         if po:
-            pp.value_scale = po.scale
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
                 pp.y_axis.tick_label_formatter = lambda x: ''
