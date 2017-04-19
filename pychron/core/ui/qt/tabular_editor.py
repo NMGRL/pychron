@@ -228,8 +228,12 @@ class _TableView(TableView):
             md = PyMimeData.coerce(ed)
             if md is None:
                 return
-            elif not hasattr(ed.instance(), '__iter__'):
-                return
+            else:
+                try:
+                    if not hasattr(ed.instance(), '__iter__'):
+                        return
+                except AttributeError:
+                    return
 
             # We might be able to handle it (but it depends on what the final
             # target is).
