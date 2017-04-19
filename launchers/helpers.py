@@ -50,11 +50,11 @@ def set_stylesheet(path):
     app.setStyle('plastique')
 
     if path is None:
-        from pychron.paths import paths
         import shutil
 
         force = True
         default_css = 'darkorange.css'
+        from pychron.paths import paths
         path = paths.hidden_path(default_css)
         if not os.path.isfile(path) or force:
             shutil.copyfile(default_css, path)
@@ -330,20 +330,10 @@ def entry_point(appname, klass, debug=False):
     monkey_patch_checkbox_render()
     monkey_patch_panel()
 
-    # set stylesheet
-
-    from pyface.util.guisupport import get_app_qt4
-    qapp = get_app_qt4()
-
-    import os
-    print os.getcwd()
-    with open('darkorange.css', 'r') as rfile:
-        qapp.setStyleSheet(rfile.read())
-
     env = initialize_version(appname, debug)
     if env:
 
-        set_stylesheet(None)
+        # set_stylesheet(None)
 
         if debug:
             set_commandline_args()
