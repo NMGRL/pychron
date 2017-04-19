@@ -790,7 +790,7 @@ class XLSXTableWriter(BaseTableWriter):
         sh.write(self._current_row, idx, nominal_value(group.weighted_age))
         sh.write(self._current_row, idx + 1, std_dev(group.weighted_age))
 
-        sh.write(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n))
+        sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
         self._current_row += 1
 

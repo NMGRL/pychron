@@ -48,11 +48,13 @@ class PDFNode(FileNode):
 class PDFFigureNode(PDFNode):
     name = 'PDF Figure'
 
+    def configure(self, **kw):
+        return BaseNode.configure(self, **kw)
+
     def traits_view(self):
 
         return self._view_factory(Item('root', editor=DirectoryEditor(root_path=paths.data_dir)),
                                   width=500)
-        return v
 
     def _generate_path(self, ei):
         name = ei.name.replace(' ', '_')

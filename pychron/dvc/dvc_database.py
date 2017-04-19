@@ -762,7 +762,7 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.filter(getattr(AnalysisTbl, k) == v)
                 except AttributeError:
                     self.debug('Invalid AnalysisTbl column {}'.format(k))
-            q = q.order_by(AnalysisTbl.analysis_timestamp.desc())
+            q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_first(q)
 
     def get_database_version(self, **kw):
