@@ -168,6 +168,9 @@ class PeakHopYamlCase1(PeakHopYamlCase):
     txt = '''
 - counts: 2
   settle: 1
+  positioning:
+    detector: H1
+    isotope: Ar40
   cup_configuration:
    - isotope: Ar40
      active: True
@@ -189,6 +192,9 @@ class PeakHopYamlCase1(PeakHopYamlCase):
      is_baseline: False
 - counts: 30
   settle: 10
+  positioning:
+    detector: H1
+    isotope: Ar40
   cup_configuration:
    - isotope: Ar37
      active: True
