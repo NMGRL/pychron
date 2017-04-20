@@ -15,19 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.qt.QtGui import QColor
-from traits.api import HasTraits, Int, Color, Str, Event, Bool
-# from traitsui.api import View, UItem
-# from pychron.lasers.scanner import ApplicationController
-from traitsui.item import UItem
-from traitsui.view import View
-from pychron.application_controller import ApplicationController
-from pychron.core.ui.display_editor import DisplayEditor
+from Queue import Queue
 # ============= standard library imports ========================
 from threading import Lock
-from Queue import Queue
+
+from pyface.qt.QtGui import QColor
+from traits.api import HasTraits, Int, Color, Str, Event, Bool
+from traitsui.api import View, UItem, Controller
+
 # ============= local library imports  ==========================
-# from pychron.viewable import Viewable
+from pychron.core.ui.display_editor import DisplayEditor
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -54,7 +51,7 @@ class DisplayModel(HasTraits):
         invoke_in_main_thread(self.trait_set, refresh=True)
 
 
-class DisplayController(ApplicationController):
+class DisplayController(Controller):
     x = Int
     y = Int
     width = Int

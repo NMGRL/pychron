@@ -15,25 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, Bool, Event, \
-    Property, Float, Tuple, File, Int
-from traitsui.api import View, Item, UItem, ButtonEditor
+import os
 # ============= standard library imports ========================
 import time
-import os
+
 import yaml
+from traits.api import Instance, List, Bool, Event, Property, Float, Tuple, File, Int
+from traitsui.api import View, Item, UItem, ButtonEditor, Controller
+
+from pychron.core.helpers.timer import Timer
+from pychron.core.ui.thread import Thread
 # ============= local library imports  ==========================
 from pychron.envisage.view_util import open_view
-from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
-from pychron.core.helpers.timer import Timer
-from pychron.loggable import Loggable
-from pychron.application_controller import ApplicationController
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.ui.thread import Thread
+from pychron.loggable import Loggable
+from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
-class ScannerController(ApplicationController):
+class ScannerController(Controller):
     execute_button = Event
     execute_label = Property(depends_on='model._scanning')
 

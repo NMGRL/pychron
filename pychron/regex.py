@@ -17,9 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import re
+
 # ============= local library imports  ==========================
-
-
 
 ALIQUOT_REGEX = re.compile('\d+-+\d+$')
 
