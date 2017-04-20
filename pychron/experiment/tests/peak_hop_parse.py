@@ -1,18 +1,14 @@
 import yaml
 
-
 __author__ = 'ross'
 
 import unittest
 
-
 from pychron.experiment.automated_run.hop_util import parse_hops, generate_hops
-
 
 HOPS = [('Ar40:H1, Ar36:CDD', 2, 1),
         ('bs:39.5:H1', 45, 2),
         ('Ar39:CDD', 2, 1)]
-
 
 
 class PeakHopYamlCase(unittest.TestCase):
@@ -159,9 +155,10 @@ class PeakHopYamlCase2(PeakHopYamlCase):
     def test_hop1_deflections(self):
         hop = self.hop1()
         self.assertEqual(hop['deflections'], [0])
+
     def test_hop2_deflections(self):
-        hop =self.hop2()
-        self.assertEqual(hop['deflections'], [3250,0,0,0,0])
+        hop = self.hop2()
+        self.assertEqual(hop['deflections'], [3250, 0, 0, 0, 0])
 
 
 class PeakHopYamlCase1(PeakHopYamlCase):
@@ -203,6 +200,7 @@ class PeakHopYamlCase1(PeakHopYamlCase):
      protect: False
      is_baseline: False
 '''
+
     def test_hop1_settle(self):
         hop = self.hop1()
         self.assertEqual(hop['settle'], 1)
@@ -234,8 +232,6 @@ class PeakHopYamlCase1(PeakHopYamlCase):
     def test_hop2_detectors(self):
         hop = self.hop2()
         self.assertEqual(hop['isotopes'], ['Ar37'])
-
-
 
 
 class PeakHopTxtCase(unittest.TestCase):
@@ -280,27 +276,27 @@ class PeakHopTxtCase(unittest.TestCase):
     def test_generate_hops(self):
         g = generate_hops(HOPS)
         h1 = g.next()
-        print h1
+        # print h1
         h1 = g.next()
-        print h1
+        # print h1
         self.assertEqual(h1['is_baselines'], (False, False))
 
         h1 = g.next()
-        print h1
+        # print h1
         self.assertEqual(h1['is_baselines'], (True,))
 
         h1 = g.next()
-        print h1
+        # print h1
         h1 = g.next()
-        print h1
+        # print h1
         self.assertEqual(h1['is_baselines'], (False,))
         h1 = g.next()
-        print h1
+        # print h1
         h1 = g.next()
-        print h1
+        # print h1
         self.assertEqual(h1['is_baselines'], (False, False))
         h1 = g.next()
-        print h1
+        # print h1
         self.assertEqual(h1['is_baselines'], (True,))
 
 
