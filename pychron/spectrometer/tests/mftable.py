@@ -7,7 +7,7 @@ from pychron.spectrometer.mftable import MagnetFieldTable
 class Argon2CDDMFTableTestCase(unittest.TestCase):
     def setUp(self):
         self.mftable = MagnetFieldTable(bind=False)
-        self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Ar38':38, 'PHHCbs': 1}
+        self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Ar38': 38, 'PHHCbs': 1}
 
         p = './data/argon_2CDD.csv'
         if not os.path.isfile(p):
@@ -32,7 +32,7 @@ class DiscreteMFTableTestCase(unittest.TestCase):
         self.mftable = MagnetFieldTable(bind=False)
         self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Foo': 1}
 
-        p = './data/discrete_mftable.csv'
+        p = './spectrometer/tests/data/discrete_mftable.csv'
         if not os.path.isfile(p):
             p = 'pychron/spectrometer/tests/data/discrete_mftable.csv'
 
@@ -43,7 +43,8 @@ class DiscreteMFTableTestCase(unittest.TestCase):
         self.assertEqual(self.mftable.mass_cal_func, 'discrete')
 
     def test_missing(self):
-        self.assertEqual(self.mftable._mftable['L2(CDD)'], (['Ar40', 'Ar39', 'Ar36', 'Foo'], [1], (12.34,), None))
+        self.assertEqual(self.mftable._mftable['L2(CDD)'], (['Ar40', 'Ar39', 'Ar36', 'Foo'],
+                                                            [40, 39, 36, 1], ('---', '---', '---', 12.34), None))
 
     def test_discrete1(self):
         dac = self.mftable.map_mass_to_dac('Ar40', 'H2')
@@ -55,7 +56,7 @@ class MFTableTestCase(unittest.TestCase):
         self.mftable = MagnetFieldTable(bind=False)
         self.mftable.molweights = {'Ar40': 40, 'Ar39': 39, 'Ar36': 36, 'Foo': 1}
 
-        p = './data/mftable.csv'
+        p = './spectrometer/tests/data/mftable.csv'
         if not os.path.isfile(p):
             p = 'pychron/spectrometer/tests/data/mftable.csv'
 
