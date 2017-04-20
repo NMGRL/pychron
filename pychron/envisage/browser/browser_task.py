@@ -216,6 +216,9 @@ class BaseBrowserTask(BaseEditorTask):
         self.dvc.create_session()
         if not self.browser_model.is_activated:
             self._setup_browser_model()
+        else:
+            # reattach DVCIsotopeRecordViews to the session
+            self.browser_model.reattach()
 
             # with no_update(self):
             #     self.browser_model.current_task_name = self.default_task_name

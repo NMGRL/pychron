@@ -56,6 +56,16 @@ class SampleBrowserModel(BrowserModel):
     # def drop_factory(self, item):
     #     print 'dropadfs', item
     #     return item
+    def reattach(self):
+        self.debug('reattach')
+
+        oans = self.analysis_table.oanalyses
+        uuids = [ai.uuid for ai in oans]
+        nans = self.db.get_analyses_uuid(uuids)
+
+        for ni, ai in zip(nans, oans):
+            ai.dbrecord = ni
+
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
         self.analysis_table.dump()
@@ -246,11 +256,11 @@ class SampleBrowserModel(BrowserModel):
             if refs:
                 self.analysis_table.add_analyses(refs)
             else:
-                atypes=','.join(atypes)
+                atypes = ','.join(atypes)
                 ms = ','.join(m.mass_spectrometers)
                 self.warning_dialog('No References found.\n\n'
                                     'Analysis Types: {}\n'
-                                    'Mass Spectrometers: {}'.format(atypes,ms))
+                                    'Mass Spectrometers: {}'.format(atypes, ms))
 
     def _project_date_bins(self, identifier):
         db = self.db
