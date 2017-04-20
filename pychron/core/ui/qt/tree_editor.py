@@ -148,8 +148,11 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         painter.drawRoundedRect(option.rect, 5, 5)
 
         item = self._tree.itemFromIndex(index)
+        try:
+            expanded, node, obj = item._py_data
+        except AttributeError:
+            return
 
-        expanded, node, obj = item._py_data
         text = node.get_label(obj)
 
         if self._show_icons:
