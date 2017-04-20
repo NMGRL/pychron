@@ -192,6 +192,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     _suppress_post_update = False
     _suppress_load_labnumbers = False
 
+    def reattach(self):
+        pass
+
     def make_records(self, ans):
         return self._make_records(ans)
 
@@ -364,7 +367,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self._suppress_load_labnumbers:
             return
 
-        db = self.db
         sams = []
         self._recent_mass_spectrometers = []
         warned = False
@@ -427,7 +429,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     @caller
     def _make_labnumbers(self):
-        db = self.db
         # dont query if analysis_types enabled but not analysis type specified
         if self.use_analysis_type_filtering and not self.analysis_include_types:
             self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
