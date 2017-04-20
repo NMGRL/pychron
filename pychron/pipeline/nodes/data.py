@@ -67,7 +67,7 @@ class DVCNode(BaseNode):
             else:
                 self.trait_set(**{self.analysis_kind: analyses})
 
-        return True
+            return True
 
 
 class InterpretedAgeNode(DVCNode):
@@ -193,10 +193,10 @@ class UnknownNode(DataNode):
             self.unknowns = self.dvc.make_analyses(records)
 
     def run(self, state):
-        if not self.unknowns and not state.unknowns:
-            if not self.configure():
-                state.canceled = True
-                return
+        # if not self.unknowns and not state.unknowns:
+        #     if not self.configure():
+        #         state.canceled = True
+        #         return
 
         review_req = []
         unks = self.unknowns

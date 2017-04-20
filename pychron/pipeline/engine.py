@@ -30,7 +30,8 @@ from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError, \
+    InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode
@@ -415,6 +416,10 @@ class PipelineEngine(Loggable):
     def add_series(self, node=None, run=True):
         series_node = SeriesNode()
         self._add_node(node, series_node, run)
+
+    def add_inverse_isochron(self, node=None):
+        isonode = InverseIsochronNode()
+        self._add_node(node, isonode)
 
     # fits
     def add_icfactor(self, node=None, run=True):
