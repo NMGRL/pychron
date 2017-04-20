@@ -202,6 +202,8 @@ class ArArAge(IsotopeGroup):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.uvalue
+        elif attr == 'uF':
+            r = self.uF
         elif attr.startswith('u') and attr != 'uage':
 
             # elif '/' in attr:
