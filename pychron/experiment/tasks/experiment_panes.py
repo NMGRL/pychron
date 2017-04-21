@@ -156,9 +156,7 @@ class ExperimentFactoryPane(TraitsDockPane):
         v = View(VGroup(button_bar,
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
-                        edit_grp,
-                        # style_sheet=load_stylesheet('experiment_factory')
-                        ),
+                        edit_grp),
                  kind='live',
                  width=225)
         return v
