@@ -278,8 +278,8 @@ class ExtractionLineManager(Manager, Consoleable):
                     vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug(
-            'update switch state {} {} args={} kw={} ncanvase={}'.format(name, state, args, kw, len(self.canvases)))
+        # self.debug(
+        #     'update switch state {} {} args={} kw={} ncanvase={}'.format(name, state, args, kw, len(self.canvases)))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
@@ -341,6 +341,13 @@ class ExtractionLineManager(Manager, Consoleable):
                 return self.switch_manager.get_state_by_description(description)
             else:
                 return self.switch_manager.get_state_by_name(name)
+
+    def get_indicator_state(self, name=None, description=None):
+        if self.switch_manager is not None:
+            if description is not None and description.strip():
+                return self.switch_manager.get_indicator_state_by_description(description)
+            else:
+                return self.switch_manager.get_indicator_state_by_name(name)
 
     def get_valve_states(self):
         if self.switch_manager is not None:
@@ -470,15 +477,29 @@ class ExtractionLineManager(Manager, Consoleable):
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
 
-        self._trigger_update()
+        if self.switch_manager and self.use_hardware_update:
+            def func():
+                t = Thread(target=self._update)
+                t.setDaemon(True)
+                t.start()
+            do_after(1000, func)
 
-    def _trigger_update(self):
-        if self.use_hardware_update and self.switch_manager:
-            do_after(self.hardware_update_period * 1000, self._update_states)
+    def _update(self):
+        p = self.hardware_update_period
+        sm = self.switch_manager
+        while 1:
+            sm.load_hardware_states()
+            time.sleep(p)
 
-    def _update_states(self):
-        self.switch_manager.load_hardware_states()
-        self._trigger_update()
+    #     self._trigger_update()
+    #
+    # def _trigger_update(self):
+    #     if self.use_hardware_update and self.switch_manager:
+    #         do_after(self.hardware_update_period * 1000, self._update_states)
+    #
+    # def _update_states(self):
+    #     self.switch_manager.load_hardware_states()
+    #     self._trigger_update()
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -710,7 +731,7 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        self.debug('handle state {}'.format(new))
+        # self.debug('handle state {}'.format(new))
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:

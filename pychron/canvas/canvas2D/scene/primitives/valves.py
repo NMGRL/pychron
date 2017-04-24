@@ -66,6 +66,7 @@ class Switch(Connectable, Circle):
             # self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
 
     def is_in(self, sx, sy):
+
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
         # print ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5, r

@@ -100,7 +100,7 @@ class Switch(BaseSwitch):
         if self.actuator is not None:
             action = 'closed'
             result = self.actuator.get_indicator_state(self, action, verbose=verbose)
-            self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
+            # self.debug('Switch indicator state {}, {}'.format(result, 'Open' if result else 'Closed'))
             if isinstance(result, bool):
                 self.set_state(result)
             else:
