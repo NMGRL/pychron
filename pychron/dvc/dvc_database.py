@@ -216,7 +216,6 @@ class DVCDatabase(DatabaseAdapter):
                         mass_spectrometer=None,
                         exclude_invalid=True):
         with self.session_ctx() as sess:
-            sess.exprih
             # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
             refs = OrderedSet()
@@ -862,7 +861,7 @@ class DVCDatabase(DatabaseAdapter):
                                    exclude_uuids=None,
                                    exclude_invalid=True,
                                    verbose=False):
-        with self.session_ctx(commit=False) as sess:
+        with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             if exclude_invalid:
                 q = q.join(AnalysisChangeTbl)

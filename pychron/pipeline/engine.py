@@ -213,11 +213,10 @@ class PipelineEngine(Loggable):
         """
         for p in self.pipeline.nodes:
             if isinstance(p, FitICFactorNode):
-                udets = {iso.detector for ai in p.unknowns
+                udets = {iso.detector for ai in self.state.unknowns
                          for iso in ai.isotopes.itervalues()}
-                rdets = {iso.detector for ai in p.references
+                rdets = {iso.detector for ai in self.state.references
                          for iso in ai.isotopes.itervalues()}
-
                 p.set_detectors(list(udets.union(rdets)))
 
     def get_unknowns_node(self):
@@ -593,6 +592,7 @@ class PipelineEngine(Loggable):
                         node.run(state)
                         node.visited = True
                         self.selected = node
+                        self.update_detectors()
                     except NoAnalysesError:
                         self.information_dialog('No Analyses in Pipeline!')
                         self.pipeline.reset()
