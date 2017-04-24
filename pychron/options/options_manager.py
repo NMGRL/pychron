@@ -74,6 +74,7 @@ class OptionsManager(Loggable):
             return v
 
     def set_detectors(self, dets):
+        print 'setdetcot', dets
         self._cached_detectors = dets
         if self.selected_options:
             self.selected_options.set_detectors(dets)
@@ -90,6 +91,8 @@ class OptionsManager(Loggable):
         if new:
             if self._cached_names:
                 new.set_names(self._cached_names)
+
+            print 'selecae change', self._cached_detectors
             if self._cached_detectors:
                 new.set_detectors(self._cached_detectors)
 
