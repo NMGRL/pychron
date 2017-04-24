@@ -15,24 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import time
+from socket import gethostbyname, gethostname
+from threading import Thread
+
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 
-# =============standard library imports ========================
-import time
-from threading import Thread
-from socket import gethostbyname, gethostname
-# =============local library imports  ==========================
 from pychron.core.file_listener import FileListener
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
+from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
-from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.pychron_constants import NULL_STR
 from pychron.wait.wait_group import WaitGroup
 
@@ -266,19 +265,21 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def reload_scene_graph(self):
         self.info('reloading canvas scene')
-        for c in self.canvases:
-            c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
-            # c.load_canvas_file(c.config_name)
 
-            if self.switch_manager:
-                for k, v in self.switch_manager.switches.iteritems():
-                    vc = c.get_object(k)
-                    if vc:
-                        vc.soft_lock = v.software_lock
-                        vc.state = v.state
+        c = self.canvas
+        c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.valves_path)
+        # c.load_canvas_file(c.config_name)
+
+        if self.switch_manager:
+            for k, v in self.switch_manager.switches.iteritems():
+                vc = c.get_object(k)
+                if vc:
+                    vc.soft_lock = v.software_lock
+                    vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+        # self.debug(
+        #     'update switch state {} {} args={} kw={} ncanvase={}'.format(name, state, args, kw, len(self.canvases)))
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
@@ -341,9 +342,18 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 return self.switch_manager.get_state_by_name(name)
 
+    def get_indicator_state(self, name=None, description=None):
+        if self.switch_manager is not None:
+            if description is not None and description.strip():
+                return self.switch_manager.get_indicator_state_by_description(description)
+            else:
+                return self.switch_manager.get_indicator_state_by_name(name)
+
     def get_valve_states(self):
         if self.switch_manager is not None:
-            return self.switch_manager.get_states()
+            # only query valve states if not already doing a
+            # hardware_update via _trigger_update
+            return self.switch_manager.get_states(query=not self.use_hardware_update)
 
     def get_valve_by_name(self, name):
         if self.switch_manager is not None:
@@ -467,15 +477,29 @@ class ExtractionLineManager(Manager, Consoleable):
             self.info('start gauge scans')
             self.gauge_manager.start_scans()
 
-        self._trigger_update()
+        if self.switch_manager and self.use_hardware_update:
+            def func():
+                t = Thread(target=self._update)
+                t.setDaemon(True)
+                t.start()
+            do_after(1000, func)
 
-    def _trigger_update(self):
-        if self.use_hardware_update and self.switch_manager:
-            do_after(self.hardware_update_period * 1000, self._update_states)
+    def _update(self):
+        p = self.hardware_update_period
+        sm = self.switch_manager
+        while 1:
+            sm.load_hardware_states()
+            time.sleep(p)
 
-    def _update_states(self):
-        self.switch_manager.load_indicator_states()
-        self._trigger_update()
+    #     self._trigger_update()
+    #
+    # def _trigger_update(self):
+    #     if self.use_hardware_update and self.switch_manager:
+    #         do_after(self.hardware_update_period * 1000, self._update_states)
+    #
+    # def _update_states(self):
+    #     self.switch_manager.load_hardware_states()
+    #     self._trigger_update()
 
     def _refresh_canvas(self):
         self.refresh_canvas()
@@ -707,8 +731,13 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        self.debug('handle state {}'.format(new))
-        self.update_switch_state(*new)
+        # self.debug('handle state {}'.format(new))
+        if isinstance(new, tuple):
+            self.update_switch_state(*new)
+        else:
+            n = len(new)
+            for i, ni in enumerate(new):
+                self.update_switch_state(refresh=i != n - 1, *ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))
