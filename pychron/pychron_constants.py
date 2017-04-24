@@ -42,6 +42,7 @@ PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
 # PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
 
+SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
 LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']

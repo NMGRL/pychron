@@ -49,6 +49,7 @@ PACKAGE_DICT = dict(
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
     PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
+    SimpleIdentifierPlugin='pychron.entry.tasks.simple_identifier.plugin',
 
     # hardware
     ClientExtractionLinePlugin='pychron.extraction_line.tasks.client_extraction_line_plugin',

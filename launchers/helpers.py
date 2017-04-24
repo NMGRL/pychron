@@ -330,9 +330,9 @@ def entry_point(appname, klass, debug=False):
     monkey_patch_checkbox_render()
     monkey_patch_panel()
 
+    # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)
     if env:
-
         # set_stylesheet(None)
 
         if debug:

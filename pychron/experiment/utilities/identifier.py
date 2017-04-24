@@ -20,10 +20,11 @@ import os
 import re
 
 import yaml
+
 # ============= local library imports  ==========================
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
-from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
+from pychron.pychron_constants import LINE_STR, ALPHAS, SPECIAL_IDENTIFIER
 
 IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
 SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
@@ -33,7 +34,7 @@ ANALYSIS_MAPPING = dict()  # ba: 'Blank Air'
 NON_EXTRACTABLE = dict()  # ba: 'Blank Air'
 ANALYSIS_MAPPING_INTS = dict()  # blank_air: 0
 SPECIAL_MAPPING = dict()  # blank_air: ba
-SPECIAL_NAMES = ['Special Labnumber', LINE_STR]  # 'Blank Air'
+SPECIAL_NAMES = [SPECIAL_IDENTIFIER, LINE_STR]  # 'Blank Air'
 SPECIAL_KEYS = []  # ba
 # AGE_TESTABLE = []
 try:

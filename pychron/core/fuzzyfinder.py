@@ -37,7 +37,7 @@ def fuzzyfinder(user_input, collection, attr=None):
     # suggestions = []
     pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     try:
-        regex = re.compile('%s' % pattern)  # Compiles a regex.
+        regex = re.compile(pattern, re.IGNORECASE)  # Compiles a regex.
     except re.error:
         return []
     # for item in collection:

@@ -50,7 +50,7 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
-from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL
+from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -70,6 +70,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     default_fits_button = Button
     default_fits_enabled = Bool
     # ===================================
+    simple_identifier_manager = Instance('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+    # selected_project = Any
+    # selected_sample = Any
+    # projects = List
+    # samples = List
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -82,12 +87,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     update_labnumber = Event
 
     aliquot = EKlass(Int)
-    special_labnumber = Str('Special Labnumber')
+    special_labnumber = Str(SPECIAL_IDENTIFIER)
 
     db_refresh_needed = Event
     auto_save_needed = Event
 
-    labnumbers = Property(depends_on='project, selected_level')
+    labnumbers = Property(depends_on='project, selected_level, _identifiers')
+    _identifiers = List
 
     use_project_based_repository_identifier = Bool
     repository_identifier = Str
@@ -261,9 +267,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         bind_preference(self, 'irradiation_project_prefix', 'pychron.entry.irradiation_project_prefix')
 
         if not self.irradiation_project_prefix:
-            self.warning_dialog('Please Set "Irradiation Project Prefix in Preferences/Entry')
+            self.warning_dialog('Please Set "Irradiation Project Prefix" in Preferences/Entry')
 
         super(AutomatedRunFactory, self).__init__(*args, **kw)
+
+    def set_identifiers(self, v):
+        self._identifiers = v
+        self.update_labnumber = True
 
     def setup_files(self):
         self.load_templates()
@@ -658,7 +668,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.display_irradiation = ''
             self.sample = ''
             self._suppress_special_labnumber_change=True
-            self.special_labnumber = 'Special Labnumber'
+            self.special_labnumber = SPECIAL_IDENTIFIER
             self._suppress_special_labnumber_change=False
 
     def _template_closed(self, obj, name, new):
@@ -978,14 +988,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_labnumbers(self):
-        lns = []
-        db = self.get_database()
-        if db is None or not db.connect():
-            return []
+        if self._identifiers:
+            lns = self._identifiers
+        else:
+            lns = []
+            db = self.get_database()
+            if db is None or not db.connect():
+                return []
 
-        if self.selected_level and self.selected_level not in ('Level', LINE_STR):
-            with db.session_ctx(use_parent_session=False):
-                lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
+            if self.selected_level and self.selected_level not in ('Level', LINE_STR):
+                with db.session_ctx(use_parent_session=False):
+                    lns = db.get_level_identifiers(self.selected_irradiation, self.selected_level)
 
         return lns
 
@@ -1380,10 +1393,10 @@ post_equilibration_script:name''')
                 special = True
 
             if not special:
-                sname = 'Special Labnumber'
+                sname = SPECIAL_IDENTIFIER
             else:
                 tag = new.split('-')[0]
-                sname = ANALYSIS_MAPPING.get(tag, 'Special Labnumber')
+                sname = ANALYSIS_MAPPING.get(tag, SPECIAL_IDENTIFIER)
 
             self._suppress_special_labnumber_change = True
             self.special_labnumber = sname
@@ -1410,7 +1423,7 @@ post_equilibration_script:name''')
         if self._suppress_special_labnumber_change:
             return
 
-        if self.special_labnumber not in ('Special Labnumber', LINE_STR, ''):
+        if self.special_labnumber not in (SPECIAL_IDENTIFIER, LINE_STR, ''):
             ln = convert_special_name(self.special_labnumber)
             self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
@@ -1525,6 +1538,14 @@ post_equilibration_script:name''')
         dh.mainstore = self.application.get_service(DVC_PROTOCOL)
         dh.bind_preferences()
         return dh
+
+    def _simple_identifier_manager_default(self):
+        sm = self.application.get_service('pychron.entry.simple_identifier_manager.SimpleIdentifierManager')
+        if sm is not None:
+            sm.activated()
+            sm.factory = self
+
+        return sm
 
     @property
     def run_block_enabled(self):

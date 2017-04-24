@@ -272,8 +272,9 @@ class SampleTbl(Base, NameMixin):
     id = primary_key()
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
-    positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
+
+    positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class ProductionTbl(Base, NameMixin):
@@ -508,8 +509,25 @@ class MediaTbl(Base, BaseMixin):
 
 
 # ======================= Simple Idenifier ================================
-class SimpleIdenifier(Base, BaseMixin):
+class SimpleIdentifierTbl(Base, BaseMixin):
     identifier = Column(Integer, primary_key=True)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
+
+    sample = relationship('SampleTbl', uselist=False)
+
+    @property
+    def sample_name(self):
+        if self.sample:
+            return self.sample.name
+
+    @property
+    def project_name(self):
+        if self.sample and self.sample.project:
+            return self.sample.project.name
+
+    @property
+    def principal_investigator_name(self):
+        if self.sample and self.sample.project and self.sample.project.principal_investigator:
+            return self.sample.project.principal_investigator.name
 
 # ============= EOF =============================================

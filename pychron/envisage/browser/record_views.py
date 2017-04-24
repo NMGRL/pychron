@@ -68,8 +68,14 @@ class SampleRecordView(RecordView):
     identifier = ''
     principal_investigator = ''
     note = ''
+    id = None
+
+    def __str__(self):
+        return self.name
 
     def _create(self, dbrecord):
+        self.id = dbrecord.id
+
         if dbrecord.material:
             self.material = dbrecord.material.name
             self.grainsize = dbrecord.material.grainsize or ''

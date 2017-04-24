@@ -34,7 +34,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, SimpleIdentifierTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
@@ -170,6 +170,30 @@ class DVCDatabase(DatabaseAdapter):
                 ret = pret or ret
 
             return ret
+
+    def add_simple_identifier(self, sid):
+        with self.session_ctx():
+            obj = SimpleIdentifierTbl()
+            obj.sampleID = sid
+            self._add_item(obj)
+
+    def get_simple_identifier(self, sid):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            q = q.join(SampleTbl)
+            q = q.filter(SampleTbl.id == sid)
+            return self._query_one(q)
+
+    def get_sample_simple_identifiers(self, sid):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            q = q.filter(SampleTbl.id == sid)
+            return self._query_all(q)
+
+    def get_simple_identifiers(self):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            return self._query_all(q)
 
     def get_repository_analyses(self, repo):
         with self.session_ctx():
