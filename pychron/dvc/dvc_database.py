@@ -212,6 +212,8 @@ class DVCDatabase(DatabaseAdapter):
             sess.commit()
 
     def find_references(self, times, atypes, hours=10, exclude=None,
+                        extract_device=None,
+                        mass_spectrometer=None,
                         exclude_invalid=True):
         with self.session_ctx() as sess:
             sess.exprih
@@ -224,6 +226,8 @@ class DVCDatabase(DatabaseAdapter):
                 high = ti + delta
                 # rs = self.get_analyses_data_range(low, high, atypes, exclude=ex, exclude_uuids=exclude)
                 rs = self.get_analyses_by_date_range(low, high,
+                                                     extract_device=extract_device,
+                                                     mass_spectrometers=mass_spectrometer,
                                                      analysis_type=atypes,
                                                      exclude=ex,
                                                      exclude_uuids=exclude,
