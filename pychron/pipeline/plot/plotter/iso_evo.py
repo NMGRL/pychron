@@ -34,7 +34,7 @@ class IsoEvo(BaseArArFigure):
     # show_sniff = False
     show_baseline = False
 
-    def plot(self, plots, legend):
+    def plot(self, plots, legend=None):
         for i, p in enumerate(plots):
             self._plot(i, p)
 

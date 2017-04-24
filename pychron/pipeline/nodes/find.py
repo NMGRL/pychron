@@ -229,7 +229,7 @@ class FindReferencesNode(FindNode):
                 ai.group_id = i
 
     def _run_group(self, state, gid, unknowns):
-        times = sorted((ai.timestamp for ai in unknowns))
+        times = sorted((ai.rundate for ai in unknowns))
 
         atype = self.analysis_type.lower().replace(' ', '_')
         refs = self.dvc.find_references(times, atype, hours=self.threshold,
