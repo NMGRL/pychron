@@ -211,14 +211,14 @@ class PipelineEngine(Loggable):
         set valid detectors for FitICFactorNodes
 
         """
-        for p in self.pipeline.nodes:
-            if isinstance(p, FitICFactorNode):
-                udets = {iso.detector for ai in p.unknowns
-                         for iso in ai.isotopes.itervalues()}
-                rdets = {iso.detector for ai in p.references
-                         for iso in ai.isotopes.itervalues()}
-
-                p.set_detectors(list(udets.union(rdets)))
+        if self.state:
+            for p in self.pipeline.nodes:
+                if isinstance(p, FitICFactorNode):
+                    udets = {iso.detector for ai in self.state.unknowns
+                             for iso in ai.isotopes.itervalues()}
+                    rdets = {iso.detector for ai in self.state.references
+                             for iso in ai.isotopes.itervalues()}
+                    p.set_detectors(list(udets.union(rdets)))
 
     def get_unknowns_node(self):
         nodes = self.get_nodes(UnknownNode)
@@ -593,6 +593,7 @@ class PipelineEngine(Loggable):
                         node.run(state)
                         node.visited = True
                         self.selected = node
+                        self.update_detectors()
                     except NoAnalysesError:
                         self.information_dialog('No Analyses in Pipeline!')
                         self.pipeline.reset()
@@ -669,6 +670,8 @@ class PipelineEngine(Loggable):
                       self.dvc,
                       clear=clear)
         except BaseException, e:
+            import traceback
+            traceback.print_exc()
             self.debug('Invalid Template: {}'.format(e))
             self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
             return

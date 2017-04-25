@@ -244,7 +244,7 @@ class ReferencesSeries(BaseSeries):
     def post_make(self):
         do_later(self.graph.refresh)
 
-    def plot(self, plots, legend):
+    def plot(self, plots, legend=None):
         if plots:
             _, mx = self._get_min_max()
 

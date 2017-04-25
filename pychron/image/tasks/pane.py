@@ -17,9 +17,8 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, VGroup, UItem, TabularEditor, Item, TextEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.envisage.browser.adapters import ProjectAdapter, SampleImageAdapter
 
@@ -45,6 +44,7 @@ class InfoPane(TraitsDockPane):
                       VGroup(UItem('object.selected_info_model.note', style='custom',
                                    editor=TextEditor(read_only=False)))))
         return v
+
 
 class SampleBrowserPane(TraitsDockPane):
     id = 'pychron.image.browser'

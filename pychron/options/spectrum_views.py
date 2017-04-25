@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, checkbox_column, object_column, \
-    MainOptions
+    MainOptions, TitleSubOptions
 
 
 class SpectrumSubOptions(SubOptions):
@@ -52,46 +51,58 @@ class SpectrumAppearance(AppearanceSubOptions):
         return self._make_view(VGroup(g, fgrp))
 
 
-class DisplaySubOptions(SubOptions):
+class DisplaySubOptions(TitleSubOptions):
     def traits_view(self):
-        display_grp = Group(HGroup(UItem('show_info',
-                                         tooltip='Show general info in the upper right corner'),
-                                   show_border=True,
-                                   label='General'),
-                            VGroup(Item('include_legend', label='Show'),
-                                   Item('include_sample_in_legend', label='Include Sample'),
-                                   Item('legend_location', label='Location'),
-                                   label='Legend', show_border=True),
+        title_grp = self._get_title_group()
 
-                            HGroup(Item('display_step', label='Step'),
-                                   Item('display_extract_value', label='Power/Temp'),
-                                   # spring,
-                                   # Item('step_label_font_size', label='Size'),
-                                   show_border=True,
-                                   label='Labels'),
-                            VGroup(HGroup(UItem('display_plateau_info',
-                                                tooltip='Display plateau info'),
-                                          # Item('plateau_font_size', label='Size',
-                                          #      enabled_when='display_plateau_info'),
-                                          Item('plateau_sig_figs', label='SigFigs')),
-                                   HGroup(Item('include_plateau_sample',
-                                               tooltip='Add the Sample name to the Plateau indicator',
-                                               label='Sample'),
-                                          Item('include_plateau_identifier',
-                                               tooltip='Add the Identifier to the Plateau indicator',
-                                               label='Identifier')),
-                                   Item('plateau_arrow_visible'),
-                                   show_border=True,
-                                   label='Plateau'),
-                            HGroup(UItem('display_integrated_info',
-                                         tooltip='Display integrated age info'),
-                                   # Item('integrated_font_size', label='Size',
-                                   #      enabled_when='display_integrated_info'),
-                                   Item('integrated_sig_figs', label='SigFigs'),
-                                   show_border=True,
-                                   label='Integrated'),
+        gen_grp = HGroup(UItem('show_info', tooltip='Show general info in the upper right corner'),
+                         show_border=True,
+                         label='General')
+
+        legend_grp = VGroup(Item('include_legend', label='Show'),
+                            Item('include_sample_in_legend', label='Include Sample'),
+                            Item('legend_location', label='Location'),
+                            label='Legend', show_border=True)
+
+        label_grp = HGroup(Item('display_step', label='Step'),
+                           Item('display_extract_value', label='Power/Temp'),
+                           # spring,
+                           # Item('step_label_font_size', label='Size'),
+                           show_border=True,
+                           label='Labels')
+
+        plat_grp = VGroup(HGroup(UItem('display_plateau_info',
+                                       tooltip='Display plateau info'),
+                                 # Item('plateau_font_size', label='Size',
+                                 #      enabled_when='display_plateau_info'),
+                                 Item('plateau_sig_figs', label='SigFigs')),
+                          HGroup(Item('include_plateau_sample',
+                                      tooltip='Add the Sample name to the Plateau indicator',
+                                      label='Sample'),
+                                 Item('include_plateau_identifier',
+                                      tooltip='Add the Identifier to the Plateau indicator',
+                                      label='Identifier')),
+                          Item('plateau_arrow_visible'),
+                          show_border=True,
+                          label='Plateau')
+
+        integrated_grp = HGroup(UItem('display_integrated_info',
+                                      tooltip='Display integrated age info'),
+                                # Item('integrated_font_size', label='Size',
+                                #      enabled_when='display_integrated_info'),
+                                Item('integrated_sig_figs', label='SigFigs'),
+                                show_border=True,
+                                label='Integrated')
+
+        display_grp = Group(gen_grp,
+                            legend_grp,
+                            title_grp,
+                            label_grp,
+                            plat_grp,
+                            integrated_grp,
                             show_border=True,
                             label='Display')
+
         return self._make_view(display_grp)
 
 

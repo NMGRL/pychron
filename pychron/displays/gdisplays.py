@@ -35,7 +35,7 @@ gLoggerDisplay = DisplayController(
     x=ds.width - 650,
     y=20,
     font_size=10,
-    default_color='yellow',
+    default_color='black',
     bgcolor='light grey',
     max_blocks=300)
 

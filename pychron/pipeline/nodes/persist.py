@@ -23,7 +23,7 @@ from traitsui.editors import DirectoryEditor, CheckListEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.progress import progress_iterator
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
@@ -58,7 +58,9 @@ class PDFFigureNode(PDFNode):
 
     def _generate_path(self, ei):
         name = ei.name.replace(' ', '_')
-        return os.path.join(self.root, add_extension(name, self.extension))
+
+        p, _ = unique_path2(self.root, name, extension=self.extension)
+        return p
 
     def run(self, state):
         for ei in state.editors:
