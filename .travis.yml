@@ -42,6 +42,9 @@ install:
   - conda create --yes --quiet -n pychron-test python=2.7
   - source activate pychron-test
   - conda install --yes qt=4.8.5 pyside statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
-  - pip install uncertainties pint
+  - pip install uncertainties pint codecov
 
-script: python setup.py test
+#script: python setup.py test
+script: coverage run pychron/test_suite.py
+after_success:
+  - codecov
