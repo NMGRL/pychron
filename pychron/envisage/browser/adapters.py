@@ -146,6 +146,19 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
+    def run_history_columns(self):
+        self.columns = [('Run ID', 'record_id'),
+                        ('Tag', 'tag'),
+                        ('RunDate', 'rundate'),
+                        ('Spec.', 'mass_spectrometer'),
+                        ('Meas.', 'meas_script_name'),
+                        ('Ext.', 'extract_script_name'),
+                        ('EVal.', 'extract_value'),
+                        ('Cleanup', 'cleanup'),
+                        ('Dur', 'duration'),
+                        ('Device', 'extract_device'),
+                        ('Comment', 'comment')]
+
     def _get_review_status_image(self):
         s = self.item.review_status
         return REVIEW_STATUS_ICONS.get(s)

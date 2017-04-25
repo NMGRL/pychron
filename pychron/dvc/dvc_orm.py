@@ -148,6 +148,16 @@ class AnalysisTbl(Base, BaseMixin):
 
     delta_time = 0
 
+    review_status = None
+
+    @property
+    def meas_script_name(self):
+        return self.measurementName
+
+    @property
+    def extract_script_name(self):
+        return self.extractionName
+
     @property
     def is_plateau_step(self):
         return
