@@ -30,6 +30,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
@@ -53,6 +54,19 @@ class SubOptions(Controller):
         if 'scrollable' not in kw:
             kw['scrollable'] = True
         return View(*args, **kw)
+
+
+class TitleSubOptions(SubOptions):
+    def _get_title_group(self):
+        title_grp = HGroup(Item('auto_generate_title',
+                                tooltip='Auto generate a title based on the analysis list'),
+                           Item('title', springy=False,
+                                enabled_when='not auto_generate_title',
+                                tooltip='User specified plot title'),
+                           icon_button_editor('edit_title_format_button', 'cog',
+                                              enabled_when='auto_generate_title'),
+                           label='Title', show_border=True)
+        return title_grp
 
 
 class GroupSubOptions(SubOptions):

@@ -17,13 +17,12 @@
 # ============= enthought library imports =======================
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 
 
-class DisplaySubOptions(SubOptions):
+class DisplaySubOptions(TitleSubOptions):
     def traits_view(self):
         errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
                                    Item('y_end_caps', label='Y End Caps'),
@@ -35,15 +34,6 @@ class DisplaySubOptions(SubOptions):
                         HGroup(Item('use_cmap_analysis_number', label='Use Color Mapping'),
                                UItem('cmap_analysis_number', enabled_when='use_cmap_analysis_number')),
                         Item('use_latest_overlay'), show_border=True, label='Analysis #')
-
-        title_grp = HGroup(Item('auto_generate_title',
-                                tooltip='Auto generate a title based on the analysis list'),
-                           Item('title', springy=False,
-                                enabled_when='not auto_generate_title',
-                                tooltip='User specified plot title'),
-                           icon_button_editor('edit_title_format_button', 'cog',
-                                              enabled_when='auto_generate_title'),
-                           label='Title', show_border=True)
 
         label_grp = VGroup(
             HGroup(Item('label_box'),
@@ -79,7 +69,7 @@ class DisplaySubOptions(SubOptions):
         display_grp = VGroup(mean_grp,
                              an_grp,
                              inset_grp,
-                             title_grp,
+                             self._get_title_group(),
                              label_grp,
                              info_grp,
                              errbar_grp,
