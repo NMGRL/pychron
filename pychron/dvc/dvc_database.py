@@ -571,9 +571,15 @@ class DVCDatabase(DatabaseAdapter):
             if return_limits:
                 return ans, hpost, lpost
 
-    def get_last_n_analyses(self, n):
+    def get_last_n_analyses(self, n, mass_spectrometer=None):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
+
+            if mass_spectrometer:
+                q = q.filter(AnalysisTbl.mass_spectrometer == mass_spectrometer)
+            else:
+                q = q.order_by(AnalysisTbl.mass_spectrometer)
+
             q = q.order_by(AnalysisTbl.timestamp.asc())
             q = q.limit(n)
             return self._query_all(q)

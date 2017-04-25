@@ -204,6 +204,16 @@ class NewExperimentQueueAction(ExperimentAction):
                 win.open()
 
 
+class RunHistoryAction(Action):
+    name = 'Run History'
+    dname = 'Run History'
+
+    def perform(self, event):
+        app = event.task.window.application
+        v = app.get_service('pychron.experiment.run_history_view.RunHistoryView')
+        open_view(v)
+
+
 class OpenExperimentHistoryAction(Action):
     name = 'Experiment Launch History'
     dname = 'Experiment Launch History'
@@ -292,6 +302,7 @@ class SaveAsCurrentExperimentAction(TaskAction):
 # ===============================================================================
 # Utilities
 # ===============================================================================
+
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
     dname = 'Signal Calculator'
