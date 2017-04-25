@@ -27,6 +27,7 @@ from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_prope
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
+from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
 
@@ -181,6 +182,20 @@ class AnalysisTable(ColumnSorterMixin):
         for ai in self.get_selected_analyses():
             ai.frozen = not ai.frozen
         self.refresh_needed = True
+
+    def load_review_status(self):
+        records = self.get_analysis_records()
+        if records:
+            for ri in records:
+                get_review_status(ri)
+            self.refresh_needed = True
+
+    def get_analysis_records(self):
+        records = self.selected
+        if not records:
+            records = self.analyses
+
+        return records
 
     # handlers
     def _add_analysis_set_button_fired(self):
