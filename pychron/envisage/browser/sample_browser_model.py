@@ -86,6 +86,8 @@ class SampleBrowserModel(BrowserModel):
     def load_review_status(self):
         self.analysis_table.load_review_status()
 
+    def get_analysis_records(self):
+        return self.analysis_table.get_analysis_records()
     #     at = self.analysis_table
     #     records = self.get_analysis_records()
     #     if records:
