@@ -865,20 +865,12 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             if exclude_invalid:
                 q = q.join(AnalysisChangeTbl)
-            # q = self._analysis_query(sess, meas_MeasurementTable)
             if labnumber:
                 q = q.join(IrradiationPositionTbl)
-            # if mass_spectrometers:
-            #     q = q.join(gen_MassSpectrometerTable)
-            # if extract_device:
-            #     q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
-            # if analysis_type:
-            #     q = q.join(gen_AnalysisTypeTable)
             if project:
                 if not labnumber:
                     q = q.join(IrradiationPositionTbl)
                 q = q.join(SampleTbl, ProjectTbl)
-
             if labnumber:
                 q = q.filter(IrradiationPositionTbl.identifier == labnumber)
             if mass_spectrometers:
@@ -896,17 +888,14 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(ProjectTbl.name == project)
             if lpost:
                 q = q.filter(AnalysisTbl.timestamp >= lpost)
-                # q = q.filter(self._get_post_filter(mi, '__ge__', cast=False))
             if hpost:
                 q = q.filter(AnalysisTbl.timestamp <= hpost)
-
             if exclude_invalid:
                 q = q.filter(AnalysisChangeTbl.tag != 'invalid')
             if exclude:
                 q = q.filter(not_(AnalysisTbl.id.in_(exclude)))
             if exclude_uuids:
                 q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
-
             q = q.order_by(getattr(AnalysisTbl.timestamp, order)())
             if limit:
                 q = q.limit(limit)
@@ -927,7 +916,6 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
             q = q.join(SampleTbl, ProjectTbl)
-            # filter_non_run = False
             if filter_non_run:
                 if mass_spectrometers or analysis_types or low_post or high_post:
                     q = q.join(AnalysisTbl)

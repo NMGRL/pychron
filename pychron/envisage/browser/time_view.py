@@ -15,6 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import pickle
+from datetime import datetime, timedelta
+
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
@@ -23,15 +27,11 @@ from traitsui.handler import Controller, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
-# ============= standard library imports ========================
-from datetime import datetime, timedelta
-import os
-import pickle
-# ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
 
 
 class TimeViewAdapter(TabularAdapter):
@@ -127,7 +127,7 @@ class TimeViewModel(HasTraits):
     analysis_type = Str
     extract_device = Str
     available_mass_spectrometers = List
-    available_analysis_types = List
+    available_analysis_types = List([NULL_STR, 'Unknown', 'Blank', 'Air', 'Cocktail'])
     available_extract_devices = List
 
     highdays = Int(0, enter_set=True, auto_set=False)
@@ -208,11 +208,11 @@ class TimeViewModel(HasTraits):
 
     def _load_available(self):
         db = self.db
-        for attr in ('mass_spectrometer', 'analysis_type', 'extract_device'):
+        for attr in ('mass_spectrometer', 'extract_device'):
             func = getattr(db, 'get_{}s'.format(attr))
             ms = func()
             ms.sort()
-            setattr(self, 'available_{}s'.format(attr), [''] + [mi.name for mi in ms])
+            setattr(self, 'available_{}s'.format(attr), [NULL_STR] + [mi.name for mi in ms])
 
     def _load_analyses(self, mass_spectrometer=None, analysis_type=None, extract_device=None):
         if self._suppress_load_analyses:
@@ -221,6 +221,14 @@ class TimeViewModel(HasTraits):
         db = self.db
         ma = self.highdate
         mi = self.lowdate
+
+        if analysis_type == NULL_STR:
+            analysis_type = None
+        if mass_spectrometer == NULL_STR:
+            mass_spectrometer = None
+        if extract_device == NULL_STR:
+            extract_device = None
+
         ans = db.get_analyses_by_date_range(mi, ma,
                                             mass_spectrometers=mass_spectrometer,
                                             analysis_type=analysis_type,
