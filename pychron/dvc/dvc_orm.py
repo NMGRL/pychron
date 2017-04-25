@@ -161,6 +161,10 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.identifier
 
     @property
+    def irradiation_info(self):
+        return '{}{} {}'.format(self.irradiation, self.irradiation_level, self.irradiation_position_position)
+
+    @property
     def irradiation(self):
         return self.irradiation_position.level.irradiation.name
 
