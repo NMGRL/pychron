@@ -71,6 +71,10 @@ class DisplaySubOptions(TitleSubOptions):
                            show_border=True,
                            label='Labels')
 
+        age_grp = HGroup(Item('nsigma', tooltip='NSigma to display for Plateau and Integrated ages'),
+                         show_border=True,
+                         label='Age Info')
+
         plat_grp = VGroup(HGroup(UItem('display_plateau_info',
                                        tooltip='Display plateau info'),
                                  # Item('plateau_font_size', label='Size',
@@ -95,6 +99,7 @@ class DisplaySubOptions(TitleSubOptions):
                                 label='Integrated')
 
         display_grp = Group(gen_grp,
+                            age_grp,
                             legend_grp,
                             title_grp,
                             label_grp,
@@ -109,7 +114,7 @@ class DisplaySubOptions(TitleSubOptions):
 class CalculationSubOptions(SubOptions):
     def traits_view(self):
         lgrp = VGroup(Item('plateau_method', label='Method'),
-                      Item('nsigma'),
+                      # Item('nsigma'),
                       Item('plateau_age_error_kind',
                            width=-100,
                            label='Error Type'),
