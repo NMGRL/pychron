@@ -164,6 +164,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     errors=errors,
                     signals=k39,
                     excludes=excludes,
+                    overlap_nsigma=options.get('step_sigma', 2),
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 
@@ -362,9 +363,9 @@ def calculate_F(isotopes,
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
     atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                        decay_time,
-                                        pr,
-                                        arar_constants)
+                                              decay_time,
+                                              pr,
+                                              arar_constants)
 
     # calculate radiogenic
     # dont include error in 40/36
