@@ -315,6 +315,8 @@ class BrowserSampleView(BaseBrowserSampleView):
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 
+    def load_review_status(self, info, obj):
+        obj.load_review_status()
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def trait_context(self):

@@ -20,7 +20,6 @@ import re
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance
 
-from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
@@ -85,19 +84,21 @@ class SampleBrowserModel(BrowserModel):
             self._top_level_filter = None
 
     def load_review_status(self):
-        at = self.analysis_table
-        records = self.get_analysis_records()
-        if records:
-            for ri in records:
-                get_review_status(ri)
-            at.refresh_needed = True
+        self.analysis_table.load_review_status()
 
-    def get_analysis_records(self):
-        records = self.analysis_table.selected
-        if not records:
-            records = self.analysis_table.analyses
+    #     at = self.analysis_table
+    #     records = self.get_analysis_records()
+    #     if records:
+    #         for ri in records:
+    #             get_review_status(ri)
+    #         at.refresh_needed = True
 
-        return records
+    # def get_analysis_records(self):
+    #     records = self.analysis_table.selected
+    #     if not records:
+    #         records = self.analysis_table.analyses
+    #
+    #     return records
 
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
         ret = None

@@ -183,6 +183,7 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
                    Action(name='Review Status Details', action='review_status_details'),
+                   Action(name='Load Review Status', action='load_review_status'),
                    Action(name='Toggle Freeze', action='toggle_freeze')
                    # Action(name='Open Copy', action='recall_copies'),
                    # Action(name='Find References', action='find_refs')
