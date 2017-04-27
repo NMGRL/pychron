@@ -20,6 +20,7 @@ from traitsui.api import View, UItem, Controller, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.dvc.func import get_review_status
 from pychron.envisage.resources import icon
 
@@ -73,7 +74,8 @@ class ReviewStatusDetailsModel(HasTraits):
 
 class ReviewStatusDetailsView(Controller):
     def traits_view(self):
-        v = View(UItem('items', editor=TabularEditor(adapter=RSDAdapter())),
+        v = View(UItem('items', editor=TabularEditor(editable=False,
+                                                     adapter=RSDAdapter())),
                  title='Review Status Details ({})'.format(self.model.record_id),
                  kind='livemodal',
                  buttons=['OK'],
