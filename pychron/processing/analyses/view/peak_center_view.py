@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 from chaco.tools.cursor_tool import CursorTool
+# ============= enthought library imports =======================
+from numpy import array
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
+
 from pychron.graph.graph import Graph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
 
@@ -58,12 +59,24 @@ class PeakCenterView(HasTraits):
                              color='darkgreen')
             g.set_y_limits(pad='0.05', plotid=0)
 
+            miR = min(ys)
+            maR = max(ys)
+            R = maR - miR
+
+            if an.additional_peak_center_data:
+                for k, (xs, ys) in an.additional_peak_center_data.iteritems():
+                    ys = array(ys)
+                    mir = ys.min()
+                    r = ys.max() - mir
+
+                    ys = (ys - mir) * R / r + miR
+
+                    g.new_series(xs, ys)
+
             return True
 
     def traits_view(self):
         v = View(UItem('graph', style='custom'))
         return v
 
-
 # ============= EOF =============================================
-
