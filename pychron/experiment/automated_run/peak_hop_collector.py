@@ -48,20 +48,7 @@ class PeakHopCollector(DataCollector):
         if args:
             is_baseline, dets, isos = args
             if not is_baseline:
-                try:
-                    data = self._get_data(dets)
-                except (AttributeError, TypeError, ValueError), e:
-                    self.debug('failed getting data {}'.format(e))
-                    return
-
-                if not data:
-                    return
-
-                x = self._get_time()
-                self._save_data(i, x, *data)
-                self._plot_data(i, x, *data)
-
-            return True
+                return self._iteration(i, detectors=dets)
 
     def _do_hop(self):
         """
