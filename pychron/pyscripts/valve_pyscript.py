@@ -76,44 +76,27 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @named_register('open')
     def _m_open(self, name=None, description=''):
-        st = time.time()
-        # if description is None:
-        #     description = NULL_STR
-
-        self.console_info('opening name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
-
-        result = self._manager_action([('open_valve', (name,), dict(
-            mode='script',
-            description=description))], protocol=ELPROTOCOL)
-        et = time.time() - st
-        self.debug('---------------------------------------- open {} ({}) result={}, '
-                   'time={:0.2f} sec'.format(name, description, result, et))
-
-        if result is not None:
-            if not self._finish_valve_change('open', result, name, description):
-                if not globalv.experiment_debug:
-                    self.warning_dialog('Failed to Open valve name={}, description={}'.format(name, description))
-                    self.cancel()
-                else:
-                    self.debug('Experiment debug mode. not canceling')
+        self._valve_actuation('open', name, description)
 
     @verbose_skip
     @command_register
     def close(self, name=None, description=''):
+        self._valve_actuation('close', name, description)
 
-        if description is None:
-            description = '---'
+    def _valve_actuation(self, action, name, description):
+        self.console_info('{} name={} desc={}'.format(action, name or NULL_STR, description or NULL_STR))
 
-        self.console_info('closing name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
-        result = self._manager_action([('close_valve', (name,), dict(
+        result = self._manager_action([('{}_valve'.format(action), (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
 
-        self.debug('---------------------------------------- close {} ({}) result={}'.format(name, description, result))
+        self.debug('-------------------------- {} {} ({}) result={}'.format(action, name, description, result))
         if result is not None:
-            if not self._finish_valve_change('close', result, name, description):
+            if not self._finish_valve_change(action, result, name, description):
                 if not globalv.experiment_debug:
-                    self.warning_dialog('Failed to Close valve name={}, description={}'.format(name, description))
+                    from pychron.core.ui.gui import invoke_in_main_thread
+                    msg = 'Failed to {} valve name="{}", description="{}"'.format(action, name, description)
+                    invoke_in_main_thread(self.warning_dialog, msg)
                     self.cancel()
                 else:
                     self.debug('Experiment debug mode. not canceling')
