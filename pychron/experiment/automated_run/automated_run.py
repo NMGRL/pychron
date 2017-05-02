@@ -1466,6 +1466,7 @@ anaylsis_type={}
             if not self.experiment_executor.datahub.load_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
+            self.isotope_group.calculate_decay_factors()
 
         self.py_clear_conditionals()
         # setup default/queue conditionals
