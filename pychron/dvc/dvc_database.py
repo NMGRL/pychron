@@ -427,7 +427,7 @@ class DVCDatabase(DatabaseAdapter):
         if pi is None:
             if ',' in name:
                 last_name, fi = name.split(',')
-                pi = PrincipalInvestigatorTbl(last_name=name.strip(), first_initial=fi.strip())
+                pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
             else:
                 pi = PrincipalInvestigatorTbl(last_name=name)
             pi = self._add_item(pi)
