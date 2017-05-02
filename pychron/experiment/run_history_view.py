@@ -47,7 +47,7 @@ class RunHistoryModel(HasTraits):
         if ms == NULL_STR:
             ms = None
 
-        self.analyses = list(reversed(self.dvc.get_last_n_analyses(self.n, ms)))
+        self.analyses = self.dvc.get_last_n_analyses(self.n, ms)
 
     def _selected_changed(self, new):
 

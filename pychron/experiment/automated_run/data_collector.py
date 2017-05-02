@@ -229,7 +229,7 @@ class DataCollector(Consoleable):
             self._data = data
             return data
 
-    def _save_data(self, i, x, keys, signals):
+    def _save_data(self, x, keys, signals):
         # self.data_writer(self.detectors, x, keys, signals)
 
         self._queue.put((x, keys, signals))
