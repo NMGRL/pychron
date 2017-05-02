@@ -16,12 +16,9 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from matplotlib import path, transforms
-from numpy import invert, zeros_like, asarray, round, min, max, array, vstack, all, copy
-from skimage.draw import circle
-
+from numpy import invert, zeros_like, asarray, max, copy
+from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
-from skimage.draw._draw import line, _coords_inside_image
 from skimage.measure import find_contours, approximate_polygon, regionprops, label
 
 
@@ -30,87 +27,88 @@ def area(a):
     return b.sum()
 
 
-def polygon_clip(rp, cp, r0, c0, r1, c1):
-    """Clip a polygon to the given bounding box.
-    Parameters
-    ----------
-    rp, cp : (N,) ndarray of double
-        Row and column coordinates of the polygon.
-    (r0, c0), (r1, c1) : double
-        Top-left and bottom-right coordinates of the bounding box.
-    Returns
-    -------
-    r_clipped, c_clipped : (M,) ndarray of double
-        Coordinates of clipped polygon.
-    Notes
-    -----
-    This makes use of Sutherland-Hodgman clipping as implemented in
-    AGG 2.4 and exposed in Matplotlib.
-    """
-    poly = path.Path(vstack((rp, cp)).T, closed=True)
-    clip_rect = transforms.Bbox([[r0, c0], [r1, c1]])
-    poly_clipped = poly.clip_to_bbox(clip_rect).to_polygons()[0]
-
-    # This should be fixed in matplotlib >1.5
-    if all(poly_clipped[-1] == poly_clipped[-2]):
-        poly_clipped = poly_clipped[:-1]
-
-    return poly_clipped[:, 0], poly_clipped[:, 1]
-
-
-def polygon_perimeter(cr, cc, shape=None, clip=False):
-    """Generate polygon perimeter coordinates.
-    Parameters
-    ----------
-    cr : (N,) ndarray
-        Row (Y) coordinates of vertices of polygon.
-    cc : (N,) ndarray
-        Column (X) coordinates of vertices of polygon.
-    shape : tuple, optional
-        Image shape which is used to determine maximum extents of output pixel
-        coordinates. This is useful for polygons which exceed the image size.
-        By default the full extents of the polygon are used.
-    clip : bool, optional
-        Whether to clip the polygon to the provided shape.  If this is set
-        to True, the drawn figure will always be a closed polygon with all
-        edges visible.
-    Returns
-    -------
-    pr, pc : ndarray of int
-        Pixel coordinates of polygon.
-        May be used to directly index into an array, e.g.
-        ``img[pr, pc] = 1``.
-    """
-
-    if clip:
-        if shape is None:
-            raise ValueError("Must specify clipping shape")
-        clip_box = array([0, 0, shape[0] - 1, shape[1] - 1])
-    else:
-        clip_box = array([min(cr), min(cc),
-                          max(cr), max(cc)])
-
-    # Do the clipping irrespective of whether clip is set.  This
-    # ensures that the returned polygon is closed and is an array.
-    cr, cc = polygon_clip(cr, cc, *clip_box)
-
-    cr = round(cr).astype(int)
-    cc = round(cc).astype(int)
-
-    # Construct line segments
-    pr, pc = [], []
-    for i in range(len(cr) - 1):
-        line_r, line_c = line(cr[i], cc[i], cr[i + 1], cc[i + 1])
-        pr.extend(line_r)
-        pc.extend(line_c)
-
-    pr = asarray(pr)
-    pc = asarray(pc)
-
-    if shape is None:
-        return pr, pc
-    else:
-        return _coords_inside_image(pr, pc, shape)
+#
+# def polygon_clip(rp, cp, r0, c0, r1, c1):
+#     """Clip a polygon to the given bounding box.
+#     Parameters
+#     ----------
+#     rp, cp : (N,) ndarray of double
+#         Row and column coordinates of the polygon.
+#     (r0, c0), (r1, c1) : double
+#         Top-left and bottom-right coordinates of the bounding box.
+#     Returns
+#     -------
+#     r_clipped, c_clipped : (M,) ndarray of double
+#         Coordinates of clipped polygon.
+#     Notes
+#     -----
+#     This makes use of Sutherland-Hodgman clipping as implemented in
+#     AGG 2.4 and exposed in Matplotlib.
+#     """
+#     poly = path.Path(vstack((rp, cp)).T, closed=True)
+#     clip_rect = transforms.Bbox([[r0, c0], [r1, c1]])
+#     poly_clipped = poly.clip_to_bbox(clip_rect).to_polygons()[0]
+#
+#     # This should be fixed in matplotlib >1.5
+#     if all(poly_clipped[-1] == poly_clipped[-2]):
+#         poly_clipped = poly_clipped[:-1]
+#
+#     return poly_clipped[:, 0], poly_clipped[:, 1]
+#
+# #
+# def polygon_perimeter(cr, cc, shape=None, clip=False):
+#     """Generate polygon perimeter coordinates.
+#     Parameters
+#     ----------
+#     cr : (N,) ndarray
+#         Row (Y) coordinates of vertices of polygon.
+#     cc : (N,) ndarray
+#         Column (X) coordinates of vertices of polygon.
+#     shape : tuple, optional
+#         Image shape which is used to determine maximum extents of output pixel
+#         coordinates. This is useful for polygons which exceed the image size.
+#         By default the full extents of the polygon are used.
+#     clip : bool, optional
+#         Whether to clip the polygon to the provided shape.  If this is set
+#         to True, the drawn figure will always be a closed polygon with all
+#         edges visible.
+#     Returns
+#     -------
+#     pr, pc : ndarray of int
+#         Pixel coordinates of polygon.
+#         May be used to directly index into an array, e.g.
+#         ``img[pr, pc] = 1``.
+#     """
+#
+#     if clip:
+#         if shape is None:
+#             raise ValueError("Must specify clipping shape")
+#         clip_box = array([0, 0, shape[0] - 1, shape[1] - 1])
+#     else:
+#         clip_box = array([min(cr), min(cc),
+#                           max(cr), max(cc)])
+#
+#     # Do the clipping irrespective of whether clip is set.  This
+#     # ensures that the returned polygon is closed and is an array.
+#     cr, cc = polygon_clip(cr, cc, *clip_box)
+#
+#     cr = round(cr).astype(int)
+#     cc = round(cc).astype(int)
+#
+#     # Construct line segments
+#     pr, pc = [], []
+#     for i in range(len(cr) - 1):
+#         line_r, line_c = line(cr[i], cc[i], cr[i + 1], cc[i + 1])
+#         pr.extend(line_r)
+#         pc.extend(line_c)
+#
+#     pr = asarray(pr)
+#     pc = asarray(pc)
+#
+#     if shape is None:
+#         return pr, pc
+#     else:
+#         return _coords_inside_image(pr, pc, shape)
 
 
 class PolygonLocator:
@@ -133,7 +131,10 @@ class PolygonLocator:
         for contour in find_contours(src, 0):
             coords = approximate_polygon(contour, tolerance=0)
             x, y = coords.T
-            rr, cc = polygon_perimeter(y, x)
+
+            # rr, cc = polygon_perimeter(y, x)
+            rr, cc = polygon(y, x)
+
             src[cc, rr] = 100
 
         lsrc = label(src)
