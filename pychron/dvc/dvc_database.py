@@ -1133,12 +1133,11 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(PrincipalInvestigatorTbl)
                 q = q.filter(ProjectTbl.name == name)
 
-                # principal_investigator_filter()
-                pi = self.get_principal_investigator(pi)
-                if pi:
-                    q = q.filter(PrincipalInvestigatorTbl.name == pi.name)
+                dbpi = self.get_principal_investigator(pi)
+                if dbpi:
+                    q = principal_investigator_filter(q, pi)
 
-                return self._query_one(q)
+                return self._query_one(q, verbose_query=True)
         else:
             return self._retrieve_item(ProjectTbl, name)
 
