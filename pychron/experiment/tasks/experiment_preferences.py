@@ -203,13 +203,12 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('use_db_persistence', label='Save analyses to Database'),
                             label='Persist', show_border=True)
 
-        pc_grp = Group(
-            Item('use_peak_center_threshold', label='Use Peak Center Threshold',
-                 tooltip='Only peak center if intensity is greater than the peak center threshold'),
-            Item('peak_center_threshold', label='Threshold', enabled_when='use_peak_center_threshold'),
-            Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
-            show_border=True,
-            label='Peak Center')
+        pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',
+                            tooltip='Only peak center if intensity is greater than the peak center threshold'),
+                       Item('peak_center_threshold', label='Threshold', enabled_when='use_peak_center_threshold'),
+                       Item('peak_center_threshold_window', label='Window', enabled_when='use_peak_center_threshold'),
+                       show_border=True,
+                       label='Peak Center')
 
         automated_grp = Group(VGroup(Item('experiment_type', label='Experiment Type'),
                                      Item('send_config_before_run',
@@ -223,6 +222,10 @@ class ExperimentPreferencesPane(PreferencesPane):
                                      Item('n_executed_display',
                                           label='N. Executed',
                                           tooltip='Number of analyses to display in the "Executed" table'),
+                                     Item('failed_intensity_count_threshold',
+                                          label='N. Failed Intensity',
+                                          tooltip='Cancel Experiment if pychron fails to get intensities from '
+                                                  'mass spectrometer more than "N. Failed Intensity" times'),
                                      pc_grp,
                                      persist_grp,
                                      monitor_grp, overlap_grp),

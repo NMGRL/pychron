@@ -126,6 +126,7 @@ class DataCollector(Consoleable):
     def clear_temporary_conditionals(self):
         self._temp_conds = None
 
+    # private
     def _measure(self, evt):
         self.debug('starting measurement')
 
@@ -195,14 +196,36 @@ class DataCollector(Consoleable):
     def _iter_hook(self, i):
         return True
 
+    def _iteration(self, i, detectors=None):
+        try:
+            data = self._get_data(detectors)
+        except (AttributeError, TypeError, ValueError), e:
+            self.debug('failed getting data {}'.format(e))
+            return
+
+        if not data:
+            return
+
+        # data is tuple (keys[], signals[])
+        k, s = data
+        if k is not None and s is not None:
+            x = self._get_time()
+            self._save_data(x, k, s)
+            self._plot_data(i, x, k, s)
+        # if k and s are both None that means failed to get intensity from spectrometer, but n failures is less than
+        # `pychron.experiment.failed_intensity_count_threshold`
+        # skip this iteration and try again next time
+
+        return True
+
     def _get_time(self):
         return time.time() - self.starttime
 
-    def _get_data(self, dets=None):
+    def _get_data(self, detectors=None):
         data = next(self.data_generator)
         if data:
-            if dets:
-                data = zip(*[d for d in zip(*data) if d[0] in dets])
+            if detectors:
+                data = zip(*[d for d in zip(*data) if d[0] in detectors])
             self._data = data
             return data
 

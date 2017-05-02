@@ -194,14 +194,16 @@ class AutomatedRun(Loggable):
 
     log_path = Str
 
+    failed_intensity_count_threshold = Int(3)
+
     def set_preferences(self, preferences):
         self.debug('set preferences')
 
         for attr, cast in (('experiment_type', str),
                            ('use_peak_center_threshold', to_bool),
                            ('peak_center_threshold', float),
-                           ('peak_center_threshold_window', int)
-                           ):
+                           ('peak_center_threshold_window', int),
+                           ('failed_intensity_count_threshold', int)):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
         self.persister.set_preferences(preferences)
@@ -478,7 +480,7 @@ class AutomatedRun(Loggable):
         correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
                              not self.spec.analysis_type.startswith('background'))
 
-        print hops
+        # print hops
         for mass, dets in groupby(hops, key=key):
             dets = list(dets)
             iso = dets[0][1]
@@ -486,7 +488,7 @@ class AutomatedRun(Loggable):
                 continue
 
             add_detector = len(dets) > 1
-            print dets
+            # print dets
             for _, _, di, _ in dets:
                 self._add_active_detector(di)
                 name = iso
@@ -2095,7 +2097,8 @@ anaylsis_type={}
     def _get_data_generator(self):
         def gen():
             cnt = 0
-            fcnt = 3
+            fcnt = self.failed_intensity_count_threshold
+
             spec = self.spectrometer_manager.spectrometer
             self._intensities = {}
             while 1:
@@ -2111,6 +2114,8 @@ anaylsis_type={}
                         # checks sufficient to catch spectrometer communication errors.
                         self.cancel_run(state='failed')
                         yield None
+                    else:
+                        yield None, None
                 else:
                     # reset the counter
                     cnt = 0
@@ -2140,8 +2145,6 @@ anaylsis_type={}
         self.isotope_group.conditional_modifier = None
 
         result = self.collector.measurement_result
-        # self.persister.whiff_result = result
-        # self._persister_action('set_persistence_spec', whiff_result=result)
         self._update_persister_spec(whiff_result=result)
         self.debug('WHIFF Result={}'.format(result))
         return result
