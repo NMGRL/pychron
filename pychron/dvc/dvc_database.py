@@ -580,7 +580,7 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 q = q.order_by(AnalysisTbl.mass_spectrometer)
 
-            q = q.order_by(AnalysisTbl.timestamp.asc())
+            q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(n)
             return self._query_all(q)
 
