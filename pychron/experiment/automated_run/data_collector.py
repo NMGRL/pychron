@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 from Queue import Queue
-from threading import Event, Thread
+from threading import Event, Thread, Timer
 
 from pyface.timer.do_later import do_later
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
@@ -163,9 +163,9 @@ class DataCollector(Consoleable):
         self.debug('measurement finished')
 
     def _iter(self, i):
-        st = time.time()
+        # st = time.time()
         result = self._check_iteration(i)
-        self.debug('check iteration duration={}'.format(time.time() - st))
+        # self.debug('check iteration duration={}'.format(time.time() - st))
 
         if not result:
             try:
@@ -191,7 +191,8 @@ class DataCollector(Consoleable):
 
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
-            do_later(self.isotope_group.calculate_age, force=True)
+            t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
+            t.start()
 
     def _iter_hook(self, i):
         return True

@@ -290,7 +290,6 @@ class AutomatedRunConditional(BaseConditional):
 
         self.debug('testing {}'.format(teststr))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
-        print msg
         self.debug(msg)
         if eval(teststr, ctx):
             self.trips += 1
