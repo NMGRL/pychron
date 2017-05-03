@@ -54,8 +54,14 @@ class ConflictResolver(HasTraits):
         cols = [ObjectColumn(name='queue_name', editable=False),
                 ObjectColumn(name='identifier', editable=False),
                 ObjectColumn(name='position', editable=False),
-                ObjectColumn(name='repository_identifier', editor=myEnumEditor(name='available_ids')),
-                ObjectColumn(name='repository_ids', editable=False)]
+                ObjectColumn(name='repository_identifier',
+                             label='Repository',
+                             tooltip='Repository assigned to this analysis in the Experiment Queue',
+                             editor=myEnumEditor(name='available_ids')),
+                ObjectColumn(name='repository_ids',
+                             label='Existing Repositories',
+                             tooltip='Set of repositories that already contain this L#',
+                             editable=False)]
 
         v = View(UItem('conflicts', editor=TableEditor(columns=cols)),
                  title='Resolve Experiment Conflicts',
