@@ -150,14 +150,17 @@ class AnalysisAdapter(BrowserAdapter):
         self.columns = [('Run ID', 'record_id'),
                         ('Tag', 'tag'),
                         ('RunDate', 'rundate'),
-                        ('Spec.', 'mass_spectrometer'),
-                        ('Meas.', 'meas_script_name'),
-                        ('Ext.', 'extract_script_name'),
+                        ('Comment', 'comment'),
+                        ('Position', 'position'),
                         ('EVal.', 'extract_value'),
                         ('Cleanup', 'cleanup'),
                         ('Dur', 'duration'),
+
                         ('Device', 'extract_device'),
-                        ('Comment', 'comment')]
+                        ('Spec.', 'mass_spectrometer'),
+                        ('Meas.', 'meas_script_name'),
+                        ('Ext.', 'extract_script_name'),
+                        ]
 
     def _get_review_status_image(self):
         s = self.item.review_status

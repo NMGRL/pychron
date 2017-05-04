@@ -221,32 +221,38 @@ class ScanManager(StreamGraphManager):
         self.graph.set_series_visibility(new, series=obj.name)
 
     def _update_magnet(self, obj, name, old, new):
-        if new and self.magnet.detector:
-            # convert dac into a mass
-            # convert mass to isotope
-            #            d = self.magnet.dac
-            if not self._suppress_isotope_change:
-                iso = self.magnet.map_dac_to_isotope(current=False)
-            else:
-                iso = self.isotope
+        self.debug('update magnet {},{},{}'.format(name, old, new))
 
-            if iso is None or iso not in self.isotopes:
-                iso = NULL_STR
-
-            if self.use_log_events:
-                if iso == NULL_STR:
-                    self.add_spec_event_marker(
-                        'DAC={:0.5f}'.format(self.magnet.dac),
-                        bgcolor='red')
+        def func():
+            if new and self.magnet.detector:
+                # convert dac into a mass
+                # convert mass to isotope
+                #            d = self.magnet.dac
+                if not self._suppress_isotope_change:
+                    iso = self.magnet.map_dac_to_isotope(current=False)
                 else:
-                    self.add_spec_event_marker(
-                        '{}:{} ({:0.5f})'.format(self.detector,
-                                                 iso, self.magnet.dac))
+                    iso = self.isotope
 
-            self.debug('setting isotope: {}'.format(iso))
-            self._suppress_isotope_change = True
-            self.trait_set(isotope=iso)
-            self._suppress_isotope_change = False
+                if iso is None or iso not in self.isotopes:
+                    iso = NULL_STR
+
+                if self.use_log_events:
+                    if iso == NULL_STR:
+                        self.add_spec_event_marker(
+                            'DAC={:0.5f}'.format(self.magnet.dac),
+                            bgcolor='red')
+                    else:
+                        self.add_spec_event_marker(
+                            '{}:{} ({:0.5f})'.format(self.detector,
+                                                     iso, self.magnet.dac))
+
+                self.debug('setting isotope: {}'.format(iso))
+                self._suppress_isotope_change = True
+                self.trait_set(isotope=iso)
+                self._suppress_isotope_change = False
+
+        from pychron.core.ui.gui import invoke_in_main_thread
+        invoke_in_main_thread(func)
 
     def _check_intensity_no_change(self, signals):
         if self.spectrometer.simulation:
