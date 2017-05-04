@@ -24,6 +24,7 @@ from traits.api import List, Callable
 from pychron.entry.entry_views.sensitivity_entry import SensitivitySelector
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.experiment.events import ExperimentEventAddition
+from pychron.experiment.run_history_view import RunHistoryView, RunHistoryModel
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
@@ -31,7 +32,8 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
-    SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction
+    SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
+    RunHistoryAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
     UserNotifierPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
@@ -51,6 +53,14 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _sens_selector_factory(self, *args, **kw):
         return SensitivitySelector()
 
+    def _run_history_factory(self, *args, **kw):
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+
+        rhm = RunHistoryModel(dvc=dvc)
+        rhm.load()
+        rh = RunHistoryView(model=rhm)
+
+        return rh
     # def _image_browser_factory(self, *args, **kw):
     #     return ImageBrowser(application=self.application)
 
@@ -142,6 +152,8 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.last_analysis_recovery', factory=LastAnalysisRecoveryAction,
                                  path='MenuBar/tools.menu'),
+                  SchemaAddition(id='pychron.experiment.run_history_view', factory=RunHistoryAction,
+                                 path='MenuBar/tools.menu'),
                   SchemaAddition(id='pychron.experiment.new_pattern', factory=NewPatternAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.open_pattern', factory=OpenPatternAction,
@@ -174,8 +186,11 @@ class ExperimentPlugin(BaseTaskPlugin):
             protocol=SensitivitySelector,
             factory=self._sens_selector_factory)
 
+        so_run_history = self.service_offer_factory(protocol=RunHistoryView,
+                                                    factory=self._run_history_factory)
         return [so_signal_calculator,
                 # so_image_browser,
-                so_sens_selector]
+                so_sens_selector,
+                so_run_history]
 
 # ============= EOF =============================================

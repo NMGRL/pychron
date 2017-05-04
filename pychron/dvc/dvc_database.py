@@ -427,7 +427,7 @@ class DVCDatabase(DatabaseAdapter):
         if pi is None:
             if ',' in name:
                 last_name, fi = name.split(',')
-                pi = PrincipalInvestigatorTbl(last_name=name.strip(), first_initial=fi.strip())
+                pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
             else:
                 pi = PrincipalInvestigatorTbl(last_name=name)
             pi = self._add_item(pi)
@@ -571,10 +571,16 @@ class DVCDatabase(DatabaseAdapter):
             if return_limits:
                 return ans, hpost, lpost
 
-    def get_last_n_analyses(self, n):
+    def get_last_n_analyses(self, n, mass_spectrometer=None):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
-            q = q.order_by(AnalysisTbl.timestamp.asc())
+
+            if mass_spectrometer:
+                q = q.filter(AnalysisTbl.mass_spectrometer == mass_spectrometer)
+            else:
+                q = q.order_by(AnalysisTbl.mass_spectrometer)
+
+            q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(n)
             return self._query_all(q)
 
@@ -1127,12 +1133,11 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.join(PrincipalInvestigatorTbl)
                 q = q.filter(ProjectTbl.name == name)
 
-                # principal_investigator_filter()
-                pi = self.get_principal_investigator(pi)
-                if pi:
-                    q = q.filter(PrincipalInvestigatorTbl.name == pi.name)
+                dbpi = self.get_principal_investigator(pi)
+                if dbpi:
+                    q = principal_investigator_filter(q, pi)
 
-                return self._query_one(q)
+                return self._query_one(q, verbose_query=True)
         else:
             return self._retrieve_item(ProjectTbl, name)
 

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 from Queue import Queue
-from threading import Event, Thread
+from threading import Event, Thread, Timer
 
 from pyface.timer.do_later import do_later
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
@@ -126,6 +126,7 @@ class DataCollector(Consoleable):
     def clear_temporary_conditionals(self):
         self._temp_conds = None
 
+    # private
     def _measure(self, evt):
         self.debug('starting measurement')
 
@@ -162,9 +163,9 @@ class DataCollector(Consoleable):
         self.debug('measurement finished')
 
     def _iter(self, i):
-        st = time.time()
+        # st = time.time()
         result = self._check_iteration(i)
-        self.debug('check iteration duration={}'.format(time.time() - st))
+        # self.debug('check iteration duration={}'.format(time.time() - st))
 
         if not result:
             try:
@@ -190,23 +191,46 @@ class DataCollector(Consoleable):
 
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
-            do_later(self.isotope_group.calculate_age, force=True)
+            t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
+            t.start()
 
     def _iter_hook(self, i):
+        return True
+
+    def _iteration(self, i, detectors=None):
+        try:
+            data = self._get_data(detectors)
+        except (AttributeError, TypeError, ValueError), e:
+            self.debug('failed getting data {}'.format(e))
+            return
+
+        if not data:
+            return
+
+        # data is tuple (keys[], signals[])
+        k, s = data
+        if k is not None and s is not None:
+            x = self._get_time()
+            self._save_data(x, k, s)
+            self._plot_data(i, x, k, s)
+        # if k and s are both None that means failed to get intensity from spectrometer, but n failures is less than
+        # `pychron.experiment.failed_intensity_count_threshold`
+        # skip this iteration and try again next time
+
         return True
 
     def _get_time(self):
         return time.time() - self.starttime
 
-    def _get_data(self, dets=None):
+    def _get_data(self, detectors=None):
         data = next(self.data_generator)
         if data:
-            if dets:
-                data = zip(*[d for d in zip(*data) if d[0] in dets])
+            if detectors:
+                data = zip(*[d for d in zip(*data) if d[0] in detectors])
             self._data = data
             return data
 
-    def _save_data(self, i, x, keys, signals):
+    def _save_data(self, x, keys, signals):
         # self.data_writer(self.detectors, x, keys, signals)
 
         self._queue.put((x, keys, signals))

@@ -367,6 +367,11 @@ class DVCAnalysis(Analysis):
             pd = jd[refdet]
             self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
+            self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
+                                                for k, pd in jd.iteritems() if k not in (refdet, 'fmt',
+                                                                                         'reference_detector',
+                                                                                         'reference_isotope')}
+
         self.peak_center = pd['center_dac']
 
     def _load_tags(self, jd):
