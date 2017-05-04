@@ -151,6 +151,13 @@ class AnalysisTbl(Base, BaseMixin):
     review_status = None
 
     @property
+    def position(self):
+        if self.measured_position:
+            return self.measured_position.position
+        else:
+            return ''
+
+    @property
     def meas_script_name(self):
         return self.measurementName
 
