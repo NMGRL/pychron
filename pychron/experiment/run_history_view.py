@@ -76,7 +76,7 @@ class RunHistoryView(Controller):
         adapter.run_history_columns()
 
         v = View(VSplit(VGroup(agrp,
-                               UItem('analyses', editor=TabularEditor(selected='selected',
+                               UItem('analyses', editor=TabularEditor(dclicked='selected',
                                                                       editable=False,
                                                                       adapter=adapter))),
                         UItem('analysis_view',
