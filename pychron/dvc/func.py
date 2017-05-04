@@ -44,11 +44,13 @@ def repository_has_staged(ps, remote='origin', branch='master'):
     return changed
 
 
-def push_repositories(ps, remote='origin', branch='master'):
+def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
         repo = Repo(pp)
-        repo.git.push(remote, branch)
+
+        if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
+            repo.git.push(remote, branch)
 
 
 def get_review_status(record):

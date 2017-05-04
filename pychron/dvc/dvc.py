@@ -651,7 +651,7 @@ class DVC(Loggable):
 
     def push_repositories(self, changes):
         for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi.default_remote_name)
+            push_repositories(changes, gi.default_remote_name, quiet=False)
 
     # IDatastore
     def get_greatest_aliquot(self, identifier):
