@@ -236,7 +236,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                    'duration', 'beam_diameter', 'ramp_duration', 'overlap',
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
-                   'use_simple_truncation', 'conditionals_path')
+                   'use_simple_truncation', 'conditionals_path',
+                   'use_project_based_repository_identifier')
 
     suppress_meta = False
 
@@ -875,10 +876,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         try:
                             pi_name = project.principal_investigator.name
                         except (AttributeError, TypeError):
+                            print 'project has pi issue. {}'.format(project_name)
                             pass
 
                         ipp = self.irradiation_project_prefix
                         d['project'] = project_name
+
+                        self.debug('trying to set repository based on project name={}'.format(project_name))
                         if project_name == 'J-Curve':
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = '{}{}'.format(ipp, irrad)
@@ -888,6 +892,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                     repo = project_name
                                 else:
                                     repo = camel_case(project_name)
+                                self.debug('setting repository to {}'.format(repo))
 
                                 self.repository_identifier = repo
                                 if not db.get_repository(repo):
