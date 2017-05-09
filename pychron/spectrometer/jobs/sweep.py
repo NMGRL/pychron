@@ -145,7 +145,8 @@ class BaseSweep(SpectrometerTask):
             if self._alive:
                 self._step(v)
                 intensity = self._step_intensity()
-                invoke_in_main_thread(self._graph_hook, v, intensity, series)
+                self._graph_hook(v, intensity, series)
+                # invoke_in_main_thread(self._graph_hook, v, intensity, series)
 
         return self._alive
 
@@ -173,6 +174,8 @@ class BaseSweep(SpectrometerTask):
                 self._update_graph_data2(plot, di, intensity[0], series)
             else:
                 self._update_graph_data(plot, di, intensity)
+
+            graph.redraw()
 
     def _update_graph_data2(self, plot, di, intensity, series):
         oys = None

@@ -95,19 +95,24 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                 self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
                 if settling_time > 0:
                     time.sleep(settling_time)
+                    self.debug('Magnet settling complete')
 
             if unprotect or unblank:
+                self.debug('Wait for magnet to stop moving')
                 for i in xrange(50):
                     if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
                         break
                     time.sleep(0.25)
+                self.debug('Magnet move complete')
 
                 if unprotect:
+                    self.debug('Unprotect detectors')
                     for d in unprotect:
                         self.ask('ProtectDetector {},Off'.format(d), verbose=verbose)
                         self.ask('GetDeflection {}'.format(d), verbose=verbose)
 
                 if unblank:
+                    self.debug('Unblank beam')
                     self.ask('BlankBeam False', verbose=verbose)
 
         self.debug('set_dac. change={}'.format(change))

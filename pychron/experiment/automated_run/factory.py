@@ -843,6 +843,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.selected_level = d['irradiation_level']
             self.irrad_hole = d['irradiation_position']
             self.display_irradiation = d['display_irradiation']
+
+            if self.use_project_based_repository_identifier:
+                ipp = self.irradiation_project_prefix
+                project_name = d['project']
+                if ipp and project_name.startswith(ipp):
+                    repo = project_name
+                else:
+                    repo = camel_case(project_name)
+                self.repository_identifier = repo
+
             return True
         else:
             # get a default repository_identifier
@@ -868,6 +878,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             pass
 
                         ipp = self.irradiation_project_prefix
+                        d['project'] = project_name
                         if project_name == 'J-Curve':
                             irrad = ip.level.irradiation.name
                             self.repository_identifier = '{}{}'.format(ipp, irrad)
