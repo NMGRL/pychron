@@ -95,6 +95,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     peak_center_threshold_window = Int(10)
 
     n_executed_display = Int
+    failed_intensity_count_threshold = Int(3)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
