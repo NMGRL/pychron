@@ -56,6 +56,7 @@ class DVCPersister(BasePersister):
     isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
+    _positions = None
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
         self.per_spec = pr
@@ -144,10 +145,7 @@ class DVCPersister(BasePersister):
             pd = {'x': x, 'y': y, 'z': z, 'position': pos, 'is_degas': per_spec.run_spec.identifier == 'dg'}
             ps.append(pd)
 
-        db = self.dvc.db
-        load_name = per_spec.load_name
-        for p in ps:
-            db.add_measured_position(load=load_name, **p)
+        self._positions = ps
         obj['positions'] = ps
 
         hexsha = self.dvc.get_meta_head()
@@ -323,6 +321,13 @@ class DVCPersister(BasePersister):
             for p in self.per_spec.videos:
                 db.add_media(p, an)
 
+        if self._positions:
+            db = self.dvc.db
+            load_name = self.per_spec.load_name
+
+            for position in self._positions:
+                pos = db.add_measured_position(load=load_name, **position)
+                an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 

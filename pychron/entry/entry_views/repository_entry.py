@@ -34,6 +34,10 @@ class RepositoryIdentifierEntry(BaseEntry):
                                                 'Repository?'.format(self.value)):
                     return
 
+            if not self.principal_investigator:
+                self.information_dialog('You must select a Principal Investigator')
+                return
+
             ret = True
             if not self.dvc.add_repository(self.value, self.principal_investigator):
                 ret = False

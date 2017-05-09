@@ -27,7 +27,7 @@ class RunHistoryModel(HasTraits):
 
     mass_spectrometer = Str
     mass_spectrometers = List
-    n = Int(10)
+    n = Int(10, auto_set=False, enter_set=True)
     analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
     selected = Any
     _cache = None
@@ -53,6 +53,7 @@ class RunHistoryModel(HasTraits):
 
         if self._cache is None:
             self._cache = {}
+        new = new.item
         uuid = new.uuid
         if uuid in self._cache:
             av = self._cache[uuid]
@@ -76,7 +77,7 @@ class RunHistoryView(Controller):
         adapter.run_history_columns()
 
         v = View(VSplit(VGroup(agrp,
-                               UItem('analyses', editor=TabularEditor(selected='selected',
+                               UItem('analyses', editor=TabularEditor(dclicked='selected',
                                                                       editable=False,
                                                                       adapter=adapter))),
                         UItem('analysis_view',
