@@ -36,7 +36,8 @@ class LocalLabAdapter(DatabaseAdapter):
     def build_database(self):
         self.connect(test=False)
         if not os.path.isfile(self.path):
-            Base.metadata.tables['LabTable'].create(bind=self.session.bind)
+            with self.session_ctx() as sess:
+                Base.metadata.tables['LabTable'].create(bind=sess.bind)
 
     def add_analysis(self, **kw):
         l = LabTable(**kw)

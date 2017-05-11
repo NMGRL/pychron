@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from requests.exceptions import SSLError
+
 from pychron.git.hosts import GitHostService
 from pychron.paths import paths
 
@@ -24,6 +26,7 @@ from pychron.paths import paths
 class GitHubService(GitHostService):
     preference_path = 'pychron.github'
     name = 'GitHub'
+    _has_access = True
 
     @property
     def remote_url(self):
@@ -50,25 +53,40 @@ class GitHubService(GitHostService):
 
     def get_team_id(self, name, organization):
         for td in self._get('{}/orgs/{}/teams'.format(paths.github_api_url,
-                                                     organization)):
+                                                      organization)):
             if td['name'] == name:
                 return td['id']
 
     def create_repo(self, name, organization, **kw):
-        cmd = '{}/orgs/{}/repos'.format(paths.github_api_url,
-                                        organization)
-        resp = self._post(cmd, name=name, **kw)
-        if resp:
-            self.debug('Create repo response {}'.format(resp.status_code))
-            return resp.status_code == 201
+        if self._has_access:
+            try:
+                cmd = '{}/orgs/{}/repos'.format(paths.github_api_url,
+                                                organization)
+                resp = self._post(cmd, name=name, **kw)
+                if resp:
+                    self.debug('Create repo response {}'.format(resp.status_code))
+                    return resp.status_code == 201
+            except SSLError, e:
+                self.warning('SSL Error. {}'.format(e))
+                self._has_access = False
+        else:
+            return True
 
     def make_url(self, name, organization):
         return '{}/{}/{}.git'.format(paths.github_url,
                                      organization, name)
 
     def get_repos(self, organization):
-        cmd = '{}/orgs/{}/repos'.format(paths.github_api_url, organization)
-        return self._get(cmd)
+        if self._has_access:
+            try:
+                cmd = '{}/orgs/{}/repos'.format(paths.github_api_url, organization)
+                return self._get(cmd)
+            except SSLError, e:
+                self.warning('SSL Error. {}'.format(e))
+                self._has_access = False
+                return []
+        else:
+            return []
 
     def get_info(self, organization):
         cmd = '{}/{}'.format(paths.github_api_url, organization)

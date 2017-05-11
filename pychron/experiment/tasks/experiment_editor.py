@@ -193,6 +193,7 @@ class ExperimentEditor(BaseTraitsEditor):
                                                     # link_copyable=False,
                                                     paste_function='executed_paste_function',
                                                     # copy_cache='linked_copy_cache',
+                                                    refresh='refresh_table_needed',
                                                     selected='executed_selected',
                                                     multi_select=True,
                                                     stretch_last_section=False,

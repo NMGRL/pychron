@@ -229,12 +229,26 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.switch_manager:
             if self.switch_manager.simulation:
                 ret = globalv.communication_simulation
-            else:
+            elif hasattr(self.switch_manager, 'get_state_checksum'):
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)
                 ret = bool(state)
         return ret, err
+
+    def setup_status_monitor(self):
+        self.stop_status_monitor(id(self), block=True)
+        self.start_status_monitor(id(self))
+        self.refresh_states()
+
+    def stop_status_monitor(self, *args, **kw):
+        pass
+
+    def start_status_monitor(self, *args, **kw):
+        pass
+
+    def refresh_states(self, *args, **kw):
+        pass
 
     def refresh_canvas(self):
         for ci in self.canvases:
