@@ -119,7 +119,7 @@ def create_issue(issue):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
 
-    r = requests.post(cmd, data=json.dumps(issue), headers=headers)
+    r = requests.post(cmd, data=json.dumps(issue), headers=headers, verify=globalv.cert_file)
 
     if r.status_code == 401:
         warning(None, 'Failed to submit issue. Username/Password incorrect.')
