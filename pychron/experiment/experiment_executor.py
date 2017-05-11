@@ -24,6 +24,7 @@ from threading import Thread, Lock, currentThread
 import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from requests.exceptions import SSLError
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
@@ -852,6 +853,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         remove_root_handler(handler)
         run.post_finish()
         self._set_thread_name(self.experiment_queue.name)
+        self.experiment_queue.refresh_table_needed = True
 
     def _close_cv(self):
         if self._cv_info:
@@ -1108,9 +1110,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return
 
         # make sure status monitor is running a
-        self.extraction_line_manager.stop_status_monitor(id(self), block=True)
-        self.extraction_line_manager.start_status_monitor(id(self))
-        self.extraction_line_manager.refresh_states()
+        self.extraction_line_manager.setup_status_monitor()
 
         ret = True
         if ai.start_extraction():
@@ -1799,13 +1799,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.use_dvc_persistence:
             # create dated references repos
-
+            sync_repos = True
             curtag = get_curtag()
 
             dvc = self.datahub.stores['dvc']
             ms = self.active_editor.queue.mass_spectrometer
             for tag in ('air', 'cocktail', 'blank'):
-                dvc.add_repository('{}_{}{}'.format(ms, tag, curtag), self.default_principal_investigator, inform=False)
+                if not dvc.add_repository('{}_{}{}'.format(ms, tag, curtag), self.default_principal_investigator, inform=False):
+                    self.warning('No access to a Git host')
+                    sync_repos = False
 
             no_repo = []
             for i, ai in enumerate(runs):
@@ -1832,9 +1834,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if prog:
             prog.change_message('Syncing repositories')
 
-        e = self._sync_repositories(prog)
-        if e:
-            raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
+        if sync_repos:
+            e = self._sync_repositories(prog)
+            if e:
+                raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
 
         if self._check_dashboard(prog):
             raise PreExecuteCheckException('Checking Dashboard')
