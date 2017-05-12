@@ -540,6 +540,22 @@ nodes:
   - klass: UnknownNode
   - klass: CSVAnalysesExportNode
 """
+
+
+REACTORS_DEFAULT = '''{
+    "Triga": {
+            "K4039": [0.007614,0.000105],
+            "K3839": [0.013,0.0],
+            "K3739": [0.0,0.0],
+            "Ca3937": [0.00066,1e-05],
+            "Ca3837": [4e-05,2e-06],
+            "Ca3637": [0.000264,1e-06],
+            "Cl3638": [250.0,0.0],
+            "Ca_K": [1.96,0.0],
+            "Cl_K": [0.227,0.0]
+            }
+}
+'''
 # SYSTEM_HEALTH = '''
 # values:
 #  - Ar40/Ar36

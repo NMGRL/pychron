@@ -616,6 +616,12 @@ class MetaRepo(GitRepoManager):
                                remove_extension=True)
 
     def get_default_productions(self):
+        p = os.path.join(paths.meta_root, 'reactors.json')
+        if not os.path.isfile(p):
+            with open(p, 'w') as wfile:
+                from pychron.file_defaults import REACTORS_DEFAULT
+                wfile.write(REACTORS_DEFAULT)
+
         with open(os.path.join(paths.meta_root, 'reactors.json'), 'r') as rfile:
             return json.load(rfile)
 

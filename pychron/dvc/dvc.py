@@ -843,7 +843,7 @@ class DVC(Loggable):
         root = os.path.join(paths.repository_dataset_dir, identifier)
         if os.path.isdir(root):
             self.debug('already a directory {}'.format(identifier))
-            return
+            return True
 
         names = self.remote_repository_names()
         if identifier in names:
