@@ -84,7 +84,12 @@ class PychronTasksPlugin(BasePlugin):
     def _my_tips_default(self):
         return ["Use <b>Help>What's New</b> to view the official ChangeLog for the current version",
                 'Turn Off Random Tip two ways:<br><b>1. Preferences>General></b> Uncheck "Random Tip".</b><br>'
-                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
+                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
+                'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
+                'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
+                'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
+                'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
+                '<b>Help/Edit UI</b>.']
 
     def _preferences_panes_default(self):
         return [GeneralPreferencesPane, BrowserPreferencesPane]
