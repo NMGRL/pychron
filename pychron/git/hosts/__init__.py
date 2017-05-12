@@ -122,8 +122,6 @@ class GitHostService(Loggable):
             if globalv.cert_file:
                 s.verify = globalv.cert_file
 
-            print 'asdfasdf', s.verify
-
             def _rget(ci):
                 r = s.get(ci)
                 if r.status_code == 401:

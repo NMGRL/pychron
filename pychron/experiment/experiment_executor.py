@@ -1799,15 +1799,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         if self.use_dvc_persistence:
             # create dated references repos
-            sync_repos = True
             curtag = get_curtag()
 
             dvc = self.datahub.stores['dvc']
             ms = self.active_editor.queue.mass_spectrometer
             for tag in ('air', 'cocktail', 'blank'):
-                if not dvc.add_repository('{}_{}{}'.format(ms, tag, curtag), self.default_principal_investigator, inform=False):
-                    self.warning('No access to a Git host')
-                    sync_repos = False
+                repo = '{}_{}{}'.format(ms, tag, curtag)
+                dvc.add_repository(repo, self.default_principal_investigator, inform=False)
 
             no_repo = []
             for i, ai in enumerate(runs):
@@ -1834,10 +1832,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if prog:
             prog.change_message('Syncing repositories')
 
-        if sync_repos:
-            e = self._sync_repositories(prog)
-            if e:
-                raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
+        e = self._sync_repositories(prog)
+        if e:
+            raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
 
         if self._check_dashboard(prog):
             raise PreExecuteCheckException('Checking Dashboard')

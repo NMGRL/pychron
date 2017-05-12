@@ -37,6 +37,7 @@ PACKAGE_DICT = dict(
     DatabasePlugin='pychron.database.tasks.database_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
     PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+    UpdatePlugin='pychron.updater.tasks.update_plugin',
 
     # data reduction
     MassSpecPlugin='pychron.mass_spec.tasks.plugin',
@@ -80,9 +81,9 @@ PACKAGE_DICT = dict(
 
     # social
     EmailPlugin='pychron.social.email.tasks.plugin',
-    GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin'
+    GoogleCalendarPlugin='pychron.social.google_calendar.tasks.plugin',
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
-    # UpdatePlugin='pychron.updater.tasks.update_plugin',
+
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     # CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
