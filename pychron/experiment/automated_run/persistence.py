@@ -214,7 +214,7 @@ class AutomatedRunPersister(BasePersister):
     data_manager = Instance('pychron.managers.data_managers.h5_data_manager.H5DataManager', ())
 
     secondary_database_fail = False
-    use_massspec_database = True
+    use_massspec_database = False
     use_analysis_grouping = Bool(False)
     grouping_threshold = Float
     grouping_suffix = Str

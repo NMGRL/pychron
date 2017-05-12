@@ -843,7 +843,7 @@ class DVC(Loggable):
         root = os.path.join(paths.repository_dataset_dir, identifier)
         if os.path.isdir(root):
             self.debug('already a directory {}'.format(identifier))
-            return
+            return True
 
         names = self.remote_repository_names()
         if identifier in names:
@@ -873,7 +873,12 @@ class DVC(Loggable):
 
                         url = gi.make_url(identifier, self.organization)
                         if i == 0:
-                            repo = Repo.clone_from(url, root)
+                            try:
+                                repo = Repo.clone_from(url, root)
+                            except BaseException, e:
+                                self.debug('failed cloning repo. {}'.format(e))
+                                ret = False
+
                             self.db.add_repository(identifier, principal_investigator)
                         else:
                             repo.create_remote(gi.default_remote_name or 'origin', url)

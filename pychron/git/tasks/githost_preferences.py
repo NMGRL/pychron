@@ -23,6 +23,7 @@ from traitsui.api import View, Item, VGroup, HGroup
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, test_connection_item
 from pychron.git.hosts import authorization
+from pychron.globals import globalv
 
 
 class GitHostPreferences(BasePreferencesHelper):
@@ -42,7 +43,9 @@ class GitHostPreferences(BasePreferencesHelper):
             header = authorization(self.username, self.password, self._token)
 
             resp = requests.get(self._url,
-                                headers=header)
+                                headers=header,
+                                verify=globalv.cert_file)
+
             if resp.status_code == 200:
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
@@ -69,7 +72,7 @@ class GitLabPreferences(GitHostPreferences):
 
     @property
     def _url(self):
-        return 'http://{}'.format(self.host)
+        return 'https://{}'.format(self.host)
 
     @property
     def _token(self):

@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Interface, Password, provides
 
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
@@ -98,7 +99,8 @@ class GitHostService(Loggable):
         raise NotImplementedError
 
     def get_repository_names(self, organization):
-        return [repo['name'] for repo in self.get_repos(organization)]
+        repos = self.get_repos(organization)
+        return [repo['name'] for repo in repos]
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))
@@ -117,6 +119,8 @@ class GitHostService(Loggable):
     def _get(self, cmd, verbose=False):
         with requests.Session() as s:
             s.headers.update(self._get_authorization())
+            if globalv.cert_file:
+                s.verify = globalv.cert_file
 
             def _rget(ci):
                 r = s.get(ci)
@@ -146,12 +150,20 @@ class GitHostService(Loggable):
 
     def _post(self, cmd, **payload):
         headers = self._get_authorization()
-        r = requests.post(cmd, data=json.dumps(payload), headers=headers)
+        kw = {}
+        if globalv.cert_file:
+            kw['verify'] = globalv.cert_file
+
+        r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
         return r
 
     def _put(self, cmd, **payload):
         headers = self._get_authorization()
-        r = requests.put(cmd, data=json.dumps(payload), headers=headers)
+        kw={}
+        if globalv.cert_file:
+            kw['verify'] = globalv.cert_file
+
+        r = requests.put(cmd, data=json.dumps(payload), headers=headers, **kw)
         return r
 
     def _get_oauth_token(self):

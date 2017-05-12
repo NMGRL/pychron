@@ -646,11 +646,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if '##' in self.labnumber:
             mod = script.get_parameter('modifier')
+            print 'masodfasdf', mod, script
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
+                print 'asdfasfasf', self.labnumber
 
     def _clear_labnumber(self):
         self.debug('clear labnumber')

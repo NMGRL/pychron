@@ -21,6 +21,7 @@ from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
+    cert_file = None
     prev_db_kind = None
     dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
@@ -147,7 +148,8 @@ class Globals(object):
                            ('entry_labbook_debug', to_bool),
                            ('irradiation_pdf_debug', to_bool),
                            ('entry_irradiation_import_from_file_debug', to_bool),
-                           ('client_only_locking', to_bool)]:
+                           ('client_only_locking', to_bool),
+                           ('cert_file', str)]:
             a = ip.get_global(attr)
             if a:
                 setattr(globalv, attr, func(a))
