@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from matplotlib import cm
+from chaco.default_colormaps import hot
 from traits.api import List, Float, Int, Enum
 from traitsui.api import View, Item
 # ============= standard library imports ========================
@@ -520,7 +520,7 @@ def test1():
         maz, miz = max(z), min(z)
         z = [(zi - miz) / (maz - miz) for zi in z]
         print z
-        cp.set_facecolors([cm.hot(zi) for zi in z])
+        cp.set_facecolors([hot(zi) for zi in z])
         # cp.set_edgecolors(z)
         if not pattern._tri.is_equilateral():
             print 'not eq'

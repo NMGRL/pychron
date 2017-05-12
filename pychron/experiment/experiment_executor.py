@@ -1953,7 +1953,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return self._extract_conditionals(p, term_name, level=SYSTEM, **kw)
         else:
             # pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
-            self.warning('no system conditionals file located at {}'.format(p))
+            self.warning('no system conditionals file located at "{}"'.format(paths.spectrometer_dir))
 
     def _load_queue_conditionals(self, term_name, **kw):
         self.debug('loading queue conditionals {}'.format(term_name))
