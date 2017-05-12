@@ -60,7 +60,7 @@ class ChromiumCO2Manager(EthernetLaserManager):
 
         resp = self.set_laser_power(value)
 
-        self.fire()
+        self.fire_laser()
 
         try:
             return abs(float(resp) - value) < tol

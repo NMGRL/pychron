@@ -65,7 +65,8 @@ class ChromiumCO2ClientPane(ClientPane):
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
-                      UItem('fire_laser_button', enabled_when='enabled'),
+                      UItem('fire_laser_button', editor=ButtonEditor(label_value='fire_label'),
+                            enabled_when='enabled'),
                       Item('output_power', label='Power'),
                       UItem('units'),
                       spring,
