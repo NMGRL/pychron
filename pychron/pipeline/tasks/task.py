@@ -540,9 +540,9 @@ class PipelineTask(BaseBrowserTask):
                 'Use <b>Data>Spectrum</b> to plot a Spectrum',
                 'Use <b>Data>Series</b> to plot a Time series of Analyses',
 
-                # 'Use <b>Data>XY Scatter</b> to plot a XY Scatter plot of '
-                # 'any Analysis value versus any other Analysis value',
-                # 'Use <b>Data>Recall</b> to view analytical data for individual analyses',
+                'Use <b>Data>XY Scatter</b> to plot a XY Scatter plot of '
+                'any Analysis value versus any other Analysis value',
+                'Use <b>Data>Recall</b> to view analytical data for individual analyses',
                 ]
 
     # handlers
