@@ -97,24 +97,10 @@ class BaseStageMap(Loggable):
                     # # line 2 list of calibration holes
                     # # should always be N,E,S,W,center
                     self.calibration_holes = line.split(',')
+                    break
 
                 cnt += 1
 
-            # # line 0 shape, dimension
-            # shape, dimension = line.split(',')
-            # self.g_shape = shape
-            # self.g_dimension = dimension = float(dimension)
-            #
-            # # line 1 list of holes to default draw
-            # line = rfile.readline()
-            # valid_holes = line.split(',')
-            #
-            # # line 2 list of calibration holes
-            # # should always be N,E,S,W,center
-            # line = rfile.readline()
-            # self.calibration_holes = line.split(',')
-
-            # for hi, line in enumerate(lines[3:]):
             hi = 0
             sms = []
             for line in rfile:
