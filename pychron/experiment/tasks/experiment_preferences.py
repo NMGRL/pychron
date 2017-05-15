@@ -119,9 +119,31 @@ class ConsolePreferences(BaseConsolePreferences):
     use_message_colormapping = Bool
 
 
+class HumanErrorCheckerPrefences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    id = 'pychron.experiment.humar_error_checker.preferences_page'
+
+    check_extraction_script = Bool
+
+
 # ======================================================================================================
 # panes
 # ======================================================================================================
+class HumanErrorCheckerPrefencesPane(PreferencesPane):
+    model_factory = HumanErrorCheckerPrefences
+    category = 'Experiment'
+
+    def traits_view(self):
+        v = View(VGroup(Item('queue_enabled', label='Queue'),
+                        Item('runs_enabled', label='Runs'),
+                        Item('non_fatal_enabled', label='Non-Fatal'),
+                        Item('extraction_script_enabled',
+                             label='Extraction Script',
+                             tooltip='Check that the Extraction Script matches the Extract Device'),
+                        label='Human-Error Checker'))
+        return v
+
+
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'

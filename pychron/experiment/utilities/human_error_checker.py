@@ -15,20 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from pychron.experiment.utilities.identifier import get_analysis_type
-from pychron.loggable import Loggable
+from traits.api import Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.preference_binding import bind_preference
+from pychron.experiment.utilities.identifier import get_analysis_type
+from pychron.loggable import Loggable
 from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
 
 
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False
     _mass_spec_required = True
+    extraction_script_enabled = Bool(True)
+    queue_enabled = Bool(True)
+    runs_enabled = Bool(True)
+    non_fatal_enabled = Bool(True)
+
+    def __init__(self, *args, **kw):
+        super(HumanErrorChecker, self).__init__(*args, **kw)
+
+        self._bind_preferences()
 
     def check_queue(self, qi):
+        if self.queue_enabled:
+            self.info('check queue disabled')
+            return
+
         self.info('check queue {}'.format(qi.name))
         if self._extraction_line_required:
             if not qi.extract_device or qi.extract_device in ('Extract Device',):
@@ -45,13 +59,25 @@ class HumanErrorChecker(Loggable):
                 return msg
 
     def check_runs_non_fatal(self, runs):
+        if not self.non_fatal_enabled:
+            self.info('check runs non fatal disabled')
+            return
+
         for i, r in enumerate(runs):
             ret = self._check_run_non_fatal(i, r)
             if ret:
                 return ret
 
+    _script_context = None
+    _warned = None
+
     def check_runs(self, runs, test_all=False, inform=True,
                    test_scripts=False):
+
+        if not self.runs_enabled:
+            self.info('check runs disabled')
+            return
+
         ret = dict()
 
         self._script_context = {}
@@ -92,14 +118,23 @@ class HumanErrorChecker(Loggable):
                 return 'Missing "{}" for run={} {} pos={}'.format(s.upper(), idx + 1, run.runid, run.position)
 
         ed = run.extract_device
-        if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
-            ds = ed.split(' ')[1].lower()
-            if ds not in es:
-                return 'Extraction script "{}" does not match the default "{}"'.format(es, ds)
-        elif run.analysis_type == 'cocktail' and es and 'cocktail' not in es:
-            return 'Cocktail analysis is not using a "cocktail" extraction script'
-        elif run.analysis_type == 'air' and es and 'air' not in es:
-            return 'Air analysis is not using an "air" extraction script'
+        if self.extraction_script_enabled:
+            if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
+                ds = ed.split(' ')[1].lower()
+                if ds not in es:
+                    return 'Extraction script "{}" does not match the default "{}". An easy solution is to make sure ' \
+                           '"{}" is in the name of the extraction script'.format(es, ds, ds)
+            elif run.analysis_type == 'cocktail' and es and 'cocktail' not in es:
+                return 'Cocktail analysis is not using a "cocktail" extraction script'
+            elif run.analysis_type == 'air' and es and 'air' not in es:
+                return 'Air analysis is not using an "air" extraction script'
+
+    # private
+    def _bind_preferences(self):
+        bind_preference(self, 'extraction_script_enabled', 'pychron.experiment.extraction_script_enabled')
+        bind_preference(self, 'runs_enabled', 'pychron.experiment.runs_enabled')
+        bind_preference(self, 'queue_enabled', 'pychron.experiment.queue_enabled')
+        bind_preference(self, 'non_fatal_enabled', 'pychron.experiment.non_fatal_enabled')
 
     def _check_run(self, run, inform, test):
         if test:
