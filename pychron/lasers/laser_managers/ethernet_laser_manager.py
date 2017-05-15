@@ -20,11 +20,12 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     use_autocenter = Bool(False)
 
     output_power = Float(enter_set=True, auto_set=False)
-    fire_laser_button = Button('Fire')
+    fire_laser_button = Button
+    fire_label = Property(depends_on='_firing')
     units = Enum('watts', 'percent')
 
     _patterning = False
-    _firing = False
+    _firing = Bool(False)
 
     stage_stop_button = Button('Stage Stop')
     move_enabled_button = Button('Enable Move')
@@ -74,6 +75,9 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
         else:
             if self.enable_laser():
                 self.enabled = True
+
+    def _get_fire_label(self):
+        return 'Fire' if not self._firing else 'Stop'
 
     def _move_enabled_button_fired(self):
         self._move_enabled = not self._move_enabled

@@ -25,9 +25,14 @@ from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+from pychron.saveable import SaveButton, Saveable, SaveableHandler
 
 
-class PeakCenterConfigHandler(Handler):
+class PeakCenterConfigHandler(SaveableHandler):
+    def save(self, info):
+        info.object.save()
+        self.close(info, True)
+
     def closed(self, info, isok):
         if isok:
             info.object.dump()
@@ -124,7 +129,7 @@ class PeakCenterConfig(HasTraits):
         return [self.detector] + self.additional_detectors
 
 
-class ItemConfigurer(HasTraits):
+class ItemConfigurer(Saveable):
     active_item = Any
 
     active_name = Str
@@ -135,6 +140,7 @@ class ItemConfigurer(HasTraits):
     new_name = Str
     add_button = Button
     root = Str
+    save_enabled = True
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -143,6 +149,9 @@ class ItemConfigurer(HasTraits):
             pickle.dump(obj, wfile)
 
         self.dump_item(self.active_item)
+
+    def save(self):
+        self.dump()
 
     def load(self, **kw):
         names = list_directory2(self.root, remove_extension=True, extension='.p')
@@ -209,7 +218,7 @@ class ItemConfigurer(HasTraits):
                         UItem('_'),
                         UItem('active_item', style='custom', editor=InstanceEditor()),
                         UItem('_')),
-                 buttons=['OK', 'Cancel'],
+                 buttons=['OK', 'Cancel', SaveButton],
                  kind='livemodal',
                  title=self.title,
                  width=400,
