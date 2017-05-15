@@ -77,21 +77,42 @@ class BaseStageMap(Loggable):
     def load(self):
         self.debug('loading stage map file {}'.format(self.file_path))
         with open(self.file_path, 'r') as rfile:
+            cnt = 0
+            for line in rfile:
+                if line.startswith('#'):
+                    continue
 
-            line = rfile.readline()
-            # line 0 shape, dimension
-            shape, dimension = line.split(',')
-            self.g_shape = shape
-            self.g_dimension = dimension = float(dimension)
+                if '#' in line:
+                    line = line.split('#')[0]
 
-            # line 1 list of holes to default draw
-            line = rfile.readline()
-            valid_holes = line.split(',')
+                if cnt == 0:
+                    # line 0 shape, dimension
+                    shape, dimension = line.split(',')
+                    self.g_shape = shape
+                    self.g_dimension = dimension = float(dimension)
+                elif cnt == 1:
+                    # line 1 list of holes to default draw
+                    valid_holes = line.split(',')
+                elif cnt == 2:
+                    # # line 2 list of calibration holes
+                    # # should always be N,E,S,W,center
+                    self.calibration_holes = line.split(',')
 
-            # line 2 list of calibration holes
-            # should always be N,E,S,W,center
-            line = rfile.readline()
-            self.calibration_holes = line.split(',')
+                cnt += 1
+
+            # # line 0 shape, dimension
+            # shape, dimension = line.split(',')
+            # self.g_shape = shape
+            # self.g_dimension = dimension = float(dimension)
+            #
+            # # line 1 list of holes to default draw
+            # line = rfile.readline()
+            # valid_holes = line.split(',')
+            #
+            # # line 2 list of calibration holes
+            # # should always be N,E,S,W,center
+            # line = rfile.readline()
+            # self.calibration_holes = line.split(',')
 
             # for hi, line in enumerate(lines[3:]):
             hi = 0
@@ -132,7 +153,7 @@ class BaseStageMap(Loggable):
 
             yield a
             if include_mid:
-                yield ri[len(ri)/2]
+                yield ri[len(ri) / 2]
             yield b
 
     def circumference_holes(self):
@@ -147,7 +168,7 @@ class BaseStageMap(Loggable):
     def mid_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
             ri = list(ri)
-            yield ri[len(ri)/2]
+            yield ri[len(ri) / 2]
 
     def get_calibration_hole(self, h):
         d = 'north', 'east', 'south', 'west', 'center'
@@ -205,7 +226,7 @@ class BaseStageMap(Loggable):
             hole = self.get_hole(key)
             if hole is None:
                 msg = '"{}" is not a valid hole for tray "{}".'.format(key,
-                                                                     self.name)
+                                                                       self.name)
         else:
             msg = '''There a no holes in tray "{}". This is most likely because
 the file "{}" was not properly parsed. \n\n
