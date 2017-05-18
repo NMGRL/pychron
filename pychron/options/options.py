@@ -187,7 +187,7 @@ class MainOptions(SubOptions):
                              show_label=False,
                              editor=myTableEditor(columns=self._get_columns(),
                                                   sortable=False,
-                                                  deletable=False,
+                                                  deletable=True,
                                                   clear_selection_on_dclicked=True,
                                                   orientation='vertical',
                                                   selected='selected',
