@@ -35,7 +35,8 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Inverse Isochron
 - Series
 - Analysis Table
-- Interpreted Age Table
+#- Interpreted Age Table
+- Interpreted Age Ideogram
 - Auto Ideogram
 - Diff
 - Vertical Flux
@@ -495,6 +496,13 @@ nodes:
   - klass: InterpretedAgeTableNode
   - klass: ReviewNode
   - klass: InterpretedAgeTablePersistNode
+"""
+
+INTERPRETED_AGE_IDEOGRAM = """
+required:
+nodes:
+  - klass: InterpretedAgeNode
+  - klass: IdeogramNode
 """
 
 AUTO_IDEOGRAM = """

@@ -273,6 +273,7 @@ class Paths(object):
     inverse_isochron_template = None
     analysis_table_template = None
     interpreted_age_table_template = None
+    interpreted_age_ideogram_template = None
     auto_ideogram_template = None
     series_template = None
     geochron_template = None
