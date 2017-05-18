@@ -744,7 +744,8 @@ class DVC(Loggable):
                  material=ia.material,
                  identifier=ia.identifier,
                  nanalyses=ia.nanalyses,
-                 irradiation=ia.irradiation)
+                 irradiation=ia.irradiation,
+                 name=ia.name)
 
         d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
                          for ai in ia.all_analyses]
@@ -928,6 +929,12 @@ class DVC(Loggable):
     # private
     def _add_interpreted_age(self, ia, d):
         p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')
+
+        i = 0
+        with os.path.isfile(p):
+            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), ia.repository_identifier, modifier='ia', mode='w')
+            i += 1
+
         dvc_dump(d, p)
 
     def _load_repository(self, expid, prog, i, n):

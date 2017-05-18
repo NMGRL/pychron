@@ -79,7 +79,8 @@ def get_review_status(record):
 
 def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
+    # suffix = '{}.ia.json'.format(idn[prefixlen:])
+    suffix = '*.ia.json'
 
     for e in repositories:
         pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
