@@ -25,6 +25,7 @@ from datetime import datetime
 from git import Repo
 
 from pychron.dvc import analysis_path
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
@@ -47,10 +48,12 @@ def repository_has_staged(ps, remote='origin', branch='master'):
 def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
-        repo = Repo(pp)
+        # repo = Repo(pp)
+        repo = GitRepoManager()
+        repo.open_repo(pp)
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
-            repo.git.push(remote, branch)
+            repo.push(remote, branch)
 
 
 def get_review_status(record):
