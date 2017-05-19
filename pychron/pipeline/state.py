@@ -21,7 +21,7 @@ from pychron.core.helpers.isotope_utils import sort_isotopes
 
 
 def get_detector_set(ans):
-    return {iso.detector for ai in ans for iso in ai.isotopes.itervalues()}
+    return {iso.detector for ai in ans if ai.isotopes for iso in ai.isotopes.itervalues()}
 
 
 class EngineState(HasTraits):
