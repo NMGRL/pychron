@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Button, Int, Bool, Float, Property, on_trait_change, List, Enum, Range, Color
 from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -50,8 +51,11 @@ class SpectrumOptions(AgeOptions):
     display_step = Bool(False)
     display_plateau_info = Bool(True)
     display_integrated_info = Bool(True)
+    display_weighted_mean_info = Bool(True)
+
     plateau_sig_figs = Int
     integrated_sig_figs = Int
+    weighted_mean_sig_figs = Int
 
     plateau_font = Property
     integrated_font = Property

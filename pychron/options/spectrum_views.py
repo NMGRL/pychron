@@ -98,13 +98,19 @@ class DisplaySubOptions(TitleSubOptions):
                                 show_border=True,
                                 label='Integrated')
 
+        weighted_mean_grp = HGroup(UItem('display_weighted_mean_info',
+                                         tooltip='Display integrated age info'),
+                                   Item('weighted_mean_sig_figs', label='SigFigs'),
+                                   show_border=True,
+                                   label='Weighted Mean')
+
         display_grp = Group(gen_grp,
                             age_grp,
                             legend_grp,
                             title_grp,
                             label_grp,
                             plat_grp,
-                            integrated_grp,
+                            HGroup(integrated_grp, weighted_mean_grp),
                             show_border=True,
                             label='Display')
 
