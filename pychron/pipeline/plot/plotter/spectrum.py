@@ -149,8 +149,8 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
-        ag.pc_nsteps = self.options.pc_nsteps
-        ag.pc_gas_fraction = self.options.pc_gas_fraction
+        ag.plateau_nsteps = self.options.pc_nsteps
+        ag.plateau_gas_fraction = self.options.pc_gas_fraction
 
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end

@@ -37,11 +37,14 @@ def memoize(function):
 
     return closure
 
+
 class Log():
     def debug(self, txt):
-        print 'debug --- {}'.format(txt)
+        pass
+        # print 'debug --- {}'.format(txt)
 
 log = Log()
+
 
 class Plateau(HasTraits):
     ages = Array
@@ -139,7 +142,6 @@ class Plateau(HasTraits):
 
     def check_overlap(self, start, end, overlap_func):
         overlap_sigma = self.overlap_sigma
-        print 'asdfasdf', overlap_sigma
         for c, i in enumerate(range(start, end, 1)):
             for j in range(start + c, end + 1, 1):
                 if i == j:
