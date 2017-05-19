@@ -86,7 +86,7 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
         pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
         ps = glob.glob(pathname)
         if ps:
-            return ps[0]
+            return ps
 
 
 class GitSessionCTX(object):

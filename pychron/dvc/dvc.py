@@ -488,8 +488,8 @@ class DVC(Loggable):
     def find_interpreted_ages(self, identifiers, repositories):
         ias = []
         for idn in identifiers:
-            path = find_interpreted_age_path(idn, repositories)
-            if path:
+            paths = find_interpreted_age_path(idn, repositories)
+            for path in paths:
                 obj = dvc_load(path)
                 name = obj.get('name')
                 ias.append(InterpretedAgeRecordView(idn, path, name))
@@ -944,6 +944,7 @@ class DVC(Loggable):
             p = analysis_path('{}_{:05d}'.format(ia.identifier, i), ia.repository_identifier, modifier='ia', mode='w')
             i += 1
 
+        self.debug('saving interpreted age. {}'.format(p))
         dvc_dump(d, p)
 
     def _load_repository(self, expid, prog, i, n):

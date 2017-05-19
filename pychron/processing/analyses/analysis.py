@@ -146,10 +146,11 @@ class IdeogramPlotable(HasTraits):
     otemp_status = None
     record_id = ''
     temp_selected = False
+    comment = ''
+    j = None
 
     def __init__(self, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
-        self.j = ufloat(0, 0)
         self.arar_constants = ArArConstants()
 
     def is_omitted(self):
@@ -203,7 +204,6 @@ class Analysis(ArArAge, IdeogramPlotable):
     step = ''
     increment = None
     aliquot_step_str = ''
-    comment = ''
     mass_spectrometer = ''
     analysis_type = ''
     extract_value = 0
