@@ -937,15 +937,18 @@ class DVC(Loggable):
 
     # private
     def _add_interpreted_age(self, ia, d):
-        p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')
+        rid = ia.repository_identifier
+        p = analysis_path(ia.identifier, rid,  modifier='ia', mode='w')
 
         i = 0
         while os.path.isfile(p):
-            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), ia.repository_identifier, modifier='ia', mode='w')
+            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), rid, modifier='ia', mode='w')
             i += 1
 
         self.debug('saving interpreted age. {}'.format(p))
         dvc_dump(d, p)
+        if self.repository_add_paths(rid, p):
+            self.repository_commit(rid, '<IA> added interpreted age {}'.format(ia.name))
 
     def _load_repository(self, expid, prog, i, n):
         if prog:
