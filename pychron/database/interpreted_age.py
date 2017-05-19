@@ -4,13 +4,15 @@ from traits.traits import Property
 from traitsui.group import HGroup
 from traitsui.item import Item
 from traitsui.view import View
+from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
+from pychron.processing.analyses.analysis import IdeogramPlotable
 
 __author__ = 'ross'
 
 
-class InterpretedAge(HasTraits):
+class InterpretedAge(IdeogramPlotable):
     create_date = TDate
     id = Long
 
