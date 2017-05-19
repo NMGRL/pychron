@@ -104,6 +104,7 @@ class InterpretedAgeNode(DVCNode):
 
     def run(self, state):
         state.interpreted_ages = self.interpreted_ages
+        state.unknowns = self.interpreted_ages
 
 
 class DataNode(DVCNode):
