@@ -25,7 +25,7 @@ from math import isnan
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo
 from traits.api import Instance, Str, Set, List, provides
-from uncertainties import nominal_value, std_dev
+from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
@@ -84,10 +84,20 @@ class Tag(object):
 
 
 class DVCInterpretedAge(InterpretedAge):
+    labnumber = None
+    group_id = None
+    graph_id = None
+    isotopes = None
+    tag = 'ok'
+    uage = None
+
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
             setattr(self, a, obj[a])
+
+        self.labnumber = self.identifier
+        self.uage = ufloat(self.age, self.age_err)
 
 
 @provides(IDatastore)
@@ -931,7 +941,7 @@ class DVC(Loggable):
         p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')
 
         i = 0
-        with os.path.isfile(p):
+        while os.path.isfile(p):
             p = analysis_path('{}_{:05d}'.format(ia.identifier, i), ia.repository_identifier, modifier='ia', mode='w')
             i += 1
 
