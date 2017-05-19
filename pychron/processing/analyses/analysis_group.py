@@ -200,10 +200,10 @@ class AnalysisGroup(HasTraits):
                 include_j_error = self.include_j_error_in_mean
 
             if include_j_error:
-                try:
-                    e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-                except ZeroDivisionError:
-                    return nan
+                # try:
+                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+                # except ZeroDivisionError:
+                #     return nan
         return e
 
     # @cached_property
