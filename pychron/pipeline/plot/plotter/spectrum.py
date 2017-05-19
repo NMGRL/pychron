@@ -14,20 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Array, List, Instance
 # ============= standard library imports ========================
 from math import isnan
+
 from numpy import hstack, array
+# ============= enthought library imports =======================
+from traits.api import Array, List, Instance
 # ============= local library imports  ==========================
-from uncertainties import nominal_value
+from uncertainties import nominal_value, std_dev
+
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
-from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 # from pychron.pipeline.plot import FlowPlotLabel
-from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
+from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, RelativePlotLabel
 from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
+from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 
@@ -38,7 +40,7 @@ class Spectrum(BaseArArFigure):
     _analysis_group_klass = StepHeatAnalysisGroup
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
-    integrated_label = None
+    age_label = None
 
     def plot(self, plots, legend=None):
         """
@@ -75,6 +77,37 @@ class Spectrum(BaseArArFigure):
     def mean_x(self, *args):
         return 50
 
+    def calculate_ylimits(self, po, s39, vs, pma=None):
+        ps = s39 / s39.sum()
+        ps = ps > 0.01
+        vs = vs[ps]
+
+        # filter ys,es if 39Ar < 1% of total
+        try:
+            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
+            vs, es = array(vs), array(es)
+            nes = es * self.options.step_nsigma
+            yl = vs - nes
+            yu = vs + nes
+
+            _mi = min(yl)
+            _ma = max(yu)
+            if pma:
+                _ma = max(pma, _ma)
+        except ValueError:
+            _mi = 0
+            _ma = 1
+
+        if not po.has_ylimits():
+            if po.calculated_ymin is None:
+                po.calculated_ymin = _mi
+            else:
+                po.calculated_ymin = min(po.calculated_ymin, _mi)
+
+            if po.calculated_ymax is None:
+                po.calculated_ymax = _ma
+            else:
+                po.calculated_ymax = max(po.calculated_ymax, _ma)
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -145,58 +178,23 @@ class Spectrum(BaseArArFigure):
 
         self.calculate_ylimits(po, s39, vs, pma)
 
-        if op.display_integrated_info:
-            text = self._make_integrated_text()
-            # fs = op.integrated_font_size
-            # if not fs:
-            #     fs = 10
-
-            self._add_integrated_label(plot,
-                                       text,
-                                       # font='modern {}'.format(fs),
-                                       font=op.integrated_font,
-                                       relative_position=self.group_id,
-                                       color=spec.color)
-
-            # label.id='integrated'
-            # if label.id in po.overlay_positions:
-            # label.label_position=po.overlay_positions[label.id]
-
+        # if op.display_weighted_mean_info:
+        #     text = self._make_weighted_mean_text()
+        #     self._add_weighted_mean_label(plot,
+        #                                   text,
+        #                                   font=op.weighted_mean_font,
+        #                                   relative_position=self.group_id,
+        #                                   color=spec.color)
+        text = self._build_age_text()
+        if text:
+            self._add_age_label(plot,
+                                text,
+                                font=op.integrated_font,
+                                relative_position=self.group_id,
+                                color=spec.color)
         self._add_info(graph, plot)
 
         return spec
-
-    def calculate_ylimits(self, po, s39, vs, pma=None):
-        ps = s39 / s39.sum()
-        ps = ps > 0.01
-        vs = vs[ps]
-
-        # filter ys,es if 39Ar < 1% of total
-        try:
-            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
-            vs, es = array(vs), array(es)
-            nes = es * self.options.step_nsigma
-            yl = vs - nes
-            yu = vs + nes
-
-            _mi = min(yl)
-            _ma = max(yu)
-            if pma:
-                _ma = max(pma, _ma)
-        except ValueError:
-            _mi = 0
-            _ma = 1
-
-        if not po.has_ylimits():
-            if po.calculated_ymin is None:
-                po.calculated_ymin = _mi
-            else:
-                po.calculated_ymin = min(po.calculated_ymin, _mi)
-
-            if po.calculated_ymax is None:
-                po.calculated_ymax = _ma
-            else:
-                po.calculated_ymax = max(po.calculated_ymax, _ma)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -212,13 +210,13 @@ class Spectrum(BaseArArFigure):
                                        component=plot)
                     plot.overlays.append(pl)
 
-    def _add_integrated_label(self, plot, text, font='modern 10', relative_position=0, **kw):
+    def _add_age_label(self, plot, text, font='modern 10', relative_position=0, **kw):
 
-        o = IntegratedPlotLabel(component=plot, text=text,
-                                hjustify='center', vjustify='bottom',
-                                font=font,
-                                relative_position=relative_position, **kw)
-        self.integrated_label = o
+        o = RelativePlotLabel(component=plot, text=text,
+                              hjustify='center', vjustify='bottom',
+                              font=font,
+                              relative_position=relative_position, **kw)
+        self.age_label = o
         plot.overlays.append(o)
 
     def _add_plot(self, xs, ys, es, plotid, po):
@@ -339,9 +337,10 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.dirty = True
 
-        if self.integrated_label:
-            text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
-            self.integrated_label.text = text
+        if self.age_label:
+            # text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)
+            text = self._build_age_text()
+            self.age_label.text = text
 
         if ag.plateau_age and self.plateau_overlay:
             text = self._make_plateau_text()
@@ -353,37 +352,6 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     # utils
     # ===============================================================================
-    def _make_plateau_text(self):
-        ag = self.analysis_group
-        plateau_age = ag.plateau_age
-        plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
-
-        e = plateau_age.std_dev * self.options.nsigma
-        text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
-                                      mswd_args=(plateau_mswd, valid_mswd, nsteps),
-                                      sig_figs=self.options.plateau_sig_figs)
-
-        sample = self.analysis_group.sample
-        identifier = self.analysis_group.identifier
-
-        if self.options.include_plateau_sample:
-            if self.options.include_plateau_identifier:
-                text = u'{}({}) {}'.format(sample, identifier, text)
-            else:
-                text = u'{} {}'.format(sample, text)
-        elif self.options.include_plateau_identifier:
-            text = u'{} {}'.format(identifier, text)
-
-        return text
-
-    def _make_integrated_text(self):
-        ag = self.analysis_group
-        tga = ag.integrated_age
-        n = ag.nanalyses
-        # mswd = ag.get_mswd_tuple()
-        text = self._build_integrated_age_label(tga, n)
-        return text
-
     def _get_age_errors(self, ans):
         ages, errors = zip(*[(ai.uage.nominal_value,
                               ai.uage.std_dev)
@@ -454,6 +422,63 @@ class Spectrum(BaseArArFigure):
     # ===============================================================================
     # labels
     # ===============================================================================
+    def _make_plateau_text(self):
+        ag = self.analysis_group
+        plateau_age = ag.plateau_age
+        plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
+
+        e = plateau_age.std_dev * self.options.nsigma
+        text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
+                                      mswd_args=(plateau_mswd, valid_mswd, nsteps),
+                                      sig_figs=self.options.plateau_sig_figs)
+
+        sample = self.analysis_group.sample
+        identifier = self.analysis_group.identifier
+
+        if self.options.include_plateau_sample:
+            if self.options.include_plateau_identifier:
+                text = u'{}({}) {}'.format(sample, identifier, text)
+            else:
+                text = u'{} {}'.format(sample, text)
+        elif self.options.include_plateau_identifier:
+            text = u'{} {}'.format(identifier, text)
+
+        return text
+
+    def _make_weighted_mean_text(self):
+        ag = self.analysis_group
+        a = ag.weighted_age
+        n = ag.nanalyses
+        op = self.options
+
+        text = self._build_label_text(nominal_value(a),
+                                      std_dev(a)*op.nsigma, n,
+                                      sig_figs=op.weighted_mean_sig_figs,
+                                      total_n=ag.total_n)
+        text = u'Weighted Mean= {}'.format(text)
+        return text
+
+    def _make_integrated_text(self):
+        ag = self.analysis_group
+        tga = ag.integrated_age
+        n = ag.nanalyses
+        text = self._build_integrated_age_label(tga, n)
+        return text
+
+    def _build_age_text(self):
+        op = self.options
+        if op.display_integrated_info or op.display_weighted_mean_info:
+            text = ''
+            if op.display_integrated_info:
+                text = self._make_integrated_text()
+            if op.display_weighted_mean_info:
+                wmtext = self._make_weighted_mean_text()
+                if text:
+                    text = u'{} {}'.format(text, wmtext)
+                else:
+                    text = wmtext
+            return text
+
     def _build_integrated_age_label(self, tga, n):
         txt = 'NaN'
         if not isnan(nominal_value(tga)):
