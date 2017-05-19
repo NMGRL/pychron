@@ -21,6 +21,7 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List
+from traits.has_traits import HasTraits
 from traitsui.handler import Handler
 from uncertainties import ufloat
 
@@ -30,6 +31,7 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.arar_age import ArArAge
+from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
@@ -134,7 +136,44 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
     return g
 
 
-class Analysis(ArArAge):
+class IdeogramPlotable(HasTraits):
+    group_id = 0
+    graph_id = 0
+
+    tag = 'ok'
+    uage = None
+    temp_status = 'ok'
+    otemp_status = None
+    record_id = ''
+    temp_selected = False
+
+    def __init__(self, *args, **kw):
+        super(IdeogramPlotable, self).__init__(*args, **kw)
+        self.j = ufloat(0, 0)
+        self.arar_constants = ArArConstants()
+
+    def is_omitted(self):
+        return self.is_omitted_by_tag() or self.temp_selected
+
+    def is_omitted_by_tag(self, tags=None):
+        if tags is None:
+            tags = ('omit', 'invalid', 'outlier')
+        return self.tag in tags
+
+    def set_temp_status(self, tag):
+        tag = tag.lower()
+        if tag != 'ok':
+            self.otemp_status = tag
+        else:
+            self.otemp_status = 'omit'
+
+        self.temp_status = tag
+
+    def set_tag(self, tag):
+        self.tag = tag
+
+
+class Analysis(ArArAge, IdeogramPlotable):
     analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
     _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
@@ -197,11 +236,11 @@ class Analysis(ArArAge):
     # processing
     is_plateau_step = False
     # temp_status = Int(0)
-    temp_status = 'ok'
-    otemp_status = None
+    # temp_status = 'ok'
+    # otemp_status = None
     # value_filter_omit = False
     # table_filter_omit = False
-    tag = ''
+    # tag = ''
     data_reduction_tag = ''
     branch = NULL_STR
 
@@ -262,18 +301,6 @@ class Analysis(ArArAge):
 
         return r
 
-    def set_temp_status(self, tag):
-        tag = tag.lower()
-        if tag != 'ok':
-            self.otemp_status = tag
-        else:
-            self.otemp_status = 'omit'
-
-        self.temp_status = tag
-
-    def set_tag(self, tag):
-        self.tag = tag
-
     def show_isotope_evolutions(self, isotopes=None, **kw):
         if isotopes:
             if isinstance(isotopes[0], (str, unicode)):
@@ -320,14 +347,6 @@ class Analysis(ArArAge):
         if analyses is None:
             analyses = [self, ]
         self.omit_event = analyses
-
-    def is_omitted(self):
-        return self.is_omitted_by_tag() or self.temp_selected
-
-    def is_omitted_by_tag(self, tags=None):
-        if tags is None:
-            tags = ('omit', 'invalid', 'outlier')
-        return self.tag in tags
 
     def sync(self, obj, **kw):
         self._sync(obj, **kw)

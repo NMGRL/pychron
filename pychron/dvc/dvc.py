@@ -85,11 +85,7 @@ class Tag(object):
 
 class DVCInterpretedAge(InterpretedAge):
     labnumber = None
-    group_id = None
-    graph_id = None
     isotopes = None
-    tag = 'ok'
-    uage = None
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
@@ -98,6 +94,9 @@ class DVCInterpretedAge(InterpretedAge):
 
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
+
+    def get_value(self, attr):
+        return getattr(self, attr)
 
 
 @provides(IDatastore)
