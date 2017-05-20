@@ -51,7 +51,10 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', 'Weighted Mean']
 FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
 
-ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
+SD = 'SD'
+SEM = 'SEM'
+MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
+ERROR_TYPES = [MSEM, SEM, SD]
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES

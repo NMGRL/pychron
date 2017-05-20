@@ -17,9 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from numpy import average, ones, asarray, where
-# ============= local library imports  ==========================
+
 from base_regressor import BaseRegressor
 from pychron.core.helpers.formatting import floatfmt
+from pychron.pychron_constants import SEM, MSEM
 
 
 class MeanRegressor(BaseRegressor):
@@ -138,9 +139,9 @@ sem={}
             if not error_calc:
                 error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
 
-        if error_calc == 'SEM':
+        if error_calc == SEM:
             e = self.sem
-        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        elif error_calc == MSEM:
             e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std

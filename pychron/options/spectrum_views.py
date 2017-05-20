@@ -23,7 +23,14 @@ from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOp
 
 
 class SpectrumSubOptions(SubOptions):
-    traits_view = View()
+    def traits_view(self):
+        weighted_grp = HGroup(Item('weighted_age_error_kind'))
+        # integrated_grp = HGroup(Item('integrated_age_error_kind'))
+        v = View(
+            # integrated_grp,
+            weighted_grp
+        )
+        return v
 
 
 class SpectrumAppearance(AppearanceSubOptions):

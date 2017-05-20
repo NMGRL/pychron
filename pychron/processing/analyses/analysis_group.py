@@ -23,7 +23,7 @@ from uncertainties import ufloat, nominal_value
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 
 
 def AGProperty(*depends):
@@ -192,7 +192,7 @@ class AnalysisGroup(HasTraits):
         if mswd is None:
             mswd = self.mswd
 
-        if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        if kind == MSEM:
             e *= mswd ** 0.5 if mswd > 1 else 1
 
         if 'age' in self.attribute:
@@ -200,10 +200,10 @@ class AnalysisGroup(HasTraits):
                 include_j_error = self.include_j_error_in_mean
 
             if include_j_error:
-                # try:
-                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-                # except ZeroDivisionError:
-                #     return nan
+                try:
+                    e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+                except ZeroDivisionError:
+                    return nan
         return e
 
     # @cached_property
@@ -250,7 +250,7 @@ class AnalysisGroup(HasTraits):
             vs, es = args
             if use_weights:
                 av, werr = calculate_weighted_mean(vs, es)
-                if error_kind == 'SD':
+                if error_kind == SD:
                     n = len(vs)
                     werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
 
@@ -402,7 +402,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_age_kind = Str('Weighted Mean')
     preferred_kca_kind = Str('Weighted Mean')
 
-    preferred_age_error_kind = Str  # ('SD')
+    preferred_age_error_kind = Str(MSEM)  # ('SD')
     preferred_ages = Property(depends_on='analyses')
 
     name = Str
@@ -487,13 +487,15 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     @cached_property
     def _get_preferred_ages(self):
-        ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron']
-        if self.analyses:
-            ref = self.analyses[0]
-            if ref.step:
-                ps.append('Integrated')
-                if self.plateau_age:
-                    ps.append('Plateau')
+        ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron',
+              'Integrated', 'Plateau']
+        # if self.analyses:
+        #     ref = self.analyses[0]
+        #     print 'asfasfasdfasfas', ref, ref.step
+        #     if ref.step:
+        #         ps.append('Integrated')
+        #         if self.plateau_age:
+        #             ps.append('Plateau')
 
         return ps
 
