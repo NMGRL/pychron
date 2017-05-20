@@ -45,8 +45,10 @@ class GroupingNode(BaseNode):
     keys = ('Aliquot', 'Identifier', 'Step', 'Comment')
     analysis_kind = 'unknowns'
     name = 'Grouping'
+    title = 'Edit Grouping'
 
     # auto_configure = False
+    _attr = 'group_id'
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -68,17 +70,23 @@ class GroupingNode(BaseNode):
 
     def run(self, state):
         unks = getattr(state, self.analysis_kind)
-        group_analyses_by_key(unks, key=self._generate_key())
+        group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
 
     def traits_view(self):
         v = View(UItem('by_key',
                        style='custom',
                        editor=EnumEditor(name='keys')),
                  width=300,
-                 title='Edit Grouping',
+                 title=self.title,
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')
         return v
+
+
+class GraphGroupingNode(GroupingNode):
+    title = 'Edit Graph Grouping'
+    name = 'Graphing Group'
+    _attr = 'graph_id'
 
 
 class BinNode(BaseNode):

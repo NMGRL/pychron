@@ -18,14 +18,15 @@
 
 # ============= standard library imports ========================
 from itertools import groupby
+
+
 # ============= local library imports  ==========================
-# def group_analyses_by_key(editor, items, key):
-def group_analyses_by_key(items, key):
-    if isinstance(key,str):
-        keyfunc=lambda x: getattr(x, key)
+def group_analyses_by_key(items, key, attr='group_id'):
+    if isinstance(key, str):
+        keyfunc = lambda x: getattr(x, key)
     else:
-        keyfunc=key
-        
+        keyfunc = key
+
     ids = []
     for it in items:
         v = keyfunc(it)
@@ -33,13 +34,9 @@ def group_analyses_by_key(items, key):
             ids.append(v)
 
     sitems = sorted(items, key=keyfunc)
-    #for i, (_, analyses) in enumerate(groupby(sitems, key=key)):
     for k, analyses in groupby(sitems, key=keyfunc):
         gid = ids.index(k)
         for it in analyses:
-            setattr(it, 'group_id', gid)
-            # idxs = [items.index(ai) for ai in analyses]
-            # editor.set_group(idxs, gid, refresh=False)
-            # for
-  
+            setattr(it, attr, gid)
+
 # ============= EOF =============================================
