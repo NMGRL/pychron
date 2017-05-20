@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import Any, Bool, List, Instance
 from traitsui.api import View
 
@@ -69,16 +71,17 @@ class FigureNode(BaseNode):
         if use_plotting and self.use_plotting:
             editor = self.editor
             if not editor:
-                editor = self._editor_factory()
-                self.editor = editor
-                state.editors.append(editor)
+                key = lambda x: x.graph_id
 
-            # print editor, state.unknowns
-            if self.auto_set_items:
-                editor.set_items(state.unknowns)
+                for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
+                    editor = self._editor_factory()
+                    state.editors.append(editor)
+                    self.editor = editor
+
+                    if self.auto_set_items:
+                        editor.set_items(list(ans))
 
             oname = editor.name
-
             # self.name = editor.name
         else:
             a = list(set([ni.labnumber for ni in state.unknowns]))

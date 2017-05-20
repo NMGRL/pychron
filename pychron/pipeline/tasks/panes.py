@@ -64,7 +64,8 @@ class PipelineHandlerMeta(MetaHasTraits):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
-                  'icfactor', 'push', 'inverse_isochron'):
+                  'icfactor', 'push', 'inverse_isochron',
+                  'graph_grouping'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -168,6 +169,8 @@ class PipelinePane(TraitsDockPane):
         def add_menu_factory():
             return MenuManager(Action(name='Add Grouping',
                                       action='add_grouping'),
+                               Action(name='Add Graph Grouping',
+                                      action='add_graph_grouping'),
                                Action(name='Add Filter',
                                       action='add_filter'),
                                Action(name='Add Inverse Isochron',
