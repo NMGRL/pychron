@@ -20,7 +20,6 @@ from itertools import groupby
 from traits.api import Any, Bool, List, Instance
 from traitsui.api import View
 
-from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager
 from pychron.options.views import view
@@ -35,7 +34,7 @@ class NoAnalysesError(BaseException):
 
 
 class FigureNode(BaseNode):
-    editor = Any
+    # editor = Any
     editor_klass = Any
     options_view = Instance(View)
     plotter_options = Any
@@ -47,8 +46,10 @@ class FigureNode(BaseNode):
     use_plotting = True
 
     def refresh(self):
-        if self.editor:
-            self.editor.refresh_needed = True
+
+        if self.editors:
+            for e in self.editors:
+                e.refresh_needed = True
 
     def run(self, state):
         self.plotter_options = self.plotter_options_manager.selected_options
@@ -68,38 +69,54 @@ class FigureNode(BaseNode):
         self.unknowns = state.unknowns
         self.references = state.references
 
+        # oname = ''
         if use_plotting and self.use_plotting:
-            editor = self.editor
-            if not editor:
+            # editor = self.editor
+            editors = self.editors
+            if not editors:
                 key = lambda x: x.graph_id
 
                 for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
                     editor = self._editor_factory()
                     state.editors.append(editor)
-                    self.editor = editor
 
                     if self.auto_set_items:
                         editor.set_items(list(ans))
+                    self.editors.append(editor)
+                    # oname = editor.name
 
-            oname = editor.name
-            # self.name = editor.name
-        else:
-            a = list(set([ni.labnumber for ni in state.unknowns]))
-            oname = '{} {}'.format(grouped_name(a), self.name)
+            key = lambda x: x.name
+            for name, es in groupby(sorted(state.editors, key=key), key=key):
+                for i, ei in enumerate(es):
+                    ei.name = '{} {:02n}'.format(ei.name, i + 1)
+                    # else:
+                    #     a = list(set([ni.labnumber for ni in state.unknowns]))
+                    #     oname = '{} {}'.format(grouped_name(a), self.name)
+                    #
+                    #     new_name = oname
+                    #     cnt = 1
+                    #     for e in state.editors:
+                    #         print 'a={}, b={}'.format(e.name, new_name)
+                    #         if e.name == new_name:
+                    #             new_name = '{} {:02n}'.format(oname, cnt)
+                    #             cnt += 1
+                    #     self.
 
-        new_name = oname
+                    # if self.editors:
+                    #     self.editor = self.editors[0]
 
-        cnt = 1
-        for e in state.editors:
-            if e.name == new_name:
-                new_name = '{} {:02n}'.format(oname, cnt)
-                cnt += 1
+                    # cnt = 1
+                    # for e in state.editors:
+                    #     print 'a={}, b={}'.format(e.name, new_name)
+                    #     if e.name == new_name:
+                    #         new_name = '{} {:02n}'.format(oname, cnt)
+                    #         cnt += 1
 
         # self.name = new_name
-        if self.editor:
-            self.editor.name = new_name
+                    # if self.editor:
+                    #     self.editor.name = new_name
 
-        return self.editor
+                    # return self.editors
 
     def configure(self, refresh=True, pre_run=False, **kw):
         # self._configured = True
@@ -107,16 +124,17 @@ class FigureNode(BaseNode):
             self._manual_configured = True
 
         pom = self.plotter_options_manager
-        if self.editor:
-            pom.set_selected(self.editor.plotter_options)
+        if self.editors:
+            pom.set_selected(self.editors[0].plotter_options)
 
         self._configure_hook()
         info = OptionsController(model=pom).edit_traits(view=self.options_view,
                                                         kind='livemodal')
         if info.result:
             self.plotter_options = pom.selected_options
-            if self.editor:
-                self.editor.plotter_options = pom.selected_options
+            if self.editors:
+                for editor in self.editors:
+                    editor.plotter_options = pom.selected_options
 
             if refresh:
                 self.refresh()
