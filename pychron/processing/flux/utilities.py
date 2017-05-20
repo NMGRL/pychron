@@ -21,6 +21,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.processing.argon_calculations import calculate_flux
+from pychron.pychron_constants import MSEM, SD
 
 
 def mean_j(ans, error_kind, monitor_age, lambda_k):
@@ -32,10 +33,10 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
 
     av, werr = calculate_weighted_mean(fs, es)
 
-    if error_kind == 'SD':
+    if error_kind == SD:
         n = len(fs)
         werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
-    elif error_kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+    elif error_kind == MSEM:
         mswd = calculate_mswd(fs, es)
         werr *= (mswd ** 0.5 if mswd > 1 else 1)
 

@@ -18,19 +18,16 @@
 from math import isnan
 
 from numpy import hstack, array
-# ============= enthought library imports =======================
 from traits.api import Array, List, Instance
-# ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
-# from pychron.pipeline.plot import FlowPlotLabel
 from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, RelativePlotLabel
 from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM
 
 
 class Spectrum(BaseArArFigure):
@@ -151,6 +148,7 @@ class Spectrum(BaseArArFigure):
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
         ag.plateau_nsteps = self.options.pc_nsteps
         ag.plateau_gas_fraction = self.options.pc_gas_fraction
+        ag.weighted_age_error_kind = self.options.weighted_age_error_kind
 
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
@@ -411,9 +409,9 @@ class Spectrum(BaseArArFigure):
     def _calc_error(self, we, mswd):
         ec = self.options.error_calc_method
         n = self.options.nsigma
-        if ec == 'SEM':
+        if ec == SEM:
             a = 1
-        elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        elif ec == MSEM:
             a = 1
             if mswd > 1:
                 a = mswd ** 0.5
@@ -482,7 +480,7 @@ class Spectrum(BaseArArFigure):
     def _build_integrated_age_label(self, tga, n):
         txt = 'NaN'
         if not isnan(nominal_value(tga)):
-            age, error = tga.nominal_value, tga.std_dev
+            age, error = nominal_value(tga.nominal_value), std_dev(tga)
 
             error *= self.options.nsigma
             txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
