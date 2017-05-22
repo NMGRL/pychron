@@ -305,7 +305,6 @@ class AutomatedRunConditional(BaseConditional):
 
     def _make_context(self, obj, data):
         teststr = self.teststr
-
         ctx = {}
         tt = []
         for ti, oper in tokenize(teststr):
@@ -315,7 +314,6 @@ class AutomatedRunConditional(BaseConditional):
             ts = ts.replace('(', '_').replace(')', '_')
 
             v = func(obj, data, self.window)
-
             vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
             vv = self._map_value(vv)
             ctx[attr] = vv
