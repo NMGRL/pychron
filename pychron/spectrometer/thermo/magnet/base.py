@@ -42,6 +42,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ##positioning
     # ===============================================================================
     def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
+                current_thread=None,
                 use_af_demag=True):
 
         # if not self._wait_lock(2):
@@ -94,7 +95,12 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
 
                 self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
                 if settling_time > 0:
-                    time.sleep(settling_time)
+
+                    self.debug('Magnet settling started')
+                    if current_thread:
+                        current_thread.sleep(settling_time)
+                    else:
+                        time.sleep(settling_time)
                     self.debug('Magnet settling complete')
 
             if unprotect or unblank:

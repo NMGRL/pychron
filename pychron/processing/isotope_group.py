@@ -138,7 +138,7 @@ class IsotopeGroup(HasTraits):
         try:
             r = self.isotopes[attr].baseline.uvalue
         except KeyError:
-            r = None
+            r = next((iso.baseline.uvalue for iso in self.isotopes.itervalues() if iso.detector == attr), None)
         return r
 
     def get_values(self, attr, n):
