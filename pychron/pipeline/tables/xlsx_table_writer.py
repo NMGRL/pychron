@@ -224,6 +224,9 @@ class XLSXTableWriter(BaseTableWriter):
 
     _options = Instance(XLSXTableWriterOptions)
 
+    def _new_workbook(self, path):
+        self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
+
     def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
         if options is None:
             options = XLSXTableWriterOptions()
@@ -232,7 +235,9 @@ class XLSXTableWriter(BaseTableWriter):
         if path is None:
             path = options.path
         self.debug('saving table to {}'.format(path))
-        self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
+
+        self._new_workbook(path)
+
         self._bold = self._workbook.add_format({'bold': True})
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})

@@ -35,7 +35,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Inverse Isochron
 - Series
 - Analysis Table
-#- Interpreted Age Table
+- Interpreted Age Table
 - Interpreted Age Ideogram
 - Auto Ideogram
 - Diff
