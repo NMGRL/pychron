@@ -388,6 +388,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
+    uuid = Str
     all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')

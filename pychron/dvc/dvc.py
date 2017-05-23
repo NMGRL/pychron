@@ -86,10 +86,15 @@ class Tag(object):
 class DVCInterpretedAge(InterpretedAge):
     labnumber = None
     isotopes = None
+    repository_identifier = None
+
+    def load_tag(self, obj):
+        self.tag = obj.get('name', '')
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name'):
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name',
+                  'uuid'):
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
@@ -508,7 +513,13 @@ class DVC(Loggable):
                 prog.change_message('Making Interpreted age {}'.format(x.name))
             obj = dvc_load(x.path)
             ia = DVCInterpretedAge()
+            ia.repository_identifier = os.path.basename(os.path.dirname(x.path))
             ia.from_json(obj)
+
+            ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
+            if os.path.isfile(ta):
+                ia.load_tag(dvc_load(ta))
+
             return ia
 
         return progress_loader(ias, func, step=25)
@@ -735,8 +746,11 @@ class DVC(Loggable):
 
         if isnan(mswd):
             mswd = 0
-
-        d = dict(age=float(nominal_value(a)),
+        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+                                                  'name', 'uuid', 'include_j_error_in_mean',
+                                                  'include_j_error_in_plateau',
+                                                  'include_j_error_in_individual_analyses')}
+        d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
                  age_kind=ia.preferred_age_kind,
@@ -744,18 +758,8 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
-                 include_j_error_in_mean=ia.include_j_error_in_mean,
-                 include_j_error_in_plateau=ia.include_j_error_in_plateau,
-                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses,
-                 sample=ia.sample,
-                 material=ia.material,
-                 identifier=ia.identifier,
-                 nanalyses=ia.nanalyses,
-                 irradiation=ia.irradiation,
-                 name=ia.name)
-
-        d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
-                         for ai in ia.all_analyses]
+                 analyses=[dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
+                           ia.all_analyses])
 
         self._add_interpreted_age(ia, d)
 
@@ -936,7 +940,7 @@ class DVC(Loggable):
     # private
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
-        p = analysis_path(ia.identifier, rid,  modifier='ia', mode='w')
+        p = analysis_path(ia.identifier, rid, modifier='ia', mode='w')
 
         i = 0
         while os.path.isfile(p):

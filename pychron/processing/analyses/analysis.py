@@ -156,6 +156,9 @@ class IdeogramPlotable(HasTraits):
         super(IdeogramPlotable, self).__init__(*args, **kw)
         self.arar_constants = ArArConstants()
 
+    def refresh_view(self):
+        pass
+
     def is_omitted(self):
         return self.is_omitted_by_tag() or self.temp_selected
 

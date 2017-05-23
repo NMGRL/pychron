@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import uuid
 from itertools import groupby
 
 from pychron.options.isochron import InverseIsochronOptions
@@ -52,6 +53,7 @@ class InterpretedAgeEditor(FigureEditor):
                                        preferred_age_kind=pk,
                                        preferred_age_error_kind=ek,
                                        use=True,
+                                       uuid=str(uuid.uuid4())
                                        **additional)
 
         ias = [func(list(ans)) for gid, ans in groupby(unks, key=key)]
