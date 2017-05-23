@@ -23,7 +23,7 @@ from pyface.qt import QtCore
 from traits.api import Event, Dict, List
 from traits.has_traits import HasTraits
 from traitsui.handler import Handler
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -144,10 +144,13 @@ class IdeogramPlotable(HasTraits):
     uage = None
     temp_status = 'ok'
     otemp_status = None
-    record_id = ''
+    _record_id = None
     temp_selected = False
     comment = ''
     j = None
+    labnumber = ''
+    aliquot = 0
+    step = ''
 
     def __init__(self, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
@@ -172,6 +175,41 @@ class IdeogramPlotable(HasTraits):
 
     def set_tag(self, tag):
         self.tag = tag
+
+    def value_string(self, t):
+        a, e = self._value_string(t)
+        pe = format_percent_error(a, e)
+        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+
+    @property
+    def status_text(self):
+        return self.temp_status.lower()
+
+    @property
+    def identifier(self):
+        return self.labnumber
+
+    @identifier.setter
+    def identifier(self, v):
+        self.labnumber = v
+
+    @property
+    def record_id(self):
+        v = self._record_id
+        if v is None:
+            v = make_runid(self.labnumber, self.aliquot, self.step)
+        return v
+
+    @record_id.setter
+    def record_id(self, v):
+        self._record_id = v
+
+    @property
+    def temp_selected(self):
+        return self.temp_status in ('omit', 'outlier', 'invalid')
+
+    def _value_string(self, t):
+        raise NotImplementedError
 
 
 class Analysis(ArArAge, IdeogramPlotable):
@@ -199,9 +237,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     laboratory = ''
     analystName = ''
     uuid = None  # Str
-    labnumber = ''
-    aliquot = 0
-    step = ''
+
     increment = None
     aliquot_step_str = ''
     mass_spectrometer = ''
@@ -390,19 +426,6 @@ class Analysis(ArArAge, IdeogramPlotable):
             traceback.print_exc()
             print 'sync view {}'.format(e)
 
-    def value_string(self, t):
-        if t == 'uF':
-            a, e = self.F, self.F_err
-        elif t == 'uage':
-            a, e = self.uage.nominal_value, self.uage.std_dev
-        else:
-            v = self.get_value(t)
-            if isinstance(v, Isotope):
-                v = v.get_intensity()
-            a, e = v.nominal_value, v.std_dev
-        pe = format_percent_error(a, e)
-        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
-
     @property
     def age_string(self):
         a = self.age
@@ -411,32 +434,18 @@ class Analysis(ArArAge, IdeogramPlotable):
 
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
-    @property
-    def status_text(self):
-        return self.temp_status.lower()
+    def _value_string(self, t):
+        if t == 'uF':
+            a, e = self.F, self.F_err
+        elif t == 'uage':
+            a, e = self.uage.nominal_value, self.uage.std_dev
+        else:
+            v = self.get_value(t)
+            if isinstance(v, Isotope):
+                v = v.get_intensity()
+            a, e = nominal_value(v), std_dev(v)
 
-    @property
-    def identifier(self):
-        return self.labnumber
-
-    @identifier.setter
-    def identifier(self, v):
-        self.labnumber = v
-
-    @property
-    def record_id(self):
-        v = self._record_id
-        if v is None:
-            v = make_runid(self.labnumber, self.aliquot, self.step)
-        return v
-
-    @record_id.setter
-    def record_id(self, v):
-        self._record_id = v
-
-    @property
-    def temp_selected(self):
-        return self.temp_status in ('omit', 'outlier', 'invalid')
+        return a, e
 
     def _get_isotope_dict(self, get):
         d = dict()
@@ -447,4 +456,5 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)
+
 # ============= EOF =============================================

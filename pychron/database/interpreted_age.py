@@ -1,10 +1,8 @@
-from traits.has_traits import HasTraits
 from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool
 from traits.traits import Property
 from traitsui.group import HGroup
 from traitsui.item import Item
 from traitsui.view import View
-from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.analysis import IdeogramPlotable
@@ -40,6 +38,13 @@ class InterpretedAge(IdeogramPlotable):
     display_age = Property
     display_age_err = Property
     display_age_units = Str('Ma')
+
+    def _value_string(self, t):
+        if t == 'uF':
+            a, e = self.F, self.F_err
+        elif t == 'uage':
+            a, e = self.uage.nominal_value, self.uage.std_dev
+        return a, e
 
     def _get_display_age(self):
         a = self.age

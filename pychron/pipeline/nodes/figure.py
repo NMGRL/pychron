@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Any, Bool, List, Instance
+from traits.api import Any, Bool, Instance
 from traitsui.api import View
 
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
@@ -34,22 +34,20 @@ class NoAnalysesError(BaseException):
 
 
 class FigureNode(BaseNode):
-    # editor = Any
+    editor = Any
     editor_klass = Any
     options_view = Instance(View)
     plotter_options = Any
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
     no_analyses_warning = Bool(False)
-    editors = List
+    # editors = List
     auto_set_items = True
     use_plotting = True
 
     def refresh(self):
-
-        if self.editors:
-            for e in self.editors:
-                e.refresh_needed = True
+        if self.editor:
+            self.editor.refresh_needed = True
 
     def run(self, state):
         self.plotter_options = self.plotter_options_manager.selected_options
@@ -71,18 +69,19 @@ class FigureNode(BaseNode):
 
         # oname = ''
         if use_plotting and self.use_plotting:
-            # editor = self.editor
-            editors = self.editors
-            if not editors:
-                key = lambda x: x.graph_id
+            editor = self.editor
+            # editors = self.editors
+            if not editor:
+                # key = lambda x: x.graph_id
+                #
+                # for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
+                editor = self._editor_factory()
+                state.editors.append(editor)
+                self.editor = editor
 
-                for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
-                    editor = self._editor_factory()
-                    state.editors.append(editor)
-
-                    if self.auto_set_items:
-                        editor.set_items(list(ans))
-                    self.editors.append(editor)
+            if self.auto_set_items:
+                editor.set_items(state.unknowns)
+                # self.editors.append(editor)
                     # oname = editor.name
 
             key = lambda x: x.name
@@ -124,17 +123,16 @@ class FigureNode(BaseNode):
             self._manual_configured = True
 
         pom = self.plotter_options_manager
-        if self.editors:
-            pom.set_selected(self.editors[0].plotter_options)
+        if self.editor:
+            pom.set_selected(self.editor.plotter_options)
 
         self._configure_hook()
         info = OptionsController(model=pom).edit_traits(view=self.options_view,
                                                         kind='livemodal')
         if info.result:
             self.plotter_options = pom.selected_options
-            if self.editors:
-                for editor in self.editors:
-                    editor.plotter_options = pom.selected_options
+            if self.editor:
+                self.editor.plotter_options = pom.selected_options
 
             if refresh:
                 self.refresh()
