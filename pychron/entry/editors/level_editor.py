@@ -304,6 +304,15 @@ class LevelEditor(Loggable):
                 head, tail = os.path.splitext(p)
                 ps[head] = IrradiationProduction(head, obj)
 
+        root = os.path.join(paths.meta_root, 'productions')
+        for p in os.listdir(root):
+            if p.endswith('.json'):
+                with open(os.path.join(root, p)) as rfile:
+                    obj = json.load(rfile)
+                head, tail = os.path.splitext(p)
+                head = 'Global {}'.format(head)
+                ps[head] = IrradiationProduction(head, obj)
+
         self.productions = ps
         self.production_names = ps.keys()
 

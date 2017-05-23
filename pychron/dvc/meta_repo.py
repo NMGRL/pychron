@@ -365,7 +365,9 @@ class MetaRepo(GitRepoManager):
         src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
         if os.path.isfile(src):
             self.update_productions(irrad,  name, prname)
-        else:
+        elif prname.startswith('Global'):
+            prname = prname[7:]
+            pathname = add_extension(prname, '.json')
             src = os.path.join(paths.meta_root, 'productions', pathname)
             if os.path.isfile(src):
                 dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
@@ -374,6 +376,8 @@ class MetaRepo(GitRepoManager):
                 self.update_productions(irrad, name, prname)
             else:
                 self.warning_dialog('Invalid production name'.format(prname))
+        else:
+            self.warning_dialog('Invalid production name'.format(prname))
 
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False, new=False):
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
