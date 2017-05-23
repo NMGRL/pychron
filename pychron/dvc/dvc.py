@@ -43,7 +43,7 @@ from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_re
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -89,11 +89,12 @@ class DVCInterpretedAge(InterpretedAge):
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
-            setattr(self, a, obj[a])
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name'):
+            setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
+        self._record_id = '{} {}'.format(self.identifier, self.name)
 
     def get_value(self, attr):
         return getattr(self, attr)
