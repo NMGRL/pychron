@@ -353,7 +353,7 @@ class ThermoSpectrometer(SpectrometerDevice):
                     nmass = self.map_mass(isotope)
                     for di in self.detectors:
 
-                        mass = nmass + (di.index - index)
+                        mass = nmass - (di.index - index)
 
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
