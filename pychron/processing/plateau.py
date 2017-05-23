@@ -15,14 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import argmax, array
 from traits.api import HasTraits, List, Array
 
-# ============= standard library imports ========================
-from numpy import argmax, array
-# ============= local library imports  ==========================
-# from pychron.core.helpers.logger_setup import logging_setup, new_logger
-# logging_setup('plateau', use_archiver=False)
-# log = new_logger('foo')
 from pychron.core.stats.core import validate_mswd, calculate_mswd
 
 
@@ -57,7 +52,8 @@ class Plateau(HasTraits):
     gas_fraction = 50
 
     use_overlap = True  # fleck criterion
-    use_mswd = False  #mahon criterion
+    use_mswd = False  # mahon criterion
+    total_signal = None
 
     def find_plateaus(self, method=''):
         """
@@ -72,8 +68,7 @@ class Plateau(HasTraits):
 
         n = len(self.ages)
         exclude = self.exclude
-        ss = [s for i, s in enumerate(self.signals)
-              if not i in exclude]
+        ss = [s for i, s in enumerate(self.signals) if not i in exclude]
 
         self.total_signal = float(sum(ss))
         # log.info(self.total_signal)

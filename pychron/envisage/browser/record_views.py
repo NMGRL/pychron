@@ -34,10 +34,13 @@ class InterpretedAgeRecordView(object):
     identifier = ''
     path = ''
 
-    def __init__(self, idn, path, name):
+    def __init__(self, idn, path, obj):
         self.identifier = idn
-        self.name = name
+        self.name = obj.get('name')
         self.path = path
+        self.age = obj.get('age')
+        self.age_err = obj.get('age_err')
+        self.age_kind = obj.get('age_kind')
 
     @property
     def id(self):
