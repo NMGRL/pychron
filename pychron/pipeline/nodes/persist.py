@@ -23,11 +23,12 @@ from traitsui.editors import DirectoryEditor, CheckListEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
-from pychron.core.helpers.filetools import add_extension, unique_path2
+from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.progress import progress_iterator
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsView, InterpretedAgePersistOptions
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 
 
@@ -337,21 +338,23 @@ class CSVAnalysesExportNode(BaseNode):
 #                     # editor.make_xls_table('FooBar', path)
 #
 #
-# class InterpretedAgeTablePersistNode(BaseNode):
-#     name = 'Save IA Table'
-#     options_klass = InterpretedAgePersistOptionsView
-#
-#     def _options_factory(self):
-#         opt = InterpretedAgePersistOptions(name='foo')
-#         return self.options_klass(model=opt)
-#
-#     def run(self, state):
-#         from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-#         for editor in state.editors:
-#             if isinstance(editor, InterpretedAgeTableEditor):
-#                 opt = self.options.model
-#                 if opt.extension == 'xls':
-#                     editor.make_xls_table(opt)
-#                     view_file(opt.path)
+
+
+class InterpretedAgeTablePersistNode(BaseNode):
+    name = 'Save IA Table'
+    options_klass = InterpretedAgePersistOptionsView
+
+    def _options_factory(self):
+        opt = InterpretedAgePersistOptions(name='foo')
+        return self.options_klass(model=opt)
+
+    def run(self, state):
+        from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
+        for editor in state.editors:
+            if isinstance(editor, InterpretedAgeTableEditor):
+                opt = self.options.model
+                if opt.extension == 'xls':
+                    editor.make_xls_table(opt)
+                    view_file(opt.path)
 
 # ============= EOF =============================================

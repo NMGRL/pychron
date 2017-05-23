@@ -15,10 +15,13 @@
 # # ===============================================================================
 #
 # # ============= enthought library imports =======================
-# from traitsui.api import View, UItem, VGroup, Tabbed, Item
-#
-# from pychron.core.save_model import SaveModel, SaveController
-# from pychron.paths import paths
+from traits.api import Enum, Bool
+from traitsui.api import View, UItem, VGroup, Tabbed, Item
+
+from pychron.core.save_model import SaveModel, SaveController
+from pychron.paths import paths
+
+
 #
 #
 # class AnalysisTablePersistOptions(SaveModel):
@@ -46,30 +49,31 @@
 #                  resizable=True)
 #         return v
 # #
-# #
-# # class InterpretedAgePersistOptions(SaveModel):
-# #     extension = Enum('xls', 'pdf')
-# #     show_grid = Bool
-# #     show_outline = Bool
-# #
-# #     @property
-# #     def default_root(self):
-# #         return paths.table_dir
-# #
-# #
-# # class InterpretedAgePersistOptionsView(SaveController):
-# #     def traits_view(self):
-# #         path_grp = self._get_path_group(show_border=True)
-# #         view_grp = VGroup(Item('show_grid'),
-# #                           Item('show_outline'),
-# #                           label='Appearance')
-# #
-# #         v = View(Tabbed(VGroup(UItem('extension', label='Output Mode'),
-# #                                path_grp),
-# #                         view_grp),
-# #                  title='Save Interpreted Age Table',
-# #                  buttons=['OK', 'Cancel'],
-# #                  resizable=True)
-# #         return v
-#
+
+
+class InterpretedAgePersistOptions(SaveModel):
+    extension = Enum('xlsx', 'pdf')
+    show_grid = Bool
+    show_outline = Bool
+
+    @property
+    def default_root(self):
+        return paths.table_dir
+
+
+class InterpretedAgePersistOptionsView(SaveController):
+    def traits_view(self):
+        path_grp = self._get_path_group(show_border=True)
+        view_grp = VGroup(Item('show_grid'),
+                          Item('show_outline'),
+                          label='Appearance')
+
+        v = View(Tabbed(VGroup(UItem('extension', label='Output Mode'),
+                               path_grp),
+                        view_grp),
+                 title='Save Interpreted Age Table',
+                 buttons=['OK', 'Cancel'],
+                 resizable=True)
+        return v
+
 # # ============= EOF =============================================
