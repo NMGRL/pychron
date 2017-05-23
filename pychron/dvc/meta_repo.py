@@ -35,12 +35,12 @@ from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
 
 class MetaObject(object):
-    def __init__(self, path):
+    def __init__(self, path, new=False):
         self.path = path
         if os.path.isfile(path):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
-        else:
+        elif not new:
             print 'failed loading {} {}'.format(path, os.path.isfile(path))
 
     def _load_hook(self, path, rfile):
@@ -361,18 +361,23 @@ class MetaRepo(GitRepoManager):
         prname = prname.replace(' ', '_')
 
         pathname = add_extension(prname, '.json')
-        src = os.path.join(paths.meta_root, 'productions', pathname)
-        if os.path.isfile(src):
-            dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
-            if not os.path.isfile(dest):
-                shutil.copyfile(src, dest)
-            self.update_productions(irrad, name, prname)
-        else:
-            self.warning_dialog('Invalid production name'.format(prname))
 
-    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False):
-        p = os.path.join(paths.meta_root, irrad, 'productions', '{}.json'.format(name))
-        prod = Production(p)
+        src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
+        if os.path.isfile(src):
+            self.update_productions(irrad,  name, prname)
+        else:
+            src = os.path.join(paths.meta_root, 'productions', pathname)
+            if os.path.isfile(src):
+                dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
+                if not os.path.isfile(dest):
+                    shutil.copyfile(src, dest)
+                self.update_productions(irrad, name, prname)
+            else:
+                self.warning_dialog('Invalid production name'.format(prname))
+
+    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False, new=False):
+        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
+        prod = Production(p, new=new)
 
         prod.update(params)
         prod.dump()
