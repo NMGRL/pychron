@@ -25,6 +25,7 @@ from traits.api import Instance, Bool, on_trait_change
 
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
+from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
@@ -246,7 +247,8 @@ class PipelineTask(BaseBrowserTask):
                     cs = []
                     for it in ans:
                         self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                        db.set_analysis_tag(it.uuid, tag)
+                        if not isinstance(InterpretedAge):
+                            db.set_analysis_tag(it.uuid, tag)
 
                         it.set_tag(tag)
                         if dvc.update_tag(it):
