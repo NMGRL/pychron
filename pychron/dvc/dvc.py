@@ -486,13 +486,10 @@ class DVC(Loggable):
         self.meta_repo.remove_irradiation_position(irradiation, level, hole)
 
     def find_interpreted_ages(self, identifiers, repositories):
-        ias = []
-        for idn in identifiers:
-            paths = find_interpreted_age_path(idn, repositories)
-            for path in paths:
-                obj = dvc_load(path)
-                name = obj.get('name')
-                ias.append(InterpretedAgeRecordView(idn, path, name))
+
+        ias = [InterpretedAgeRecordView(idn, path, dvc_load(path))
+               for idn in identifiers
+               for path in find_interpreted_age_path(idn, repositories)]
 
         return ias
 

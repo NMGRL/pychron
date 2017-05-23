@@ -408,6 +408,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     name = Str
     use = Bool
 
+    def _get_nanalyses(self):
+        if self.preferred_age_kind == 'Plateau':
+            return (self.plateau_nsteps[0] - self.plateau_steps[1]) + 1
+        else:
+            return super(InterpretedAgeGroup, self)._get_nanalyses()
+
     def _preferred_age_error_kind_changed(self, new):
         self.weighted_age_error_kind = new
         self.arith_age_error_kind = new

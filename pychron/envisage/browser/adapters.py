@@ -22,6 +22,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -209,7 +210,10 @@ class AnalysisAdapter(BrowserAdapter):
 
 class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Identifier', 'identifier'),
-               ('Name', 'name')]
+               ('Name', 'name'),
+               ('Age', 'age'),
+               (PLUSMINUS_ONE_SIGMA, 'age_err'),
+               ('Kind', 'age_kind')]
 
     font = 'arial 10'
     name_width = 100
