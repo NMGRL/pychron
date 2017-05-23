@@ -297,12 +297,14 @@ class LevelEditor(Loggable):
     def _load_local_productions(self):
         root = os.path.join(paths.meta_root, self.irradiation, 'productions')
         ps = {}
+        keys = []
         for p in os.listdir(root):
             if p.endswith('.json'):
                 with open(os.path.join(root, p)) as rfile:
                     obj = json.load(rfile)
                 head, tail = os.path.splitext(p)
                 ps[head] = IrradiationProduction(head, obj)
+                keys.append(head)
 
         root = os.path.join(paths.meta_root, 'productions')
         for p in os.listdir(root):
@@ -312,9 +314,9 @@ class LevelEditor(Loggable):
                 head, tail = os.path.splitext(p)
                 head = 'Global {}'.format(head)
                 ps[head] = IrradiationProduction(head, obj)
-
+                keys.append(head)
         self.productions = ps
-        self.production_names = ps.keys()
+        self.production_names = keys
 
     def _load_productions(self):
         reactors = self.meta_repo.get_default_productions()
@@ -356,7 +358,7 @@ class LevelEditor(Loggable):
 
     def _add_production_button_fired(self):
         v = View(Item('new_production_name',
-                      label='Name'), title='New Production', kind='livemodal', buttons=['OK','Cancel'])
+                      label='Name'), title='New Production', kind='livemodal', buttons=['OK', 'Cancel'])
         info = self.edit_traits(v)
         if info.result:
             self._save_production(name=self.new_production_name)
