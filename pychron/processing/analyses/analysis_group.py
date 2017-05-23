@@ -296,7 +296,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_nsteps = Int(3)
     plateau_gas_fraction = Float(50)
-
+    plateau_mswd = Float
+    plateau_mswd_valid = Bool
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
     #         n = self.nsteps
@@ -408,7 +409,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def _get_nanalyses(self):
         if self.preferred_age_kind == 'Plateau':
-            return (self.plateau_nsteps[0] - self.plateau_steps[1]) + 1
+            return self.nsteps
         else:
             return super(InterpretedAgeGroup, self)._get_nanalyses()
 
@@ -443,28 +444,28 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         pa = self.preferred_age
         v = 0
         if pa is not None:
-            v = float(pa.nominal_value)
+            v = float(nominal_value(pa))
         return v
 
     def _get_preferred_age_error(self):
         pa = self.preferred_age
         e = 0
         if pa is not None:
-            e = float(pa.std_dev)
+            e = float(std_dev(pa))
         return e
 
     def _get_preferred_kca_value(self):
         pa = self.preferred_kca
         v = 0
         if pa is not None:
-            v = float(pa.nominal_value)
+            v = float(nominal_value(pa))
         return v
 
     def _get_preferred_kca_error(self):
         pa = self.preferred_kca
         e = 0
         if pa is not None:
-            e = float(pa.std_dev)
+            e = float(std_dev(pa))
         return e
 
     def _get_preferred_kca(self):
