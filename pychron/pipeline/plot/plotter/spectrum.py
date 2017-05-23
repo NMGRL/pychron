@@ -472,7 +472,7 @@ class Spectrum(BaseArArFigure):
             if op.display_weighted_mean_info:
                 wmtext = self._make_weighted_mean_text()
                 if text:
-                    text = u'{} {}'.format(text, wmtext)
+                    text = u'{}    {}'.format(text, wmtext)
                 else:
                     text = wmtext
             return text
