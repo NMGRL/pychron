@@ -329,6 +329,7 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
             UItem('interpreted_table.interpreted_ages',
                   # width=0.4,
                   editor=myTabularEditor(
+                      auto_resize=True,
                       adapter=self.model.interpreted_age_table.tabular_adapter,
                       operations=['move', 'delete'],
                       # column_clicked=make_name('column_clicked'),

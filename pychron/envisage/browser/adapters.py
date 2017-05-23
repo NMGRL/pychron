@@ -21,6 +21,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.resources import icon
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
@@ -218,5 +219,14 @@ class InterpretedAgeAdapter(TabularAdapter):
     font = 'arial 10'
     name_width = 100
     identifier_width = 100
+
+    age_text = Property
+    age_err_text = Property
+
+    def _get_age_text(self):
+        return floatfmt(self.item.age, 3)
+
+    def _get_age_err_text(self):
+        return floatfmt(self.item.age_err, 3)
 
 # ============= EOF =============================================
