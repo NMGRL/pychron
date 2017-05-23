@@ -251,7 +251,8 @@ class FitFluxNode(FitNode):
         return view('Flux Options')
 
     def run(self, state):
-        editor = super(FitFluxNode, self).run(state)
+        super(FitFluxNode, self).run(state)
+        editor = self.editor
         if not editor:
             state.canceled = True
             return
