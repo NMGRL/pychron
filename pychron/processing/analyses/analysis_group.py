@@ -19,7 +19,7 @@ import math
 
 from numpy import array, nan
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Float
-from uncertainties import ufloat, nominal_value
+from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
@@ -235,12 +235,10 @@ class AnalysisGroup(HasTraits):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
     def _get_values(self, attr):
-        # vs = (getattr(ai, attr) for ai in self.analyses
-        #       if not ai.is_omitted())
         vs = (getattr(ai, attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
-            vs, es = zip(*[(v.nominal_value, v.std_dev) for v in vs])
+            vs, es = zip(*[(nominal_value(v), std_dev(v)) for v in vs])
             vs, es = array(vs), array(es)
             return vs, es
 
