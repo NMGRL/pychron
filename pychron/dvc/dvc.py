@@ -516,9 +516,11 @@ class DVC(Loggable):
             ia.repository_identifier = os.path.basename(os.path.dirname(x.path))
             ia.from_json(obj)
 
-            ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
-            if os.path.isfile(ta):
+            try:
+                ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
                 ia.load_tag(dvc_load(ta))
+            except AnalysisNotAnvailableError:
+                pass
 
             return ia
 
