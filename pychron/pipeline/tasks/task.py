@@ -247,7 +247,7 @@ class PipelineTask(BaseBrowserTask):
                     cs = []
                     for it in ans:
                         self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                        if not isinstance(InterpretedAge):
+                        if not isinstance(it, InterpretedAge):
                             db.set_analysis_tag(it.uuid, tag)
 
                         it.set_tag(tag)
