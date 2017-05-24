@@ -36,7 +36,7 @@ from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
+    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -481,6 +481,10 @@ class PipelineEngine(Loggable):
 
     def add_push(self, node=None, run=True):
         newnode = PushNode()
+        self._add_node(node, newnode, run=run)
+
+    def add_set_interpreted_age(self, node=None, run=True):
+        newnode = SetInterpretedAgeNode()
         self._add_node(node, newnode, run=run)
 
     # ============================================================================================================

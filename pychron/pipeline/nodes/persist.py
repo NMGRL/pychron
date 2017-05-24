@@ -28,8 +28,12 @@ from pychron.core.progress import progress_iterator
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsView, InterpretedAgePersistOptions
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
+from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 
 
 class PersistNode(BaseNode):
@@ -311,6 +315,7 @@ class CSVAnalysesExportNode(BaseNode):
 
         return row
 
+
 # class TablePersistNode(FileNode):
 #     pass
 #
@@ -338,6 +343,19 @@ class CSVAnalysesExportNode(BaseNode):
 #                     # editor.make_xls_table('FooBar', path)
 #
 #
+
+class SetInterpretedAgeNode(BaseNode):
+    name = 'Set IA'
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+    def configure(self, pre_run=False, **kw):
+        return True
+
+    def run(self, state):
+        for editor in state.editors:
+            if isinstance(editor, InterpretedAgeEditor):
+                ias = editor.get_interpreted_ages()
+                set_interpreted_age(self.dvc, ias)
 
 
 class InterpretedAgeTablePersistNode(BaseNode):

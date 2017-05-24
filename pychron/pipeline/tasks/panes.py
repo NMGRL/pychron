@@ -65,7 +65,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping'):
+                  'graph_grouping', 'set_interpreted_age'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -181,6 +181,8 @@ class PipelinePane(TraitsDockPane):
                                       action='add_spectrum'),
                                Action(name='Add Series',
                                       action='add_series'),
+                               Action(name='Add Set IA',
+                                      action='add_set_interpreted_age'),
                                Action(name='Add Review',
                                       action='add_review'),
                                Action(name='Add Push'),

@@ -29,7 +29,7 @@ from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
-from pychron.pipeline.nodes.persist import PersistNode
+from pychron.pipeline.nodes.persist import PersistNode, SetInterpretedAgeNode
 
 
 class PipelineTemplateSaveView(HasTraits):
@@ -90,6 +90,8 @@ class PipelineTemplate(HasTraits):
             node = self._node_factory(klass, ni)
             if isinstance(node, InterpretedAgeNode):
                 node.trait_set(browser_model=iabmodel, dvc=dvc)
+            elif isinstance(node, SetInterpretedAgeNode):
+                node.trait_set(dvc=dvc)
             elif isinstance(node, (DVCNode, FindNode)):
                 node.trait_set(browser_model=bmodel, dvc=dvc)
             elif isinstance(node, (PersistNode, GainCalibrationNode, PushNode)):

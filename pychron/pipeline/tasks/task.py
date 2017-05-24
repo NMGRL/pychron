@@ -44,7 +44,7 @@ from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction,
     EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
     InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
-    InterpretedAgeFactoryModel
+    InterpretedAgeFactoryModel, set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
@@ -324,15 +324,7 @@ class PipelineTask(BaseBrowserTask):
 
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
-
-        repository_identifiers = self.dvc.get_local_repositories()
-        model = InterpretedAgeFactoryModel(groups=ias)
-
-        iaf = InterpretedAgeFactoryView(model=model,
-                                        repository_identifiers=repository_identifiers)
-        info = iaf.edit_traits()
-        if info.result:
-            self._add_interpreted_ages(ias)
+        set_interpreted_age(self.dvc, ias)
 
     def git_rollback(self):
         # select experiment
@@ -467,12 +459,6 @@ class PipelineTask(BaseBrowserTask):
                             # 'status': ai.temp_status,
                             'group_id': ai.group_id} for ai in editor.analyses]
         return obj
-
-    def _add_interpreted_ages(self, ias):
-        dvc = self.dvc
-        for ia in ias:
-            if ia.use:
-                dvc.add_interpreted_age(ia)
 
     def _close_editor(self, editor):
         for e in self.editor_area.editors:
