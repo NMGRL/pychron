@@ -28,7 +28,9 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class InterpretedAgeAdapter(TabularAdapter):
-    columns = [('Sample', 'sample'),
+    columns = [('Status', 'status'),
+               ('Name', 'name'),
+               ('Sample', 'sample'),
                ('Identifier', 'identifier'),
                ('Material', 'material'),
                ('Irradiation', 'irradiation'),
@@ -48,6 +50,7 @@ class InterpretedAgeAdapter(TabularAdapter):
     display_age_err_width = Int(75)
     nanalyses_width = Int(75)
 
+    status_text = Property
     display_age_text = Property
     display_age_err_text = Property
     mswd_text = Property
@@ -62,6 +65,9 @@ class InterpretedAgeAdapter(TabularAdapter):
 
     kca_nsigma = Int(2)
     display_age_nsigma = Int(2)
+
+    def _get_status_text(self):
+        return 'X' if self.item.is_omitted() else ''
 
     def _get_display_age_text(self):
         return self._format_number('display_age')

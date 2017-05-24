@@ -118,7 +118,9 @@ class InterpretedAgeTableOptions(TableOptions):
         return [int(c.sigfigs) for c in self.columns if c.sigfigs]
 
     def _columns_default(self):
-        cs = (('Sample', 'sample', ''),
+        cs = (('Status', 'status', ''),
+              ('Name', 'name', ''),
+              ('Sample', 'sample', ''),
               ('Identifier', 'identifier', ''),
               ('Material', 'material', ''),
               ('Irradiation', 'irradiation', ''),

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.stats import calculate_weighted_mean
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 
 
@@ -86,7 +87,17 @@ class InterpretedAgeXLSTableWriter(XLSXTableWriter):
         self._add_summary_header_row(start, sh, cols)
         start += 2
         for i, ia in enumerate(ias):
-            self._add_summary_row(sh, ia, i + start, cols, adapter)
+            r = i + start
+            self._add_summary_row(sh, ia, r, cols, adapter)
+
+        if options.include_weighted_mean:
+            vs, es = zip(*((ia.age, ia.age_err) for ia in ias if not ia.is_omitted()))
+
+            wm, we = calculate_weighted_mean(vs, es)
+            print wm, we
+            sh.write(r + 2, 0, 'Weighted Mean')
+            sh.write(r + 2, 2, wm)
+            sh.write(r + 2, 3, we)
 
     def _add_title_row(self, row, sh, title):
         # sh.write(row, 0, title)

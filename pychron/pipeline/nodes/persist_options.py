@@ -55,6 +55,7 @@ class InterpretedAgePersistOptions(SaveModel):
     extension = Enum('xlsx', 'pdf')
     show_grid = Bool
     show_outline = Bool
+    include_weighted_mean = Bool
 
     @property
     def default_root(self):
@@ -66,11 +67,14 @@ class InterpretedAgePersistOptionsView(SaveController):
         path_grp = self._get_path_group(show_border=True)
         view_grp = VGroup(Item('show_grid'),
                           Item('show_outline'),
+                          show_border=True,
                           label='Appearance')
-
+        opt_grp = VGroup(view_grp, Item('include_weighted_mean'),
+                         label='Options')
         v = View(Tabbed(VGroup(UItem('extension', label='Output Mode'),
                                path_grp),
-                        view_grp),
+
+                        opt_grp),
                  title='Save Interpreted Age Table',
                  buttons=['OK', 'Cancel'],
                  resizable=True)

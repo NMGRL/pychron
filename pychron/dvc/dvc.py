@@ -104,6 +104,10 @@ class DVCInterpretedAge(InterpretedAge):
     def get_value(self, attr):
         return getattr(self, attr)
 
+    @property
+    def status(self):
+        return 'X' if self.is_omitted() else ''
+
 
 @provides(IDatastore)
 class DVC(Loggable):
