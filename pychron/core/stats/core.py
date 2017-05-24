@@ -47,20 +47,13 @@ def calculate_mswd(x, errs, k=1, wm=None):
     return mswd_w
 
 
-def calculate_weighted_mean(x, errs, error=0):
+def calculate_weighted_mean(x, errs):
     x = asarray(x)
     errs = asarray(errs)
     weights = 1 / errs ** 2
-    #     weights = asarray(map(lambda e: 1 / e ** 2, errs))
-
-    #     wtot = weights.sum()
-    #     wmean = (weights * x).sum() / wtot
 
     wmean, sum_weights = average(x, weights=weights, returned=True)
-    if error == 0:
-        werr = sum_weights ** -0.5
-    elif error == 1:
-        werr = 1
+    werr = sum_weights ** -0.5
     return wmean, werr
 
 
