@@ -550,12 +550,13 @@ class BaseArArFigure(HasTraits, SelectionFigure):
         for si in self.sorted_analyses:
             ctx = {'aliquot': si.aliquot,
                    'step': si.step,
-                   'sample': si.sample}
+                   'sample': si.sample,
+                   'name': si.name}
 
             x = f.format(**ctx)
             labels.append(x)
 
-        font = self.options.get_formatting_value('label_font', 'label_font')
+        font = self.options.label_font
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box,

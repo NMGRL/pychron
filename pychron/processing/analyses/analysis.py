@@ -139,6 +139,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 class IdeogramPlotable(HasTraits):
     group_id = 0
     graph_id = 0
+    name = ''
 
     tag = 'ok'
     uage = None
