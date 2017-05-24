@@ -22,6 +22,7 @@ from traits.api import HasTraits, List, Property, cached_property, Str, Bool, In
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
+from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 
@@ -407,6 +408,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     name = Str
     use = Bool
+
+    def _name_default(self):
+        name = ''
+        if self.analyses:
+            name = make_aliquot(self.analyses[0].aliquot)
+        return name
 
     def _get_nanalyses(self):
         if self.preferred_age_kind == 'Plateau':

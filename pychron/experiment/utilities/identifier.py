@@ -240,9 +240,14 @@ def make_step(s):
     return s or ''
 
 
-def make_aliquot_step(a, s):
+def make_aliquot(a):
     if not isinstance(a, str):
         a = '{:02d}'.format(int(a))
+    return a
+
+
+def make_aliquot_step(a, s):
+    a = make_aliquot(a)
     s = make_step(s)
     return '{}{}'.format(a, s)
 

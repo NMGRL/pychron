@@ -318,7 +318,13 @@ class BrowserSampleView(BaseBrowserSampleView):
     def load_review_status(self, info, obj):
         obj.load_review_status()
 
+
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
+
+    def delete(self, info, obj):
+        print 'asfdasfdasdfasdf', info, obj
+
+
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
         ctx['interpreted_table'] = self.model.interpreted_age_table

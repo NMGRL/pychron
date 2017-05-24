@@ -67,8 +67,9 @@ class InterpretedAgeBrowserModel(BrowserModel):
         ses = self.repositories
 
         idns = [idn.identifier for idn in identifiers]
-        experiments = [e.name for e in ses]
-        ias = self.db.find_interpreted_ages(idns, experiments)
+        # repos = {idn.repository_identifier for idn in identifiers}
+        repos = [e.name for e in ses]
+        ias = self.db.find_interpreted_ages(idns, repos)
 
         return ias
 
