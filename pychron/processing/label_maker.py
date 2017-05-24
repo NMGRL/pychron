@@ -113,6 +113,7 @@ class LabelTemplateView(BaseTemplateView):
 
 class TitleTemplateView(BaseTemplateView):
     view_title = 'Title Maker'
+
     def _get_additional_groups(self):
         return (HGroup(UItem('multi_group_example', style='readonly'),
                        show_border=True, label='Multi Group Example'),
