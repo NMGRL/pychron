@@ -94,12 +94,13 @@ class TitleTemplater(BaseTemplater):
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
+    attributes = List(['Sample', 'Aliquot', 'Step', 'Name', '<SPACE>'])
     attribute_formats = {'step': '',
                          'aliquot': '02n',
-                         'sample': ''}
+                         'sample': '',
+                         'name': ''}
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001'}
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo'}
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
                               'Aliquot Step'])
