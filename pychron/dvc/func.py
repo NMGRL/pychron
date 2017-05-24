@@ -84,14 +84,14 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
     suffix = '{}*.ia.json'.format(idn[prefixlen:])
     # suffix = '{}*.ia.json'.format(prefix)
-
+    ret = []
     for e in repositories:
         pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
         ps = glob.glob(pathname)
         if ps:
-            return ps
-    else:
-        return []
+            ret.extend(ps)
+
+    return ret
 
 
 class GitSessionCTX(object):
