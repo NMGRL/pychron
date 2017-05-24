@@ -424,10 +424,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         plateau_step = False
         if self.preferred_age_kind == 'Plateau':
             if self.plateau_age:
-                idx = self.analyses.index(an)
-                ps, pe = self.plateau_steps
+                if not an.is_omitted():
+                    idx = self.analyses.index(an)
+                    ps, pe = self.plateau_steps
 
-                plateau_step = ps <= idx <= pe
+                    plateau_step = ps <= idx <= pe
 
         return plateau_step
 
