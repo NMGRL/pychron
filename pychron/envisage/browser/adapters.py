@@ -229,4 +229,9 @@ class InterpretedAgeAdapter(TabularAdapter):
     def _get_age_err_text(self):
         return floatfmt(self.item.age_err, 3)
 
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Delete', action='delete'),]
+
+        return MenuManager(*actions)
+
 # ============= EOF =============================================
