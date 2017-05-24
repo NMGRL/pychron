@@ -349,7 +349,7 @@ class Ideogram(BaseArArFigure):
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
 
-        self._add_peak_labels(line, self.xs, self.xes)
+        self._add_peak_labels(line)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -442,23 +442,23 @@ class Ideogram(BaseArArFigure):
                     ov.set_x_limits(xmi, xma)
                     ov.set_y_limits(0, yma2)
 
-    def _add_peak_labels(self, line, ages, errors):
+    def _add_peak_labels(self, line):
         if self.options.label_all_peaks:
             xs = line.index.get_data()
             ys = line.value.get_data()
+            if xs.shape[0]:
+                xp, yp = fast_find_peaks(ys, xs)
+                for xi, yi in zip(xp, yp):
+                    label = PeakLabel(line,
+                                      data_point=(xi, yi),
+                                      label_text=floatfmt(xi, n=3),
+                                      # label_style='bubble',
 
-            xp, yp = fast_find_peaks(ys, xs)
-            for xi, yi in zip(xp, yp):
-                label = PeakLabel(line,
-                                  data_point=(xi, yi),
-                                  label_text=floatfmt(xi, n=3),
-                                  # label_style='bubble',
-
-                                  # border_visible=False,
-                                  # marker_visible=False,
-                                  # show_label_coords=False
-                                  )
-                line.overlays.append(label)
+                                      # border_visible=False,
+                                      # marker_visible=False,
+                                      # show_label_coords=False
+                                      )
+                    line.overlays.append(label)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -587,49 +587,55 @@ class Ideogram(BaseArArFigure):
         if not self.xs.shape[0]:
             return
 
-        _, fxs = zip(*filter(f, enumerate(self.xs)))
-        _, fxes = zip(*filter(f, enumerate(self.xes)))
-        n = len(fxs)
-        if n:
-
+        xx = filter(f, enumerate(self.xs))
+        if xx:
+            _, fxs = zip(*xx)
+            _, fxes = zip(*filter(f, enumerate(self.xes)))
+            n = len(fxs)
             xs, ys = self._calculate_probability_curve(fxs, fxes)
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
+        else:
+            n = 0
+            fxs,fxes = [],[]
+            ys = []
+            xs = []
+            wm, we, mswd, valid_mswd = 0, 0, 0, False
 
-            lp.value.set_data(ys)
-            lp.index.set_data(xs)
+        lp.value.set_data(ys)
+        lp.index.set_data(xs)
 
-            total_n = self.xs.shape[0]
-            for ov in lp.overlays:
-                if isinstance(ov, MeanIndicatorOverlay):
-                    ov.set_x(wm)
-                    ov.error = we
-                    if ov.label:
-                        mswd_args = mswd, valid_mswd, n
-                        ov.label.text = self._build_label_text(wm, we, n,
-                                                               mswd_args=mswd_args,
-                                                               total_n=total_n,
-                                                               percent_error=self.options.display_percent_error,
-                                                               sig_figs=self.options.mean_sig_figs)
+        total_n = self.xs.shape[0]
+        for ov in lp.overlays:
+            if isinstance(ov, MeanIndicatorOverlay):
+                ov.set_x(wm)
+                ov.error = we
+                if ov.label:
+                    mswd_args = mswd, valid_mswd, n
+                    ov.label.text = self._build_label_text(wm, we, n,
+                                                           mswd_args=mswd_args,
+                                                           total_n=total_n,
+                                                           percent_error=self.options.display_percent_error,
+                                                           sig_figs=self.options.mean_sig_figs)
 
-            lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
+        lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
 
-            self._add_peak_labels(lp, fxs, fxes)
+        self._add_peak_labels(lp)
 
-            # update the data label position
-            # for ov in sp.overlays:
-            # if isinstance(ov, DataLabel):
-            # _, y = ov.data_point
-            # ov.data_point = wm, y
-            # n = len(fxs)
-            # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
+        # update the data label position
+        # for ov in sp.overlays:
+        # if isinstance(ov, DataLabel):
+        # _, y = ov.data_point
+        # ov.data_point = wm, y
+        # n = len(fxs)
+        # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
 
-            if sel:
-                dp.visible = True
-                # xs, ys = self._calculate_probability_curve(oxs, oxes)
-                # dp.value.set_data(ys)
-                # dp.index.set_data(xs)
-            else:
-                dp.visible = False
+        if sel:
+            dp.visible = True
+            # xs, ys = self._calculate_probability_curve(oxs, oxes)
+            # dp.value.set_data(ys)
+            # dp.index.set_data(xs)
+        else:
+            dp.visible = False
         graph.redraw()
         # ===============================================================================
         # utils
@@ -818,4 +824,5 @@ class Ideogram(BaseArArFigure):
 
     def _handle_limits(self):
         self._rebuild_ideo()
+
 # ============= EOF =============================================
