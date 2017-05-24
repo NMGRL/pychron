@@ -64,4 +64,16 @@ class InterpretedAgeFactoryView(Controller):
 
         return v
 
+
+def set_interpreted_age(dvc, ias):
+    repos = dvc.get_local_repositories()
+    model = InterpretedAgeFactoryModel(groups=ias)
+    iaf = InterpretedAgeFactoryView(model=model,
+                                    repository_identifiers=repos)
+    info = iaf.edit_traits()
+    if info.result:
+        dvc = dvc
+        for ia in ias:
+            if ia.use:
+                dvc.add_interpreted_age(ia)
 # ============= EOF =============================================

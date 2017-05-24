@@ -132,7 +132,8 @@ class BaseNode(HasTraits):
         return d
 
     def _options_factory(self):
-        return self.options_klass()
+        if self.options_klass:
+            return self.options_klass()
 
     def _options_default(self):
         return self._options_factory()
