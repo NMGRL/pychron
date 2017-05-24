@@ -69,6 +69,7 @@ class Tag(object):
         tag.name = an.tag
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
+        print an.record_id, an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
 
         return tag
@@ -516,7 +517,7 @@ class DVC(Loggable):
                 prog.change_message('Making Interpreted age {}'.format(x.name))
             obj = dvc_load(x.path)
             ia = DVCInterpretedAge()
-            ia.repository_identifier = os.path.basename(os.path.dirname(x.path))
+            ia.repository_identifier = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(x.path))))
             ia.from_json(obj)
 
             try:
