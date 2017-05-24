@@ -522,7 +522,8 @@ class DVC(Loggable):
 
             try:
                 ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
-                ia.load_tag(dvc_load(ta))
+                if ta is not None:
+                    ia.load_tag(dvc_load(ta))
             except AnalysisNotAnvailableError:
                 pass
 
