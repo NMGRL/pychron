@@ -226,7 +226,8 @@ class Spectrum(BaseArArFigure):
                                  color=group.line_color,
                                  value_scale=po.scale,
                                  plotid=plotid)
-
+        
+        ds.value_mapper.fill_value = 1e-20
         ds.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
 
         ds.index.sort_order = 'ascending'
