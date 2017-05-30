@@ -1311,11 +1311,14 @@ class AutomatedRun(Loggable):
         self.spec.state = 'measurement'
 
         # get current spectrometer values
-        if self.spectrometer_manager:
-            self.debug('setting spec, defl, and gains')
-            self._update_persister_spec(spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                                        defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                        gains=self.spectrometer_manager.make_gains_dict())
+        sm = self.spectrometer_manager
+        if sm:
+            self.debug('setting trap, emission, spec, defl, and gains')
+            self._update_persister_spec(spec_dict=sm.make_parameters_dict(),
+                                        defl_dict=sm.make_deflections_dict(),
+                                        gains=sm.make_gains_dict(),
+                                        trap=sm.read_trap_current(),
+                                        emission=sm.read_emission())
 
         self._persister_action('pre_measurement_save')
 
