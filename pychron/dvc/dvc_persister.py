@@ -365,6 +365,9 @@ class DVCPersister(BasePersister):
 
         endianness = '>'
         per_spec = self.per_spec
+
+        source = {'emission': per_spec.emission,
+                  'trap': per_spec.trap}
         keys = []
         for iso in per_spec.isotope_group.isotopes.values():
 
@@ -446,7 +449,7 @@ class DVCPersister(BasePersister):
         obj['isotopes'] = isos
         obj['spec_sha'] = self._get_spectrometer_sha()
         obj['intensity_scalar'] = per_spec.intensity_scalar
-
+        obj['source'] = source
         # save the conditionals
         obj['conditionals'] = [c.to_dict() for c in per_spec.conditionals] if \
             per_spec.conditionals else None
