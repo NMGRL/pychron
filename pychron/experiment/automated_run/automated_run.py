@@ -1907,12 +1907,9 @@ anaylsis_type={}
         plot_panel.set_analysis_view(self.experiment_type,
                                      analysis_type=self.spec.analysis_type,
                                      analysis_id=self.runid)
-        an = plot_panel.analysis_view
-        an.load(self)
-
-        plot_panel.trait_set(
-            plot_title=title,
-            analysis_view=an)
+        # an = plot_panel.analysis_view
+        # an.load(self)
+        plot_panel.trait_set(plot_title=title)
 
         return plot_panel
 
@@ -2300,7 +2297,7 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.1
+            max_ = tc * self._integration_seconds
 
         if starttime_offset > mi:
             min_ = -starttime_offset
@@ -2309,7 +2306,6 @@ anaylsis_type={}
         series = 0
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(iso.detector)
-            print k, iso.detector, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]

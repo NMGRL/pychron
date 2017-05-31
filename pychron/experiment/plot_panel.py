@@ -181,11 +181,11 @@ class PlotPanel(Loggable):
         self.detectors = dets
 
         evt = Event()
-        invoke_in_main_thread(self._create, evt)
-
+        # invoke_in_main_thread(self._create, evt)
+        self._create(evt)
         # wait here until _create finishes
-        while not evt.wait(0.05):
-            pass
+        # while not evt.wait(0.05):
+        #     pass
 
         time.sleep(0.1)
         # while not evt.is_set():
@@ -299,8 +299,9 @@ class PlotPanel(Loggable):
         self._ncounts = v
 
         xmi, xma = self.isotope_graph.get_x_limits()
-        xm = max(xma, xma + (v - o) * 1.05)
+        xm = max(xma, xma + (v - o) * self.integration_time)
         self.isotope_graph.set_x_limits(max_=xm)
+        self.baseline_graph.set_x_limits(max_=xm)
 
     def _get_ncycles(self):
         return self._ncycles

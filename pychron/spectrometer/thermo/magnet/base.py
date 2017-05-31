@@ -86,8 +86,6 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
         change = dv > 1e-7
         if change:
             self._dac = v
-            if use_dac_changed:
-                self.dac_changed = True
 
             if not self.simulation:
                 if settling_time is None:
@@ -123,6 +121,9 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
 
         self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
+        if use_dac_changed:
+            self.dac_changed = True
+
         return change
 
     @get_float
