@@ -472,7 +472,8 @@ class ScanManager(StreamGraphManager):
 
     def _integration_time_changed(self):
         if self.integration_time:
-            self.spectrometer.set_integration_time(self.integration_time)
+            self.debug('setting integration time={}'.format(self.integration_time))
+            self.spectrometer.set_integration_time(self.integration_time, force=True)
             self.reset_scan_timer()
 
     def _consume(self, dm):

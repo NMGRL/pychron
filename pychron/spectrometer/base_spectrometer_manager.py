@@ -40,6 +40,12 @@ class BaseSpectrometerManager(Manager):
 
     def set_deflection(self, det, defl):
         pass
+
+    def read_trap_current(self):
+        return self.spectrometer.source.read_trap_current()
+
+    def read_emission(self):
+        return self.spectrometer.source.read_emission()
 # ============= EOF =============================================
 
 
