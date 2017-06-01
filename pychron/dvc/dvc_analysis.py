@@ -373,6 +373,7 @@ class DVCAnalysis(Analysis):
                                                                                          'reference_isotope')}
 
         self.peak_center = pd['center_dac']
+        self.peak_center_reference_detector = refdet
 
     def _load_tags(self, jd):
         self.set_tag(jd.get('name'))
