@@ -266,6 +266,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     ramp_rate = 0
     peak_center = 0
     peak_center_data = None
+    peak_center_reference_detector = None
     additional_peak_center_data = None
     collection_version = ''
     source_parameters = Dict
