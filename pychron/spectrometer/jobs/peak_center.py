@@ -82,7 +82,7 @@ class BasePeakCenter(MagnetSweep):
         self.canceled = True
         self.stop()
 
-    def get_peak_center(self, ntries=2):
+    def get_peak_center(self, ntries=2, timeout=None):
 
         self._alive = True
         self.canceled = False

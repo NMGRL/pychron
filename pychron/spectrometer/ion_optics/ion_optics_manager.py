@@ -330,18 +330,18 @@ class IonOpticsManager(Manager):
         config.isotopes = sort_isotopes(keys)
         return config
 
-    def _timeout_func(self, timeout, evt):
-        st = time.time()
-        while not evt.is_set():
-            if not self.alive:
-                break
-
-            if time.time() - st > timeout:
-                self.warning('Peak Centering timed out after {}s'.format(timeout))
-                self.cancel_peak_center()
-                break
-
-            time.sleep(0.01)
+    # def _timeout_func(self, timeout, evt):
+    #     st = time.time()
+    #     while not evt.is_set():
+    #         if not self.alive:
+    #             break
+    #
+    #         if time.time() - st > timeout:
+    #             self.warning('Peak Centering timed out after {}s'.format(timeout))
+    #             self.cancel_peak_center()
+    #             break
+    #
+    #         time.sleep(0.01)
 
     def _peak_center(self, save, confirm_save, warn, message, on_end, timeout):
 
@@ -350,10 +350,10 @@ class IonOpticsManager(Manager):
         ref = self.reference_detector
         isotope = self.reference_isotope
 
-        if timeout:
-            evt = Event()
-            self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
-            self.timeout_thread.start()
+        # if timeout:
+        #     evt = Event()
+        #     self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
+        #     self.timeout_thread.start()
 
         dac_d = pc.get_peak_center()
 
@@ -393,8 +393,8 @@ class IonOpticsManager(Manager):
 
         self.trait_set(alive=False)
 
-        if timeout:
-            evt.set()
+        # if timeout:
+        #     evt.set()
 
         self.spectrometer.restore_integration()
 
