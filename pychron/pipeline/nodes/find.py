@@ -263,7 +263,7 @@ class FindReferencesNode(FindNode):
                     state.references = list(refs)
 
                 if unks is not None:
-                    state.unknowns = unks
+                    state.unknowns.extend( unks)
                 state.has_references = True
             else:
                 state.veto = self

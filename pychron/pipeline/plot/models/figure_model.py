@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import HasTraits, List, Property, Any, Instance
 
 from pychron.pipeline.plot.layout import FigureLayout
@@ -66,32 +68,23 @@ class FigureModel(HasTraits):
 
     def _make_panels(self):
         if self.analysis_groups:
-
-            pass
-            # gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
-            #       enumerate(self.analysis_groups)]
-            # gs = [self._panel_klass(analyses=)]
-
+            gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
+                  enumerate(self.analysis_groups)]
         else:
-            # key = lambda x: x.graph_id
-            # ans = sorted(self.analyses, key=key)
-            # gs = [self._panel_klass(analyses=list(ais),
-            #                         plot_options=self.plot_options,
-            #                         graph_id=gid)
-            #       for gid, ais in groupby(ans, key=key)]
-
-            # if hasattr(self, 'references'):
-            # gg = groupby(self.references, key=key)
-            gs = [self._panel_klass(analyses=self.analyses,
+            key = lambda x: x.graph_id
+            ans = sorted(self.analyses, key=key)
+            gs = [self._panel_klass(analyses=list(ais),
                                     plot_options=self.plot_options,
-                                    references=self.references)]
-            # gg = iter(self.references)
-            # for gi in gs:
-            #     try:
-            #         gid, ais = gg.next()
-            #         gi.references = list(ais)
-            #     except StopIteration:
-            #         break
+                                    graph_id=gid)
+                  for gid, ais in groupby(ans, key=key)]
+            # if hasattr(self, 'references'):
+            gg = groupby(self.references, key=key)
+            for gi in gs:
+                try:
+                    gid, ais = gg.next()
+                    gi.references = list(ais)
+                except StopIteration:
+                    break
 
         for gi in gs:
             gi.make_figures()
