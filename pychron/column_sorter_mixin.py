@@ -29,13 +29,14 @@ class ColumnSorterMixin(HasTraits):
     sort_suppress = False
 
     def _column_clicked_changed(self, event):
-        values = event.editor.value
-        name, field = event.editor.adapter.columns[event.column]
+        if event:
+            values = event.editor.value
+            name, field = event.editor.adapter.columns[event.column]
 
-        self._reverse_sort = not self._reverse_sort
-        self.sort_suppress = True
-        self._sort_columns(values, name, field)
-        self.sort_suppress = False
+            self._reverse_sort = not self._reverse_sort
+            self.sort_suppress = True
+            self._sort_columns(values, name, field)
+            self.sort_suppress = False
 
     def _sort_columns(self, values, name='', field=None):
         # get the field to sort on
