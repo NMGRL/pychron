@@ -54,6 +54,9 @@ class Blob:
 
 
 class MassSpecAnalysis(Analysis):
+    r3739 = 0
+    Cl3839 = 0
+
     def _sync(self, obj):
 
         self.j = ufloat(0, 0)
