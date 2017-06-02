@@ -53,10 +53,12 @@ class SpectrometerTask(Loggable):
             self.execute()
 
     def execute(self):
+        self.debug('execute', self.__class__.__name__)
         self._alive = True
         t = QThread(name=self.__class__.__name__, target=self._execute)
         t.start()
         self.execution_thread = t
+        self.debug('execution thread. {}'.format(t))
         return t
 
     def _execute(self):

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import time
+from threading import currentThread
 
 from traits.api import List, Float, Bool
 
@@ -42,7 +43,6 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
     # ##positioning
     # ===============================================================================
     def set_dac(self, v, verbose=True, settling_time=None, use_dac_changed=True,
-                current_thread=None,
                 use_af_demag=True):
 
         # if not self._wait_lock(2):
@@ -85,20 +85,13 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
 
         change = dv > 1e-7
         if change:
-            self._dac = v
-
             if not self.simulation:
                 if settling_time is None:
                     settling_time = self.settling_time
 
-                self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
+                self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
                 if settling_time > 0:
-
-                    self.debug('Magnet settling started')
-                    if current_thread:
-                        current_thread.sleep(settling_time)
-                    else:
-                        time.sleep(settling_time)
+                    time.sleep(settling_time)
                     self.debug('Magnet settling complete')
 
             if unprotect or unblank:
@@ -119,6 +112,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                     self.debug('Unblank beam')
                     self.ask('BlankBeam False', verbose=verbose)
 
+                self._dac = v
         self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
         if use_dac_changed:
