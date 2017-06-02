@@ -40,6 +40,12 @@ class RegressionInspectorTool(InfoInspector):
                 lines.append('MSWD= {}{}, n={}'.format(valid,
                                                        floatfmt(reg.mswd, n=3), reg.n))
 
+            mi, ma = reg.min(), reg.max()
+            lines.append('Min={}, Max={}, D={}%'.format(floatfmt(mi), floatfmt(ma), (ma - mi) / float(ma) * 100))
+            lines.append('Max={}'.format(floatfmt(reg.max())))
+            lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean()), floatfmt(reg.std()),
+                                                               floatfmt(reg.sem(), reg.n)))
+
             lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
 
         return lines

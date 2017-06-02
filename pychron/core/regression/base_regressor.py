@@ -77,6 +77,21 @@ class BaseRegressor(HasTraits):
     degrees_of_freedom = Property
     integrity_warning = False
 
+    def min(self):
+        return self.clean_ys.min()
+
+    def max(self):
+        return self.clean_ys.max()
+
+    def mean(self):
+        return self.clean_ys.mean()
+
+    def std(self):
+        return self.clean_ys.std()
+
+    def sem(self):
+        return self.std()/self.n**0.5
+
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
 
