@@ -30,10 +30,17 @@ class RegressionInspectorTool(InfoInspector):
             reg = self.component.regressor
 
             v, e = reg.predict(0), reg.predict_error(0)
+            x = self.current_position[0]
+            vv,ee = reg.predict(x), reg.predict_error(x)
+
             lines = [reg.make_equation(),
                      'x=0, y={} +/-{}({}%)'.format(floatfmt(v, n=9),
                                                    floatfmt(e, n=9),
-                                                   format_percent_error(v, e))]
+                                                   format_percent_error(v, e)),
+                     'x={}, y={} +/-{}({}%)'.format(x, floatfmt(vv, n=9),
+                                                   floatfmt(ee, n=9),
+                                                   format_percent_error(vv, ee)),
+                     ]
 
             if reg.mswd not in ('NaN', None):
                 valid = '' if reg.valid_mswd else '*'

@@ -22,7 +22,7 @@ from pychron.options.options import SubOptions, AppearanceSubOptions, MainOption
 
 class SeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View()
+        v = View('use_time_axis')
         return v
 
 

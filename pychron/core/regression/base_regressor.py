@@ -191,12 +191,14 @@ class BaseRegressor(HasTraits):
     def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:
             rmodel = self.predict(rx)
-        if self.error_calc_type == 'CI':
-            func = self.calculate_ci
+
+        print self.error_calc_type
+        func = self.calculate_ci
+        if self.error_calc_type == 'SEM':
+            func = self.calculate_sem_error_envelope
         elif self.error_calc_type == 'SD':
             func = self.calculate_sd_error_envelope
-        else:
-            func = self.calculate_sem_error_envelope
+
         return func(rx, rmodel)
 
     def calculate_sd_error_envelope(self, rx, rmodel):
