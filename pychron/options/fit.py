@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int
+from traits.api import Str, Int, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -32,6 +32,7 @@ class FitOptions(AuxPlotFigureOptions):
     global_fit = Str('Fit')
     global_error_type = Str('Error')
     nsigma = Int(1)
+    use_time_axis = Bool(True)
 
     def set_names(self, names):
         for ai in self.aux_plots:
