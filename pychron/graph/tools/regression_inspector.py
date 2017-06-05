@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 
 
@@ -47,10 +48,11 @@ class RegressionInspectorTool(InfoInspector):
                 lines.append('MSWD= {}{}, n={}'.format(valid,
                                                        floatfmt(reg.mswd, n=3), reg.n))
 
-            mi, ma = reg.min(), reg.max()
+            mi, ma = reg.min, reg.max
             lines.append('Min={}, Max={}, D={}%'.format(floatfmt(mi), floatfmt(ma), floatfmt((ma - mi) / float(ma) * 100)))
-            lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean()), floatfmt(reg.std()),
-                                                               floatfmt(reg.sem()), reg.n))
+
+            lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
+                                                               floatfmt(reg.sem), reg.n))
 
             lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
 

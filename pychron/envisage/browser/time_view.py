@@ -142,6 +142,12 @@ class TimeViewModel(HasTraits):
     append_replace_enabled = True
     _active_column = None
 
+    def get_analysis_records(self):
+        if self.selected:
+            return self.selected
+        else:
+            return self.analyses
+
     @on_trait_change('mass_spectrometer, analysis_type, extract_device, lowdate, highdate, limit')
     def _handle_filter(self):
         ms = self.mass_spectrometer

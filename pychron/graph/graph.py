@@ -25,7 +25,7 @@ from chaco.api import OverlayPlotContainer, \
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
-from numpy import array, hstack, Inf, savetxt, column_stack
+from numpy import array, hstack, Inf, savetxt, column_stack, zeros_like
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
@@ -1181,7 +1181,11 @@ class Graph(ContextMenuMixin):
 
         a = array(data.get_data(names[0]))
         for ni in names[1:]:
-            a = column_stack((a, data.get_data(ni)))
+            d = data.get_data(ni)
+            try:
+                a = column_stack((a, d))
+            except ValueError:
+                a = column_stack((a, zeros_like(a)))
 
         savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
 
