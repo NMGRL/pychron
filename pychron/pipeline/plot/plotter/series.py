@@ -113,7 +113,10 @@ class Series(BaseSeries):
             elif po.use_percent_dev:
                 ytitle = '{} Dev %'.format(ytitle)
 
-            p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
+            if self.options.use_time_axis:
+                p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
+            else:
+                p = graph.new_plot(ytitle=ytitle, xtitle='N')
 
             if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
@@ -206,8 +209,8 @@ class Series(BaseSeries):
                                         additional_info=af,
                                         value_format=value_format)
 
-            if po.use_time_axis:
-                p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
+            # if po.use_time_axis:
+            #     p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
             end_caps = True
             if po.y_error and yerr is not None:

@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-FITS = ['linear', 'parabolic', 'cubic']
+FITS = ['linear', 'parabolic', 'cubic', 'quartic']
 
 
 def fit_to_degree(f):

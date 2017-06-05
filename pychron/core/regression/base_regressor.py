@@ -192,7 +192,7 @@ class BaseRegressor(HasTraits):
         if rmodel is None:
             rmodel = self.predict(rx)
 
-        print self.error_calc_type
+        print 'dddd', self.error_calc_type
         func = self.calculate_ci
         if self.error_calc_type == 'SEM':
             func = self.calculate_sem_error_envelope

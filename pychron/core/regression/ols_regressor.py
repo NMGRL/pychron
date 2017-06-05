@@ -22,6 +22,7 @@ from numpy import asarray, column_stack, ones, \
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
+from pychron.core.helpers.fits import FITS
 from pychron.pychron_constants import MSEM
 from pychron.pychron_constants import SEM
 
@@ -318,8 +319,7 @@ class OLSRegressor(BaseRegressor):
             self.calculate()
 
     def _get_fit(self):
-        fits = ['linear', 'parabolic', 'cubic']
-        return fits[self._degree - 1]
+        return FITS[self._degree - 1]
 
     def _set_fit(self, v):
         self._set_degree(v)
