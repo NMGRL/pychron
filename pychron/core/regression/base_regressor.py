@@ -192,7 +192,6 @@ class BaseRegressor(HasTraits):
         if rmodel is None:
             rmodel = self.predict(rx)
 
-        print 'dddd', self.error_calc_type
         func = self.calculate_ci
         if self.error_calc_type == 'SEM':
             func = self.calculate_sem_error_envelope
@@ -274,7 +273,7 @@ class BaseRegressor(HasTraits):
 
         fit = self.fit
         eq = '+'.join(ps)
-        s = '{}    y={}+{}'.format(fit, eq, constant)
+        s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
         return s
 
     def _calculate_ci(self, rx):
