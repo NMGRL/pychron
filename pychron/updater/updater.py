@@ -104,9 +104,12 @@ class Updater(Loggable):
         branch = self.branch
         remote = self.remote
         if self.use_tag:
-            repo = self._repo
             # check for new tags
             self._fetch(prune=True)
+            repo = self._repo
+            if not repo:
+                return
+
             tags = repo.tags
             ctag = tags[self.version_tag]
             tags = [t for t in tags if t.tag]
@@ -298,17 +301,18 @@ class Updater(Loggable):
 
     def _fetch(self, branch=None, prune=False):
         repo = self._get_working_repo()
-        origin = repo.remotes.origin
-        try:
-            if prune:
-                repo.git.fetch('--prune', origin, '+refs/tags/*:refs/tags/*')
+        if repo is not None:
+            origin = repo.remotes.origin
+            try:
+                if prune:
+                    repo.git.fetch('--prune', origin, '+refs/tags/*:refs/tags/*')
 
-            if branch:
-                repo.git.fetch(origin, branch)
-            else:
-                repo.git.fetch(origin)
-        except GitCommandError, e:
-            self.warning('Failed to fetch. {}'.format(e))
+                if branch:
+                    repo.git.fetch(origin, branch)
+                else:
+                    repo.git.fetch(origin)
+            except GitCommandError, e:
+                self.warning('Failed to fetch. {}'.format(e))
 
     def _validate_branch(self, name):
         """
@@ -438,8 +442,12 @@ class Updater(Loggable):
             p = build_repo
             if not os.path.isdir(p):
                 r_mkdir(p)
-                url = 'https://github.com/{}.git'.format(self.remote)
-                repo = Repo.clone_from(url, p)
+                if self.remote:
+                    url = 'https://github.com/{}.git'.format(self.remote)
+                    repo = Repo.clone_from(url, p)
+                else:
+                    self.information_dialog('Please set "remote" in Updater preferences')
+                    return
             else:
                 repo = Repo(p)
             self._repo = repo

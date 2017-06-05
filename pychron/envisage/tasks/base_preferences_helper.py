@@ -91,7 +91,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
 
         if self.remote.strip():
             try:
-                cmd = 'https://github.com/{}'.format(self.remote)
+                cmd = 'https://github.com/{}.git'.format(self.remote)
                 urllib2.urlopen(cmd)
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
