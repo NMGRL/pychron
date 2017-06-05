@@ -371,11 +371,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self._recent_mass_spectrometers = []
         warned = False
 
-        if any((p.name.startswith('RECENT') for p in self.selected_projects)):
-            if not self.search_criteria.recent_hours:
-                if not warned:
-                    self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
-                                        '"RECENT (hrs)" is located in the "Browser" category')
+        if self.selected_projects:
+            if any((p.name.startswith('RECENT') for p in self.selected_projects)):
+                if not self.search_criteria.recent_hours:
+                    if not warned:
+                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
+                                            '"RECENT (hrs)" is located in the "Browser" category')
 
         sams.extend(self._make_labnumbers())
 

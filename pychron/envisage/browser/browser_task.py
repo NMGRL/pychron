@@ -189,8 +189,12 @@ class BaseBrowserTask(BaseEditorTask):
 
         def extract_blob(blob):
             blob = base64.b64decode(blob)
-            x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in xrange(0, len(blob), 8)]).T
-            x[0] = 0
+            if blob != 'No Response':
+                x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in xrange(0, len(blob), 8)]).T
+                x[0] = 0
+            else:
+                x, y = [], []
+
             return x, y
 
         g = StackedGraph()
@@ -226,6 +230,7 @@ class BaseBrowserTask(BaseEditorTask):
             # self.browser_model.activated()
             # self._activate_sample_browser()
             # self.activate_workspace()
+
     def _closed_hook(self):
         self.dvc.close_session()
 
