@@ -98,12 +98,13 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         p.y_axis.title_spacing = 50
         if show_equilibration:
             sniff = iso.sniff
-            g.new_series(sniff.xs, sniff.ys,
-                         type='scatter',
-                         fit=None,
-                         color='red')
-            ymi, yma = min_max(ymi, yma, sniff.ys)
-            xmi, xma = min_max(xmi, xma, sniff.xs)
+            if sniff.xs.shape[0]:
+                g.new_series(sniff.xs, sniff.ys,
+                             type='scatter',
+                             fit=None,
+                             color='red')
+                ymi, yma = min_max(ymi, yma, sniff.ys)
+                xmi, xma = min_max(xmi, xma, sniff.xs)
 
         if show_evo:
             if iso.fit is None:

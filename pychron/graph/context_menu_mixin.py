@@ -148,18 +148,29 @@ class RegressionContextMenuMixin(ContextMenuMixin):
             ('linear', 'cm_linear'),
             ('parabolic', 'cm_parabolic'),
             ('cubic', 'cm_cubic'),
+            ('quartic', 'cm_quartic'),
             (u'average {}SD'.format(PLUSMINUS), 'cm_average_std'),
             (u'average {}SEM'.format(PLUSMINUS), 'cm_average_sem')
         ]
+
         menu = MenuManager(
             *[self.action_factory(name, func) for name, func in actions],
             name='Fit')
+        actions = [
+            ('SD', 'cm_sd'),
+            ('SEM', 'cm_sem'),
+            ('CI', 'cm_ci')]
+
+        emenu = MenuManager(
+            *[self.action_factory(name, func) for name, func in actions],
+            name='Error')
 
         #        contents.append(Menu(
         #                             self.action_factory('Omit', 'set_status'),
         #                             self.action_factory('Include', 'set_status'),
         #                             name=))
         contents.append(menu)
+        contents.append(emenu)
         return contents
 
 # ============= EOF =============================================
