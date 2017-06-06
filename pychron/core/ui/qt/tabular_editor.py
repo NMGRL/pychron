@@ -575,6 +575,7 @@ class _TabularEditor(qtTabularEditor):
             slot = self._on_rows_selection
         else:
             slot = self._on_row_selection
+
         signal = 'selectionChanged(QItemSelection,QItemSelection)'
         QtCore.QObject.connect(self.control.selectionModel(),
                                QtCore.SIGNAL(signal), slot)
@@ -716,7 +717,8 @@ class _TabularEditor(qtTabularEditor):
 
     def _scroll_to_row_changed(self, row):
         row = min(row, self.model.rowCount(None)) - 1
-        qtTabularEditor._scroll_to_row_changed(self, 0)
-        qtTabularEditor._scroll_to_row_changed(self, row)
+        super(_TabularEditor, self)._scroll_to_row_changed(0)
+        super(_TabularEditor, self)._scroll_to_row_changed(row)
+
 
 # ============= EOF =============================================

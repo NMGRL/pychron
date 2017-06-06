@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 import time
-from threading import currentThread
 
 from traits.api import List, Float, Bool
 
@@ -112,7 +111,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                     self.debug('Unblank beam')
                     self.ask('BlankBeam False', verbose=verbose)
 
-                self._dac = v
+        self._dac = v
         self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
         if use_dac_changed:

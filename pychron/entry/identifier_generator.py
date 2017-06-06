@@ -265,7 +265,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         test = monkey(not is_monitor)
         for level in levels:
             i = 0
-            for position in level.positions:
+            for position in sorted(level.positions, key=lambda x: x.position):
                 if not has_sample(position):
                     continue
 

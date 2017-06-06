@@ -24,7 +24,7 @@ from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 class ThermoSource(SpectrometerDevice):
-    nominal_hv = Float(4500)
+    nominal_hv = Float(4500, enter_set=True, auto_set=False)
     current_hv = Float(4500)
 
     trap_current = Property(depends_on='_trap_current')
@@ -44,6 +44,10 @@ class ThermoSource(SpectrometerDevice):
     z_symmetry_high = Float(100.0)
 
     _extraction_lens = Float  # Range(0.0, 100.)
+
+    def _nominal_hv_changed(self, new):
+        if new is not None:
+            self.set_hv(new)
 
     def set_hv(self, v):
         return self._set_value('SetHV', v)
