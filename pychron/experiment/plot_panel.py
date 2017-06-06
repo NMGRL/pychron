@@ -187,7 +187,7 @@ class PlotPanel(Loggable):
         # while not evt.wait(0.05):
         #     pass
 
-        time.sleep(0.1)
+        evt.wait(0.1)
         # while not evt.is_set():
         #     time.sleep(0.05)
 
