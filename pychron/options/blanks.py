@@ -18,7 +18,7 @@
 from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.blanks_views import VIEWS
+from pychron.options.views.blanks_views import VIEWS
 from pychron.options.series import SeriesOptions, SeriesFitAuxPlot
 from pychron.processing.fits.fit import FilterFit
 

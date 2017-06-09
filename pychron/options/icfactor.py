@@ -18,7 +18,7 @@
 from traits.api import Str, Float, Property, List
 
 from pychron.options.fit import FitAuxPlot
-from pychron.options.icfactor_views import VIEWS
+from pychron.options.views.icfactor_views import VIEWS
 from pychron.options.series import SeriesOptions
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE
 

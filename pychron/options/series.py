@@ -18,7 +18,7 @@
 from traits.api import List, Bool
 
 from pychron.options.fit import FitAuxPlot, FitOptions
-from pychron.options.series_views import VIEWS
+from pychron.options.views.series_views import VIEWS
 
 
 class SeriesFitAuxPlot(FitAuxPlot):

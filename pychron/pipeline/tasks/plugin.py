@@ -44,6 +44,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['spectrum_template', 'SPEC', ov],
                  ['series_template', 'SERIES', ov],
                  ['inverse_isochron_template', 'INVERSE_ISOCHRON', ov],
+                 ['radial_template', 'RADIAL', ov],
                  ['csv_ideogram_template', 'CSV_IDEO', ov],
                  ['flux_template', 'FLUX', ov],
                  ['vertical_flux_template', 'VERTICAL_FLUX', ov],

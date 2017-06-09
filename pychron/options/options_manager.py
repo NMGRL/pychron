@@ -21,7 +21,7 @@ from traits.api import Str, List, Button, Instance, Tuple, Property
 from traitsui.api import Controller, View, Item
 
 from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
@@ -33,9 +33,10 @@ from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions
+from pychron.options.radial import RadialOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
-from pychron.options.views import view
+from pychron.options.views.views import view
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
 
@@ -322,6 +323,13 @@ class InverseIsochronOptionsManager(FigureOptionsManager):
     _defaults = (('screen', INVERSE_ISOCHRON_SCREEN),
                  ('presentation', INVERSE_ISOCHRON_PRESENTATION))
     _default_options_txt = INVERSE_ISOCHRON_SCREEN
+
+
+class RadialOptionsManager(FigureOptionsManager):
+    id = 'radial'
+    options_klass = RadialOptions
+    _defaults = (('screen', RADIAL_SCREEN),)
+    _default_options_txt = RADIAL_SCREEN
 
 
 class OptionsController(Controller):

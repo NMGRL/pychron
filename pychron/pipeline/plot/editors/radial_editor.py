@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,30 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-from traits.api import List, Float, Bool
-
-from pychron.options.aux_plot import AuxPlot
-from pychron.options.fit import FitOptions
-from pychron.options.views.iso_evo_views import VIEWS
-from pychron.processing.fits.fit import IsoFilterFit
+from pychron.pipeline.plot.editors.figure_editor import FigureEditor
+from pychron.pipeline.plot.models.radial_model import RadialModel
 
 
-class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
-    names = List
-    height = 0
-    ofit = None
-
-
-class IsotopeEvolutionOptions(FitOptions):
-    aux_plot_klass = IsoFilterFitAuxPlot
-    subview_names = List(['Main', 'IsoEvo', 'Appearance'])
-    goodness_threshold = Float  # in percent
-    # _main_options_klass = IsoEvoMainOptions
-    show_sniff = Bool(False)
-
-    def _get_subview(self, name):
-        return VIEWS[name]
+class RadialEditor(FigureEditor):
+    figure_model_klass = RadialModel
+    basename = 'radial'
 
 # ============= EOF =============================================

@@ -18,7 +18,7 @@
 from traits.api import Str, Bool, Float, Property, List, Color, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
+from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
 from pychron.pychron_constants import FIT_ERROR_TYPES
 
