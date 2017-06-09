@@ -34,6 +34,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Spectrum
 - Inverse Isochron
 - Series
+- Radial
 - Analysis Table
 #- Interpreted Age Table
 - Interpreted Age Ideogram
@@ -380,9 +381,18 @@ spec_d = dict(plateau_line_width=1,
 SPECTRUM_PRESENTATION = make_presentation(**spec_d)
 SPECTRUM_SCREEN = make_screen(**spec_d)
 
+radial_d = dict()
+RADIAL_SCREEN = make_screen(**radial_d)
 # ===============================================================
 # Pipeline Templates
 # ===============================================================
+RADIAL = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: RadialNode
+"""
 YIELD = """
 required:
 nodes:

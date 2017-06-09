@@ -22,7 +22,7 @@ from traitsui.api import View, Item
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
-from pychron.options.spectrum_views import VIEWS
+from pychron.options.views.spectrum_views import VIEWS
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS
 
 

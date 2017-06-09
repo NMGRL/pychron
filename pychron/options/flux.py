@@ -56,7 +56,7 @@ class FluxOptions(FigureOptions):
     #     return obj
 
     def _get_subview(self, name):
-        from pychron.options.flux_views import VIEWS
+        from pychron.options.views.flux_views import VIEWS
         return VIEWS[name]
 
 
@@ -71,6 +71,6 @@ class VerticalFluxOptions(FigureOptions):
         return [VerticalFluxAuxPlot()]
 
     def _get_subview(self, name):
-        from pychron.options.vertical_flux_views import VIEWS
+        from pychron.options.views.vertical_flux_views import VIEWS
         return VIEWS[name]
 # ============= EOF =============================================

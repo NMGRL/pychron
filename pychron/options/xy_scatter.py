@@ -20,7 +20,7 @@ from traits.api import Str, List
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AuxPlotFigureOptions
-from pychron.options.xy_scatter_views import VIEWS
+from pychron.options.views.xy_scatter_views import VIEWS
 
 
 class XYScatterAuxPlot(AuxPlot):

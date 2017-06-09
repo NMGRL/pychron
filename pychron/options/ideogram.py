@@ -20,7 +20,7 @@ from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, 
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
-from pychron.options.ideogram_views import VIEWS
+from pychron.options.views.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
 from pychron.pychron_constants import NULL_STR, FONTS, SIZES
 

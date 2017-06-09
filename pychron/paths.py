@@ -279,6 +279,7 @@ class Paths(object):
     geochron_template = None
     yield_template = None
     csv_analyses_export_template = None
+    radial_template = None
 
     furnace_sample_states = None
 

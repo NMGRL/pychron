@@ -20,8 +20,9 @@ from traitsui.api import View
 
 from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
-    SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager
-from pychron.options.views import view
+    SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
+    RadialOptionsManager
+from pychron.options.views.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039
@@ -240,4 +241,9 @@ class InverseIsochronNode(FigureNode):
     editor_klass = 'pychron.pipeline.plot.editors.isochron_editor,InverseIsochronEditor'
     plotter_options_manager_klass = InverseIsochronOptionsManager
 
+
+class RadialNode(FigureNode):
+    name = 'Radial Plot'
+    editor_klass = 'pychron.pipeline.plot.editors.radial_editor,RadialEditor'
+    plotter_options_manager_klass = RadialOptionsManager
 # ============= EOF =============================================
