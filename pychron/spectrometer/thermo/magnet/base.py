@@ -114,7 +114,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
         self._dac = v
         self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
-        if use_dac_changed:
+        if use_dac_changed and change:
             self.dac_changed = True
 
         return change
