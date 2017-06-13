@@ -318,6 +318,10 @@ class BrowserSampleView(BaseBrowserSampleView):
     def load_review_status(self, info, obj):
         obj.load_review_status()
 
+    def load_chrono_view(self, info, obj):
+        obj.load_chrono_view()
+
+
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()

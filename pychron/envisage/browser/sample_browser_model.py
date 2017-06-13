@@ -133,7 +133,7 @@ class SampleBrowserModel(BrowserModel):
         ss = [si.labnumber for si in self.selected_samples]
         bt = self.search_criteria.reference_hours_padding
         if not bt:
-            self.information_dialog('Set "References Window" in Preferences defaulting to 2hrs')
+            self.information_dialog('Set "References Window" in Preferences.\n\nDefaulting to 2hrs')
             bt = 2
 
         # ss  = ['bu-FD-O']

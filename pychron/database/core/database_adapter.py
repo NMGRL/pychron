@@ -103,6 +103,22 @@ ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 #                 self._sess.expire_on_commit = True
 #                 # self._sess.close()
 #                 # del self._sess
+def binfunc(ds, hours):
+    ds = [dx.timestamp for dx in ds]
+    p1 = ds[0]
+    delta_seconds = hours * 3600
+    td = timedelta(seconds=delta_seconds * 0.25)
+
+    for i, di in enumerate(ds):
+        i = max(0, i - 1)
+
+        dd = ds[i]
+        if (di - dd).total_seconds() > delta_seconds:
+            yield p1 - td, dd + td
+            p1 = di
+
+    yield p1 - td, di + td
+
 
 class SessionCTX(object):
     def __init__(self, parent, use_parent_session=True):
@@ -555,8 +571,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
         lan = q.order_by(asc).first()
         han = q.order_by(desc).first()
 
-        lan = datetime.now() if not lan else lan[0]
-        han = datetime.now() if not han else han[0]
+        lan = datetime.now() if not lan else lan.timestamp
+        han = datetime.now() if not han else han.timestamp
         td = timedelta(hours=hours)
 
         return lan - td, han + td

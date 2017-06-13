@@ -97,7 +97,7 @@ class LabnumberAdapter(BrowserAdapter):
             # psenabled = obj.current_task_name in ('Ideogram', 'Spectrum')
             # psenabled = isinstance(obj, FigureTask)
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
-                               # Action(name='Chronological View', action='on_chrono_view'),
+                               Action(name='Chronological View', action='load_chrono_view'),
                                Action(name='Configure', action='configure_sample_table'), )
             # Action(name='Plot Selected (Grouped)',
             #        enabled=psenabled,

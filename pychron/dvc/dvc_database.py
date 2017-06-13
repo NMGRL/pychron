@@ -25,7 +25,7 @@ from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
 from pychron.core.spell_correct import correct
-from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
 from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     IrradiationTbl, LevelTbl, SampleTbl, \
@@ -298,6 +298,72 @@ class DVCDatabase(DatabaseAdapter):
     #             q = q.filter(not_(AnalysisTbl.uuid.in_(exclude_uuids)))
     #
     #         return self._query_all(q, verbose_query=False)
+    def get_min_max_analysis_timestamp(self, lns=None, projects=None, delta=0):
+        """
+            lns: list of labnumbers/identifiers
+            return: datetime, datetime
+
+            get the min and max analysis_timestamps for all analyses with labnumbers in lns
+        """
+
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            if lns:
+                q = q.join(IrradiationPositionTbl)
+                q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
+            elif projects:
+                q = q.join(IrradiationPositionTbl, SampleTbl, ProjectTbl)
+                q = q.filter(ProjectTbl.name.in_(projects))
+            # q = self._analysis_query(sess, attr='analysis_timestamp')
+            # if lns:
+            #     q = q.filter(gen_LabTable.identifier.in_(lns))
+            #
+            # elif projects:
+            #     q = q.join(gen_SampleTable, gen_ProjectTable)
+            #     q = q.filter(gen_ProjectTable.name.in_(projects))
+
+            return self._get_date_range(q, hours=delta)
+
+    def get_labnumber_mass_spectrometers(self, lns):
+        """
+            return all the mass spectrometers use to measure these labnumbers analyses
+
+            returns (str, str,...)
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
+            q = q.filter(distinct(AnalysisTbl.mass_spectrometer.name))
+            return self._query_all(q)
+            # q = self._analysis_query(sess,
+            #                          meas_MeasurementTable, meas_AnalysisTable,
+            #                          before=True,
+            #                          cols=(distinct(gen_MassSpectrometerTable.name),))
+            #
+            # q = q.filter(gen_LabTable.identifier.in_(lns))
+            # return [di[0] for di in q.all()]
+
+
+    def get_analysis_date_ranges(self, lns, hours):
+        """
+            lns: list of labnumbers/identifiers
+        """
+
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.filter(IrradiationPositionTbl.identifier.in_(lns))
+            q = q.order_by(AnalysisTbl.timestamp.asc())
+            ts = self._query_all(q)
+            return list(binfunc(ts, hours))
+            # q = self._analysis_query(sess, attr='analysis_timestamp')
+            #
+            # q = q.filter(gen_LabTable.identifier.in_(lns))
+            # q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            # ts = self._query_all(q)
+            #
+            # return list(binfunc(ts, hours))
 
     def get_production_name(self, irrad, level):
         with self.session_ctx() as sess:
