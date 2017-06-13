@@ -23,7 +23,6 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.initialization.nodes import Plugin, PluginTree, GlobalTree, GlobalValue, InitializationModel
 
-
 DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'MassSpec': 'Mass Spec plugin',
                    'PyScript': "Edit PyScripts; pychron's internal scripting language",
@@ -49,6 +48,7 @@ DESCRIPTION_MAP = {'Experiment': 'Execute sets of automated runs',
                    'ClientExtractionLine': 'Remotely control extraction line components',
                    'ArgusSpectrometer': 'Thermo ArgusVI plugin',
                    'HelixSpectrometer': 'Thermo Helix plugin',
+                   'NGXSpectrometer': 'Isotopx NGX plugin',
                    'NMGRLFurnace': "NMGRL's resistance furnace plugin",
                    'FusionsCO2': 'Photon Machines Fusions CO2',
                    'FusionsDiode': 'Photon Machines Fusions Diode',
@@ -90,6 +90,7 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'Update')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'HelixSpectrometer',
+                                 'NGXSpectrometer',
                                  'ExtractionLine',
                                  'ClientExtractionLine',
                                  'NMGRLFurnace',
