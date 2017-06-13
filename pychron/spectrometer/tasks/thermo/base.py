@@ -36,13 +36,10 @@ from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 
 
 class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
-    id = 'pychron.spectrometer.argus'
-    spectrometer_manager_klass = ArgusSpectrometerManager
-    manager_name = 'argus_spectrometer_manager'
-    name = 'ArgusSpectrometer'
-
-    def _preferences_default(self):
-        return self._preferences_factory('spectrometer')
+    # id = 'pychron.spectrometer.argus'
+    # spectrometer_manager_klass = ArgusSpectrometerManager
+    # manager_name = 'argus_spectrometer_manager'
+    # name = 'ArgusSpectrometer'
 
     def start(self):
         super(ThermoSpectrometerPlugin, self).start()
@@ -58,30 +55,8 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
             open_view(rv, view=v)
 
     # ===============================================================================
-    # tests
-    # ===============================================================================
-    def test_communication(self):
-        manager = self.spectrometer_manager
-        return manager.test_connection()
-
-    def test_intensity(self):
-        manager = self.spectrometer_manager
-        ret = manager.test_connection(force=False)
-        if ret and ret[0]:
-            ret = manager.test_intensity()
-
-        return ret
-
-    # ===============================================================================
     # defaults
     # ===============================================================================
-
-    def _readout_view_factory(self):
-        v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)
-        return v
-
-    def _preferences_panes_default(self):
-        return [SpectrometerPreferencesPane]
 
     def _task_extensions_default(self):
 
