@@ -48,6 +48,7 @@ class AutomatedRunSpec(HasTraits):
     skip = Bool(False)
     end_after = Bool(False)
     collection_version = Str
+    delay_after = Float
     # ===========================================================================
     # queue globals
     # ===========================================================================
@@ -313,6 +314,12 @@ class AutomatedRunSpec(HasTraits):
 
         return run
 
+    def get_delay_after(self, da, db):
+        d = self.delay_after
+        if not d:
+            d = db if self.analysis_type == 'blank' else da
+        return d
+
     def load(self, script_info, params):
         for k, v in script_info.iteritems():
             k = k if k == 'script_options' else '{}_script'.format(k)
@@ -399,7 +406,8 @@ class AutomatedRunSpec(HasTraits):
                   'irradiation_level',
                   'irradiation_position',
                   'material',
-                  'data_reduction_tag']
+                  'data_reduction_tag',
+                  'delay_after']
 
         if self.is_step_heat():
             traits.append('aliquot')

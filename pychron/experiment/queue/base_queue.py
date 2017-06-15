@@ -14,19 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+import datetime
+import os
+
 # ============= standard library imports ========================
 import yaml
-import os
-import datetime
+# ============= enthought library imports =======================
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+
+from pychron.core.helpers.ctx_managers import no_update
 # ============= local library imports  ==========================
 from pychron.experiment.queue.run_block import RunBlock
-from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.stats import ExperimentStats
+from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.paths import paths
-from pychron.core.helpers.ctx_managers import no_update
+from pychron.pychron_constants import NULL_STR, LINE_STR
 
 
 def extract_meta(line_gen):
@@ -50,6 +52,7 @@ queue_conditionals_name: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
 delay_between_analyses: {}
+delay_after_blank: {}
 extract_device: {}
 tray: {}
 load: {}
@@ -70,6 +73,7 @@ class BaseExperimentQueue(RunBlock):
     tray = Str
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
+    delay_after_blank = CInt(15)
 
     queue_conditionals_name = Str
 
@@ -96,11 +100,14 @@ class BaseExperimentQueue(RunBlock):
     # ===============================================================================
     def load(self, txt):
         self.initialized = False
-        self.stats.delay_between_analyses = self.delay_between_analyses
-        self.stats.delay_before_analyses = self.delay_before_analyses
 
         line_gen = self._get_line_generator(txt)
         self._extract_meta(line_gen)
+
+        self.stats.delay_between_analyses = self.delay_between_analyses
+        self.stats.delay_before_analyses = self.delay_before_analyses
+        self.stats.delay_after_blank = self.delay_after_blank
+
         aruns = self._load_runs(line_gen)
         if aruns is not None:
             # set frequency_added_counter
@@ -269,6 +276,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('mass_spectrometer', meta, key_default('Spectrometer'))
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
+        self._set_meta_param('delay_after_blank', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
@@ -332,7 +340,8 @@ class BaseExperimentQueue(RunBlock):
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
                'autocenter', 'frequency_group',
-               'repository_identifier']
+               'repository_identifier',
+               'delay_after']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))

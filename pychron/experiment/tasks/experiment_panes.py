@@ -128,8 +128,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                          name=queue_factory_name('available_conditionals')))),
                            label='Spectrometer/Extract Device',
                            show_border=True)
-        delay_grp = VGroup(queue_factory_item('delay_before_analyses'),
-                           queue_factory_item('delay_between_analyses'),
+        delay_grp = VGroup(queue_factory_item('delay_before_analyses', label='Delay Before Analyses (s)'),
+                           queue_factory_item('delay_between_analyses', label='Delay Between Analyses (s)'),
+                           queue_factory_item('delay_after_blank', label='Delay After Blank (s)'),
                            show_border=True,
                            label='Delays')
         queue_grp = VGroup(user_grp, email_grp, ms_ed_grp, delay_grp,
@@ -189,6 +190,10 @@ class ExperimentFactoryPane(TraitsDockPane):
                                             editor=myEnumEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),
+                           run_factory_item('delay_after',
+                                            label='Delay After (s)',
+                                            tooltip='Time (s) to delay after this analysis. This value supersedes '
+                                                    '"Delay Between Analyses" or "Delay After Blank"'),
                            spring),
                     HGroup(run_factory_item('repository_identifier',
                                             label='Repository ID',

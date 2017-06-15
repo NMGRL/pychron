@@ -24,7 +24,6 @@ from threading import Thread, Lock, currentThread
 import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
-from requests.exceptions import SSLError
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
@@ -547,7 +546,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         total_cnt = 0
         is_first_flag = True
         is_first_analysis = True
-
+        delay_after_previous_analysis = None
         # from pympler import classtracker
         # tr = classtracker.ClassTracker()
         # from pychron.experiment.automated_run.automated_run import AutomatedRun
@@ -589,7 +588,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if not overlapping:
                     if self.is_alive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
-                        self._delay(exp.delay_between_analyses)
+                        # self._delay(exp.delay_between_analyses)
+                        d = delay_after_previous_analysis
+                        if d:
+                            self._delay(d)
+
                         if not self.is_alive():
                             self.debug('User Cancel between runs')
                             break
@@ -606,6 +609,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 self.wait_group.active_control.page_name = run.runid
                 run.is_first = is_first_flag
+                delay_after_previous_analysis = run.spec.get_delay_after(exp.delay_between_analyses,
+                                                                         exp.delay_after_blank)
 
                 if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap[0]:
                     self.debug('waiting for extracting_run to finish')
