@@ -50,6 +50,7 @@ class ExperimentStats(Loggable):
 
     delay_between_analyses = Float
     delay_before_analyses = Float
+    delay_after_blank = Float
     # _start_time = None
     _post = None
 
@@ -172,7 +173,9 @@ class ExperimentStats(Loggable):
             warned = []
             ni = len(runs)
 
+            btw = 0
             run_dur = 0
+            d = 0
             for a in runs:
                 sh = a.script_hash
 
@@ -184,9 +187,14 @@ class ExperimentStats(Loggable):
                         run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
+                d = a.get_delay_after(self.delay_between_analyses, self.delay_after_blank)
+                btw += d
 
-            btw = self.delay_between_analyses * (ni - 1)
-            dur = run_dur + btw + self.delay_before_analyses
+            # subtract the last delay_after because experiment doesn't delay after last analysis
+            btw -=d
+
+            # btw = self.delay_between_analyses * (ni - 1)
+            dur = run_dur + self.delay_before_analyses + btw
             self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
                                                                        run_dur, btw))
 

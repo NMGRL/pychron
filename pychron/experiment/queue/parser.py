@@ -95,6 +95,7 @@ class RunParser(Loggable):
                      'cleanup',
                      ('ramp_duration', 'ramp'),
                      'weight',
+                     'delay_after',
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam'),

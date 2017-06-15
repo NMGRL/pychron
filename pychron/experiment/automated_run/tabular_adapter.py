@@ -19,6 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int, Dict
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.strtools import to_bool
@@ -71,7 +72,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Post Eq.', 'post_equilibration_script'),
         ('Post Meas.', 'post_measurement_script'),
         ('Options', 'script_options'),
-        ('Comment', 'comment')]
+        ('Comment', 'comment'),
+        ('Delay After','delay_after')]
 
     columns = [('Labnumber', 'labnumber'),
                ('Aliquot', 'aliquot'), ]

@@ -78,6 +78,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     set_labnumber = True
     set_position = True
 
+    delay_after = Float
     labnumber = String(enter_set=True, auto_set=False)
     update_labnumber = Event
 
@@ -237,7 +238,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                    'pattern', 'labnumber', 'position',
                    'weight', 'comment', 'template',
                    'use_simple_truncation', 'conditionals_path',
-                   'use_project_based_repository_identifier')
+                   'use_project_based_repository_identifier', 'delay_after')
 
     suppress_meta = False
 
@@ -490,7 +491,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'weight', 'comment',
                 'sample','project','material', 'username',
                 'ramp_duration',
-                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier']
+                'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier',
+                'delay_after']
 
     def _set_run_values(self, arv, excludes=None):
         """
@@ -548,7 +550,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                      'position',
                      'collection_time_zero_offset',
                      'use_cdd_warming',
-                     'weight', 'comment'):
+                     'weight', 'comment', 'delay_after'):
 
             if attr in excludes:
                 continue
@@ -1349,7 +1351,7 @@ use_cdd_warming,
 extract_units,
 pattern,
 position,
-weight, comment, skip, overlap, repository_identifier''')
+weight, comment, skip, overlap, repository_identifier, delay_after''')
     def _edit_handler(self, name, new):
         if name == 'pattern':
             if not self._use_pattern():
