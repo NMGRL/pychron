@@ -84,15 +84,11 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
 
         change = dv > 1e-7
         if change:
-            self._dac = v
-            if use_dac_changed:
-                self.dac_changed = True
-
             if not self.simulation:
                 if settling_time is None:
                     settling_time = self.settling_time
 
-                self.debug('Magnet settling time: {:0.3f}'.format(settling_time))
+                self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
                 if settling_time > 0:
                     time.sleep(settling_time)
                     self.debug('Magnet settling complete')
@@ -115,8 +111,12 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
                     self.debug('Unblank beam')
                     self.ask('BlankBeam False', verbose=verbose)
 
+        self._dac = v
         self.debug('set_dac. change={}'.format(change))
         # self._wait_release()
+        if use_dac_changed and change:
+            self.dac_changed = True
+
         return change
 
     @get_float

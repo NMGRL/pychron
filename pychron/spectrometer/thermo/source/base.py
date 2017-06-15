@@ -24,7 +24,7 @@ from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
 class ThermoSource(SpectrometerDevice):
-    nominal_hv = Float(4500)
+    nominal_hv = Float(4500, enter_set=True, auto_set=False)
     current_hv = Float(4500)
 
     trap_current = Property(depends_on='_trap_current')
@@ -33,6 +33,7 @@ class ThermoSource(SpectrometerDevice):
     z_symmetry = Property(depends_on='_z_symmetry')
     y_symmetry = Property(depends_on='_y_symmetry')
     extraction_lens = Property(Range(0, 100.0), depends_on='_extraction_lens')
+    emission = Float
 
     _y_symmetry = Float  # Range(0.0, 100.)
     _z_symmetry = Float  # Range(0.0, 100.)
@@ -44,8 +45,15 @@ class ThermoSource(SpectrometerDevice):
 
     _extraction_lens = Float  # Range(0.0, 100.)
 
+    def _nominal_hv_changed(self, new):
+        if new is not None:
+            self.set_hv(new)
+
     def set_hv(self, v):
         return self._set_value('SetHV', v)
+
+    def read_emission(self):
+        return self._read_value('GetParameter Source Current Readback', 'emission')
 
     def read_trap_current(self):
         return self._read_value('GetParameter Trap Current Readback', '_trap_current')

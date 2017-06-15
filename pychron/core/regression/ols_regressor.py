@@ -22,6 +22,10 @@ from numpy import asarray, column_stack, ones, \
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
+from pychron.core.helpers.fits import FITS
+from pychron.pychron_constants import MSEM
+from pychron.pychron_constants import SEM
+
 logger = logging.getLogger('Regressor')
 
 # ============= local library imports  ==========================
@@ -206,11 +210,11 @@ class OLSRegressor(BaseRegressor):
 
             return varY_hat[0, 0]
 
-        if error_calc == 'SEM':
+        if error_calc == SEM:
             def func(xi):
                 varY_hat = calc_hat(xi)
                 return sef * sqrt(varY_hat)
-        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        elif error_calc == MSEM:
             mswd = self.mswd
 
             def func(xi):
@@ -315,8 +319,7 @@ class OLSRegressor(BaseRegressor):
             self.calculate()
 
     def _get_fit(self):
-        fits = ['linear', 'parabolic', 'cubic']
-        return fits[self._degree - 1]
+        return FITS[self._degree - 1]
 
     def _set_fit(self, v):
         self._set_degree(v)

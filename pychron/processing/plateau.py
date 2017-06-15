@@ -15,14 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from numpy import argmax, array
 from traits.api import HasTraits, List, Array
 
-# ============= standard library imports ========================
-from numpy import argmax, array
-# ============= local library imports  ==========================
-# from pychron.core.helpers.logger_setup import logging_setup, new_logger
-# logging_setup('plateau', use_archiver=False)
-# log = new_logger('foo')
 from pychron.core.stats.core import validate_mswd, calculate_mswd
 
 
@@ -38,6 +33,14 @@ def memoize(function):
     return closure
 
 
+class Log():
+    def debug(self, txt):
+        pass
+        # print 'debug --- {}'.format(txt)
+
+log = Log()
+
+
 class Plateau(HasTraits):
     ages = Array
     errors = Array
@@ -49,7 +52,8 @@ class Plateau(HasTraits):
     gas_fraction = 50
 
     use_overlap = True  # fleck criterion
-    use_mswd = False  #mahon criterion
+    use_mswd = False  # mahon criterion
+    total_signal = None
 
     def find_plateaus(self, method=''):
         """
@@ -64,8 +68,7 @@ class Plateau(HasTraits):
 
         n = len(self.ages)
         exclude = self.exclude
-        ss = [s for i, s in enumerate(self.signals)
-              if not i in exclude]
+        ss = [s for i, s in enumerate(self.signals) if not i in exclude]
 
         self.total_signal = float(sum(ss))
         # log.info(self.total_signal)
@@ -95,11 +98,11 @@ class Plateau(HasTraits):
                 continue
 
             if not self.check_nsteps(start, i):
-                # log.debug('{} {} nsteps failed'.format(start, i))
+                log.debug('{} {} nsteps failed'.format(start, i))
                 continue
 
             if self.use_overlap and not self.check_overlap(start, i, overlap_func):
-                # log.debug('{} {} overlap failed'.format(start, i))
+                log.debug('{} {} overlap failed'.format(start, i))
                 # potential_end=None
                 break
 
@@ -107,7 +110,7 @@ class Plateau(HasTraits):
                 continue
 
             if not self.check_percent_released(start, i):
-                # log.debug('{} {} percent failed'.format(start, i))
+                log.debug('{} {} percent failed'.format(start, i))
                 continue
 
             potential_end = i
@@ -119,7 +122,7 @@ class Plateau(HasTraits):
         ss = sum([(s if not i in self.exclude else 0)
                   for i, s in enumerate(self.signals)][start:end + 1])
 
-        # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
+        log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
 
         return ss / self.total_signal >= self.gas_fraction/100.
 
@@ -158,7 +161,7 @@ class Plateau(HasTraits):
         return a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2
 
     def check_nsteps(self, start, end):
-        return end - start >= self.nsteps
+        return (end - start) + 1 >= self.nsteps
 
 # ============= EOF =============================================
 

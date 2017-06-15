@@ -218,14 +218,17 @@ class DVCAnalysis(Analysis):
 
         for sn in sniffs:
             isok = sn['isotope']
+            det = sn['detector']
+            if use_name_pairs:
+                isok = '{}{}'.format(isok, det)
+
             if keys and isok not in keys:
                 continue
 
-            try:
-                iso = isotopes[isok]
-            except KeyError:
-                continue
-            iso.sniff.unpack_data(format_blob(sn['blob']), n_only)
+            data = format_blob(sn['blob'])
+            for iso in isotopes.itervalues():
+                if iso.detector == det:
+                    iso.sniff.unpack_data(data, n_only)
 
     def set_production(self, prod, r):
         self.production_obj = r
@@ -373,6 +376,7 @@ class DVCAnalysis(Analysis):
                                                                                          'reference_isotope')}
 
         self.peak_center = pd['center_dac']
+        self.peak_center_reference_detector = refdet
 
     def _load_tags(self, jd):
         self.set_tag(jd.get('name'))

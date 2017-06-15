@@ -25,6 +25,7 @@ from datetime import datetime
 from git import Repo
 
 from pychron.dvc import analysis_path
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 
 
@@ -47,10 +48,12 @@ def repository_has_staged(ps, remote='origin', branch='master'):
 def push_repositories(ps, remote='origin', branch='master', quiet=True):
     for p in ps:
         pp = os.path.join(paths.repository_dataset_dir, p)
-        repo = Repo(pp)
+        # repo = Repo(pp)
+        repo = GitRepoManager()
+        repo.open_repo(pp)
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
-            repo.git.push(remote, branch)
+            repo.push(remote, branch)
 
 
 def get_review_status(record):
@@ -79,13 +82,16 @@ def get_review_status(record):
 
 def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
-    suffix = '{}.ia.json'.format(idn[prefixlen:])
-
+    suffix = '{}*.ia.json'.format(idn[prefixlen:])
+    # suffix = '{}*.ia.json'.format(prefix)
+    ret = []
     for e in repositories:
         pathname = '{}/{}/{}/ia/{}'.format(paths.repository_dataset_dir, e, prefix, suffix)
         ps = glob.glob(pathname)
         if ps:
-            return ps[0]
+            ret.extend(ps)
+
+    return ret
 
 
 class GitSessionCTX(object):

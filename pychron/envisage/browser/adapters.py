@@ -21,7 +21,9 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
@@ -209,10 +211,27 @@ class AnalysisAdapter(BrowserAdapter):
 
 class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Identifier', 'identifier'),
-               ('Name', 'name')]
+               ('Name', 'name'),
+               ('Age', 'age'),
+               (PLUSMINUS_ONE_SIGMA, 'age_err'),
+               ('Kind', 'age_kind')]
 
     font = 'arial 10'
     name_width = 100
     identifier_width = 100
+
+    age_text = Property
+    age_err_text = Property
+
+    def _get_age_text(self):
+        return floatfmt(self.item.age, 3)
+
+    def _get_age_err_text(self):
+        return floatfmt(self.item.age_err, 3)
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Delete', action='delete'),]
+
+        return MenuManager(*actions)
 
 # ============= EOF =============================================

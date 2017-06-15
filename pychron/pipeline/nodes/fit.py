@@ -197,8 +197,8 @@ class FitIsotopeEvolutionNode(FitNode):
         if self.editor:
             self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
 
-        for ai in state.unknowns:
-            ai.graph_id = 0
+        # for ai in state.unknowns:
+        #     ai.graph_id = 0
 
         self._set_saveable(state)
 
@@ -251,7 +251,8 @@ class FitFluxNode(FitNode):
         return view('Flux Options')
 
     def run(self, state):
-        editor = super(FitFluxNode, self).run(state)
+        super(FitFluxNode, self).run(state)
+        editor = self.editor
         if not editor:
             state.canceled = True
             return

@@ -20,7 +20,7 @@ import time
 from chaco.array_data_source import ArrayDataSource
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-from numpy import array, Inf
+from numpy import array, Inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
@@ -67,19 +67,22 @@ class BaseSeries(BaseArArFigure):
 
     def _get_xs(self, plots, ans, tzero=None):
 
-        xs = array([ai.timestamp for ai in ans])
-        px = plots[0]
-        if tzero is None:
-            if px.normalize == 'now':
-                tzero = time.time()
-            else:
-                tzero = xs[-1]
+        if self.options.use_time_axis:
+            xs = array([ai.timestamp for ai in ans])
+            px = plots[0]
+            if tzero is None:
+                if px.normalize == 'now':
+                    tzero = time.time()
+                else:
+                    tzero = xs[-1]
 
-        xs -= tzero
-        if not px.use_time_axis:
-            xs /= 3600.
+            xs -= tzero
+            if not px.use_time_axis:
+                xs /= 3600.
+            else:
+                self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
         else:
-            self.graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+            xs = arange(len(ans))
 
         return xs
 
@@ -110,7 +113,10 @@ class Series(BaseSeries):
             elif po.use_percent_dev:
                 ytitle = '{} Dev %'.format(ytitle)
 
-            p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
+            if self.options.use_time_axis:
+                p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
+            else:
+                p = graph.new_plot(ytitle=ytitle, xtitle='N')
 
             if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
@@ -203,8 +209,8 @@ class Series(BaseSeries):
                                         additional_info=af,
                                         value_format=value_format)
 
-            if po.use_time_axis:
-                p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
+            # if po.use_time_axis:
+            #     p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
             end_caps = True
             if po.y_error and yerr is not None:

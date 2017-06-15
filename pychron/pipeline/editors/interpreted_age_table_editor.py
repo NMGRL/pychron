@@ -1,162 +1,163 @@
-# # ===============================================================================
-# # Copyright 2013 Jake Ross
-# #
-# # Licensed under the Apache License, Version 2.0 (the "License");
-# # you may not use this file except in compliance with the License.
-# # You may obtain a copy of the License at
-# #
-# # http://www.apache.org/licenses/LICENSE-2.0
-# #
-# # Unless required by applicable law or agreed to in writing, software
-# # distributed under the License is distributed on an "AS IS" BASIS,
-# # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# # See the License for the specific language governing permissions and
-# # limitations under the License.
-# # ===============================================================================
+# ===============================================================================
+# Copyright 2013 Jake Ross
 #
-# # ============= enthought library imports =======================
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# from traits.api import List, Int, Event, Instance, Property, Str
-# from traitsui.api import View, UItem, VGroup, TabularEditor, Item, HGroup
-# from traitsui.tabular_adapter import TabularAdapter
-# # ============= standard library imports ========================
-# # ============= local library imports  ==========================
-# from pychron.column_sorter_mixin import ColumnSorterMixin
-# # from pychron.database.interpreted_age import InterpretedAge
-# # from pychron.database.records.isotope_record import IsotopeRecordView
-# from pychron.core.helpers.formatting import floatfmt
-# from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+# http://www.apache.org/licenses/LICENSE-2.0
 #
-#
-# # from pychron.processing.tasks.browser.panes import AnalysisAdapter
-# from pychron.processing.tables.interpreted_age.xls_writer import InterpretedAgeXLSTableWriter
-# from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
-#
-#
-# class InterpretedAgeAdapter(TabularAdapter):
-#     columns = [('Sample', 'sample'),
-#                ('Identifier', 'identifier'),
-#                ('Material', 'material'),
-#                ('Irradiation', 'irradiation'),
-#                ('Kind', 'age_kind'),
-#                ('N', 'nanalyses'),
-#                ('MSWD', 'mswd'),
-#                ('K/Ca', 'kca'),
-#                (PLUSMINUS_ONE_SIGMA, 'kca_err'),
-#                ('Age', 'display_age'),
-#                (PLUSMINUS_ONE_SIGMA, 'display_age_err')]
-#
-#     font = 'arial 10'
-#     sample_width = Int(100)
-#     identifier_width = Int(100)
-#     age_kind_width = Int(100)
-#     display_age_width = Int(75)
-#     display_age_err_width = Int(75)
-#     nanalyses_width = Int(75)
-#
-#     display_age_text = Property
-#     display_age_err_text = Property
-#     mswd_text = Property
-#     kca_text = Property
-#     kca_err_text = Property
-#
-#     display_age_sigfigs = Int(3)
-#     display_age_err_sigfigs = Int(3)
-#     mswd_sigfigs = Int(3)
-#     kca_sigfigs = Int(3)
-#     kca_err_sigfigs = Int(3)
-#
-#     kca_nsigma = Int(2)
-#     display_age_nsigma = Int(2)
-#
-#     def _get_display_age_text(self):
-#         return self._format_number('display_age')
-#
-#     def _get_display_age_err_text(self):
-#         return self._format_err('display_age')
-#
-#     def _get_mswd_text(self):
-#         return self._format_number('mswd')
-#
-#     def _get_kca_text(self):
-#         return self._format_number('kca')
-#
-#     def _get_kca_err_text(self):
-#         return self._format_err('kca')
-#
-#     def _format_number(self, attr):
-#         v = getattr(self.item, attr)
-#         n = getattr(self, '{}_sigfigs'.format(attr))
-#         return floatfmt(v, n)
-#
-#     def _format_err(self, attr):
-#         nsigma = getattr(self, '{}_nsigma'.format(attr))
-#         v = getattr(self.item, '{}_err'.format(attr))
-#         v *= nsigma
-#         n = getattr(self, '{}_err_sigfigs'.format(attr))
-#         return floatfmt(v, n)
-#
-#
-# class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
-#     interpreted_ages = List
-#     # analyses = List
-#     # pdf_table_options = Instance(PDFTableOptions, ())
-#     # saved_group_id = Int
-#     name = 'Untitled'
-#     refresh = Event
-#     tabular_adapter = Instance(InterpretedAgeAdapter, ())
-#     title = Str('Table 1. Ar/Ar Summary Table')
-#     # def save_summary_table(self, root, auto_view=False):
-#     #     name = '{}_summary'.format(self.name)
-#     #     w = SummaryPDFTableWriter()
-#     #     items = self.interpreted_ages
-#     #     title = self.get_title()
-#     #
-#     #     opt = self.pdf_table_options
-#     #     p, _ = unique_path(root, name, extension='.pdf')
-#     #     w.options = opt
-#     #     w.build(p, items, title)
-#     #     if auto_view:
-#     #         view_file(p)
-#     #
-#     # def get_title(self):
-#     #     opt = self.pdf_table_options
-#     #     if opt.auto_title:
-#     #         title = self._generate_title()
-#     #     else:
-#     #         title = opt.title
-#     #     return title
-#
-#     def make_xls_table(self, output_options):
-#         # ans = self._clean_items()
-#         # means = self.analysis_groups
-#         t = InterpretedAgeXLSTableWriter()
-#         path = output_options.path
-#         if path:
-#             t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter, output_options)
-#             return path
-#
-#     def _generate_title(self):
-#         return self.title
-#
-#     #     return 'Table 1. Ar/Ar Summary Table'
-#
-#     # @on_trait_change('interpreted_ages[]')
-#     # def _interpreted_ages_changed(self):
-#     #     if self.interpreted_ages:
-#     #         self.pdf_table_options.title = self._generate_title()
-#     #         self.pdf_table_options.age_units = self.interpreted_ages[0].display_age_units
-#
-#     def traits_view(self):
-#         interpreted_grp = UItem('interpreted_ages',
-#                                 editor=TabularEditor(adapter=self.tabular_adapter,
-#                                                      operations=['move', 'delete'],
-#                                                      column_clicked='column_clicked',
-#                                                      refresh='refresh'))
-#         title_grp = HGroup(Item('title'))
-#         v = View(VGroup(title_grp, interpreted_grp))
-#         return v
-#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+
+from traits.api import List, Int, Event, Instance, Property, Str
+from traitsui.api import View, UItem, VGroup, TabularEditor, Item, HGroup
+from traitsui.tabular_adapter import TabularAdapter
+
+from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.formatting import floatfmt
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.pipeline.tables.interpreted_xlsx_table_writer import InterpretedAgeXLSTableWriter
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+
+
+class InterpretedAgeAdapter(TabularAdapter):
+    columns = [('Status', 'status'),
+               ('Name', 'name'),
+               ('Sample', 'sample'),
+               ('Identifier', 'identifier'),
+               ('Material', 'material'),
+               ('Irradiation', 'irradiation'),
+               ('Kind', 'age_kind'),
+               ('N', 'nanalyses'),
+               ('MSWD', 'mswd'),
+               ('K/Ca', 'kca'),
+               (PLUSMINUS_ONE_SIGMA, 'kca_err'),
+               ('Age', 'display_age'),
+               [PLUSMINUS_ONE_SIGMA, 'display_age_err']]
+
+    font = 'arial 10'
+    sample_width = Int(100)
+    identifier_width = Int(100)
+    age_kind_width = Int(100)
+    display_age_width = Int(75)
+    display_age_err_width = Int(75)
+    nanalyses_width = Int(75)
+
+    status_text = Property
+    display_age_text = Property
+    display_age_err_text = Property
+    mswd_text = Property
+    kca_text = Property
+    kca_err_text = Property
+
+    display_age_sigfigs = Int(3)
+    display_age_err_sigfigs = Int(3)
+    mswd_sigfigs = Int(3)
+    kca_sigfigs = Int(3)
+    kca_err_sigfigs = Int(3)
+
+    kca_nsigma = Int(2)
+    display_age_nsigma = Int(2)
+
+    def _get_status_text(self):
+        return 'X' if self.item.is_omitted() else ''
+
+    def _get_display_age_text(self):
+        return self._format_number('display_age')
+
+    def _get_display_age_err_text(self):
+        return self._format_err('display_age')
+
+    def _get_mswd_text(self):
+        return self._format_number('mswd')
+
+    def _get_kca_text(self):
+        return self._format_number('kca')
+
+    def _get_kca_err_text(self):
+        return self._format_err('kca')
+
+    def _format_number(self, attr):
+        v = getattr(self.item, attr)
+        n = getattr(self, '{}_sigfigs'.format(attr))
+        return floatfmt(v, n)
+
+    def _format_err(self, attr):
+        nsigma = getattr(self, '{}_nsigma'.format(attr))
+        v = getattr(self.item, '{}_err'.format(attr))
+        v *= nsigma
+        n = getattr(self, '{}_err_sigfigs'.format(attr))
+        return floatfmt(v, n)
+
+
+class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
+    interpreted_ages = List
+    # analyses = List
+    # pdf_table_options = Instance(PDFTableOptions, ())
+    # saved_group_id = Int
+    name = 'Untitled'
+    refresh = Event
+    tabular_adapter = Instance(InterpretedAgeAdapter, ())
+    title = Str('Table 1. Ar/Ar Summary Table')
+
+    # def save_summary_table(self, root, auto_view=False):
+    #     name = '{}_summary'.format(self.name)
+    #     w = SummaryPDFTableWriter()
+    #     items = self.interpreted_ages
+    #     title = self.get_title()
+    #
+    #     opt = self.pdf_table_options
+    #     p, _ = unique_path(root, name, extension='.pdf')
+    #     w.options = opt
+    #     w.build(p, items, title)
+    #     if auto_view:
+    #         view_file(p)
+    #
+    # def get_title(self):
+    #     opt = self.pdf_table_options
+    #     if opt.auto_title:
+    #         title = self._generate_title()
+    #     else:
+    #         title = opt.title
+    #     return title
+
+    def make_xls_table(self, output_options):
+        # ans = self._clean_items()
+        # means = self.analysis_groups
+        t = InterpretedAgeXLSTableWriter()
+        path = output_options.path
+        if path:
+            t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter, output_options)
+            return path
+
+    def _generate_title(self):
+        return self.title
+
+    #     return 'Table 1. Ar/Ar Summary Table'
+
+    # @on_trait_change('interpreted_ages[]')
+    # def _interpreted_ages_changed(self):
+    #     if self.interpreted_ages:
+    #         self.pdf_table_options.title = self._generate_title()
+    #         self.pdf_table_options.age_units = self.interpreted_ages[0].display_age_units
+
+    def traits_view(self):
+        interpreted_grp = UItem('interpreted_ages',
+                                editor=TabularEditor(adapter=self.tabular_adapter,
+                                                     operations=['move', 'delete'],
+                                                     column_clicked='column_clicked',
+                                                     refresh='refresh'))
+        title_grp = HGroup(Item('title'))
+        v = View(VGroup(title_grp, interpreted_grp))
+        return v
+
 # # ============= EOF =============================================
 # # def _selected_history_name_changed(self):
 # #     if self.selected_history_name:

@@ -36,7 +36,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Series
 - Radial
 - Analysis Table
-#- Interpreted Age Table
+- Interpreted Age Table
 - Interpreted Age Ideogram
 - Auto Ideogram
 - Diff

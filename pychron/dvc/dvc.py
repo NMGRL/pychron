@@ -25,7 +25,7 @@ from math import isnan
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo
 from traits.api import Instance, Str, Set, List, provides
-from uncertainties import nominal_value, std_dev
+from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
@@ -43,7 +43,7 @@ from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_re
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -69,6 +69,7 @@ class Tag(object):
         tag.name = an.tag
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
+        print an.record_id, an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
 
         return tag
@@ -84,10 +85,29 @@ class Tag(object):
 
 
 class DVCInterpretedAge(InterpretedAge):
+    labnumber = None
+    isotopes = None
+    repository_identifier = None
+
+    def load_tag(self, obj):
+        self.tag = obj.get('name', '')
+
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation'):
-            setattr(self, a, obj[a])
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name',
+                  'uuid'):
+            setattr(self, a, obj.get(a, NULL_STR))
+
+        self.labnumber = self.identifier
+        self.uage = ufloat(self.age, self.age_err)
+        self._record_id = '{} {}'.format(self.identifier, self.name)
+
+    def get_value(self, attr):
+        return getattr(self, attr)
+
+    @property
+    def status(self):
+        return 'X' if self.is_omitted() else ''
 
 
 @provides(IDatastore)
@@ -477,13 +497,9 @@ class DVC(Loggable):
         self.meta_repo.remove_irradiation_position(irradiation, level, hole)
 
     def find_interpreted_ages(self, identifiers, repositories):
-        ias = []
-        for idn in identifiers:
-            path = find_interpreted_age_path(idn, repositories)
-            if path:
-                obj = dvc_load(path)
-                name = obj.get('name')
-                ias.append(InterpretedAgeRecordView(idn, path, name))
+        ias = [InterpretedAgeRecordView(idn, path, dvc_load(path))
+               for idn in identifiers
+               for path in find_interpreted_age_path(idn, repositories)]
 
         return ias
 
@@ -501,7 +517,16 @@ class DVC(Loggable):
                 prog.change_message('Making Interpreted age {}'.format(x.name))
             obj = dvc_load(x.path)
             ia = DVCInterpretedAge()
+            ia.repository_identifier = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(x.path))))
             ia.from_json(obj)
+
+            try:
+                ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
+                if ta is not None:
+                    ia.load_tag(dvc_load(ta))
+            except AnalysisNotAnvailableError:
+                pass
+
             return ia
 
         return progress_loader(ias, func, step=25)
@@ -728,8 +753,11 @@ class DVC(Loggable):
 
         if isnan(mswd):
             mswd = 0
-
-        d = dict(age=float(nominal_value(a)),
+        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+                                                  'name', 'uuid', 'include_j_error_in_mean',
+                                                  'include_j_error_in_plateau',
+                                                  'include_j_error_in_individual_analyses')}
+        d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
                  age_kind=ia.preferred_age_kind,
@@ -737,17 +765,8 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
-                 include_j_error_in_mean=ia.include_j_error_in_mean,
-                 include_j_error_in_plateau=ia.include_j_error_in_plateau,
-                 include_j_error_in_individual_analyses=ia.include_j_error_in_individual_analyses,
-                 sample=ia.sample,
-                 material=ia.material,
-                 identifier=ia.identifier,
-                 nanalyses=ia.nanalyses,
-                 irradiation=ia.irradiation)
-
-        d['analyses'] = [dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai))
-                         for ai in ia.all_analyses]
+                 analyses=[dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
+                           ia.all_analyses])
 
         self._add_interpreted_age(ia, d)
 
@@ -927,8 +946,18 @@ class DVC(Loggable):
 
     # private
     def _add_interpreted_age(self, ia, d):
-        p = analysis_path(ia.identifier, ia.repository_identifier, modifier='ia', mode='w')
+        rid = ia.repository_identifier
+        p = analysis_path(ia.identifier, rid, modifier='ia', mode='w')
+
+        i = 0
+        while os.path.isfile(p):
+            p = analysis_path('{}_{:05d}'.format(ia.identifier, i), rid, modifier='ia', mode='w')
+            i += 1
+
+        self.debug('saving interpreted age. {}'.format(p))
         dvc_dump(d, p)
+        if self.repository_add_paths(rid, p):
+            self.repository_commit(rid, '<IA> added interpreted age {}'.format(ia.name))
 
     def _load_repository(self, expid, prog, i, n):
         if prog:

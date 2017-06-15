@@ -24,8 +24,7 @@ from traits.api import List, Bool, Int, on_trait_change, Color
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-
-class IntegratedPlotLabel(PlotLabel):
+class RelativePlotLabel(PlotLabel):
     relative_position = Int
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
@@ -63,6 +62,14 @@ class IntegratedPlotLabel(PlotLabel):
             self._label.draw(gc)
 
         return
+
+
+class IntegratedPlotLabel(RelativePlotLabel):
+    pass
+
+
+class WeightedMeanPlotLabel(RelativePlotLabel):
+    pass
 
 
 class SpectrumLabelOverlay(AbstractOverlay):

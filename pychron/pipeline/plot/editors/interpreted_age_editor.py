@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import uuid
 from itertools import groupby
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-# from pychron.database.interpreted_age import InterpretedAge
+
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -35,7 +34,7 @@ class InterpretedAgeEditor(FigureEditor):
         additional = {}
         if isinstance(po, SpectrumOptions):
             ek = po.plateau_age_error_kind
-            pk = 'Plateau'
+            pk = ''
             additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
         elif isinstance(po, InverseIsochronOptions):
             pk = 'Isochron'
@@ -54,6 +53,7 @@ class InterpretedAgeEditor(FigureEditor):
                                        preferred_age_kind=pk,
                                        preferred_age_error_kind=ek,
                                        use=True,
+                                       uuid=str(uuid.uuid4()),
                                        **additional)
 
         ias = [func(list(ans)) for gid, ans in groupby(unks, key=key)]

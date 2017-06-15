@@ -34,9 +34,9 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode
+from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode
+    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -203,6 +203,9 @@ class PipelineEngine(Loggable):
     def reset(self):
         # for ni in self.pipeline.nodes:
         #     ni.visited = False
+        if self.state:
+            self.state.canceled = False
+
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
 
@@ -373,6 +376,7 @@ class PipelineEngine(Loggable):
         newnode = ReviewNode()
         self._add_node(node, newnode, run)
 
+
     def chain_ideogram(self, node):
         self._set_template('ideogram', clear=False)
 
@@ -391,6 +395,10 @@ class PipelineEngine(Loggable):
     # preprocess
     def add_filter(self, node=None, run=True):
         newnode = FilterNode()
+        self._add_node(node, newnode, run)
+
+    def add_graph_grouping(self, node=None, run=True):
+        newnode = GraphGroupingNode()
         self._add_node(node, newnode, run)
 
     def add_grouping(self, node=None, run=True):
@@ -475,6 +483,10 @@ class PipelineEngine(Loggable):
         newnode = PushNode()
         self._add_node(node, newnode, run=run)
 
+    def add_set_interpreted_age(self, node=None, run=True):
+        newnode = SetInterpretedAgeNode()
+        self._add_node(node, newnode, run=run)
+
     # ============================================================================================================
     def save_pipeline_template(self):
         # self.info('Saving pipeline to {}'.format(path))
@@ -525,6 +537,8 @@ class PipelineEngine(Loggable):
         state = self.state
         state.unknowns = unks
 
+        state.canceled = False
+
         ost = time.time()
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
@@ -574,6 +588,7 @@ class PipelineEngine(Loggable):
         if start_node:
             self.debug('starting at node {} {}'.format(start_node, run_from))
         state.veto = None
+        state.canceled = False
 
         for node in self.pipeline.iternodes(start_node):
             node.visited = False

@@ -21,8 +21,9 @@ from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List
+from traits.has_traits import HasTraits
 from traitsui.handler import Handler
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -30,6 +31,7 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.arar_age import ArArAge
+from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
 
@@ -96,12 +98,13 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
         p.y_axis.title_spacing = 50
         if show_equilibration:
             sniff = iso.sniff
-            g.new_series(sniff.xs, sniff.ys,
-                         type='scatter',
-                         fit=None,
-                         color='red')
-            ymi, yma = min_max(ymi, yma, sniff.ys)
-            xmi, xma = min_max(xmi, xma, sniff.xs)
+            if sniff.xs.shape[0]:
+                g.new_series(sniff.xs, sniff.ys,
+                             type='scatter',
+                             fit=None,
+                             color='red')
+                ymi, yma = min_max(ymi, yma, sniff.ys)
+                xmi, xma = min_max(xmi, xma, sniff.xs)
 
         if show_evo:
             if iso.fit is None:
@@ -134,7 +137,87 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
     return g
 
 
-class Analysis(ArArAge):
+class IdeogramPlotable(HasTraits):
+    group_id = 0
+    graph_id = 0
+    name = ''
+
+    tag = 'ok'
+    uage = None
+    temp_status = 'ok'
+    otemp_status = None
+    _record_id = None
+    temp_selected = False
+    comment = ''
+    j = None
+    labnumber = ''
+    aliquot = 0
+    step = ''
+
+    def __init__(self, *args, **kw):
+        super(IdeogramPlotable, self).__init__(*args, **kw)
+        self.arar_constants = ArArConstants()
+
+    def refresh_view(self):
+        pass
+
+    def is_omitted(self):
+        return self.is_omitted_by_tag() or self.temp_selected
+
+    def is_omitted_by_tag(self, tags=None):
+        if tags is None:
+            tags = ('omit', 'invalid', 'outlier')
+        return self.tag in tags
+
+    def set_temp_status(self, tag):
+        tag = tag.lower()
+        if tag != 'ok':
+            self.otemp_status = tag
+        else:
+            self.otemp_status = 'omit'
+
+        self.temp_status = tag
+
+    def set_tag(self, tag):
+        self.tag = tag
+
+    def value_string(self, t):
+        a, e = self._value_string(t)
+        pe = format_percent_error(a, e)
+        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+
+    @property
+    def status_text(self):
+        return self.temp_status.lower()
+
+    @property
+    def identifier(self):
+        return self.labnumber
+
+    @identifier.setter
+    def identifier(self, v):
+        self.labnumber = v
+
+    @property
+    def record_id(self):
+        v = self._record_id
+        if v is None:
+            v = make_runid(self.labnumber, self.aliquot, self.step)
+        return v
+
+    @record_id.setter
+    def record_id(self, v):
+        self._record_id = v
+
+    @property
+    def temp_selected(self):
+        return self.temp_status in ('omit', 'outlier', 'invalid')
+
+    def _value_string(self, t):
+        raise NotImplementedError
+
+
+class Analysis(ArArAge, IdeogramPlotable):
     analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
     _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
 
@@ -159,12 +242,9 @@ class Analysis(ArArAge):
     laboratory = ''
     analystName = ''
     uuid = None  # Str
-    labnumber = ''
-    aliquot = 0
-    step = ''
+
     increment = None
     aliquot_step_str = ''
-    comment = ''
     mass_spectrometer = ''
     analysis_type = ''
     extract_value = 0
@@ -187,6 +267,7 @@ class Analysis(ArArAge):
     ramp_rate = 0
     peak_center = 0
     peak_center_data = None
+    peak_center_reference_detector = None
     additional_peak_center_data = None
     collection_version = ''
     source_parameters = Dict
@@ -197,11 +278,11 @@ class Analysis(ArArAge):
     # processing
     is_plateau_step = False
     # temp_status = Int(0)
-    temp_status = 'ok'
-    otemp_status = None
+    # temp_status = 'ok'
+    # otemp_status = None
     # value_filter_omit = False
     # table_filter_omit = False
-    tag = ''
+    # tag = ''
     data_reduction_tag = ''
     branch = NULL_STR
 
@@ -262,18 +343,6 @@ class Analysis(ArArAge):
 
         return r
 
-    def set_temp_status(self, tag):
-        tag = tag.lower()
-        if tag != 'ok':
-            self.otemp_status = tag
-        else:
-            self.otemp_status = 'omit'
-
-        self.temp_status = tag
-
-    def set_tag(self, tag):
-        self.tag = tag
-
     def show_isotope_evolutions(self, isotopes=None, **kw):
         if isotopes:
             if isinstance(isotopes[0], (str, unicode)):
@@ -321,14 +390,6 @@ class Analysis(ArArAge):
             analyses = [self, ]
         self.omit_event = analyses
 
-    def is_omitted(self):
-        return self.is_omitted_by_tag() or self.temp_selected
-
-    def is_omitted_by_tag(self, tags=None):
-        if tags is None:
-            tags = ('omit', 'invalid', 'outlier')
-        return self.tag in tags
-
     def sync(self, obj, **kw):
         self._sync(obj, **kw)
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
@@ -371,19 +432,6 @@ class Analysis(ArArAge):
             traceback.print_exc()
             print 'sync view {}'.format(e)
 
-    def value_string(self, t):
-        if t == 'uF':
-            a, e = self.F, self.F_err
-        elif t == 'uage':
-            a, e = self.uage.nominal_value, self.uage.std_dev
-        else:
-            v = self.get_value(t)
-            if isinstance(v, Isotope):
-                v = v.get_intensity()
-            a, e = v.nominal_value, v.std_dev
-        pe = format_percent_error(a, e)
-        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
-
     @property
     def age_string(self):
         a = self.age
@@ -392,32 +440,18 @@ class Analysis(ArArAge):
 
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
-    @property
-    def status_text(self):
-        return self.temp_status.lower()
+    def _value_string(self, t):
+        if t == 'uF':
+            a, e = self.F, self.F_err
+        elif t == 'uage':
+            a, e = self.uage.nominal_value, self.uage.std_dev
+        else:
+            v = self.get_value(t)
+            if isinstance(v, Isotope):
+                v = v.get_intensity()
+            a, e = nominal_value(v), std_dev(v)
 
-    @property
-    def identifier(self):
-        return self.labnumber
-
-    @identifier.setter
-    def identifier(self, v):
-        self.labnumber = v
-
-    @property
-    def record_id(self):
-        v = self._record_id
-        if v is None:
-            v = make_runid(self.labnumber, self.aliquot, self.step)
-        return v
-
-    @record_id.setter
-    def record_id(self, v):
-        self._record_id = v
-
-    @property
-    def temp_selected(self):
-        return self.temp_status in ('omit', 'outlier', 'invalid')
+        return a, e
 
     def _get_isotope_dict(self, get):
         d = dict()
@@ -428,4 +462,5 @@ class Analysis(ArArAge):
 
     def __str__(self):
         return '{}<{}>'.format(self.record_id, self.__class__.__name__)
+
 # ============= EOF =============================================

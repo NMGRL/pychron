@@ -16,12 +16,15 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any, Event, Property, Bool
+from pyface.qt.QtCore import QThread
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
 # ============= standard library imports ========================
 from numpy import linspace
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from threading import Thread
+
+
 # from pychron.spectrometer.spectrometer import Spectrometer
 
 class SpectrometerTask(Loggable):
@@ -29,7 +32,7 @@ class SpectrometerTask(Loggable):
     execute_button = Event
     execute_label = Property(depends_on='_alive')
     _alive = Bool
-
+    execution_thread = None
     graph = Any
 
     def _get_execute_label(self):
@@ -40,6 +43,7 @@ class SpectrometerTask(Loggable):
 
     def stop(self):
         self._alive = False
+        self.execution_thread = None
 
     def _execute_button_fired(self):
         if self.isAlive():
@@ -49,9 +53,12 @@ class SpectrometerTask(Loggable):
             self.execute()
 
     def execute(self):
+        self.debug('execute', self.__class__.__name__)
         self._alive = True
-        t = Thread(name=self.__class__.__name__, target=self._execute)
+        t = QThread(name=self.__class__.__name__, target=self._execute)
         t.start()
+        self.execution_thread = t
+        self.debug('execution thread. {}'.format(t))
         return t
 
     def _execute(self):
@@ -71,4 +78,5 @@ class SpectrometerTask(Loggable):
         nsteps = abs(end - start + width * sign) / width
         self.debug('calculated step values: start={}, end={}, width={}, nsteps={}'.format(start, end, width, nsteps))
         return linspace(start, end, nsteps)
+
 # ============= EOF =============================================

@@ -77,6 +77,26 @@ class BaseRegressor(HasTraits):
     degrees_of_freedom = Property
     integrity_warning = False
 
+    @property
+    def min(self):
+        return self.clean_ys.min()
+
+    @property
+    def max(self):
+        return self.clean_ys.max()
+
+    @property
+    def mean(self):
+        return self.clean_ys.mean()
+
+    @property
+    def std(self):
+        return self.clean_ys.std()
+
+    @property
+    def sem(self):
+        return self.std/self.n**0.5
+
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
 
@@ -176,12 +196,13 @@ class BaseRegressor(HasTraits):
     def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:
             rmodel = self.predict(rx)
-        if self.error_calc_type == 'CI':
-            func = self.calculate_ci
+
+        func = self.calculate_ci
+        if self.error_calc_type == 'SEM':
+            func = self.calculate_sem_error_envelope
         elif self.error_calc_type == 'SD':
             func = self.calculate_sd_error_envelope
-        else:
-            func = self.calculate_sem_error_envelope
+
         return func(rx, rmodel)
 
     def calculate_sd_error_envelope(self, rx, rmodel):
@@ -257,7 +278,7 @@ class BaseRegressor(HasTraits):
 
         fit = self.fit
         eq = '+'.join(ps)
-        s = '{}    y={}+{}'.format(fit, eq, constant)
+        s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
         return s
 
     def _calculate_ci(self, rx):

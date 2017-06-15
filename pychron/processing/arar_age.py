@@ -196,7 +196,6 @@ class ArArAge(IsotopeGroup):
                 pass
 
     def get_value(self, attr):
-        # print 'get attr', attr, self.isotopes
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]
@@ -244,7 +243,6 @@ class ArArAge(IsotopeGroup):
         #     # iso=next((i for i in self.isotopes if i.detector==attr), None)
         #     if iso:
         #         r = ufloat(iso.ys[-1], tag=attr)
-
         return r
 
     def get_interference_corrected_value(self, iso):

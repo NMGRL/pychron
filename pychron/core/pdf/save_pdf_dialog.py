@@ -65,7 +65,16 @@ class FigurePDFOptions(BasePDFOptions):
     def bounds(self):
         units = UNITS_MAP[self.units]
         page = PAGE_MAP[self.page_type]
-        if self.use_column_width:
+        if self.fit_to_page:
+            if self.orientation == 'landscape':
+                b = [page[1], page[0]]
+            else:
+                b = [page[0], page[1]]
+
+            b[0] -= (self.left_margin+self.right_margin)*units
+            b[1] -= (self.top_margin+self.bottom_margin)*units
+
+        elif self.use_column_width:
             if self.orientation == 'landscape':
                 page = landscape(page)
                 width_margins = self.bottom_margin + self.top_margin
@@ -77,9 +86,6 @@ class FigurePDFOptions(BasePDFOptions):
             # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
             nw = w * COLUMN_MAP[self.columns]
             b = [nw, nw]
-
-        elif self.fit_to_page:
-            b = [page[0], page[1]]
         else:
             b = [self.fixed_width * units, self.fixed_height * units]
 
@@ -95,10 +101,14 @@ class FigurePDFOptions(BasePDFOptions):
         units = UNITS_MAP[self.units]
         if self.orientation == 'landscape':
             w, h = self.bounds
-            lbrt = self.bottom_margin, self.right_margin, h / units, w / units
+            lbrt = (self.bottom_margin, self.right_margin,
+                    w / units + self.bottom_margin,
+                    h / units + self.right_margin)
         else:
             w, h = self.bounds
-            lbrt = self.left_margin, self.bottom_margin, w / units, h / units
+            lbrt = (self.left_margin, self.bottom_margin,
+                   w / units+self.left_margin,
+                   h / units+self.bottom_margin)
             # lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
         # print map(lambda x: x*units, lbrt)
         # print 'lbrt', lbrt
@@ -159,7 +169,6 @@ def save_pdf(component, path=None, default_directory=None, view=False, options=N
                 path = dlg.path
 
         if path:
-
             path = add_extension(path, '.pdf')
             gc = PdfPlotGraphicsContext(filename=path,
                                         dest_box=options.dest_box,

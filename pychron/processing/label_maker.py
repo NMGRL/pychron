@@ -94,12 +94,13 @@ class TitleTemplater(BaseTemplater):
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
+    attributes = List(['Sample', 'Aliquot', 'Step', 'Name', '<SPACE>'])
     attribute_formats = {'step': '',
                          'aliquot': '02n',
-                         'sample': ''}
+                         'sample': '',
+                         'name': ''}
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001'}
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo'}
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
                               'Aliquot Step'])
@@ -112,6 +113,7 @@ class LabelTemplateView(BaseTemplateView):
 
 class TitleTemplateView(BaseTemplateView):
     view_title = 'Title Maker'
+
     def _get_additional_groups(self):
         return (HGroup(UItem('multi_group_example', style='readonly'),
                        show_border=True, label='Multi Group Example'),

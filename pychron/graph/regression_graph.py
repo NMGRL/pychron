@@ -79,12 +79,28 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.set_fit('cubic', plotid=self.selected_plotid)
         self._update_graph()
 
+    def cm_quartic(self):
+        self.set_fit('quartic', plotid=self.selected_plotid)
+        self._update_graph()
+
     def cm_average_std(self):
         self.set_fit('average_std', plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_sem(self):
         self.set_fit('average_sem', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_sd(self):
+        self.set_error_calc_type('sd', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_sem(self):
+        self.set_error_calc_type('sem', plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_ci(self):
+        self.set_error_calc_type('ci', plotid=self.selected_plotid)
         self._update_graph()
 
     # ===============================================================================
@@ -201,6 +217,29 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         scatter = plot.plots['data{}'.format(series)][0]
         return scatter.filter_outliers_dict['filter_outliers']
 
+    def set_error_calc_type(self, fi, plotid=0, series=0, redraw=True):
+        fi = fi.lower()
+        plot = self.plots[plotid]
+        # for idx in range(series, -1, -1):
+        key = 'data{}'.format(series)
+        # print 'set fit', fi, plotid, key, plot.plots.keys()
+        print 'a', key, plot.plots
+        print 'b', key in plot.plots
+
+        if key in plot.plots:
+            scatter = plot.plots[key][0]
+            f = scatter.fit
+            if '_' in f:
+                f = f.split('_')[0]
+            scatter.fit = '{}_{}'.format(f, fi)
+
+            # if lkey in plot.plots:
+            #     line = plot.plots[lkey][0]
+            #     line.regressor.error_calc_type = fi
+
+                # if redraw:
+                #     self.redraw()
+
     def set_fit(self, fi, plotid=0, series=0, redraw=True):
 
         fi = fi.lower()
@@ -212,7 +251,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             scatter = plot.plots[key][0]
             # print key
             if scatter.fit != fi:
-                lkey = 'line{}'.format(series)
+                lkey = 'fit{}'.format(series)
                 if lkey in plot.plots:
                     line = plot.plots[lkey][0]
                     line.regressor = None
@@ -222,8 +261,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 scatter.index.metadata['selections'] = []
                 scatter.index.metadata['filtered'] = None
 
-                if redraw:
-                    self.redraw()
+                # if redraw:
+                #     self.redraw()
                 # break
 
     def get_fit(self, plotid=0, series=0):
@@ -312,7 +351,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if line and hasattr(line, 'regressor'):
             r = line.regressor
 
-        if fit in [1, 2, 3]:
+        if fit in [1, 2, 3, 4]:
             r = self._poly_regress(scatter, r, fit)
 
         elif isinstance(fit, tuple):

@@ -215,12 +215,16 @@ class DVCDatabase(DatabaseAdapter):
                         extract_device=None,
                         mass_spectrometer=None,
                         exclude_invalid=True):
+
         with self.session_ctx() as sess:
             # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
             refs = OrderedSet()
             ex = None
             for ti in times:
+                if not isinstance(ti, datetime):
+                    ti = ti.rundate
+
                 low = ti - delta
                 high = ti + delta
                 # rs = self.get_analyses_data_range(low, high, atypes, exclude=ex, exclude_uuids=exclude)

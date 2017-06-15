@@ -101,6 +101,7 @@ class BrowserModel(BaseBrowserModel):
             self._load_mass_spectrometers()
 
             self.load_browser_selection()
+            self.is_activated = True
 
     def refresh_samples(self):
         self.debug('refresh samples')

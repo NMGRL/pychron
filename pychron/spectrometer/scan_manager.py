@@ -228,11 +228,13 @@ class ScanManager(StreamGraphManager):
                 # convert dac into a mass
                 # convert mass to isotope
                 #            d = self.magnet.dac
+                print 'supre', self._suppress_isotope_change
                 if not self._suppress_isotope_change:
                     iso = self.magnet.map_dac_to_isotope(current=False)
                 else:
                     iso = self.isotope
 
+                print iso, self.isotopes
                 if iso is None or iso not in self.isotopes:
                     iso = NULL_STR
 
@@ -432,14 +434,15 @@ class ScanManager(StreamGraphManager):
 
     def _detector_changed(self, old, new):
         self.debug('detector changed {}'.format(self.detector))
+        self.magnet.detector = self.detector
+        self.rise_rate.detector = self.detector
+
         if self.isotope not in ('', NULL_STR, None):
             self.debug('isotope not set isotope={}. Not setting magnet'.format(self.isotope))
             return
 
         if self.detector and not self._check_detector_protection(old, True):
             # self.scanner.detector = self.detector
-            self.rise_rate.detector = self.detector
-            self.magnet.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
             for name, plot in self.graph.plots[0].plots.iteritems():
@@ -472,7 +475,8 @@ class ScanManager(StreamGraphManager):
 
     def _integration_time_changed(self):
         if self.integration_time:
-            self.spectrometer.set_integration_time(self.integration_time)
+            self.debug('setting integration time={}'.format(self.integration_time))
+            self.spectrometer.set_integration_time(self.integration_time, force=True)
             self.reset_scan_timer()
 
     def _consume(self, dm):

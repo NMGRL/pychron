@@ -119,7 +119,13 @@ def create_issue(issue):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
 
-    r = requests.post(cmd, data=json.dumps(issue), headers=headers, verify=globalv.cert_file)
+    kw = {'data': json.dumps(issue),
+          'headers': headers}
+
+    if globalv.cert_file:
+        kw['verify'] = globalv.cert_file
+
+    r = requests.post(cmd, **kw)
 
     if r.status_code == 401:
         warning(None, 'Failed to submit issue. Username/Password incorrect.')
@@ -179,7 +185,7 @@ class ExceptionHandler(Controller):
 
     def _make_issue(self):
         m = self.model
-        issue = {'title': m.title,
+        issue = {'title': m.title or 'No Title Provided',
                  'labels': m.labels,
                  'body': self._make_body()}
         return issue

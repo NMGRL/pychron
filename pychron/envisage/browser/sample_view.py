@@ -323,6 +323,11 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
+
+    def delete(self, info, obj):
+        print 'asfdasfdasdfasdf', info, obj
+
+
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
         ctx['interpreted_table'] = self.model.interpreted_age_table
@@ -333,6 +338,7 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
             UItem('interpreted_table.interpreted_ages',
                   # width=0.4,
                   editor=myTabularEditor(
+                      auto_resize=True,
                       adapter=self.model.interpreted_age_table.tabular_adapter,
                       operations=['move', 'delete'],
                       # column_clicked=make_name('column_clicked'),

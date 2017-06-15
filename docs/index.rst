@@ -23,6 +23,7 @@ Welcome to Pychron's documentation!
   course/index
   tutorials/index
   api/index
+  massspec_pychron
 
 Indices and tables
 ==================

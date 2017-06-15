@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance
-# ============= standard library imports ========================
 from itertools import groupby
-# ============= local library imports  ==========================
-# from pychron.pipeline.plot import FigureLayout
+
+from traits.api import HasTraits, List, Property, Any, Instance
+
 from pychron.pipeline.plot.layout import FigureLayout
 
 
@@ -71,7 +70,6 @@ class FigureModel(HasTraits):
         if self.analysis_groups:
             gs = [self._panel_klass(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
                   enumerate(self.analysis_groups)]
-
         else:
             key = lambda x: x.graph_id
             ans = sorted(self.analyses, key=key)
@@ -79,7 +77,6 @@ class FigureModel(HasTraits):
                                     plot_options=self.plot_options,
                                     graph_id=gid)
                   for gid, ais in groupby(ans, key=key)]
-
             # if hasattr(self, 'references'):
             gg = groupby(self.references, key=key)
             for gi in gs:

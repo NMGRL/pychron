@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Bool, List, Instance
+from itertools import groupby
+
+from traits.api import Any, Bool, Instance
 from traitsui.api import View
 
-from pychron.envisage.tasks.base_editor import grouped_name
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
     RadialOptionsManager
@@ -41,7 +42,7 @@ class FigureNode(BaseNode):
     plotter_options_manager_klass = Any
     plotter_options_manager = Any
     no_analyses_warning = Bool(False)
-    editors = List
+    # editors = List
     auto_set_items = True
     use_plotting = True
 
@@ -67,37 +68,55 @@ class FigureNode(BaseNode):
         self.unknowns = state.unknowns
         self.references = state.references
 
+        # oname = ''
         if use_plotting and self.use_plotting:
             editor = self.editor
+            # editors = self.editors
             if not editor:
+                # key = lambda x: x.graph_id
+                #
+                # for _, ans in groupby(sorted(state.unknowns, key=key), key=key):
                 editor = self._editor_factory()
-                self.editor = editor
                 state.editors.append(editor)
+                self.editor = editor
 
-            # print editor, state.unknowns
             if self.auto_set_items:
                 editor.set_items(state.unknowns)
+                # self.editors.append(editor)
+                    # oname = editor.name
 
-            oname = editor.name
+            key = lambda x: x.name
+            for name, es in groupby(sorted(state.editors, key=key), key=key):
+                for i, ei in enumerate(es):
+                    ei.name = '{} {:02n}'.format(ei.name, i + 1)
+                    # else:
+                    #     a = list(set([ni.labnumber for ni in state.unknowns]))
+                    #     oname = '{} {}'.format(grouped_name(a), self.name)
+                    #
+                    #     new_name = oname
+                    #     cnt = 1
+                    #     for e in state.editors:
+                    #         print 'a={}, b={}'.format(e.name, new_name)
+                    #         if e.name == new_name:
+                    #             new_name = '{} {:02n}'.format(oname, cnt)
+                    #             cnt += 1
+                    #     self.
 
-            # self.name = editor.name
-        else:
-            a = list(set([ni.labnumber for ni in state.unknowns]))
-            oname = '{} {}'.format(grouped_name(a), self.name)
+                    # if self.editors:
+                    #     self.editor = self.editors[0]
 
-        new_name = oname
-
-        cnt = 1
-        for e in state.editors:
-            if e.name == new_name:
-                new_name = '{} {:02n}'.format(oname, cnt)
-                cnt += 1
+                    # cnt = 1
+                    # for e in state.editors:
+                    #     print 'a={}, b={}'.format(e.name, new_name)
+                    #     if e.name == new_name:
+                    #         new_name = '{} {:02n}'.format(oname, cnt)
+                    #         cnt += 1
 
         # self.name = new_name
-        if self.editor:
-            self.editor.name = new_name
+                    # if self.editor:
+                    #     self.editor.name = new_name
 
-        return self.editor
+                    # return self.editors
 
     def configure(self, refresh=True, pre_run=False, **kw):
         # self._configured = True

@@ -76,7 +76,8 @@ class EditView(ModelView):
 
                           VGroup(HGroup(UItem('selected_production_name',
                                               editor=EnumEditor(name='production_names')),
-                                        Item('new_production_name', label='Name')),
+                                        # Item('new_production_name', label='Name')
+                                        ),
                                  UItem('selected_production', style='custom')),
                           label='Production Ratios')
 
@@ -296,15 +297,26 @@ class LevelEditor(Loggable):
     def _load_local_productions(self):
         root = os.path.join(paths.meta_root, self.irradiation, 'productions')
         ps = {}
+        keys = []
         for p in os.listdir(root):
             if p.endswith('.json'):
                 with open(os.path.join(root, p)) as rfile:
                     obj = json.load(rfile)
                 head, tail = os.path.splitext(p)
-                ps[head] = IrradiationProduction(p, obj)
+                ps[head] = IrradiationProduction(head, obj)
+                keys.append(head)
 
+        root = os.path.join(paths.meta_root, 'productions')
+        for p in os.listdir(root):
+            if p.endswith('.json'):
+                with open(os.path.join(root, p)) as rfile:
+                    obj = json.load(rfile)
+                head, tail = os.path.splitext(p)
+                head = 'Global {}'.format(head)
+                ps[head] = IrradiationProduction(head, obj)
+                keys.append(head)
         self.productions = ps
-        self.production_names = ps.keys()
+        self.production_names = keys
 
     def _load_productions(self):
         reactors = self.meta_repo.get_default_productions()
@@ -330,14 +342,26 @@ class LevelEditor(Loggable):
 
         self.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
 
-    def _save_production(self):
+    def _save_production(self, name=None):
         prod = self.selected_production
-        if prod.dirty:
-            prname = prod.name.replace(' ', '_')
+        if prod.dirty or name:
+            if name:
+                prname = name
+            else:
+                prname = prod.name
 
+            prname = prname.replace(' ', '_')
             self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                         self.selected_production.get_params())
+                                                         self.selected_production.get_params(),
+                                                         new=name is not None)
             self.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
+
+    def _add_production_button_fired(self):
+        v = View(Item('new_production_name',
+                      label='Name'), title='New Production', kind='livemodal', buttons=['OK', 'Cancel'])
+        info = self.edit_traits(v)
+        if info.result:
+            self._save_production(name=self.new_production_name)
 
     def _edit_production_button_fired(self):
         self.selected_production.editable = True
@@ -345,7 +369,6 @@ class LevelEditor(Loggable):
     def _selected_production_name_changed(self, new):
         if new:
             self.selected_production = self.productions[new]
-            self.new_production_name = new
 
     def _selected_tray_changed(self):
         holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)

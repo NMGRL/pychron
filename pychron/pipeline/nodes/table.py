@@ -15,11 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
 from itertools import groupby
 
+from traits.api import HasTraits, List, Enum, Bool, Str
+from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
+from traitsui.extras.checkbox_column import CheckboxColumn
+
+from pychron.paths import paths
+from pychron.persistence_loggable import PersistenceMixin
+from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
 class TableNode(BaseNode):
@@ -65,83 +74,84 @@ class XLSXAnalysisTableNode(TableNode):
                              'blanks': blank_group,
                              'airs': air_group})
 
-#
-# class TableOptions(HasTraits, PersistenceMixin):
-#     pass
-#
-#
-# class AnalysisTableOptions(TableOptions):
-#     references_enabled = Bool(False)
-#
-#
-# class TableColumn(HasTraits):
-#     name = Str
-#     display = Bool(True)
-#     sigfigs = Str
-#     key = Str
-#
-#
-# class InterpretedAgeTableOptions(TableOptions):
-#     columns = List(dump=True)
-#     kca_nsigma = Enum(1, 2, 3, dump=True)
-#     age_nsigma = Enum(1, 2, 3, dump=True)
-#
-#     def __init__(self, *args, **kw):
-#         super(InterpretedAgeTableOptions, self).__init__(*args, **kw)
-#         self.persistence_path = os.path.join(paths.hidden_dir, 'interpreted_age_table_options.p')
-#
-#     def _kca_nsigma_default(self):
-#         return 2
-#
-#     def _age_nsigma_default(self):
-#         return 2
-#
-#     @property
-#     def column_labels(self):
-#         return [c.name for c in self.columns if c.display]
-#
-#     @property
-#     def column_keys(self):
-#         return [c.key for c in self.columns if c.display]
-#
-#     @property
-#     def column_sigfigs(self):
-#         return [int(c.sigfigs) for c in self.columns if c.sigfigs]
-#
-#     def _columns_default(self):
-#         cs = (('Sample', 'sample', ''),
-#               ('Identifier', 'identifier', ''),
-#               ('Material', 'material', ''),
-#               ('Irradiation', 'irradiation', ''),
-#               ('Age Kind', 'age_kind', ''),
-#               ('MSWD', 'mswd', 3),
-#               ('K/Ca', 'kca', 3),
-#               ('K/Ca Error', 'kca_err', 3),
-#               ('N', 'nanalyses', ''),
-#               ('Age', 'display_age', 3),
-#               ('Age Error', 'display_age_err', 3),
-#               )
-#
-#         cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
-#         return cols
-#
-#     def traits_view(self):
-#         cols = [ObjectColumn(name='name', editable=False),
-#                 CheckboxColumn(name='display'),
-#                 ObjectColumn(name='sigfigs')]
-#
-#         sigma = VGroup(Item('age_nsigma'), Item('kca_nsigma'))
-#
-#         v = View(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
-#                         sigma,
-#                         ),
-#                  title='Interpreted Age Table Options',
-#                  resizable=True,
-#                  height=500,
-#                  width=300,
-#                  buttons=['OK', 'Cancel'])
-#         return v
-#
+
+class TableOptions(HasTraits, PersistenceMixin):
+    pass
+
+
+class AnalysisTableOptions(TableOptions):
+    references_enabled = Bool(False)
+
+
+class TableColumn(HasTraits):
+    name = Str
+    display = Bool(True)
+    sigfigs = Str
+    key = Str
+
+
+class InterpretedAgeTableOptions(TableOptions):
+    columns = List(dump=True)
+    kca_nsigma = Enum(1, 2, 3, dump=True)
+    age_nsigma = Enum(1, 2, 3, dump=True)
+
+    def __init__(self, *args, **kw):
+        super(InterpretedAgeTableOptions, self).__init__(*args, **kw)
+        self.persistence_path = os.path.join(paths.hidden_dir, 'interpreted_age_table_options.p')
+
+    def _kca_nsigma_default(self):
+        return 2
+
+    def _age_nsigma_default(self):
+        return 2
+
+    @property
+    def column_labels(self):
+        return [c.name for c in self.columns if c.display]
+
+    @property
+    def column_keys(self):
+        return [c.key for c in self.columns if c.display]
+
+    @property
+    def column_sigfigs(self):
+        return [int(c.sigfigs) for c in self.columns if c.sigfigs]
+
+    def _columns_default(self):
+        cs = (('Status', 'status', ''),
+              ('Name', 'name', ''),
+              ('Sample', 'sample', ''),
+              ('Identifier', 'identifier', ''),
+              ('Material', 'material', ''),
+              ('Irradiation', 'irradiation', ''),
+              ('Age Kind', 'age_kind', ''),
+              ('MSWD', 'mswd', 3),
+              ('K/Ca', 'kca', 3),
+              ('K/Ca Error', 'kca_err', 3),
+              ('N', 'nanalyses', ''),
+              ('Age', 'display_age', 3),
+              ('Age Error', 'display_age_err', 3))
+
+        cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
+        return cols
+
+    def traits_view(self):
+        cols = [ObjectColumn(name='name', editable=False),
+                CheckboxColumn(name='display'),
+                ObjectColumn(name='sigfigs')]
+
+        sigma = VGroup(Item('age_nsigma'), Item('kca_nsigma'))
+
+        v = View(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
+                        sigma,
+                        ),
+                 title='Interpreted Age Table Options',
+                 resizable=True,
+                 height=500,
+                 width=300,
+                 buttons=['OK', 'Cancel'])
+        return v
+
 #
 # # ==================================================
 #
@@ -188,43 +198,43 @@ class XLSXAnalysisTableNode(TableNode):
 #     #     pass
 #
 #
-# class InterpretedAgeTableNode(TableNode):
-#     name = 'Interpreted Age Table'
-#     options_klass = InterpretedAgeTableOptions
-#
-#     def finish_configure(self):
-#         if self.options:
-#             self.options.dump()
-#
-#     def _options_factory(self):
-#         op = super(InterpretedAgeTableNode, self)._options_factory()
-#         op.load()
-#         return op
-#
-#     def run(self, state):
-#         editor = InterpretedAgeTableEditor()
-#
-#         ta = editor.tabular_adapter
-#         cols = [c for c in ta.columns if c[1] in self.options.column_keys]
-#         if cols:
-#
-#             ta.kca_nsigma = self.options.kca_nsigma
-#             ta.display_age_nsigma = self.options.age_nsigma
-#
-#             for i, c in enumerate(cols):
-#                 if c[1] == 'kca_err':
-#                     cols[i] = (PLUSMINUS_NSIGMA.format(self.options.kca_nsigma), 'kca_err')
-#                 elif c[1] == 'display_age_err':
-#                     cols[i] = (PLUSMINUS_NSIGMA.format(self.options.age_nsigma), 'display_age_err')
-#
-#             for c, si in zip(cols, self.options.column_sigfigs):
-#                 attr = '{}_sigfigs'.format(c[1])
-#                 if hasattr(ta, attr):
-#                     setattr(ta, attr, si)
-#
-#             ta.columns = cols
-#
-#         editor.interpreted_ages = state.interpreted_ages
-#         state.editors.append(editor)
+class InterpretedAgeTableNode(TableNode):
+    name = 'Interpreted Age Table'
+    options_klass = InterpretedAgeTableOptions
+
+    def finish_configure(self):
+        if self.options:
+            self.options.dump()
+
+    def _options_factory(self):
+        op = super(InterpretedAgeTableNode, self)._options_factory()
+        op.load()
+        return op
+
+    def run(self, state):
+        editor = InterpretedAgeTableEditor()
+
+        ta = editor.tabular_adapter
+        cols = [c for c in ta.columns if c[1] in self.options.column_keys]
+        if cols:
+
+            ta.kca_nsigma = self.options.kca_nsigma
+            ta.display_age_nsigma = self.options.age_nsigma
+
+            for i, c in enumerate(cols):
+                if c[1] == 'kca_err':
+                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.kca_nsigma), 'kca_err')
+                elif c[1] == 'display_age_err':
+                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.age_nsigma), 'display_age_err')
+
+            for c, si in zip(cols, self.options.column_sigfigs):
+                attr = '{}_sigfigs'.format(c[1])
+                if hasattr(ta, attr):
+                    setattr(ta, attr, si)
+
+            ta.columns = cols
+
+        editor.interpreted_ages = state.interpreted_ages
+        state.editors.append(editor)
 
 # ============= EOF =============================================

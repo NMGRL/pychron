@@ -60,7 +60,8 @@ class MagnetSweep(BaseSweep):
 
     def _step(self, v):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
-                                         settling_time=self.integration_time*2, use_dac_changed=False)
+                                         settling_time=self.integration_time*2,
+                                         use_dac_changed=False)
 
     def _execute(self):
         sm = self.start_mass

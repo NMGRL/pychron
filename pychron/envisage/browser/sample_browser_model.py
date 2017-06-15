@@ -87,7 +87,10 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.load_review_status()
 
     def get_analysis_records(self):
-        return self.analysis_table.get_analysis_records()
+        if not self.sample_view_active:
+            return self.time_view_model.get_analysis_records()
+        else:
+            return self.analysis_table.get_analysis_records()
     #     at = self.analysis_table
     #     records = self.get_analysis_records()
     #     if records:

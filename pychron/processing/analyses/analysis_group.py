@@ -19,11 +19,12 @@ import math
 
 from numpy import array, nan
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Float
-from uncertainties import ufloat, nominal_value
+from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
+from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 
 
 def AGProperty(*depends):
@@ -192,7 +193,7 @@ class AnalysisGroup(HasTraits):
         if mswd is None:
             mswd = self.mswd
 
-        if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        if kind == MSEM:
             e *= mswd ** 0.5 if mswd > 1 else 1
 
         if 'age' in self.attribute:
@@ -235,12 +236,10 @@ class AnalysisGroup(HasTraits):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
     def _get_values(self, attr):
-        # vs = (getattr(ai, attr) for ai in self.analyses
-        #       if not ai.is_omitted())
         vs = (getattr(ai, attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
-            vs, es = zip(*[(v.nominal_value, v.std_dev) for v in vs])
+            vs, es = zip(*[(nominal_value(v), std_dev(v)) for v in vs])
             vs, es = array(vs), array(es)
             return vs, es
 
@@ -250,7 +249,7 @@ class AnalysisGroup(HasTraits):
             vs, es = args
             if use_weights:
                 av, werr = calculate_weighted_mean(vs, es)
-                if error_kind == 'SD':
+                if error_kind == SD:
                     n = len(vs)
                     werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
 
@@ -298,7 +297,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_nsteps = Int(3)
     plateau_gas_fraction = Float(50)
-
+    plateau_mswd = Float
+    plateau_mswd_valid = Bool
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
     #         n = self.nsteps
@@ -389,6 +389,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
+    uuid = Str
     all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')
@@ -402,11 +403,23 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_age_kind = Str('Weighted Mean')
     preferred_kca_kind = Str('Weighted Mean')
 
-    preferred_age_error_kind = Str  # ('SD')
+    preferred_age_error_kind = Str(MSEM)  # ('SD')
     preferred_ages = Property(depends_on='analyses')
 
     name = Str
     use = Bool
+
+    def _name_default(self):
+        name = ''
+        if self.analyses:
+            name = make_aliquot(self.analyses[0].aliquot)
+        return name
+
+    def _get_nanalyses(self):
+        if self.preferred_age_kind == 'Plateau':
+            return self.nsteps
+        else:
+            return super(InterpretedAgeGroup, self)._get_nanalyses()
 
     def _preferred_age_error_kind_changed(self, new):
         self.weighted_age_error_kind = new
@@ -418,10 +431,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         plateau_step = False
         if self.preferred_age_kind == 'Plateau':
             if self.plateau_age:
-                idx = self.analyses.index(an)
-                ps, pe = self.plateau_steps
+                if not an.is_omitted():
+                    idx = self.analyses.index(an)
+                    ps, pe = self.plateau_steps
 
-                plateau_step = ps <= idx <= pe
+                    plateau_step = ps <= idx <= pe
 
         return plateau_step
 
@@ -439,28 +453,28 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         pa = self.preferred_age
         v = 0
         if pa is not None:
-            v = float(pa.nominal_value)
+            v = float(nominal_value(pa))
         return v
 
     def _get_preferred_age_error(self):
         pa = self.preferred_age
         e = 0
         if pa is not None:
-            e = float(pa.std_dev)
+            e = float(std_dev(pa))
         return e
 
     def _get_preferred_kca_value(self):
         pa = self.preferred_kca
         v = 0
         if pa is not None:
-            v = float(pa.nominal_value)
+            v = float(nominal_value(pa))
         return v
 
     def _get_preferred_kca_error(self):
         pa = self.preferred_kca
         e = 0
         if pa is not None:
-            e = float(pa.std_dev)
+            e = float(std_dev(pa))
         return e
 
     def _get_preferred_kca(self):
@@ -487,13 +501,15 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     @cached_property
     def _get_preferred_ages(self):
-        ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron']
-        if self.analyses:
-            ref = self.analyses[0]
-            if ref.step:
-                ps.append('Integrated')
-                if self.plateau_age:
-                    ps.append('Plateau')
+        ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron',
+              'Integrated', 'Plateau']
+        # if self.analyses:
+        #     ref = self.analyses[0]
+        #     print 'asfasfasdfasfas', ref, ref.step
+        #     if ref.step:
+        #         ps.append('Integrated')
+        #         if self.plateau_age:
+        #             ps.append('Plateau')
 
         return ps
 
