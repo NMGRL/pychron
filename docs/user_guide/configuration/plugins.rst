@@ -27,19 +27,24 @@ List of Plugins
   * **LabspyClient** - Labspy client. push updates to the labspy database.
   * **Update** - Update plugin.
   * **Image** - Use to take snapshots with a connected camera and save to file or database.
+  * **IGSN** - International Geo Sample Number.
+  * **Geochron** - Upload analyses to Geochron.org
 
 * **Hardware**
 
   * **ExtractionLine** - Control extraction line components.
   * **ClientExtractionLine** - Remotely control extraction line components.
   * **ArgusSpectrometer** - Thermo ArgusVI plugin.
+  * **HelixSpectrometer** - Thermo Helix plugin.
+  * **NGXSpectrometer** - Isotopx NGX plugin.
   * **NMGRLFurnace** - NMGRL's resistance furnace plugin.
+  * **ChromiumCO2** - Photon Machines Fusions CO2 control via "Chromium"
   * **FusionsCO2** - Photon Machines Fusions CO2.
   * **FusionsDiode** - Photon Machines Fusions Diode.
   * **FusionsUV** - NMGRL's custom Fusions UV.
   * **ExternalPipette** - Interface with the APIS pipette system.
   * **CanvasDesigner** - Visual editor for the Extraction Line Schematic.
-  * **IGSN** - International Geo Sample Number.
+
 
 * **Social**
   * **Email** - Allows pychron to send emails

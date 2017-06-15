@@ -35,6 +35,27 @@ Spectrometers
 .. autoclass:: pychron.spectrometer.thermo.magnet.helix.HelixMagnet
    :members:
 
+
+Isotopx
+----------
+The Isotopx package (pychron.spectrometer.isotopx) contains abstractions for interfacing a Isotopx mass 
+spectrometer via IsotopxRCS
+
+Spectrometers
+~~~~~~~~~~~~~
+.. autoclass:: pychron.spectrometer.isotopx.spectrometer.base.IsotopxSpectrometer
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.spectrometer.argus.NGXSpectrometer
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.magnet.base.IsotopxMagnet
+   :members:
+
+.. autoclass:: pychron.spectrometer.isotopx.magnet.argus.NGXMagnet
+   :members:
+
+
 MAP
 --------------
 The map package (pychron.spectrometer.map) contains abstractions for interfacing with a Mass Analyzer Products (MAP)
