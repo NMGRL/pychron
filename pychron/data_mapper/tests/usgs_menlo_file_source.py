@@ -19,11 +19,11 @@ import os
 import unittest
 
 from pychron.core.test_helpers import get_data_dir
-from pychron.entry.dvc_import.sources.usgs_menlo_source import USGSMenloSource
+from pychron.data_mapper.sources.usgs_menlo_source import USGSMenloSource
 
 
 def fget_data_dir():
-    op = 'pychron/entry/tests/data'
+    op = 'pychron/data_mapper/tests/data'
     return get_data_dir(op)
 
 
@@ -35,31 +35,31 @@ class USGSMenloFileSourceUnittest(unittest.TestCase):
         cls.spec = cls.src.get_analysis_import_spec(p)
 
     def test_runid(self):
-        self.assertEqual(self.spec.analysis.runid, '16F0203A')
+        self.assertEqual(self.spec.run_spec.runid, '16F0203A')
 
     def test_irradiation(self):
-        self.assertEqual(self.spec.irradiation.name, 'IRR351')
+        self.assertEqual(self.spec.run_spec.irradiation, 'IRR351')
 
     def test_level(self):
-        self.assertEqual(self.spec.irradiation.levels[0].name, 'OQ')
+        self.assertEqual(self.spec.run_spec.irradiation_level, 'OQ')
 
     def test_sample(self):
-        self.assertEqual(self.spec.analysis.position.sample.name, 'TM-13-04')
+        self.assertEqual(self.spec.run_spec.sample, 'TM-13-04')
 
     def test_material(self):
-        self.assertEqual(self.spec.analysis.position.sample.material, 'Andesite')
+        self.assertEqual(self.spec.run_spec.material, 'Andesite')
 
     def test_project(self):
-        self.assertEqual(self.spec.analysis.position.sample.project, 'Pagan')
+        self.assertEqual(self.spec.run_spec.project, 'Pagan')
 
     def test_j(self):
-        self.assertEqual(self.spec.analysis.position.j, 0.000229687907897)
+        self.assertEqual(self.spec.j, 0.000229687907897)
 
     def test_j_err(self):
-        self.assertEqual(self.spec.analysis.position.j_err, 0.00000055732)
+        self.assertEqual(self.spec.j_err, 0.00000055732)
 
     def test_timestamp(self):
-        ts = self.spec.analysis.timestamp
+        ts = self.spec.run_spec.analysis_timestamp
         self.assertEqual(ts.month, 7)
 
     def test_40_count_xs(self):
@@ -93,15 +93,15 @@ class USGSMenloFileSourceUnittest(unittest.TestCase):
         self._test_count_ys('Ar36', 80)
 
     def _test_count_xs(self, k, cnt):
-        xs = self.spec.analysis.isotopes[k].xs
+        xs = self.spec.isotope_group.isotopes[k].xs
         self.assertEqual(len(xs), cnt)
 
     def _test_count_ys(self, k, cnt):
-        ys = self.spec.analysis.isotopes[k].ys
+        ys = self.spec.isotope_group.isotopes[k].ys
         self.assertEqual(len(ys), cnt)
 
     def test_discrimination(self):
-        disc = self.spec.analysis.discrimination
+        disc = self.spec.discrimination
         self.assertEqual(disc, 1.0505546075085326)
 
 

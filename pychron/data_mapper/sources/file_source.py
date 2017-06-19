@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2016 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.entry.dvc_import.model import DVCImporterModel
-from pychron.entry.dvc_import.view import DVCImporterView
-from pychron.envisage.view_util import open_view
+from pychron.data_mapper.sources.dvc_source import DVCSource
 
 
-def do_import_irradiation(dvc, sources, default_source=None):
-    model = DVCImporterModel(dvc=dvc, sources=sources)
+class FileSource(DVCSource):
+    pass
 
-    model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
-    view = DVCImporterView(model=model)
-    info = open_view(view)
-    return info.result
 
 # ============= EOF =============================================
