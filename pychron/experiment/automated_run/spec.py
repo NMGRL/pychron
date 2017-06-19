@@ -137,6 +137,7 @@ class AutomatedRunSpec(HasTraits):
     _changed = False
 
     _step_heat = False
+    _runid = None
 
     @property
     def acquisition_software(self):
@@ -491,7 +492,14 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
     @property
     def runid(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
+        if self._runid:
+            return self._runid
+        else:
+            return make_runid(self.labnumber, self.aliquot, self.step)
+
+    @runid.setter
+    def runid(self, v):
+        self._runid = v
 
     @property
     def rundate(self):

@@ -25,7 +25,7 @@ from chaco.api import OverlayPlotContainer, \
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
-from numpy import array, hstack, Inf, savetxt, column_stack, zeros_like
+from numpy import array, hstack, Inf, column_stack
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
@@ -1167,27 +1167,66 @@ class Graph(ContextMenuMixin):
     #     self._add_line_inspector(plot, axis='y', color=color)
 
     def _export_data(self, path, plotid):
+        # names = []
+        # a = None
+        with open(path, 'w') as wfile:
+            def write(l):
+                wfile.write('{}\n'.format(l))
 
-        if plotid is not None:
-            plot = self.plots[plotid]
-        else:
-            plot = self.selected_plot
+            for plot in self.plots:
+                line = plot.y_axis.title
+                write(line)
+                for k, pp in plot.plots.iteritems():
+                    pp = pp[0]
+                    a = column_stack((pp.index.get_data(), pp.value.get_data()))
+                    e = pp.yerror
+                    header = 'x,y'
+                    if e is not None:
+                        try:
+                            a = column_stack((a, e.get_data()))
+                            header = 'x,y,e'
+                        except ValueError:
+                            pass
 
-        if plot is None:
-            return
+                    write(k)
+                    write(header)
+                    for row in a:
+                        write(','.join(map('{:0.8f}'.format, row)))
+                        # print 'fff', pp, pp[0].yerror
+                        # data = plot.data
+                        # names.extend(sorted(data.list_data()))
+                        # if a is None:
+                        #     a = array(data.get_data(names[0]))
+                        #
+                        # for ni in names[1:]:
+                        #     d = data.get_data(ni)
+                        #     try:
+                        #         a = column_stack((a, d))
+                        #     except ValueError:
+                        #         a = column_stack((a, zeros_like(a)))
 
-        data = plot.data
-        names = sorted(data.list_data())
+                        # savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
 
-        a = array(data.get_data(names[0]))
-        for ni in names[1:]:
-            d = data.get_data(ni)
-            try:
-                a = column_stack((a, d))
-            except ValueError:
-                a = column_stack((a, zeros_like(a)))
-
-        savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
+                        # if plotid is not None:
+                        #     plot = self.plots[plotid]
+                        # else:
+                        #     plot = self.selected_plot
+                        #
+                        # if plot is None:
+                        #     return
+                        #
+                        # data = plot.data
+                        # names = sorted(data.list_data())
+                        #
+                        # a = array(data.get_data(names[0]))
+                        # for ni in names[1:]:
+                        #     d = data.get_data(ni)
+                        #     try:
+                        #         a = column_stack((a, d))
+                        #     except ValueError:
+                        #         a = column_stack((a, zeros_like(a)))
+                        #
+                        # savetxt(path, a, fmt='%.8f', delimiter=',', header=','.join(names))
 
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """

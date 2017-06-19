@@ -23,7 +23,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.text_editor import myTextEditor
-from pychron.entry.dvc_import import DVCImporterModel
+from pychron.data_mapper.model import DVCImporterModel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 

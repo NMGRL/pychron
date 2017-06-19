@@ -15,7 +15,7 @@
 # ===============================================================================
 from traits.api import provides
 
-from pychron.entry.dvc_import.sources.idvc_source import IDVCSource
+from pychron.data_mapper.sources.idvc_source import IDVCSource
 from pychron.loggable import Loggable
 
 

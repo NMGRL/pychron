@@ -21,8 +21,8 @@ def suite():
     from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase1
     from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
     from pychron.spectrometer.tests.mftable import MFTableTestCase, DiscreteMFTableTestCase
+    from pychron.data_mapper.tests.usgs_menlo_file_source import USGSMenloFileSourceUnittest
     from pychron.experiment.tests.peak_hop_parse import PeakHopTxtCase
-    from pychron.entry.tests.usgs_menlo_file_source import USGSMenloFileSourceUnittest
     from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
     from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
     from pychron.core.tests.spell_correct import SpellCorrectTestCase
