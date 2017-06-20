@@ -145,4 +145,35 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         q = q.filter(ProcessInfo.name == name)
         return self._query_one(q)
 
+    def get_latest_lab_temperatures(self):
+        return self._get_latest('Temp.')
+
+    def get_latest_lab_humiditys(self):
+        return self._get_latest('Hum.')
+
+    def get_latest_lab_pneumatics(self):
+        return self._get_latest('Pressure')
+
+    def _get_latest(self, tag):
+        values = []
+        with self.session_ctx(use_parent_session=False) as sess:
+            q = sess.query(ProcessInfo)
+            q = q.filter(ProcessInfo.name.contains(tag))
+            ps = self._query_all(q)
+
+            for p in ps:
+                q = sess.query(Measurement)
+                q = q.filter(Measurement.process_info_id == p.id)
+                q = q.order_by(Measurement.pub_date.desc())
+
+                record = self._query_first(q)
+
+                values.append({'name': p.name,
+                               'title': p.graph_title,
+                               'pub_date': record.pub_date,
+                               'value': record.value,
+                               'device': p.device.name})
+
+        return values
+
 # ============= EOF =============================================

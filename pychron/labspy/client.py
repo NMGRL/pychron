@@ -120,6 +120,15 @@ class LabspyClient(Loggable):
             else:
                 self.debug('No devices to check for connection status')
 
+    def get_latest_lab_temperatures(self):
+        self.db.get_latest_lab_temperatures()
+
+    def get_latest_lab_humiditys(self):
+        self.db.get_latest_lab_humiditys()
+
+    def get_latest_lab_pneumatics(self):
+        self.db.get_latest_lab_pneumatics()
+
     def _connection_status(self, verbose=False):
 
         # if verbose:
