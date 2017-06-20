@@ -432,8 +432,6 @@ class AutomatedRun(Loggable):
         else:
             sc = 'green'
 
-
-
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime,
@@ -1052,9 +1050,20 @@ class AutomatedRun(Loggable):
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
+            kw = {}
+            lclient = self.application.get_service('pychron.labspy.client.LabspyClient')
+            if lclient:
+                for tag in ('tab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                    try:
+                        kw[tag] = getattr(lclient, 'get_{}'.format(tag))()
+                    except BaseException, e:
+                        self.debug('Get Labspy Environmentals: {}'.format(e))
+                        self.debug_exception()
+
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
-                                        tripped_conditional=self.tripped_conditional)
+                                        tripped_conditional=self.tripped_conditional,
+                                        **kw)
 
             # add a result to the run spec.
             self.spec.new_result(self)
@@ -2400,7 +2409,8 @@ anaylsis_type={}
 
         regressing = grpname != 'sniff'
         scnt, fcnt = (2, 1) if regressing else (1, 0)
-        self.debug('"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
+        self.debug(
+            '"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
 
         self.measurement_script.increment_series_counts(scnt, fcnt)
 

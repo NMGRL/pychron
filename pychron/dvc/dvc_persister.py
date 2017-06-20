@@ -442,6 +442,10 @@ class DVCPersister(BasePersister):
         # obj['acquisition_software'] = 'pychron version={}'.format(pversion)
         # obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
 
+        obj['environmental'] = {'lab_temperatures': per_spec.lab_temperatures,
+                                'lab_humiditys': per_spec.lab_humiditys,
+                                'lab_pneumatics': per_spec.lab_pneumatics}
+
         obj['laboratory'] = per_spec.run_spec.laboratory
         obj['analyst_name'] = per_spec.run_spec.username
         obj['whiff_result'] = per_spec.whiff_result

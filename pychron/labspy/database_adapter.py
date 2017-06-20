@@ -20,7 +20,6 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= local library imports  ==========================
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
-
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -146,15 +145,35 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         q = q.filter(ProcessInfo.name == name)
         return self._query_one(q)
 
-    def get_measurements(self, device, name, low=None, high=None):
-        q = self.session.query(Measurement)
-        q = q.join(ProcessInfo, Device)
-        q = q.filter(Device.name == device)
-        q = q.filter(ProcessInfo.name == name)
+    def get_latest_lab_temperatures(self):
+        return self._get_latest('Temp.')
 
-        if low:
-            q = q.filter(Measurement.pub_date >= low)
+    def get_latest_lab_humiditys(self):
+        return self._get_latest('Hum.')
 
-        return self._query_all(q)
+    def get_latest_lab_pneumatics(self):
+        return self._get_latest('Pressure')
+
+    def _get_latest(self, tag):
+        values = []
+        with self.session_ctx(use_parent_session=False) as sess:
+            q = sess.query(ProcessInfo)
+            q = q.filter(ProcessInfo.name.contains(tag))
+            ps = self._query_all(q)
+
+            for p in ps:
+                q = sess.query(Measurement)
+                q = q.filter(Measurement.process_info_id == p.id)
+                q = q.order_by(Measurement.pub_date.desc())
+
+                record = self._query_first(q)
+
+                values.append({'name': p.name,
+                               'title': p.graph_title,
+                               'pub_date': record.pub_date,
+                               'value': record.value,
+                               'device': p.device.name})
+
+        return values
 
 # ============= EOF =============================================
