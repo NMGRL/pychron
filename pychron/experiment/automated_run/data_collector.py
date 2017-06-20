@@ -133,14 +133,14 @@ class DataCollector(Consoleable):
         self._queue = q = Queue()
 
         def writefunc():
-            dets = self.detectors
             writer = self.data_writer
-            while not q.empty() or not evt.wait(2):
+            while not q.empty() or not evt.wait(1):
+                dets = self.detectors
                 while not q.empty():
                     x, keys, signals = q.get()
                     writer(dets, x, keys, signals)
 
-        # only write to file every 5 seconds and not on main thread
+        # only write to file every 1 seconds and not on main thread
         t = Thread(target=writefunc)
         # t.setDaemon(True)
         t.start()

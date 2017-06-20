@@ -21,6 +21,7 @@ import re
 import time
 import weakref
 from itertools import groupby
+from pprint import pformat
 from threading import Thread, Event as TEvent
 
 import yaml
@@ -115,6 +116,7 @@ class AutomatedRun(Loggable):
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
     dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister')
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
@@ -1050,20 +1052,26 @@ class AutomatedRun(Loggable):
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
-            kw = {}
-            lclient = self.application.get_service('pychron.labspy.client.LabspyClient')
+            env = {}
+            lclient = self.labspy_client
             if lclient:
-                for tag in ('tab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
-                    try:
-                        kw[tag] = getattr(lclient, 'get_{}'.format(tag))()
-                    except BaseException, e:
-                        self.debug('Get Labspy Environmentals: {}'.format(e))
-                        self.debug_exception()
+                if lclient.connect():
+                    for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                        try:
+                            env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
+                        except BaseException, e:
+                            self.debug('Get Labspy Environmentals: {}'.format(e))
+                            self.debug_exception()
+                else:
+                    self.debug('failed to connect to labspy client. Could not retrieve environmentals')
+                self.debug('Enviromentals: {}'.format(pformat(env)))
+            else:
+                self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
                                         tripped_conditional=self.tripped_conditional,
-                                        **kw)
+                                        **env)
 
             # add a result to the run spec.
             self.spec.new_result(self)

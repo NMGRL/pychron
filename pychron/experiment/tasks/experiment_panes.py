@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -428,6 +428,11 @@ class IsotopeEvolutionPane(TraitsDockPane):
     name = 'Isotope Evolutions'
     plot_panel = Instance(PlotPanel, ())
     is_peak_hop = DelegatesTo('plot_panel')
+    continue_button = Button
+
+    def _continue_button_fired(self):
+        print 'contuneusdfas'
+        self.plot_panel.ncounts = 0
 
     def traits_view(self):
         v = View(VSplit(UItem('object.plot_panel.graph_container',
@@ -447,6 +452,9 @@ class IsotopeEvolutionPane(TraitsDockPane):
                                       Spring(springy=False, width=-10),
                                       Item('object.plot_panel.ncounts', label='Counts',
                                            tooltip='Set the number of measurement points'),
+                                      icon_button_editor('continue_button', 'arrow-right-double-2',
+                                                         tooltip='Continue to next measurement step. '
+                                                                 'Simply sets "Counts" to 0'),
                                       Spring(springy=False, width=-10),
                                       CustomLabel('object.plot_panel.display_counts',
                                                   color='red',

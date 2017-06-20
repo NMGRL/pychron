@@ -1211,6 +1211,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         arun.integration_time = 1.04
 
+        arun.labspy_client = self.application.get_service('pychron.labspy.client.LabspyClient')
         arun.experiment_executor = self
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
