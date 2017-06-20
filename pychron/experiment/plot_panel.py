@@ -19,7 +19,7 @@ import time
 from threading import Event
 
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Tuple, Color, HasTraits, Any, Int
+    Str, CInt, Tuple, Color, HasTraits, Any, Int, Button
 from traitsui.api import View, UItem, VGroup, HGroup, spring, ListEditor
 from uncertainties import std_dev, nominal_value
 

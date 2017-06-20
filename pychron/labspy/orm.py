@@ -51,6 +51,7 @@ class ProcessInfo(Base, StatusMixin):
     units = stringcolumn()
     device_id = Column(Integer, ForeignKey('status_device.id'))
     measurements = relationship('Measurement', backref='process')
+    graph_title = stringcolumn()
 
 
 class Measurement(Base, StatusMixin):

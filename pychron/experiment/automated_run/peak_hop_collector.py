@@ -166,6 +166,10 @@ class PeakHopCollector(DataCollector):
                     for d in active_dets:
                         det = self.parent.get_detector(d)
                         plot = g.get_plot_by_ytitle(det.isotope)
+
+                        if not plot:
+                            plot = g.get_plot_by_ytitle('{}{}'.format(det.name, det.isotope))
+
                         if plot:
                             scatter = plot.plots['data{}'.format(self.series_idx)][0]
                             scatter.color = current_color
