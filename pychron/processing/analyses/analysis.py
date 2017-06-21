@@ -243,6 +243,11 @@ class Analysis(ArArAge, IdeogramPlotable):
     analystName = ''
     uuid = None  # Str
 
+    # environmentals
+    lab_temperature = 0
+    lab_humidity = 0
+    lab_airpressure = 0
+
     increment = None
     aliquot_step_str = ''
     mass_spectrometer = ''
