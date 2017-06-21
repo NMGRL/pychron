@@ -26,7 +26,7 @@ from pychron.options.options_manager import IdeogramOptionsManager, OptionsContr
 from pychron.options.views.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
-    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039
+    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC
 
 
@@ -251,7 +251,7 @@ class SeriesNode(FigureNode):
 
                             names.append('{}/{} DetIC'.format(vj.detector, vi.detector))
 
-            names.extend([PEAK_CENTER, ANALYSIS_TYPE])
+            names.extend([PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM])
             pom.set_names(names)
 
 

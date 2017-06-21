@@ -30,14 +30,22 @@ from pychron.pipeline.plot.plotter.ticks import TICKS
 
 N = 500
 
-ATTR_MAPPING = {'Peak Center': 'peak_center',
-                'Age': 'uage',
-                'RadiogenicYield': 'rad40_percent'}
 
 PEAK_CENTER = 'Peak Center'
 ANALYSIS_TYPE = 'Analysis Type'
 RADIOGENIC_YIELD = 'RadiogenicYield'
+LAB_TEMP = 'Lab Temperature'
+LAB_HUM = 'Lab Humidity'
+LAB_AIRPRESSUE = 'Lab Air Pressure'
 AGE = 'Age'
+
+ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
+                AGE: 'uage',
+                RADIOGENIC_YIELD: 'rad40_percent',
+                LAB_TEMP: 'lab_temperature',
+                LAB_HUM: 'lab_humidity',
+                LAB_AIRPRESSUE: 'lab_airpressure'}
+
 
 AR4039 = 'Ar40/Ar39'
 UAR4039 = 'uAr40/Ar39'

@@ -568,7 +568,8 @@ class DVC(Loggable):
                 # print 'make time {}'.format(time.time()-t)
                 return r
             except BaseException:
-                pass
+                self.debug('make analysis exception')
+                self.debug_exception()
 
         ret = progress_loader(records, func, threshold=1, step=25)
         et = time.time() - st
