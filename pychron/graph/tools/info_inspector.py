@@ -20,8 +20,6 @@ from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 from traits.api import Event, Instance
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 
 
@@ -140,7 +138,8 @@ class InfoOverlay(AbstractOverlay):
 
         x, y = sx, sy = self.tool.current_screen
 
-        gc.set_font(Font('Arial'))
+        size = 14
+        gc.set_font(Font('Arial', size=size))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Bool
+from traits.api import List, Bool, Enum
 
 from pychron.options.fit import FitAuxPlot, FitOptions
 from pychron.options.series_views import VIEWS
@@ -43,6 +43,9 @@ class SeriesFitAuxPlot(FitAuxPlot):
 class SeriesOptions(FitOptions):
     aux_plot_klass = SeriesFitAuxPlot
     subview_names = List(['Main', 'Series', 'Appearance'])
+    error_bar_nsigma = Enum(1, 2, 3)
+    end_caps = Bool(False)
+    show_info = Bool(True)
 
     def _get_subview(self, name):
         return VIEWS[name]

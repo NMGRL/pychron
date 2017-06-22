@@ -15,14 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, EnumEditor
+from traitsui.api import View, UItem, VGroup, EnumEditor, Item
 
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 
 
 class SeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View('use_time_axis')
+        v = View('use_time_axis',
+                 Item('error_bar_nsigma'),
+                 Item('end_caps'),
+                 Item('show_info'))
         return v
 
 
@@ -60,7 +63,9 @@ class SeriesMainOptions(MainOptions):
         return cols
 # ===============================================================
 # ===============================================================
-VIEWS = {'main': SeriesMainOptions, 'series': SeriesSubOptions, 'appearance': SeriesAppearance}
+VIEWS = {'main': SeriesMainOptions,
+         'series': SeriesSubOptions,
+         'appearance': SeriesAppearance}
 # VIEWS['series'] = SeriesSubOptions
 # VIEWS['appearance'] = SeriesAppearance
 
