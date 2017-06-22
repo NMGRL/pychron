@@ -186,8 +186,8 @@ class Series(BaseSeries):
                     m = ys.mean()
                     ys = ys - m
                     if po.use_percent_dev:
-                        ys /= m * 100
-                        yerr /= m * 100
+                        ys = ys/m * 100
+                        yerr = yerr/m * 100
 
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
