@@ -35,7 +35,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
-from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE
 
 
 def principal_investigator_filter(q, principal_investigator):
@@ -234,7 +234,8 @@ class DVCDatabase(DatabaseAdapter):
                                                      analysis_type=atypes,
                                                      exclude=ex,
                                                      exclude_uuids=exclude,
-                                                     exclude_invalid=exclude_invalid)
+                                                     exclude_invalid=exclude_invalid,
+                                                     verbose=False)
                 refs.update(rs)
                 ex = [r.id for r in refs]
                 # print rs
@@ -956,7 +957,7 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     q = q.filter(
                         AnalysisTbl.mass_spectrometer == mass_spectrometers)
-            if extract_device:
+            if extract_device and not extract_device == EXTRACT_DEVICE:
                 q = q.filter(AnalysisTbl.extract_device == extract_device)
             if analysis_type:
                 q = in_func(q, AnalysisTbl.analysis_type, analysis_type)

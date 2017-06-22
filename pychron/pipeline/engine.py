@@ -869,7 +869,7 @@ class PipelineEngine(Loggable):
     _len_references_removed = 0
 
     def _handle_len_unknowns(self, new):
-        # self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
         def func(editor):
             vs = self.selected.unknowns
             editor.set_items(vs)

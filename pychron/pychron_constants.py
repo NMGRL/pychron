@@ -74,6 +74,8 @@ SIGNAL = 'signal'
 BASELINE = 'baseline'
 WHIFF = 'whiff'
 
+EXTRACT_DEVICE = 'Extract Device'
+
 import string
 
 seeds = string.ascii_uppercase
