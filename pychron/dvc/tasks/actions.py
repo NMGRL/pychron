@@ -17,12 +17,15 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import os
+
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
+from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import restart
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -64,6 +67,47 @@ class PullAction(LocalRepositoryAction):
     method = 'pull'
     image = icon('arrow_down')
 
+
+class ShareChangesAction(Action):
+    name = 'Share Changes'
+
+    def perform(self, event):
+        from git import Repo
+        from git.exc import InvalidGitRepositoryError
+        from pychron.paths import paths
+        remote = 'origin'
+        branch = 'master'
+        repos = []
+        for d in os.listdir(paths.repository_dataset_dir):
+            if d.startswith('.') or d.startswith('~'):
+                continue
+
+            try:
+                r = Repo(os.path.join(paths.repository_dataset_dir, d))
+            except InvalidGitRepositoryError:
+                continue
+            repos.append(r)
+
+        n = len(repos)
+        pd = myProgressDialog(max=n - 1,
+                              can_cancel=True,
+                              can_ok=False)
+        pd.open()
+        shared = False
+        for r in repos:
+            pd.change_message('Fetch {}'.format(os.path.basename(r.working_dir)))
+            c = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
+            if c:
+
+                r.git.pull()
+
+                d = os.path.basename(r.working_dir)
+                if confirm(None, 'Share changes made to {}.\n\n{}'.format(d, c)) == YES:
+                    r.git.push(remote, branch)
+                    shared = True
+
+        msg = 'Changes successfully shared' if shared else 'No changes to share'
+        information(None, msg)
 
 # class PullAnalysesAction(Action):
 #     name = 'Pull Analyses'

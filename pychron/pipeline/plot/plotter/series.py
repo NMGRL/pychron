@@ -18,15 +18,15 @@
 import time
 
 from chaco.array_data_source import ArrayDataSource
-from chaco.scales.time_scale import CalendarScaleSystem
-from chaco.scales_tick_generator import ScalesTickGenerator
 from numpy import array, Inf, arange
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
+from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.plotter.ticks import TICKS
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
 
@@ -126,6 +126,9 @@ class Series(BaseSeries):
             else:
                 p = graph.new_plot(ytitle=ytitle, xtitle='N')
 
+            if i == 0:
+                self._add_info(p)
+
             if po.name == ANALYSIS_TYPE:
                 from pychron.pipeline.plot.plotter.ticks import tick_formatter, StaticTickGenerator
 
@@ -220,9 +223,10 @@ class Series(BaseSeries):
             # if po.use_time_axis:
             #     p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
-            end_caps = True
             if po.y_error and yerr is not None:
-                self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
+                s = self.options.error_bar_nsigma
+                ec = self.options.end_caps
+                self._add_error_bars(scatter, yerr, 'y', s, ec, visible=True)
 
             if set_ylimits:
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
@@ -233,6 +237,28 @@ class Series(BaseSeries):
 
             traceback.print_exc()
             print 'Series', e
+
+    def update_graph_metadata(self, obj, name, old, new):
+        sorted_ans = self.sorted_analyses
+        if obj:
+            self._filter_metadata_changes(obj, sorted_ans)
+
+        # ===============================================================================
+        # plotters
+        # ===============================================================================
+
+    # private
+    def _add_info(self, plot):
+        if self.group_id == 0:
+            if self.options.show_info:
+                ts = [u'Data {}{}{}'.format(PLUSMINUS, self.options.error_bar_nsigma, SIGMA)]
+
+                if ts:
+                    pl = FlowPlotLabel(text='\n'.join(ts),
+                                       overlay_position='inside top',
+                                       hjustify='left',
+                                       component=plot)
+                    plot.overlays.append(pl)
 
     def _unpack_attr(self, attr):
         if attr == ANALYSIS_TYPE:
@@ -247,25 +273,5 @@ class Series(BaseSeries):
 
         return super(Series, self)._unpack_attr(attr)
 
-    def update_graph_metadata(self, obj, name, old, new):
-        sorted_ans = self.sorted_analyses
-        if obj:
-            self._filter_metadata_changes(obj, sorted_ans)
-
-# ===============================================================================
-# plotters
-# ===============================================================================
-
-# ===============================================================================
-# overlays
-# ===============================================================================
-
-# ===============================================================================
-# utils
-# ===============================================================================
-
-# ===============================================================================
-# labels
-# ===============================================================================
 
 # ============= EOF =============================================
