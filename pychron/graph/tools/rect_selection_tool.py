@@ -20,6 +20,8 @@ from traits.api import Any, Str
 
 # =============standard library imports ========================
 from numpy import vstack
+
+
 # =============local library imports  ==========================
 
 class RectSelectionOverlay(AbstractOverlay):
@@ -55,7 +57,7 @@ class RectSelectionTool(BaseTool):
     group_id = 0
 
     def select_key_pressed(self, event):
-        if event.character=='Esc':
+        if event.character == 'Esc':
             self._end_select(event)
 
     def normal_mouse_enter(self, event):
@@ -181,6 +183,7 @@ class RectSelectionTool(BaseTool):
     def select_left_up(self, event):
         self._update_selection()
         self._end_select(event)
+        self.component.request_redraw()
 
     def select_mouse_move(self, event):
         self._end_pos = (event.x, event.y)
@@ -190,27 +193,28 @@ class RectSelectionTool(BaseTool):
         comp = self.component
         index = comp.index
         ind = []
-        #        print self._start_pos, self._end_pos
         if self._start_pos and self._end_pos:
             x, y = self._start_pos
             x2, y2 = self._end_pos
 
-            dx, dy = comp.map_data([x, y])
-            dx2, dy2 = comp.map_data([x2, y2])
+            if abs(x - x2) > 3 and abs(y - y2) > 3:
+                dx, dy = comp.map_data([x, y])
+                dx2, dy2 = comp.map_data([x2, y2])
 
-            datax = index.get_data()
-            datay = comp.value.get_data()
+                datax = index.get_data()
+                datay = comp.value.get_data()
 
-            data = vstack([datax, datay]).transpose()
+                data = vstack([datax, datay]).transpose()
 
-            ind = [i for i, (xi, yi) in enumerate(data) \
-                   if (dx <= xi <= dx2 and dy >= yi >= dy2) or
-                      (dx >= xi >= dx2) and dy <= yi <= dy2]
+                ind = [i for i, (xi, yi) in enumerate(data) \
+                       if (dx <= xi <= dx2 and dy >= yi >= dy2) or
+                       (dx >= xi >= dx2) and dy <= yi <= dy2]
 
         selection = index.metadata[self.selection_metadata_name]
         nind = list(set(ind) ^ set(selection))
         index.metadata[self.selection_metadata_name] = nind
         # index.metadata_changed = True
+        # return ret
 
     def _end_select(self, event):
         self.event_state = 'normal'

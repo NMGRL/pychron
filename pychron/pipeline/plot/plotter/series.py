@@ -217,6 +217,7 @@ class Series(BaseSeries):
                         'Rel. Time: {:0.4f}'.format(x))
 
             self._add_scatter_inspector(scatter,
+                                        add_selection=False,
                                         additional_info=af,
                                         value_format=value_format)
 
@@ -242,10 +243,6 @@ class Series(BaseSeries):
         sorted_ans = self.sorted_analyses
         if obj:
             self._filter_metadata_changes(obj, sorted_ans)
-
-        # ===============================================================================
-        # plotters
-        # ===============================================================================
 
     # private
     def _add_info(self, plot):

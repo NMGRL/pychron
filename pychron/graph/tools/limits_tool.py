@@ -37,7 +37,7 @@ class LimitsTool(BaseTool):
     limits_updated = Event
 
     def _set_entered_value(self, c):
-        if c == '.' or c in string.digits:
+        if c in ('.', '-') or c in string.digits:
             self.entered_value += c
         elif c in ('Backspace', 'Delete'):
             self.entered_value = self.entered_value[:-1]
@@ -46,6 +46,8 @@ class LimitsTool(BaseTool):
         c = event.character
         if c == 'Esc':
             self._finish(event)
+        elif c == 'Enter':
+            self.drag_left_up(event)
         else:
             self._set_entered_value(c)
             self.event_state = 'manual_set' if self.entered_value else 'drag'
@@ -102,9 +104,10 @@ class LimitsTool(BaseTool):
         self.ruler_data_pos = self._map_value(v - 0.25)
 
     def drag_left_up(self, event):
-        self._finish(event)
         v = event.x if self.orientation == 'x' else event.y
         self._set_value(v)
+
+        self._finish(event)
         event.handled = True
 
     def _finish(self, event):
