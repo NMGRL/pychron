@@ -2333,6 +2333,7 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit='linear',
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
@@ -2365,6 +2366,7 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit=None,
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 

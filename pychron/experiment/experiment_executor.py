@@ -494,6 +494,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
 
+        if self.stats:
+            self.stats.reset()
+
         for i, exp in enumerate(self.experiment_queues):
             self._set_thread_name(exp.name)
             self.heading('"{}" started'.format(exp.name))

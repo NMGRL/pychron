@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from numpy import average, ones, asarray, where
+from numpy import average, ones, asarray, where, ones_like
 
 from base_regressor import BaseRegressor
 from pychron.core.helpers.formatting import floatfmt
@@ -97,7 +97,7 @@ sem={}
 
     def predict(self, xs=None, *args):
         if xs is not None:
-            return ones(asarray(xs).shape) * self.mean
+            return ones_like(xs) * self.mean
         else:
             return self.mean
 
@@ -146,7 +146,7 @@ sem={}
         else:
             e = self.std
 
-        return ones(asarray(x).shape) * e
+        return ones_like(x) * e
 
     def calculate_standard_error_fit(self):
         return self.std

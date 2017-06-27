@@ -192,7 +192,10 @@ class PlotPanel(Loggable):
         #     time.sleep(0.05)
 
     def update(self):
-        self.isotope_graph.refresh()
+        if self.is_baseline:
+            self.baseline_graph.refresh()
+        else:
+            self.isotope_graph.refresh()
 
         if self.figure and isinstance(self.isotope_group, ArArAge):
             age = self.isotope_group.uage

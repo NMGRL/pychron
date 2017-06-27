@@ -203,6 +203,7 @@ class ExperimentStats(Loggable):
         return str(dur)
 
     def _get_remaining(self):
+        # self.debug('Remaining seconds={}, tt={}, e={}'.format(self._total_time-self._elapsed, self._total_time, self._elapsed))
         dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
 
