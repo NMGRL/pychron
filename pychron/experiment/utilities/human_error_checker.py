@@ -39,7 +39,7 @@ class HumanErrorChecker(Loggable):
         self._bind_preferences()
 
     def check_queue(self, qi):
-        if self.queue_enabled:
+        if not self.queue_enabled:
             self.info('check queue disabled')
             return
 

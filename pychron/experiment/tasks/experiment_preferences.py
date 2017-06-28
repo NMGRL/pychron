@@ -119,27 +119,34 @@ class ConsolePreferences(BaseConsolePreferences):
     use_message_colormapping = Bool
 
 
-class HumanErrorCheckerPrefences(BasePreferencesHelper):
+class HumanErrorCheckerPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.humar_error_checker.preferences_page'
 
-    check_extraction_script = Bool
+    extraction_script_enabled = Bool
+    queue_enabled = Bool
+    non_fatal_enabled = Bool
+    runs_enabled = Bool
 
 
 # ======================================================================================================
 # panes
 # ======================================================================================================
-class HumanErrorCheckerPrefencesPane(PreferencesPane):
-    model_factory = HumanErrorCheckerPrefences
+class HumanErrorCheckerPreferencesPane(PreferencesPane):
+    model_factory = HumanErrorCheckerPreferences
     category = 'Experiment'
 
     def traits_view(self):
-        v = View(VGroup(Item('queue_enabled', label='Queue'),
-                        Item('runs_enabled', label='Runs'),
-                        Item('non_fatal_enabled', label='Non-Fatal'),
+        v = View(VGroup(Item('queue_enabled', label='Queue',
+                             tooltip='Check queue for errors like missing Extract Device'),
+                        Item('runs_enabled', label='Runs',
+                             tooltip='Check runs for errors'),
+                        Item('non_fatal_enabled', label='Non-Fatal',
+                             tooltip='Warn user about non-fatal issues like missing scripts'),
                         Item('extraction_script_enabled',
                              label='Extraction Script',
                              tooltip='Check that the Extraction Script matches the Extract Device'),
+                        show_border=True,
                         label='Human-Error Checker'))
         return v
 
@@ -160,7 +167,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                  label='Port'),
             label='Notifications')
 
-        editor_grp = Group(
+        editor_grp = VGroup(
             Item('automated_runs_editable',
                  label='Direct editing',
                  tooltip='Allow user to edit Automated Runs directly within table. '
