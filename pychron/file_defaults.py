@@ -38,6 +38,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Interpreted Age Table
 - Interpreted Age Ideogram
 - Auto Ideogram
+- Auto Series
 - Diff
 - Vertical Flux
 - Xy Scatter
@@ -516,6 +517,13 @@ nodes:
     key: Identifier
   - klass: IdeogramNode
     no_analyses_warning: False
+"""
+
+AUTO_SERIES = """
+required:
+nodes:
+  - klass: ListenUnknownNode
+  - klass: SeriesNode
 """
 
 SERIES = """

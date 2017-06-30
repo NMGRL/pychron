@@ -1049,6 +1049,8 @@ class Graph(ContextMenuMixin):
         plot.overlays.append(guide_overlay)
 
     def _add_rule(self, v, orientation, plotid=0, add_move_tool=False, **kw):
+        if v is None:
+            return
 
         if 'plot' in kw:
             plot = kw['plot']
@@ -1056,7 +1058,6 @@ class Graph(ContextMenuMixin):
             plot = self.plots[plotid]
 
         from pychron.graph.guide_overlay import GuideOverlay, GuideOverlayMoveTool
-
         l = GuideOverlay(plot, value=v, orientation=orientation, **kw)
         plot.underlays.append(l)
 
