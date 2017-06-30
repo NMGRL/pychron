@@ -53,6 +53,7 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['interpreted_age_ideogram_template', 'INTERPRETED_AGE_IDEOGRAM', ov],
                  ['interpreted_age_table_template', 'INTERPRETED_AGE_TABLE', ov],
                  ['auto_ideogram_template', 'AUTO_IDEOGRAM', ov],
+                 ['auto_series_template', 'AUTO_SERIES', ov],
                  ['geochron_template', 'GEOCHRON', ov],
                  ['yield_template', 'YIELD', ov],
                  ['csv_analyses_export_template', 'CSV_ANALYSES_EXPORT', ov]]

@@ -275,6 +275,7 @@ class Paths(object):
     interpreted_age_table_template = None
     interpreted_age_ideogram_template = None
     auto_ideogram_template = None
+    auto_series_template = None
     series_template = None
     geochron_template = None
     yield_template = None
