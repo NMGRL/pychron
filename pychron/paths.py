@@ -161,6 +161,7 @@ class Paths(object):
     # data
     # ==============================================================================
     data_dir = None
+    report_dir = None
     modeling_data_dir = None
     argus_data_dir = None
     positioning_error_dir = None
@@ -276,6 +277,7 @@ class Paths(object):
     interpreted_age_ideogram_template = None
     auto_ideogram_template = None
     auto_series_template = None
+    auto_report_template = None
     series_template = None
     geochron_template = None
     yield_template = None
@@ -374,6 +376,7 @@ class Paths(object):
         # data
         # ==============================================================================
         self.data_dir = data_dir = join(root, 'data')
+        self.report_dir = join(data_dir, 'reports')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
         self.furnace_scans_dir = join(data_dir, 'furnace_scans')
         self.modeling_data_dir = join(data_dir, 'modeling')

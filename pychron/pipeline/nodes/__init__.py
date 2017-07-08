@@ -34,6 +34,7 @@ from pychron.pipeline.nodes.persist import CSVAnalysesExportNode, InterpretedAge
 from pychron.pipeline.nodes.persist import DVCPersistNode, PDFFigureNode, \
     BlanksPersistNode, IsotopeEvolutionPersistNode, ICFactorPersistNode, FluxPersistNode, XLSXTablePersistNode
 from pychron.pipeline.nodes.push import PushNode
+from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import XLSXAnalysisTableNode, InterpretedAgeTableNode
 
