@@ -169,7 +169,7 @@ class OLSRegressor(BaseRegressor):
             e = e[0]
         return e
 
-    def predict_error_algebraic(self, x, error_calc='sem'):
+    def predict_error_algebraic(self, x, error_calc='SEM'):
         """
         draper and smith 24
 
@@ -182,7 +182,7 @@ class OLSRegressor(BaseRegressor):
 
         def calc_error(Xk):
             a = 1 / n + (Xk - Xbar) ** 2 / ((xs - Xbar) ** 2).sum()
-            if error_calc == 'sem':
+            if error_calc == SEM:
                 var_Ypred = s * s * a
             else:
                 var_Ypred = s * s * (1 + a)

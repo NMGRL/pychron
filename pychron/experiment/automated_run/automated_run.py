@@ -21,6 +21,7 @@ import re
 import time
 import weakref
 from itertools import groupby
+from pprint import pformat
 from threading import Thread, Event as TEvent
 
 import yaml
@@ -115,6 +116,7 @@ class AutomatedRun(Loggable):
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
     dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister')
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
     # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
@@ -431,8 +433,6 @@ class AutomatedRun(Loggable):
             sc = self.experiment_executor.baseline_color
         else:
             sc = 'green'
-
-
 
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
@@ -1052,9 +1052,26 @@ class AutomatedRun(Loggable):
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
+            env = {}
+            lclient = self.labspy_client
+            if lclient:
+                if lclient.connect():
+                    for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                        try:
+                            env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
+                        except BaseException, e:
+                            self.debug('Get Labspy Environmentals: {}'.format(e))
+                            self.debug_exception()
+                else:
+                    self.debug('failed to connect to labspy client. Could not retrieve environmentals')
+                self.debug('Enviromentals: {}'.format(pformat(env)))
+            else:
+                self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
+
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
-                                        tripped_conditional=self.tripped_conditional)
+                                        tripped_conditional=self.tripped_conditional,
+                                        **env)
 
             # add a result to the run spec.
             self.spec.new_result(self)
@@ -2316,6 +2333,7 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit='linear',
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
@@ -2348,6 +2366,7 @@ anaylsis_type={}
                                      marker_size=1.25,
                                      fit=None,
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
@@ -2400,7 +2419,8 @@ anaylsis_type={}
 
         regressing = grpname != 'sniff'
         scnt, fcnt = (2, 1) if regressing else (1, 0)
-        self.debug('"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
+        self.debug(
+            '"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
 
         self.measurement_script.increment_series_counts(scnt, fcnt)
 

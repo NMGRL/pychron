@@ -120,6 +120,15 @@ class LabspyClient(Loggable):
             else:
                 self.debug('No devices to check for connection status')
 
+    def get_latest_lab_temperatures(self):
+        return self.db.get_latest_lab_temperatures()
+
+    def get_latest_lab_humiditys(self):
+        return self.db.get_latest_lab_humiditys()
+
+    def get_latest_lab_pneumatics(self):
+        return self.db.get_latest_lab_pneumatics()
+
     def _connection_status(self, verbose=False):
 
         # if verbose:
@@ -243,8 +252,8 @@ class LabspyClient(Loggable):
             self.debug('failed adding measurement. {}'.format(e))
 
     def connect(self):
-        self.warning('not connected to db {}'.format(self.db.url))
-        self.db.connect()
+        self.warning('not connected to db {}'.format(self.db.public_url))
+        return self.db.connect()
 
     @property
     def notification_triggers(self):

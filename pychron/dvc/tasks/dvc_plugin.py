@@ -23,7 +23,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction
 from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
     DVCDBConnectionPreferencesPane, DVCExperimentPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
@@ -133,7 +133,11 @@ class DVCPlugin(BaseTaskPlugin):
         actions = [SchemaAddition(factory=WorkOfflineAction,
                                   path='MenuBar/tools.menu'),
                    SchemaAddition(factory=UseOfflineDatabase,
-                                  path='MenuBar/tools.menu')]
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=ShareChangesAction,
+                                  path='MenuBar/tools.menu'),
+                   # SchemaAddition(factory=PullAction),
+                   ]
 
         return [TaskExtension(actions=actions), ]
 

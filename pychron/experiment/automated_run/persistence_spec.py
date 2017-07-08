@@ -91,4 +91,7 @@ class PersistenceSpec(HasTraits):
     tripped_conditional = None
 
     power_achieved = Float
+    lab_temperatures = List
+    lab_humiditys = List
+    lab_pneumatics = List
 # ============= EOF =============================================

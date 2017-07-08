@@ -58,13 +58,14 @@ class PeakCenterView(HasTraits):
                 component=p,
                 tool=t)
             p.overlays.append(dto)
-            t.current_position = an.peak_center, 0
-
             v = nominal_value(an.peak_center)
-            g.add_vertical_rule(v)
-            g.add_plot_label('Center={:0.5f} V'.format(v),
-                             font='modern 12',
-                             color='darkgreen')
+            if v is not None:
+                t.current_position = v, 0
+
+                g.add_vertical_rule(v)
+                g.add_plot_label('Center={:0.5f} V'.format(v),
+                                 font='modern 12',
+                                 color='darkgreen')
             g.set_y_limits(pad='0.05', plotid=0)
 
             miR = min(ref_ys)

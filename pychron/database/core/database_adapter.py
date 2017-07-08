@@ -331,7 +331,7 @@ class DatabaseAdapter(Loggable):
             else:
                 url = self.url
                 if url is not None:
-                    self.info('{} connecting to database {}'.format(id(self), url))
+                    self.info('{} connecting to database {}'.format(id(self), self.public_url))
                     engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
@@ -350,11 +350,11 @@ class DatabaseAdapter(Loggable):
                         self.connected = True
 
                     if self.connected:
-                        self.info('connected to db {}'.format(self.url))
+                        self.info('connected to db {}'.format(self.public_url))
                         # self.initialize_database()
                     else:
                         self.connection_error = 'Not Connected to Database "{}".\nAccess Denied for user= {} \
-host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
+host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                         if warn:
                             from pychron.core.ui.gui import invoke_in_main_thread
                             invoke_in_main_thread(self.warning_dialog, self.connection_error)
@@ -506,12 +506,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url)
 
             connected = True
         except OperationalError:
-            self.warning('Operational connection failed to {}'.format(self.url))
+            self.warning('Operational connection failed to {}'.format(self.public_url))
             connected = False
             self._test_connection_enabled = False
 
         except Exception, e:
-            self.warning('connection failed to {} exception={}'.format(self.url, e))
+            self.warning('connection failed to {} exception={}'.format(self.public_url, e))
             connected = False
 
         finally:

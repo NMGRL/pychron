@@ -141,6 +141,25 @@ class DVCAnalysis(Analysis):
         self.load_paths()
         self.load_spectrometer_parameters(jd['spec_sha'])
 
+        self.load_environmentals(jd.get('environmental'))
+
+    def load_environmentals(self, ed):
+        if ed is not None:
+            lt = ed.get('lab_temperatures', [])
+            if lt:
+                self.lab_temperature = next((t['value'] for t in lt if t['device'] == 'EnvironmentalMonitor' and
+                                             t['name'] == 'Lab Temp.'), 0)
+
+            ht = ed.get('lab_humiditys', [])
+            if ht:
+                self.lab_humidity = next((t['value'] for t in lt if t['device'] == 'EnvironmentalMonitor' and
+                                          t['name'] == 'Lab Hum.'), 0)
+
+            pt = ed.get('lab_pneumatics', [])
+            if pt:
+                self.lab_airpressure = next((t['value'] for t in lt if t['device'] == 'AirPressure' and
+                                             t['name'] == 'Pressure'), 0)
+
     def load_paths(self, modifiers=None):
         if modifiers is None:
             modifiers = ('intercepts', 'baselines', 'blanks', 'icfactors', 'tags', 'peakcenter')

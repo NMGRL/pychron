@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 import json
 import os
+from pprint import pformat
 
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
@@ -38,8 +39,8 @@ def dvc_dump(obj, path):
     with open(path, 'w') as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)
-        except TypeError:
-            print 'dvc dump exception {}'.format(obj)
+        except TypeError, e:
+            print 'dvc dump exception. error:{}, {}'.format(e, pformat(obj))
 
 
 def dvc_load(path):

@@ -24,8 +24,8 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
-from traits.api import Instance, Bool, Int, Str, List, Enum
-from traitsui.api import View, Item, EnumEditor
+from traits.api import Instance, Bool, Int, Str, List, Enum, Float
+from traitsui.api import View, Item, EnumEditor, CheckListEditor
 
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
@@ -267,12 +267,18 @@ class ListenUnknownNode(UnknownNode):
     exclude_uuids = List
     period = Int(15)
     mode = Enum('Normal', 'Window')
+    analysis_types = List
+    available_analysis_types = List(['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail'])
+    post_analysis_delay = Float(5)
+    verbose = Bool
+
     engine = None
     _alive = False
 
     _cached_unknowns = None
     _unks_ids = None
     _updated = False
+    max_period = 10
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -293,17 +299,25 @@ class ListenUnknownNode(UnknownNode):
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
-            return True
-
+            info = self.edit_traits()
+            return info.result
+        #
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
         v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
-                 Item('period', label='Update Period (s)'),
+                 Item('period', label='Update Period (s)',
+                      tooltip='Defauly time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
+                Item('analysis_types',style='custom',
+                     editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('post_analysis_delay', label='Post Analysis Found Delay',
+                      tooltip='Time (min) to delay before next "check for new analyses"'),
+                 Item('verbose'),
+                 kind='livemodal',
                  buttons=['OK', 'Cancel'])
         return v
 
@@ -324,45 +338,60 @@ class ListenUnknownNode(UnknownNode):
     def _stop_listening(self):
         self._alive = False
 
-    def _iter(self):
-        if self._alive:
-            unks = self._load_unknowns()
-            # if globalv.auto_pipeline_debug:
-            #     self.tracker.stats.print_summary()
+    def _iter(self, acc=1.0, last_update=None):
+        if not self._alive:
+            return
 
-            if self._alive:
-                if unks:
-                    unks_ids = [id(ai) for ai in unks]
-                    if self._unks_ids != unks_ids:
-                        # self.unknowns = unks
-                        self._unks_ids = unks_ids
-                        self.engine.rerun_with(unks, post_run=False)
-                        self.engine.refresh_figure_editors()
+        unks, updated = self._load_analyses()
+        if not self._alive:
+            return
 
-                if self._alive:
+        if unks:
+            unks_ids = [id(ai) for ai in unks]
+            if self._unks_ids != unks_ids:
+                # self.unknowns = unks
+                self._unks_ids = unks_ids
+                self.engine.rerun_with(unks, post_run=False)
+                self.engine.refresh_figure_editors()
 
-                    if self._updated:
-                        # if a new analysis was just found wait for at least 2mins before querying again
-                        period = 120
-                        self._updated = False
-                    else:
-                        period = self.period
+        if not self._alive:
+            return
 
-                    do_after(int(period * 1000), self._iter)
+        st = None
+        if updated:
+            # if a new analysis was just found wait
+            # for at least `post_analysis_delay` mins before querying again
+            st = time.time()
+            if last_update:
 
-    def _load_unknowns(self):
+                if self._between_updates:
+                    self._between_updates = ((st-last_update)+self._between_updates)/2.
+                else:
+                    self._between_updates = st - last_update
+
+                period = self._between_updates*0.75
+
+            else:
+                period = 60*self.post_analysis_delay
+        else:
+            period = self.period
+
+        do_after(int(period * 1000), self._iter, acc, st)
+
+    def _load_analyses(self):
         td = timedelta(hours=self.hours)
         high = datetime.now()
-
+        updated = False
         if self.mode == 'Normal':
             low = self._low - td
         else:
             low = high - td
 
         with self.dvc.session_ctx(use_parent_session=False):
+            ats = [a.lower().replace(' ', '_') for a in self.analysis_types]
             unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       analysis_type='unknown',
-                                                       mass_spectrometers=self.mass_spectrometer, verbose=True)
+                                                       analysis_type=ats,
+                                                       mass_spectrometers=self.mass_spectrometer, verbose=self.verbose)
             records = [ri for unk in unks for ri in unk.record_views]
             if not self._cached_unknowns:
                 ans = self.dvc.make_analyses(records)
@@ -377,7 +406,7 @@ class ListenUnknownNode(UnknownNode):
                         ais.append(ri)
 
                 if ais:
-                    self._updated = True
+                    updated = True
                     # the database may have updated but the repository not yet updated.
                     # sleeping X seconds is a potential work around but a little dump.
                     # better solution is to save to database after repository is updated
@@ -391,6 +420,6 @@ class ListenUnknownNode(UnknownNode):
                             pass
 
         self._cached_unknowns = ans
-        return ans
+        return ans, updated
 
 # ============= EOF =============================================

@@ -35,7 +35,7 @@ from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction
     SaveAsCurrentExperimentAction, SyncQueueAction, AcquireSpectrometerAction, ReleaseSpectrometerAction, \
     RunHistoryAction
 from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
-    UserNotifierPreferencesPane, HumanErrorCheckerPrefencesPane
+    UserNotifierPreferencesPane, HumanErrorCheckerPreferencesPane
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 
 
@@ -85,7 +85,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         return [ExperimentPreferencesPane,
                 ConsolePreferencesPane,
                 UserNotifierPreferencesPane,
-                HumanErrorCheckerPrefencesPane]
+                HumanErrorCheckerPreferencesPane]
 
     def _file_defaults_default(self):
         return [('experiment_defaults', 'EXPERIMENT_DEFAULTS', False)]

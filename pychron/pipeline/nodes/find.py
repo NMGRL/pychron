@@ -207,7 +207,7 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-
+        print 'unkns', state.unknowns
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
             if self._run_group(state, gid, list(ans)):
@@ -236,7 +236,7 @@ class FindReferencesNode(FindNode):
                                         extract_device=self.extract_device,
                                         mass_spectrometer=self.mass_spectrometer,
                                         make_records=False)
-
+        print 'asdfasdfasdfasdf', refs
         if refs:
             unknowns.extend(refs)
             model = GraphicalFilterModel(analyses=unknowns,

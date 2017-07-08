@@ -71,7 +71,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._update_graph()
 
     def cm_parabolic(self):
-        print self.selected_plotid
         self.set_fit('parabolic', plotid=self.selected_plotid)
         self._update_graph()
 
@@ -256,7 +255,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line = plot.plots[lkey][0]
                     line.regressor = None
 
-                # print 'fit for {}={}'.format(key, fi)
+                # print self, 'fit for {}={}, {}'.format(key, fi, scatter)
                 scatter.fit = fi
                 scatter.index.metadata['selections'] = []
                 scatter.index.metadata['filtered'] = None
@@ -344,7 +343,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _regress(self, plot, scatter, line):
         fit, err = convert_fit(scatter.fit)
+
         if fit is None:
+            print 'fit is none, {}'.format(scatter.fit)
             return
 
         r = None
@@ -364,7 +365,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         if r:
             r.error_calc_type = err
-
             if line:
                 plow = plot.index_range._low_value
                 phigh = plot.index_range._high_value
@@ -386,21 +386,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 try:
                     line.index.set_data(fx)
                     line.value.set_data(fy)
-                except BaseException:
+                except BaseException, e:
+                    print 'Regerssion Exception, {}'.format(e)
                     return
 
                 if hasattr(line, 'error_envelope'):
-                    # ly, uy, x = r.calculate_error_envelope2(fx, fy)
-                    # print 'fff', ly
-                    # print 'x',x
-                    # print 'ly',ly
-                    # line.error_envelope2.xs = x
-                    # line.error_envelope2.lower = ly
-                    # line.error_envelope2.upper = uy
-                    # line.error_envelope2.invalidate()
                     ci = r.calculate_error_envelope(fx, fy)
-                    # ci = r.calculate_ci(fx, fy)
-                    #                 print ci
                     if ci is not None:
                         ly, uy = ci
                     else:
