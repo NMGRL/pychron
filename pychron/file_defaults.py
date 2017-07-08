@@ -41,6 +41,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Auto Ideogram
 - Auto Series
 - Auto Report
+- Report
 - Diff
 - Vertical Flux
 - Xy Scatter
@@ -529,10 +530,18 @@ nodes:
   - klass: IdeogramNode
     no_analyses_warning: False
 """
+REPORT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: ReportNode
+"""
+
 AUTO_REPORT = """
 required:
 nodes:
   - klass: ListenUnknownNode
+    single_shot: True
   - klass: ReportNode
 """
 AUTO_SERIES = """

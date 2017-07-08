@@ -78,6 +78,7 @@ class PersistenceMixin(object):
 
     def load(self, verbose=False):
         attrs = self.get_attributes()
+        print attrs, 'asdfsdadsasdfasd'
         if not attrs:
             raise NotImplementedError
 
@@ -113,6 +114,7 @@ class PersistenceMixin(object):
             raise NotImplementedError
 
         p = self.get_persistence_path()
+        print 'asdfasfasfsadf', p
         if p:
 
             if verbose:

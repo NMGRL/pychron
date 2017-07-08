@@ -278,6 +278,7 @@ class Paths(object):
     auto_ideogram_template = None
     auto_series_template = None
     auto_report_template = None
+    report_template = None
     series_template = None
     geochron_template = None
     yield_template = None

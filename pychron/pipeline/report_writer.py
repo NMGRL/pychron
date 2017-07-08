@@ -16,13 +16,14 @@
 from traits.api import Bool, List, Instance
 from traitsui.api import View, UItem, Item, VGroup, InstanceEditor, Tabbed
 
-from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path, view_file
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 from pychron.core.pdf.options import BasePDFOptions
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.options.options_manager import SeriesOptionsManager, OptionsController
 from pychron.options.views.views import view
 from pychron.paths import paths
+from pychron.persistence_loggable import dumpable
 from pychron.pipeline.plot.editors.series_editor import SeriesEditor
 
 
@@ -34,11 +35,17 @@ class AirReportSeriesOptionsManager(SeriesOptionsManager):
     id = 'air_report_series'
 
 
+class CocktailReportSeriesOptionsManager(SeriesOptionsManager):
+    id = 'cocktail_report_series'
+
+
 class ReportOptions(BasePDFOptions):
-    blank_unknowns_enabled = Bool
-    airs_enabled = Bool
-    cocktails_enabled = Bool
-    blank_unknowns_enabled = Bool
+    _persistence_name = 'report_options'
+
+    blank_unknowns_enabled = dumpable(Bool(True))
+    airs_enabled = dumpable(Bool(True))
+    cocktails_enabled = dumpable(Bool(True))
+    blank_unknowns_enabled = dumpable(Bool(True))
 
     blank_unknowns_series_options_manager = Instance(BUReportSeriesOptionsManager, ())
     blank_unknowns_series_options_controller = Instance(OptionsController)
@@ -46,9 +53,13 @@ class ReportOptions(BasePDFOptions):
     airs_series_options_manager = Instance(AirReportSeriesOptionsManager, ())
     airs_series_options_controller = Instance(OptionsController)
 
+    cocktails_series_options_manager = Instance(CocktailReportSeriesOptionsManager, ())
+    cocktails_series_options_controller = Instance(OptionsController)
+
     def set_names(self, names):
         self.blank_unknowns_series_options_manager.set_names(names)
         self.airs_series_options_manager.set_names(names)
+        self.cocktails_series_options_manager.set_names(names)
 
     @property
     def path(self):
@@ -70,7 +81,15 @@ class ReportOptions(BasePDFOptions):
                                enabled_when='airs_enabled'),
                          label='Airs')
 
-        v = View(Tabbed(bu_grp, air_grp),
+        cocktail_grp = VGroup(Item('cocktails_enabled', label='Enabled'),
+                              UItem('cocktails_series_options_controller',
+                                    editor=InstanceEditor(view=view('Cocktails')),
+                                    style='custom',
+                                    enabled_when='cocktails_enabled'),
+                              label='Cocktails')
+
+        layout_grp = self._get_layout_group()
+        v = View(Tabbed(bu_grp, air_grp, cocktail_grp, layout_grp),
                  buttons=['OK', 'Cancel'])
         return v
 
@@ -80,6 +99,10 @@ class ReportOptions(BasePDFOptions):
 
     def _airs_series_options_controller_default(self):
         o = OptionsController(model=self.airs_series_options_manager)
+        return o
+
+    def _cocktails_series_options_controller_default(self):
+        o = OptionsController(model=self.cocktails_series_options_manager)
         return o
 
 
@@ -92,17 +115,23 @@ class ReportWriter(BasePDFWriter):
 
         path = self.options.path
         self.build(path)
+        view_file(path)
 
     # private
     def _build(self, *args, **kw):
         flowables = []
         templates = None
+        if self.options.blank_unknowns_enabled:
+            f = self._make_time_series('blank_unknown')
+            flowables.extend(f)
 
-        f = self._make_time_series('blank_unknown')
-        flowables.extend(f)
+        if self.options.airs_enabled:
+            f = self._make_time_series('air')
+            flowables.extend(f)
 
-        f = self._make_time_series('air')
-        flowables.extend(f)
+        if self.options.cocktails_enabled:
+            f = self._make_time_series('cocktail')
+            flowables.extend(f)
 
         return flowables, templates
 
@@ -118,8 +147,8 @@ class ReportWriter(BasePDFWriter):
 
             s.component.use_backbuffer = False
 
-            s = (self._new_paragraph(name),
-                 ComponentFlowable(s.component),
+            s = (self._new_paragraph(name, s='Heading1'),
+                 ComponentFlowable(s.component, bounds=self.options.bounds),
                  self._page_break())
         else:
             s = (self._new_paragraph('No {}s'.format(name)), self._page_break())

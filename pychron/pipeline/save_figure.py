@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Instance
 from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, Tabbed
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions, PDFLayoutView
+from pychron.core.pdf.options import PDFLayoutView
+from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions
 from pychron.core.save_model import SaveModel, SaveController
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
