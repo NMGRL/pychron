@@ -267,7 +267,7 @@ class ListenUnknownNode(UnknownNode):
     exclude_uuids = List
     period = Int(15)
     mode = Enum('Normal', 'Window')
-    analysis_types = List
+    analysis_types = List(['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail'])
     available_analysis_types = List(['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail'])
     post_analysis_delay = Float(5)
     verbose = Bool
@@ -321,6 +321,11 @@ class ListenUnknownNode(UnknownNode):
                  buttons=['OK', 'Cancel'])
         return v
 
+    def run(self, state):
+        self._low = datetime.now()
+        unks, updated = self._load_analyses()
+        state.unknowns = unks
+
     def post_run(self, engine, state):
         if not self._alive:
             self.engine = engine
@@ -330,7 +335,6 @@ class ListenUnknownNode(UnknownNode):
         self._stop_listening()
 
     def _start_listening(self):
-        self._low = datetime.now()
         self._alive = True
         self._updated = False
         self._iter()
