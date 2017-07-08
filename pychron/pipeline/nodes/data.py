@@ -32,6 +32,11 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class DVCNode(BaseNode):
+    """
+
+    Base node for all nodes that need access to a DVC instance or BrowserModel for
+    retrieving analyses
+    """
     dvc = Instance('pychron.dvc.dvc.DVC')
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
