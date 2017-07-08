@@ -279,6 +279,7 @@ class ListenUnknownNode(UnknownNode):
     _unks_ids = None
     _updated = False
     max_period = 10
+    single_shot = False
 
     def finish_load(self):
         self.available_spectrometers = self.dvc.get_mass_spectrometer_names()
@@ -288,7 +289,7 @@ class ListenUnknownNode(UnknownNode):
         if globalv.auto_pipeline_debug:
             self.mass_spectrometer = 'jan'
             self.period = 15
-            self.hours = 9
+            self.hours = 48
 
             # from pympler.classtracker import ClassTracker
             # self.tracker = ClassTracker()
@@ -329,7 +330,8 @@ class ListenUnknownNode(UnknownNode):
     def post_run(self, engine, state):
         if not self._alive:
             self.engine = engine
-            self._start_listening()
+            if not self.single_shot:
+                self._start_listening()
 
     def reset(self):
         self._stop_listening()
