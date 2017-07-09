@@ -83,6 +83,22 @@ class AnalysisGroup(HasTraits):
 
     total_n = AGProperty()
 
+    def attr_stats(self, attr):
+        w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
+        mswd = calculate_mswd(vs, es, wm=w)
+        valid_mswd = validate_mswd(mswd, self.nanalyses)
+        mi = min(vs)
+        ma = max(vs)
+
+        total_dev = (ma - mi) / ma * 100
+
+        return {'mean': w,
+                'sd': sd,
+                'sem': sem,
+                'mswd': mswd,
+                'valid_mswd': valid_mswd,
+                'min': mi, 'max': ma, 'total_dev': total_dev}
+
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
@@ -105,11 +121,13 @@ class AnalysisGroup(HasTraits):
 
         return self._calculate_mswd(attr)
 
-    def _calculate_mswd(self, attr):
+    def _calculate_mswd(self, attr, values=None):
         m = 0
-        args = self._get_values(attr)
-        if args:
-            vs, es = args
+        if values is None:
+            values = self._get_values(attr)
+
+        if values:
+            vs, es = values
             m = calculate_mswd(vs, es)
 
         return m
@@ -245,11 +263,18 @@ class AnalysisGroup(HasTraits):
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
         args = self._get_values(attr)
+        sem = 0
         if args:
             vs, es = args
             if use_weights:
                 av, werr = calculate_weighted_mean(vs, es)
-                if error_kind == SD:
+
+                if error_kind == 'both':
+                    sem = werr
+                    n = len(vs)
+                    werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
+
+                elif error_kind == SD:
                     n = len(vs)
                     werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
 
@@ -259,7 +284,10 @@ class AnalysisGroup(HasTraits):
         else:
             av, werr = 0, 0
 
-        return av, werr
+        if error_kind == 'both':
+            return av, werr, sem, args
+        else:
+            return av, werr
 
     def _calculate_arithmetic_mean(self, attr):
         return self._calculate_mean(attr, use_weights=False)
@@ -299,6 +327,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_gas_fraction = Float(50)
     plateau_mswd = Float
     plateau_mswd_valid = Bool
+
     # def _get_nanalyses(self):
     #     if self.plateau_steps:
     #         n = self.nsteps
