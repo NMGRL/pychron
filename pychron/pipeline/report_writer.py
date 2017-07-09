@@ -27,6 +27,8 @@ from pychron.options.views.views import view
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pipeline.plot.editors.series_editor import SeriesEditor
+from pychron.pipeline.plot.plotter.series import ATTR_MAPPING
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 
 
 class BUReportSeriesOptionsManager(SeriesOptionsManager):
@@ -141,14 +143,14 @@ class ReportWriter(BasePDFTableWriter):
 
         opt = getattr(self.options, '{}s_series_options_manager'.format(analysis_type)).selected_options
 
-        ans = self._get_analyses(analysis_type)
+        ag = self._get_analyses(analysis_type)
         name = ' '.join((a.capitalize() for a in analysis_type.split('_')))
-        if ans:
+        if ag:
             s = SeriesEditor(plotter_options=opt)
-            s.set_items(ans)
+            s.set_items(ag.analyses)
             s.component.use_backbuffer = False
 
-            table = self._make_summary_table(s, opt)
+            table = self._make_summary_table(ag, opt)
 
             s = (self._new_paragraph(name, s='Heading1'),
                  ComponentFlowable(s.component, bounds=self.options.bounds),
@@ -159,9 +161,9 @@ class ReportWriter(BasePDFTableWriter):
 
         return s
 
-    def _make_summary_table(self, editor, opt):
+    def _make_summary_table(self, ag, opt):
 
-        ag = editor.analysis_groups[0]
+        # ag = editor.analysis_groups[0]
 
         ts = self._new_style(header_line_idx=0, header_line_width=2)
 
@@ -177,29 +179,39 @@ class ReportWriter(BasePDFTableWriter):
         header.add_item(value='Max')
         header.add_item(value='Dev %')
 
-        rows = []
+        rows = [header]
         for i, attr in enumerate(opt.get_plotable_aux_plots()):
-            stat = ag.attr_stats(attr)
+            name = key = attr.name
+            if name in ATTR_MAPPING:
+                key = ATTR_MAPPING[name]
+            stat = ag.attr_stats(key)
 
             r = Row()
-            r.add_item(value=attr)
-            r.add_item(value=stat['mean'])
-            r.add_item(value=stat['sd'])
-            r.add_item(value=stat['sem'])
-            r.add_item(value='{}{}'.format(stat['mswd'],
-                                           '' if stat['valid'] else '*'))
-            r.add_item(value=stat['max'])
-            r.add_item(value=stat['min'])
-            r.add_item(value=stat['total_dev'])
+            r.add_item(value=name)
+            r.add_item(value=stat['mean'], fmt='{:0.4f}')
+            r.add_item(value=stat['sd'], fmt='{:0.4f}')
+            r.add_item(value=stat['sem'], fmt='{:0.4f}')
+            r.add_item(value='{}{}'.format('{:0.4f}'.format(stat['mswd']),
+                                           '' if stat['valid_mswd'] else '*'))
+            r.add_item(value=stat['max'], fmt='{:0.4f}')
+            r.add_item(value=stat['min'], fmt='{:0.4f}')
+            r.add_item(value=stat['total_dev'], fmt='{:0.4f}')
             rows.append(r)
+
+            if i % 2 == 0:
+                bg_color = colors.whitesmoke
+            else:
+                bg_color = colors.lightgrey
+
+            ts.add('BACKGROUND', (0, i+1), (-1, i+1), bg_color)
 
         table = self._new_table(ts, rows)
         return table
 
     def _get_analyses(self, analysis_type):
         ans = [a for a in self._analyses if a.analysis_type == analysis_type]
-        return ans
-        # if ans:
-        #     return AnalysisGroup(analyses=ans)
+        # return ans
+        if ans:
+            return AnalysisGroup(analyses=ans)
 
 # ============= EOF =============================================
