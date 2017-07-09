@@ -254,7 +254,7 @@ class AnalysisGroup(HasTraits):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
     def _get_values(self, attr):
-        vs = (getattr(ai, attr) for ai in self.clean_analyses())
+        vs = (ai.get_value(attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
             vs, es = zip(*[(nominal_value(v), std_dev(v)) for v in vs])

@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from numpy import asarray, average, vectorize
+from numpy import asarray, average, vectorize, ones_like, count_nonzero
+
 
 # ============= local library imports  ==========================
 def _kronecker(ii, jj):
@@ -50,7 +51,11 @@ def calculate_mswd(x, errs, k=1, wm=None):
 def calculate_weighted_mean(x, errs):
     x = asarray(x)
     errs = asarray(errs)
-    weights = 1 / errs ** 2
+    if not count_nonzero(errs):
+        weights = ones_like(x)
+    else:
+        weights = 1 / errs ** 2
+
 
     wmean, sum_weights = average(x, weights=weights, returned=True)
     werr = sum_weights ** -0.5
