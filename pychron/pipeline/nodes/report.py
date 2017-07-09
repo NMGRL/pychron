@@ -106,6 +106,4 @@ class ReportNode(BaseNode):
         r.options = self.options
         r.make_report(ans)
 
-
-
 # ============= EOF =============================================
