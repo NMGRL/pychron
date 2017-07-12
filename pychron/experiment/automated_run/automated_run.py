@@ -2531,7 +2531,8 @@ anaylsis_type={}
         root = paths.extraction_dir
         ext = self._ext_factory(root, self.script_info.extraction_script_name,
                                 klass=klass)
-        ext.automated_run = self
+        if ext is not None:
+            ext.automated_run = self
         return ext
 
     def _post_measurement_script_factory(self):

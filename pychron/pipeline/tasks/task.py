@@ -112,6 +112,7 @@ class PipelineTask(BaseBrowserTask):
             self.diff_enabled = True
 
         self.engine.dvc = self.dvc
+        self.browser_model.dvc = self.dvc
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
