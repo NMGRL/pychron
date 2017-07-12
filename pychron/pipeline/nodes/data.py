@@ -304,7 +304,7 @@ class ListenUnknownNode(UnknownNode):
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)',
-                      tooltip='Defauly time (s) to delay between "check for new analyses"'),
+                      tooltip='Default time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
                 Item('analysis_types',style='custom',

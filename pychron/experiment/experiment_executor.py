@@ -423,10 +423,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # self.extraction_state_label = ''
         self.experiment_queue.executed = True
 
-        if self.stats:
-            self.stats.reset()
-            self.stats.start_timer()
-
     def _wait_for_save(self):
         """
             wait for experiment queue to be saved.
@@ -494,9 +490,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
 
-        if self.stats:
-            self.stats.reset()
-
         for i, exp in enumerate(self.experiment_queues):
             self._set_thread_name(exp.name)
             self.heading('"{}" started'.format(exp.name))
@@ -525,6 +518,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
+
+        self.debug('reset stats: {}'.format(self.stats))
+        if self.stats:
+            self.stats.reset()
+            self.stats.start_timer()
 
         self._do_event(events.START_QUEUE)
         # self._add_event()

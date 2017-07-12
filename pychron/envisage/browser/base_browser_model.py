@@ -94,6 +94,7 @@ def extract_mass_spectrometer_name(name):
 
 
 class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
+    dvc = Instance('pychron.dvc.dvc.DVC')
     plot_selected = Event
 
     selected_principal_investigators = Any
@@ -783,6 +784,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_db(self):
         if self.use_workspace:
             db = self.workspace.index_db
+        elif self.dvc:
+            db = self.dvc
         else:
             db = self.application.get_service(DVC_PROTOCOL)
 

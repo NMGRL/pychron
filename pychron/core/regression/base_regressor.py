@@ -313,7 +313,7 @@ class BaseRegressor(HasTraits):
 
             # print rx, cors[0]
 
-            return cors
+            return cors/2.
 
     def _delete_filtered_hook(self, outliers):
         pass
