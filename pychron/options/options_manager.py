@@ -80,10 +80,10 @@ class OptionsManager(Loggable):
         if self.selected_options:
             self.selected_options.set_detectors(dets)
 
-    def set_names(self, names):
+    def set_names(self, names, *args, **kw):
         self._cached_names = names
         if self.selected_options:
-            self.selected_options.set_names(names)
+            self.selected_options.set_names(names, *args, **kw)
 
             # for p in self.plotter_options_list:
             #     p.set_names(names)

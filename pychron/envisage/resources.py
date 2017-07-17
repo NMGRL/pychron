@@ -42,6 +42,9 @@ def icon(name):
                 break
         else:
             print 'no icon for "{}"'.format(name)
+
+    # if name=='.png':
+    #     raise RuntimeError
     return ImageResource(name=name, search_path=icon_search_path)
 
 

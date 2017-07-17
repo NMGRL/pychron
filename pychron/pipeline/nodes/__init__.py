@@ -19,9 +19,10 @@
 # ============= local library imports  ==========================
 
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
-    InterpretedAgeNode
+    InterpretedAgeNode, CalendarUnknownNode
 from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
+from pychron.pipeline.nodes.email import EmailNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
     VerticalFluxNode, XYScatterNode, RadialNode
 from pychron.pipeline.nodes.filter import FilterNode

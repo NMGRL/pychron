@@ -21,7 +21,7 @@ from pychron.pychron_constants import AR40, AR39, AR36, AR38, UNKNOWN, COCKTAIL,
 
 
 class ReportNode(BaseNode):
-    name = 'ReportNode'
+    name = 'Report'
     options_klass = ReportOptions
 
     def configure(self, *args, **kw):
@@ -54,7 +54,7 @@ class ReportNode(BaseNode):
                             names.append(k)
                             names.append('{}bs'.format(k))
                             names.append('{}ic'.format(k))
-                    
+
                     # names.extend(iso_keys)
                     # names.extend(['{}bs'.format(ki) for ki in iso_keys])
                     # names.extend(['{}ic'.format(ki) for ki in iso_keys])
@@ -102,8 +102,11 @@ class ReportNode(BaseNode):
 
     def run(self, state):
         ans = state.unknowns
-        r = ReportWriter()
-        r.options = self.options
-        r.make_report(ans)
+        if ans:
+            r = ReportWriter()
+            r.options = self.options
+            path = r.make_report(ans)
+            state.report_path = path
+
 
 # ============= EOF =============================================

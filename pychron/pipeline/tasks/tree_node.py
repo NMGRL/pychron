@@ -28,6 +28,7 @@ class PipelineGroupTreeNode(TreeNode):
     icon_name = ''
     label = 'name'
 
+ICON_MAP = {}
 
 class PipelineTreeNode(TreeNode):
     icon_name = ''
@@ -69,10 +70,17 @@ class PipelineTreeNode(TreeNode):
         name = self.icon_name
         if not isinstance(obj, Pipeline):
 
-            if not object.enabled:
+            if not obj.enabled:
                 name = 'cancel'
 
-        return icon(name)
+        if name in ICON_MAP:
+            i = ICON_MAP[name]
+        else:
+            i = icon(name)
+            ICON_MAP[name] = i
+
+        return i
+
 
         # def get_background(self, obj):
         #     # print 'get', obj, obj.visited

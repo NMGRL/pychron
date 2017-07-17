@@ -540,9 +540,9 @@ nodes:
 AUTO_REPORT = """
 required:
 nodes:
-  - klass: ListenUnknownNode
-    single_shot: True
+  - klass: CalendarUnknownNode 
   - klass: ReportNode
+  - klass: EmailNode
 """
 AUTO_SERIES = """
 required:

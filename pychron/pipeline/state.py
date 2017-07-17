@@ -55,6 +55,8 @@ class EngineState(HasTraits):
     level = Str
     irradiation = Str
 
+    report_path = None
+
     @cached_property
     def _get_udetectors(self):
         return get_detector_set(self.unknowns)

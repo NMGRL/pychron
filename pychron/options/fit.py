@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Int, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -34,9 +35,9 @@ class FitOptions(AuxPlotFigureOptions):
     nsigma = Int(1)
     use_time_axis = Bool(True)
 
-    def set_names(self, names):
+    def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:
-            if ai.name not in names:
+            if clear_missing and ai.name not in names:
                 ai.plot_enabled = False
                 ai.save_enabled = False
                 ai.name = ''

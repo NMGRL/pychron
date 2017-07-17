@@ -51,7 +51,8 @@ sgrp = VGroup(Item('fit_to_page'),
 PDFLayoutGroup = VGroup(Item('orientation'),
                      mgrp,
                      sgrp,
-                     cgrp)
+                     cgrp,
+                        label='Layout')
 
 PDFLayoutView = View(PDFLayoutGroup,
                      buttons=['OK', 'Cancel'],
