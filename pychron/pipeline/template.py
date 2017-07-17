@@ -18,6 +18,7 @@
 import os
 
 import yaml
+from pyface.message_dialog import warning
 from traits.api import HasTraits
 from traitsui.api import View, UItem
 
@@ -26,6 +27,7 @@ from pychron.paths import paths
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode
 from pychron.pipeline.nodes.diff import DiffNode
+from pychron.pipeline.nodes.email import EmailNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
@@ -102,6 +104,13 @@ class PipelineTemplate(HasTraits):
             elif isinstance(node, GeochronNode):
                 service = application.get_service('pychron.geochron.geochron_service.GeochronService')
                 node.trait_set(service=service)
+            elif isinstance(node, EmailNode):
+                emailer = application.get_service('pychron.social.email.emailer.Emailer')
+                if emailer is None:
+                    warning(None, 'Cannot load an Email Node, the Email Plugin required.')
+                    continue
+
+                node.trait_set(emailer=emailer)
 
             node.finish_load()
             # elif isinstance(node, FitICFactorNode):
