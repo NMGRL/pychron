@@ -488,9 +488,12 @@ class ExperimentEditorTask(EditorTask):
 
         if windows:
             is_are, them = 'is', 'it'
+            sing_plural = ''
             if len(windows) > 1:
                 is_are, them = 'are', 'them'
-            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
+                sing_plural = 's'
+
+            msg = '{} window{} {} open. Is it ok to close {}?'.format(','.join(names), sing_plural, is_are, them)
 
             if self.confirmation_dialog(msg):
                 for wi in windows:

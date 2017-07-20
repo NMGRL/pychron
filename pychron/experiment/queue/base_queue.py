@@ -43,19 +43,19 @@ def extract_meta(line_gen):
 
 
 __METASTR__ = '''
-username: {}
-use_email: {}
-email: {}
-use_group_email: {}
-date: {}
-queue_conditionals_name: {}
-mass_spectrometer: {}
-delay_before_analyses: {}
-delay_between_analyses: {}
-delay_after_blank: {}
-extract_device: {}
-tray: {}
-load: {}
+username: {username:}
+use_email: {use_email:}
+email: {email:}
+use_group_email: {use_group_email:}
+date: {date:}
+queue_conditionals_name: {queue_conditionals:}
+mass_spectrometer: {mass_spectrometer:}
+delay_before_analyses: {delay_before_analyses:}
+delay_between_analyses: {delay_between_analyses:}
+delay_after_blank: {delay_after_blank:}
+extract_device: {extract_device:}
+tray: {tray:}
+load: {load:}
 '''
 
 
@@ -358,18 +358,19 @@ class BaseExperimentQueue(RunBlock):
             ms = ''
 
         s = __METASTR__.format(
-            self.username,
-            self.use_email,
-            self.email,
-            self.use_group_email,
-            datetime.datetime.today(),
-            self.queue_conditionals_name,
-            ms,
-            self.delay_before_analyses,
-            self.delay_between_analyses,
-            self.extract_device,
-            self.tray or '',
-            self.load_name or '')
+            username=self.username,
+            use_email=self.use_email,
+            email=self.email,
+            use_group_email=self.use_group_email,
+            date=datetime.datetime.today(),
+            queue_conditionals=self.queue_conditionals_name,
+            mass_spectrometer=ms,
+            delay_before_analyses=self.delay_before_analyses,
+            delay_between_analyses=self.delay_between_analyses,
+            delay_after_blank=self.delay_after_blank,
+            extract_device=self.extract_device,
+            tray=self.tray or '',
+            load=self.load_name or '')
 
         if wfile:
             wfile.write(s)

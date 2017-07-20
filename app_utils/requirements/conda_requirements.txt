@@ -20,3 +20,6 @@ requests
 keyring
 pil
 python.app
+pytables
+jinja2
+psutil

@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
+from pyface.timer.do_later import do_later
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor, ScannerEditor
 from pychron.spectrometer.tasks.spectrometer_actions import StopScanAction
@@ -37,7 +41,32 @@ class SpectrometerTask(EditorTask):
     tool_bars = [SToolBar(StopScanAction(), )]
 
     def populate_mftable(self):
-        self.scan_manager.populate_mftable()
+        sm = self.scan_manager
+        cfg = sm.setup_populate_mftable()
+        if cfg:
+            def func():
+                refiso = cfg.isotope
+                ion = sm.ion_optics_manager
+                ion.backup_mftable()
+                for di in cfg.detectors:
+                    ion.setup_peak_center(detector=[di], isotope=refiso,
+                                          config_name=cfg.peak_center_config.active_item.name,
+                                          standalone_graph=False,
+                                          show_label=True, use_configuration_dac=False)
+
+                    ion.peak_center.update_others = False
+                    name = 'Pop MFTable {}-{}'.format(di, refiso)
+                    invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=ion.peak_center,
+                                                                              name=name))
+
+                    self._on_peak_center_start()
+                    ion.do_peak_center(new_thread=False, save=True, warn=True)
+                    self._on_peak_center_end()
+                    if not ion.peak_center.isAlive():
+                        break
+
+            t = Thread(target=func)
+            t.start()
 
     def stop_scan(self):
         self.debug('stop scan fired')
