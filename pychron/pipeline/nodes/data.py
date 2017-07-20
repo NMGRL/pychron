@@ -416,9 +416,6 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                     print 'updated={} loaded unks={}'.format(updated, unks)
 
                     if unks:
-                        # unks_ids = [id(ai) for ai in unks]
-                        # if self._unks_ids != unks_ids:
-                        # self._unks_ids = unks_ids
                         self.engine.rerun_with(unks, post_run=False)
         else:
             self._ran = False

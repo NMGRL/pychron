@@ -24,7 +24,7 @@ from numpy import asarray, array, nonzero, polyval
 from scipy.optimize import leastsq, brentq
 from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
 
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, backup
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -99,6 +99,9 @@ class MagnetFieldTable(Loggable):
                         '{}.use_local_mftable_archive'.format(prefid))
         bind_preference(self, 'use_db_archive',
                         '{}.use_db_mftable_archive'.format(prefid))
+
+    def backup(self):
+        backup(self.path, paths.mftable_backup_dir)
 
     def map_dac_to_mass(self, dac, detname):
         detname = get_detector_name(detname)

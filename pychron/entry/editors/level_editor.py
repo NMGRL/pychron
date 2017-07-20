@@ -27,7 +27,7 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.canvas.utils import load_holder_canvas, iter_geom
+from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.database.core.defaults import parse_irradiation_tray_map, load_irradiation_map
 from pychron.dvc.meta_repo import MetaRepo
@@ -216,8 +216,10 @@ class LevelEditor(Loggable):
 
     def _save_tray(self, level, original_tray):
         db = self.db
-        tr = db.get_irradiation_holder(self.selected_tray)
-        n = len(tuple(iter_geom(tr.geometry)))
+        # tr = db.get_irradiation_holder(self.selected_tray)
+        # n = len(tuple(iter_geom(tr.geometry)))
+
+        n = len(db.get_irradiation_holder_holdes(self.selected_tray))
         on = len(level.positions)
         if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
@@ -227,7 +229,7 @@ class LevelEditor(Loggable):
             elif self.confirmation_dialog('You are about to orphan {} irradiation identifiers. '
                                           'Are you sure you want to continue?'.format(on - n)):
 
-                level.holder = tr
+                level.holder = self.selected_tray
                 for p in level.positions[n:]:
                     self.debug('deleting {} {} {} {}'.format(level.irradiation.name,
                                                              level.name,
@@ -235,7 +237,7 @@ class LevelEditor(Loggable):
                                                              p.labnumber.identifier))
                     db.delete_irradiation_position(p)
         else:
-            level.holder = tr
+            level.holder = self.selected_tray
 
     def _add_level(self):
         irrad = self.irradiation

@@ -17,8 +17,6 @@
 # ============= enthought library imports =======================
 import cPickle as pickle
 import os
-import time
-from threading import Event
 
 from traits.api import Range, Instance, Bool, \
     Button, Any
@@ -305,6 +303,9 @@ class IonOpticsManager(Manager):
                 open_view(graph)
 
         return self.peak_center
+
+    def backup_mftable(self):
+        self.spectrometer.magnet.mftable.backup()
 
     # private
     def _setup_config(self):

@@ -36,6 +36,9 @@ class SpectrometerTask(EditorTask):
     _scan_editor = Instance(ScanEditor)
     tool_bars = [SToolBar(StopScanAction(), )]
 
+    def populate_mftable(self):
+        self.scan_manager.populate_mftable()
+
     def stop_scan(self):
         self.debug('stop scan fired')
         editor = self.active_editor

@@ -20,16 +20,16 @@ from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 from pyface.timer.do_later import do_later
 from traits.api import Property
-
-# ============= standard library imports ========================
-
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.envisage.tasks.actions import myTaskAction
 from pychron.envisage.view_util import open_view
 from pychron.paths import paths
-
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+
+
+# ============= standard library imports ========================
 
 
 def get_manager(event, protocol):
@@ -105,6 +105,12 @@ class ViewReadoutAction(Action):
 class SendConfigAction(myTaskAction):
     name = 'Send Configuration'
     method = 'send_configuration'
+    task_ids = ['pychron.spectrometer']
+
+
+class PopulateMFTableAction(myTaskAction):
+    name = 'Populate MF Table'
+    method = 'populate_mftable'
     task_ids = ['pychron.spectrometer']
 
 

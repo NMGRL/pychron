@@ -228,6 +228,7 @@ class Paths(object):
     deflection = None
     startup_tests = None
     ic_mftable = None
+    mftable_backup_dir = None
     system_conditionals = None
     experiment_defaults = None
     system_health = None
@@ -436,6 +437,7 @@ class Paths(object):
         self.last_experiment = join(self.appdata_dir, 'last_experiment')
         self.mftable = join(self.spectrometer_dir, 'mftables', 'mftable.csv')
         self.ic_mftable = join(self.spectrometer_dir, 'mftables', 'ic_mftable.csv')
+        self.mftable_backup_dir = join(self.spectrometer_dir, 'mftables', 'backup')
 
         self.deflection = join(self.spectrometer_dir, 'deflection.yaml')
         self.startup_tests = join(self.setup_dir, 'startup_tests.yaml')
