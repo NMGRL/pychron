@@ -60,6 +60,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     delay_between_analyses = Int(30)
     delay_before_analyses = Int(5)
+    delay_after_blank = Int(15)
     tray = Str
     trays = Property
 

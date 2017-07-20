@@ -183,7 +183,7 @@ class ScanManager(StreamGraphManager):
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
-    def populate_mftable(self):
+    def setup_populate_mftable(self):
         from pychron.spectrometer.mftable_config import MFTableConfig
         pcc = self.ion_optics_manager.peak_center_config
         pcc.view_name = 'mftable_view'
@@ -193,17 +193,13 @@ class ScanManager(StreamGraphManager):
                             isotopes=self.isotopes,
                             isotope=self.isotope,
                             peak_center_config=pcc)
+
         info = cfg.edit_traits()
-        if info.result:
-            self._populate_mftable(cfg)
         pcc.view_name = ''
+        if info.result:
+            return cfg
 
     # private
-    def _populate_mftable(self, cfg):
-        from pychron.spectrometer.mftable_generator import MFTableGenerator
-        gen = MFTableGenerator()
-        do_later(gen.make_mftable, self.ion_optics_manager, cfg)
-
     def _load_settings(self, params):
         spec = self.spectrometer
         if self.use_default_scan_settings:
