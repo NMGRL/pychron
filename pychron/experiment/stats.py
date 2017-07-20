@@ -24,7 +24,7 @@ from pychron.core.helpers.timer import Timer
 from pychron.core.ui.pie_clock import PieClockModel
 from pychron.experiment.duration_tracker import AutomatedRunDurationTracker
 from pychron.loggable import Loggable
-from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
+from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, NULL_STR
 
 
 class ExperimentStats(Loggable):
@@ -211,8 +211,11 @@ class ExperimentStats(Loggable):
         return str(dur)
 
     def _get_remaining(self):
-        # self.debug('Remaining seconds={}, tt={}, e={}'.format(self._total_time-self._elapsed, self._total_time, self._elapsed))
-        dur = timedelta(seconds=round(self._total_time - self._elapsed))
+        if not self._total_time:
+            dur = NULL_STR
+        else:
+            # self.debug('Remaining seconds={}, tt={}, e={}'.format(self._total_time-self._elapsed, self._total_time, self._elapsed))
+            dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
 
 
@@ -222,8 +225,8 @@ class StatsGroup(ExperimentStats):
     # @caller
     def reset(self):
         # print 'resetwas'
-        ExperimentStats.reset(self)
         self.calculate(force=True)
+        ExperimentStats.reset(self)
 
     def calculate(self, force=False):
         """

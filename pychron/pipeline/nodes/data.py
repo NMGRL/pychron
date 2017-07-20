@@ -288,6 +288,23 @@ class BaseAutoUnknownNode(UnknownNode):
             return info.result
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
+    def traits_view(self):
+        v = View(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
+                                      'Window: get analyses between now and now - hours'),
+                 Item('hours'),
+                 Item('period', label='Update Period (s)',
+                      tooltip='Default time (s) to delay between "check for new analyses"'),
+                 Item('mass_spectrometer', label='Mass Spectrometer',
+                      editor=EnumEditor(name='available_spectrometers')),
+                Item('analysis_types',style='custom',
+                     editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('post_analysis_delay', label='Post Analysis Found Delay',
+                      tooltip='Time (min) to delay before next "check for new analyses"'),
+                 Item('verbose'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        return v
+
     def post_run(self, engine, state):
         if not self._alive:
             self.engine = engine
