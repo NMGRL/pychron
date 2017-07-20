@@ -145,8 +145,8 @@ class BaseSweep(SpectrometerTask):
             if self._alive:
                 self._step(v)
                 intensity = self._step_intensity()
-                self._graph_hook(v, intensity, series)
-                # invoke_in_main_thread(self._graph_hook, v, intensity, series)
+                # self._graph_hook(v, intensity, series)
+                invoke_in_main_thread(self._graph_hook, v, intensity, series)
 
         return self._alive
 

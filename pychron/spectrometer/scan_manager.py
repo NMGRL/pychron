@@ -164,7 +164,7 @@ class ScanManager(StreamGraphManager):
         self._graph_scan_width_changed()
 
         self._detector_changed(None, self.detector)
-        self._isotope_changed(None, self.isotope)
+        # self._isotope_changed(None, self.isotope)
 
         # bind
         self._bind_listeners()
@@ -251,11 +251,12 @@ class ScanManager(StreamGraphManager):
                 #     iso = self.isotope
 
                 iso = self.isotope
-                print iso, self.isotopes
                 if iso is None or iso not in self.isotopes:
                     iso = NULL_STR
 
                 if self.use_log_events:
+                    self.debug('logging events')
+
                     if iso == NULL_STR:
                         self.add_spec_event_marker(
                             'DAC={:0.5f}'.format(self.magnet.dac),
@@ -265,10 +266,10 @@ class ScanManager(StreamGraphManager):
                             '{}:{} ({:0.5f})'.format(self.detector,
                                                      iso, self.magnet.dac))
 
-                self.debug('setting isotope: {}'.format(iso))
-                self._suppress_isotope_change = True
-                self.trait_set(isotope=iso)
-                self._suppress_isotope_change = False
+                # self.debug('setting isotope: {}'.format(iso))
+                # self._suppress_isotope_change = True
+                # self.trait_set(isotope=iso)
+                # self._suppress_isotope_change = False
 
         from pychron.core.ui.gui import invoke_in_main_thread
         invoke_in_main_thread(func)
@@ -434,23 +435,23 @@ class ScanManager(StreamGraphManager):
         plot.value_range.on_trait_change(self._update_graph_limits,
                                          '_low_value, _high_value')
 
-    def _isotope_changed(self, old, new):
-        if self._suppress_isotope_change:
-            return
-
-        self.debug('isotope changed {}'.format(self.isotope))
-        if self.isotope != NULL_STR and not self._check_detector_protection(old,
-                                                                            False):
-            def func():
-                self._suppress_isotope_change = True
-                self._set_position()
-                self._suppress_isotope_change = False
-
-            t = Thread(target=func)
-            t.start()
+    # def _isotope_changed(self, old, new):
+    #     if self._suppress_isotope_change:
+    #         return
+    #
+    #     self.debug('isotope changed {}'.format(self.isotope))
+    #     if self.isotope != NULL_STR and not self._check_detector_protection(old,
+    #                                                                         False):
+    #         def func():
+    #             self._suppress_isotope_change = True
+    #             self._set_position()
+    #             self._suppress_isotope_change = False
+    #
+    #         t = Thread(target=func)
+    #         t.start()
 
     def _detector_changed(self, old, new):
-        self.debug('detector changed {}'.format(self.detector))
+        self.debug('detector changed {}'.format(new))
         self.magnet.detector = self.detector
         self.rise_rate.detector = self.detector
 
@@ -458,7 +459,7 @@ class ScanManager(StreamGraphManager):
             self.debug('isotope not set isotope={}. Not setting magnet'.format(self.isotope))
             return
 
-        if self.detector and not self._check_detector_protection(old, True):
+        if new and not self._check_detector_protection(old, True):
             # self.scanner.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
@@ -466,29 +467,29 @@ class ScanManager(StreamGraphManager):
                 plot = plot[0]
                 plot.line_width = emphasize_width if name == self.detector.name else nominal_width
 
-            mass = self.magnet.mass
-            if abs(mass) > 1e-5:
-                molweights = self.spectrometer.molecular_weights
-                if self.isotope in molweights:
-                    mw = molweights[self.isotope]
-                    if abs(mw - mass) > 0.1:
-                        self.isotope = NULL_STR
-                    else:
-                        mass = self.isotope
-
-                self.info('set position {} on {}'.format(mass, self.detector))
-
-                def func():
-                    self._suppress_isotope_change = True
-                    self.ion_optics_manager.position(mass, self.detector)
-                    self._suppress_isotope_change = False
-
-                # thread not super necessary
-                # simple allows gui to update while the magnet is delaying for settling_time
-                # t = Thread(target=self.ion_optics_manager.position,
-                #            args=(mass, self.detector))
-                t = Thread(target=func)
-                t.start()
+            # mass = self.magnet.mass
+            # if abs(mass) > 1e-5:
+            #     molweights = self.spectrometer.molecular_weights
+            #     if self.isotope in molweights:
+            #         mw = molweights[self.isotope]
+            #         if abs(mw - mass) > 0.1:
+            #             self.isotope = NULL_STR
+            #         else:
+            #             mass = self.isotope
+            #
+            #     self.info('set position {} on {}'.format(mass, self.detector))
+            #
+            #     def func():
+            #         self._suppress_isotope_change = True
+            #         self.ion_optics_manager.position(mass, self.detector)
+            #         self._suppress_isotope_change = False
+            #
+            #     # thread not super necessary
+            #     # simple allows gui to update while the magnet is delaying for settling_time
+            #     # t = Thread(target=self.ion_optics_manager.position,
+            #     #            args=(mass, self.detector))
+            #     t = Thread(target=func)
+            #     t.start()
 
     def _integration_time_changed(self):
         if self.integration_time:

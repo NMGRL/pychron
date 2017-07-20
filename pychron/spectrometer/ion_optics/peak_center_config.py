@@ -70,6 +70,7 @@ class PeakCenterConfig(HasTraits):
     use_dac_offset = Bool
     dac_offset = Float
     calculate_all_peaks = Bool
+    use_mftable_dac = Bool
 
     update_others = Bool(True)
 
@@ -121,19 +122,21 @@ class PeakCenterConfig(HasTraits):
                                UItem('dac_offset', enabled_when='use_dac_offset')),
                         Item('calculate_all_peaks'),
                         show_border=True, label='Post Process')
+
         if include_update_others:
             itm = Item('update_others', label='Update All Detectors',
-                       visible=include_update_others,
                        tooltip='Update all the detectors in the '
                                'mftable not only the reference '
-                               'detector'),
+                               'detector')
             pp_grp.content.append(itm)
         return pp_grp
 
     def _get_measure_grp(self):
-        m_grp = VGroup(HGroup(Item('use_current_dac',
-                                   label='Use Current DAC'),
-                              Item('dac', enabled_when='not use_current_dac')),
+        m_grp = VGroup(VGroup(HGroup(Item('use_current_dac',
+                                          label='Use Current DAC'),
+                                     Item('use_mftable_dac',
+                                          label='Use DAC from MFTable')),
+                              Item('dac', enabled_when='not use_current_dac and not use_mftable_dac')),
                        Item('integration_time'),
                        Item('directions'),
                        Item('window', label='Peak Width (V)'),

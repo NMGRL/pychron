@@ -52,6 +52,7 @@ class SpectrometerTask(EditorTask):
                     ion.setup_peak_center(detector=[di], isotope=refiso,
                                           config_name=cfg.peak_center_config.active_item.name,
                                           standalone_graph=False,
+                                          new=True,
                                           show_label=True, use_configuration_dac=False)
 
                     ion.peak_center.update_others = False

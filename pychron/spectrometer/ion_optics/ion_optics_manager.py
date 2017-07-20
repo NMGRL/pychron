@@ -202,7 +202,7 @@ class IonOpticsManager(Manager):
         if detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
-            self.peak_center_config.load(dac=spec.magnet.dac)
+            self.peak_center_config.load()
             if config_name:
                 self.peak_center_config.active_name = config_name
 
@@ -213,7 +213,7 @@ class IonOpticsManager(Manager):
             else:
                 pcc = self.peak_center_config.active_item
         elif config_name:
-            self.peak_center_config.load(dac=spec.magnet.dac)
+            self.peak_center_config.load()
             self.peak_center_config.active_name = config_name
             pcc = self.peak_center_config.active_item
 
@@ -240,8 +240,7 @@ class IonOpticsManager(Manager):
             dac_offset = pcc.dac_offset
             calculate_all_peaks = pcc.calculate_all_peaks
             update_others = pcc.update_others
-
-            if center_dac is None and use_configuration_dac:
+            if not pcc.use_mftable_dac and center_dac is None and use_configuration_dac:
                 center_dac = pcc.dac
 
         spec.set_integration_time(integration_time)
