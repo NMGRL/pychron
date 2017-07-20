@@ -19,7 +19,7 @@ import os
 
 from apptools import sweet_pickle as pickle
 from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
-from traitsui.api import View, Item, HGroup, Handler, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
+from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
 
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -87,20 +87,28 @@ class PeakCenterConfig(HasTraits):
         if new:
             self.available_detectors = [d for d in self.detectors if d != new]
 
-    def traits_view(self):
-        degrp = VGroup(UItem('additional_detectors', style='custom',
-                             editor=CheckListEditor(name='available_detectors',
-                                                    cols=max(1, len(self.available_detectors)))),
-                       show_border=True, label='Additional Detectors')
+    def mftable_view(self):
+        m_grp = self._get_measure_grp()
+        pp_grp = self._get_post_process_grp(include_update_others=False)
 
-        m_grp = VGroup(HGroup(Item('use_current_dac',
-                                   label='Use Current DAC'),
-                              Item('dac', enabled_when='not use_current_dac')),
-                       Item('integration_time'),
-                       Item('directions'),
-                       Item('window', label='Peak Width (V)'),
-                       Item('step_width', label='Step Width (V)'),
-                       show_border=True, label='Measure')
+        v = View(VGroup(m_grp,
+                        pp_grp))
+        return v
+
+    def traits_view(self):
+        degrp = self._get_additional_detectors_grp()
+
+        m_grp = self._get_measure_grp()
+        pp_grp = self._get_post_process_grp()
+
+        v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),
+                               Item('isotope', editor=EnumEditor(name='isotopes'))),
+                        degrp,
+                        m_grp,
+                        pp_grp))
+        return v
+
+    def _get_post_process_grp(self, include_update_others=True):
         pp_grp = VGroup(Item('min_peak_height', label='Min Peak Height (fA)'),
                         Item('percent', label='% Peak Height'),
                         HGroup(Item('use_interpolation', label='Use Interpolation'),
@@ -112,17 +120,33 @@ class PeakCenterConfig(HasTraits):
                         HGroup(Item('use_dac_offset', label='DAC Offset'),
                                UItem('dac_offset', enabled_when='use_dac_offset')),
                         Item('calculate_all_peaks'),
-                        Item('update_others', label='Update All Detectors', tooltip='Update all the detectors in the '
-                                                                                    'mftable not only the reference '
-                                                                                    'detector'),
                         show_border=True, label='Post Process')
+        if include_update_others:
+            itm = Item('update_others', label='Update All Detectors',
+                       visible=include_update_others,
+                       tooltip='Update all the detectors in the '
+                               'mftable not only the reference '
+                               'detector'),
+            pp_grp.content.append(itm)
+        return pp_grp
 
-        v = View(VGroup(HGroup(Item('detector', editor=EnumEditor(name='detectors')),
-                               Item('isotope', editor=EnumEditor(name='isotopes'))),
-                        degrp,
-                        m_grp,
-                        pp_grp))
-        return v
+    def _get_measure_grp(self):
+        m_grp = VGroup(HGroup(Item('use_current_dac',
+                                   label='Use Current DAC'),
+                              Item('dac', enabled_when='not use_current_dac')),
+                       Item('integration_time'),
+                       Item('directions'),
+                       Item('window', label='Peak Width (V)'),
+                       Item('step_width', label='Step Width (V)'),
+                       show_border=True, label='Measure')
+        return m_grp
+
+    def _get_additional_detectors_grp(self):
+        degrp = VGroup(UItem('additional_detectors', style='custom',
+                             editor=CheckListEditor(name='available_detectors',
+                                                    cols=max(1, len(self.available_detectors)))),
+                       show_border=True, label='Additional Detectors')
+        return degrp
 
     @property
     def active_detectors(self):
@@ -141,6 +165,7 @@ class ItemConfigurer(Saveable):
     add_button = Button
     root = Str
     save_enabled = True
+    view_name = Str
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
@@ -216,7 +241,8 @@ class ItemConfigurer(Saveable):
                                      editor=EnumEditor(name='names')),
                                icon_button_editor('add_button', 'add')),
                         UItem('_'),
-                        UItem('active_item', style='custom', editor=InstanceEditor()),
+                        UItem('active_item', style='custom',
+                              editor=InstanceEditor(view=self.view_name)),
                         UItem('_')),
                  buttons=['OK', 'Cancel', SaveButton],
                  kind='livemodal',
@@ -233,6 +259,7 @@ class PeakCenterConfigurer(ItemConfigurer):
     detectors = List
     isotopes = List
     available_detectors = List
+    display_detector_choice = True
 
     def _root_default(self):
         return paths.peak_center_config_dir

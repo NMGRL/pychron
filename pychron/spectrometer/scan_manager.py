@@ -183,7 +183,27 @@ class ScanManager(StreamGraphManager):
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
+    def populate_mftable(self):
+        from pychron.spectrometer.mftable_config import MFTableConfig
+        pcc = self.ion_optics_manager.peak_center_config
+        pcc.view_name = 'mftable_view'
+        pcc.load()
+        cfg = MFTableConfig(detectors=self.detector_names,
+                            available_detectors=self.detector_names,
+                            isotopes=self.isotopes,
+                            isotope=self.isotope,
+                            peak_center_config=pcc)
+        info = cfg.edit_traits()
+        if info.result:
+            self._populate_mftable(cfg)
+        pcc.view_name = ''
+
     # private
+    def _populate_mftable(self, cfg):
+        from pychron.spectrometer.mftable_generator import MFTableGenerator
+        gen = MFTableGenerator()
+        do_later(gen.make_mftable, self.ion_optics_manager, cfg)
+
     def _load_settings(self, params):
         spec = self.spectrometer
         if self.use_default_scan_settings:
@@ -228,12 +248,13 @@ class ScanManager(StreamGraphManager):
                 # convert dac into a mass
                 # convert mass to isotope
                 #            d = self.magnet.dac
-                print 'supre', self._suppress_isotope_change
-                if not self._suppress_isotope_change:
-                    iso = self.magnet.map_dac_to_isotope(current=False)
-                else:
-                    iso = self.isotope
+                # print 'supre', self._suppress_isotope_change
+                # if not self._suppress_isotope_change:
+                #     iso = self.magnet.map_dac_to_isotope(current=False)
+                # else:
+                #     iso = self.isotope
 
+                iso = self.isotope
                 print iso, self.isotopes
                 if iso is None or iso not in self.isotopes:
                     iso = NULL_STR
@@ -310,7 +331,7 @@ class ScanManager(StreamGraphManager):
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
         else:
-            self._signal_failed_cnt+=1
+            self._signal_failed_cnt += 1
             if self._signal_failed_cnt > 3:
                 self.warning_dialog('Something appears to be wrong.\n\n'
                                     'The detector intensities have not changed in 5 iterations. '

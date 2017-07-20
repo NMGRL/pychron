@@ -51,6 +51,9 @@ def backup(p, backupdir, **kw):
     :return:
     """
     bp, _ = os.path.splitext(os.path.basename(p))
+    if not os.path.isdir(backupdir):
+        os.mkdir(backupdir)
+
     pp = unique_date_path(backupdir, bp, **kw)
     shutil.copyfile(p, pp)
     return bp, pp
