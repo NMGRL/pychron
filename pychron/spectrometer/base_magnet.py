@@ -43,7 +43,7 @@ import time
 
 class BaseMagnet(Loggable):
     dac = Property(Float, depends_on='_dac')
-    mass = Float
+    mass = Float(enter_set=True, auto_set=False)
 
     _dac = Float
     dacmin = Float(0.0)
@@ -285,7 +285,7 @@ class BaseMagnet(Loggable):
     def _mass_changed(self, old, new):
         if self._suppress_mass_update:
             return
-
+        self.debug('mass changed old={}, new={}'.format(old, new))
         if self._validate_mass_change(old, new):
             self._set_mass(new)
         else:
@@ -351,9 +351,10 @@ class BaseMagnet(Loggable):
                                                               high_name='dacmax',
                                                               format='%0.5f')),
 
-                               Item('mass', editor=RangeEditor(mode='slider', low_name='massmin',
-                                                               high_name='massmax',
-                                                               format='%0.3f')),
+                               Item('mass'),
+                                    # editor=RangeEditor(mode='slider', low_name='massmin',
+                                    #                            high_name='massmax',
+                                    #                            format='%0.3f')),
                                HGroup(Spring(springy=False,
                                              width=48),
                                       Item('massmin', width=-40), Spring(springy=False,
