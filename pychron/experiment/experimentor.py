@@ -191,13 +191,10 @@ class Experimentor(DVCIrradiationable):
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
-        ans = self._get_all_runs(queues)
-        self.stats.nruns = len(ans)
+        # ans = self._get_all_runs(queues)
+        # self.stats.nruns = len(ans)
 
-        self.executor.trait_set(
-            experiment_queues=queues,
-            experiment_queue=queues[0],
-            stats=self.stats)
+        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0], stats=self.stats)
 
         return self.executor.execute()
 
