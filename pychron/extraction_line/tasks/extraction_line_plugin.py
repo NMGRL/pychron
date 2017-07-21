@@ -30,7 +30,7 @@ from pychron.envisage.tasks.list_actions import ProcedureAction
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import PyScriptRunner
-from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
+from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction, StopWatchAction
 from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
     ConsolePreferencesPane
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
@@ -87,6 +87,9 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         ex = [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',
                                                     factory=RefreshCanvasAction,
+                                                    path='MenuBar/tools.menu'),
+                                     SchemaAddition(id='stopwatch',
+                                                    factory=StopWatchAction,
                                                     path='MenuBar/tools.menu')])]
 
         if self.application.get_plugin('pychron.pyscript.plugin'):
