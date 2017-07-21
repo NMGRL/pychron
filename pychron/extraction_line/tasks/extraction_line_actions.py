@@ -91,6 +91,15 @@ class RefreshCanvasAction(ExtractionLineAction):
         manager.reload_canvas()
 
 
+class StopWatchAction(Action):
+    name = 'Stop Watch'
+    description = 'Simple stopwatch with call outs at desired intervals'
+
+    def perform(self, event):
+        from pychron.extraction_line.stop_watch import StopWatch
+        sw = StopWatch()
+        open_view(sw)
+
 # class OpenViewControllerAction(ExtractionLineAction):
 #    description = 'Open User views'
 #    name = 'Open User Views'
