@@ -68,6 +68,11 @@ class PullAction(LocalRepositoryAction):
     image = icon('arrow_down')
 
 
+class FindChangesAction(TaskAction):
+    name = 'Find Changes'
+    method = 'find_changes'
+
+
 class ShareChangesAction(Action):
     name = 'Share Changes'
 

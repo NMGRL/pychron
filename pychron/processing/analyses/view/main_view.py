@@ -284,17 +284,26 @@ class MainView(HasTraits):
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
             c = an.arar_constants
-            ratios = [('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-                      ('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
-                      ('40Ar/39Ar', 'Ar40/Ar39', 1)]
+            ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
+                      ('40Ar/37Ar', 'Ar40/Ar37', 1),
+                      ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+                      ('40Ar/39Ar', 'Ar40/Ar39', 1),
+                      ('38Ar/39Ar', 'Ar38/Ar39', 1),
+                      ('37Ar/39Ar', 'Ar37/Ar39', 1),
+                      ]
+
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
+            cv.append(ComputedValue(name='F', tag='uf',
+                                    value=nominal_value(an.uF),
+                                    error=std_dev(an.uF)))
 
             cv.append(ComputedValue(name='Age',
                                     tag='uage',
                                     value=nominal_value(an.uage),
                                     error=std_dev(an.uage)))
+
             self.computed_values = cv
             self._update_ratios()
         else:

@@ -31,7 +31,7 @@ from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
-from pychron.pychron_constants import INTERFERENCE_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
 
 EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'extract_units',
@@ -118,6 +118,10 @@ class DVCAnalysis(Analysis):
             self.extract_units = 'W'
 
         jd = dvc_load(path)
+
+        self.measurement_script_name = jd.get('measurement', NULL_STR)
+        self.extraction_script_name = jd.get('extraction', NULL_STR)
+
         for attr in META_ATTRS:
             v = jd.get(attr)
             if v is not None:
