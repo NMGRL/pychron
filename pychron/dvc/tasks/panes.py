@@ -55,6 +55,17 @@ class RepoCentralPane(TraitsTaskPane):
         return v
 
 
+class RepoAdapter(TabularAdapter):
+    columns = [('Name', 'name')]
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        color = 'white'
+        if item.dirty:
+            color = 'red'
+        return color
+
+
 class SelectionPane(TraitsDockPane):
     id = 'pychron.repo.selection'
     name = 'Repositories'
@@ -64,9 +75,12 @@ class SelectionPane(TraitsDockPane):
                                   editor=ListStrEditor(selected='selected_repository_name',
                                                        editable=False)),
                             show_border=True, label='Origin')
+
         local_grp = VGroup(UItem('local_names',
-                                 editor=ListStrEditor(selected='selected_local_repository_name',
-                                                      editable=False)),
+                                 editor=TabularEditor(adapter=RepoAdapter(),
+                                                      selected='selected_local_repository_name',
+                                                      # editable=False
+                                                      )),
                            show_border=True, label='Local')
 
         v = View(VGroup(local_grp, origin_grp))
