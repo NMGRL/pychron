@@ -333,6 +333,8 @@ class BaseBrowserTask(BaseEditorTask):
                 av.show_intermediate = self.recall_configurer.show_intermediate
 
                 self.recall_configurer.set_fonts(av)
+                av.main_view.set_options(rec, self.recall_configurer.recall_options)
+                # av.main_view.recall_options = self.recall_configurer.recall_options
 
                 editor = RecallEditor(rec, av)
 
@@ -377,6 +379,8 @@ class BaseBrowserTask(BaseEditorTask):
             try:
                 self._recall_item(new.item)
             except BaseException, e:
+                import traceback
+                traceback.print_exc()
                 self.critical('analysis_table:dclicked error {}'.format(str(e)))
 
     # @on_trait_change('analysis_table:selected')

@@ -17,18 +17,18 @@
 # ============= enthought library imports =======================
 from traits.api import Instance, Str, Int
 from traitsui.api import View, UItem, InstanceEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.processing.analyses.view.adapters import MeasurementTabularAdapter, ExtractionTabularAdapter
 
 
 class RecallEditor(BaseTraitsEditor):
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
     analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
 
-    measurement_adapter = Instance(MeasurementTabularAdapter, ())
-    extraction_adapter = Instance(ExtractionTabularAdapter, ())
+    # measurement_adapter = Instance(MeasurementTabularAdapter, ())
+    # extraction_adapter = Instance(ExtractionTabularAdapter, ())
     basename = Str
     instance_id = Int
 

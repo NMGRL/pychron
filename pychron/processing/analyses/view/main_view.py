@@ -54,11 +54,16 @@ class MainView(HasTraits):
 
     selected = Any
     show_iso_evo_needed = Event
+    recall_options = None
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
         if analysis:
             self._load(analysis)
+
+    def set_options(self, an, options):
+        self.recall_options = options
+        self.load(an, True)
 
     def load(self, an, refresh=False):
         self._load(an)
@@ -284,14 +289,33 @@ class MainView(HasTraits):
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
             c = an.arar_constants
-            ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
-                      ('40Ar/37Ar', 'Ar40/Ar37', 1),
-                      ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-                      ('40Ar/39Ar', 'Ar40/Ar39', 1),
-                      ('38Ar/39Ar', 'Ar38/Ar39', 1),
-                      ('37Ar/39Ar', 'Ar37/Ar39', 1),
-                      ]
+            ratios = []
+            refs = {'40Ar/38Ar': nominal_value(c.atm4038),
+                    '40Ar/36Ar': nominal_value(c.atm4036)}
+            detmapping = {'40Ar': 'Ar40',
+                          '39Ar': 'Ar39',
+                          '38Ar': 'Ar38',
+                          '37Ar': 'Ar37',
+                          '36Ar': 'Ar36'}
 
+            if self.recall_options:
+                for r in self.recall_options.cocktail_options.ratios:
+                    name = r.tagname
+                    if name:
+                        n = detmapping.get(r.numerator)
+                        d = detmapping.get(r.denominator)
+                        ref = refs.get(name, 1)
+                        ratios.append((name, name, ref))
+
+            print 'ratios a', ratios
+            # ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
+            #           ('40Ar/37Ar', 'Ar40/Ar37', 1),
+            #           ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
+            #           ('40Ar/39Ar', 'Ar40/Ar39', 1),
+            #           ('38Ar/39Ar', 'Ar38/Ar39', 1),
+            #           ('37Ar/39Ar', 'Ar37/Ar39', 1),
+            #           ]
+            # print 'asdf', ratios
             cv = self._make_ratios(ratios)
 
             an.calculate_age()

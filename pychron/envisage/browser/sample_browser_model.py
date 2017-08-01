@@ -144,7 +144,11 @@ class SampleBrowserModel(BrowserModel):
         if any((vi.name.startswith('RECENT ') for vi in self.selected_projects)):
             ts = ts[-1:]
 
-        ms = db.get_labnumber_mass_spectrometers(ss)
+        if self.mass_spectrometers_enabled:
+            ms = self.mass_spectrometer_includes
+        else:
+            ms = db.get_labnumber_mass_spectrometers(ss)
+
         n = len(ts)
         if n > 1:
             if not self.confirmation_dialog('The date range you selected is to large. It will be '
