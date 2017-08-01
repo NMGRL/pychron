@@ -53,6 +53,7 @@ AR4038 = 'Ar40/Ar38'
 UAR4038 = 'uAr40/Ar38'
 AR4036 = 'Ar40/Ar36'
 UAR4036 = 'uAr40/Ar36'
+AR3739 = 'Ar37/Ar39'
 
 
 class BaseSeries(BaseArArFigure):
