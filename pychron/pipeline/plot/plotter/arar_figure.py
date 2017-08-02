@@ -44,8 +44,9 @@ from pychron.pychron_constants import PLUSMINUS
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
 #                 '%40Ar*': 'Radiogenic 40Ar'}
 
-class SelectionFigure(object):
-    _omit_key = None
+class SelectionFigure(HasTraits):
+    # _omit_key = None
+    graph = Any
 
     def _set_selected(self, ans, sel):
         for i, a in enumerate(ans):
@@ -86,7 +87,7 @@ class SelectionFigure(object):
         return sel
 
 
-class BaseArArFigure(HasTraits, SelectionFigure):
+class BaseArArFigure(SelectionFigure):
     inspector_event = Event
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
@@ -98,7 +99,6 @@ class BaseArArFigure(HasTraits, SelectionFigure):
     ytitle = Str
     replot_needed = Event
     _reverse_sorted_analyses = False
-    graph = Any
 
     options = Any
 
@@ -434,6 +434,7 @@ class BaseArArFigure(HasTraits, SelectionFigure):
             if es is None:
                 es = zeros_like(vs)
             ufs = vstack((vs, es)).T
+            filter_str_idx = None
             if fs:
                 filter_str_idx = filter_ufloats(ufs, fs)
                 ftag = po.filter_str_tag.lower()
@@ -447,7 +448,8 @@ class BaseArArFigure(HasTraits, SelectionFigure):
 
             if nsigma:
                 vs = ma.array(vs, mask=False)
-                vs.mask[filter_str_idx] = True
+                if filter_str_idx is not None:
+                    vs.mask[filter_str_idx] = True
                 sigma_idx = sigma_filter(vs, nsigma)
 
                 stag = po.sigma_filter_tag.lower()

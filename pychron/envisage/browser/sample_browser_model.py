@@ -228,16 +228,14 @@ class SampleBrowserModel(BrowserModel):
 
             kw = dict(limit=lim,
                       include_invalid=not at.omit_invalid,
-                      mass_spectrometers=self._recent_mass_spectrometers,
+                      # mass_spectrometers=self._recent_mass_spectrometers,
                       exclude_uuids=uuids,
                       # repositories=[e.name for e in self.selected_repositories] if self.selected_repositories else None
                       )
 
-            lp, hp = self.low_post, self.high_post
-            ans = self._retrieve_sample_analyses(new,
-                                                 low_post=lp,
-                                                 high_post=hp,
-                                                 **kw)
+            lp = self.low_post if self.use_low_post else None
+            hp = self.high_post if self.use_high_post else None
+            ans = self._retrieve_sample_analyses(new, low_post=lp, high_post=hp, **kw)
 
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))

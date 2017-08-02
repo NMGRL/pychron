@@ -26,7 +26,8 @@ from pychron.options.options_manager import IdeogramOptionsManager, OptionsContr
 from pychron.options.views.views import view
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
-    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM
+    ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
+    AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC, AR37
 
 
@@ -188,7 +189,7 @@ class XYScatterNode(FigureNode):
             #
             # names.append('Peak Center')
             # names.append('AnalysisType')
-        pom.set_names(names)
+            pom.set_names(names)
 
 
 class VerticalFluxNode(FigureNode):
@@ -230,18 +231,32 @@ class SeriesNode(FigureNode):
                 names.extend(iso_keys)
                 names.extend(['{}bs'.format(ki) for ki in iso_keys])
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
-                if AR40 in iso_keys:
-                    if AR39 in iso_keys:
+                if AR39 in iso_keys:
+                    if AR40 in iso_keys:
                         names.extend([AR4039, UAR4039])
-                    if AR36 in iso_keys:
-                        names.extend([AR4036, UAR4036])
                     if AR38 in iso_keys:
+                        names.extend([AR3839, UAR3839])
+                    if AR37 in iso_keys:
+                        names.extend([AR3739, UAR3739])
+                    if AR36 in iso_keys:
+                        names.extend([AR3639, UAR3639])
+
+                if AR38 in iso_keys:
+                    if AR40 in iso_keys:
                         names.extend([AR4038, UAR4038])
+                    if AR37 in iso_keys:
+                        names.extend([AR3738, UAR3738])
+                    if AR36 in iso_keys:
+                        names.extend([AR3638, UAR3638])
 
                 if AR37 in iso_keys:
-                    if AR39 in iso_keys:
-                        names.extend([AR3739])
+                    if AR40 in iso_keys:
+                        names.extend([AR4037, UAR4037])
+                    if AR36 in iso_keys:
+                        names.extend([AR3637, UAR3637])
 
+                if AR36 in iso_keys:
+                    names.extend([AR4036, UAR4036])
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)

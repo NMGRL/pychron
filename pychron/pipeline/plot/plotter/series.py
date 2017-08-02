@@ -46,14 +46,29 @@ ATTR_MAPPING = {PEAK_CENTER: 'peak_center',
                 LAB_HUM: 'lab_humidity',
                 LAB_AIRPRESSUE: 'lab_airpressure'}
 
-
 AR4039 = 'Ar40/Ar39'
 UAR4039 = 'uAr40/Ar39'
+AR3839 = 'Ar38/Ar39'
+UAR3839 = 'uAr38/Ar39'
+AR3739 = 'Ar37/Ar39'
+UAR3739 = 'uAr37/Ar39'
+AR3639 = 'Ar36/Ar39'
+UAR3639 = 'uAr36/Ar39'
+
 AR4038 = 'Ar40/Ar38'
 UAR4038 = 'uAr40/Ar38'
+AR3738 = 'Ar37/Ar38'
+UAR3738 = 'uAr37/Ar38'
+AR3638 = 'Ar36/Ar38'
+UAR3638 = 'uAr36/Ar38'
+
+AR4037 = 'Ar40/Ar37'
+UAR4037 = 'uAr40/Ar37'
+AR3637 = 'Ar36/Ar37'
+UAR3637 = 'uAr36/Ar37'
+
 AR4036 = 'Ar40/Ar36'
 UAR4036 = 'uAr40/Ar36'
-AR3739 = 'Ar37/Ar39'
 
 
 class BaseSeries(BaseArArFigure):
@@ -100,15 +115,15 @@ class BaseSeries(BaseArArFigure):
 
 
 class Series(BaseSeries):
-    _omit_key = 'omit_series'
+    # _omit_key = 'omit_series'
 
-    def _has_attr(self, name):
-        a = name in ('AnalysisType', 'Peak Center', 'Age', 'RadiogenicYield')
-        if not a:
-            if self.sorted_analyses:
-                ai = self.sorted_analyses[0]
-                a = bool(ai.get_value(name))
-        return a
+    # def _has_attr(self, name):
+    #     a = name in (ANALYSIS_TYPE, PEAK_CENTER, AGE, RADIOGENIC_YIELD)
+    #     if not a:
+    #         if self.sorted_analyses:
+    #             ai = self.sorted_analyses[0]
+    #             a = bool(ai.get_value(name))
+    #     return a
 
     def build(self, plots):
 

@@ -27,12 +27,12 @@ from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
-from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM
+from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM
 
 
 class Spectrum(BaseArArFigure):
     xs = Array
-    _omit_key = 'omit_spec'
+    # _omit_key = 'omit_spec'
 
     _analysis_group_klass = StepHeatAnalysisGroup
     spectrum_overlays = List
@@ -407,15 +407,24 @@ class Spectrum(BaseArArFigure):
 
         return array(xs), array(ys), array(es), array(c39s), array(ar39s), array(values)
 
+    #
+    # def _calc_error(self, we, mswd):
+    #     ec = self.options.error_calc_method
+    #     n = self.options.nsigma
+    #     if ec == SEM:
+    #         a = 1
+    #     elif ec == MSEM:
+    #         a = 1
+    #         if mswd > 1:
+    #             a = mswd ** 0.5
+    #     return we * a * n
+
     def _calc_error(self, we, mswd):
         ec = self.options.error_calc_method
         n = self.options.nsigma
-        if ec == SEM:
-            a = 1
-        elif ec == MSEM:
-            a = 1
-            if mswd > 1:
-                a = mswd ** 0.5
+        a = 1
+        if ec == MSEM and mswd > 1:
+            a = mswd ** 0.5
         return we * a * n
 
     # ===============================================================================
