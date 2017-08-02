@@ -43,12 +43,16 @@ class MediaStorageManager(Loggable):
             klass = BACKEND_DICT[new]
             self.storage = klass()
 
+    def get_host(self):
+        return self.storage.host
+
     def get_base_url(self):
         return self.storage.get_base_url()
 
     def put(self, local_path, remote_path):
         self.storage.put(local_path, remote_path)
-
+        return '{}:{}'.format(self.get_base_url(), remote_path)
+        
     def exists(self, remote_path):
         self.storage.exists(remote_path)
 

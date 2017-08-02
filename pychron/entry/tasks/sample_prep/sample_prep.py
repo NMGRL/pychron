@@ -130,7 +130,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     add_step_button = Button
     edit_session_button = Button
 
-    snapshot_button = Button
+    snapshot_button = Button('Snapshot')
     view_camera_button = Button
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
@@ -357,19 +357,22 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         dvc = self.dvc
 
-        pp = '{}/{}-{}.jpg'.format(sessionname, step.id, time.time())
-
-        p = os.tmpfile()
-        self.camera.save(p)
-
+        pp = os.path.join('images', 'sampleprep', sessionname, '{}-{}.jpg'.format(step.id, time.time()))
+        from tempfile import TemporaryFile
+        p = TemporaryFile()
+        # p='{}.jpg'.format(p)
+        self.camera.save_jpeg(p)
+        p.seek(0)
         url = msm.put(p, pp)
+        print 'moving to {}'.format(pp)
         dvc.add_sample_prep_image(step.id, msm.get_host(), url)
 
     def _view_camera_button_fired(self):
         v = View(VGroup(UItem('camera',
+                              width=640, height=480,
                               editor=CameraEditor()),
-                        UItem('snapshot_button'),
-                        width=896, height=680))
+                        UItem('snapshot_button')),
+                        title='Camera')
 
         self.edit_traits(view=v)
 

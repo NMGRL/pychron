@@ -119,7 +119,7 @@ class SamplePrepPane(TraitsTaskPane):
                                                 tooltip='Add a sample prep step'),
                              icon_button_editor('upload_image_button', 'camera',
                                                 tooltip='Add image'),
-                             icon_button_editor('snapshot_button', 'camera1',
+                             icon_button_editor('view_camera_button', 'camera1',
                                                 tooltip='Take a picture'),
                              spring,
                              UItem('object.active_sample.name', style='readonly'),
