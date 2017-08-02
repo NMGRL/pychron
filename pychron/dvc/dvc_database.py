@@ -509,7 +509,7 @@ class DVCDatabase(DatabaseAdapter):
             a = self.get_project(name, principal_investigator)
             if a is None:
                 self.debug('Adding project {} {}'.format(name, principal_investigator))
-                a = ProjectTbl(name=name, **kw)
+                a = ProjectTbl(name=name, checkin_date=datetime.now(), **kw)
                 if principal_investigator:
                     dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:

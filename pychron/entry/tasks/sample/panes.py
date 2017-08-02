@@ -18,7 +18,7 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor
+from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -132,8 +132,9 @@ class SampleEditorPane(TraitsDockPane):
                        label='PrincipalInvestigator',
                        show_border=True)
 
-        prgrp = HGroup(UItem('project', editor=ComboboxEditor(name='projects',
-                                                              use_filter=False)),
+        prgrp = HGroup(UItem('project',
+                             editor=EnumEditor(name='projects')),
+                             # editor=ComboboxEditor(name='projects', use_filter=False)),
                        UItem('generate_project_button', tooltip='Generate a default name for this project'),
                        UItem('set_optionals_button', tooltip='Set optional values for current project'),
                        icon_button_editor('add_project_button', 'add',
@@ -143,8 +144,11 @@ class SampleEditorPane(TraitsDockPane):
                        label='Project',
                        show_border=True)
 
-        mgrp = HGroup(UItem('material', editor=ComboboxEditor(name='materials', use_filter=False)),
-                      UItem('grainsize', editor=ComboboxEditor(name='grainsizes', use_filter=False)),
+        mgrp = HGroup(UItem('material',
+                            editor=EnumEditor(name='materials')),
+                            # editor=ComboboxEditor(name='materials', use_filter=False)),
+                      UItem('grainsize',
+                            editor=ComboboxEditor(name='grainsizes', use_filter=False)),
                       icon_button_editor('add_material_button', 'add',
                                          enabled_when='material',
                                          tooltip='Add a material'),

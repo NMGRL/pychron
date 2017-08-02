@@ -697,6 +697,7 @@ class GitRepoManager(Loggable):
             msg_prefix = 'modified' if dest_exists else 'added'
 
         if not dest_exists:
+            self.debug('copying to destination.{}>>{}'.format(p, dest))
             shutil.copyfile(p, dest)
 
         if msg is None:
