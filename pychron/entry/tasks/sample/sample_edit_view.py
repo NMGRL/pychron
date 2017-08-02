@@ -50,16 +50,19 @@ class SampleEditItem(HasTraits):
     _projects = List
     _materials = List
 
+    _project = Str
+    _material = Str
+    _note = Str
+
     def __init__(self, rec, *args, **kw):
         super(SampleEditItem, self).__init__(*args, **kw)
-        self.name = self._name = rec.name
         self.id = rec.id
+
+        self.name = self._name = rec.name
         self.note = self._note = rec.note or ''
 
-        if rec.project:
-            self.project = self._project = rec.project.pname
-        if rec.material:
-            self.material = self._material = rec.material.gname
+        self.project = self._project = rec.project.pname if rec.project else ''
+        self.material = self._material = rec.material.gname if rec.material else ''
 
     @property
     def altered(self):

@@ -49,8 +49,8 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'acquisition_software',
               'data_reduction_software')
 
-PATH_MODIFIERS = (
-    None, '.data', 'blanks', 'intercepts', 'icfactors', 'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
+PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
+                  'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
 
 
 class Blank:

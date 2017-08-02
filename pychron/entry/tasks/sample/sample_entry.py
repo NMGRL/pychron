@@ -272,6 +272,14 @@ class SampleEntry(DVCAble):
 
         with dvc.session_ctx(use_parent_session=False):
             for s in self._samples:
+                if not s.name:
+                    self.warning_dialog('A Sample name is required')
+                    continue
+                if s.project and not s.project.name:
+                    self.warning_dialog('A Project name is required. Skipping {}'.format(s.name))
+                if s.material and not s.material.name:
+                    self.warning_dialog('A material is required. Skipping {}'.format(s.name))
+
                 if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
                                   note=s.note):
                     s.added = True
@@ -328,12 +336,12 @@ class SampleEntry(DVCAble):
         if self.sample:
 
             material_spec = self._get_material_spec()
-            if not material_spec:
+            if not material_spec or not material_spec.name:
                 self.information_dialog('Please enter a material for this sample')
                 return
 
             project_spec = self._get_project_spec()
-            if not project_spec:
+            if not project_spec or not project_spec.name:
                 self.information_dialog('Please enter a project for this sample')
                 return
 
