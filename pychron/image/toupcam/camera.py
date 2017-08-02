@@ -25,8 +25,10 @@ from numpy import zeros, uint8, uint32
 import Image as pil
 # ============= local library imports  ==========================
 from pychron.image.i_camera import ICamera
+import os
 
-lib = ctypes.cdll.LoadLibrary('libtoupcam.dylib')
+libp = os.path.join(os.path.dirname(__file__), 'libtoupcam.dylib')
+lib = ctypes.cdll.LoadLibrary(libp)
 
 TOUPCAM_EVENT_EXPOSURE = 1  # exposure time changed
 TOUPCAM_EVENT_TEMPTINT = 2  # white balance changed
@@ -80,8 +82,12 @@ class ToupCamCamera(object):
         # image = self.get_jpeg_data(im, 10)
         image = self.get_pil_image(im)
         # image.save(self._save_path, 'JPEG', quality=90)
-        image.save(self._save_path, 'TIFF')
+        image.save(self._save_path)
         # view_file(self._save_path)
+
+    def save_jpeg(self, p, quality=75):
+        im = self.get_pil_image()
+        im.save(p, 'JPEG', quality=quality)
 
     def get_jpeg_data(self, data=None, quality=75):
 
@@ -282,6 +288,3 @@ class ToupCamCamera(object):
 
 
 # ============= EOF =============================================
-
-
-

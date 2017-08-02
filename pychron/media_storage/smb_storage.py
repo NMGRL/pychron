@@ -54,9 +54,11 @@ class SMBStorage(RemoteStorage):
             # make sure directory available to write to
             if os.path.basename(dest) != dest:
                 self._r_mkdir(os.path.dirname(dest), conn)
-
-            with open(src, 'r') as rfile:
-                conn.storeFile(self.service_name, dest, rfile)
+            if not isinstance(src, (str, unicode)):
+                conn.storeFile(self.service_name, dest, src)
+            else:
+                with open(src, 'r') as rfile:
+                    conn.storeFile(self.service_name, dest, rfile)
             conn.close()
 
     def _r_mkdir(self, dest, conn=None):
