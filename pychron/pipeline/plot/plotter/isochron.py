@@ -69,7 +69,8 @@ class AtmInterceptOverlay(AbstractOverlay):
 
 
 class Isochron(BaseArArFigure):
-    _omit_key = 'omit_iso'
+    # _omit_key = 'omit_iso'
+    pass
 
 
 class InverseIsochron(Isochron):

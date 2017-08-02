@@ -168,8 +168,9 @@ class TimeViewModel(HasTraits):
                 self._active_column = event.column
                 name, field = event.editor.adapter.columns[event.column]
 
-                sattr = getattr(self.selected[0], field)
-                self.analyses = [ai for ai in self.analyses if getattr(ai, field) == sattr]
+                sattrs = {getattr(s, field) for s in self.selected}
+                self.analyses = [ai for ai in self.analyses if getattr(ai, field) in sattrs]
+
             self.refresh_table_needed = True
 
     def _highdays_changed(self):

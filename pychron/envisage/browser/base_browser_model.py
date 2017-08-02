@@ -384,27 +384,27 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.samples = sams
         self.osamples = sams
 
-    def _retrieve_recent_labnumbers(self, recent_name):
-        ms = extract_mass_spectrometer_name(recent_name)
-        db = self.db
-        hpost = datetime.now()
-        lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-        self._low_post = lpost
-
-        self.use_high_post = False
-        self.use_low_post = True
-
-        self.trait_property_changed('low_post', self._low_post)
-        self._recent_mass_spectrometers.append(ms)
-
-        # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-        ls = db.get_labnumbers(mass_spectrometers=(ms,),
-                               # repositories=es,
-                               low_post=lpost)
-
-        sams = self._load_sample_record_views(ls)
-
-        return sams
+    # def _retrieve_recent_labnumbers(self, recent_name):
+    #     ms = extract_mass_spectrometer_name(recent_name)
+    #     db = self.db
+    #     hpost = datetime.now()
+    #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+    #     self._low_post = lpost
+    #
+    #     self.use_high_post = False
+    #     self.use_low_post = True
+    #
+    #     self.trait_property_changed('low_post', self._low_post)
+    #     self._recent_mass_spectrometers.append(ms)
+    #
+    #     # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
+    #     ls = db.get_labnumbers(mass_spectrometers=(ms,),
+    #                            # repositories=es,
+    #                            low_post=lpost)
+    #
+    #     sams = self._load_sample_record_views(ls)
+    #
+    #     return sams
 
     def _populate_samples(self, lns=None):
         db = self.db
@@ -653,8 +653,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _selected_projects_changed(self, old, new):
 
         if new and self.project_enabled:
-            self._recent_low_post = None
-            self._recent_mass_spectrometers = None
+            # self._recent_low_post = None
+            # self._recent_mass_spectrometers = None
             isrecent = any(['RECENT' in x.name for x in new])
             if old:
                 if any(['RECENT' in x.name for x in old]) and not isrecent:
@@ -700,6 +700,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._filter_by_hook()
 
     def _filter_by_hook(self):
+        self.high_post = datetime.now()
         # names = [ni.name for ni in self.selected_projects]
         self._load_associated_labnumbers()
 

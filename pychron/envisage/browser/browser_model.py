@@ -41,7 +41,7 @@ from traits.api import Str, Bool, Property, on_trait_change, Button, List
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
-from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
+from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
 
 # from pychron.processing.tasks.browser.time_view import TimeViewModel
@@ -296,11 +296,11 @@ class BrowserModel(BaseBrowserModel):
                     self.use_low_post = True
 
                     self.trait_property_changed('low_post', self._low_post)
-                    for ri in rs:
-                        mi = extract_mass_spectrometer_name(ri)
-                        if mi not in ms:
-                            ms.append(mi)
-                        self._recent_mass_spectrometers.append(mi)
+                    # for ri in rs:
+                    #     mi = extract_mass_spectrometer_name(ri)
+                    #     if mi not in ms:
+                    #         ms.append(mi)
+                    #     self._recent_mass_spectrometers.append(mi)
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
         hp = self.high_post if self.use_high_post or self.use_named_date_range else None

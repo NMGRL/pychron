@@ -114,7 +114,7 @@ class Ideogram(BaseArArFigure):
     xes = Array
     ytitle = 'Relative Probability'
 
-    _omit_key = 'omit_ideo'
+    # _omit_key = 'omit_ideo'
 
     def plot(self, plots, legend=None):
         """
@@ -273,10 +273,11 @@ class Ideogram(BaseArArFigure):
         else:
             ys = arange(startidx + n - 1, startidx - 1, -1)
 
+        ans = self.sorted_analyses
+        ts = array([ai.timestamp for ai in ans])
+        ts -= ts[0]
+
         if self.options.use_cmap_analysis_number:
-            ans = self.sorted_analyses
-            ts = array([ai.timestamp for ai in ans])
-            ts -= ts[0]
             scatter = self._add_aux_plot(xs, ys, name, po, pid,
                                          colors=ts,
                                          color_map_name=self.options.cmap_analysis_number,
