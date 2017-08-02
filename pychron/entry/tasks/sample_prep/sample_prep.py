@@ -17,16 +17,19 @@
 # ============= enthought library imports =======================
 import os
 import socket
+import time
 
 import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
-    Instance, Event, Date, Enum, Long
-from traitsui.api import View, UItem, Item, EnumEditor
+    Instance, Event, Date, Enum, Long, Any
+from traitsui.api import View, UItem, Item, EnumEditor, VGroup
 
+from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
+from pychron.image.toupcam.camera import ToupCamCamera
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
@@ -127,6 +130,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
     add_step_button = Button
     edit_session_button = Button
 
+    snapshot_button = Button
+    view_camera_button = Button
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
 
@@ -142,6 +147,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     fheavy_liquid = Bool
     fpick = Bool
     fstatus = Enum('', 'Good', 'Bad', 'Use For Irradiation')
+    camera = Any
 
     @property
     def persistence_path(self):
@@ -163,9 +169,13 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self._load_session_samples()
 
+        self.camera = ToupCamCamera()
+        self.camera.open()
+
     def prepare_destroy(self):
         self.dvc.close_session()
         self.dump()
+        self.camera.close()
 
     def locate_sample(self):
         locator = SampleLocator(dvc=self.dvc)
@@ -341,7 +351,29 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _session_changed(self):
         self._load_session_samples()
 
-    def _upload_image_button_fired(self):
+    def _snapshot_button_fired(self):
+        step, msm = self._pre_image()
+        sessionname = self.session.replace(' ', '_')
+
+        dvc = self.dvc
+
+        pp = '{}/{}-{}.jpg'.format(sessionname, step.id, time.time())
+
+        p = os.tmpfile()
+        self.camera.save(p)
+
+        url = msm.put(p, pp)
+        dvc.add_sample_prep_image(step.id, msm.get_host(), url)
+
+    def _view_camera_button_fired(self):
+        v = View(VGroup(UItem('camera',
+                              editor=CameraEditor()),
+                        UItem('snapshot_button'),
+                        width=896, height=680))
+
+        self.edit_traits(view=v)
+
+    def _pre_image(self):
         step = self.selected_step
         if step is None and self.active_sample.steps:
             step = self.active_sample.steps[0]
@@ -355,6 +387,10 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if not msm:
             self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
             return
+        return step, msm
+
+    def _upload_image_button_fired(self):
+        step, msm = self._pre_image()
 
         # host = self.application.preferences.get('pychron.entry.sample_prep.host')
         # username = self.application.preferences.get('pychron.entry.sample_prep.username')

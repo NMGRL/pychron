@@ -44,6 +44,9 @@ class SMBStorage(RemoteStorage):
                 print sf.filename
 
             conn.close()
+    # def exists(self, ):
+    #     conn = self._get_connection()
+    #     if conn:
 
     def put(self, src, dest):
         conn = self._get_connection()
