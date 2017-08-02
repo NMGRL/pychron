@@ -49,6 +49,9 @@ class MediaStorageManager(Loggable):
     def put(self, local_path, remote_path):
         self.storage.put(local_path, remote_path)
 
+    def exists(self, remote_path):
+        self.storage.exists(remote_path)
+
     def add_image_to_db(self, url, analysis_uuid):
         pass
 
