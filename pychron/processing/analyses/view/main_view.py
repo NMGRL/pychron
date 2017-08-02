@@ -159,7 +159,13 @@ class MainView(HasTraits):
                             units='s'),
             ExtractionValue(name='T_o',
                             value=an.collection_time_zero_offset,
-                            units='s')]
+                            units='s'),
+            ExtractionValue(name='Lab Temp.',
+                            value=an.lab_temperature,
+                            units='F'),
+           ExtractionValue(name='Lab Hum.',
+                           units='%',
+                           value=an.lab_humidity)]
 
         if 'UV' in an.extract_device:
             extra = [ExtractionValue(name='Mask Pos.',

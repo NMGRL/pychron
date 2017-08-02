@@ -149,20 +149,16 @@ class DVCAnalysis(Analysis):
 
     def load_environmentals(self, ed):
         if ed is not None:
-            lt = ed.get('lab_temperatures', [])
-            if lt:
-                self.lab_temperature = next((t['value'] for t in lt if t['device'] == 'EnvironmentalMonitor' and
-                                             t['name'] == 'Lab Temp.'), 0)
+            def func(stag, attr, device, key, default=0):
+                lt = ed.get(attr, [])
+                if lt:
+                    v = next((t['value'] for t in lt if t['device'] == device and
+                              t['name'] == key), default)
+                    setattr(self, stag, v)
 
-            ht = ed.get('lab_humiditys', [])
-            if ht:
-                self.lab_humidity = next((t['value'] for t in lt if t['device'] == 'EnvironmentalMonitor' and
-                                          t['name'] == 'Lab Hum.'), 0)
-
-            pt = ed.get('lab_pneumatics', [])
-            if pt:
-                self.lab_airpressure = next((t['value'] for t in lt if t['device'] == 'AirPressure' and
-                                             t['name'] == 'Pressure'), 0)
+            func('lab_temperature', 'lab_temperatures', 'EnvironmentalMonitor', 'Lab Temp.')
+            func('lab_humidity', 'lab_humiditys', 'EnvironmentalMonitor', 'Lab Hum.')
+            func('lab_airpressure', 'lab_pneumatics', 'AirPressure', 'Pressure')
 
     def load_paths(self, modifiers=None):
         if modifiers is None:
