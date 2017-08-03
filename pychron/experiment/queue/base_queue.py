@@ -53,6 +53,7 @@ mass_spectrometer: {mass_spectrometer:}
 delay_before_analyses: {delay_before_analyses:}
 delay_between_analyses: {delay_between_analyses:}
 delay_after_blank: {delay_after_blank:}
+delay_after_air: {delay_after_air:}
 extract_device: {extract_device:}
 tray: {tray:}
 load: {load:}
@@ -74,6 +75,7 @@ class BaseExperimentQueue(RunBlock):
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
     delay_after_blank = CInt(15)
+    delay_after_air = CInt(10)
 
     queue_conditionals_name = Str
 
@@ -107,6 +109,7 @@ class BaseExperimentQueue(RunBlock):
         self.stats.delay_between_analyses = self.delay_between_analyses
         self.stats.delay_before_analyses = self.delay_before_analyses
         self.stats.delay_after_blank = self.delay_after_blank
+        self.stats.delay_after_air = self.delay_after_air
 
         aruns = self._load_runs(line_gen)
         if aruns is not None:
@@ -277,6 +280,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('delay_after_blank', meta, default_int)
+        self._set_meta_param('delay_after_air', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
@@ -368,6 +372,7 @@ class BaseExperimentQueue(RunBlock):
             delay_before_analyses=self.delay_before_analyses,
             delay_between_analyses=self.delay_between_analyses,
             delay_after_blank=self.delay_after_blank,
+            delay_after_air=self.delay_after_air,
             extract_device=self.extract_device,
             tray=self.tray or '',
             load=self.load_name or '')

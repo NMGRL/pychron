@@ -318,10 +318,17 @@ class AutomatedRunSpec(HasTraits):
 
         return run
 
-    def get_delay_after(self, da, db):
+    def get_delay_after(self, du, db, da):
         d = self.delay_after
         if not d:
-            d = db if self.analysis_type.startswith('blank') else da
+            d = du
+            if self.analysis_type == 'air':
+                d = da
+            elif self.analysis_type.startswith('blank'):
+                d = db
+
+            # d = db if self.analysis_type.startswith('blank') else du
+
         return d
 
     def load(self, script_info, params):

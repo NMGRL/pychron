@@ -61,6 +61,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     delay_between_analyses = Int(30)
     delay_before_analyses = Int(5)
     delay_after_blank = Int(15)
+    delay_after_air = Int(15)
     tray = Str
     trays = Property
 
@@ -80,6 +81,8 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
                    'use_group_email',
                    'delay_between_analyses',
                    'delay_before_analyses',
+                   'delay_after_blank',
+                   'delay_after_air',
                    'queue_conditionals_name')
 
     def activate(self, load_persistence):
