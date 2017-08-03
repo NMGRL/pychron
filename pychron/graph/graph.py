@@ -972,7 +972,7 @@ class Graph(ContextMenuMixin):
         # print 'adding data',plotid, series, len(self.series[plotid])
         try:
             names = self.series[plotid][series]
-        except IndexError:
+        except (IndexError, TypeError):
             print 'adding datum', plotid, series, self.series[plotid]
             return
 

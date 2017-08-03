@@ -27,6 +27,7 @@ from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses
+from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
@@ -149,16 +150,7 @@ class DVCAnalysis(Analysis):
 
     def load_environmentals(self, ed):
         if ed is not None:
-            def func(stag, attr, device, key, default=0):
-                lt = ed.get(attr, [])
-                if lt:
-                    v = next((t['value'] for t in lt if t['device'] == device and
-                              t['name'] == key), default)
-                    setattr(self, stag, v)
-
-            func('lab_temperature', 'lab_temperatures', 'EnvironmentalMonitor', 'Lab Temp.')
-            func('lab_humidity', 'lab_humiditys', 'EnvironmentalMonitor', 'Lab Hum.')
-            func('lab_airpressure', 'lab_pneumatics', 'AirPressure', 'Pressure')
+            set_environmentals(self, ed)
 
     def load_paths(self, modifiers=None):
         if modifiers is None:

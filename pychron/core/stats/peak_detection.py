@@ -179,6 +179,8 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
 
     if max_i == 0:
         max_i = len(x)/2
+    elif max_i == len(x)-1:
+        max_i = len(x)/2
 
     mx = x[max_i]
     my = ma
@@ -211,7 +213,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         hx = x[i + 1] - xstep
         hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:
-        raise PeakCenterError('peak not well centered')
+        raise PeakCenterError('peak not well centered, len(x)={}, len(y)={}, i={}'.format(len(x), len(y), i))
 
     if (hx - lx) < 0:
         raise PeakCenterError('unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx))
