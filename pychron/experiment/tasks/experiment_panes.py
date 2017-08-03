@@ -131,6 +131,7 @@ class ExperimentFactoryPane(TraitsDockPane):
         delay_grp = VGroup(queue_factory_item('delay_before_analyses', label='Delay Before Analyses (s)'),
                            queue_factory_item('delay_between_analyses', label='Delay Between Analyses (s)'),
                            queue_factory_item('delay_after_blank', label='Delay After Blank (s)'),
+                           queue_factory_item('delay_after_air', label='Delay After Air (s)'),
                            show_border=True,
                            label='Delays')
         queue_grp = VGroup(user_grp, email_grp, ms_ed_grp, delay_grp,
