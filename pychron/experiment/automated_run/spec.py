@@ -111,6 +111,9 @@ class AutomatedRunSpec(HasTraits):
     executable = Property(depends_on='identifier_error, _executable')
     _executable = Bool(True)
 
+    lab_temperature = 0
+    lab_humidity = 0
+
     # ===========================================================================
     # info
     # ===========================================================================
@@ -318,7 +321,7 @@ class AutomatedRunSpec(HasTraits):
     def get_delay_after(self, da, db):
         d = self.delay_after
         if not d:
-            d = db if self.analysis_type == 'blank' else da
+            d = db if self.analysis_type.startswith('blank') else da
         return d
 
     def load(self, script_info, params):

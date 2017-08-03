@@ -346,7 +346,7 @@ class PlotPanel(Loggable):
     def _plot_title_changed(self, new):
         self.graph_container.label = new
 
-    @on_trait_change('isotope_graph:regression_results')
+    @on_trait_change('isotope_graph:regression_results, baseline_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
             self.analysis_view.load_computed(self.isotope_group, new_list=False)

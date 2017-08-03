@@ -346,9 +346,9 @@ class MeasurementPyScript(ValvePyScript):
             # self._series_count += 2
             # self._fit_series_count += 1
 
-    @count_verbose_skip
+    @verbose_skip
     @command_register
-    def peak_center(self, detector=None, isotope=None,
+    def peak_center(self, detector='', isotope='',
                     integration_time=1.04, save=True, calc_time=False,
                     directions='Increase', config_name='default'):
         """

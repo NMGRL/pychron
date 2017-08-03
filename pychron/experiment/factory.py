@@ -89,7 +89,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                   'email', 'use_email',
                   'use_group_email',
                   'load_name',
-                  'delay_before_analyses', 'delay_between_analyses',
+                  'delay_after_blank', 'delay_between_analyses',
                   'queue_conditionals_name', 'username'):
 
             if not self._sync_queue_to_factory(eq, qf, a):

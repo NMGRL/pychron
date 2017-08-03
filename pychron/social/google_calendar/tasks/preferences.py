@@ -64,7 +64,7 @@ class GoogleCalendarExperimentPreferencesPane(PreferencesPane):
     model_factory = GoogleCalendarExperimentPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('enabled', Label='Enabled', tooltip='Post experiment events to Google Calendar'),
+        v = View(VGroup(Item('enabled', label='Enabled', tooltip='Post experiment events to Google Calendar'),
                         Item('run_delay',
                              tooltip='Only post an event after at least "Run Delay" runs have been completed',
                              label='Run Delay')))

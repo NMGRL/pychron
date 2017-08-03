@@ -41,6 +41,7 @@ from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
     QueueModificationConditional
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
+from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
@@ -1052,21 +1053,7 @@ class AutomatedRun(Loggable):
             conds = (self.termination_conditionals, self.truncation_conditionals,
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
-            env = {}
-            lclient = self.labspy_client
-            if lclient:
-                if lclient.connect():
-                    for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
-                        try:
-                            env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
-                        except BaseException, e:
-                            self.debug('Get Labspy Environmentals: {}'.format(e))
-                            self.debug_exception()
-                else:
-                    self.debug('failed to connect to labspy client. Could not retrieve environmentals')
-                self.debug('Enviromentals: {}'.format(pformat(env)))
-            else:
-                self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
+            env = self._get_environmentals()
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
@@ -1281,6 +1268,11 @@ class AutomatedRun(Loggable):
                                         videos=videos)
 
             self._persister_save_action('post_extraction_save')
+
+            env = self._get_environmentals()
+            if env:
+                set_environmentals(self.spec, env)
+
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
@@ -1460,6 +1452,24 @@ anaylsis_type={}
     # ===============================================================================
     # private
     # ===============================================================================
+    def _get_environmentals(self):
+        env = {}
+        lclient = self.labspy_client
+        if lclient:
+            if lclient.connect():
+                for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                    try:
+                        env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
+                    except BaseException, e:
+                        self.debug('Get Labspy Environmentals: {}'.format(e))
+                        self.debug_exception()
+            else:
+                self.debug('failed to connect to labspy client. Could not retrieve environmentals')
+            self.debug('Enviromentals: {}'.format(pformat(env)))
+        else:
+            self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
+        return env
+
     def _start(self):
         if self.isotope_group is None:
             # load arar_age object for age calculation

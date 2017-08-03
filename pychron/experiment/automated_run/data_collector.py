@@ -366,6 +366,7 @@ class DataCollector(Consoleable):
             elif self.collection_kind == BASELINE:
                 bgraph = self.plot_panel.baseline_graph
                 update_graph(bgraph, pid, fit, 0, 0)
+                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
             else:
                 update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
 

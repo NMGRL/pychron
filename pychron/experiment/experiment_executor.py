@@ -610,8 +610,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 self.wait_group.active_control.page_name = run.runid
                 run.is_first = is_first_flag
+
+
                 delay_after_previous_analysis = run.spec.get_delay_after(exp.delay_between_analyses,
                                                                          exp.delay_after_blank)
+                self.debug('$$$$$$$$$$$$$$ delay after dp={}, d={} da={} db={}, at={}'.format(delay_after_previous_analysis,
+                                                                                       run.spec.delay_after,
+                                                                                       exp.delay_between_analyses,
+                                                                                       exp.delay_after_blank,
+                                                                                       run.spec.analysis_type))
 
                 if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap[0]:
                     self.debug('waiting for extracting_run to finish')
