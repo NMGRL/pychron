@@ -19,12 +19,12 @@ import time
 from Queue import Queue
 from threading import Event, Thread, Timer
 
-from pyface.timer.do_later import do_later
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
+from pychron.spectrometer.thermo.spectrometer.base import NoIntensityChange
 
 
 class DataCollector(Consoleable):
@@ -64,6 +64,8 @@ class DataCollector(Consoleable):
     _queue = None
 
     err_message = Str
+    no_intensity_threshold = 10
+    not_intensity_count = 0
 
     def wait(self):
         st = time.time()
@@ -200,9 +202,17 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
+            self.not_intensity_count = 0
         except (AttributeError, TypeError, ValueError), e:
             self.debug('failed getting data {}'.format(e))
             return
+        except NoIntensityChange:
+            self.warning('No Intensity change. Something is wrong. ')
+            if self.no_intensity_count > self.no_intensity_threshold:
+                return
+
+            self.not_intensity_count+=1
+            return True
 
         if not data:
             return

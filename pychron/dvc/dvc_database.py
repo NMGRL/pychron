@@ -449,14 +449,22 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_sample(self, name, project, material, grainsize=None, note=''):
         with self.session_ctx():
-            a = self.get_sample(name, project, material, grainsize)
-            if a is None:
+            ret = self.get_sample(name, project, material, grainsize)
+            if ret is None:
                 self.debug('Adding sample {},{},{}'.format(name, project, material))
+                p = self.get_project(project)
                 a = SampleTbl(name=name, note=note)
-                a.project = self.get_project(project)
-                a.material = self.get_material(material, grainsize)
-                a = self._add_item(a)
-            return a
+                if p is not None:
+                    a.project = p
+                    m = self.get_material(material, grainsize)
+                    if m is not None:
+                        a.material = m
+                        ret = self._add_item(a)
+                    else:
+                        self.debug('No material={}, grainsize={}'.format(material, grainsize))
+                else:
+                    self.debug('No project {}'.format(project))
+            return ret
 
     def add_extraction_device(self, name):
         with self.session_ctx():

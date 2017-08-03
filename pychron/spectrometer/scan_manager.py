@@ -38,6 +38,7 @@ from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.spectrometer.readout_view import ReadoutView
+from pychron.spectrometer.thermo.spectrometer.base import NoIntensityChange
 
 
 class ScanManager(StreamGraphManager):
@@ -81,8 +82,8 @@ class ScanManager(StreamGraphManager):
     use_log_events = Bool
     log_events_enabled = False
     _valve_event_list = List
-    _prev_signals = None
-    _no_intensity_change_cnt = 0
+    # _prev_signals = None
+    # _no_intensity_change_cnt = 0
     _suppress_isotope_change = False
 
     settings_name = 'scan_settings'
@@ -274,44 +275,44 @@ class ScanManager(StreamGraphManager):
         from pychron.core.ui.gui import invoke_in_main_thread
         invoke_in_main_thread(func)
 
-    def _check_intensity_no_change(self, signals):
-        if self.spectrometer.simulation:
-            return
-
-        if self._no_intensity_change_cnt > 4:
-            self.warning_dialog('Something appears to be wrong.\n\n'
-                                'The detector intensities have not changed in 5 iterations. '
-                                'Check Qtegra and RemoteControlServer.\n\n'
-                                'Scan is stopped! Close and reopen window to restart')
-            self._stop_timer()
-            self._no_intensity_change_cnt = 0
-            self._prev_signals = None
-            return True
-
-        if signals is None:
-            self._no_intensity_change_cnt += 1
-        elif self._prev_signals is not None:
-            try:
-                test = (signals == self._prev_signals).all()
-            except (AttributeError, TypeError):
-                print 'signals', signals
-                print 'prev_signals', self._prev_signals
-                test = True
-
-            if test:
-                self._no_intensity_change_cnt += 1
-            else:
-                self._no_intensity_change_cnt = 0
-                self._prev_signals = None
-
-        self._prev_signals = signals
+    # def _check_intensity_no_change(self, signals):
+    #     if self.spectrometer.simulation:
+    #         return
+    #
+    #     if self._no_intensity_change_cnt > 4:
+    #         self.warning_dialog('Something appears to be wrong.\n\n'
+    #                             'The detector intensities have not changed in 5 iterations. '
+    #                             'Check Qtegra and RemoteControlServer.\n\n'
+    #                             'Scan is stopped! Close and reopen window to restart')
+    #         self._stop_timer()
+    #         self._no_intensity_change_cnt = 0
+    #         self._prev_signals = None
+    #         return True
+    #
+    #     if signals is None:
+    #         self._no_intensity_change_cnt += 1
+    #     elif self._prev_signals is not None:
+    #         try:
+    #             test = (signals == self._prev_signals).all()
+    #         except (AttributeError, TypeError):
+    #             print 'signals', signals
+    #             print 'prev_signals', self._prev_signals
+    #             test = True
+    #
+    #         if test:
+    #             self._no_intensity_change_cnt += 1
+    #         else:
+    #             self._no_intensity_change_cnt = 0
+    #             self._prev_signals = None
+    #
+    #     self._prev_signals = signals
 
     def _update(self, data):
         keys, signals = data
         if keys:
             self._signal_failed_cnt = 0
-            if self._check_intensity_no_change(signals):
-                return
+            # if self._check_intensity_no_change(signals):
+            #     return
 
             series, idxs = zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys))
             signals = [signals[idx] for idx in idxs]
@@ -338,9 +339,17 @@ class ScanManager(StreamGraphManager):
 
     def _update_scan_graph(self):
         if self.scan_enabled:
-            data = self.spectrometer.get_intensities()
-            if data:
-                self._update(data)
+            try:
+                data = self.spectrometer.get_intensities()
+                if data:
+                    self._update(data)
+
+            except NoIntensityChange:
+                self.warning_dialog('Something appears to be wrong.\n\n'
+                                    'The detector intensities have not changed in 5 iterations. '
+                                    'Check Qtegra and RemoteControlServer.\n\n'
+                                    'Scan is stopped! Close and reopen window to restart')
+                self._stop_timer()
 
     def _stop_timer(self):
         self.info('stopping scan timer')
