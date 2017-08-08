@@ -30,7 +30,7 @@ from pychron.experiment.conditional.tabular_adapters import EActionConditionalsA
     EConditionalsAdapter, EModificationConditionalsAdapter, PRConditionalsAdapter, ConditionalsAdapter
 
 FUNCTIONS = ['', 'Max', 'Min', 'Slope', 'Average', 'Between']
-FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
+FUNC_DICT = {'slope': 'slope({})', 'max': 'max({})', 'min': 'min({})', 'average': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'Inactive': '{}.inactive',
             'BaselineCorrected': '{}.bs_corrected',
@@ -102,7 +102,6 @@ class ConditionalGroup(HasTraits):
     def dump(self):
         cs = []
         for ci in self.conditionals:
-            print ci
             d = {}
             for a, b in self.dump_attrs:
                 if not b:
@@ -258,6 +257,7 @@ class ConditionalGroup(HasTraits):
                               editor=myEnumEditor(values=FUNCTIONS),
                               tooltip='Optional. Apply a predefined function to this attribute. '
                                       'Functions include {}'.format(','.join(FUNCTIONS[1:]))),
+                         Item('window', enabled_when='not modifier_enabled'),
                          Item('modifier',
                               enabled_when='modifier_enabled',
                               tooltip='Optional. Apply a modifier to this attribute.'
@@ -358,6 +358,7 @@ class PostRunGroup(ConditionalGroup):
                                editor=myEnumEditor(name='available_attrs')),
                           VGroup(Item('function',
                                       editor=myEnumEditor(values=FUNCTIONS)),
+                                 Item('window', enabled_when='not modifier_enabled'),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
                                       editor=myEnumEditor(values=['', 'StdDev', 'Current', 'Inactive',

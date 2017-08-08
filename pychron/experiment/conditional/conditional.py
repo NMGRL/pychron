@@ -277,7 +277,7 @@ class AutomatedRunConditional(BaseConditional):
                 # print ocnt, self.frequency, b, c
                 return cnt_flag
 
-    def _check(self, run, data):
+    def _check(self, run, data, verbose=False):
         """
         make a teststr and context from the run and data
         evaluate the teststr with the context
@@ -289,6 +289,8 @@ class AutomatedRunConditional(BaseConditional):
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
         self.debug('testing {}'.format(teststr))
+        if verbose:
+            self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
         if eval(teststr, ctx):

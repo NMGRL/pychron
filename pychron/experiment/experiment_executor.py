@@ -382,6 +382,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def show_conditionals(self, *args, **kw):
         invoke_in_main_thread(self._show_conditionals, *args, **kw)
 
+    def refresh_table(self):
+        self.experiment_queue.refresh_table_needed = True
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -807,6 +810,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if step != '_post_measurement':  # save data even if post measurement fails
                     run.spec.state = 'failed'
                 break
+
+
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
             if run.spec.state not in ('truncated', 'canceled', 'failed'):
@@ -916,7 +921,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.abort_run()
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True, err=None):
-        self.debug('_cancel')
+        self.debug('_cancel. style={}, cancel_run={}, msg={}, confirm={}, err={}'.format(style, cancel_run,
+                                                                                         msg, confirm, err))
         aruns = (self.measuring_run, self.extracting_run)
 
         if style == 'queue':
@@ -942,10 +948,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if style == 'queue':
                     self.alive = False
                     self.debug('Queue cancel. stop timer')
-                    self.stats.stop_timer()
+                    invoke_in_main_thread(self.stats.stop_timer)
 
-                self.set_extract_state(False)
-                self.wait_group.stop()
+                invoke_in_main_thread(self.set_extract_state, False)
+                invoke_in_main_thread(self.wait_group.stop)
+
                 self._canceled = True
                 for arun in aruns:
                     if arun:
