@@ -30,7 +30,7 @@ class USGSMenloSource(FileSource):
 
     def get_analysis_import_spec(self, p, delimiter=None):
         pspec = PersistenceSpec()
-        
+
         rspec = AutomatedRunSpec()
         pspec.run_spec = rspec
         # spec = ImportSpec
@@ -56,7 +56,7 @@ class USGSMenloSource(FileSource):
 
         # irrad = Irradiation()
         rspec.irradiation = row[1]
-        
+
         row = f.next()
         rspec.irradiation_level = row[1]
 
@@ -113,6 +113,7 @@ class USGSMenloSource(FileSource):
         b37 = map(float, row)
         b36 = map(float, row)
         b35 = map(float, row)
+        b355 = map(float, row)
         for i, row in enumerate(f):
             if i > 36:
                 break
@@ -135,8 +136,10 @@ class USGSMenloSource(FileSource):
         pspec.isotope_group = IsotopeGroup(isotopes=isotopes)
         return pspec
 
-    def _get_isotope(self, f, name, ncnts):
+    def _get_isotope(self, f, name, ncnts, bs):
         iso = Isotope(name, 'Detector1')
+        # iso.baseline = Baseline(name, 'Detector1')
+        # iso.baseline.value = bs
         iso.name = name
         rs = (f.next() for i in xrange(ncnts))
         xs, ys = zip(*((float(r[0]), float(r[1])) for r in rs))
@@ -198,56 +201,55 @@ class USGSMenloSource(FileSource):
 
         return []
 
-    # def _level_factory(self, irradname, li):
-    #     level = Level()
-    #     level.name = li['name']
-    #     level.holder = li['tray']
-    #
-    #     prod = self._production_factory(li)
-    #     level.production = prod
-    #     pos = [self._position_factory(ip)
-    #            for ip in self.get_irradiation_positions(irradname, level.name)]
-    #     level.positions = pos
-    #
-    #     return level
-    #
-    # def _position_factory(self, ip):
-    #     dbsam = ip.sample
-    #     s = Sample()
-    #     s.name = dbsam.Sample
-    #     s.material = ip.Material
-    #
-    #     pp = Project()
-    #     pp.name = ip.sample.project.Project
-    #     pp.principal_investigator = ip.sample.project.PrincipalInvestigator
-    #     s.project = pp
-    #
-    #     p = Position()
-    #     p.sample = s
-    #     p.position = ip.HoleNumber
-    #     p.identifier = ip.IrradPosition
-    #     p.j = ip.J
-    #     p.j_err = ip.JEr
-    #     p.note = ip.Note
-    #     p.weight = ip.Weight
-    #
-    #     return p
-    #
-    # def _production_factory(self, li):
-    #     prod = Production()
-    #     prod.name = li['production_name']
-    #     p = li['production']
-    #
-    #     for attr in INTERFERENCE_KEYS:
-    #         try:
-    #             setattr(prod, attr, p[attr])
-    #         except AttributeError:
-    #             pass
-    #
-    #     prod.Ca_K = p['Ca_K']
-    #     prod.Cl_K = p['Cl_K']
-    #     prod.Cl3638 = p['Cl3638']
-    #     return prod
-
+        # def _level_factory(self, irradname, li):
+        #     level = Level()
+        #     level.name = li['name']
+        #     level.holder = li['tray']
+        #
+        #     prod = self._production_factory(li)
+        #     level.production = prod
+        #     pos = [self._position_factory(ip)
+        #            for ip in self.get_irradiation_positions(irradname, level.name)]
+        #     level.positions = pos
+        #
+        #     return level
+        #
+        # def _position_factory(self, ip):
+        #     dbsam = ip.sample
+        #     s = Sample()
+        #     s.name = dbsam.Sample
+        #     s.material = ip.Material
+        #
+        #     pp = Project()
+        #     pp.name = ip.sample.project.Project
+        #     pp.principal_investigator = ip.sample.project.PrincipalInvestigator
+        #     s.project = pp
+        #
+        #     p = Position()
+        #     p.sample = s
+        #     p.position = ip.HoleNumber
+        #     p.identifier = ip.IrradPosition
+        #     p.j = ip.J
+        #     p.j_err = ip.JEr
+        #     p.note = ip.Note
+        #     p.weight = ip.Weight
+        #
+        #     return p
+        #
+        # def _production_factory(self, li):
+        #     prod = Production()
+        #     prod.name = li['production_name']
+        #     p = li['production']
+        #
+        #     for attr in INTERFERENCE_KEYS:
+        #         try:
+        #             setattr(prod, attr, p[attr])
+        #         except AttributeError:
+        #             pass
+        #
+        #     prod.Ca_K = p['Ca_K']
+        #     prod.Cl_K = p['Cl_K']
+        #     prod.Cl3638 = p['Cl3638']
+        #     return prod
 
 # ============= EOF =============================================
