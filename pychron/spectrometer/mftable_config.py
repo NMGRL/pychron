@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, Any, List, Str
+from traits.api import HasTraits, Any, List, Str, Bool, Float
 from traitsui.api import View, UItem, InstanceEditor, VGroup, Item, EnumEditor, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import TableColumn
+from traitsui.table_column import TableColumn, ObjectColumn
 
 
 class Detector(HasTraits):
     name = Str
-    enabled = Str
-    deflection = Str
+    enabled = Bool
+    deflection = Float
 
     def __init__(self, obj):
         self.name = obj.name
@@ -52,8 +52,8 @@ class MFTableConfig(HasTraits):
                            editor=InstanceEditor(),
                            style='custom'), label='Peak Center Config.', show_border=True)
 
-        cols = [CheckboxColumn(name='enabled'), TableColumn(name='name'),
-                TableColumn(name='deflection')]
+        cols = [CheckboxColumn(name='enabled'), ObjectColumn(name='name'),
+                ObjectColumn(name='deflection')]
 
         v = View(VGroup(
 

@@ -193,7 +193,7 @@ class ScanManager(StreamGraphManager):
                             isotopes=self.isotopes,
                             isotope=self.isotope,
                             peak_center_config=pcc)
-        cfg.set_detectors(detectors=self.spectrometer.detectors)
+        cfg.set_detectors(self.spectrometer.detectors)
         info = cfg.edit_traits()
         pcc.view_name = ''
         if info.result:
