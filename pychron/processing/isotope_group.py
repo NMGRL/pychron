@@ -129,7 +129,7 @@ class IsotopeGroup(HasTraits):
 
     def get_slope(self, attr, n=-1):
         try:
-            iso = self.isotopes[attr].get_slope(n)
+            iso = self.isotopes[attr]
         except KeyError:
             iso = next((i for i in self.isotopes.itervalues() if i.detector == attr), None)
 
