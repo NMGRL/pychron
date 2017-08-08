@@ -14,30 +14,59 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import HasTraits, Any, List, Str
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Item, CheckListEditor, EnumEditor
+from traitsui.api import View, UItem, InstanceEditor, VGroup, Item, EnumEditor, TableEditor
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import TableColumn
+
+
+class Detector(HasTraits):
+    name = Str
+    enabled = Str
+    deflection = Str
+
+    def __init__(self, obj):
+        self.name = obj.name
+        self.enabled = False
+        self.deflection = obj.deflection
 
 
 class MFTableConfig(HasTraits):
     peak_center_config = Any
     detectors = List
-    available_detectors = List
+    available_detector_names = List
+    finish_detector = Str
+    finish_isotope = Str
 
     isotopes = List
     isotope = Str
+
+    def get_finish_position(self):
+        return self.finish_isotope, self.finish_detector
+
+    def set_detectors(self, dets):
+        self.detectors = [Detector(d) for d in dets]
+        self.available_detector_names = [di.name for di in self.detectors]
 
     def traits_view(self):
         pcc = VGroup(UItem('peak_center_config',
                            editor=InstanceEditor(),
                            style='custom'), label='Peak Center Config.', show_border=True)
 
-        v = View(VGroup(Item('detectors',
-                             style='custom', editor=CheckListEditor(name='available_detectors',
-                                                                 cols=5)),
-                        Item('isotope', editor=EnumEditor(name='isotopes')),
-                        pcc),
+        cols = [CheckboxColumn(name='enabled'), TableColumn(name='name'),
+                TableColumn(name='deflection')]
 
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+        v = View(VGroup(
+
+            Item('detectors',
+                 editor=TableEditor(columns=cols)),
+            Item('isotope', editor=EnumEditor(name='isotopes')),
+            VGroup(Item('finish_detector', editor=EnumEditor(name='available_detector_names')),
+                   Item('finish_isotope', editor=EnumEditor(name='isotopes')),
+                   show_border=True, label='End Position'),
+            pcc),
+
+            kind='livemodal',
+            buttons=['OK', 'Cancel'])
         return v
 
 # ============= EOF =============================================

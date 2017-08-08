@@ -132,12 +132,13 @@ class LabnumberEntry(DVCIrradiationable):
 
     def import_irradiation(self):
         self.debug('import irradiation')
-        from pychron.entry.dvc_import import do_import_irradiation
+        # from pychron.entry.dvc_import import do_import_irradiation
 
         mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
         mssource = self.application.get_service(mdb)
         mssource.bind_preferences()
 
+        from pychron.data_mapper import do_import_irradiation
         do_import_irradiation(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
         self.updated = True
 
@@ -147,8 +148,9 @@ class LabnumberEntry(DVCIrradiationable):
     def import_irradiation_load_xls(self, p):
         self.info('import irradiation file: {}'.format(p))
 
-        from pychron.entry.dvc_import import do_import_irradiation
+        # from pychron.entry.dvc_import import do_import_irradiation
         from pychron.entry.xls_irradiation_source import XLSIrradiationSource
+        from pychron.data_mapper import do_import_irradiation
 
         xlssource = XLSIrradiationSource(p)
         name = os.path.basename(p)
@@ -230,7 +232,7 @@ class LabnumberEntry(DVCIrradiationable):
             pos = self.irradiated_positions
 
         for ip in pos:
-            if ip.identifier:
+            if ip.sample:
                 ip.trait_set(j=j, j_err=j * 1e-3)
 
         if not self.selected and self.confirmation_dialog('Would you like to set default J for entire irradiation'):
@@ -292,6 +294,7 @@ class LabnumberEntry(DVCIrradiationable):
                 w = LabbookPDFWriter()
                 info = w.options.edit_traits()
                 if info.result:
+                    w.options.dump()
                     irrads = db.get_irradiations(names=table.selected,
                                                  order_func='asc')
 
