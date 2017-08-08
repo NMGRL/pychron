@@ -19,7 +19,6 @@ from threading import Thread
 
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
-from pyface.timer.do_later import do_later
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 
@@ -48,15 +47,23 @@ class SpectrometerTask(EditorTask):
                 refiso = cfg.isotope
                 ion = sm.ion_optics_manager
                 ion.backup_mftable()
-                for di in cfg.detectors:
-                    ion.setup_peak_center(detector=[di], isotope=refiso,
+
+                odefl = []
+                dets = cfg.get_detectors()
+                self.debug('setting deflections')
+                for det, defl in dets:
+                    odefl.append((det, sm.spectrometer.get_deflection(det)))
+                    sm.spectrometer.set_deflection(det, defl)
+
+                for di in dets:
+                    ion.setup_peak_center(detector=[di.name], isotope=refiso,
                                           config_name=cfg.peak_center_config.active_item.name,
                                           standalone_graph=False,
                                           new=True,
                                           show_label=True, use_configuration_dac=False)
 
                     ion.peak_center.update_others = False
-                    name = 'Pop MFTable {}-{}'.format(di, refiso)
+                    name = 'Pop MFTable {}-{}'.format(di.name, refiso)
                     invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=ion.peak_center,
                                                                               name=name))
 
@@ -65,6 +72,17 @@ class SpectrometerTask(EditorTask):
                     self._on_peak_center_end()
                     if not ion.peak_center.isAlive():
                         break
+
+                self.debug('unset deflections')
+                for det, defl in odefl:
+                    sm.spectrometer.set_deflection(det, defl)
+
+                fp = cfg.get_finish_position()
+                self.debug('move to end position={}'.format(fp))
+                if fp:
+                    iso, det = fp
+                    if iso and det:
+                        ion.position(iso, det)
 
             t = Thread(target=func)
             t.start()
