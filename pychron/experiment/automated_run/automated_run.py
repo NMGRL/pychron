@@ -725,6 +725,7 @@ class AutomatedRun(Loggable):
 
         if self.spec.state != 'not run':
             self.spec.state = 'aborted'
+            self.experiment_executor.refresh_table()
 
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
@@ -759,6 +760,7 @@ class AutomatedRun(Loggable):
         if state:
             if self.spec.state != 'not run':
                 self.spec.state = state
+                self.experiment_executor.refresh_table()
 
     def truncate_run(self, style='normal'):
         """
@@ -782,6 +784,7 @@ class AutomatedRun(Loggable):
             self.collector.set_truncated()
             self.truncated = True
             self.spec.state = 'truncated'
+            self.experiment_executor.refresh_table()
 
     # ===============================================================================
     #
@@ -871,6 +874,7 @@ class AutomatedRun(Loggable):
         if self.spec:
             if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
                 self.spec.state = 'failed'
+                self.experiment_executor.refresh_table()
 
         self.stop()
 
@@ -1210,6 +1214,7 @@ class AutomatedRun(Loggable):
         msg = 'Extraction Started {}'.format(script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'extraction'
+        self.experiment_executor.refresh_table()
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
         script.runner = self.runner
@@ -1318,6 +1323,7 @@ class AutomatedRun(Loggable):
         msg = 'Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'measurement'
+        self.experiment_executor.refresh_table()
 
         # get current spectrometer values
         sm = self.spectrometer_manager
@@ -1367,7 +1373,6 @@ class AutomatedRun(Loggable):
 
         msg = 'Post Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        # self.spec.state = 'extraction'
         script.runner = self.runner
         script.manager = self.experiment_executor
 
