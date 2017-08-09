@@ -286,7 +286,7 @@ class AutomatedRun(Loggable):
         else:
             fits = dict([f.split(':') for f in fits])
 
-        print 'set fits {}'.format(isotopes)
+        # print 'set fits {}'.format(isotopes)
         for k, iso in isotopes.iteritems():
             try:
                 fi = fits[k]

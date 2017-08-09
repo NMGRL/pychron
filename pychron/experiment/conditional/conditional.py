@@ -293,17 +293,18 @@ class AutomatedRunConditional(BaseConditional):
             self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
-        if eval(teststr, ctx):
-            self.trips += 1
-            self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
-                                                                 self.ntrips))
-            if self.trips >= self.ntrips:
-                self.tripped = True
-                self.message = 'condition {} is True'.format(teststr)
+        if teststr and ctx:
+            if eval(teststr, ctx):
+                self.trips += 1
+                self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
+                                                                     self.ntrips))
+                if self.trips >= self.ntrips:
+                    self.tripped = True
+                    self.message = 'condition {} is True'.format(teststr)
+                    self.trips = 0
+                    return True
+            else:
                 self.trips = 0
-                return True
-        else:
-            self.trips = 0
 
     def _make_context(self, obj, data):
         teststr = self.teststr
@@ -316,14 +317,15 @@ class AutomatedRunConditional(BaseConditional):
             ts = ts.replace('(', '_').replace(')', '_')
 
             v = func(obj, data, self.window)
-            vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
-            vv = self._map_value(vv)
-            ctx[attr] = vv
+            if v is not None:
+                vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
+                vv = self._map_value(vv)
+                ctx[attr] = vv
 
-            ts = self._interpolate_teststr(ts, obj, data)
-            tt.append(ts)
-            if oper:
-                tt.append(oper)
+                ts = self._interpolate_teststr(ts, obj, data)
+                tt.append(ts)
+                if oper:
+                    tt.append(oper)
 
         return ' '.join(tt), ctx
 
