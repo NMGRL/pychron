@@ -35,7 +35,7 @@ def get_teststr_attr_func(token):
             (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
             (ACTIVE_REGEX, 'not attr in data[0]'),
             (CP_REGEX, 'aa.get_current_intensity(attr)'),
-            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
+            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr, default=None)'),
             (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
             (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
             (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),

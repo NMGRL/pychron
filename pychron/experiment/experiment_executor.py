@@ -1068,8 +1068,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if tripped:
                 v.select_conditional(tripped, tripped=True)
 
-            if self._cv_info:
-                self._close_cv()
+            # if self._cv_info:
+            #     self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
 

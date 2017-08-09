@@ -270,11 +270,13 @@ class IsotopeGroup(HasTraits):
         iso.detector = det
         iso.ic_factor = self.get_ic_factor(det)
 
-    def get_baseline_corrected_value(self, iso):
+    def get_baseline_corrected_value(self, iso, default=0):
+        print 'asdf', iso, default, self.isotope_keys
         try:
             return self.isotopes[iso].get_baseline_corrected_value()
         except KeyError:
-            return ufloat(0, 0, tag=iso)
+            if default is not None:
+                return ufloat(default, 0, tag=iso)
 
     def get_isotopes(self, det):
         for iso in self.isotopes.itervalues():
