@@ -110,9 +110,16 @@ class SpectrometerTask(EditorTask):
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        es = [int(e.name.split(' ')[-1])
-              for e in self.editor_area.editors
-              if isinstance(e, PeakCenterEditor)]
+        # es = [int(e.name.split(' ')[-1])
+        #       for e in self.editor_area.editors
+        #       if isinstance(e, PeakCenterEditor)]
+        es = []
+        for e in self.editor_area.editors:
+            if isinstance(e, PeakCenterEditor):
+                try:
+                    es.append(int(e.name.split(' ')[-1]))
+                except ValueError:
+                    pass
 
         i = max(es) + 1 if es else 1
 
