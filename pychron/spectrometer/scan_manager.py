@@ -189,14 +189,16 @@ class ScanManager(StreamGraphManager):
         pcc = self.ion_optics_manager.peak_center_config
         pcc.view_name = 'mftable_view'
         pcc.load()
-        cfg = MFTableConfig(
-                            isotopes=self.isotopes,
+        cfg = MFTableConfig(isotopes=self.isotopes,
                             isotope=self.isotope,
                             peak_center_config=pcc)
+        cfg.load()
         cfg.set_detectors(self.spectrometer.detectors)
+
         info = cfg.edit_traits()
         pcc.view_name = ''
         if info.result:
+            cfg.dump()
             return cfg
 
     # private
