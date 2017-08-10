@@ -202,7 +202,7 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            self.not_intensity_count = 0
+            self.no_intensity_count = 0
         except (AttributeError, TypeError, ValueError), e:
             self.debug('failed getting data {}'.format(e))
             return
@@ -211,7 +211,7 @@ class DataCollector(Consoleable):
             if self.no_intensity_count > self.no_intensity_threshold:
                 return
 
-            self.not_intensity_count+=1
+            self.no_intensity_count += 1
             return True
 
         if not data:

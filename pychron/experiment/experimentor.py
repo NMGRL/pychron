@@ -123,10 +123,9 @@ class Experimentor(DVCIrradiationable):
         self.debug('executor executable {}'.format(self.executor.executable))
         self.debug('stats calculated')
 
-        ans = self._get_all_runs(queues)
-        self.stats.nruns = len(ans)
-
-        self.debug('get all runs n={}'.format(len(ans)))
+        # ans = self._get_all_runs(queues)
+        # self.stats.nruns = len(ans)
+        # self.debug('get all runs n={}'.format(len(ans)))
 
         self.debug('updating stats')
         self.stats.calculate()
