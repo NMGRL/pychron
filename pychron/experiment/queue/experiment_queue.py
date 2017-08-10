@@ -183,15 +183,23 @@ class ExperimentQueue(BaseExperimentQueue):
         hs = list(attrs)
 
         ev = SelectAttrView(available_attributes=hs)
-        info = ev.edit_traits()
-        if info.result:
-            if ev.attributes:
+        ev.on_trait_change(self._handle_select_attributes, 'attributes')
+        ev.edit_traits()
+        # if info.result:
+            # if ev.attributes:
+            #
+            #     s = self.selected[0]
+            #     def test(v):
+            #         return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
+            #
+            #     self._select_same(test)
+    def _handle_select_attributes(self, attributes):
+        if attributes:
+            s = self.selected[0]
+            def test(v):
+                return all([getattr(v, k) == getattr(s, k) for k in attributes])
 
-                s = self.selected[0]
-                def test(v):
-                    return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
-
-                self._select_same(test)
+            self._select_same(test)
 
     def _select_same(self, test):
         self.selected = [si for si in self.cleaned_automated_runs if test(si)]
