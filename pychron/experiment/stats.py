@@ -192,9 +192,8 @@ class ExperimentStats(Loggable):
                 btw += d
 
             # subtract the last delay_after because experiment doesn't delay after last analysis
-            btw -=d
+            btw -= d
 
-            # btw = self.delay_between_analyses * (ni - 1)
             dur = run_dur + self.delay_before_analyses + btw
             self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
                                                                        run_dur, btw))
@@ -215,7 +214,6 @@ class ExperimentStats(Loggable):
         if not self._total_time:
             dur = NULL_STR
         else:
-            # self.debug('Remaining seconds={}, tt={}, e={}'.format(self._total_time-self._elapsed, self._total_time, self._elapsed))
             dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
 
@@ -225,24 +223,16 @@ class StatsGroup(ExperimentStats):
 
     # @caller
     def reset(self):
-        # print 'resetwas'
+        self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
         self.calculate(force=True)
-        ExperimentStats.reset(self)
+        super(StatsGroup, self).reset()
 
     def calculate(self, force=False):
         """
             calculate the total duration
             calculate the estimated time of finish
         """
-        # runs = [ai
-        # for ei in self.experiment_queues
-        #            for ai in ei.cleaned_automated_runs]
-        #
-        # ni = len(runs)
-        # self.nruns = ni
-        # for ei in self.experiment_queues:
-        #     dur=ei.stats.calculate_duration(ei.cleaned_automated_runs)
-        #     if
+
         if force or not self._total_time:
             self.debug('calculating experiment stats')
             tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
@@ -250,11 +240,6 @@ class StatsGroup(ExperimentStats):
 
             self.debug('total_time={}'.format(tt))
             self._total_time = tt
-            # offset = 0
-            # if self._start_time:
-            #     offset = time.time() - self._start_time
-
-            # self.etf = self.format_duration(tt - offset)
             self.etf = self.format_duration(tt)
 
     def recalculate_etf(self):
@@ -278,7 +263,6 @@ class StatsGroup(ExperimentStats):
 
                 st += ei.stats.calculate_duration(
                     ei.executed_runs + ei.cleaned_automated_runs[:si]) + ei.delay_between_analyses
-                # et += ei.stats.calculate_duration(ei.executed_runs+ei.cleaned_automated_runs[:si + 1])
 
                 rd = self.get_run_duration(sel)
                 et = st + rd
@@ -291,7 +275,6 @@ class StatsGroup(ExperimentStats):
                 et += ei.stats.calculate_duration()
 
         if at_times:
-            # self.time_at = self.format_duration(tt)
             self.end_at = self.format_duration(et)
             if st:
                 self.start_at = self.format_duration(st)
