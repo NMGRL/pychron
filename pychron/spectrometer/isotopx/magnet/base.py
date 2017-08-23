@@ -17,5 +17,7 @@ from pychron.spectrometer.base_magnet import BaseMagnet
 
 
 class IsotopxMagnet(BaseMagnet):
-    pass
+    def read_dac(self):
+        pass
+
 # ============= EOF =============================================

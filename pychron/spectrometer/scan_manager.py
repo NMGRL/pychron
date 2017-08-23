@@ -24,7 +24,7 @@ import yaml
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    Str
+    Str, TraitError
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
@@ -219,7 +219,11 @@ class ScanManager(StreamGraphManager):
         if iso:
             self.isotope = iso
 
-        self.integration_time = params.get('integration_time', 1.048576)
+        dit = self.spectrometer.default_integration_time
+        try:
+            self.integration_time = params.get('integration_time', dit)
+        except TraitError:
+            self.integration_time = dit
 
     def _dump_settings(self, d):
         iso = self.isotope

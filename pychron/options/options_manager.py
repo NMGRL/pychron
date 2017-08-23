@@ -36,7 +36,6 @@ from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
-from pychron.options.views.views import view
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
 
@@ -360,10 +359,10 @@ class OptionsController(Controller):
         self.model.factory_default()
 
 
-if __name__ == '__main__':
-    paths.build('_dev')
-    # om = IdeogramOptionsManager()
-    om = OptionsController(model=SeriesOptionsManager())
-    om.configure_traits(view=view('Series'))
+# if __name__ == '__main__':
+#     paths.build('_dev')
+#     # om = IdeogramOptionsManager()
+#     om = OptionsController(model=SeriesOptionsManager())
+#     om.configure_traits(view=view('Series'))
 
 # ============= EOF =============================================

@@ -15,13 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, Property
 
 from pychron.envisage.view_util import open_view
-from pychron.paths import paths
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
@@ -37,14 +34,6 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
     of thermo.spectrometer.Spectrometer
 
     """
-    spectrometer_microcontroller = Any
-    name = Property(depends_on='spectrometer_microcontroller')
-
-    def test_connection(self, **kw):
-        return self.spectrometer.test_connection(**kw)
-
-    def test_intensity(self, **kw):
-        return self.spectrometer.test_intensity(**kw)
 
     def protect_detector(self, det, protect):
         protect = 'On' if protect else 'Off'
@@ -91,75 +80,6 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
             d[di.name] = di.read_deflection()
         return d
 
-    def load(self, db_mol_weights=True):
-        spec = self.spectrometer
-        mftable = spec.magnet.mftable
-
-        self.debug('******************************* LOAD Spec')
-        if db_mol_weights:
-            # get the molecular weights from the database
-            # dbm = IsotopeDatabaseManager(application=self.application,
-            #                              warn=False)
-            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-            if dbm and dbm.is_connected():
-                self.info('loading molecular_weights from database')
-                mws = dbm.db.get_molecular_weights()
-                # convert to a dictionary
-                m = dict([(mi.name, mi.mass) for mi in mws])
-                spec.molecular_weights = m
-                mftable.db = dbm.db
-
-        if not spec.molecular_weights:
-            import csv
-            # load the molecular weights dictionary
-            p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
-            if os.path.isfile(p):
-                self.info('loading "molecular_weights.csv" file')
-                with open(p, 'U') as f:
-                    reader = csv.reader(f, delimiter='\t')
-                    args = [[l[0], float(l[1])] for l in reader]
-                    spec.molecular_weights = dict(args)
-            else:
-                self.info('writing a default "molecular_weights.csv" file')
-                # make a default molecular_weights.csv file
-                from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mw
-
-                with open(p, 'U' if os.path.isfile(p) else 'w') as f:
-                    writer = csv.writer(f, delimiter='\t')
-                    data = [a for a in mw.itervalues()]
-                    data = sorted(data, key=lambda x: x[1])
-                    for row in data:
-                        writer.writerow(row)
-                spec.molecular_weights = mw
-
-        self.spectrometer.load()
-        mftable.spectrometer_name = self.spectrometer.name
-
-        return True
-
-    def finish_loading(self):
-        self.debug('Finish loading')
-
-        # integration_time = 1.048576
-
-        # set device microcontrollers
-        self.spectrometer.set_microcontroller(self.spectrometer_microcontroller)
-
-        # update the current hv
-        self.spectrometer.source.sync_parameters()
-
-        # set integration time
-        self.spectrometer.get_integration_time()
-        # integration_time = self.spectrometer.get_integration_time()
-        # self.integration_time = integration_time
-
-        # self.integration_time = 0.065536
-
-        self.spectrometer.load_configurations()
-
-        self.bind_preferences()
-        self.spectrometer.finish_loading()
-
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'
         bind_preference(self.spectrometer, 'send_config_on_startup',
@@ -196,11 +116,7 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
         ion = self.application.get_service('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
         return klass(spectrometer=self.spectrometer, ion_optics_manager=ion)
 
-    def _get_name(self):
-        r = ''
-        if self.spectrometer_microcontroller:
-            r = self.spectrometer_microcontroller.name
-        return r
+
 
 
 # ============= EOF =============================================

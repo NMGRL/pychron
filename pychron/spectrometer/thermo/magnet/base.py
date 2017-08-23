@@ -20,11 +20,11 @@ import time
 from traits.api import List, Float, Bool
 
 from pychron.core.helpers.strtools import to_bool
-from pychron.spectrometer.base_magnet import BaseMagnet, get_float
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+from pychron.hardware import get_float
+from pychron.spectrometer.base_magnet import BaseMagnet
 
 
-class ThermoMagnet(BaseMagnet, SpectrometerDevice):
+class ThermoMagnet(BaseMagnet):
     """
     Magnet interface to Qtegra.
 
@@ -119,7 +119,7 @@ class ThermoMagnet(BaseMagnet, SpectrometerDevice):
 
         return change
 
-    @get_float
+    @get_float(default=0)
     def read_dac(self):
         return self.ask('GetMagnetDAC')
 

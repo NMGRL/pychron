@@ -14,33 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
+
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Any, Property
+# from traits.api import HasTraits, on_trait_change, Str, Int, Float, Button
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class SpectrometerDevice(ConfigLoadable):
-    microcontroller = Any
-    spectrometer = Any
-    simulation = Property
-
-    def _get_simulation(self):
-        s = True
-        if self.microcontroller:
-            s = self.microcontroller.simulation
-        return s
-
-    def finish_loading(self):
-        pass
-
-    def ask(self, *args, **kw):
-        if self.microcontroller:
-            return self.microcontroller.ask(*args, **kw)
+class NGXController(CoreDevice):
+    pass
 
 
 # ============= EOF =============================================
