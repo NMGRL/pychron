@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
-from pychron.spectrometer.isotopx.spectrometer.ngx import NGXSpectrometer
+from pychron.spectrometer.isotopx.detector.base import IsotopxDetector
 
 
-class NGXSpectrometerManager(BaseSpectrometerManager):
-    spectrometer_klass = NGXSpectrometer
+class NGXDetector(IsotopxDetector):
+    pass
+
 # ============= EOF =============================================

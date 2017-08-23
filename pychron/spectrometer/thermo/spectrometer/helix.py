@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.thermo_spectrometer_controller import HelixController
 from pychron.spectrometer.thermo.detector.helix import HelixDetector
 from pychron.spectrometer.thermo.magnet.helix import HelixMagnet
 from pychron.spectrometer.thermo.source.helix import HelixSource
@@ -27,6 +28,7 @@ class HelixSpectrometer(ThermoSpectrometer):
     magnet_klass = HelixMagnet
     source_klass = HelixSource
     detector_klass = HelixDetector
+    microcontroller_klass = HelixController
 
 
 class HelixPlusSpectrometer(HelixSpectrometer):

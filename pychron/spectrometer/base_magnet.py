@@ -17,31 +17,18 @@
 # ============= enthought library imports =======================
 import os
 import time
-import yaml
 from math import pi
+
+import yaml
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 
-from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
-def get_float(func):
-    def dec(*args, **kw):
-        try:
-            return float(func(*args, **kw))
-        except (TypeError, ValueError):
-            return 0.0
-
-    return dec
-
-
-import threading
-import time
-
-
-class BaseMagnet(Loggable):
+class BaseMagnet(SpectrometerDevice):
     dac = Property(Float, depends_on='_dac')
     mass = Float(enter_set=True, auto_set=False)
 
@@ -66,13 +53,16 @@ class BaseMagnet(Loggable):
 
     _suppress_mass_update = False
 
-    def __init__(self, *args, **kw):
-        super(BaseMagnet, self).__init__(*args, **kw)
-        self._lock = threading.Lock()
-        self._cond = threading.Condition((threading.Lock()))
+    # def __init__(self, *args, **kw):
+    #     super(BaseMagnet, self).__init__(*args, **kw)
+    #     self._lock = threading.Lock()
+    #     self._cond = threading.Condition((threading.Lock()))
 
     def reload_mftable(self):
         self.mftable.load_mftable()
+
+    def read_dac(self):
+        raise NotImplementedError
 
     def set_dac(self, *args, **kw):
         raise NotImplementedError

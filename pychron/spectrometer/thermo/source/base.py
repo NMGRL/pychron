@@ -17,15 +17,16 @@
 # ============= enthought library imports =======================
 from traits.api import Float, Range, Property
 from traitsui.api import View, Item, RangeEditor
-# ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.base_source import BaseSource
 
 
-class ThermoSource(SpectrometerDevice):
-    nominal_hv = Float(4500, enter_set=True, auto_set=False)
-    current_hv = Float(4500)
+# ============= standard library imports ========================
+
+
+class ThermoSource(BaseSource):
+
 
     trap_current = Property(depends_on='_trap_current')
     _trap_current = Float

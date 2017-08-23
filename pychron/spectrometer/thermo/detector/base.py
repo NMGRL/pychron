@@ -14,18 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+import os
+
+from numpy import loadtxt, polyfit, polyval, poly1d
+from scipy import optimize
 # ============= enthought library imports =======================
 from traits.api import Float, Property, Int
 from traitsui.api import View, Item, HGroup, \
     spring
-# ============= standard library imports ========================
-import os
-from numpy import loadtxt, polyfit, polyval, poly1d
-from scipy import optimize
+
+from pychron.paths import paths
 # ============= local library imports  ==========================
 from pychron.spectrometer.base_detector import BaseDetector
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
-from pychron.paths import paths
+from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
 class ThermoDetector(BaseDetector, SpectrometerDevice):
