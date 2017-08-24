@@ -13,6 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+SOURCE_CONTROL_PARAMETERS = {'IonEnergy': 'IE',
+                             'YFocus': 'YF',
+                             'YBias': 'YB',
+                             'ZFocus': 'ZF',
+                             'ZBias': 'ZB',
+                             'ElectronEnergy': 'EE',
+                             'IonRepeller': 'IR',
+                             'TrapVoltage': 'TV',
+                             'FilamentCurrent': 'FC',
+                             'FilamentVoltage': 'FV',
+                             'TrapCurrent': 'TC',
+                             'EmissionCurrent': 'EC',
+                             'ConfinementVoltage': 'CV',
+                             'ESA+Plate': 'ESA+',
+                             'ESA-Plate': 'ESA-'
+                             }
 
 # ============= EOF =============================================
