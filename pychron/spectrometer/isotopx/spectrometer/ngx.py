@@ -16,8 +16,9 @@
 from traits.api import Enum
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES
+from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource
@@ -69,7 +70,23 @@ class NGXSpectrometer(BaseSpectrometer):
         return it
 
     def read_parameter_word(self, keys):
-        pass
+        print keys
+        values = []
+        for kk in keys:
+            try:
+                key = SOURCE_CONTROL_PARAMETERS[kk]
+            except KeyError:
+                values.append(NULL_STR)
+                continue
+
+            resp = self.ask('GetSourceOutput {}'.format(key))
+            if resp is not None:
+                try:
+                    last_set, readback = resp.split(',')
+                    values.append(float(readback))
+                except ValueError:
+                    values.append(NULL_STR)
+        return values
 
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
