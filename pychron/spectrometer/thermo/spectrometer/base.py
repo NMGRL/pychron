@@ -88,6 +88,8 @@ class ThermoSpectrometer(BaseSpectrometer):
     _prev_signals = None
     _no_intensity_change_cnt = 0
 
+    _test_connect_command = 'GetIntegrationTime'
+
     def reload_mftable(self):
         self.magnet.reload_mftable()
 

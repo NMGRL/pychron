@@ -134,7 +134,8 @@ class TCPHandler(Handler):
     def get_packet(self, cmd, message_frame=None):
         try:
             return self._recvall(self.sock.recv, frame=message_frame)
-        except socket.timeout:
+        except socket.timeout, e:
+            print 'socket timeout', e
             return
 
     def send_packet(self, p):
@@ -283,8 +284,10 @@ class EthernetCommunicator(Communicator):
                 self.info('no handle    {}'.format(cmd.strip()))
             return
 
+        # print self.write_terminator
         cmd = '{}{}'.format(cmd, self.write_terminator)
-
+        # print cmd
+        # cmd = '{}\n'.format(cmd)
         r = None
         with self._lock:
             if self.error_mode:
@@ -324,7 +327,8 @@ class EthernetCommunicator(Communicator):
     def read(self, *args, **kw):
         with self._lock:
             handler = self.get_handler()
-            return handler.get_packet('')
+            if handler:
+                return handler.get_packet('')
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:

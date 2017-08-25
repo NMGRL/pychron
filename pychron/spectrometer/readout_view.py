@@ -163,22 +163,23 @@ class ReadoutView(Loggable):
         with open(path, 'r') as rfile:
             try:
                 yt = yaml.load(rfile)
-                yl, yd = yt
+                if yt:
+                    yl, yd = yt
 
-                for rd in yl:
-                    rr = Readout(spectrometer=self.spectrometer,
-                                 name=rd['name'],
-                                 min_value=rd.get('min', 0),
-                                 max_value=rd.get('max', 1),
-                                 compare=rd.get('compare', True))
-                    self.readouts.append(rr)
+                    for rd in yl:
+                        rr = Readout(spectrometer=self.spectrometer,
+                                     name=rd['name'],
+                                     min_value=rd.get('min', 0),
+                                     max_value=rd.get('max', 1),
+                                     compare=rd.get('compare', True))
+                        self.readouts.append(rr)
 
-                for rd in yd:
-                    if rd.get('enabled', False):
-                        rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                               name=rd['name'],
-                                               compare=rd.get('compare', True))
-                        self.deflections.append(rr)
+                    for rd in yd:
+                        if rd.get('enabled', False):
+                            rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                                   name=rd['name'],
+                                                   compare=rd.get('compare', True))
+                            self.deflections.append(rr)
 
             except yaml.YAMLError:
                 return
