@@ -51,6 +51,8 @@ class BaseSpectrometer(SpectrometerDevice):
     _saved_integration = None
     _debug_values = None
 
+    _test_connect_command = ''
+
     def start(self):
         pass
 
@@ -63,6 +65,7 @@ class BaseSpectrometer(SpectrometerDevice):
         send configuration if self.send_config_on_startup set in Preferences
         :return:
         """
+
         if self.microcontroller:
             self.name = self.microcontroller.name
 
@@ -85,7 +88,7 @@ class BaseSpectrometer(SpectrometerDevice):
         ret, err = False, ''
         if not self.simulation:
             if force:
-                ret = self.ask('GetIntegrationTime', verbose=True) is not None
+                ret = self.ask(self._test_connect_command, verbose=True) is not None
             else:
                 ret = self._connection_status
         elif globalv.communication_simulation:
@@ -347,7 +350,9 @@ class BaseSpectrometer(SpectrometerDevice):
         return self.source_klass(spectrometer=self, microcontroller=self.microcontroller)
 
     def _microcontroller_default(self):
-        return self.microcontroller_klass()
+        mc = self.microcontroller_klass(name='microcontroller')
+        mc.bootstrap()
+        return mc
 
     @cached_property
     def _get_isotopes(self):

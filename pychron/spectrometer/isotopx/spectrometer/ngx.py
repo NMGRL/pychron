@@ -13,18 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Enum, Str
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
-from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS
+from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, ERRORS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
-class NGXSpectrometer(BaseSpectrometer):
+class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     integration_time = Enum(ISOTOPX_INTEGRATION_TIMES)
 
@@ -34,12 +35,25 @@ class NGXSpectrometer(BaseSpectrometer):
     microcontroller_klass = NGXController
 
     rcs_id = 'NOM'
-    username = 'massspec'
-    password = 'analysis'
+    username = Str('')
+    password = Str('')
+
+    _test_connect_command = 'GETMASS'
+
+    def finish_loading(self):
+        resp = self.read()
+
+        bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
+        bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+
+        if resp:
+            self.info('NGX-{}'.format(resp))
+            self.ask('Login {},{}'.format(self.username, self.password))
+
+        super(NGXSpectrometer, self).finish_loading()
 
     def start(self):
-        self.ask('Login {},{}'.format(self.username, self.password))
-        self.ask('StartAcq -1,{}'.format(self.rcs_id))
+        self.ask('StartAcq 500,{}'.format(self.rcs_id))
 
     def read_intensities(self):
         keys = []
@@ -47,7 +61,8 @@ class NGXSpectrometer(BaseSpectrometer):
 
         datastr = self.read()
         if datastr:
-            pass
+            if datastr.startswith('#EVENT:ACQ,{}'.format(self.rcs_id)):
+                signals = [float(i) for i in datastr[:-1].split(',')[5:]]
 
         return keys, signals
 
