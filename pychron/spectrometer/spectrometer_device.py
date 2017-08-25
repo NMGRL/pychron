@@ -39,12 +39,19 @@ class SpectrometerDevice(ConfigLoadable):
     def finish_loading(self):
         pass
 
-    def ask(self, *args, **kw):
+    def ask(self, cmd, *args, **kw):
         if self.microcontroller:
-            return self.microcontroller.ask(*args, **kw)
+            resp = self.microcontroller.ask(cmd, *args, **kw)
+            resp = self.handle_response(cmd, resp)
+            return resp
 
     def read(self, *args, **kw):
         if self.microcontroller:
             return self.microcontroller.read(*args, **kw)
 
+    def tell(self, *args, **kw):
+        if self.microcontroller:
+            self.microcontroller.tell(*args, **kw)
+    # def handle_response(self, cmd, resp):
+    #     return resp
 # ============= EOF =============================================

@@ -14,9 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.spectrometer.base_magnet import BaseMagnet
+from pychron.spectrometer.isotopx import IsotopxMixin
 
 
-class IsotopxMagnet(BaseMagnet):
+class IsotopxMagnet(BaseMagnet, IsotopxMixin):
     def read_dac(self):
         pass
 

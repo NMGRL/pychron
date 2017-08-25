@@ -225,7 +225,7 @@ class Initializer(Loggable):
                 dev_class = dev_class.text.strip()
 
             try:
-
+                print manager, device
                 dev = getattr(manager, device)
                 if dev is None:
                     dev = manager.create_device(device,

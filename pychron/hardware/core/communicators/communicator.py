@@ -76,6 +76,13 @@ class Communicator(HeadlessConfigLoadable):
 
     def load(self, config, path):
         self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           default=chr(13),
+                           optional=True)
+
+        if self.write_terminator == 'chr(10)':
+            self.write_terminator = chr(10)
+
         return True
 
     def close(self):

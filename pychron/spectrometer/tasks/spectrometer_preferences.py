@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Float, Enum
+from traits.api import Bool, Float, Enum, Str, Password
 from traitsui.api import View, Item, VGroup, HGroup
 
 # ============= standard library imports ========================
@@ -82,5 +82,21 @@ class SpectrometerPreferencesPane(PreferencesPane):
                           show_border=True)
 
         return View(VGroup(gen_grp, mf_grp, scan_grp, magnet_grp))
+
+
+class NGXSpectrometerPreferences(BasePreferencesHelper):
+    username = Str
+    password = Password
+    preferences_path = 'pychron.spectrometer.ngx'
+
+
+class NGXSpectrometerPreferencesPane(PreferencesPane):
+    model_factory = NGXSpectrometerPreferences
+    category = 'Spectrometer'
+
+    def traits_view(self):
+        v = View(Item('username'),
+                 Item('password'))
+        return v
 
 # ============= EOF =============================================

@@ -26,7 +26,7 @@ class NGXMagnet(IsotopxMagnet):
 
     @get_float()
     def read_mass(self):
-        return self.ask('GetMass')
+        return self.ask('GETMASS')
 
     def set_mass(self, v, delay=None, deflect=False):
         """
