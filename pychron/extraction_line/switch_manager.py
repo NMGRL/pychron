@@ -233,10 +233,11 @@ class SwitchManager(Manager):
                 continue
 
             keys.append(k)
-
-            states.append(int(v.state))
+            #             state = '{}{}'.format(k, int(self._get_state_by(v)))
+            state = '{}{}'.format(k, int(v.state))
+            states.append(state)
             if time.time() - st > timeout:
-                self.debug('get states timeout')
+                self.debug('get states timeout. timeout={}'.format(timeout))
                 break
         else:
             # if loop completes before timeout dont save keys
@@ -340,8 +341,6 @@ class SwitchManager(Manager):
 
         if v is not None:
             return v.software_lock
-        else:
-            self.critical('failed to located valve name="{}", description="{}"'.formnat(name, description))
 
     def open_switch(self, *args, **kw):
         return self.open_by_name(*args, **kw)
@@ -507,13 +506,15 @@ class SwitchManager(Manager):
                             d[key] = bool(int(state))
                         except IndexError:
                             return d
+                            # if key.upper() in ALPHAS:
+                            # if state in ('0', '1'):
             except ValueError:
                 pass
 
         return d
 
     def load_valve_states(self):
-        self.load_indicator_states(force=True)
+        self.load_hardware_states()
 
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
@@ -523,19 +524,29 @@ class SwitchManager(Manager):
 
     def load_hardware_states(self):
         self.debug('load hardware states')
-        self.load_indicator_states()
-
-    def load_indicator_states(self, force=False):
-        self.debug('load indicator states')
-        update = False
+        # update = False
+        states = []
         for k, v in self.switches.iteritems():
-            if v.query_state or force:
-                ostate = v.state
+            if v.query_state:
+                # ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
-                self.refresh_state = (k, s, False)
-                update = update or ostate != s
-        if update:
-            self.refresh_canvas_needed = True
+                states.append((k, s))
+                # self.refresh_state = (k, s, False)
+                # if ostate != s:
+                # update = update or ostate != s
+
+        if states:
+            self.refresh_state = states
+            # if update:
+            # self.refresh_canvas_needed = True
+
+    def load_indicator_states(self):
+        self.debug('load indicator states')
+        for k, v in self.switches.iteritems():
+            s = v.get_hardware_indicator_state()
+            self.refresh_state = (k, s, False)
+
+        self.refresh_canvas_needed = True
 
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
@@ -545,7 +556,7 @@ class SwitchManager(Manager):
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
             if v.state != s:
-                update = update or ostate !=s
+                update = update or ostate != s
             self.refresh_state = (k, s, False)
 
         if update:
