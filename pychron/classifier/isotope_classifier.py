@@ -18,13 +18,15 @@
 # ============= standard library imports ========================
 from numpy import ones, vstack, zeros, hstack
 from numpy.random import random
+
 # ============= local library imports  ==========================
-from pychron.experiment.classifier.base_classifier import BaseClassifier
+from pychron.classifier.base_classifier import BaseClassifier
 
 
 def make_sample(iso):
     # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
-    return iso.mass, iso.n, iso.intercept_percent_error
+    return iso.mass, iso.n, iso.value, iso.intercept_percent_error, iso.slope(), iso.standard_fit_error(), \
+           iso.noutliers()
 
 
 class IsotopeClassifier(BaseClassifier):
@@ -67,6 +69,7 @@ class IsotopeClassifier(BaseClassifier):
 
         klass = None
         prob = 0
+        print x
         if self._clf:
             klass = int(self._clf.predict(x)[0])
             prob = self._clf.predict_proba(x)[0][klass]

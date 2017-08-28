@@ -29,7 +29,7 @@ from uncertainties import std_dev, nominal_value
 from pychron.dvc import dvc_dump, analysis_path
 from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
-from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
+# from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
@@ -53,7 +53,7 @@ class DVCPersister(BasePersister):
     active_repository = Instance(GitRepoManager)
     dvc = Instance(DVC_PROTOCOL)
     use_isotope_classifier = Bool(False)
-    isotope_classifier = Instance(IsotopeClassifier, ())
+    # isotope_classifier = Instance(IsotopeClassifier, ())
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
@@ -360,15 +360,17 @@ class DVCPersister(BasePersister):
         cbaselines = {}
         icfactors = {}
 
-        if self.use_isotope_classifier:
-            clf = self.isotope_classifier
-
         endianness = '>'
         per_spec = self.per_spec
 
         source = {'emission': per_spec.emission,
                   'trap': per_spec.trap}
         keys = []
+
+        clf = None
+        if self.use_isotope_classifier:
+            clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
+
         for iso in per_spec.isotope_group.isotopes.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
@@ -381,7 +383,8 @@ class DVCPersister(BasePersister):
 
             isod = {'detector': iso.detector,
                     'name': iso.name}
-            if self.use_isotope_classifier:
+
+            if clf is not None:
                 klass, prob = clf.predict_isotope(iso)
                 isod.update(classification=klass,
                             classification_probability=prob)

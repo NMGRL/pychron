@@ -46,6 +46,8 @@ PACKAGE_DICT = dict(
     GitHubPlugin='pychron.git.tasks.github_plugin',
     PipelinePlugin='pychron.pipeline.tasks.plugin',
 
+    ClassifierPlugin='pychron.classifier.tasks.plugin',
+
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',

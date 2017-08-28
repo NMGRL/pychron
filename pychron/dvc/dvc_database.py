@@ -649,6 +649,8 @@ class DVCDatabase(DatabaseAdapter):
             ans = self._query_all(q)
             if return_limits:
                 return ans, hpost, lpost
+            else:
+                return ans
 
     def get_last_n_analyses(self, n, mass_spectrometer=None):
         with self.session_ctx() as sess:
