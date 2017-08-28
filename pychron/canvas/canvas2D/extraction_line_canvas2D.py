@@ -96,9 +96,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.state = nstate
-            self.draw_valid = False
 
             if refresh:
+                print 'referehs {} {}'.format(name, nstate)
+                self.draw_valid = False
                 self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
@@ -136,7 +137,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         pass
 
     def normal_mouse_move(self, event):
-
         item = self._over_item(event)
         if item is not None:
             self.event_state = 'select'
@@ -163,8 +163,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         try:
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
-        except AttributeError:
-            pass
+
+        except AttributeError, e:
+            print 'select mouse move {}'.format(e)
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):

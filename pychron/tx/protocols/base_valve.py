@@ -49,6 +49,7 @@ class BaseValveProtocol(ServiceProtocol):
     def _register_base_services(self):
         services = (('Open', '_open'),
                     ('Close', '_close'),
+                    ('GetIndicatorState', '_get_indicator_state'),
                     ('GetValveState', '_get_valve_state'),
                     ('GetStateChecksum', '_get_state_checksum'),
                     ('GetValveStates', '_get_valve_states'),
@@ -58,6 +59,14 @@ class BaseValveProtocol(ServiceProtocol):
         self._register_services(services)
 
     # command handlers
+    def _get_indicator_state(self, data):
+        if isinstance(data, dict):
+            data = data['value']
+        result = self._manager.get_indicator_state(data)
+        if result is None:
+            result = InvalidValveErrorCode(data)
+        return result
+
     def _get_valve_state(self, data):
         if isinstance(data, dict):
             data = data['value']

@@ -283,6 +283,24 @@ class SwitchManager(Manager):
         """
         return next((item for item in self.explanable_items if item.name == n), None)
 
+    def get_indicator_state_by_name(self, n, force=False):
+        v = self.get_switch_by_name(n)
+        state = None
+        if v is not None:
+            state = self._get_indicator_state_by(v, force=force)
+
+        return state
+
+    def get_indicator_state_by_description(self, n):
+        """
+        """
+        v = self.get_valve_by_description(n)
+        state = None
+        if v is not None:
+            state = self._get_indicator_state_by(v)
+
+        return state
+
     def get_state_by_name(self, n, force=False):
         """
         """
@@ -422,6 +440,18 @@ class SwitchManager(Manager):
                         self.debug('interlocked {}'.format(interlock))
                         return v
 
+    def _get_indicator_state_by(self, v, force=False):
+        state = None
+        if (self.query_valve_state and v.query_state) or force:
+            state = v.get_hardware_indicator_state(verbose=False)
+            if not v.actuator or v.actuator.simulation:
+                state = None
+
+        if state is None:
+            state = v.state
+
+        return state
+
     def _get_state_by(self, v, force=False):
         """
         """
@@ -493,19 +523,19 @@ class SwitchManager(Manager):
 
     def load_hardware_states(self):
         self.debug('load hardware states')
-        self.load_indicator_states()
-
-    def load_indicator_states(self, force=False):
-        self.debug('load indicator states')
-        update = False
+        # update = False
+        states = []
         for k, v in self.switches.iteritems():
-            if v.query_state or force:
-                ostate = v.state
+            if v.query_state:
                 s = v.get_hardware_indicator_state(verbose=False)
-                self.refresh_state = (k, s, False)
-                update = update or ostate != s
-        if update:
-            self.refresh_canvas_needed = True
+                states.append((k, s))
+
+        if states:
+            self.refresh_state = states
+
+    def load_indicator_states(self):
+        self.debug('load indicator states')
+        self.load_hardware_states()
 
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
@@ -515,7 +545,7 @@ class SwitchManager(Manager):
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
             if v.state != s:
-                update = update or ostate !=s
+                update = update or ostate != s
             self.refresh_state = (k, s, False)
 
         if update:
