@@ -392,6 +392,16 @@ class IsotopicMeasurement(BaseMeasurement):
         f = natural_name_fit(f)
         self._fit = f
 
+    def slope(self):
+        m, b = polyfit(self.xs, self.ys, 1)
+        return m
+
+    def standard_fit_error(self):
+        return self.regressor.calculate_standard_error_fit()
+
+    def noutliers(self):
+        return self.regressor.xs.shape[0] - self.regressor.clean_xs.shape[0]
+
     # def _error_type_changed(self):
     #     self.regressor.error_calc_type = self.error_type
 

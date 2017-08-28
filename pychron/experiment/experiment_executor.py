@@ -46,7 +46,7 @@ from pychron.experiment.conflict_resolver import ConflictResolver
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.experiment_status import ExperimentStatus
-from pychron.experiment.health.series import SystemHealthSeries
+# from pychron.experiment.health.series import SystemHealthSeries
 from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
@@ -133,7 +133,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     pyscript_runner = Instance(IPyScriptRunner)
     monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
-    system_health = Instance(SystemHealthSeries)
+    # system_health = Instance(SystemHealthSeries)
 
     measuring_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
     extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
@@ -849,8 +849,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # if self.use_labspy:
         #     self.labspy_client.add_run(run, self.experiment_queue)
 
-        if self.use_system_health:
-            self._add_system_health(run)
+        # if self.use_system_health:
+        #     self._add_system_health(run)
 
         # mem_log('end run')
         if self.stats:
@@ -1078,22 +1078,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
-
-    def _add_system_health(self, run):
-        # save analysis. don't cancel immediately
-        ret = None
-        if self.system_health:
-            ret = self.system_health.add_analysis(self)
-
-        # cancel the experiment if failed to save to the secondary database
-        # cancel/terminate if system health returns a value
-
-        if ret == 'cancel':
-            self.cancel(cancel_run=True, msg=self.system_health.error_msg)
-        elif ret == 'terminate':
-            self.cancel('run', cancel_run=True, msg=self.system_health.error_msg)
-        else:
-            return True
+    #
+    # def _add_system_health(self, run):
+    #     # save analysis. don't cancel immediately
+    #     ret = None
+    #     if self.system_health:
+    #         ret = self.system_health.add_analysis(self)
+    #
+    #     # cancel the experiment if failed to save to the secondary database
+    #     # cancel/terminate if system health returns a value
+    #
+    #     if ret == 'cancel':
+    #         self.cancel(cancel_run=True, msg=self.system_health.error_msg)
+    #     elif ret == 'terminate':
+    #         self.cancel('run', cancel_run=True, msg=self.system_health.error_msg)
+    #     else:
+    #         return True
 
     # ===============================================================================
     # execution steps
@@ -1268,8 +1268,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             arun.monitor = mon
             arun.persister.monitor = mon
 
-        if self.use_system_health:
-            arun.system_health = self.system_health
+        # if self.use_system_health:
+        #     arun.system_health = self.system_health
 
         if self.use_xls_persistence:
             xls_persister = ExcelPersister()
@@ -2232,9 +2232,9 @@ Use Last "blank_{}"= {}
     def _scheduler_default(self):
         return ExperimentScheduler()
 
-    def _system_health_default(self):
-        sh = SystemHealthSeries()
-        return sh
+    # def _system_health_default(self):
+    #     sh = SystemHealthSeries()
+    #     return sh
 
     def _datahub_default(self):
         dh = Datahub()
