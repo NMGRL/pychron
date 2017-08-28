@@ -489,6 +489,7 @@ class ExtractionLineManager(Manager, Consoleable):
         sm = self.switch_manager
         while 1:
             sm.load_hardware_states()
+            self.refresh_canvas()
             time.sleep(p)
 
     #     self._trigger_update()
