@@ -110,11 +110,18 @@ class DVCPersister(BasePersister):
         if sblob:
             sblob = base64.b64encode(sblob)
 
-        obj = {'request': rblob,  # time vs
-               'response': oblob,
+        # obj = {'request': rblob,  # time vs
+        #        'response': oblob,
+        #        'sblob': sblob,
+        #        'snapshots': per_spec.snapshots,
+        #        'videos': per_spec.videos}
+
+        obj = {'measured_response': rblob,  # time vs
+               'requested_output': oblob,
                'sblob': sblob,
                'snapshots': per_spec.snapshots,
                'videos': per_spec.videos}
+
 
         pid = per_spec.pid
         if pid:

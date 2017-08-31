@@ -243,6 +243,8 @@ class Analysis(ArArAge, IdeogramPlotable):
     instrument_name = ''
     analystName = ''
     uuid = None  # Str
+    measured_response_stream = None
+    requested_output_stream = None
 
     experiment_queue_name = ''
 

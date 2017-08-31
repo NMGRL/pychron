@@ -107,6 +107,15 @@ class DVCAnalysis(Analysis):
             if v is not None:
                 setattr(self, attr, v)
 
+        rs = jd.get('measured_response')
+        if rs is None:
+            rs = jd.get('request')
+        self.measured_response_stream = rs
+        rs = jd.get('requested_output')
+        if rs is None:
+            rs = jd.get('response')
+        self.requested_output_stream = rs
+
         pd = jd.get('positions')
         if pd:
             ps = sorted(pd, key=lambda x: x['position'])
