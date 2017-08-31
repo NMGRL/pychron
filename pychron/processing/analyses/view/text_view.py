@@ -57,9 +57,9 @@ class MeasurementView(TextView):
     attribute = 'measurement_script_blob'
 
 
-class ExtractionView(TextView):
-    name = 'Extraction'
-    attribute = 'extraction_script_blob'
+# class ExtractionView(TextView):
+#     name = 'Extraction'
+#     attribute = 'extraction_script_blob'
     # def __init__(self, analysis, *args, **kw):
     #     super(ExperimentView, self).__init__(*args, **kw)
     #     self._load(analysis)

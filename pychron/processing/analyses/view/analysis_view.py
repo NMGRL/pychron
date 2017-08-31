@@ -15,10 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+
 from traits.api import HasTraits, Instance, Event, Str, Bool, List
 from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Group, Handler, spring, HGroup
 
+from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.dvc_commit_view import HistoryView
@@ -28,7 +31,7 @@ from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
-from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
+from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
 from pychron.pychron_constants import DETECTOR_IC, COCKTAIL, UNKNOWN
 
 
@@ -50,6 +53,29 @@ class AnalysisViewHandler(Handler):
 
     def show_all(self, uiinfo, obj):
         obj.show_iso_evolutions(show_evo=True, show_equilibration=True, show_baseline=True)
+
+
+class ExtractionView(HasTraits):
+    graph = Instance(StackedGraph)
+
+    def setup_graph(self, response_data, request_data):
+        self.graph = g = StackedGraph()
+
+        if response_data:
+            x, y = unpack(format_blob(response_data), fmt='<ff')
+            g.new_plot()
+            g.new_series(x[1:], y[1:])
+            g.set_x_limits()
+
+        if request_data:
+            x, y = unpack(format_blob(request_data), fmt='<ff')
+            self.graph.new_plot()
+            g.new_series(x[1:], y[1:])
+            g.set_x_limits()
+
+    def traits_view(self):
+        v = View(UItem('graph', style='custom'))
+        return v
 
 
 class AnalysisView(HasTraits):
@@ -113,9 +139,9 @@ class AnalysisView(HasTraits):
                 ('history', HistoryView),
                 # ('blanks', BlanksView),
                 # ('fits', FitsView),
-                ('experiment', ExperimentView, 'experiment_txt'),
-                ('extraction', ExtractionView, 'extraction_script_blob'),
-                ('measurement', MeasurementView, 'measurement_script_blob'),
+                # ('experiment', ExperimentView, 'experiment_txt'),
+                # ('extraction', ExtractionView, 'extraction_script_blob'),
+                # ('measurement', MeasurementView, 'measurement_script_blob'),
                 ('interference', InterferencesView, 'interference_corrections'),
                 ('spectrometer', SpectrometerView, 'source_parameters')):
 
@@ -134,6 +160,11 @@ class AnalysisView(HasTraits):
             # if view is None:
             view = klass(an)
             setattr(self, name, view)
+
+        if an.measured_response_stream:
+            ev = ExtractionView()
+            ev.setup_graph(an.measured_response_stream, an.requested_output_stream)
+            self.extraction_view = ev
 
         if an.snapshots:
             snapshot_view = SnapshotView(an.snapshots)
