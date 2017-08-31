@@ -36,7 +36,7 @@ PACKAGE_DICT = dict(
     DashboardClientPlugin='pychron.dashboard.tasks.client.plugin',
     DatabasePlugin='pychron.database.tasks.database_plugin',
     LabspyClientPlugin='pychron.labspy.tasks.plugin',
-    PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
+    # PsychoDramaPlugin='pychron.psychodrama.tasks.plugin',
     UpdatePlugin='pychron.updater.tasks.update_plugin',
 
     # data reduction

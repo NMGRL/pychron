@@ -240,8 +240,11 @@ class Analysis(ArArAge, IdeogramPlotable):
     acquisition_software = None
     data_reduction_software = None
     laboratory = ''
+    instrument_name = ''
     analystName = ''
     uuid = None  # Str
+
+    experiment_queue_name = ''
 
     # environmentals
     lab_temperature = 0

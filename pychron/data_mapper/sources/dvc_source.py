@@ -16,11 +16,19 @@
 from traits.api import provides
 
 from pychron.data_mapper.sources.idvc_source import IDVCSource
+from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.loggable import Loggable
 
 
 @provides(IDVCSource)
 class DVCSource(Loggable):
+    def new_persistence_spec(self):
+        pspec = PersistenceSpec()
+        rspec = AutomatedRunSpec()
+        pspec.run_spec = rspec
+        return pspec
+
     def get_irradiation_import_spec(self, name):
         pass
 

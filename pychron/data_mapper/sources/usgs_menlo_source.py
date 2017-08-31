@@ -19,8 +19,6 @@
 from datetime import datetime
 
 from pychron.data_mapper.sources.file_source import FileSource
-from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
-from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
 
@@ -29,10 +27,13 @@ class USGSMenloSource(FileSource):
     _delimiter = '\t'
 
     def get_analysis_import_spec(self, p, delimiter=None):
-        pspec = PersistenceSpec()
+        # pspec = PersistenceSpec()
+        #
+        # rspec = AutomatedRunSpec()
+        # pspec.run_spec = rspec
 
-        rspec = AutomatedRunSpec()
-        pspec.run_spec = rspec
+        pspec = self.new_persistence_spec()
+        rspec = pspec.run_spec
         # spec = ImportSpec
 
         # analysis = Analysis()

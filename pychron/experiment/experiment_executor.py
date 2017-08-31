@@ -249,17 +249,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'default_integration_time',
                  'use_xls_persistence',
                  'use_db_persistence',
-                 'experiment_type')
+                 'experiment_type',
+                 'laboratory')
         self._preference_binder(prefid, attrs)
 
         # dvc
-
         self._preference_binder('pychron.dvc.experiment', ('use_dvc_persistence',))
+
         # dashboard
         self._preference_binder('pychron.dashboard.experiment', ('use_dashboard_client',))
 
         # system health
-        self._preference_binder(prefid, ('use_system_health',))
+        # self._preference_binder(prefid, ('use_system_health',))
 
         # colors
         attrs = ('signal_color', 'sniff_color', 'baseline_color')

@@ -295,6 +295,7 @@ class SampleTbl(Base, NameMixin):
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
+    igsn = stringcolumn(140)
 
 
 class ProductionTbl(Base, NameMixin):

@@ -48,7 +48,7 @@ META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot
               'username', 'queue_conditionals_name', 'identifier',
               'repository_identifier',
               'acquisition_software',
-              'data_reduction_software')
+              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name')
 
 PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
                   'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
