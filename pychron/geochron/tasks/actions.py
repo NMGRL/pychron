@@ -16,6 +16,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -26,6 +27,8 @@ class UploadAction(TaskAction):
     name = 'Upload to Geochron...'
 
     def perform(self, event):
+        information(None, 'Upload to Geochron is not fully implemented')
+
         app = event.task.application
         geochron_service = app.get_service('pychron.geochron.geochron_service.GeochronService')
 

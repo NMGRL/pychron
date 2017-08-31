@@ -116,4 +116,8 @@ SAMPLE_ATTRS = (('user_code', '', True),
                 ('collection_start_date', '', False),
                 ('collection_date_precision', '', False),
                 ('original_archive', '', False))
+
+MATERIALS = ('Rock', 'Sediment', 'Soil', 'Synthetic', 'NotApplicable','Other',
+             'Biology','Gas','Ice', 'LiquidAqueous', 'LiquidOrganic', 'Mineral',  'Particulate')
+
 # ============= EOF =============================================

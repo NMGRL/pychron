@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import os
+from itertools import groupby
 
 import yaml
 from apptools.preferences.preference_binding import bind_preference
@@ -182,20 +183,43 @@ class LabnumberEntry(DVCIrradiationable):
             sv = IrradiationStatusView(model=sm)
             sv.edit_traits()
 
-    def get_igsns(self, igsn_repo):
+    def get_igsns(self):
+        srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
+        if srv is None:
+            self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
+            return
+
         self.info('get igsn')
         items = self.selected
         if not items:
             items = self.irradiated_positions
 
-        for item in items:
-            if item.sample:
+        def key(x):
+            return (x.sample, x.material, x.project)
+
+        items = filter(lambda x: not x.igsn, items)
+
+        no_save = False
+        for (sample, material, project), poss in groupby(sorted(items, key=key), key=key):
+            if not sample:
+                continue
+
+            self.debug('Get IGSN for sample={}, material={}, project={}'.format(sample, material, project))
+            igsn = srv.get_new_igsn(sample)
+            if igsn:
+                for item in poss:
+                    item.igsn = igsn
+            else:
+                no_save = True
+                break
                 # need to check for existing IGSN for sample
-
-                self.debug('Get IGSN for sample={}, position={}'.format(item.sample, item.hole))
-
-        self.warning('IGSN Not fully implemented')
-        raise NotImplementedError
+                # if igsn is not None:
+                #     item.igsn = igsn
+        if not no_save:
+            self.save()
+        self.refresh_table = True
+        # self.warning('IGSN Not fully implemented')
+        # raise NotImplementedError
 
     def transfer_j(self):
         items = self.selected
@@ -532,6 +556,7 @@ class LabnumberEntry(DVCIrradiationable):
                 sam = db.add_sample(sam,
                                     project=proj,
                                     material=mat)
+                sam.igsn = ir.igsn
                 dbpos.sample = sam
 
             prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))
@@ -706,6 +731,8 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                 v = ''
                 if dbpos.identifier:
                     v = str(dbpos.identifier)
+
+                ir.igsn = dbpos.sample.igsn or ''
 
                 ir.identifier = v
                 if v:

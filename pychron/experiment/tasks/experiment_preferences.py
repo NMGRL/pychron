@@ -41,7 +41,9 @@ class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
+    laboratory = Str
     experiment_type = Enum('Ar/Ar', 'Generic')
+    instrument_name = Str
 
     use_notifications = Bool
     notifications_port = Int

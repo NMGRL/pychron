@@ -142,13 +142,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def get_igsns(self):
         self.info('Get IGSNs')
 
-        igsn_repo = self.application.get_service('pychron.repo.igsn.IGSNRepository')
-        if not igsn_repo.url:
-            self.warning_dialog('No IGSN URL set in preferences. '
-                                'The url is required before proceeding. ')
-            return
+        # if not igsn_repo.url:
+        #     self.warning_dialog('No IGSN URL set in preferences. '
+        #                         'The url is required before proceeding. ')
+        #     return
 
-        self.manager.get_igsns(igsn_repo)
+        self.manager.get_igsns()
 
     def transfer_j(self):
         self.info('Transferring J Data')

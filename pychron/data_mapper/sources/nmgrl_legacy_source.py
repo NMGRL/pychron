@@ -1,11 +1,11 @@
 # ===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,25 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.data_mapper.sources.file_source import FileSource
+
+
+class NMGRLLegacySource(FileSource):
+    def get_analysis_import_spec(self, p):
+        pspec = self.new_persistence_spec()
+        rspec = pspec.run_spec
 
 
 
-# =============enthought library imports=======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-def command_generator(cmds, vals):
-    i = 0
-    while 1:
-        yield '{} {}'.format(cmds[i], vals[i])
-        i += 1
-
-
-class Protocol:
-    commands = None
-
-    def test_command_factory(self):
-        return command_generator(self.commands.keys(), self.commands.values())
-
-# ============= EOF =====================================
+# ============= EOF =============================================

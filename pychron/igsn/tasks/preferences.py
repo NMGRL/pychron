@@ -24,7 +24,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 class UserCodeStr(BaseStr):
     def validate(self, obj, name, value):
-        if len(value) != 3:
+        if len(value) < 3:
             self.error(obj, name, value)
         else:
             return value
@@ -32,10 +32,9 @@ class UserCodeStr(BaseStr):
 
 class IGSNPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.igsn'
-    url = Str
     username = Str
     password = Password
-    usercode = UserCodeStr
+    user_code = UserCodeStr
 
 
 class IGSNPreferencesPane(PreferencesPane):
@@ -48,8 +47,7 @@ class IGSNPreferencesPane(PreferencesPane):
                           show_border=True,
                           label='Authentication')
 
-        v = View(VGroup(Item('url', label='IGSN URL'),
-                        Item('user_code', tooltip='Three alphanumeric characters used as a sample prefix'),
+        v = View(VGroup(Item('user_code', tooltip='Three+ alphanumeric characters used as a sample prefix'),
                         auth_grp))
         return v
 

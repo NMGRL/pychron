@@ -34,6 +34,7 @@ class BaseIrradiatedPosition(HasTraits):
     principal_investigator = Str
     level = Str
     irradiation = Str
+    igsn = Str
 
     j = Float(0)
     j_err = Float(0)
@@ -69,7 +70,6 @@ class IrradiatedPosition(BaseIrradiatedPosition):
     nanalyses = Int
 
 
-
 class BaseIrradiatedPositionAdapter(TabularAdapter):
     columns = [
         ('Hole', 'hole'),
@@ -90,6 +90,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         ('Hole', 'hole'),
         ('Identifier', 'identifier'),
         ('Sample', 'sample'),
+        ('IGSN', 'igsn'),
         ('PI', 'principal_investigator'),
         ('Project', 'project'),
         ('Material', 'material'),
@@ -100,6 +101,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         (u'{}J'.format(PLUSMINUS), 'j_err'),
         ('Note', 'note')]
 
+    igsn_width = Int(70)
     identifier_width = Int(80)
     hole_width = Int(50)
     sample_width = Int(100)

@@ -203,19 +203,19 @@ class Production(MetaObject):
 
     @property
     def k_ca(self):
-        return 1 / self.ca_k
+        return 1 / self.Ca_K
 
     @property
     def k_cl(self):
-        return 1 / self.cl_k
+        return 1 / self.Cl_K
 
     @property
     def k_cl_err(self):
-        return std_dev(1 / ufloat(self.cl_k, self.cl_k_err))
+        return std_dev(1 / ufloat(self.Cl_K, self.Cl_K_err))
 
     @property
     def k_ca_err(self):
-        return std_dev(1 / ufloat(self.ca_k, self.ca_k_err))
+        return std_dev(1 / ufloat(self.Ca_K, self.Ca_K_err))
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]

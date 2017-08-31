@@ -51,7 +51,7 @@ class GeochronService(Loggable):
                 sample_elem.attrib[attr] = val
 
         self._add_preferred_age(sample_elem, analysis_group)
-        self._add_interpreted_ages()
+        self._add_interpreted_ages(sample_elem, analysis_group)
         self._add_parameters(sample_elem, analysis_group)
 
     def _add_preferred_age(self, sample_elem, analysis_group):
@@ -70,8 +70,27 @@ class GeochronService(Loggable):
             experiments_elem = etree.SubElement(experiments_included_elem, 'Experiment')
             experiments_elem.attrib['experimentIdentifier'] = analysis.record_id
 
-    def _add_interpreted_ages(self):
-        pass
+    def _add_interpreted_ages(self, sample_elem, analysis_group):
+        interpreted_ages_elem = etree.SubElement(sample_elem, 'InterpretedAges')
+        interpreted_age_elem = etree.SubElement(interpreted_ages_elem, 'InterpretedAge')
+
+        age = ''
+        age_error = ''
+        interpreted_age_error_internal = ''
+        interpreted_age_error_external = ''
+        age_type = ''
+        age_classification = ''
+        age_reference = ''
+        description = ''
+
+        etree.SubElement(interpreted_age_elem, age)
+        etree.SubElement(interpreted_age_elem, age_error)
+        etree.SubElement(interpreted_age_elem, interpreted_age_error_internal)
+        etree.SubElement(interpreted_age_elem, interpreted_age_error_external)
+        etree.SubElement(interpreted_age_elem, age_type)
+        etree.SubElement(interpreted_age_elem, age_classification)
+        etree.SubElement(interpreted_age_elem, age_reference)
+        etree.SubElement(interpreted_age_elem, description)
 
     def _add_parameters(self, sample_elem, analysis_group):
         param_elem = etree.SubElement(sample_elem, 'Parameters')
@@ -167,10 +186,10 @@ class GeochronService(Loggable):
         val = None
         try:
             val = str(getattr(obj, iattr))
-        except AttributeError:
+        except AttributeError, e:
             if required:
                 self.warning_dialog('Required attribute "{}" not supplied. Contact developer'.format(attr))
-        self.debug('get value {:>15s}, {:>15s}={:>15s}'.format(attr, iattr, val))
+        self.debug('get value {:<38s} {:<38s}={}'.format(attr, iattr, val))
         return val
 
 

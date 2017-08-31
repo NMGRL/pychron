@@ -191,6 +191,8 @@ class AutomatedRun(Loggable):
     persistence_spec = Instance(PersistenceSpec)
 
     experiment_type = Str(AR_AR)
+    laboratory = Str
+    instrument_name = Str
 
     intensity_scalar = Float
     _intensities = None
@@ -203,6 +205,8 @@ class AutomatedRun(Loggable):
         self.debug('set preferences')
 
         for attr, cast in (('experiment_type', str),
+                           ('laboratory', str),
+                           ('instrument_name', str),
                            ('use_peak_center_threshold', to_bool),
                            ('peak_center_threshold', float),
                            ('peak_center_threshold_window', int),
@@ -1062,6 +1066,8 @@ class AutomatedRun(Loggable):
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
                                         tripped_conditional=self.tripped_conditional,
+                                        laboratory=self.laboratory,
+                                        instrument_name = self.instrument_name,
                                         **env)
 
             # add a result to the run spec.
@@ -1192,7 +1198,9 @@ class AutomatedRun(Loggable):
                                     runscript_blob=script_blob,
                                     signal_fods=sfods,
                                     baseline_fods=bsfods,
-                                    intensity_scalar=self.intensity_scalar)
+                                    intensity_scalar=self.intensity_scalar,
+                                    laboratory=self.laboratory,
+                                    instrument_name=self.instrument_name)
 
     # ===============================================================================
     # doers
