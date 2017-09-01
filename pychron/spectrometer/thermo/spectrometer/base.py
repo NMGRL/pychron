@@ -324,7 +324,8 @@ class ThermoSpectrometer(BaseSpectrometer):
     def read_intensities(self,tagged=True):
         keys = []
         signals = []
-        datastr = self.ask('GetData', verbose=False, quiet=True)
+
+        datastr = self.ask('GetData', verbose=False, quiet=True, use_error_mode=False)
         if datastr:
             if 'ERROR' not in datastr:
                 data = datastr.split(',')

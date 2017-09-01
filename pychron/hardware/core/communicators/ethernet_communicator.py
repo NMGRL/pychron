@@ -266,7 +266,7 @@ class EthernetCommunicator(Communicator):
             self.handler = None
 
     def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, timeout=None,
-            message_frame=None, delay=None, *args, **kw):
+            message_frame=None, delay=None, use_error_mode=True, *args, **kw):
         """
         @param cmd: ASCII text to send
         @param retries: number of retries if command fails
@@ -290,12 +290,13 @@ class EthernetCommunicator(Communicator):
         # cmd = '{}\n'.format(cmd)
         r = None
         with self._lock:
-            if self.error_mode:
+            if use_error_mode and self.error_mode:
                 retries = 2
 
             re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
             for _ in xrange(retries):
-                r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay)
+                r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay,
+                              use_error_mode=use_error_mode)
                 if r is not None:
                     break
                 else:
@@ -346,10 +347,11 @@ class EthernetCommunicator(Communicator):
         self.handler = None
         self.error_mode = False
 
-    def _ask(self, cmd, timeout=None, message_frame=None, delay=None):
+    def _ask(self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True):
         if self.error_mode:
             self.handler = None
-            timeout = 0.25
+            if use_error_mode:
+                timeout = 0.25
 
         if timeout is None:
             timeout = self.default_timeout
