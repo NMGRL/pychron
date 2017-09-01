@@ -151,8 +151,7 @@ class BaseSpectrometer(SpectrometerDevice):
         #     if abs(v-mass) < 0.05:
         #         print 'found'
         #         break
-        print molweights, mass
-
+        # print molweights, mass
         return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.15), 'Iso{:0.4f}'.format(mass))
 
     def map_mass(self, isotope):
@@ -183,12 +182,15 @@ class BaseSpectrometer(SpectrometerDevice):
             else:
                 det.isotope = isotope
 
+                self.debug('molweights={}'.format(self.molecular_weights))
                 index = det.index
                 try:
                     # nmass = int(isotope[2:])
                     nmass = self.map_mass(isotope)
                     for di in self.detectors:
-                        mass = nmass + (di.index - index)
+                        mass = nmass - di.index + index
+
+                        # mass = nmass - (di.index + index)
 
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))

@@ -751,7 +751,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             n = len(new)
             for i, ni in enumerate(new):
-                self.update_switch_state(refresh=i != n - 1, *ni)
+                self.update_switch_state(refresh=i == n - 1, *ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))
