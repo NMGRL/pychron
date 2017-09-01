@@ -64,7 +64,7 @@ class DataCollector(Consoleable):
     _queue = None
 
     err_message = Str
-    no_intensity_threshold = 10
+    no_intensity_threshold = 100
     not_intensity_count = 0
 
     def wait(self):
