@@ -209,7 +209,7 @@ class ControlsPane(TraitsDockPane):
                                    tooltip='Apply Detector/Isotope magnet position'))
 
         magnet_grp = VGroup(magnet_pos_grp,
-            UItem('magnet', style='custom'),
+            UItem('magnet', style='custom', editor=InstanceEditor()),
             label='Magnet')
         detector_grp = VGroup(
             HGroup(
@@ -222,7 +222,7 @@ class ControlsPane(TraitsDockPane):
             label='Detectors')
 
         rise_grp = UItem('rise_rate', style='custom')
-        source_grp = UItem('source', style='custom')
+        source_grp = UItem('source', style='custom', editor=InstanceEditor())
 
         # cols = [ObjectColumn(name='text', label='Text',
         # width=0.40, ),

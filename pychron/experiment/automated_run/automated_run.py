@@ -1066,10 +1066,12 @@ class AutomatedRun(Loggable):
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
                                         tripped_conditional=self.tripped_conditional,
-                                        laboratory=self.laboratory,
-                                        instrument_name = self.instrument_name,
+                                        # laboratory=self.laboratory,
+                                        # instrument_name = self.instrument_name,
                                         **env)
 
+            self.spec.laboratory = self.laboratory
+            self.spec.instrument_name= self.instrument_name
             # add a result to the run spec.
             self.spec.new_result(self)
 
