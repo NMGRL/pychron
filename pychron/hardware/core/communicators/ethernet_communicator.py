@@ -14,15 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Float
 # ============= standard library imports ========================
 import socket
 import time
+
+# ============= enthought library imports =======================
+from traits.api import Float
+
 # ============= local library imports  ==========================
 from pychron.globals import globalv
-from pychron.hardware.core.communicators.communicator import Communicator, process_response
 from pychron.hardware.core.checksum_helper import computeCRC
+from pychron.hardware.core.communicators.communicator import Communicator, process_response
 
 
 class MessageFrame(object):
@@ -132,11 +134,7 @@ class TCPHandler(Handler):
         self.sock.connect(addr)
 
     def get_packet(self, cmd, message_frame=None):
-        try:
-            return self._recvall(self.sock.recv, frame=message_frame)
-        except socket.timeout, e:
-            print 'socket timeout', e
-            return
+        return self._recvall(self.sock.recv, frame=message_frame)
 
     def send_packet(self, p):
         self.sock.send(p)
@@ -254,6 +252,7 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
+                self.debug('get handler {},{} {}'.format(self.host, self.port, timeout))
                 h.open_socket((self.host, self.port), timeout=timeout)
                 h.set_frame(self.message_frame)
                 self.handler = h
