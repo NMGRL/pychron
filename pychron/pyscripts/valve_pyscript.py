@@ -146,7 +146,7 @@ class ValvePyScript(PyScript):
             self.console_info(msg)
             change_ok = False
             if self.retry_actuation and retry < 100:
-                time.sleep(0.25)
+                time.sleep(1)
                 msg = 'Retry actuation. i={} Action="{}", Name="{}", Description="{}"'.format(retry, action, name or '',
                                                                                               description or '')
                 self.console_info(msg)

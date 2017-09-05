@@ -111,10 +111,16 @@ class DVCAnalysis(Analysis):
         if rs is None:
             rs = jd.get('request')
         self.measured_response_stream = rs
+
         rs = jd.get('requested_output')
         if rs is None:
             rs = jd.get('response')
         self.requested_output_stream = rs
+
+        rs = jd.get('setpoint_stream')
+        if rs is None:
+            rs = jd.get('sblob')
+        self.setpoint_stream = rs
 
         pd = jd.get('positions')
         if pd:
