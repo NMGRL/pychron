@@ -30,7 +30,7 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import SCRIPT_NAMES
+from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR
 
 
 def auto_connect(func):
@@ -179,8 +179,14 @@ class LabspyClient(Loggable):
                 'Setting connection status for dev={},com={},addr={},status={}'.format(
                     devname, com,
                     addr, status))
+        appname = self.application.name
 
-        appname, user = self.application.name.split('-')
+        user = NULL_STR
+        try:
+            appname, user = appname.split('-')
+        except ValueError:
+            pass
+
         with self.db.session_ctx():
             self.db.set_connection(ts,
                                    appname.strip(),
