@@ -108,20 +108,24 @@ class StatusMonitor(Loggable):
             self.debug('stop_event set. no more iterations')
             return True
 
+        delay = self.update_period/2.
         if self.state_freq and not i % self.state_freq:
             if globalv.valve_debug:
                 self.debug('load valve states')
             vm.load_valve_states()
+            time.sleep(delay)
 
         if self.lock_freq and not i % self.lock_freq:
             if globalv.valve_debug:
                 self.debug('load lock states')
             vm.load_valve_lock_states()
+            time.sleep(delay)
 
         if self.owner_freq and not i % self.owner_freq:
             if globalv.valve_debug:
                 self.debug('load owners')
             vm.load_valve_owners()
+            time.sleep(delay)
 
         if self.checksum_freq and not i % self.checksum_freq:
             if not vm.state_checksum:
