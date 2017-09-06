@@ -293,13 +293,14 @@ class EthernetCommunicator(Communicator):
                 retries = 2
 
             re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
-            for _ in xrange(retries):
+            for i in xrange(retries):
                 r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay,
                               use_error_mode=use_error_mode)
                 if r is not None:
                     break
                 else:
                     time.sleep(0.025)
+                    self.debug('doing retry {}'.format(o))
                     # else:
                     #     self._reset_connection()
 
