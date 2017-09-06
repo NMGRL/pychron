@@ -37,6 +37,8 @@ class PersistenceSpec(HasTraits):
     sensitivity_multiplier = Float
     experiment_queue_name = Str
     experiment_queue_blob = Str
+    instrument_name = Str
+    laboratory = Str
 
     extraction_name = Str
     extraction_blob = Str
