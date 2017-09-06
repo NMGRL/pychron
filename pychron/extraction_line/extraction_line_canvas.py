@@ -56,7 +56,7 @@ class ExtractionLineCanvas(HasTraits):
         """
             do the specific canvas action
         """
-        self._canvas_function('update_switch_state', name, state, *args)
+        self._canvas_function('update_switch_state', name, state, *args, **kw)
 
     def update_switch_lock_state(self, name, state, *args, **kw):
         """

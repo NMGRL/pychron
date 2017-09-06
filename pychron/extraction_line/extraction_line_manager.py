@@ -286,7 +286,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state, *args)
+            c.update_switch_state(name, state, *args, **kw)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
@@ -732,13 +732,13 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        # self.debug('handle state {}'.format(new))
+        self.debug('handle state {}'.format(new))
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:
             n = len(new)
             for i, ni in enumerate(new):
-                self.update_switch_state(refresh=i != n - 1, *ni)
+                self.update_switch_state(refresh=i == n - 1, *ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))
