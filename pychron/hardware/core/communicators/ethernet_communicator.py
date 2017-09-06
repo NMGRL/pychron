@@ -240,7 +240,7 @@ class EthernetCommunicator(Communicator):
         ret = not self.simulation and handler is not None
         return ret
 
-    def get_handler(self, timeout=None):
+    def get_handler(self, cmd=None, timeout=None):
         if timeout is None:
             timeout = self.timeout
 
@@ -252,7 +252,8 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
-                self.debug('get handler {},{} {}'.format(self.host, self.port, timeout))
+                self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
+                                                                 self.port, timeout))
                 h.open_socket((self.host, self.port), timeout=timeout)
                 h.set_frame(self.message_frame)
                 self.handler = h
@@ -300,7 +301,7 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     time.sleep(0.025)
-                    self.debug('doing retry {}'.format(o))
+                    self.debug('doing retry {}'.format(i))
                     # else:
                     #     self._reset_connection()
 
@@ -310,7 +311,7 @@ class EthernetCommunicator(Communicator):
             #     self.error_mode = True
 
             if self.use_end:
-                # self.debug('ending connection. Handler: {}'.format(self.handler))
+                # self.debug('ending connection. Handler: {}, cmd={}'.format(self.handler, cmd))
                 if self.handler:
                     self.handler.end()
                 self._reset_connection()
@@ -357,7 +358,7 @@ class EthernetCommunicator(Communicator):
             timeout = self.default_timeout
 
         self.error_mode = False
-        handler = self.get_handler(timeout)
+        handler = self.get_handler(cmd, timeout)
         if not handler:
             return
 

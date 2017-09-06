@@ -408,7 +408,6 @@ class AutomatedRunSpec(HasTraits):
                   'conditionals',
                   'syn_extraction',
                   'collection_time_zero_offset',
-                  'repository_identifier',
                   'weight',
                   'comment',
                   'project',
@@ -423,9 +422,13 @@ class AutomatedRunSpec(HasTraits):
         if self.is_step_heat():
             traits.append('aliquot')
 
+        if not self.is_special():
+            traits.append('repository_identifier')
+
         if verbose:
             for t in traits:
                 print '{} ==> {}'.format(t, getattr(self, t))
+
         return self.clone_traits(traits)
 
     # ===============================================================================
