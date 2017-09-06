@@ -1070,8 +1070,8 @@ class AutomatedRun(Loggable):
                                         # instrument_name = self.instrument_name,
                                         **env)
 
-            self.spec.laboratory = self.laboratory
-            self.spec.instrument_name= self.instrument_name
+            # self.spec.laboratory = self.laboratory
+            # self.spec.instrument_name= self.instrument_name
             # add a result to the run spec.
             self.spec.new_result(self)
 

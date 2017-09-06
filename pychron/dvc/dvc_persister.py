@@ -573,11 +573,19 @@ class DVCPersister(BasePersister):
         return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
-        rs = self.per_spec.run_spec
         if keys is None:
             keys = META_ATTRS
 
-        d = {k: getattr(rs, k) for k in keys}
+        def get(ki):
+            obj = self.per_spec
+            if not hasattr(obj, ki):
+                obj = self.per_spec.run_spec
+            try:
+                return getattr(obj, ki)
+            except AttributeError:
+                pass
+
+        d = {k: get(k) for k in keys}
         return d
 
     def _get_spectrometer_sha(self):
