@@ -29,6 +29,7 @@ from traitsui.api import View, Item, EnumEditor, CheckListEditor
 
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pychron_constants import ANALYSIS_TYPES
 
 
 class DVCNode(BaseNode):
@@ -264,8 +265,8 @@ class BaseAutoUnknownNode(UnknownNode):
     hours = Int(12)
     mass_spectrometer = Str
     available_spectrometers = List
-    analysis_types = List(['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail'])
-    available_analysis_types = List(['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail'])
+    analysis_types = List(ANALYSIS_TYPES)
+    available_analysis_types = List(ANALYSIS_TYPES)
     engine = None
     single_shot = False
     verbose = Bool
@@ -353,7 +354,7 @@ class BaseAutoUnknownNode(UnknownNode):
             print 'ats={}'.format(ats)
             print 'ms={}'.format(self.mass_spectrometer)
             unks = self.dvc.get_analyses_by_date_range(low, high,
-                                                       analysis_type=ats,
+                                                       analysis_types=ats,
                                                        mass_spectrometers=self.mass_spectrometer, verbose=self.verbose)
             records = [ri for unk in unks for ri in unk.record_views]
 

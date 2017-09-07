@@ -174,4 +174,6 @@ AR_AR = 'Ar/Ar'
 
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
+
+ANALYSIS_TYPES = ['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
 # ============= EOF =============================================

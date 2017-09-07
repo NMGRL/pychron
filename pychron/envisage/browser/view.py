@@ -69,6 +69,29 @@ class BaseBrowserView(HasTraits):
             return {'object': self.model, 'pane': self}
         return super(BaseBrowserView, self).trait_context()
 
+    def _get_browser_tool_group(self):
+        hgrp = HGroup(icon_button_editor('filter_by_button',
+                                         'find',
+                                         tooltip='Filter analyses using defined criteria'),
+                      # icon_button_editor('load_view_button',
+                      #                    'table',
+                      #                    tooltip='Select analyses by load'),
+                      # icon_button_editor('graphical_filter_button',
+                      #                    'chart_curve_go',
+                      #                    tooltip='Filter analyses graphically'),
+                      icon_button_editor('load_recent_button', 'time-go', tooltip='Load recent analyses'),
+
+                      icon_button_editor('find_references_button',
+                                         '3d_glasses',
+                                         tooltip='Find references associated with current selection'),
+                      icon_button_editor('toggle_view',
+                                         'arrow_switch',
+                                         tooltip='Toggle between Sample and Time views'),
+                      spring,
+                      CustomLabel('datasource_url', color='maroon'),
+                      show_border=True)
+        return hgrp
+
     def _get_browser_group(self):
         grp = Group(UItem('pane.sample_view',
                           style='custom',
@@ -118,26 +141,9 @@ class PaneBrowserView(BaseBrowserView):
     def traits_view(self):
         main_grp = self._get_browser_group()
 
-        hgrp = HGroup(icon_button_editor('filter_by_button',
-                                         'find',
-                                         tooltip='Filter analyses using defined criteria'),
-                      # icon_button_editor('load_view_button',
-                      #                    'table',
-                      #                    tooltip='Select analyses by load'),
-                      # icon_button_editor('graphical_filter_button',
-                      #                    'chart_curve_go',
-                      #                    tooltip='Filter analyses graphically'),
-                      icon_button_editor('find_references_button',
-                                         '3d_glasses',
-                                         tooltip='Find references associated with current selection'),
-                      icon_button_editor('toggle_view',
-                                         'arrow_switch',
-                                         tooltip='Toggle between Sample and Time views'),
-                      spring,
-                      CustomLabel('datasource_url', color='maroon'),
-                      show_border=True)
+        tool_grp = self._get_browser_tool_group()
 
-        v = View(VGroup(hgrp, main_grp))
+        v = View(VGroup(tool_grp, main_grp))
 
         return v
 
@@ -151,30 +157,11 @@ class BrowserView(BaseBrowserView):
 
     def traits_view(self):
         main_grp = self._get_browser_group()
-
-        hgrp = HGroup(icon_button_editor('filter_by_button',
-                                         'find',
-                                         tooltip='Filter analyses using defined criteria'),
-                      # icon_button_editor('graphical_filter_button',
-                      #                    'chart_curve_go',
-                      #                    tooltip='Filter analyses graphically'),
-                      icon_button_editor('find_references_button',
-                                         '',
-                                         tooltip='Find references associated with current selection'),
-                      icon_button_editor('toggle_view',
-                                         'arrow_switch',
-                                         tooltip='Toggle between Sample and Time views'),
-                      spring,
-                      CustomLabel('datasource_url', color='maroon'))
+        tool_grp = self._get_browser_tool_group()
 
         bgrp = HGroup(spring, UItem('pane.append_button'), UItem('pane.replace_button'),
                       defined_when='pane.show_append_replace_buttons')
-        v = View(VGroup(hgrp, main_grp, bgrp),
-                 # buttons=['Cancel'],
-                 # Action(name='Append',
-                 #        action='append_analyses'),
-                 # Action(name='Replace',
-                 #        action='replace_analyses')],
+        v = View(VGroup(tool_grp, main_grp, bgrp),
                  handler=BrowserViewHandler(),
                  title='Browser',
                  resizable=True)
