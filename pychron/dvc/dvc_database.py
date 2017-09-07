@@ -52,6 +52,27 @@ def principal_investigator_filter(q, principal_investigator):
     return q
 
 
+def analysis_type_filter(q, analysis_types):
+    if hasattr(analysis_types, '__iter__'):
+        analysis_types = map(str.lower, analysis_types)
+    else:
+        analysis_types = analysis_types.lower()
+
+    # q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
+    # if 'blank' in analysis_types or any(ai.startswith('blank') for ai in analysis_types):
+    #     q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
+    analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
+
+    if 'blank' in analysis_types:
+        analysis_types.remove('blank')
+        q = q.filter(
+            or_(AnalysisTbl.analysis_type.startswith('blank'),
+                AnalysisTbl.analysis_type.in_(analysis_types)))
+    else:
+        q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+    return q
+
+
 class NewMassSpectrometerView(HasTraits):
     name = Str
     kind = Str
@@ -231,7 +252,7 @@ class DVCDatabase(DatabaseAdapter):
                 rs = self.get_analyses_by_date_range(low, high,
                                                      extract_device=extract_device,
                                                      mass_spectrometers=mass_spectrometer,
-                                                     analysis_type=atypes,
+                                                     analysis_types=atypes,
                                                      exclude=ex,
                                                      exclude_uuids=exclude,
                                                      exclude_invalid=exclude_invalid,
@@ -348,7 +369,6 @@ class DVCDatabase(DatabaseAdapter):
             #
             # q = q.filter(gen_LabTable.identifier.in_(lns))
             # return [di[0] for di in q.all()]
-
 
     def get_analysis_date_ranges(self, lns, hours):
         """
@@ -635,14 +655,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
 
             if analysis_types:
-                if hasattr(analysis_types, '__iter__'):
-                    analysis_types = map(str.lower, analysis_types)
-                else:
-                    analysis_types = analysis_types.lower()
-
-                q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
-                if 'blank' in analysis_types:
-                    q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
+                q = analysis_type_filter(q, analysis_types)
 
             q = q.filter(AnalysisTbl.timestamp >= lpost)
             q = q.order_by(AnalysisTbl.timestamp.asc())
@@ -938,7 +951,7 @@ class DVCDatabase(DatabaseAdapter):
     def get_analyses_by_date_range(self, lpost, hpost,
                                    labnumber=None,
                                    limit=None,
-                                   analysis_type=None,
+                                   analysis_types=None,
                                    mass_spectrometers=None,
                                    extract_device=None,
                                    project=None,
@@ -969,8 +982,12 @@ class DVCDatabase(DatabaseAdapter):
                         AnalysisTbl.mass_spectrometer == mass_spectrometers)
             if extract_device and not extract_device == EXTRACT_DEVICE:
                 q = q.filter(AnalysisTbl.extract_device == extract_device)
-            if analysis_type:
-                q = in_func(q, AnalysisTbl.analysis_type, analysis_type)
+            # if analysis_type:
+            #     q = in_func(q, AnalysisTbl.analysis_type, analysis_type)
+
+            if analysis_types:
+                q = analysis_type_filter(q, analysis_types)
+
             if project:
                 q = q.filter(ProjectTbl.name == project)
             if lpost:
@@ -1128,13 +1145,14 @@ class DVCDatabase(DatabaseAdapter):
             if high_post:
                 q = q.filter(AnalysisTbl.timestamp <= high_post)
             if analysis_types:
-                if 'blank' in analysis_types:
-                    analysis_types.remove('blank')
-                    q = q.filter(
-                        or_(AnalysisTbl.analysis_type.startswith('blank'),
-                            AnalysisTbl.analysis_type.in_(analysis_types)))
-                else:
-                    q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+                q = analysis_type_filter(q, analysis_types)
+                # if 'blank' in analysis_types:
+                #     analysis_types.remove('blank')
+                #     q = q.filter(
+                #         or_(AnalysisTbl.analysis_type.startswith('blank'),
+                #             AnalysisTbl.analysis_type.in_(analysis_types)))
+                # else:
+                #     q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
             if irradiation:
                 q = q.filter(IrradiationTbl.name == irradiation)
                 q = q.filter(LevelTbl.name == level)

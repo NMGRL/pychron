@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import re
+from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance
@@ -33,6 +34,7 @@ REG = re.compile(r'.' * NCHARS)
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
+    load_recent_button = Button
     toggle_view = Button
 
     add_analysis_group_button = Button
@@ -91,7 +93,8 @@ class SampleBrowserModel(BrowserModel):
             return self.time_view_model.get_analysis_records()
         else:
             return self.analysis_table.get_analysis_records()
-    #     at = self.analysis_table
+
+    # at = self.analysis_table
     #     records = self.get_analysis_records()
     #     if records:
     #         for ri in records:
@@ -141,8 +144,8 @@ class SampleBrowserModel(BrowserModel):
 
         # ss  = ['bu-FD-O']
         ts = db.get_analysis_date_ranges(ss, bt)
-        if any((vi.name.startswith('RECENT ') for vi in self.selected_projects)):
-            ts = ts[-1:]
+        # if any((vi.name.startswith('RECENT ') for vi in self.selected_projects)):
+        #     ts = ts[-1:]
 
         if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
@@ -207,7 +210,12 @@ class SampleBrowserModel(BrowserModel):
         if self.sample_view_active:
             self._find_references_hook()
 
+    def _load_recent_button_fired(self):
+        self.debug('load recent button fired')
+        self._load_recent()
+
     def _toggle_view_fired(self):
+        self.debug('toggle view fired')
         self.sample_view_active = not self.sample_view_active
         if not self.sample_view_active:
             self.time_view_model.load()
@@ -243,6 +251,28 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
 
     # private
+    def _load_recent(self):
+        from pychron.envisage.browser.recent_view import RecentView
+        v = RecentView(mass_spectrometers=self.available_mass_spectrometers)
+        v.load()
+        info = v.edit_traits()
+        if info.result:
+            v.dump()
+            now = datetime.now()
+            lp = now - timedelta(hours=v.nhours)
+            ls = self.db.get_labnumbers(mass_spectrometers=[v.mass_spectrometer],
+                                        analysis_types=v.analysis_types,
+                                        high_post=now,
+                                        low_post=lp,
+                                        filter_non_run=self.filter_non_run_samples)
+            sams = self._load_sample_record_views(ls)
+
+            self.samples = sams
+            self.osamples = sams
+
+            xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+            self.analysis_table.set_analyses(xx)
+
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
         ms = list({a.mass_spectrometer for a in ans})
@@ -280,7 +310,7 @@ class SampleBrowserModel(BrowserModel):
                 for li, hi in bins:
                     yield li, hi
 
-    def _get_analysis_series(self, lp, hp, ms):
+    def _get_analysis_series(self, lp, hp, ms, analysis_types=None):
         self.use_low_post = True
         self._set_low_post(lp)
         self.use_high_post = True
@@ -288,7 +318,7 @@ class SampleBrowserModel(BrowserModel):
         ans = self._retrieve_analyses(low_post=lp,
                                       high_post=hp,
                                       order='desc',
-                                      mass_spectrometers=ms)
+                                      mass_spectrometers=ms, analysis_types=analysis_types)
         return ans
 
     def _selected_projects_change_hook(self, names):

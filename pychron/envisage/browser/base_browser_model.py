@@ -458,7 +458,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            include_invalid=False,
                            mass_spectrometers=None,
                            repositories=None,
-                           make_records=True):
+                           make_records=True,
+                           analysis_types=None):
         db = self.db
         if samples:
             lns = [si.labnumber for si in samples]
@@ -475,14 +476,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers,
-                                                repositories=repositories)
+                                                repositories=repositories,)
             self.debug('retrieved analyses n={}'.format(tc))
         else:
+            self.debug('retrieved analyses by date range')
             ans = db.get_analyses_by_date_range(low_post, high_post,
                                                 order=order,
                                                 mass_spectrometers=mass_spectrometers,
                                                 repositories=repositories,
-                                                limit=limit)
+                                                limit=limit,
+                                                analysis_types=analysis_types)
 
         if make_records:
             return self._make_records(ans)
@@ -502,8 +505,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ms = db.get_active_mass_spectrometer_names()
 
         recents = []
-        if include_recent:
-            recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
+        # if include_recent:
+        #     recents = [ProjectRecordView('RECENT {}'.format(mi.upper())) for mi in ms]
 
         pss = sorted([ProjectRecordView(p) for p in ps], key=lambda x: x.name)
 
@@ -655,16 +658,17 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if new and self.project_enabled:
             # self._recent_low_post = None
             # self._recent_mass_spectrometers = None
-            isrecent = any(['RECENT' in x.name for x in new])
-            if old:
-                if any(['RECENT' in x.name for x in old]) and not isrecent:
-                    self.use_high_post = False
-                    self.use_low_post = False
+            # isrecent = any(['RECENT' in x.name for x in new])
+            # if old:
+            #     if any(['RECENT' in x.name for x in old]) and not isrecent:
+            #         self.use_high_post = False
+            #         self.use_low_post = False
 
             names = [ni.name for ni in new]
             self.debug('bbmodel selected projects={}'.format(names))
-            if not isrecent:
-                self._load_project_date_range(names)
+            # if not isrecent:
+            #     self._load_project_date_range(names)
+            self._load_project_date_range(names)
 
             self._load_associated_labnumbers()
             self._load_associated_groups(names)
