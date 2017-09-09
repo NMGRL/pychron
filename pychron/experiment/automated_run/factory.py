@@ -90,7 +90,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     labnumbers = Property(depends_on='project, selected_level')
 
-    use_project_based_repository_identifier = Bool
+    use_project_based_repository_identifier = Bool(True)
     repository_identifier = Str
     repository_identifiers = Property(depends_on='repository_identifier_dirty, db_refresh_needed')
     add_repository_identifier = Event
