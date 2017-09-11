@@ -14,15 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Any, Event, Property, Bool
-from pyface.qt.QtCore import QThread
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
 # ============= standard library imports ========================
 from numpy import linspace
+from pyface.qt.QtCore import QThread
+# ============= enthought library imports =======================
+from traits.api import Any, Event, Property, Bool
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
-from threading import Thread
 
 
 # from pychron.spectrometer.spectrometer import Spectrometer
@@ -53,7 +53,7 @@ class SpectrometerTask(Loggable):
             self.execute()
 
     def execute(self):
-        self.debug('execute', self.__class__.__name__)
+        self.debug('execute {}'.format(self.__class__.__name__))
         self._alive = True
         t = QThread(name=self.__class__.__name__, target=self._execute)
         t.start()
