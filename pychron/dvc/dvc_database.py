@@ -1414,8 +1414,8 @@ class DVCDatabase(DatabaseAdapter):
                 names = [e.name for e in eds]
         return names
 
-    def get_users(self):
-        return self._retrieve_items(UserTbl)
+    def get_users(self, **kw):
+        return self._retrieve_items(UserTbl, **kw)
 
     def get_usernames(self):
         return self._get_table_names(UserTbl)
