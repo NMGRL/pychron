@@ -252,8 +252,8 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
-                self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
-                                                                 self.port, timeout))
+                # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
+                #                                                  self.port, timeout))
                 h.open_socket((self.host, self.port), timeout=timeout)
                 h.set_frame(self.message_frame)
                 self.handler = h

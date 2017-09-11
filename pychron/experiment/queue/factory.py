@@ -154,10 +154,13 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         db = self.get_database()
         if db is None or not db.connect():
             return []
+
+        us = []
         with db.session_ctx(use_parent_session=False):
-            dbus = db.get_users()
-            us = [ui.name for ui in dbus]
-            self._emails = {ui.name: ui.email or '' for ui in dbus}
+            dbus = db.get_users(verbose_query=True)
+            if dbus:
+                us = [ui.name for ui in dbus]
+                self._emails = {ui.name: ui.email or '' for ui in dbus}
 
         return [''] + us
 
