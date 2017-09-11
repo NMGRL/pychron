@@ -193,6 +193,12 @@ class BaseExperimentQueue(RunBlock):
 
             return runs
 
+    def remove(self, run):
+        try:
+            self.automated_runs.remove(run)
+        except ValueError:
+            self.debug('failed to remove {}. not in automated_runs list'.format(run))
+
     def _add_frequency_runs(self, runspecs, freq,
                             freq_before, freq_after,
                             is_run_block, is_repeat_block):
