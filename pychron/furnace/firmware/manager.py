@@ -27,6 +27,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
+from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
@@ -44,7 +45,8 @@ DEVICES = {'controller': HeadlessEurotherm,
            'temp_hum': DHT11,
            'camera': RPiCamera,
            'backout1': HeadlessWatlowEZZone,
-           'backout2': HeadlessWatlowEZZone}
+           'backout2': HeadlessWatlowEZZone,
+           'rotary_dumper': RotaryDumper}
 
 
 def debug(func):
@@ -64,6 +66,7 @@ class FirmwareManager(HeadlessLoggable):
     feeder = None
     temp_hum = None
     camera = None
+    rotary_dumper =None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
@@ -88,7 +91,8 @@ class FirmwareManager(HeadlessLoggable):
         self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
-        print 'asdfasfdasdfasdfasfasdfasdfadsfa', yd['magnets']
+        self._load_rotary_dumper()
+
         if self._use_broadcast_service:
             self._broadcaster = Broadcaster()
             self._broadcaster.setup(self._broadcaster_port)
@@ -321,32 +325,52 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def energize_magnets(self, data):
         print '---------------------------- aasdfasdf', self._magnet_channels
-        if self.switch_controller:
-            period = 3
-            if data:
-                if isinstance(data, dict):
+        func = None
+        if self._magnet_channels:
+            if self.switch_controller:
+                period = 3
+                if data:
+                    if isinstance(data, dict):
 
-                    period = data.get('period', 3)
-                else:
-                    period = data
+                        period = data.get('period', 3)
+                    else:
+                        period = data
 
-            def func():
-                self._is_energized = True
-                prev = None
-                for m in self._magnet_channels:
-                    self.switch_controller.set_channel_state(m, True)
-                    if prev:
-                        self.switch_controller.set_channel_state(prev, False)
+                def func():
+                    self._is_energized = True
+                    prev = None
+                    for m in self._magnet_channels:
+                        self.switch_controller.set_channel_state(m, True)
+                        if prev:
+                            self.switch_controller.set_channel_state(prev, False)
 
-                    prev = m
-                    time.sleep(period)
-                self.switch_controller.set_channel_state(prev, False)
-                self._is_energized = False
+                        prev = m
+                        time.sleep(period)
+                    self.switch_controller.set_channel_state(prev, False)
+                    self._is_energized = False
 
+        else:
+            if self.rotary_dumper:
+                def func():
+                    nsteps = None
+                    rpm = None
+                    if data:
+                        if isinstance(data, dict):
+                            nsteps = data.get('nsteps', 3)
+                            rpm = data.get('rpm')
+                        else:
+                            nsteps = data
+
+                    self._is_energized = True
+                    self.rotary_dumper.energize(nsteps, rpm)
+                    while self.rotary_dumper.dump_in_progress():
+                        time.sleep(0.5)
+                    self._is_energized = False
+
+        if func:
             t = Thread(target=func)
             t.start()
             return True
-
     @debug
     def is_energized(self, data):
         return self._is_energized
@@ -354,11 +378,20 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def denergize_magnets(self, data):
         self._is_energized = False
-        if self.switch_controller:
-            for m in self._magnet_channels:
-                self.switch_controller.set_channel_state(m, False)
-            return True
-
+        if self._magnet_channels:
+            if self.switch_controller:
+                for m in self._magnet_channels:
+                    self.switch_controller.set_channel_state(m, False)
+                return True
+        else:
+            if self.rotary_dumper:
+                nsteps = None
+                if data:
+                    if isinstance(data, dict):
+                        nsteps = data.get('nsteps')
+                    else:
+                        nsteps = data
+                self.rotary_dumper.denergize(nsteps)
     @debug
     def move_absolute(self, data):
         drive = self._get_drive(data)
@@ -643,6 +676,9 @@ class FirmwareManager(HeadlessLoggable):
         if bs:
             self._use_broadcast_service = bs.get('enabled')
             self._broadcast_port = bs.get('port', 9000)
+
+    def _load_rotary_dumper(self):
+        pass
 
     def _load_magnets(self, m):
         self._magnet_channels = m

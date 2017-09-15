@@ -17,50 +17,80 @@
 # ============= enthought library imports =======================
 import json
 
-from traits.api import Str
+from traits.api import Str, Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.data_helper import make_bitarray
 
 
-class NMGRLMagnetDumper(CoreDevice):
+class BaseDumper(CoreDevice):
     _dump_in_progress = False
 
     def energize(self):
         self._dump_in_progress = True
-        d = json.dumps({'command': 'EnergizeMagnets', 'period': 3})
+        self._energize()
+
+    def denergize(self):
+        self._denergize()
+        self._dump_in_progress = False
+
+    def _energize(self):
+        raise NotImplementedError
+
+    def _denergize(self):
+        raise NotImplementedError
+
+    def is_energized(self):
+        raise NotImplementedError
+
+    def _get_dump_state(self):
+        raise NotImplementedError
+
+    def dump_in_progress(self):
+        state = False
+        if self._dump_in_progress:
+            state = self._get_dump_state()
+            if not state:
+                self._dump_in_progress = False
+        return state
+
+
+class NMGRLRotaryDumper(BaseDumper):
+    nsteps = Int
+    rpm = Int
+
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'nsteps', 'Motion', 'nsteps')
+        self.set_attribute(config, 'rpm', 'Motion', 'rpm')
+        super(NMGRLMagnetDumper, self).load_additional_args(config)
+
+    def energize(self):
+        d = json.dumps({'command': 'EnergizeMagnets', 'nsteps': self.nsteps, 'rpm': self.rpm})
         self.ask(d)
 
     def denergize(self):
-        self._dump_in_progress = False
-        self.ask('DenergizeMagnets')
+        d = json.dumps({'command': 'DenergizeMagnets', 'nsteps': self.nsteps})
+        self.ask(d)
 
     def is_energized(self):
         ret = self.ask('IsEnergized', verbose=True) == 'OK'
         self._dump_in_progress = ret
         return ret
 
-    # channel_address = Str
-    # in_progress_address = Str
-    # _dump_in_progress = False
-    #
-    # def load_additional_args(self, config):
-    #     self.set_attribute(config, 'channel_address', 'General', 'channel_address')
-    #     self.set_attribute(config, 'in_progress_address', 'General', 'in_progress_address')
-    #     super(NMGRLMagnetDumper, self).load_additional_args(config)
-    #
-    # def actuate(self):
-    #     if self._cdevice:
-    #         self._dump_in_progress = True
-    #         self._cdevice.open_channel(self.channel_address)
-    #
-    def dump_in_progress(self):
-        state = False
-        if self._dump_in_progress:
-            state = self.ask('GetMagnetsState')
-            if not state:
-                self._dump_in_progress = False
-        return state
+
+class NMGRLMagnetDumper(BaseDumper):
+    def energize(self):
+        d = json.dumps({'command': 'EnergizeMagnets', 'period': 3})
+        self.ask(d)
+
+    def denergize(self):
+        self.ask('DenergizeMagnets')
+
+    def is_energized(self):
+        ret = self.ask('IsEnergized', verbose=True) == 'OK'
+        self._dump_in_progress = ret
+        return ret
 
 # ============= EOF =============================================
