@@ -24,12 +24,11 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
     Instance, Event, Date, Enum, Long, Any
-from traitsui.api import View, UItem, Item, EnumEditor, VGroup
+from traitsui.api import View, UItem, Item, EnumEditor
 
-from pychron.core.ui.qt.camera_editor import CameraEditor
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
-from pychron.image.toupcam.camera import ToupCamCamera
+from pychron.image.camera import Camera
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
@@ -169,7 +168,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self._load_session_samples()
 
-        self.camera = ToupCamCamera()
+        self.camera = Camera()
+        # self.camera = ToupCamCamera()
         self.camera.open()
 
     def prepare_destroy(self):
@@ -351,7 +351,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _session_changed(self):
         self._load_session_samples()
 
-    def _snapshot_button_fired(self):
+    @on_trait_change('camera:snapshot_event')
+    def _handle_snapshot(self):
         step, msm = self._pre_image()
         sessionname = self.session.replace(' ', '_')
 
@@ -368,13 +369,16 @@ class SamplePrep(DVCAble, PersistenceMixin):
         dvc.add_sample_prep_image(step.id, msm.get_host(), url)
 
     def _view_camera_button_fired(self):
-        v = View(VGroup(UItem('camera',
-                              width=640, height=480,
-                              editor=CameraEditor()),
-                        UItem('snapshot_button')),
-                        title='Camera')
+        # v = View(VGroup(UItem('camera',
+        #                       width=640, height=480,
+        #                       editor=CameraEditor()),
+        #                 UItem('snapshot_button')),
+        #                 title='Camera')
+        #
+        # self.edit_traits(view=v)
+        self.camera.activate()
+        self.camera.edit_traits()
 
-        self.edit_traits(view=v)
 
     def _pre_image(self):
         step = self.selected_step

@@ -73,7 +73,8 @@ class PersistenceMixin(object):
     def get_persistence_path(self):
         try:
             return self._make_persistence_path(self.persistence_path)
-        except (AttributeError, NotImplementedError):
+        except (AttributeError, NotImplementedError),e:
+            print e
             self.warning('persistence path not implemented')
 
     def load(self, verbose=False):
