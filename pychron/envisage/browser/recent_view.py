@@ -13,9 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+
 from traits.api import HasTraits, Str, List, Float, Enum
 from traitsui.api import View, Item, EnumEditor, CheckListEditor
 
+from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -30,11 +33,14 @@ class RecentView(HasTraits, PersistenceMixin):
     ndays = Float(dump=True)
 
     presets = Enum('Last Day', 'Last Week', 'Last Month', dump=True)
-    persistence_path = 'recent_view'
 
     analysis_types = List(ANALYSIS_TYPES, dump=True)
     available_analysis_types = List(ANALYSIS_TYPES)
 
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'recent_view')
+    
     def traits_view(self):
         v = View(Item('presets', label='Presets'),
                  Item('ndays', label='Days'),
