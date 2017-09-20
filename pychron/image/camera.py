@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import HasTraits, provides, Button, Event, Range
+from traits.api import HasTraits, provides, Button, Event, Range,Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.has_traits import on_trait_change
@@ -35,7 +35,7 @@ from pychron.persistence_loggable import PersistenceMixin
 
 @provides(ICamera)
 class Camera(HasTraits, PersistenceMixin):
-    _device = None
+    _device = Any
     configure = Button
     snapshot_event = Event
     temperature = Range(2000, 15000, mode='slider', dump=True)
@@ -64,6 +64,9 @@ class Camera(HasTraits, PersistenceMixin):
         self.load()
         self._update_color()
 
+    def save_jpeg(self, p):
+        self._device.save_jpeg(p)
+
     # handlers
     def _awb_button_fired(self):
         if self._device:
@@ -79,7 +82,7 @@ class Camera(HasTraits, PersistenceMixin):
     def _handle_color_change(self, name, new):
         if self._device is not None:
             if not self._no_update:
-                getattr(self, 'set_{}'.format(name))(new)
+                getattr(self._device, 'set_{}'.format(name))(new)
 
     def _temperature_changed(self):
         self._set_temp_tint()
@@ -98,14 +101,18 @@ class Camera(HasTraits, PersistenceMixin):
 
     def _set_temp_tint(self):
         if not self._no_update:
-            self.camera.set_temperature_tint(self.temperature, self.tint)
+            self._device.set_temperature_tint(self.temperature, self.tint)
 
     def _update_color(self):
         self._update_temptint()
         with no_update(self):
-            d = {k: getattr(self.camera, 'get_{}'.format(k))() for k in
+            d = {k: getattr(self._device, 'get_{}'.format(k))() for k in
                  ('hue', 'saturation', 'brightness', 'contrast', 'gamma')}
-            self.trait_set(**d)
+            print 'dasfa', d
+            try:
+                self.trait_set(**d)
+            except TypeError:
+                pass
 
     #
     #     def traits_view(self):

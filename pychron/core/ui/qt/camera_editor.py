@@ -77,6 +77,3 @@ class  CameraEditor(BasicEditorFactory):
     fps = Int(24)
 
 # ============= EOF =============================================
-
-
-
