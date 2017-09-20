@@ -170,7 +170,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self.camera = Camera()
         # self.camera = ToupCamCamera()
-        self.camera.open()
+        self.camera.activate()
 
     def prepare_destroy(self):
         self.dvc.close_session()
