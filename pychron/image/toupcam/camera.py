@@ -14,18 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import os
-from cStringIO import StringIO
-
-from traits.api import provides
 # ============= standard library imports ========================
 import ctypes
-from numpy import zeros, uint8, uint32
+import os
+# ============= enthought library imports =======================
+from cStringIO import StringIO
+
 import Image as pil
+from numpy import zeros, uint8, uint32
+from traits.api import provides
+
 # ============= local library imports  ==========================
 from pychron.image.i_camera import ICamera
-import os
 
 libp = os.path.join(os.path.dirname(__file__), 'libtoupcam.dylib')
 lib = ctypes.cdll.LoadLibrary(libp)
@@ -102,13 +102,13 @@ class ToupCamCamera(object):
     def get_pil_image(self, data=None):
         # im = self._data
         if data is None:
-            data= self._data
+            data = self._data
 
-        raw = data.view(uint8).reshape(data.shape+(-1,))
-        bgr = raw[...,:3]
+        raw = data.view(uint8).reshape(data.shape + (-1,))
+        bgr = raw[..., :3]
         image = pil.fromarray(bgr, 'RGB')
-        b,g,r = image.split()
-        return pil.merge('RGB', (r,g,b))
+        b, g, r = image.split()
+        return pil.merge('RGB', (r, g, b))
 
     def get_image_data(self, *args, **kw):
         d = self._data
@@ -127,7 +127,7 @@ class ToupCamCamera(object):
         h, w = args[1].value, args[0].value
 
         shape = (h, w)
-        if self.bits==8:
+        if self.bits == 8:
             dtype = uint8
         else:
             dtype = uint32
@@ -182,6 +182,7 @@ class ToupCamCamera(object):
         if self._lib_func('get_{}'.format(func), ctypes.byref(v)):
             return v.value
 
+    # setters
     def set_gamma(self, v):
         self._lib_func('put_Gamma', ctypes.c_int(v))
 
@@ -197,6 +198,10 @@ class ToupCamCamera(object):
     def set_hue(self, v):
         self._lib_func('put_Hue', ctypes.c_int(v))
 
+    def set_exposure_time(self, v):
+        self._lib_func('put_ExpoTime', ctypes.c_ulong(v))
+
+    # getters
     def get_gamma(self):
         return self._lib_get_func('Gamma')
 
@@ -211,6 +216,9 @@ class ToupCamCamera(object):
 
     def get_hue(self):
         return self._lib_get_func('Hue')
+
+    def get_exposure_time(self):
+        return self._lib_get_func('ExpoTime')
 
     def do_awb(self, callback=None):
         """
@@ -243,7 +251,8 @@ class ToupCamCamera(object):
             return expo_enabled.value
 
     def set_auto_exposure(self, expo_enabled):
-        lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
+        self._lib_func('put_AutoExpoEnable', ctypes.c_bool(expo_enabled))
+        # lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
 
     def get_camera(self, cid=None):
         func = lib.Toupcam_Open
@@ -284,7 +293,7 @@ class ToupCamCamera(object):
             return res
 
     def set_esize(self, nres):
-        lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
-
+        self._lib_func('put_eSize', ctypes.c_ulong(nres))
+        # lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
 
 # ============= EOF =============================================
