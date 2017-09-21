@@ -24,6 +24,9 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.resources import icon
+
+IMAGE_ICON = icon('image')
 
 
 class SamplesAdapter(TabularAdapter):
@@ -57,7 +60,8 @@ class PrepStepAdapter(TabularAdapter):
                ('Acid', 'acid'),
                ('Heavy_liquid', 'heavy_liquid'),
                ('Pick', 'pick'),
-               ('Comments','comment')]
+               ('Image', 'nimages'),
+               ('Comments', 'comment')]
     font = 'arial 10'
     odd_bg_color = '#f5f5d6'
     timestamp_width = Int(100)
@@ -70,6 +74,25 @@ class PrepStepAdapter(TabularAdapter):
     frantz_width = Int(125)
 
     timestamp_text = Property
+    nimages_text = Property
+    nimages_image = Property
+
+    # def get_image(self, obj, trait, row, column):
+    #     name = self.column_map[column]
+    #     if name == 'nimages':
+    #         item = getattr(obj, trait)[row]
+    #         if item.nimages:
+    #             return IMAGE_ICON
+
+    def _get_nimages_image(self):
+        im = self.item.nimages
+        return IMAGE_ICON if im else None
+
+    def _get_nimages_text(self):
+        ret = ''
+        if self.item.nimages:
+            ret = str(self.item.nimages)
+        return ret
 
     def _get_timestamp_text(self):
         t = self.item.timestamp
@@ -85,6 +108,7 @@ class SamplePrepPane(TraitsTaskPane):
     def traits_view(self):
         hgrp = VGroup(UItem('object.active_sample.steps', editor=TabularEditor(adapter=PrepStepAdapter(),
                                                                                selected='selected_step',
+                                                                               dclicked='dclicked',
                                                                                editable=False)),
                       label='History')
 
@@ -121,6 +145,8 @@ class SamplePrepPane(TraitsTaskPane):
                                                 tooltip='Add image'),
                              icon_button_editor('view_camera_button', 'camera1',
                                                 tooltip='Take a picture'),
+                             icon_button_editor('view_image_button', 'camera2',
+                                                tooltip='View Associated Image'),
                              spring,
                              UItem('object.active_sample.name', style='readonly'),
                              spring),

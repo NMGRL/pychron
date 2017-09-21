@@ -471,6 +471,8 @@ class SamplePrepStepTbl(Base, BaseMixin):
     timestamp = Column(DATETIME, default=func.now())
     added = Column(Boolean)
 
+    images = relationship('SamplePrepImageTbl', backref='step')
+
 
 class SamplePrepImageTbl(Base, BaseMixin):
     id = Column(Integer, primary_key=True)

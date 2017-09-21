@@ -52,7 +52,10 @@ class MediaStorageManager(Loggable):
     def put(self, local_path, remote_path):
         self.storage.put(local_path, remote_path)
         return '{}:{}'.format(self.get_base_url(), remote_path)
-        
+
+    def get(self, remote_path, dest):
+        return self.storage.get(remote_path, dest)
+
     def exists(self, remote_path):
         self.storage.exists(remote_path)
 

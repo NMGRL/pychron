@@ -85,9 +85,13 @@ class ToupCamCamera(object):
         image.save(self._save_path)
         # view_file(self._save_path)
 
-    def save_jpeg(self, p, quality=75):
+    def save_jpeg(self, p, quality=100):
         im = self.get_pil_image()
         im.save(p, 'JPEG', quality=quality)
+
+    def save_tiff(self, p):
+        im = self.get_pil_image()
+        im.save(p, 'TIFF')
 
     def get_jpeg_data(self, data=None, quality=75):
 
