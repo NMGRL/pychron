@@ -114,7 +114,6 @@ class PersistenceMixin(object):
             raise NotImplementedError
 
         p = self.get_persistence_path()
-        print 'asdfasfasfsadf', p
         if p:
 
             if verbose:
