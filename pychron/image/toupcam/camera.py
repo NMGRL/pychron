@@ -255,8 +255,7 @@ class ToupCamCamera(object):
             return expo_enabled.value
 
     def set_auto_exposure(self, expo_enabled):
-        self._lib_func('put_AutoExpoEnable', ctypes.c_bool(expo_enabled))
-        # lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
+        lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
 
     def get_camera(self, cid=None):
         func = lib.Toupcam_Open
@@ -297,7 +296,7 @@ class ToupCamCamera(object):
             return res
 
     def set_esize(self, nres):
-        self._lib_func('put_eSize', ctypes.c_ulong(nres))
-        # lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
+        lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
+
 
 # ============= EOF =============================================
