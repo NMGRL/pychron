@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 import os
 import socket
-import time
 
 import paramiko
 from pyface.constant import OK
@@ -26,6 +25,7 @@ from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, 
     Instance, Event, Date, Enum, Long, Any, Int
 from traitsui.api import View, UItem, Item, EnumEditor
 
+from pychron.core.helpers.datetime_tools import get_date
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.image.camera import CameraViewer
@@ -359,13 +359,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self._load_session_samples()
 
     @on_trait_change('camera:snapshot_event')
-    def _handle_snapshot(self, name):
+    def _handle_snapshot(self, meta):
         step, msm = self._pre_image()
         sessionname = self.session.replace(' ', '_')
 
         dvc = self.dvc
+        name = meta.get('name', True)
         if isinstance(name, bool):
-            name = '{}-{}'.format(step.id, time.time())
+            name = '{}-{}-{}'.format(self.active_sample.name, step.id, get_date(fmt='%Y-%m-%d%H%M'))
 
         pp = os.path.join('images', 'sampleprep', sessionname, '{}.jpg'.format(name))
         from tempfile import TemporaryFile
@@ -375,7 +376,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         p.seek(0)
         url = msm.put(p, pp)
         print 'moving to {}'.format(pp)
-        dvc.add_sample_prep_image(step.id, msm.get_host(), url)
+        dvc.add_sample_prep_image(step.id, msm.get_host(), url, meta.get('note', ''))
 
     def _view_camera_button_fired(self):
         # v = View(VGroup(UItem('camera',
@@ -418,7 +419,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
                     # self.selected_image = img.convert('RGBA')
                     v = ImageViewer(image_getter=msm,
                                     title='{} Images'.format(self.active_sample.name))
-                    v.set_images([img.path for img in step.images])
+                    v.set_images([(img.path, img.note) for img in step.images])
                     v.edit_traits()
 
             #

@@ -51,7 +51,8 @@ class CameraViewer(HasTraits):
     hue_default_button = Button('Defaults')
 
     snapshot_name = Str
-    use_auto_snapshot_name= Bool
+    use_auto_snapshot_name = Bool
+    note = Str
     _no_update = False
 
     # @property
@@ -110,37 +111,10 @@ class CameraViewer(HasTraits):
             d = {k: getattr(self._device, 'get_{}'.format(k))() for k in
                  ('hue', 'saturation', 'brightness', 'contrast', 'gamma',
                   'auto_exposure', 'exposure_time')}
-            print 'addddddddddd', d
             try:
                 self.trait_set(**d)
             except TraitError:
                 pass
-
-    #
-    #     def traits_view(self):
-    #         hue_grp = VGroup(HGroup(spring, UItem('hue_default_button')),
-    #                          Item('hue'),
-    #                          Item('saturation'),
-    #                          Item('brightness'),
-    #                          show_border=True,
-    #                          label='Hue/Saturation/Brightness')
-    #         c_gamma_grp = VGroup(HGroup(spring, UItem('contrast_default_button')),
-    #                              Item('contrast'),
-    #                              Item('gamma'),
-    #                              show_border=True,
-    #                              label='Contrast/Gamma')
-    #
-    #         ctrl_grp = VGroup(UItem('save_button'),
-    #                           UItem('awb_button'),
-    #                           Item('temperature', label='Temp.', width=300),
-    #                           Item('tint'),
-    #                           hue_grp, c_gamma_grp)
-
-    # deff __getattr__(self, item):
-    #     try:
-    #         return getattr(self._device, item)
-    #     except AttributeError:
-    #         pass
 
     def open(self):
         self._device = ToupCamCamera()
@@ -154,11 +128,11 @@ class CameraViewer(HasTraits):
 
     def do_snapshot(self):
         if self.use_auto_snapshot_name:
-            evt = True
+            name = True
         else:
-            evt = self.snapshot_name
+            name = self.snapshot_name
 
-        self.snapshot_event = evt
+        self.snapshot_event = {'name': name, 'note': self.note}
 
     def save_settings(self):
         pass
@@ -191,11 +165,12 @@ class CameraViewer(HasTraits):
                               show_border=True,
                               label='Exposure')
         white_balance_grp = VGroup(UItem('awb_button'),
-                                #    show_border=True,
+                                   show_border=True,
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
         meta_grp = VGroup(Item('use_auto_snapshot_name'),
                           Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+                          VGroup(UItem('note', style='custom'), show_border=True, label='Note'),
                           show_border=True,
                           label='Meta')
 
@@ -203,13 +178,12 @@ class CameraViewer(HasTraits):
                         hue_grp,
                         exposure_grp,
                         c_gamma_grp,
-                        white_balance_grp
-                        )
+                        white_balance_grp)
 
         v = View(HSplit(ctrlgrp,
                         UItem('_device',
-                             width=640, height=480,
-                             editor=CameraEditor())),
+                              width=640, height=480,
+                              editor=CameraEditor())),
                  toolbar=ToolBar(Action(action='do_snapshot',
                                         image=icon('camera'),
                                         name='Snapshot'

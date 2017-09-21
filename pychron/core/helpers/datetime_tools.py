@@ -16,8 +16,8 @@
 
 import math
 import time
-
 from datetime import datetime
+
 from numpy import ediff1d, asarray
 from numpy import where
 
@@ -58,8 +58,8 @@ def get_datetime(timestamp=None):
     return d
 
 
-def get_date():
-    return time.strftime('%Y-%m-%d')
+def get_date(fmt='%Y-%m-%d'):
+    return time.strftime(fmt)
 
 
 def make_timef(timestamp=None):

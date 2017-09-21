@@ -18,20 +18,35 @@ import os
 from zipfile import ZipFile
 
 from PIL import Image
-from traits.api import HasTraits, List, Any, Str, Button, Int, Property
-from traitsui.api import View, UItem, HGroup, VGroup, HSplit, spring
-from traitsui.editors import ListStrEditor
+from traits.api import HasTraits, List, Any, Str, Button, Int, Property, Instance
+from traitsui.api import View, UItem, HGroup, VGroup, HSplit, spring, TabularEditor
+from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.image_editor import ImageEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
+class ImageRecordAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Note', 'note')]
+
+
+class ImageRecord(HasTraits):
+    path = Str
+    note = Str
+
+    @property
+    def name(self):
+        return os.path.basename(self.path)
+
+
 class ImageViewer(HasTraits):
     image_getter = None
-    images = List
+    records = List(ImageRecord)
     selected_image = Any
-    selected_image_name = Str
+    # selected_image_name = Instance(ImageRecord)
+    selected_record = Instance(ImageRecord)
     image_names = List
     nimages = Int
 
@@ -57,10 +72,12 @@ class ImageViewer(HasTraits):
     def _get_display_counter(self):
         return self.counter + 1
 
-    def set_images(self, paths):
-        self.images = paths
-        self.nimages = len(paths)
-        self.image_names = [os.path.basename(p) for p in paths]
+    def set_images(self, records):
+
+        self.records = [ImageRecord(path=p, note=n or '') for p, n in records]
+        # self.images = paths
+        self.nimages = len(records)
+        self.image_names = [i.name for i in self.records]
         self.counter = 0
 
     def _next_button_fired(self):
@@ -84,7 +101,7 @@ class ImageViewer(HasTraits):
         if dialog.open() == OK:
             path = dialog.path
             if path:
-                self.selected_image.save(path)
+                self.selected_image.save(add_extension(path, '.jpg'))
 
     def _save_zip_button_fired(self):
         from pyface.file_dialog import FileDialog
@@ -103,24 +120,29 @@ class ImageViewer(HasTraits):
                             # self.selected_image.save(path)
 
     def _counter_changed(self):
-        self.selected_image_name = self.image_names[self.counter]
+        self.selected_record = self.records[self.counter]
 
     def traits_view(self):
-        ctrl_grp = HGroup(HGroup(icon_button_editor('first_button', 'go-first'),
+        ctrl_grp = HGroup(HGroup(icon_button_editor('first_button', 'go-first', tooltip='First'),
                                  icon_button_editor('previous_button', 'go-previous',
-                                                    enabled_when='previous_enabled'),
-                                 icon_button_editor('next_button', 'go-next', enabled_when='next_enabled'),
-                                 icon_button_editor('last_button', 'go-last'),
+                                                    enabled_when='previous_enabled', tooltip='Previous'),
+                                 icon_button_editor('next_button', 'go-next', enabled_when='next_enabled',
+                                                    tooltip='Next'),
+                                 icon_button_editor('last_button', 'go-last', tooltip='Last'),
                                  defined_when='nimages'),
                           spring,
-                          icon_button_editor('save_button', 'picture-save'),
-                          icon_button_editor('save_zip_button', 'compress',
+                          icon_button_editor('save_button', 'picture-save', tooltip='Save to File'),
+                          icon_button_editor('save_zip_button', 'compress', tooltip='Compress/Save all images',
                                              defined_when='nimages'))
 
         v = View(HSplit(VGroup(ctrl_grp,
-                               UItem('image_names',
-                                     editor=ListStrEditor(horizontal_lines=True,
-                                                          selected='selected_image_name'),
+                               UItem('records',
+                                     editor=TabularEditor(adapter=ImageRecordAdapter(),
+                                                          editable=False,
+                                                          selected='selected_record'),
+                                     # editor=ListStrEditor(horizontal_lines=True,
+                                     #                      editable=False,
+                                     #                      selected='selected_image_name'),
                                      defined_when='nimages')),
                         UItem('selected_image',
                               width=1.0,
@@ -130,15 +152,15 @@ class ImageViewer(HasTraits):
                  resizable=True)
         return v
 
-    def _selected_image_name_changed(self, new):
+    def _selected_record_changed(self, new):
         if new:
-            buf = self._get_image_buf(new)
+            buf = self._get_image_buf(new.path)
             # buf.seek(0)
             img = Image.open(buf)
             self.selected_image = img.convert('RGBA')
 
-    def _get_image_buf(self, name):
-        path = next((p for p in self.images if os.path.basename(p) == name), None)
+    def _get_image_buf(self, path):
+        # path = next((p.path for p in self.records if p.name == path), None)
         if path:
             buf = StringIO.StringIO()
             self.image_getter.get(path, buf)

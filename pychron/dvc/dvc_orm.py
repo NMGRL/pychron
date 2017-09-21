@@ -480,6 +480,7 @@ class SamplePrepImageTbl(Base, BaseMixin):
     host = Column(String(45))
     path = Column(String(45))
     timestamp = Column(DATETIME, default=func.now())
+    note = Column(BLOB)
 
 
 class RestrictedNameTbl(Base, BaseMixin):
