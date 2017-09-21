@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str
 from traits.has_traits import on_trait_change
-from traitsui.api import View, UItem, VGroup, VFold, HSplit, Item, HGroup, spring
+from traitsui.api import View, UItem, VGroup, HSplit, Item, HGroup, spring
 from traitsui.menu import Action, ToolBar
 
 from pychron.core.helpers.ctx_managers import no_update
@@ -188,14 +188,18 @@ class CameraViewer(HasTraits):
         #
         exposure_grp = VGroup(Item('auto_exposure_enabled'),
                               Item('exposure_time', enabled_when='not auto_exposure_enabled'),
+                              show_border=True,
                               label='Exposure')
         white_balance_grp = VGroup(UItem('awb_button'),
+                                   show_border=True,
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
         meta_grp = VGroup(Item('use_auto_snapshot_name'),
                           Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+                          show_border=True,
                           label='Meta')
-        ctrlgrp = VFold(meta_grp, 
+
+        ctrlgrp = VGroup(meta_grp,
                         hue_grp,
                         exposure_grp,
                         c_gamma_grp,
