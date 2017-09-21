@@ -1726,11 +1726,12 @@ class DVCDatabase(DatabaseAdapter):
             obj.sessionID = session.id
             self._add_item(obj)
 
-    def add_sample_prep_image(self, stepid, host, path):
+    def add_sample_prep_image(self, stepid, host, path, note):
         with self.session_ctx():
             obj = SamplePrepImageTbl(host=host,
                                      path=path,
-                                     stepID=stepid)
+                                     stepID=stepid,
+                                     note=note)
             self._add_item(obj)
 
     def get_sample_prep_samples(self, worker, session):
