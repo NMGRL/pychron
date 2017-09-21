@@ -366,7 +366,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         dvc = self.dvc
         if isinstance(name, bool):
             name = '{}-{}'.format(step.id, time.time())
-        
+
         pp = os.path.join('images', 'sampleprep', sessionname, '{}.jpg'.format(name))
         from tempfile import TemporaryFile
         p = TemporaryFile()
@@ -385,7 +385,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         #                 title='Camera')
         #
         # self.edit_traits(view=v)
-        self.camera.activate()
+        # self.camera.activate()
         self.camera.edit_traits()
 
     def _dclicked_fired(self):

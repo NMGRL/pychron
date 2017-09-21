@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str
 from traits.has_traits import on_trait_change
-from traitsui.api import View, UItem, VGroup, HSplit, Item, HGroup, spring
+from traitsui.api import View, UItem, VGroup, HSplit, Item, HGroup, spring, VFold
 from traitsui.menu import Action, ToolBar
 
 from pychron.core.helpers.ctx_managers import no_update
@@ -110,7 +110,7 @@ class CameraViewer(HasTraits):
             d = {k: getattr(self._device, 'get_{}'.format(k))() for k in
                  ('hue', 'saturation', 'brightness', 'contrast', 'gamma',
                   'auto_exposure', 'exposure_time')}
-
+            print 'addddddddddd', d
             try:
                 self.trait_set(**d)
             except TraitError:
@@ -191,7 +191,7 @@ class CameraViewer(HasTraits):
                               show_border=True,
                               label='Exposure')
         white_balance_grp = VGroup(UItem('awb_button'),
-                                   show_border=True,
+                                #    show_border=True,
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
         meta_grp = VGroup(Item('use_auto_snapshot_name'),
@@ -199,24 +199,28 @@ class CameraViewer(HasTraits):
                           show_border=True,
                           label='Meta')
 
-        ctrlgrp = VGroup(meta_grp,
+        ctrlgrp = VFold(meta_grp,
                         hue_grp,
                         exposure_grp,
                         c_gamma_grp,
-                        white_balance_grp)
+                        white_balance_grp
+                        )
 
         v = View(HSplit(ctrlgrp,
-                        VGroup(UItem('_device',
-                                     width=640, height=480,
-                                     editor=CameraEditor()))),
+                        UItem('_device',
+                             width=640, height=480,
+                             editor=CameraEditor())),
                  toolbar=ToolBar(Action(action='do_snapshot',
                                         image=icon('camera'),
+                                        name='Snapshot'
                                         ),
                                  # Action(action='save_settings',
                                  #        image=icon('cog'))
                                  ),
                  title='Camera',
                  resizable=True)
+        # v = View(VGroup(meta_grp, exposure_grp, c_gamma_grp,
+        #                 white_balance_grp))
         return v
 
         # _owners = None
