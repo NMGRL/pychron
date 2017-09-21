@@ -100,41 +100,42 @@ class ImageViewer(HasTraits):
                         buf = self._get_image_buf(p)
                         if buf:
                             zipf.writestr(p, buf.getvalue())
-                # self.selected_image.save(path)
+                            # self.selected_image.save(path)
 
     def _counter_changed(self):
         self.selected_image_name = self.image_names[self.counter]
 
     def traits_view(self):
         ctrl_grp = HGroup(HGroup(icon_button_editor('first_button', 'go-first'),
-                          icon_button_editor('previous_button', 'go-previous',
-                                             enabled_when='previous_enabled'),
-                          icon_button_editor('next_button', 'go-next', enabled_when='next_enabled'),
-                          icon_button_editor('last_button', 'go-last'),
+                                 icon_button_editor('previous_button', 'go-previous',
+                                                    enabled_when='previous_enabled'),
+                                 icon_button_editor('next_button', 'go-next', enabled_when='next_enabled'),
+                                 icon_button_editor('last_button', 'go-last'),
                                  defined_when='nimages'),
                           spring,
                           icon_button_editor('save_button', 'picture-save'),
                           icon_button_editor('save_zip_button', 'compress',
                                              defined_when='nimages'))
 
-        v = View(HSplit(UItem('image_names',
-                              editor=ListStrEditor(horizontal_lines=True,
-                                                   selected='selected_image_name'),
-                              defined_when='nimages'),
-
-                        VGroup(ctrl_grp,
-                               UItem('selected_image', width=896,
-                                     height=680, editor=ImageEditor()))),
+        v = View(HSplit(VGroup(ctrl_grp,
+                               UItem('image_names',
+                                     editor=ListStrEditor(horizontal_lines=True,
+                                                          selected='selected_image_name'),
+                                     defined_when='nimages')),
+                        UItem('selected_image',
+                              width=1.0,
+                              height=1.0,
+                              editor=ImageEditor())),
                  title=self.title,
-                 resizable=False)
+                 resizable=True)
         return v
 
     def _selected_image_name_changed(self, new):
         if new:
-                buf = self._get_image_buf(new)
-                # buf.seek(0)
-                img = Image.open(buf)
-                self.selected_image = img.convert('RGBA')
+            buf = self._get_image_buf(new)
+            # buf.seek(0)
+            img = Image.open(buf)
+            self.selected_image = img.convert('RGBA')
 
     def _get_image_buf(self, name):
         path = next((p for p in self.images if os.path.basename(p) == name), None)
@@ -143,4 +144,5 @@ class ImageViewer(HasTraits):
             self.image_getter.get(path, buf)
             buf.seek(0)
             return buf
+
 # ============= EOF =============================================
