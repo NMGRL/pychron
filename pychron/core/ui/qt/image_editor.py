@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+# =============standard library imports ========================
+from Image import Image
+from PIL import Image as PILImage
+from pyface.image_resource import ImageResource
 # =============enthought library imports=======================
 from pyface.qt.QtGui import QLabel, QImage, QPixmap, QScrollArea
-from pyface.image_resource import ImageResource
 from qimage2ndarray import array2qimage
 from traits.api import Any, Bool, Event, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
-
-# =============standard library imports ========================
-from Image import Image
 
 # =============local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -33,8 +33,11 @@ from pychron.core.ui.gui import invoke_in_main_thread
 def convert_bitmap(image, width=None, height=None):
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
-    elif isinstance(image, Image):
-        data = image.tostring('raw', 'RGBA')
+    elif isinstance(image, (Image, PILImage.Image)):
+        try:
+            data = image.tostring('raw', 'RGBA')
+        except NotImplementedError:
+            data = image.tobytes('raw', 'RGBA')
         im = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(QImage.rgbSwapped(im))
     else:
@@ -43,6 +46,7 @@ def convert_bitmap(image, width=None, height=None):
             pix = QPixmap.fromImage(array2qimage(image))
         else:
             pix = QPixmap()
+
     if pix:
         if width > 0 and height > 0:
             pix = pix.scaled(width, height)

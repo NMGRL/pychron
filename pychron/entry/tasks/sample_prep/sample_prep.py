@@ -23,12 +23,13 @@ import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
-    Instance, Event, Date, Enum, Long, Any
+    Instance, Event, Date, Enum, Long, Any, Int
 from traitsui.api import View, UItem, Item, EnumEditor
 
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
-from pychron.image.camera import Camera
+from pychron.image.camera import CameraViewer
+from pychron.image.viewer import ImageViewer
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
@@ -71,6 +72,8 @@ class PrepStepRecord(HasTraits):
     frantz = Str
     pick = Str
     heavy_liquid = Str
+
+    nimages = Int
 
     flag_crush = Bool
     flag_sieve = Bool
@@ -130,9 +133,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
     edit_session_button = Button
 
     snapshot_button = Button('Snapshot')
+    view_image_button = Button
     view_camera_button = Button
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
+    dclicked = Event
 
     pattributes = ('worker', 'session', 'principal_investigator', 'project')
     move_to_session_name = Str
@@ -147,6 +152,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     fpick = Bool
     fstatus = Enum('', 'Good', 'Bad', 'Use For Irradiation')
     camera = Any
+    selected_image = Any
 
     @property
     def persistence_path(self):
@@ -168,7 +174,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         self._load_session_samples()
 
-        self.camera = Camera()
+        self.camera = CameraViewer()
         # self.camera = ToupCamCamera()
         self.camera.activate()
 
@@ -251,7 +257,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
                                    frantz=s.frantz or '',
                                    pick=s.pick or '',
                                    heavy_liquid=s.heavy_liquid or '',
-                                   timestamp=s.timestamp)
+                                   timestamp=s.timestamp,
+                                   nimages=len(s.images))
             return pstep
 
         asample.steps = [factory(i) for i in self.dvc.get_sample_prep_steps(asample.worker, asample.session,
@@ -352,13 +359,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self._load_session_samples()
 
     @on_trait_change('camera:snapshot_event')
-    def _handle_snapshot(self):
+    def _handle_snapshot(self, name):
         step, msm = self._pre_image()
         sessionname = self.session.replace(' ', '_')
 
         dvc = self.dvc
-
-        pp = os.path.join('images', 'sampleprep', sessionname, '{}-{}.jpg'.format(step.id, time.time()))
+        if isinstance(name, bool):
+            name = '{}-{}'.format(step.id, time.time())
+        
+        pp = os.path.join('images', 'sampleprep', sessionname, '{}.jpg'.format(name))
         from tempfile import TemporaryFile
         p = TemporaryFile()
         # p='{}.jpg'.format(p)
@@ -379,6 +388,47 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.camera.activate()
         self.camera.edit_traits()
 
+    def _dclicked_fired(self):
+        self._view_associated_image()
+
+    def _selected_step_changed(self, new):
+        pass
+
+    def _view_image_button_fired(self):
+        self._view_associated_image()
+
+    def _view_associated_image(self):
+
+        new = self.selected_step
+        if new:
+            msm = self._get_msm()
+            if not msm:
+                return
+
+            dvc = self.dvc
+            with dvc.session_ctx():
+                step = dvc.get_sample_prep_step_by_id(new.id)
+                if step.images:
+                    # dbimg = step.images[0]
+                    #
+                    # buf = StringIO.StringIO()
+                    # msm.get(dbimg.path, buf)
+                    # buf.seek(0)
+                    # img = Image.open(buf)
+                    # self.selected_image = img.convert('RGBA')
+                    v = ImageViewer(image_getter=msm,
+                                    title='{} Images'.format(self.active_sample.name))
+                    v.set_images([img.path for img in step.images])
+                    v.edit_traits()
+
+            #
+            # self.edit_traits(view=v)
+
+    def _get_msm(self):
+        msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
+        if not msm:
+            self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
+        return msm
 
     def _pre_image(self):
         step = self.selected_step
@@ -390,10 +440,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
             return
 
-        msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
-        if not msm:
-            self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
-            return
+        msm = self._get_msm()
+
         return step, msm
 
     def _upload_image_button_fired(self):

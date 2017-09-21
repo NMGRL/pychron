@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError
+from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str
 from traits.has_traits import on_trait_change
 from traitsui.api import View, UItem, VGroup, VFold, HSplit, Item, HGroup, spring
 from traitsui.menu import Action, ToolBar
@@ -32,7 +32,7 @@ from pychron.image.toupcam.camera import ToupCamCamera
 
 
 @provides(ICamera)
-class Camera(HasTraits):
+class CameraViewer(HasTraits):
     _device = Any
     configure = Button
     snapshot_event = Event
@@ -50,6 +50,8 @@ class Camera(HasTraits):
     contrast_default_button = Button('Defaults')
     hue_default_button = Button('Defaults')
 
+    snapshot_name = Str
+    use_auto_snapshot_name= Bool
     _no_update = False
 
     # @property
@@ -151,7 +153,12 @@ class Camera(HasTraits):
         pass
 
     def do_snapshot(self):
-        self.snapshot_event = True
+        if self.use_auto_snapshot_name:
+            evt = True
+        else:
+            evt = self.snapshot_name
+
+        self.snapshot_event = evt
 
     def save_settings(self):
         pass
@@ -185,8 +192,11 @@ class Camera(HasTraits):
         white_balance_grp = VGroup(UItem('awb_button'),
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
-
-        ctrlgrp = VFold(hue_grp,
+        meta_grp = VGroup(Item('use_auto_snapshot_name'),
+                          Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+                          label='Meta')
+        ctrlgrp = VFold(meta_grp, 
+                        hue_grp,
                         exposure_grp,
                         c_gamma_grp,
                         white_balance_grp)
