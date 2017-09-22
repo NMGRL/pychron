@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str
+from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str, Enum
 from traits.has_traits import on_trait_change
 from traitsui.api import View, UItem, VGroup, HSplit, Item, HGroup, spring, VFold
 from traitsui.menu import Action, ToolBar
@@ -55,6 +55,7 @@ class CameraViewer(HasTraits):
     note = Str
     _no_update = False
 
+    extension = Enum('jpg', 'png', 'tiff')
     # @property
     # def persistence_path(self):
     #     try:
@@ -68,6 +69,9 @@ class CameraViewer(HasTraits):
 
     def save_jpeg(self, p):
         self._device.save_jpeg(p)
+
+    def save(self, p):
+        self._device.save(p)
 
     # handlers
     def _awb_button_fired(self):
@@ -132,7 +136,9 @@ class CameraViewer(HasTraits):
         else:
             name = self.snapshot_name
 
-        self.snapshot_event = {'name': name, 'note': self.note}
+        self.snapshot_event = {'name': name,
+                               'extension': self.extension,
+                               'note': self.note}
 
     def save_settings(self):
         pass
@@ -169,7 +175,8 @@ class CameraViewer(HasTraits):
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
         meta_grp = VGroup(HGroup(Item('use_auto_snapshot_name'),
-                                 Item('snapshot_name', enabled_when='not use_auto_snapshot_name')),
+                                 Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+                                 Item('extension')),
                           VGroup(UItem('note', style='custom'), show_border=True, label='Note'),
                           show_border=True,
                           label='Meta')
@@ -262,7 +269,7 @@ class CameraViewer(HasTraits):
 
 
 if __name__ == '__main__':
-    c = Camera()
+    c = CameraViewer()
     c.activate()
     c.configure_traits()
     # c.dump()
