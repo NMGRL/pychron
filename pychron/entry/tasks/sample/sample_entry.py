@@ -280,7 +280,10 @@ class SampleEntry(DVCAble):
                 if s.material and not s.material.name:
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
 
-                if dvc.add_sample(s.name, s.project.name, s.material.name, s.material.grainsize or None,
+                if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name, s.material.name,
+                                  s.material.grainsize
+                or
+                        None,
                                   note=s.note):
                     s.added = True
                     dvc.commit()

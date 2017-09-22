@@ -467,12 +467,12 @@ class DVCDatabase(DatabaseAdapter):
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, material, grainsize=None, note=''):
+    def add_sample(self, name, project, pi, material, grainsize=None, note=''):
         with self.session_ctx():
-            ret = self.get_sample(name, project, material, grainsize)
+            ret = self.get_sample(name, project, pi, material, grainsize)
             if ret is None:
-                self.debug('Adding sample {},{},{}'.format(name, project, material))
-                p = self.get_project(project)
+                self.debug('Adding sample {},{},{},{}'.format(name, project, pi, material))
+                p = self.get_project(project, pi)
                 a = SampleTbl(name=name, note=note)
                 if p is not None:
                     a.project = p
@@ -483,7 +483,7 @@ class DVCDatabase(DatabaseAdapter):
                     else:
                         self.debug('No material={}, grainsize={}'.format(material, grainsize))
                 else:
-                    self.debug('No project {}'.format(project))
+                    self.debug('No project {}, {}'.format(project, pi))
             return ret
 
     def add_extraction_device(self, name):
@@ -1271,12 +1271,12 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             return self._query_one(q)
 
-    def get_sample(self, name, project, material, grainsize=None):
+    def get_sample(self, name, project, pi, material, grainsize=None):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
-            project = self.get_project(project)
+            project = self.get_project(project, pi)
             material = self.get_material(material, grainsize)
 
             q = q.filter(SampleTbl.project == project)
@@ -1465,14 +1465,38 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.name.like('%{}%'.format(name)))
             return self._query_all(q, verbose_query=True)
 
-    def get_samples(self, project=None, **kw):
-        if project:
-            if hasattr(project, '__iter__'):
-                kw = self._append_filters(ProjectTbl.name.in_(project), kw)
-            else:
-                kw = self._append_filters(ProjectTbl.name == project, kw)
-            kw = self._append_joins(ProjectTbl, kw)
-        return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
+    def get_samples(self, projects=None, principal_investigators=None, **kw):
+        # if projects:
+        #     if hasattr(projects, '__iter__'):
+        #         kw = self._append_filters(ProjectTbl.name.in_(projects), kw)
+        #     else:
+        #         kw = self._append_filters(ProjectTbl.name == projects, kw)
+        #     kw = self._append_joins(ProjectTbl, kw)
+        #
+        # if principal_investigators:
+        #
+        # return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            if projects:
+                q = q.join(ProjectTbl)
+
+            if principal_investigators:
+                q = q.join(PrincipalInvestigatorTbl)
+
+            if projects:
+                if hasattr(projects, '__iter__'):
+                    q = q.filter(ProjectTbl.name.in_(projects))
+                else:
+                    q = q.filter(ProjectTbl.name == projects)
+
+            if principal_investigators:
+                if not hasattr(principal_investigators, '__iter__'):
+                    principal_investigators = (principal_investigators,)
+
+                for p in principal_investigators:
+                    q = principal_investigator_filter(q, p)
+            return self._query_all(q, **kw)
 
     def get_irradiations_by_repositories(self, repositories):
         with self.session_ctx() as sess:

@@ -812,12 +812,12 @@ class DVC(Loggable):
             db.add_project(name, pi, **kw)
         return added
 
-    def add_sample(self, name, project, material, grainsize=None, note=None):
+    def add_sample(self, name, project, pi, material, grainsize=None, note=None):
         added = False
         db = self.db
-        if not db.get_sample(name, project, material, grainsize):
+        if not db.get_sample(name, project, pi, material, grainsize):
             added = True
-            db.add_sample(name, project, material, grainsize, note=note)
+            db.add_sample(name, project, pi, material, grainsize, note=note)
         return added
 
     def add_principal_investigator(self, name):

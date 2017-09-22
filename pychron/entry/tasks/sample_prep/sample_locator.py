@@ -60,7 +60,7 @@ class SampleLocator(HasTraits):
     @cached_property
     def _get_samples(self):
         if self.project:
-            return [si.name for si in self.dvc.get_samples(project=self.project)]
+            return [si.name for si in self.dvc.get_samples(projects=self.project)]
         else:
             return []
 
