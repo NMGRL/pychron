@@ -489,7 +489,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     @cached_property
     def _get_samples(self):
         if self.project:
-            ss = self.dvc.get_samples(project=self.project)
+            ss = self.dvc.get_samples(projects=self.project, principal_investigators=self.principal_investigator)
             return [self._sample_record_factory(si) for si in ss]
         else:
             return []
@@ -497,6 +497,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     @cached_property
     def _get_projects(self):
         with self.dvc.session_ctx(use_parent_session=False):
+
             ps = self.dvc.get_projects(principal_investigators=(self.principal_investigator,),
                                        order='asc')
             if ps:
