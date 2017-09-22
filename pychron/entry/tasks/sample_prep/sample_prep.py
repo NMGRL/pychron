@@ -371,7 +371,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if isinstance(name, bool):
             name = '{}-{}-{}'.format(self.active_sample.name, step.id, get_date(fmt='%Y-%m-%d%H%M'))
 
-        pp = os.path.join('images', 'sampleprep', sessionname, '{}.{}'.format(meta.get('extension', 'jpg')))
+        pp = os.path.join('images', 'sampleprep', sessionname, '{}.{}'.format(name, meta.get('extension', 'jpg')))
         from tempfile import TemporaryFile
         p = TemporaryFile()
         # p='{}.jpg'.format(p)

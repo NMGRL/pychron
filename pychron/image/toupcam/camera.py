@@ -69,8 +69,10 @@ class ToupCamCamera(object):
 
     # icamera interface
     def save(self, p):
-        self._save_path = p
-        lib.Toupcam_Snap(self.cam, self.resolution)
+        # self._save_path = p
+        # lib.Toupcam_Snap(self.cam, self.resolution)
+        image = self.get_pil_image()
+        image.save(p)
 
     def _do_save(self, im):
 
