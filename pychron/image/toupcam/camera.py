@@ -68,11 +68,12 @@ class ToupCamCamera(object):
         self.bits = bits
 
     # icamera interface
-    def save(self, p):
+    def save(self, p, extension='JPEG', *args, **kw):
         # self._save_path = p
         # lib.Toupcam_Snap(self.cam, self.resolution)
         image = self.get_pil_image()
-        image.save(p)
+
+        image.save(p, extension, *args, **kw)
 
     def _do_save(self, im):
 

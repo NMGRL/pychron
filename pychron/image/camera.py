@@ -55,7 +55,7 @@ class CameraViewer(HasTraits):
     note = Str
     _no_update = False
 
-    extension = Enum('jpg', 'png', 'tiff')
+    extension = Enum('JPEG', 'PNG', 'TIFF')
     # @property
     # def persistence_path(self):
     #     try:
