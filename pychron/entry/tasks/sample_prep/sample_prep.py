@@ -371,11 +371,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if isinstance(name, bool):
             name = '{}-{}-{}'.format(self.active_sample.name, step.id, get_date(fmt='%Y-%m-%d%H%M'))
 
-        pp = os.path.join('images', 'sampleprep', sessionname, '{}.jpg'.format(name))
+        pp = os.path.join('images', 'sampleprep', sessionname, '{}.{}'.format(meta.get('extension', 'jpg')))
         from tempfile import TemporaryFile
         p = TemporaryFile()
         # p='{}.jpg'.format(p)
-        self.camera.save_jpeg(p)
+        self.camera.save(p)
         p.seek(0)
         url = msm.put(p, pp)
         dvc.add_sample_prep_image(step.id, msm.get_host(), url, meta.get('note', ''))
