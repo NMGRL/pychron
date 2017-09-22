@@ -1758,6 +1758,12 @@ class DVCDatabase(DatabaseAdapter):
                                      note=note)
             self._add_item(obj)
 
+    def get_sample_prep_image(self, img_id):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepImageTbl)
+            q = q.filter(SamplePrepImageTbl.id == img_id)
+            return self._query_one(q)
+
     def get_sample_prep_samples(self, worker, session):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
