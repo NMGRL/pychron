@@ -500,6 +500,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
             ps = self.dvc.get_projects(principal_investigators=(self.principal_investigator,),
                                        order='asc')
+            self.project = ''
             if ps:
                 return [p.name for p in ps]
             else:
