@@ -18,7 +18,7 @@ import os
 from zipfile import ZipFile
 
 from PIL import Image
-from traits.api import HasTraits, List, Any, Str, Button, Int, Property, Instance
+from traits.api import HasTraits, List, Any, Str, Button, Int, Property, Instance, Long, Event
 from traitsui.api import View, UItem, HGroup, VGroup, HSplit, spring, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -35,10 +35,19 @@ class ImageRecordAdapter(TabularAdapter):
 class ImageRecord(HasTraits):
     path = Str
     note = Str
+    id  = Long
 
     @property
     def name(self):
         return os.path.basename(self.path)
+
+    def traits_view(self):
+        v = View(VGroup(UItem('note', style='custom'),
+                        label='Note', show_border=True),
+                 buttons=['OK', 'Cancel'],
+                 title='Edit Image Note',
+                 resizable=True)
+        return v
 
 
 class ImageViewer(HasTraits):
@@ -62,6 +71,9 @@ class ImageViewer(HasTraits):
     next_enabled = Property(depends_on='counter')
     previous_enabled = Property(depends_on='counter')
     title = Str
+    edit_event = Any
+    dclicked = Event
+    dclicked_enabled=False
 
     def _get_next_enabled(self):
         return self.counter < self.nimages - 1
@@ -74,7 +86,7 @@ class ImageViewer(HasTraits):
 
     def set_images(self, records):
 
-        self.records = [ImageRecord(path=p, note=n or '') for p, n in records]
+        self.records = [ImageRecord(path=p, note=n or '', id=i) for p, n, i in records]
         # self.images = paths
         self.nimages = len(records)
         self.image_names = [i.name for i in self.records]
@@ -122,6 +134,12 @@ class ImageViewer(HasTraits):
     def _counter_changed(self):
         self.selected_record = self.records[self.counter]
 
+    def _dclicked_fired(self):
+        if self.dclicked_enabled:
+            info = self.selected_record.edit_traits(kind='livemodal')
+            if info.result:
+                self.edit_event = self.selected_record
+
     def traits_view(self):
         ctrl_grp = HGroup(HGroup(icon_button_editor('first_button', 'go-first', tooltip='First'),
                                  icon_button_editor('previous_button', 'go-previous',
@@ -139,6 +157,7 @@ class ImageViewer(HasTraits):
                                UItem('records',
                                      editor=TabularEditor(adapter=ImageRecordAdapter(),
                                                           editable=False,
+                                                          dclicked='dclicked',
                                                           selected='selected_record'),
                                      # editor=ListStrEditor(horizontal_lines=True,
                                      #                      editable=False,

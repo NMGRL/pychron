@@ -419,11 +419,19 @@ class SamplePrep(DVCAble, PersistenceMixin):
                     # self.selected_image = img.convert('RGBA')
                     v = ImageViewer(image_getter=msm,
                                     title='{} Images'.format(self.active_sample.name))
-                    v.set_images([(img.path, img.note) for img in step.images])
+                    v.on_trait_change(self._handle_image_edit, 'edit_event')
+                    v.set_images([(img.path, img.note, img.id) for img in step.images])
                     v.edit_traits()
+                    v.dclicked_enabled = True
 
             #
             # self.edit_traits(view=v)
+    def _handle_image_edit(self, new):
+        dvc = self.dvc
+        with dvc.session_ctx():
+            img = dvc.get_sample_prep_image(new.id)
+            img.note = new.note
+            dvc.commit()
 
     def _get_msm(self):
         msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
