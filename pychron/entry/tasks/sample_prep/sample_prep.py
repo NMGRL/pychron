@@ -53,6 +53,7 @@ class SampleRecord(HasTraits):
     worker = Str
     session = Str
     project = Str
+    principal_investigator = Str
     material = Str
     grainsize = Str
     steps = List
@@ -241,6 +242,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _sample_record_factory(self, s):
         r = SampleRecord(name=s.name,
                          project=s.project.name,
+                         principal_investigator=s.project.principal_investigator.name,
                          material=s.material.name,
                          grainsize=s.material.grainsize or '',
                          worker=self.worker,
@@ -300,6 +302,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _add_step_button_fired(self):
         if self.active_sample:
             sa = (self.active_sample.name, self.active_sample.project,
+                  self.active_sample.principal_investigator,
                   self.active_sample.material, self.active_sample.grainsize)
 
             params = self._make_step()
@@ -375,8 +378,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.camera.save_jpeg(p)
         p.seek(0)
         url = msm.put(p, pp)
-        print 'moving to {}'.format(pp)
         dvc.add_sample_prep_image(step.id, msm.get_host(), url, meta.get('note', ''))
+        self._load_steps_for_sample(self.active_sample)
+        self.information_dialog('Snapshot saved')
 
     def _view_camera_button_fired(self):
         # v = View(VGroup(UItem('camera',

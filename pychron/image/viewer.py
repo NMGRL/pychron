@@ -35,7 +35,7 @@ class ImageRecordAdapter(TabularAdapter):
 class ImageRecord(HasTraits):
     path = Str
     note = Str
-    id  = Long
+    id = Long
 
     @property
     def name(self):
@@ -73,7 +73,7 @@ class ImageViewer(HasTraits):
     title = Str
     edit_event = Any
     dclicked = Event
-    dclicked_enabled=False
+    dclicked_enabled = False
 
     def _get_next_enabled(self):
         return self.counter < self.nimages - 1

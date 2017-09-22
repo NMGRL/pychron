@@ -51,7 +51,7 @@ class CameraViewer(HasTraits):
     hue_default_button = Button('Defaults')
 
     snapshot_name = Str
-    use_auto_snapshot_name = Bool
+    use_auto_snapshot_name = Bool(True)
     note = Str
     _no_update = False
 
@@ -168,8 +168,8 @@ class CameraViewer(HasTraits):
                                    show_border=True,
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
-        meta_grp = VGroup(Item('use_auto_snapshot_name'),
-                          Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+        meta_grp = VGroup(HGroup(Item('use_auto_snapshot_name'),
+                                 Item('snapshot_name', enabled_when='not use_auto_snapshot_name')),
                           VGroup(UItem('note', style='custom'), show_border=True, label='Note'),
                           show_border=True,
                           label='Meta')
