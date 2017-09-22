@@ -70,8 +70,8 @@ class CameraViewer(HasTraits):
     def save_jpeg(self, p):
         self._device.save_jpeg(p)
 
-    def save(self, p):
-        self._device.save(p)
+    def save(self, p, *args, **kw):
+        self._device.save(p, *args, **kw)
 
     # handlers
     def _awb_button_fired(self):
@@ -160,12 +160,6 @@ class CameraViewer(HasTraits):
                              show_border=True,
                              label='Contrast/Gamma')
 
-        # ctrl_grp = VGroup(UItem('save_button'),
-        #                   UItem('awb_button'),
-        #                   Item('temperature', label='Temp.', width=300),
-        #                   Item('tint'),
-        #                   hue_grp, c_gamma_grp)
-        #
         exposure_grp = VGroup(Item('auto_exposure_enabled'),
                               Item('exposure_time', enabled_when='not auto_exposure_enabled'),
                               show_border=True,
@@ -174,8 +168,10 @@ class CameraViewer(HasTraits):
                                    show_border=True,
                                    label='White Balance')
         # color_grp = VGroup(label='Color')
-        meta_grp = VGroup(HGroup(Item('use_auto_snapshot_name'),
-                                 Item('snapshot_name', enabled_when='not use_auto_snapshot_name'),
+        meta_grp = VGroup(HGroup(Item('use_auto_snapshot_name', label='Use Auto'),
+                                 Item('snapshot_name',
+                                      label='Name',
+                                      enabled_when='not use_auto_snapshot_name'),
                                  Item('extension')),
                           VGroup(UItem('note', style='custom'), show_border=True, label='Note'),
                           show_border=True,
