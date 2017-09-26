@@ -29,12 +29,12 @@ from pychron.stage.stage_manager import BaseStageManager
 
 
 class Feeder(LinearAxis):
-    def start_jitter(self):
+    def start_jitter(self, *args, **kw):
         """
         :param turns: fractional turns
         :return:
         """
-        self._cdevice.start_jitter()
+        self._cdevice.start_jitter(*args, **kw)
 
     def stop_jitter(self):
         self._cdevice.stop_jitter()

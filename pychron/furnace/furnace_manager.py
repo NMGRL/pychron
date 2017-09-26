@@ -259,11 +259,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def start_jitter_feeder(self):
         self.debug('jitter feeder')
-        self.stage_manager.start_jitter(turns=0.5, p1=0.1, p2=0.25)
+        self.stage_manager.feeder.start_jitter(turns=0.5, p1=0.1, p2=0.25)
 
     def stop_jitter_feeder(self):
         self.debug('stop jitter')
-        self.stage_manager.stop_jitter()
+        self.stage_manager.feeder.stop_jitter()
 
     def configure_jitter_feeder(self):
         self.debug('configure jitter')
@@ -485,7 +485,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             shutil.copyfile(paths.furnace_sample_states, bp)
 
     def _handle_state(self, new):
-        self.dumper_canvas.update_switch_state(*new)
+        if not isinstance(new, list):
+            new = [new]
+
+        for ni in new:
+            self.dumper_canvas.update_switch_state(*ni)
 
     def _open_logic(self, name):
         """
