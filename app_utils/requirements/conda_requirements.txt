@@ -18,7 +18,7 @@ pip
 PyMySQL=0.6.6
 requests
 keyring
-pil
+pillow
 python.app
 pytables
 jinja2
