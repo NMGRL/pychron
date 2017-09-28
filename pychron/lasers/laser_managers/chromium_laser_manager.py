@@ -19,7 +19,6 @@ from traits.api import HasTraits, provides
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
@@ -27,6 +26,11 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 class ChromiumCO2Manager(EthernetLaserManager):
     stage_manager_id = 'chromium.pychron'
     configuration_dir_name = 'chromium'
+    _alive = False
+
+    y_sign = 1  # these should be config values
+    x_sign = 1
+    z_sign = 1
 
     def end_extract(self, *args, **kw):
         self.ask('laser.stop')
@@ -56,7 +60,7 @@ class ChromiumCO2Manager(EthernetLaserManager):
 
         resp = self.set_laser_power(value)
 
-        self.fire()
+        self.fire_laser()
 
         try:
             return abs(float(resp) - value) < tol
@@ -88,6 +92,7 @@ class ChromiumCO2Manager(EthernetLaserManager):
     # private
     def _stage_stop_button_fired(self):
         self.ask('stage.stop')
+        self._alive = False
         self.update_position()
 
     def _fire_laser_button_fired(self):
@@ -128,7 +133,10 @@ class ChromiumCO2Manager(EthernetLaserManager):
         ys = 5000
         zs = 100
 
-        xm, ym, zm = x * 1000, y * 1000, z * 1000
+        self._alive = True
+        self.debug('pos={}, x={}, y={}'.format(pos, x, y))
+        xm, ym, zm = self.x_sign*x * 1000, self.y_sign*y * 1000, self.z_sign*z * 1000
+
         cmd = 'stage.moveto {},{},{},{},{},{}'.format(xm, ym, zm, xs, ys, zs)
         self.info('sending {}'.format(cmd))
         self.ask(cmd)
@@ -140,6 +148,9 @@ class ChromiumCO2Manager(EthernetLaserManager):
 
         def cmpfunc(xyz):
             try:
+                if not self._alive:
+                    return True
+
                 return not all(map(lambda ab: abs(ab[0] - ab[1]) <= 2,
                                    zip(map(float, xyz.split(',')),
                                        (xm, ym, zm))))

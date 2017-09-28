@@ -168,13 +168,13 @@ class VideoStageManager(StageManager):
         super(VideoStageManager, self).initialize_stage()
         self.initialize_video()
 
-        s = self.stage_controller
-        if s.axes:
-            xa = s.axes['x'].drive_ratio
-            ya = s.axes['y'].drive_ratio
+        # s = self.stage_controller
+        # if s.axes:
+        #     xa = s.axes['x'].drive_ratio
+        #     ya = s.axes['y'].drive_ratio
 
-            self._drive_xratio = xa
-            self._drive_yratio = ya
+        # self._drive_xratio = xa
+        # self._drive_yratio = ya
 
         self._update_zoom(0)
 

@@ -21,6 +21,7 @@ import cPickle as pickle
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
 from pychron.paths import paths
@@ -46,7 +47,6 @@ class LaserManager(BaseLaserManager):
 
     plugin_id = Str
 
-    status_text = Str
     pulse = Instance(Pulse)
 
     auxilary_graph = Instance(Component)
@@ -176,6 +176,7 @@ class LaserManager(BaseLaserManager):
     def emergency_shutoff(self, reason):
         """
         """
+        self.warning('Emergency shutoff')
         self.disable_laser()
 
         if reason is not None:
@@ -185,7 +186,7 @@ class LaserManager(BaseLaserManager):
 
             self.error_code = LaserMonitorErrorCode(reason)
 
-            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
+            invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -264,8 +265,8 @@ class LaserManager(BaseLaserManager):
             lm = self.monitor_klass(manager=self,
                                     #                            configuration_dir_name=paths.monitors_dir,
                                     name=self.monitor_name)
-        if hasattr(lm, 'update_imb'):
-            self.on_trait_change(lm.update_imb, 'laser_controller:internal_meter_response')
+        # if hasattr(lm, 'update_imb'):
+        #     self.on_trait_change(lm.update_imb, 'laser_controller:internal_meter_response')
         return lm
 
     # ===============================================================================
