@@ -54,12 +54,9 @@ class MediaStorageManager(Loggable):
         return '{}:{}'.format(self.get_base_url(), remote_path)
 
     def get(self, remote_path, dest):
-        return self.storage.get(remote_path, dest)
+        self.storage.get(remote_path, dest)
 
     def exists(self, remote_path):
         self.storage.exists(remote_path)
-
-    def add_image_to_db(self, url, analysis_uuid):
-        pass
 
 # ============= EOF =============================================

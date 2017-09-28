@@ -33,8 +33,12 @@ class FileStorage(Storage):
         super(FileStorage, self).__init__(*args, **kw)
         bind_preference(self, 'root', 'pychron.media_storage.root')
 
-    def get_host(self):
+    @property
+    def host(self):
         return socket.getfqdn()
+
+    def get_base_url(self):
+        return 'file'
 
     def put(self, src, dest):
         root = self.root
@@ -43,6 +47,12 @@ class FileStorage(Storage):
 
         dest = os.path.join(root, dest)
         shutil.copyfile(src, dest)
-        return 'file:{}'.format(dest)
+
+    def get(self, path, dest):
+        with open(path, 'rb') as rfile:
+            dest.write(rfile.read())
+
+    def exists(self, path):
+        return os.path.exists(path)
 
 # ============= EOF =============================================
