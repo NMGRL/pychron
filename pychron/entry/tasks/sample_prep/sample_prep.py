@@ -63,6 +63,9 @@ class SampleRecord(HasTraits):
             if getattr(si, step):
                 return True
 
+    def args(self):
+        return self.name, self.project, self.principal_investigator, self.material, self.grainsize
+
 
 class PrepStepRecord(HasTraits):
     id = Long
@@ -301,12 +304,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _add_step_button_fired(self):
         if self.active_sample:
-            sa = (self.active_sample.name, self.active_sample.project,
-                  self.active_sample.principal_investigator,
-                  self.active_sample.material, self.active_sample.grainsize)
-
             params = self._make_step()
-            self.dvc.add_sample_prep_step(sa, self.worker, self.session,
+            self.dvc.add_sample_prep_step(self.active_sample.args(), self.worker, self.session,
                                           **params)
             self._load_steps_for_sample(self.active_sample)
 
@@ -314,8 +313,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if self.selected:
             dvc = self.dvc
             for s in self.selected:
-                sa = (s.name, s.project, s.material, s.grainsize)
-                dvc.add_sample_prep_step(sa, self.worker, self.session, added=True)
+                dvc.add_sample_prep_step(s.args(), self.worker, self.session, added=True)
 
             self._load_session_samples()
 
@@ -429,8 +427,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
                     v.edit_traits()
                     v.dclicked_enabled = True
 
-            #
-            # self.edit_traits(view=v)
+                    #
+                    # self.edit_traits(view=v)
+
     def _handle_image_edit(self, new):
         dvc = self.dvc
         with dvc.session_ctx():
