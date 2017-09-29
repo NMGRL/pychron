@@ -28,6 +28,10 @@ from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
+class NoIntensityChange(BaseException):
+    pass
+
+
 class BaseSpectrometer(SpectrometerDevice):
     integration_time = Any
     default_integration_time = 1
@@ -52,6 +56,9 @@ class BaseSpectrometer(SpectrometerDevice):
     _debug_values = None
 
     _test_connect_command = ''
+
+    _prev_signals = None
+    _no_intensity_change_cnt = 0
 
     def start(self):
         pass
@@ -285,20 +292,60 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            # if self.microcontroller.simulation and globalv.communication_simulation:
-            # keys, signals = self._get_simulation_data()
-            # else:
-            # datastr = self.ask('GetData', verbose=False, quiet=True)
             keys, signals = self.read_intensities()
 
         if not keys and globalv.communication_simulation:
             keys, signals = self._get_simulation_data()
 
+        signals = array(signals)
+
+        self._check_intensity_no_change(signals)
+
         for k, v in zip(keys, signals):
             det = self.get_detector(k)
             det.set_intensity(v)
 
-        return keys, array(signals)
+        return keys, signals
+
+    def _check_intensity_no_change(self, signals):
+        if self.simulation:
+            return
+
+        if self._no_intensity_change_cnt > 50:
+            # self.warning_dialog('Something appears to be wrong.\n\n'
+            #                     'The detector intensities have not changed in 5 iterations. '
+            #                     'Check Qtegra and RemoteControlServer.\n\n'
+            #                     'Scan is stopped! Close and reopen window to restart')
+            self._no_intensity_change_cnt = 0
+            self._prev_signals = None
+            raise NoIntensityChange()
+
+        if signals is None:
+            self._no_intensity_change_cnt += 1
+        elif self._prev_signals is not None:
+            try:
+                test = (signals == self._prev_signals).all()
+            except (AttributeError, TypeError):
+                print 'signals', signals
+                print 'prev_signals', self._prev_signals
+                test = True
+
+            if test:
+                self.debug('no intensity change cnt= {}'.format(self._no_intensity_change_cnt))
+                self.debug('signals={}'.format(signals))
+                self.debug('prev_signals={}'.format(self._prev_signals))
+
+                self._no_intensity_change_cnt += 1
+            else:
+                if self._no_intensity_change_cnt > 0:
+                    self.debug('resetting no_intensity_change_cnt')
+                    self.debug('signals={}'.format(signals))
+                    self.debug('prev_signals={}'.format(self._prev_signals))
+
+                self._no_intensity_change_cnt = 0
+                self._prev_signals = None
+
+        self._prev_signals = signals
 
     def get_intensity(self, dkeys):
         """

@@ -130,6 +130,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('EVal.', 'extract_value'),
                    ('Cleanup', 'cleanup'),
                    ('Dur', 'duration'),
+                   ('Position', 'position'),
                    ('Device', 'extract_device'),
                    ('Comment', 'comment')]
 

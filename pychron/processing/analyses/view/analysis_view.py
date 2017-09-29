@@ -62,13 +62,13 @@ class ExtractionView(HasTraits):
         self.graph = g = StackedGraph()
 
         if response_data:
-            x, y = unpack(format_blob(response_data), fmt='<ff')
+            x, y = unpack(response_data, fmt='<ff', decode=True)
             g.new_plot()
             g.new_series(x[1:], y[1:])
             g.set_x_limits()
 
         if request_data:
-            x, y = unpack(format_blob(request_data), fmt='<ff')
+            x, y = unpack(request_data, fmt='<ff', decode=True)
             self.graph.new_plot()
             g.new_series(x[1:], y[1:])
             g.set_x_limits()

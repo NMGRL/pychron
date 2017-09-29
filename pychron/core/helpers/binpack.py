@@ -42,6 +42,20 @@ def unpack(blob, fmt='>ff', step=8, decode=False):
     if decode:
         blob = format_blob(blob)
 
-    return zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+    if blob:
+        try:
+            return zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+        except struct.error:
+            ret = []
+            for i in xrange(0, len(blob), step):
+                try:
+                    args = struct.unpack(fmt, blob[i:i+step])
+                except struct.error:
+                    break
+                ret.append(args)
+            return zip(*ret)
+
+    else:
+        return [[] for _ in fmt.count('f')]
 
 # ============= EOF =============================================

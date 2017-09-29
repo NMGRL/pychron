@@ -151,6 +151,7 @@ class ResultsView(Controller):
                  title='Test Results',
 
                  buttons=buttons,
+                 height=500,
                  width=650,
                  kind='livemodal',
                  resizable=True)

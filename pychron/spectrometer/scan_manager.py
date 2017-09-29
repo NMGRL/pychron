@@ -33,12 +33,12 @@ from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.base_detector import BaseDetector
+from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
 from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.spectrometer.readout_view import ReadoutView
-from pychron.spectrometer.thermo.spectrometer.base import NoIntensityChange
 
 
 class ScanManager(StreamGraphManager):

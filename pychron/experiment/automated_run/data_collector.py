@@ -24,7 +24,6 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
-from pychron.spectrometer.thermo.spectrometer.base import NoIntensityChange
 
 
 class DataCollector(Consoleable):
@@ -202,17 +201,18 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            self.no_intensity_count = 0
+            # self.no_intensity_count = 0
         except (AttributeError, TypeError, ValueError), e:
             self.debug('failed getting data {}'.format(e))
             return
-        except NoIntensityChange:
-            self.warning('No Intensity change. Something is wrong. ')
-            if self.no_intensity_count > self.no_intensity_threshold:
-                return
-
-            self.no_intensity_count += 1
-            return True
+        # except NoIntensityChange:
+        #     self.warning('No Intensity change. Something is wrong. cnt={}, threshold={}'.format(self.no_intensity_count,
+        #                                                                                         self.no_intensity_threshold))
+        #     if self.no_intensity_count > self.no_intensity_threshold:
+        #         return
+        #
+        #     self.no_intensity_count += 1
+        #     return True
 
         if not data:
             return
@@ -233,7 +233,12 @@ class DataCollector(Consoleable):
         return time.time() - self.starttime
 
     def _get_data(self, detectors=None):
-        data = next(self.data_generator)
+        try:
+            data = next(self.data_generator)
+        except StopIteration:
+            self.debug('data generator stopped')
+            return
+
         if data:
             if detectors:
                 data = zip(*[d for d in zip(*data) if d[0] in detectors])
