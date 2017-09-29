@@ -52,10 +52,6 @@ def calculate_radius(m_e, hv, mfield):
     return r
 
 
-class NoIntensityChange(BaseException):
-    pass
-
-
 class ThermoSpectrometer(BaseSpectrometer):
 
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
@@ -85,8 +81,6 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     _config = None
     _debug_values = None
-    _prev_signals = None
-    _no_intensity_change_cnt = 0
 
     _test_connect_command = 'GetIntegrationTime'
 
@@ -338,49 +332,18 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = map(float, signals)
 
-        if not keys and globalv.communication_simulation:
-            keys, signals = self._get_simulation_data()
+        # if not keys and globalv.communication_simulation:
+        #     keys, signals = self._get_simulation_data()
 
-        for k, v in zip(keys, signals):
-            det = self.get_detector(k)
-            det.set_intensity(v)
+        # for k, v in zip(keys, signals):
+        #     det = self.get_detector(k)
+        #     det.set_intensity(v)
 
-        signals = array(signals)
+        # signals = array(signals)
 
-        self._check_intensity_no_change(signals)
+        # self._check_intensity_no_change(signals)
 
-        return keys, array(signals)
-
-    def _check_intensity_no_change(self, signals):
-        if self.simulation:
-            return
-
-        if self._no_intensity_change_cnt > 4:
-            # self.warning_dialog('Something appears to be wrong.\n\n'
-            #                     'The detector intensities have not changed in 5 iterations. '
-            #                     'Check Qtegra and RemoteControlServer.\n\n'
-            #                     'Scan is stopped! Close and reopen window to restart')
-            self._no_intensity_change_cnt = 0
-            self._prev_signals = None
-            raise NoIntensityChange()
-
-        if signals is None:
-            self._no_intensity_change_cnt += 1
-        elif self._prev_signals is not None:
-            try:
-                test = (signals == self._prev_signals).all()
-            except (AttributeError, TypeError):
-                print 'signals', signals
-                print 'prev_signals', self._prev_signals
-                test = True
-
-            if test:
-                self._no_intensity_change_cnt += 1
-            else:
-                self._no_intensity_change_cnt = 0
-                self._prev_signals = None
-
-        self._prev_signals = signals
+        return keys, signals
 
     def get_intensity(self, dkeys):
         """

@@ -49,6 +49,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
+from pychron.spectrometer.base_spectrometer import NoIntensityChange
 
 DEBUG = False
 
@@ -2145,13 +2146,18 @@ anaylsis_type={}
             spec = self.spectrometer_manager.spectrometer
             self._intensities = {}
             while 1:
-                k, s = spec.get_intensities(tagged=True)
+                try:
+                    k, s = spec.get_intensities(tagged=True)
+                except NoIntensityChange:
+                    self.warning('Canceling Run. Intensity from mass spectrometer not changing')
+                    self.cancel_run(state='failed')
+                    yield None
+
                 if not k:
                     cnt += 1
-                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt), color='red')
+                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt))
                     if cnt >= fcnt:
-                        self.info('Canceling Run. Failed getting intensity from mass spectrometer',
-                                  color='red')
+                        self.warning('Canceling Run. Failed getting intensity from mass spectrometer')
 
                         # do we need to cancel the experiment or will the subsequent pre run
                         # checks sufficient to catch spectrometer communication errors.

@@ -80,7 +80,7 @@ class Experimentor(DVCIrradiationable):
             qs = self.experiment_queues
 
         if self.executor.is_alive():
-            qs = (self.executor.experiment_queue, )
+            qs = (self.executor.experiment_queue,)
 
         self.executor.executable = all([ei.is_executable() for ei in qs])
         self.debug('setting executable {}'.format(self.executor.executable))
@@ -132,8 +132,8 @@ class Experimentor(DVCIrradiationable):
         self.refresh_executable(queues)
 
         # for qi in self.experiment_queues:
-            # aruns = self._get_all_automated_runs([qi])
-            # renumber_aliquots(aruns)
+        # aruns = self._get_all_automated_runs([qi])
+        # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
@@ -210,13 +210,14 @@ class Experimentor(DVCIrradiationable):
         ed = queue.extract_device
         db = self.get_database()
         with db.session_ctx():
+            next_pos = None
             for i, ai in enumerate(queue.automated_runs):
 
                 if ai.skip or ai.is_special():
                     continue
 
                 kw = {'identifier': ai.identifier, 'position': ai.position,
-                      'mass_spectrometer': ms,
+                      'mass_spectrometer': ms.lower(),
                       'extract_device': ed}
                 if ai.is_step_heat():
                     kw['aliquot'] = ai.aliquot
@@ -227,7 +228,15 @@ class Experimentor(DVCIrradiationable):
                 aa = db.get_analysis_by_attr(**kw)
                 if aa is None:
                     self.debug('----- not found')
-                    break
+                    if next_pos == ai:
+                        i -= 1
+                        break
+                    elif not self.confirmation_dialog('Found analyses up to {}. '
+                                                      'position={}, extract={}. '
+                                                      'Continue searching?'.format(ai.runid, ai.extract_value,
+                                                                                   ai.position)):
+                        break
+                    next_pos = queue.automated_runs[i + 1]
 
             if i:
                 if i == len(queue.automated_runs) - 1:
@@ -312,7 +321,7 @@ class Experimentor(DVCIrradiationable):
             a = new[-1]
             if not a.skip:
                 self.stats.calculate_at(a, at_times=self.executor.is_alive())
-                    # self.stats.calculate()
+                # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
     def handle_delay_between_analyses(self, new):

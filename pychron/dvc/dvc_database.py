@@ -860,13 +860,30 @@ class DVCDatabase(DatabaseAdapter):
     def get_analysis_by_attr(self, **kw):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
+            use_ident = False
+            if 'identifier' in kw:
+                q = q.join(IrradiationPositionTbl)
+                use_ident = True
+            use_pos = False
+            if 'position' in kw:
+                q = q.join(MeasuredPositionTbl)
+                use_pos = True
+
+            if use_ident:
+                q = q.filter(IrradiationPositionTbl.identifier == kw['identifier'])
+                kw.pop('identifier')
+
+            if use_pos:
+                q = q.filter(MeasuredPositionTbl.position == kw['position'])
+                kw.pop('position')
+
             for k, v in kw.iteritems():
                 try:
                     q = q.filter(getattr(AnalysisTbl, k) == v)
                 except AttributeError:
                     self.debug('Invalid AnalysisTbl column {}'.format(k))
             q = q.order_by(AnalysisTbl.timestamp.desc())
-            return self._query_first(q)
+            return self._query_first(q, verbose_query=False)
 
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:

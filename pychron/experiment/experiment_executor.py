@@ -878,7 +878,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _close_cv(self):
         if self._cv_info:
             try:
-                self._cv_info.control.close()
+                invoke_in_main_thread(self._cv_info.control.close)
             except (AttributeError, ValueError, TypeError):
                 pass
                 # window could already be closed
