@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import time
 
-import Image as PImage
+from Image import Image as PImage
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict
 from kiva.agg.agg import GraphicsContextArray

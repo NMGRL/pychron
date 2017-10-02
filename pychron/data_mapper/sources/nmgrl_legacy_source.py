@@ -19,7 +19,7 @@ from pychron.data_mapper.sources.file_source import FileSource
 class NMGRLLegacySource(FileSource):
     def get_analysis_import_spec(self, p):
         pspec = self.new_persistence_spec()
-        rspec = pspec.run_spec
+        return pspec
 
 
 
