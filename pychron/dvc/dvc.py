@@ -543,7 +543,7 @@ class DVC(Loggable):
 
     def make_analyses(self, records, calculate_f_only=False):
         if not records:
-            return
+            return []
 
         globalv.active_analyses = records
 
