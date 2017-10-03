@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Float, Bool
+from traits.api import List, Float, Bool, Int
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
@@ -33,6 +33,10 @@ class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
     subview_names = List(['Main', 'IsoEvo', 'Appearance'])
     goodness_threshold = Float  # in percent
+    slope_goodness = Float
+    outlier_goodness = Int
+    curvature_goodness = Float
+    curvature_goodness_at = Float
     # _main_options_klass = IsoEvoMainOptions
     show_sniff = Bool(False)
 

@@ -26,6 +26,7 @@ from itertools import izip
 from numpy import array, Inf, polyfit
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
 
@@ -92,8 +93,8 @@ class BaseMeasurement(object):
             self.xs = array(xs)
             self.ys = array(ys)
 
-        # print self.name, self.xs.shape, self.ys.shape
-        # print self.name, self.ys
+            # print self.name, self.xs.shape, self.ys.shape
+            # print self.name, self.ys
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
@@ -109,7 +110,7 @@ class BaseMeasurement(object):
         except struct.error, e:
             print 'unpack_blob', e
 
-    def get_slope(self, n):
+    def get_slope(self, n=-1):
         if self.xs.shape[0] and self.ys.shape[0] and self.xs.shape[0] == self.ys.shape[0]:
             xs = self.xs
             ys = self.ys
@@ -118,6 +119,16 @@ class BaseMeasurement(object):
                 ys = ys[-n:]
 
             return polyfit(xs, ys, 1)[0]
+
+    def get_curvature(self, x):
+        ys = self._get_curvature_ys()
+        if x < 1:
+            x = self.xs.shape[0] * x
+
+        return curvature_at(ys, x)
+
+    def _get_curvature_ys(self):
+        return self.ys
 
 
 class IsotopicMeasurement(BaseMeasurement):
@@ -247,12 +258,12 @@ class IsotopicMeasurement(BaseMeasurement):
                 # if self._regressor:
                 #     self._regressor.error_calc_type = self.error_type
 
-                    # self.include_baseline_error = fit.include_baseline_error or False
+                # self.include_baseline_error = fit.include_baseline_error or False
 
-                    # self._value = 0
-                    # self._error = 0
-            # if notify:
-            #     self._dirty = True
+                # self._value = 0
+                # self._error = 0
+                # if notify:
+                #     self._dirty = True
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -392,15 +403,14 @@ class IsotopicMeasurement(BaseMeasurement):
         f = natural_name_fit(f)
         self._fit = f
 
-    def slope(self):
-        m, b = polyfit(self.xs, self.ys, 1)
-        return m
-
     def standard_fit_error(self):
         return self.regressor.calculate_standard_error_fit()
 
     def noutliers(self):
         return self.regressor.xs.shape[0] - self.regressor.clean_xs.shape[0]
+
+    def _get_curvature_ys(self):
+        return self.regressor.predict(self.xs)
 
     # def _error_type_changed(self):
     #     self.regressor.error_calc_type = self.error_type

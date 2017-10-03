@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Property, List, Instance, Event
-from traitsui.api import View, UItem, TabularEditor
+from traits.api import Int, Property, List, Instance, Event, Bool
+from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
@@ -43,10 +43,16 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
     intercept_error_text = Property
     percent_error_text = Property
 
-    def get_bg_color(self, obj, trait, row, column=0):
+    def get_tooltip( self, obj, trait, row, column ):
         item = getattr(obj, trait)[row]
-        if not item.goodness:
-            return LIGHT_RED
+
+        return item.tooltip
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        if not obj.display_only_bad:
+            item = getattr(obj, trait)[row]
+            if not item.goodness:
+                return LIGHT_RED
 
     def _get_intercept_value_text(self):
         return self._format_number('intercept_value')
@@ -70,6 +76,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
     results = List
     adapter = Instance(IsoEvolutionResultsAdapter, ())
     dclicked = Event
+    display_only_bad = Bool
 
     def __init__(self, results, *args, **kw):
         super(IsoEvolutionResultsEditor, self).__init__(*args, **kw)
@@ -77,7 +84,14 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
         na = grouped_name([r.identifier for r in results if r.identifier])
         self.name = 'IsoEvo Results {}'.format(na)
 
-        self.results = results
+        self.oresults = self.results = results
+        # self.results = sorted(results, key=lambda x: x.goodness)
+
+    def _display_only_bad_changed(self, new):
+        if new:
+            self.results = [r for r in self.results if not r.goodness]
+        else:
+            self.results = self.oresults
 
     def _dclicked_fired(self, new):
         if new:
@@ -85,9 +99,11 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
             result.analysis.show_isotope_evolutions((result.isotope,))
 
     def traits_view(self):
-        v = View(UItem('results', editor=TabularEditor(adapter=self.adapter,
+        filter_grp = HGroup(Item('display_only_bad'))
+        v = View(VGroup(filter_grp,
+                        UItem('results', editor=TabularEditor(adapter=self.adapter,
                                                        editable=False,
-                                                       dclicked='dclicked')))
+                                                       dclicked='dclicked'))))
         return v
 
 # ============= EOF =============================================
