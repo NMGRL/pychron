@@ -1,3 +1,4 @@
+import json
 import os
 
 import shutil
@@ -14,16 +15,33 @@ class Name:
     def match(self, f, tag,ext='.json'):
         sdn = self.identifier[3:]
         for c, i in enumerate(range(self.increments[0], self.increments[1] + 1)):
-            if f == '{}-{:02n}{}.{}{}'.format(sdn, self.aliquot, make_step(i), tag, ext):
+            if f == '{}-{:02n}{}{}{}'.format(sdn, self.aliquot, make_step(i), tag, ext):
                 return c
 
     def make(self, idx, tag):
         sdn = self.identifier[3:]
-        return '{}-{:02n}{}.{}.json'.format(sdn, self.aliquot, make_step(self.increments[0] + idx), tag)
+        return '{}-{:02n}{}.{}.json'.format(sdn, self.aliquot, make_step(self.make_increment(idx)), tag)
+
+    def make_increment(self, idx):
+        return self.increments[0]+idx
 
 
-def rename(root, src, dest):
+def rename(root, src, dest, dry=True):
     idn = src.identifier[:3]
+
+    r = os.path.join(root, idn)
+
+    for f in os.listdir(r):
+        idx = src.match(f, '')
+        if idx is not None:
+            ad = json.load(os.path.join(r,f))
+
+            ad['aliquot'] = dest.aliquot
+            ad['increment'] = dest.make_increment(idx)
+            d = dest.make(idx, '')
+            print 'editing {} to {}'.format(f, d)
+            if not dry:
+                json.dump(ad, d)
 
     for tag in ('.data', 'blanks', 'baselines', 'extraction', 'icfactors', 'logs', 'intercepts', 'peakcenter'):
         r = os.path.join(root, idn, tag)
@@ -37,12 +55,14 @@ def rename(root, src, dest):
         else:
             t = tag[:4]
 
+        t= '.{}'.format(t)
         for f in os.listdir(r):
             idx = src.match(f, t, ext)
             if idx is not None:
                 d = dest.make(idx, t)
                 print 'moving {} to {}'.format(f, d)
-                shutil.move(os.path.join(r, f), os.path.join(r, d))
+                if not dry:
+                    shutil.move(os.path.join(r, f), os.path.join(r, d))
 
 
 def main():
