@@ -25,7 +25,7 @@ from pychron.classifier.base_classifier import BaseClassifier
 
 def make_sample(iso):
     # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
-    return iso.mass, iso.n, iso.value, iso.intercept_percent_error, iso.slope(), iso.standard_fit_error(), \
+    return iso.mass, iso.n, iso.value, iso.intercept_percent_error, iso.get_slope(), iso.standard_fit_error(), \
            iso.noutliers()
 
 

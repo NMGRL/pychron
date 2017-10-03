@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack, zeros
+from numpy import array, vstack, mean, average, hstack, zeros, gradient
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
@@ -307,4 +307,33 @@ def approximate_polygon_center2(pts, r=None):
 
     return xf, yf, r
 
+
+def curvature(ys):
+    d = gradient(ys)
+    dd = gradient(d)
+    c = dd / (1 + d ** 2) ** 1.5
+    cs = abs(c)
+    return cs
+
+
+def curvature_at(ys, x):
+    cs = curvature(ys)
+    return cs[int(x)]
+
+
+if __name__ == '__main__':
+    from numpy import linspace
+    import matplotlib.pyplot as plt
+
+    xs = linspace(0, 10, 100)
+    ys = 1 * xs ** 2
+    ys2 = 3 * xs ** 2
+
+    plt.subplot(2, 1, 1)
+    plt.plot(xs, curvature(ys))
+    plt.plot(xs, curvature(ys2))
+    plt.subplot(2, 1, 2)
+    plt.plot(xs, ys)
+    plt.plot(xs, ys2)
+    plt.show()
 # ============= EOF =============================================

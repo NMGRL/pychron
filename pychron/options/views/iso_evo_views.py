@@ -24,9 +24,18 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 class IsoEvoSubOptions(SubOptions):
     def traits_view(self):
-        return self._make_view(Item('goodness_threshold', label='Goodness',
+        return self._make_view(Item('goodness_threshold', label='Intercept Goodness',
                                     tooltip='If % error is greater than "Goodness Threshold" '
-                                            'mark regression as "Bad"'))
+                                            'mark regression as "Bad"'),
+                               Item('slope_goodness', label='Slope Goodness',
+                                    tooltip='If slope of regression is positive and the isotope '
+                                            'intensity is greater than "Slope Goodness Intensity" '
+                                            'then mark regression as "Bad"'),
+                               Item('outlier_goodness', label='Outlier Goodness',
+                                    tooltip='If more than "Outlier Goodness" points are identified as outliers'
+                                            'then mark regression as "Bad"'),
+                               HGroup(Item('curvature_goodness'),
+                                      Item('curvature_goodness_at')))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):
@@ -44,10 +53,10 @@ class IsoEvoMainOptions(MainOptions):
         g = HGroup(
             # Item('controller.plot_enabled', label='Plot'),
             Item('controller.save_enabled', label='Enabled'),
-                   Item('controller.fit'),
-                   UItem('controller.error_type', width=-75),
-                   Item('controller.filter_outliers', label='Filter Outliers'),
-                   Item('show_sniff'))
+            Item('controller.fit'),
+            UItem('controller.error_type', width=-75),
+            Item('controller.filter_outliers', label='Filter Outliers'),
+            Item('show_sniff'))
         return g
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers')

@@ -133,6 +133,9 @@ class FitICFactorNode(FitReferencesNode):
                      for a in self.plotter_options.aux_plots]
 
 
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
+GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
+
 class IsoEvoResult(HasTraits):
     # record_id = Str
     isotope = Str
@@ -141,9 +144,35 @@ class IsoEvoResult(HasTraits):
     intercept_error = Float
     percent_error = Float
     regression_str = Str
-    goodness = Bool(True)
+    int_err_goodness = None
+    slope_goodness = None
+    outlier_goodness = None
+    curvature_goodness = None
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
+
+    @property
+    def goodness(self):
+        good = True
+        for g in GOODNESS_TAGS:
+            v = getattr(self, '{}_goodness'.format(g))
+            if v is not None:
+                good &= v
+
+        return good
+
+    @property
+    def tooltip(self):
+
+        def f(t, m):
+            v = getattr(self, '{}_goodness'.format(t))
+            if v is not None:
+                v = 'OK' if v else "Bad"
+            else:
+                v = 'Not Tested'
+            return '{:<25}: {}'.format(m, v)
+
+        return '\n'.join([f(g, n) for g,n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
     @property
     def record_id(self):
@@ -226,17 +255,33 @@ class FitIsotopeEvolutionNode(FitNode):
 
             if iso:
                 i, e = iso.value, iso.error
-                pe = e / i * 100
+                pe = abs(e / i * 100)
+
                 goodness_threshold = po.goodness_threshold
-                goodness = True
+                int_err_goodness = None
                 if goodness_threshold:
-                    goodness = pe < goodness_threshold
+                    int_err_goodness = bool(pe < goodness_threshold)
+
+                slope_goodness = None
+                if po.slope_goodness:
+                    slope_goodness = bool(iso.get_slope() < 0 or i < po.slope_goodness)
+
+                outlier_goodness = None
+                if po.outlier_goodness:
+                    outlier_goodness = bool(iso.noutliers() < po.outlier_goodness)
+
+                curvature_goodness = None
+                if po.curvature_goodness:
+                    curvature_goodness = iso.curvature_at(po.curvature_goodness_at) < po.curvature_goodness
 
                 yield IsoEvoResult(analysis=xi,
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
-                                   goodness=bool(goodness),
+                                   int_err_goodness=int_err_goodness,
+                                   slope_goodness=slope_goodness,
+                                   outlier_goodness=outlier_goodness,
+                                   curvature_goodness=curvature_goodness,
                                    regression_str=iso.regressor.tostring(),
                                    fit=f.fit,
                                    isotope=k)
