@@ -450,6 +450,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
     post_analysis_delay = Float(5)
 
     max_period = 10
+    _between_updates = None
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -470,6 +471,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
+                 title='Configure',
                  kind='livemodal',
                  buttons=['OK', 'Cancel'])
         return v

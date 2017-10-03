@@ -56,7 +56,7 @@ def analysis_type_filter(q, analysis_types):
     if hasattr(analysis_types, '__iter__'):
         analysis_types = map(str.lower, analysis_types)
     else:
-        analysis_types = analysis_types.lower()
+        analysis_types = (analysis_types.lower(),)
 
     # q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
     # if 'blank' in analysis_types or any(ai.startswith('blank') for ai in analysis_types):

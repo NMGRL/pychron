@@ -854,6 +854,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 project_name = d['project']
                 if ipp and project_name.startswith(ipp):
                     repo = project_name
+                    if repo=='REFERENCES':
+                        repo = ''
                 else:
                     repo = camel_case(project_name)
                 self.repository_identifier = repo

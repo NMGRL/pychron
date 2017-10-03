@@ -27,8 +27,8 @@ import yaml
 from pychron.core.helpers.strtools import to_bool
 
 PIPELINE_TEMPLATES = '''- Isotope Evolutions
-- IC Factor
 - Blanks
+- IC Factor
 - Flux
 - Ideogram
 - Spectrum
