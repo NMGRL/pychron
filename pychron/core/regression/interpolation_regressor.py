@@ -14,13 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str
 
 from pychron.core.regression.base_regressor import BaseRegressor
-
-# ============= standard library imports ========================
-from numpy import where, polyval, polyfit
 
 
 # ============= local library imports  ==========================
@@ -70,20 +69,18 @@ class InterpolationRegressor(BaseRegressor):
             else:
                 return es[ti]
 
-    def bracketing_average_predictors(self, tm, attr='value'):
+    def bracketing_average_predictors(self, tm, exc, attr='value'):
         try:
-            pb, ab, _ = self._bracketing_predictors(tm, attr)
+            pb, ab, _ = self._bracketing_predictors(tm, exc, attr)
 
             return (pb + ab) / 2.0
         except TypeError:
             return 0
 
-    def bracketing_interpolate_predictors(self, tm, attr='value'):
-        xs = self.xs
+    def bracketing_interpolate_predictors(self, tm, exc, attr='value'):
         try:
-            pb, ab, ti = self._bracketing_predictors(tm, attr)
+            pb, ab, x = self._bracketing_predictors(tm, exc, attr)
 
-            x = [xs[ti], xs[ti + 1]]
             y = [pb, ab]
 
             if attr == 'error':
@@ -101,21 +98,29 @@ class InterpolationRegressor(BaseRegressor):
         except TypeError:
             return 0
 
-    def _bracketing_predictors(self, tm, attr):
+    def _bracketing_predictors(self, tm, exc, attr):
         xs = self.xs
         ys = self.ys
         es = self.yserr
 
         try:
             ti = where(xs < tm)[0][-1]
-            if attr == 'value':
-                pb = ys[ti]
-                ab = ys[ti + 1]
-            else:
-                pb = es[ti]
-                ab = es[ti + 1]
 
-            return pb, ab, ti
+            li = ti
+            hi = ti + 1
+            while li in exc and li > 0:
+                li -= 1
+            while hi in exc and hi < self.n:
+                hi += 1
+
+            if attr == 'value':
+                pb = ys[li]
+                ab = ys[hi]
+            else:
+                pb = es[li]
+                ab = es[hi]
+
+            return pb, ab, (xs[li], xs[hi])
         except IndexError:
             return 0
 
