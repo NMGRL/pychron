@@ -368,7 +368,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         fys = reg.predict(pts)
         yserr = reg.yserr
-        l, u = reg.calculate_error_envelope([[p] for p in pts], rmodel=fys)
+        l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr

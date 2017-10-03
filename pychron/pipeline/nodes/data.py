@@ -467,6 +467,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
     post_analysis_delay = Float(5)
 
     max_period = 10
+    _between_updates = None
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -479,7 +480,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
                                       'Window: get analyses between now and now - hours'),
                  Item('hours'),
                  Item('period', label='Update Period (s)',
-                      tooltip='Defauly time (s) to delay between "check for new analyses"'),
+                      tooltip='Default time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
                  Item('analysis_types', style='custom',
@@ -487,6 +488,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
+                 title='Configure',
                  kind='livemodal',
                  buttons=['OK', 'Cancel'])
         return v
