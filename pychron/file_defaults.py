@@ -48,6 +48,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Geochron
 - Yield
 - CSV Analyses Export
+- CSV Ideogram
 '''
 
 IDENTIFIERS_DEFAULT = """
