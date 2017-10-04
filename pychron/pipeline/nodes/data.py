@@ -143,7 +143,7 @@ class CSVNode(BaseNode):
             if dlg.open() == OK:
                 self.path = dlg.path
 
-        return self.path is not None
+        return bool(self.path)
 
     def run(self, state):
         if not self.unknowns:
