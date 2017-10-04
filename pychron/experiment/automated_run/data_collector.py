@@ -146,6 +146,7 @@ class DataCollector(Consoleable):
         # t.setDaemon(True)
         t.start()
 
+        self.debug('measurement period (ms) = {}'.format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
         while not evt.is_set():
