@@ -179,7 +179,7 @@ class AutomatedRun(Loggable):
     _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
-    _integration_seconds = Float(1.0)
+    _integration_seconds = Float(1.1)
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
