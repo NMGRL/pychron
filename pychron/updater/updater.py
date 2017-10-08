@@ -29,6 +29,9 @@ from pychron.paths import build_repo
 from pychron.paths import r_mkdir
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
+CONDA_DISTRO = 'miniconda2'
+CONDA_ENV = 'pychron_env'
+
 
 class Updater(Loggable):
     check_on_startup = Bool
@@ -134,7 +137,10 @@ class Updater(Loggable):
                             # install dependencies
                             import subprocess
                             root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-                            bin = os.path.join(os.path.expanduser('~'), 'miniconda2', 'envs', 'pychron', 'bin')
+
+                            bin = os.path.join(os.path.expanduser('~'), os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
+                                               'envs',
+                                               os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
 
                             conda = os.path.join(bin, 'conda')
                             cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
