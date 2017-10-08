@@ -22,10 +22,11 @@ from traitsui.api import View, UItem, TableEditor, ListEditor, Handler
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
 from ConfigParser import ConfigParser
-import os
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.spectrometer import get_spectrometer_config_path
+
 
 class Parameter(HasTraits):
     name = Str
@@ -52,9 +53,11 @@ Do you want to send these parameters to the spectrometer?
         for g in self.groups:
             for pa in g.parameters:
                 yield g.name, pa.name, pa.value
+
     def load(self):
         cfp = ConfigParser()
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        # p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        p = get_spectrometer_config_path()
         cfp.read(p)
         gs = []
         for section in cfp.sections():
@@ -70,7 +73,7 @@ Do you want to send these parameters to the spectrometer?
         self.groups = gs
 
     def dump(self):
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        p = get_spectrometer_config_path()
 
         cfp = ConfigParser()
         cfp.read(p)

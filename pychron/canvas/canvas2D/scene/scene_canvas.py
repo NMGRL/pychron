@@ -15,16 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from kiva import JOIN_ROUND
+try:
+    from kiva import JOIN_ROUND
+except ImportError:
+    JOIN_ROUND = 0
 from traits.api import Instance
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.scene import Scene
 
 
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
+    scene_klass = Scene
 
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
@@ -47,6 +50,10 @@ class SceneCanvas(BaseDataCanvas):
             for li in self.scene.layers:
                 li.visible = False
             self.request_redraw()
+
+    def update(self, *args, **kw):
+        if self.scene:
+            self.scene.request_layout()
 
     # private
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
@@ -71,12 +78,12 @@ class SceneCanvas(BaseDataCanvas):
             gc.set_antialias(0)
             gc.set_line_join(JOIN_ROUND)
             offset = self.border_width
-            gc.move_to(self.x+offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y2-offset)
-            gc.line_to(self.x2-offset, self.y2-offset)
-            gc.line_to(self.x2-offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y+offset)
-            gc.line_to(self.x+offset, self.y2-offset)
+            gc.move_to(self.x + offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y2 - offset)
+            gc.line_to(self.x2 - offset, self.y2 - offset)
+            gc.line_to(self.x2 - offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y + offset)
+            gc.line_to(self.x + offset, self.y2 - offset)
             gc.close_path()
             gc.stroke_path()
 
@@ -85,5 +92,11 @@ class SceneCanvas(BaseDataCanvas):
         if new:
             new.on_trait_change(self.request_redraw, 'layout_needed')
         if old:
-            old.on_trait_change(self.request_redraw, 'layout_needed', remove=True)
+            old.on_trait_change(self.request_redraw,
+                                'layout_needed', remove=True)
+
+    def _scene_default(self):
+        if self.scene_klass:
+            return self.scene_klass()
+
 # ============= EOF =============================================

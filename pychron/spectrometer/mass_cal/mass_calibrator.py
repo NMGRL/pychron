@@ -122,29 +122,29 @@ class MassCalibratorSweep(MagnetSweep):
 
     def _save_to_db(self):
         db = self.db
-        with db.session_ctx():
-            spectrometer = 'Obama'
-            hist = db.add_mass_calibration_history(spectrometer)
+        spectrometer = 'Obama'
+        hist = db.add_mass_calibration_history(spectrometer)
 
-            # add coarse scan
-            d = self._get_coarse_data()
+        # add coarse scan
+        d = self._get_coarse_data()
+        data = self._pack(d)
+        db.add_mass_calibration_scan(hist, blob=data)
+
+        # add fine scans
+        plot = self.graph.plots[1]
+        cps = [cp for cp in self.calibration_peaks if cp.isotope]
+        for cp, ki in zip(cps, sorted(plot.plots.keys())):
+            p = plot.plots[ki][0]
+
+            xs = p.index.get_data()
+            ys = p.value.get_data()
+            d = array((xs, ys)).T
             data = self._pack(d)
-            db.add_mass_calibration_scan(hist, blob=data)
-
-            # add fine scans
-            plot = self.graph.plots[1]
-            cps = [cp for cp in self.calibration_peaks if cp.isotope]
-            for cp, ki in zip(cps, sorted(plot.plots.keys())):
-                p = plot.plots[ki][0]
-
-                xs = p.index.get_data()
-                ys = p.value.get_data()
-                d = array((xs, ys)).T
-                data = self._pack(d)
-                db.add_mass_calibration_scan(hist,
-                                             cp.isotope,
-                                             blob=data,
-                                             center=cp.dac, )
+            db.add_mass_calibration_scan(hist,
+                                         cp.isotope,
+                                         blob=data,
+                                         center=cp.dac, )
+        db.commit()
 
     def _apply_calibration(self):
         """

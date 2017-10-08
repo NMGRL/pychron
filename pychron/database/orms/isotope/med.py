@@ -21,10 +21,8 @@ from sqlalchemy import Column, BLOB, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-# ============= local library imports  ==========================
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from util import Base
 
 
@@ -47,4 +45,5 @@ class med_SampleImageTable(Base, NameMixin):
     image = Column(BLOB)
     sample_id = foreignkey('gen_SampleTable')
     note = Column(BLOB)
+
 # ============= EOF =============================================

@@ -19,8 +19,8 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from SocketServer import ThreadingUDPServer
 import socket
+from SocketServer import ThreadingUDPServer
 
 # ============= local library imports  ==========================
 from messaging_server import MessagingServer

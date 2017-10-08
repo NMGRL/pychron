@@ -24,12 +24,18 @@ from pychron.pychron_constants import PLUSMINUS
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class BaseIrradiatedPosition(HasTraits):
-    labnumber = Str
+    identifier = Str
     material = Str
     sample = Str
+    grainsize = Str
     hole = Int
     alt_hole = Int
     project = Str
+    principal_investigator = Str
+    level = Str
+    irradiation = Str
+    igsn = Str
+
     j = Float(0)
     j_err = Float(0)
     pred_j = Float
@@ -61,6 +67,7 @@ class IrradiatedPosition(BaseIrradiatedPosition):
     weight = CStr
     note = Str
     analyzed = Bool
+    nanalyses = Int
 
 
 class BaseIrradiatedPositionAdapter(TabularAdapter):
@@ -79,26 +86,36 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
 
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
+        ('', 'analyzed'),
         ('Hole', 'hole'),
-        ('Identifier', 'labnumber'),
+        ('Identifier', 'identifier'),
         ('Sample', 'sample'),
+        ('IGSN', 'igsn'),
+        ('PI', 'principal_investigator'),
         ('Project', 'project'),
         ('Material', 'material'),
+        ('Grainsize', 'grainsize'),
         #               ('Size', 'size'),
         ('Weight', 'weight'),
         ('J', 'j'),
         (u'{}J'.format(PLUSMINUS), 'j_err'),
         ('Note', 'note')]
 
-    labnumber_width = Int(80)
+    igsn_width = Int(70)
+    identifier_width = Int(80)
     hole_width = Int(50)
     sample_width = Int(100)
-    project_width = Int(75)
-    material_width = Int(50)
+    project_width = Int(150)
+    material_width = Int(100)
+    grainsize_width = Int(70)
     size_width = Int(50)
     weight_width = Int(50)
-    j_width = Int(100)
-    j_err_width = Int(100)
+    j_width = Int(75)
+    j_err_width = Int(75)
+
+    analyzed_text = Property
+    j_text = Property
+    j_err_text = Property
 
     font = 'arial 10'
 
@@ -106,6 +123,31 @@ class IrradiatedPositionAdapter(TabularAdapter):
 
     #    def _get_hole_width(self):
     #        return 35
+
+    def get_tooltip(self, obj, trait, row, column):
+        name = self.column_map[column]
+
+        if name == 'analyzed':
+            item = getattr(obj, trait)[row]
+            return 'N Analyses: {}'.format(item.nanalyses)
+
+    def _get_analyzed_text(self):
+        return 'X' if self.item.analyzed else ''
+
+    def _set_analyzed_text(self):
+        pass
+
+    def _set_j_text(self, t):
+        self.item.j = float(t)
+
+    def _set_j_err_text(self, t):
+        self.item.j_err = t
+
+    def _get_j_text(self):
+        return '{:0.6E}'.format(self.item.j)
+
+    def _get_j_err_text(self):
+        return '{:0.6E}'.format(self.item.j_err)
 
     def get_bg_color(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]

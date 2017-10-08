@@ -20,7 +20,7 @@ from traits.api import Instance, Button, Bool, Str, List, provides, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
-from pychron.hardware.apis_controller import ApisController
+#from pychron.hardware.apis_controller import ApisController
 from pychron.managers.manager import Manager
 
 
@@ -38,7 +38,7 @@ class InvalidPipetteError(BaseException):
 
 @provides(IPipetteManager)
 class SimpleApisManager(Manager):
-    controller = Instance(ApisController)
+    controller = Instance('pychron.hardware.apis_controller.ApisController')
 
     test_command = Str
     test_command_response = Str
@@ -60,7 +60,7 @@ class SimpleApisManager(Manager):
     def test_connection(self):
         return self.controller.test_connection()
 
-    def set_extract_state(self, state):
+    def set_extract_state(self, state, *args, **kw):
         pass
 
     def finish_loading(self):
@@ -184,6 +184,7 @@ class SimpleApisManager(Manager):
         return cmd
 
     def _controller_default(self):
+        from pychron.hardware.apis_controller import ApisController
         v = ApisController(name='apis_controller')
         return v
 

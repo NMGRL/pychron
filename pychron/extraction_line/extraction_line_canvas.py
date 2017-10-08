@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Any
 from traitsui.api import View, Item
-from enable.component_editor import ComponentEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from canvas.canvas3D.extraction_line_canvas3D import ExtractionLineCanvas3D
@@ -38,7 +40,7 @@ class ExtractionLineCanvas(HasTraits):
     def refresh(self):
         """
         """
-        self._canvas_function('request_redraw')
+        self._canvas_function('invalidate_and_redraw')
 
     def get_object(self, name):
         if self.canvas2D:
@@ -54,7 +56,7 @@ class ExtractionLineCanvas(HasTraits):
         """
             do the specific canvas action
         """
-        self._canvas_function('update_switch_state', name, state)
+        self._canvas_function('update_switch_state', name, state, *args)
 
     def update_switch_lock_state(self, name, state, *args, **kw):
         """
@@ -72,6 +74,8 @@ class ExtractionLineCanvas(HasTraits):
         c = self.canvas2D
         if c:
             getattr(c, func)(*args, **kw)
+        else:
+            print 'canvas2D not available'
 
     def _canvas_factory(self):
         from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D

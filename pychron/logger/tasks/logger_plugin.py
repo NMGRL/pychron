@@ -24,9 +24,6 @@ from pychron.logger.tasks.actions import LogViewerAction, CurrentLogViewerAction
 from pychron.logger.tasks.logger_task import LoggerTask
 
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
 class LoggerPlugin(BaseTaskPlugin):
     id = 'pychron.logger'
     name = 'Logger'
@@ -37,7 +34,7 @@ class LoggerPlugin(BaseTaskPlugin):
                             name='Logger')]
 
     def _task_factory(self):
-        return LoggerTask()
+        return LoggerTask(application=self.application)
 
     def _task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(factory=LogViewerAction,

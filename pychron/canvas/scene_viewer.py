@@ -19,7 +19,6 @@ from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, HGroup, Group
 
 from pychron.loggable import Loggable
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from enable.component_editor import ComponentEditor

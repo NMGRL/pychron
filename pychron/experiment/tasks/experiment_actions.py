@@ -14,22 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
-
 # ============= enthought library imports =======================
+import os
 
-from pyface.message_dialog import warning
+from pyface.message_dialog import warning, information
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.core.helpers.filetools import get_path
-from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
-
-
-
-
-# ============= standard library imports ========================
-import os
-# ============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+from pychron.envisage.view_util import open_view
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
+from pychron.globals import globalv
 from pychron.paths import paths
 
 EXP_ID = 'pychron.experiment.task'
@@ -41,6 +37,7 @@ class ResetSystemHealthAction(Action):
 
     def perform(self, event):
         from pychron.experiment.health.series import reset_system_health_series
+
         reset_system_health_series()
 
 
@@ -167,14 +164,14 @@ class SystemConditionalsAction(Action):
         if spec:
             dnames = spec.spectrometer.detector_names
 
-        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml','.yml'))
+        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p:
             edit_conditionals(p, detectors=dnames, app=task.application)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))
 
 
-def open_experiment(event, path):
+def open_experiment(event, path=None):
     app = event.task.window.application
     task = event.task
     if task.id == EXP_ID:
@@ -205,6 +202,16 @@ class NewExperimentQueueAction(ExperimentAction):
             task = win.active_task
             if task.new():
                 win.open()
+
+
+class RunHistoryAction(Action):
+    name = 'Run History'
+    dname = 'Run History'
+
+    def perform(self, event):
+        app = event.task.window.application
+        v = app.get_service('pychron.experiment.run_history_view.RunHistoryView')
+        open_view(v)
 
 
 class OpenExperimentHistoryAction(Action):
@@ -264,22 +271,45 @@ class OpenExperimentQueueAction(ExperimentAction):
     id = 'pychron.open_experiment'
 
     def perform(self, event):
-        path = '/Users/ross/Pychron_dev/experiments/Current Experiment.txt'
-        # path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
+        open_experiment(event)
+
+
+class OpenCurrentExperimentQueueAction(ExperimentAction):
+    description = 'Open Current Experiment'
+    name = 'Open Current Experiment...'
+    dname = 'Open Current Experiment'
+    image = icon('project-open')
+    id = 'pychron.open_current_experiment'
+
+    def perform(self, event):
+        name = 'CurrentExperiment.txt'
+        path = os.path.join(paths.experiment_dir, name)
+
+        if not os.path.isfile(path):
+            information(None, 'No experiment called {}'.format(name))
         open_experiment(event, path)
+
+
+class SaveAsCurrentExperimentAction(TaskAction):
+    description = 'Save As Current Experiment'
+    name = 'Save As Current Experiment...'
+    dname = 'Save As Current Experiment'
+    image = icon('document-save-as')
+    id = 'pychron.experiment.save_as_current_experiment'
+    method = 'save_as_current_experiment'
 
 
 # ===============================================================================
 # Utilities
 # ===============================================================================
+
 class SignalCalculatorAction(ExperimentAction):
     name = 'Signal Calculator'
     dname = 'Signal Calculator'
 
     def perform(self, event):
         obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
-        app = event.task.window.application
-        app.open_view(obj)
+        open_view(obj)
 
 
 class ResetQueuesAction(TaskAction):
@@ -287,5 +317,45 @@ class ResetQueuesAction(TaskAction):
     name = 'Reset Queues'
     dname = 'Reset Queues'
 
+
+class SyncQueueAction(TaskAction):
+    method = 'sync_queue'
+    name = 'Sync Queue'
+    dname = 'Sync Queue'
+
+
+class LastAnalysisRecoveryAction(Action):
+    name = 'Recover Last Analysis'
+    dname = 'Recover Last Analysis'
+
+    def perform(self, event):
+        from pychron.experiment.analysis_recovery import AnalysisRecoverer
+        a = AnalysisRecoverer()
+        a.recover_last_analysis()
+
+
+class RunnerAction(TaskAction):
+    def _get_runner(self, event):
+        app = event.task.application
+        runner = app.get_service(IPyScriptRunner)
+        if not runner:
+            warning(None, 'No runner available')
+
+        return runner
+
+
+class AcquireSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            if not runner.acquire(globalv.own_spectrometer):
+                warning(None, 'Failed to acquire {}'.format(globalv.spectrometer))
+
+
+class ReleaseSpectrometerAction(RunnerAction):
+    def perform(self, event):
+        runner = self._get_runner()
+        if runner:
+            runner.release(globalv.own_spectrometer)
 
 # ============= EOF ====================================

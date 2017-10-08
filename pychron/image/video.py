@@ -15,25 +15,19 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Any, Bool, Float, List, Str, Int
-# =============standard library imports ========================
-from threading import Thread, Lock, Event
-import time
 import os
 import shutil
-from numpy import asarray
-# =============local library imports ===========================
-from pychron.image.image import Image
-# from pychron.image.pyopencv_image_helper import swapRB
-from cv_wrapper import get_capture_device
-from cv_wrapper import swap_rb as cv_swap_rb
-# query_frame, write_frame, \
-#    new_video_writer, grayspace, get_nframes, \
-#    set_frame_index, get_fps, set_video_pos, crop, swapRB
-#
+import time
+from threading import Thread, Lock, Event
 
+from PIL import Image as PImage
+from numpy import asarray
+from traits.api import Any, Bool, Float, List, Str, Int
+
+from cv_wrapper import get_capture_device
+from pychron.core.helpers.filetools import add_extension
 from pychron.globals import globalv
-from pychron.consumer_mixin import consumable
+from pychron.image.image import Image
 
 
 def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
@@ -54,13 +48,19 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     if os.path.exists(output):
         return
 
-    frame_rate = '{}'.format(fps)
-    codec = '{}'.format('x264')  # H.264
-    path = '{}'.format(os.path.join(path, name_filter))
+    frame_rate = str(fps)
+    # codec = '{}'.format('x264')  # H.264
+    path = str(os.path.join(path, name_filter))
     if ffmpeg is None or not os.path.isfile(ffmpeg):
         ffmpeg = '/usr/local/bin/ffmpeg'
 
     subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output])
+
+
+def pil_save(src, p, ext='.jpg'):
+    im = PImage.fromarray(src)
+    p = add_extension(p, ext=ext)
+    im.save(p)
 
 
 class Video(Image):
@@ -71,8 +71,6 @@ class Video(Image):
     track_mouse = Bool
     mouse_x = Float
     mouse_y = Float
-    #    snapshot = Button
-    #    data_directory = Any
 
     users = List
 
@@ -87,6 +85,9 @@ class Video(Image):
     output_mode = Str('MPEG')
     ffmpeg_path = Str
     fps = Int
+
+    def is_recording(self):
+        return self._recording
 
     def is_open(self):
         return self.cap is not None
@@ -117,7 +118,7 @@ class Video(Image):
                         print 'video.open', e
                         self.cap = None
 
-        if not user in self.users:
+        if user not in self.users:
             self.users.append(user)
 
     def close(self, user=None, force=False):
@@ -142,17 +143,13 @@ class Video(Image):
 
     def get_image_data(self, cmap=None, **kw):
         frame = self.get_frame(**kw)
-        if frame is not None:
-            return asarray(frame[:, :])
+        return asarray(frame)
+        # if frame is not None:
+        #     return asarray(frame[:, :])
 
     def start_recording(self, path, renderer=None):
         self._stop_recording_event = Event()
         self.output_path = path
-
-        if self.output_mode == 'MPEG':
-            func = self._ffmpeg_record
-        else:
-            func = self._cv_record
 
         fps = 12
         if self.cap is None:
@@ -161,8 +158,8 @@ class Video(Image):
         if self.cap is not None:
             self._recording = True
 
-            t = Thread(target=func, args=(path, self._stop_recording_event,
-                                          fps, renderer))
+            t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event,
+                                                         fps, renderer))
             t.start()
 
     def stop_recording(self, wait=False):
@@ -180,17 +177,19 @@ class Video(Image):
         """
         src = self.get_frame(**kw)
         if src is not None:
-            #            if crop:
-            #                icrop(*((pychron,) + crop))
             self.save(path, src=src)
 
         return src.clone()
 
     # private
-    def _ready_to_save(self):
+    def _ready_to_save(self, timeout=120):
         if self._save_ok_event:
+            st = time.time()
             while not self._save_ok_event.is_set():
                 time.sleep(0.5)
+                if timeout and time.time()-st>timeout:
+                    return
+
             return True
 
     def _ffmpeg_record(self, path, stop, fps, renderer=None):
@@ -212,31 +211,35 @@ class Video(Image):
         os.mkdir(image_dir)
 
         cnt = 0
-        #        new_frame = lambda : self.get_frame(swap_rb=False)
-        #        frame = self.get_frame(swap_rb=False)
 
         if renderer is None:
-            #             save = lambda x: self.save(x, pychron=cv_swap_rb(frame))
-            def save(p):
-                frame = self.get_frame()
+            def renderer(p):
+                frame = self.get_cached_frame()
                 if frame is not None:
-                    src = cv_swap_rb(frame)
-                    self.save(p, src)
-        else:
-            save = lambda x: renderer(x)
+                    pil_save(frame, p)
 
-        # cm = ConsumerMixin()
-        #         cm.setup_consumer(save)
+                    # self.save(p, frame)
+        # else:
+        #     save = lambda x: renderer(x)
+
         fps_1 = 1 / float(fps)
-        with consumable(func=save) as con:
-            while not stop.is_set():
-                st = time.time()
-                # pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
-                pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
-                con.add_consumable(pn)
-                cnt += 1
-                dur = time.time() - st
-                time.sleep(max(0, fps_1 - dur))
+        # with consumable(func=save) as con:
+        #     while not stop.is_set():
+        #         st = time.time()
+        #         pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
+        #         con.add_consumable(pn)
+        #         cnt += 1
+        #         dur = time.time() - st
+        #         time.sleep(max(0, fps_1 - dur))
+        while not stop.is_set():
+            st = time.time()
+            pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
+
+            renderer(pn)
+            # con.add_consumable(pn)
+            cnt += 1
+            dur = time.time() - st
+            time.sleep(max(0, fps_1 - dur))
 
         self._convert_to_video(image_dir, fps, name_filter='image_%05d.jpg', output=path)
 
@@ -261,81 +264,21 @@ class Video(Image):
     def _get_frame(self, lock=True, **kw):
         cap = self.cap
         if globalv.video_test:
-            #            if self.source_frame is None:
             p = globalv.video_test_path
-            self.load(p, swap_rb=False)
+            self.load(p, swap_rb=True)
 
             f = self.source_frame
             return f
-        # f = self.current_frame.clone()
+
         elif cap is not None:
             s, img = self.cap.read()
             if s:
                 return img
 
     def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
-        ffmpeg = self.ffmpeg_path
+        print 'convert to video. FFmpeg={}'.format(self.ffmpeg_path)
 
+        ffmpeg = self.ffmpeg_path
         convert_to_video(path, fps, name_filter, ffmpeg, output)
 
-    def _cv_record(self, path, stop, fps, renderer=None):
-        """
-            use OpenCV VideoWriter to save video file
-            !!on mac seems only raw video can saved. playable avi file but
-            bad internally. No format
-        """
-        #        fps = 1 / 8.
-        #        if self.cap is None:
-        #            self.open()
-        #
-        #        if self.cap is not None:
-        #            self._recording = True
-        # #                if self._frame is None:
-        frame = self.get_frame()
-
-        #                size = map(int, self._frame.size())
-        w = 300
-        h = 300
-        size = (w, h)
-
-        '''
-            @todo: change video writing scheme
-            
-            create a new directory
-            save jpegs into directory
-            use ffmpeg to stitch into a video
-        '''
-        writer = new_video_writer(path, fps,
-                                  size
-                                  )
-        sleep = time.sleep
-        ctime = time.time
-
-        fsize = frame.size()
-        x = (fsize[0] - size[0]) / 2
-        y = (fsize[1] - size[1]) / 2
-
-        while not stop.is_set():
-            st = ctime()
-            f = crop(frame.clone(), x, y, w, h)
-            #                    write_frame(writer, grayspace(f))
-            write_frame(writer, f)
-            dur = ctime() - st
-            sleep(max(0.001, 1 / fps - dur))
-
 # =================== EOF =================================================
-#    def shutdown(self):
-#        self.users = []
-#        del(self.cap)
-#
-#    def get_nframes(self):
-#        if self.cap is not None:
-#            return get_nframes(self.cap)
-#
-#    def get_fps(self):
-#        if self.cap is not None:
-#            return get_fps(self.cap)
-#
-#    def set_video_pos(self, pos):
-#        if self.cap is not None:
-#            set_video_pos(self.cap, pos)

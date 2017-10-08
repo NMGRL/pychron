@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import os
-import pickle
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
@@ -27,21 +25,18 @@ import struct
 import binascii
 # =============local library imports  ==========================
 from kerr_device import KerrDevice
+from pychron.hardware.base_linear_drive import BaseLinearDrive
 from pychron.hardware.core.data_helper import make_bitarray
 import time
 from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.hardware.linear_mapper import LinearMapper
-from pychron.core.helpers.timer import Timer
-from pychron.consumer_mixin import ConsumerMixin
 from pychron.core.ui.qt.progress_editor import ProgressEditor
 # from pyface.progress_dialog import ProgressDialog
-from pychron.paths import paths
 
 SIGN = ['negative', 'positive']
 
 
-class KerrMotor(KerrDevice, ConsumerMixin):
+class KerrMotor(KerrDevice, BaseLinearDrive):
     """
         Base class for motors controller by a kerr microcontroller board
 
@@ -50,34 +45,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
     use_hysteresis = Bool(False)
     hysteresis_value = Float(0)  # nominal value to for hysteresis
 
-    velocity = Property
-    _velocity = Float
-    acceleration = Float
-    home_delay = Float
-    home_velocity = Float
-    home_acceleration = Float
-    homing_position = Int
-    home_at_startup = Bool(True)
-    home_position = CInt
-    home_limit = CInt
-
-    min = Float(0)
-    max = Float(100)
-    steps = Int(137500)
-    min_steps = Int(0)
-    sign = Float
-
-    enabled = Bool(False)
-    timer = None
-
-    data_position = Property(depends_on='_data_position')
-    _data_position = Float
-
-    update_position = Float
-    nominal_position = Float
-
-    progress = None
-
     _motor_position = CInt
     doing_hysteresis_correction = False
     do_hysteresis = False
@@ -85,32 +52,16 @@ class KerrMotor(KerrDevice, ConsumerMixin):
     display_name_color = 'brown'
 
     locked = False
-    units = 'mm'
 
     home_button = Button('Home')
 
     home_status = Int
 
-    def set_value(self, value, block=False):
-        if self.data_position != value:
-            self.enabled = False
-            value = self._convert_value(value)
-            self.info('setting data position {}'.format(value))
-            self._set_motor(value)
-            #            self.data_position = value
-            if block:
-                self.info('waiting for move to complete')
-                self.block()
-                self.info('move complete')
-                self.enabled = True
-        else:
-            self.info('not changing pos {}=={}'.format(self.data_position, value))
-
-        return True
-
     def load_additional_args(self, config):
         """
         """
+        self.unique_id = self.address
+
         args = [
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
@@ -128,16 +79,8 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             ('General', 'min'),
             ('General', 'max'),
             ('General', 'nominal_position'),
-            ('General', 'units')
-        ]
-        for args in args:
-            if len(args) == 3:
-                section, key, cast = args
-            else:
-                cast = 'float'
-                section, key = args
-
-            self.set_attribute(config, key, section, key, cast=cast)
+            ('General', 'units')]
+        self._load_config_attributes(config, args)
 
         if config.has_option('Motion', 'hysteresis'):
             '''
@@ -149,26 +92,11 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             '''
 
             self.hysteresis_value = self.config_get(config, 'Motion', 'hysteresis', cast='int')
-        # self.use_hysteresis = True
-        #         else:
-        #             self.use_hysteresis = False
 
         if config.has_option('General', 'initialize'):
             self.use_initialize = self.config_get(config, 'General', 'initialize', cast='boolean')
 
-        mi = self.min
-        ma = self.max
-
-        if self.sign == -1:
-            tm = mi
-            mi = ma
-            ma = tm
-
-        self.linear_mapper = LinearMapper(
-            low_data=mi,
-            high_data=ma,
-            low_step=int(self.min_steps),
-            high_step=int(self.steps))
+        self.linear_mapper_factory()
 
     def initialize(self, *args, **kw):
         """
@@ -217,6 +145,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         self.setup_consumer(buftime=500)
 
         return True
+
+    def is_simulation(self):
+        return self.parent.simulation
 
     def reset_position(self, motor_off=True, position=None):
         """
@@ -301,75 +232,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                 #                 do_after(25, progress.change_message, '{} position = {}'.format(self.name, pos))
             time.sleep(0.5)
 
-    def block(self, n=3, tolerance=1, progress=None, homing=False):
-        """
-        """
-        fail_cnt = 0
-        pos_buffer = []
-
-        while not self.parent.simulation:
-
-            steps = self.load_data_position(set_pos=False)
-            if homing:
-                invoke_in_main_thread(self.trait_set, homing_position=steps)
-
-            if progress is not None:
-                progress.change_message('{} position = {}'.format(self.name, steps),
-                                        auto_increment=False)
-
-            if steps is None:
-                fail_cnt += 1
-                if fail_cnt > 5:
-                    break
-                continue
-
-            pos_buffer.append(steps)
-            if len(pos_buffer) == n:
-                if abs(float(sum(pos_buffer)) / n - steps) < tolerance:
-                    break
-                else:
-                    pos_buffer.pop(0)
-
-            time.sleep(0.1)
-
-        if fail_cnt > 5:
-            self.warning('Problem Communicating')
-
-    def load_data_position(self, set_pos=True):
-        """
-        """
-        steps = self._read_motor_position(verbose=False)
-        if steps is not None:
-            pos = self.linear_mapper.map_data(steps)
-            pos = max(self.min, min(self.max, pos))
-            self.update_position = pos
-            if set_pos:
-                self._data_position = pos
-
-            self.debug('Load data position {} {} steps= {}'.format(
-                pos, self.units,
-                steps))
-            return steps
-
-    def timer_factory(self):
-        """
-            reuse timer if possible
-        """
-        timer = self.timer
-
-        func = self._update_position
-        if timer is None:
-            self._not_moving_count = 0
-            timer = Timer(250, func)
-        else:
-            if timer.isActive():
-                self.debug('reusing old timer')
-            else:
-                self._not_moving_count = 0
-                timer = Timer(250, func)
-
-        return timer
-
     def set_homing_required(self, value):
         self.debug('Set homing required: {}'.format(value))
         hd = self._get_homing_persistence()
@@ -417,40 +279,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             self.reset_position(position=self.homing_position)
 
         self.load_data_position()
-
-    def _set_last_known_position(self, pos):
-        self.debug('Set last known position: {}'.format(pos))
-        hd = self._get_homing_persistence()
-        if not hd:
-            hd = {}
-
-        hd['last_known_position'] = pos
-        self._dump_homing_persistence(hd)
-
-    def _get_last_known_position(self):
-        hd = self._get_homing_persistence()
-        if hd:
-            return hd.get('last_known_position')
-
-    @property
-    def homing_path(self):
-        return os.path.join(paths.hidden_dir, '{}-{}-homing.p'.format(self.name, self.address))
-
-    def _dump_homing_persistence(self, hd):
-        p = self.homing_path
-        with open(p, 'w') as wfile:
-            pickle.dump(hd, wfile)
-
-    def _get_homing_persistence(self):
-        p = self.homing_path
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                return pickle.load(rfile)
-
-    def _get_homing_required(self):
-        hd = self._get_homing_persistence()
-        if hd:
-            return hd['homing_required']
 
     def _home_motor(self, progress=None, *args, **kw):
 
@@ -516,10 +344,11 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             return self._hexstr_to_float(pos)
 
     def _test_status_byte(self, status, setbits):
-        b = '{:08b}'.format(int(status[:2], 16))
-        bb = [bool(int(b[7 - si])) for si in setbits]
+        if status:
+            b = '{:08b}'.format(int(status[:2], 16))
+            bb = [bool(int(b[7 - si])) for si in setbits]
 
-        return all(bb)
+            return all(bb)
 
     def _moving(self, verbose=True):
         status_byte = self.read_defined_status(verbose=verbose)
@@ -678,9 +507,6 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         self._execute_hex_command(cmd)
 
-    def _convert_value(self, value):
-        return value
-
     def _float_to_hexstr(self, f, endianness='little'):
         f = max(0, f)
         fmt = '%si' % ('<' if endianness == 'little' else '>')
@@ -777,11 +603,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
     def _get_display_name(self):
         return self.name.capitalize()
 
-    def _get_data_position(self):
-        return self._data_position
 
-    def _set_data_position(self, pos):
-        self.add_consumable((self._set_motor, pos))
 
     # view
     def control_view(self):

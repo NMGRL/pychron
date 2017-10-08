@@ -1,8 +1,16 @@
 CHANGELOG
-============
-2.1.1
-------------------
+=========
+2.6
+---
 ### Features ###
+* added Display Hole to Laser Canvas
+
+### Bug Fixes ###
+
+2.5
+---
+### Features ###
+* moved to DVC
 
 ### Bug Fixes ###
 

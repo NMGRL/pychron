@@ -78,7 +78,7 @@ class ArduinoGPActuator(GPActuator):
         self.repeat_command(cmd, ntries=3, check_val='OK')
         return self._check_actuation(obj, False)
 
-    def get_channel_state(self, obj, verbose=True):
+    def get_channel_state(self, obj, verbose=True, **kw):
         pin = PIN_MAPPING[int(obj.address)]
         indicator_open_pin = pin - 1
         indicator_close_pin = pin - 2

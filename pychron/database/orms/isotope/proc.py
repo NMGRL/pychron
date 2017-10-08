@@ -16,19 +16,16 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     BLOB, Float, Boolean, DateTime, TIMESTAMP, ForeignKey
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
-# ============= local library imports  ==========================
+from sqlalchemy.sql.expression import func
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
-# from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
-from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import INTERPOLATE_TYPES
-
 from util import Base
 
 
@@ -100,6 +97,10 @@ class proc_TagTable(Base):
     omit_series = Column(Boolean)
 
     analyses = relationship('meas_AnalysisTable', backref='tag_item')
+
+    def to_dict(self):
+        return {k: getattr(self, k) for k in ('name', 'omit_ideo', 'omit_series',
+                                              'omit_spec', 'omit_iso')}
 
 
 class proc_ArArHistoryTable(Base, HistoryMixin):
@@ -249,7 +250,7 @@ class proc_BlanksTable(Base, BaseMixin):
 
     analysis_set = relationship('proc_BlanksSetTable',
                                 primaryjoin='proc_BlanksTable.set_id==proc_BlanksSetTable.set_id',
-                                backref = 'blanks',
+                                backref='blanks',
                                 uselist=True)
 
     # analysis_set = relationship('proc_BlanksSetTable')
@@ -312,6 +313,7 @@ class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
                             backref='selected_detector_intercalibration',
                             uselist=False)
 
+
 class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
     ## intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
     ic_analysis_id = foreignkey('meas_AnalysisTable')
@@ -330,9 +332,6 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     set_id = Column(String(40), ForeignKey('proc_DetectorIntercalibrationSetTable.set_id'))
 
 
-
-
-
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
     detector_params = relationship('proc_DetectorParamTable',
                                    backref='history')
@@ -348,11 +347,11 @@ class proc_DetectorParamTable(Base, BaseMixin):
     disc_error = Column(Float)
     detector_id = foreignkey('gen_DetectorTable')
 
-    #@todo: add refmass to detector param table
+    # @todo: add refmass to detector param table
     refmass = 35.9675
 
 
-#     selected = relationship('proc_SelectedHistoriesTable',
+# selected = relationship('proc_SelectedHistoriesTable',
 #                             backref='selected_detector_param',
 #                             uselist=False
 #                             )

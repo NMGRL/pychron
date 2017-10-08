@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Instance
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import Event, Instance
+
+from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+
 
 def intersperse(m, delim):
     """
@@ -30,7 +31,7 @@ def intersperse(m, delim):
          result=[1,'---',2,'---',3]
 
     """
-    m=iter(m)
+    m = iter(m)
     yield next(m)
     for x in m:
         yield delim
@@ -41,21 +42,36 @@ class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
+    use_pane = False
+    inspector_item = Event
+    inspector_item_klass = BaseInspectorItem
+    event_queue = None
+    hittest_threshold = 3
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
         try:
-            pos = self.component.hittest(xy)
+            pos = self.component.hittest(xy, threshold=self.hittest_threshold)
+            # event.window.set_pointer('cross')
         except IndexError:
+            # event.window.set_pointer('arrow')
             return
 
-        if isinstance(pos, tuple):
+        if isinstance(pos, (tuple, list)):
             self.current_position = pos
             self.current_screen = xy
             event.handled = True
         else:
+            # event.window.set_pointer('arrow')
             self.current_position = None
             self.current_screen = None
+
+        if self.event_queue is not None:
+            self.event_queue[id(self)] = self.current_position is not None
+
+        if self.use_pane:
+            self._generate_inspector_event()
+
         self.metadata_changed = True
 
     def assemble_lines(self):
@@ -65,6 +81,23 @@ class InfoInspector(BaseTool):
         self.current_screen = None
         self.current_position = None
         self.metadata_changed = True
+        # event.window.set_pointer('arrow')
+
+    def _generate_inspector_event(self):
+        if self.current_position:
+            txt = '\n'.join(self.assemble_lines())
+        else:
+            txt = ''
+            if self.event_queue:
+                if not any((v for v in self.event_queue.itervalues())):
+                    txt = ''
+                else:
+                    txt = None
+
+        if txt or txt == '':
+            i = self.inspector_item_klass()
+            i.text = txt
+            self.inspector_item = i
 
 
 class InfoOverlay(AbstractOverlay):
@@ -82,13 +115,22 @@ class InfoOverlay(AbstractOverlay):
         self.request_redraw()
 
     def overlay(self, plot, gc, *args, **kw):
+        # with gc:
+        #     self._draw_indicator(gc)
+
         with gc:
             lines = self.tool.assemble_lines()
             if lines:
                 lines = [li for li in lines if li and li.strip()]
                 self._draw_info(plot, gc, lines)
 
-        self.visible = False
+                # self.visible = False
+
+    def _draw_indicator(self, gc):
+        cx, cy = self.tool.current_screen
+        gc.set_fill_color((1, 1, 1, 0.5))
+        gc.arc(cx, cy, self.tool.hittest_threshold, 0, 360)
+        gc.draw_path()
 
     def _draw_info(self, plot, gc, lines):
         if not self.tool.current_screen:
@@ -96,16 +138,17 @@ class InfoOverlay(AbstractOverlay):
 
         x, y = sx, sy = self.tool.current_screen
 
-        gc.set_font(Font('Arial'))
+        size = 14
+        gc.set_font(Font('Arial', size=size))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
         rect_width = max(lws) + 4
-        rect_height = (max(lhs)+2) * len(lhs)
+        rect_height = (max(lhs) + 2) * len(lhs)
 
-        xoffset = 5
-        yoffset = -5
+        xoffset = 15
+        yoffset = -15
         gc.translate_ctm(xoffset, yoffset)
 
         # if the box doesnt fit in window
@@ -116,23 +159,48 @@ class InfoOverlay(AbstractOverlay):
         if x + xoffset + rect_width > x2:
             x = x2 - rect_width - xoffset - 1
 
-        # move down if to tall
-        # if y + yoffset + rect_height > y2:
-        #     y = y2 - rect_height - yoffset -1
+        multi_column = 0
+        h = max(lhs) + 2
+        cheight = self.component.height
+        if rect_height > cheight+5*h:
+            multi_column = 2
+        else:
+            # move up if too tall
+            if y + yoffset - rect_height < self.component.y:
+                y = y2 - yoffset
 
         # if current point within bounds of box, move box to left
         if x < sx:
             x = sx - rect_width - xoffset - 6
 
-        gc.translate_ctm(x, y-rect_height)
-        gc.rect(0, -2, rect_width, rect_height+4)
+        if multi_column:
+            gc.translate_ctm(x, self.component.y)
+            gc.rect(0, -2, multi_column * rect_width, cheight - yoffset)
+        else:
+            gc.translate_ctm(x, y - rect_height)
+            gc.rect(0, -2, rect_width, rect_height + 4)
+
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
 
-        h = max(lhs)+2
-        for i, mi in enumerate(lines[::-1]):
-            gc.set_text_position(0, h * i)
-            gc.show_text(mi)
+        if multi_column:
+            gen = (li for li in lines)
+            for col in xrange(multi_column):
+                i = 0
+                for mi in gen:
+                    if i == 0 and mi == '--------':
+                        continue
+
+                    yi = h * i
+                    if yi > cheight:
+                        break
+                    gc.set_text_position(col * rect_width, y2 - yi)
+                    gc.show_text(mi)
+                    i += 1
+        else:
+            for i, mi in enumerate(lines[::-1]):
+                gc.set_text_position(0, h * i)
+                gc.show_text(mi)
 
     def _tool_changed(self, old, new):
         if old:

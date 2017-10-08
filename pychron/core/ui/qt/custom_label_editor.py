@@ -13,23 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.etsconfig.etsconfig import ETSConfig
-
-ETSConfig.toolkit = 'qt4'
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Color, \
-    Button, Any, Instance, on_trait_change
+from traits.api import HasTraits, Str, Int, Color, Button, Any, Instance, on_trait_change, Bool
 from traitsui.api import View, UItem
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
+from pyface.qt.QtGui import QLabel
 # ============= standard library imports ========================
 import random
-from PySide.QtGui import QLabel
 # ============= local library imports  ==========================
 
 
 class _CustomLabelEditor(Editor):
-#    txtctrl = Any
     color = Any
     bgcolor = Any
     weight = Any
@@ -85,15 +80,16 @@ class _CustomLabelEditor(Editor):
 
     def update_editor(self):
         if self.control:
-        #             print self.object, self.value
             if isinstance(self.value, (str, int, float, long, unicode)):
                 self.control.setText(str(self.value))
-                #            self.control.SetLabel(self.value)
 
     def _create_control(self, parent):
         control = QLabel()
-        color = self.item.color.name()
-        self._set_style(color=color,
+        bgcolor = None
+        if self.item.use_color_background:
+            bgcolor = self.item.bgcolor.name()
+        self._set_style(color=self.item.color.name(),
+                        bgcolor=bgcolor,
                         control=control)
 
         control.setMargin(5)
@@ -120,13 +116,13 @@ class CustomLabel(UItem):
 
     bgcolor = Color('transparent')
     bgcolor_name = Str
-
+    use_color_background = Bool(False)
     weight = Str('normal')
 
-    top_padding = Int(5)
-    bottom_padding = Int(5)
-    left_padding = Int(5)
-    right_padding = Int(5)
+    # top_padding = Int(5)
+    # bottom_padding = Int(5)
+    # left_padding = Int(5)
+    # right_padding = Int(5)
 
     def _size_name_changed(self):
         self.editor.text_size = self.size_name

@@ -19,8 +19,6 @@ from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-# traits.has_traits.CHECK_INTERFACES = 1
-
 
 class IDatastore(Interface):
     def get_greatest_aliquot(self, identifier):

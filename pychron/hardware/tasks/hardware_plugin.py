@@ -15,27 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.extension_point import ExtensionPoint
+from envisage.ui.tasks.task_extension import TaskExtension
+from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.action.action import Action
+from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import HasTraits, Bool, Instance, List, Dict
-# from traitsui.api import View, Item
+
 from pychron.core.helpers.importtools import import_klass
 from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from envisage.extension_point import ExtensionPoint
-# from pychron.managers.hardware_manager import HardwareManager
-# from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
-from pychron.hardware.flag_manager import FlagManager
-# from apptools.preferences.preference_binding import bind_preference
+from pychron.envisage.view_util import open_view
 from pychron.hardware.core.i_core_device import ICoreDevice
-from envisage.ui.tasks.task_factory import TaskFactory
-from pychron.hardware.tasks.hardware_task import HardwareTask
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.action.action import Action
-from pyface.tasks.action.schema_addition import SchemaAddition
+from pychron.hardware.flag_manager import FlagManager
 from pychron.hardware.tasks.hardware_preferences import HardwarePreferencesPane
+from pychron.hardware.tasks.hardware_task import HardwareTask
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+
 class Preference(HasTraits):
     pass
 
@@ -59,7 +59,7 @@ class OpenFlagManagerAction(Action):
         app = event.task.window.application
         man = app.get_service('pychron.hardware.flag_manager.FlagManager')
 
-        app.open_view(man)
+        open_view(man)
 
 
 class HardwarePlugin(BaseTaskPlugin):
@@ -104,22 +104,30 @@ class HardwarePlugin(BaseTaskPlugin):
         # create the hardware proxy server
         ehs = to_bool(self.application.preferences.get('pychron.hardware.enable_hardware_server'))
         if ehs:
-            use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted'))
+            # use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted', True))
+            use_tx = True
             if use_tx:
                 from pychron.tx.server import TxServer
                 rhm = TxServer()
                 node = self.application.preferences.node('pychron.hardware')
-                ports = eval(node.get('ports'))
-                factories = eval(node.get('factories'))
-                for protocol in eval(node.get('pnames')):
+                ports = eval(node.get('ports', '[]'))
+                factories = eval(node.get('factories', '[]'))
+                for protocol in eval(node.get('pnames', '[]')):
                     factory = import_klass(factories[protocol])
                     port = int(ports[protocol])
-                    rhm.add_endpoint(port, factory(self.application))
-                    self.debug('Added Pychron Proxy Service: {}:{}'.format(protocol, port))
 
-            else:
-                from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
-                rhm = RemoteHardwareManager(application=self.application)
+                    exc = rhm.add_endpoint(port, factory(self.application))
+                    if exc:
+                        msg = 'Failed starting Command Server for "{}:{}". Please check that multiple ' \
+                              'instances of pychron are not running on this computer. ' \
+                              'Exception: {}'.format(protocol, port, exc)
+                        self.warning_dialog(msg)
+                    else:
+                        self.info('Added Pychron Proxy Service: {}:{}'.format(protocol, port))
+
+            # else:
+            #     from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
+            #     rhm = RemoteHardwareManager(application=self.application)
 
             self._remote_hardware_manager = rhm
             rhm.bootstrap()
@@ -139,7 +147,7 @@ class HardwarePlugin(BaseTaskPlugin):
                 s.stop_scan()
 
     def _factory(self):
-        task = HardwareTask()
+        task = HardwareTask(application=self.application)
         return task
 
     def _flag_manager_factory(self):

@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
+
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -74,10 +77,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         conn.timestamp = ts
 
     def get_connection(self, appname, devname):
-        with self.session_ctx() as sess:
-            q = sess.query(Connections)
-            q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
-            return self._query_first(q, reraise=True)
+        q = self.session.query(Connections)
+        q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+        return self._query_first(q, reraise=True)
 
     def update_experiment(self, hashid, **kw):
         exp = self.get_experiment(hashid)
@@ -90,12 +92,14 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def add_measurement(self, dev, name, value, unit):
         pinfo = self.get_process_info(dev, name)
-        if not pinfo:
-            pinfo = self.add_process_info(dev, name, unit)
-
-        measurement = Measurement(value=value)
-        measurement.process = pinfo
-        return self._add_item(measurement)
+        # if not pinfo:
+        #     pinfo = self.add_process_info(dev, name, unit)
+        if pinfo:
+            measurement = Measurement(value=value)
+            measurement.process = pinfo
+            return self._add_item(measurement)
+        else:
+            self.warning('ProcessInfo={} Device={} not available'.format(name, dev))
 
     def add_process_info(self, dev, name, unit):
         self.debug('add process info {} {} {}'.format(dev, name, unit))
@@ -129,18 +133,62 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     #         return self._query_one(q)
 
     def get_migrate_version(self, **kw):
-        with self.session_ctx() as sess:
-            q = sess.query(Version)
-            q = q.limit(1)
-            mv = q.one()
-            return mv
+        q = self.session.query(Version)
+        q = q.limit(1)
+        mv = q.one()
+        return mv
 
     def get_device(self, name):
         return self._retrieve_item(Device, name, key='name')
 
     def get_process_info(self, dev, name):
-        dev = self.get_device(dev)
-        if dev:
-            return next((p for p in dev.processes if p.name == name), None)
+        q = self.session.query(ProcessInfo)
+        q = q.join(Device)
+        q = q.filter(Device.name == dev)
+        q = q.filter(ProcessInfo.name == name)
+        return self._query_one(q)
+
+    def get_latest_lab_temperatures(self):
+        return self._get_latest('Temp.')
+
+    def get_latest_lab_humiditys(self):
+        return self._get_latest('Hum.')
+
+    def get_latest_lab_pneumatics(self):
+        return self._get_latest('Pressure')
+
+    def _get_latest(self, tag):
+        values = []
+        with self.session_ctx(use_parent_session=False) as sess:
+            q = sess.query(ProcessInfo)
+            q = q.filter(ProcessInfo.name.contains(tag))
+            ps = self._query_all(q)
+
+            for p in ps:
+                q = sess.query(Measurement)
+                q = q.filter(Measurement.process_info_id == p.id)
+                q = q.filter(Measurement.pub_date > datetime.now() - timedelta(hours=24))
+                q = q.order_by(Measurement.pub_date.desc())
+
+                record = self._query_first(q)
+                if record:
+                    values.append({'name': p.name,
+                                   'title': p.graph_title,
+                                   'pub_date': record.pub_date.isoformat(),
+                                   'value': record.value,
+                                   'device': p.device.name})
+
+        return values
+
+    def get_measurements(self, device, name, low=None, high=None):
+        q = self.session.query(Measurement)
+        q = q.join(ProcessInfo, Device)
+        q = q.filter(Device.name == device)
+        q = q.filter(ProcessInfo.name == name)
+
+        if low:
+            q = q.filter(Measurement.pub_date >= low)
+
+        return self._query_all(q)
 
 # ============= EOF =============================================

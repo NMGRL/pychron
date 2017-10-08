@@ -19,11 +19,11 @@
 import re
 # ============= local library imports  ==========================
 # match .current_point
-CP_REGEX = re.compile(r'[\w\d]+\.(current|cur)')
+CP_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.(current|cur)')
 # match .std_dev
-STD_REGEX = re.compile(r'[\w\d]+\.(std_dev|sd|stddev)')
+STD_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.(std_dev|sd|stddev)')
 # match .inactive
-ACTIVE_REGEX = re.compile(r'[\w\d]+\.inactive')
+ACTIVE_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.inactive')
 
 # Functions
 def make_func_regex(r):
@@ -60,7 +60,7 @@ PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
-DEFLECTION_REGEX = re.compile(r'[\w\d]+\.deflection')
+DEFLECTION_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.deflection')
 
 RATIO_REGEX = re.compile(r'[A-Za-z]{1,2}\d{1,2}/[A-Za-z]{1,2}\d{1,2}')
 
@@ -70,6 +70,10 @@ PRESSURE_REGEX = re.compile(r'\w+\.\w+\.pressure')
 DEVICE_REGEX = re.compile(r'device\.\w+')
 
 INTERPOLATE_REGEX = re.compile(r'\$\w+')
+
+
+EXTRACTION_STR_PERCENT_REGEX = re.compile(r'\d+%(,\d+%)*$')
+EXTRACTION_STR_ABS_REGEX = re.compile(r'\d+(\.\d+)*(,\d+(\.\d+)*)*$')
 # ============= EOF =============================================
 
 

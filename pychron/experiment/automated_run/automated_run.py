@@ -15,38 +15,41 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long
-# ============= standard library imports ========================
+import ast
 import os
 import re
 import time
-import ast
-import yaml
 import weakref
 from itertools import groupby
+from pprint import pformat
 from threading import Thread, Event as TEvent
-from uncertainties import ufloat, nominal_value, std_dev
-from numpy import Inf
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import get_path
-from pychron.core.helpers.filetools import add_extension
-# from pychron.core.codetools.memory_usage import mem_log
 
+import yaml
+from numpy import Inf, polyfit, linspace, polyval
+from traits.api import Any, Str, List, Property, \
+    Event, Instance, Bool, HasTraits, Float, Int, Long
+from uncertainties import ufloat, nominal_value, std_dev
+
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import get_path
+from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.preference_binding import set_preference
+from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
+    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
+    QueueModificationConditional
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
+from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
-
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS
+    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
+from pychron.spectrometer.base_spectrometer import NoIntensityChange
 
 DEBUG = False
 
@@ -115,9 +118,10 @@ class AutomatedRun(Loggable):
     peak_hop_collector = Instance('pychron.experiment.automated_run.peak_hop_collector.PeakHopCollector')
     persister = Instance('pychron.experiment.automated_run.persistence.AutomatedRunPersister', ())
     dvc_persister = Instance('pychron.dvc.dvc_persister.DVCPersister')
+    labspy_client = Instance('pychron.labspy.client.LabspyClient')
 
     xls_persister = Instance('pychron.experiment.automated_run.persistence.ExcelPersister')
-    system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
+    # system_health = Instance('pychron.experiment.health.series.SystemHealthSeries')
 
     collector = Property
 
@@ -126,7 +130,7 @@ class AutomatedRun(Loggable):
     runner = Any
     monitor = Any
     plot_panel = Any
-    arar_age = Instance('pychron.processing.arar_age.ArArAge')
+    isotope_group = Instance('pychron.processing.isotope_group.IsotopeGroup')
 
     spec = Any
     runid = Str
@@ -141,11 +145,14 @@ class AutomatedRun(Loggable):
     is_peak_hop = Bool(False)
 
     truncated = Bool
-    state = Str('not run')
+    # state = Str('not run')
     measuring = Bool(False)
     dirty = Bool(False)
     update = Event
+
+    use_db_persistence = Bool(True)
     use_dvc_persistence = Bool(False)
+    use_xls_persistence = Bool(False)
 
     measurement_script = Instance('pychron.pyscripts.measurement_pyscript.MeasurementPyScript')
     post_measurement_script = Instance('pychron.pyscripts.extraction_line_pyscript.ExtractionPyScript')
@@ -156,6 +163,9 @@ class AutomatedRun(Loggable):
     truncation_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
+    modification_conditionals = List
+
+    tripped_conditional = Instance('pychron.experiment.conditional.conditional.BaseConditional')
 
     peak_center = None
     coincidence_scan = None
@@ -165,30 +175,48 @@ class AutomatedRun(Loggable):
     _peak_center_detectors = List
     _loaded = False
     _measured = False
+    _aborted = False
     _alive = Bool(False)
     _truncate_signal = Bool
     _equilibration_done = False
-    _integration_seconds = Float(1.0)
+    _integration_seconds = Float(1.1)
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
 
     use_peak_center_threshold = Bool
-    peak_center_threshold1 = Int(10)
-    peak_center_threshold2 = Int(3)
+    # peak_center_threshold1 = Int(10)
+    peak_center_threshold = Float(3)
     peak_center_threshold_window = Int(10)
 
     persistence_spec = Instance(PersistenceSpec)
 
+    experiment_type = Str(AR_AR)
+    laboratory = Str
+    instrument_name = Str
+
     intensity_scalar = Float
     _intensities = None
 
-    def bind_preferences(self):
-        prefid = 'pychron.experiment'
-        bind_preference(self, 'use_peak_center_threshold', '{}.use_peak_center_threshold'.format(prefid))
-        bind_preference(self, 'peak_center_threshold1', '{}.peak_center_threshold1'.format(prefid))
-        bind_preference(self, 'peak_center_threshold2', '{}.peak_center_threshold2'.format(prefid))
-        bind_preference(self, 'peak_center_threshold_window', '{}.peak_center_threshold_window'.format(prefid))
+    log_path = Str
+
+    failed_intensity_count_threshold = Int(3)
+
+    def set_preferences(self, preferences):
+        self.debug('set preferences')
+
+        for attr, cast in (('experiment_type', str),
+                           ('laboratory', str),
+                           ('instrument_name', str),
+                           ('use_peak_center_threshold', to_bool),
+                           ('peak_center_threshold', float),
+                           ('peak_center_threshold_window', int),
+                           ('failed_intensity_count_threshold', int)):
+            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
+
+        self.persister.set_preferences(preferences)
+        self.multi_collector.console_set_preferences(preferences, 'pychron.experiment')
+        self.peak_hop_collector.console_set_preferences(preferences, 'pychron.experiment')
 
     # ===============================================================================
     # pyscript interface
@@ -202,34 +230,30 @@ class AutomatedRun(Loggable):
 
             return self._intensities['signals'][idx]
 
-    def py_generate_ic_mftable(self, detectors, refiso):
-        return self._generate_ic_mftable(detectors, refiso)
+    def py_set_intensity_scalar(self, v):
+        self.intensity_scalar = v
+        return True
+
+    def py_set_isotope_group(self, name):
+        if self.plot_panel:
+            self.plot_panel.add_isotope_graph(name)
+
+    def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None, update_existing=True):
+        return self._generate_ic_mftable(detectors, refiso, peak_center_config, update_existing)
 
     def py_whiff(self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0):
         return self._whiff(ncounts, conditionals, starttime, starttime_offset, series, fit_series)
 
     def py_reset_data(self):
         self.debug('reset data')
-        self.persister.pre_measurement_save()
         self._persister_action('pre_measurement_save')
 
-    def _update_persister_spec(self, **kw):
-        self.persistence_spec.trait_set(**kw)
+    def py_send_spectrometer_configuration(self):
+        self.spectrometer_manager.spectrometer.send_configuration()
+        self.spectrometer_manager.spectrometer.clear_cached_config()
 
-    def _persister_action(self, func, *args, **kw):
-        getattr(self.persister, func)(*args, **kw)
-        for i, p in enumerate((self.xls_persister, self.dvc_persister)):
-            if p is None:
-                continue
-
-            try:
-                getattr(p, func)(*args, **kw)
-            except BaseException, e:
-                self.warning('{} persister action failed. {} func={}, excp={}'.format(i, p.__class__.__name__,
-                                                                                      func, e))
-                import traceback
-
-                traceback.print_exc()
+    def py_reload_mftable(self):
+        self.spectrometer_manager.spectrometer.magnet.reload_mftable()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -240,10 +264,10 @@ class AutomatedRun(Loggable):
     def py_define_detectors(self, isotope, det):
         self._define_detectors(isotope, det)
 
-    def py_position_magnet(self, pos, detector, dac=False):
+    def py_position_magnet(self, pos, detector, use_dac=False):
         if not self._alive:
             return
-        self._set_magnet_position(pos, detector, dac=dac)
+        self._set_magnet_position(pos, detector, use_dac=use_dac)
 
     def py_activate_detectors(self, dets, peak_center=False):
         if not self._alive:
@@ -259,7 +283,7 @@ class AutomatedRun(Loggable):
             self._activate_detectors(dets)
 
     def py_set_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
         if not fits:
             fits = self._get_default_fits()
         elif len(fits) == 1:
@@ -267,6 +291,7 @@ class AutomatedRun(Loggable):
         else:
             fits = dict([f.split(':') for f in fits])
 
+        # print 'set fits {}'.format(isotopes)
         for k, iso in isotopes.iteritems():
             try:
                 fi = fits[k]
@@ -278,7 +303,7 @@ class AutomatedRun(Loggable):
             self.debug('set "{}" to "{}"'.format(k, fi))
 
     def py_set_baseline_fits(self, fits):
-        isotopes = self.arar_age.isotopes
+        isotopes = self.isotope_group.isotopes
 
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
@@ -316,8 +341,9 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             self.plot_panel.is_baseline = False
+            self.plot_panel.show_isotope_graph()
 
-        self.persister.build_tables(group, self._active_detectors)
+        self.persister.build_tables(group, self._active_detectors, ncounts)
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -356,6 +382,7 @@ class AutomatedRun(Loggable):
                                delay=delay,
                                close_inlet=close_inlet,
                                do_post_equilibration=do_post_equilibration))
+        t.setDaemon(True)
         t.start()
 
         return evt
@@ -364,19 +391,22 @@ class AutomatedRun(Loggable):
         if block:
             return self._sniff(ncounts, starttime, starttime_offset, series)
         else:
-            t = Thread(target=self._sniff, args=(ncounts, starttime, starttime_offset, series))
+            t = Thread(target=self._sniff,
+                       name='sniff',
+                       args=(ncounts, starttime, starttime_offset, series))
+            t.setDaemon(True)
             t.start()
             return True
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, fit_series=0, settling_time=4):
+                     series=0, fit_series=0, settling_time=4, use_dac=False):
 
         if not self._alive:
             return
 
         gn = 'baseline'
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
 
         ion = self.ion_optics_manager
 
@@ -385,7 +415,7 @@ class AutomatedRun(Loggable):
                 if detector is None:
                     detector = self._active_detectors[0].name
 
-                ion.position(mass, detector)
+                ion.position(mass, detector, use_dac=use_dac)
 
                 msg = 'Delaying {}s for detectors to settle'.format(settling_time)
                 self.info(msg)
@@ -397,6 +427,7 @@ class AutomatedRun(Loggable):
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.is_baseline = True
+            self.plot_panel.show_baseline_graph()
 
         self.multi_collector.is_baseline = True
         self.multi_collector.fit_series_idx = fit_series
@@ -408,6 +439,7 @@ class AutomatedRun(Loggable):
             sc = self.experiment_executor.baseline_color
         else:
             sc = 'green'
+
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime,
@@ -416,8 +448,8 @@ class AutomatedRun(Loggable):
                                check_conditionals, sc)
 
         if self.plot_panel:
-            bs = dict([(iso.name, iso.baseline.uvalue) for iso in
-                       self.arar_age.isotopes.values()])
+            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
+                       self.isotope_group.isotopes.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
 
@@ -439,23 +471,31 @@ class AutomatedRun(Loggable):
 
         key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
-        hops = sorted(hops, key=key)
-        a = self.arar_age
+
+        map_mass = self.spectrometer_manager.spectrometer.map_mass
+        hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
+
+        hops = sorted(hops, key=key, reverse=True)
+        a = self.isotope_group
         g = self.plot_panel.isotope_graph
+        g.clear()
+        self.measurement_script.reset_series()
 
         _, pb = self.get_previous_blanks()
         pbs = self.get_previous_baselines()
         correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
                              not self.spec.analysis_type.startswith('background'))
-        for iso, dets in groupby(hops, key=key):
+
+        # print hops
+        for mass, dets in groupby(hops, key=key):
             dets = list(dets)
-            # print iso, dets, dets[0][2]
-            if dets[0][2]:
+            iso = dets[0][1]
+            if dets[0][3]:
                 continue
 
             add_detector = len(dets) > 1
-
-            for _, di, _ in dets:
+            # print dets
+            for _, _, di, _ in dets:
                 self._add_active_detector(di)
                 name = iso
                 if iso in a.isotopes:
@@ -466,17 +506,23 @@ class AutomatedRun(Loggable):
                     ii = a.isotope_factory(name=iso, detector=di)
                     if correct_for_blank:
                         if iso in pb:
-                            b = pb[iso]
+                            _, b = pb[iso]
                             ii.set_blank(nominal_value(b), std_dev(b))
                     if iso in pbs:
-                        b = pbs[iso]
+                        _, b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
                 plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
+                # print 'get plot {}, {}{}. plot={}'.format(iso, iso, di, plot)
                 if plot is None:
-                    plot = self.plot_panel.new_plot()
+                    plots = self.plot_panel.new_plot()
+                    plot = plots['isotope']
                     pid = g.plots.index(plot)
-                    # print 'adding', pid
+
+                    # this is a hack
+                    # add a placeholder scatter plot. normally this would have been the sniff plot
+                    # but g.clear removed all plots
+                    # g.new_series(type='scatter', plotid=pid)
                     g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 if add_detector:
@@ -484,6 +530,9 @@ class AutomatedRun(Loggable):
 
                 a.isotopes[name] = ii
                 plot.y_axis.title = name
+
+        # for p in self.plot_panel.isotope_graph.plots:
+        #     print p.y_axis.title
 
         self.plot_panel.analysis_view.load(self)
 
@@ -503,19 +552,20 @@ class AutomatedRun(Loggable):
             self.plot_panel.trait_set(is_baseline=is_baseline,
                                       _ncycles=cycles,
                                       hops=hops)
+            self.plot_panel.show_isotope_graph()
 
         # required for mass spec
         self.persister.save_as_peak_hop = True
 
         self.is_peak_hop = True
 
-        self.persister.build_peak_hop_tables(group, hops)
-        writer = self.persister.get_data_writer(group)
+        # self.persister.build_peak_hop_tables(group, hops)
+        # writer = self.persister.get_data_writer(group)
 
         check_conditionals = True
         self._add_conditionals()
 
-        ret = self._peak_hop(cycles, counts, hops, group, writer,
+        ret = self._peak_hop(cycles, counts, hops, group,
                              starttime, starttime_offset, series,
                              check_conditionals)
 
@@ -524,26 +574,41 @@ class AutomatedRun(Loggable):
 
         return ret
 
-    def py_peak_center(self, detector=None, save=True, isotope=None, check_intensity=True,
-                       directions='Increase', **kw):
+    def py_peak_center(self, detector=None, save=True, isotope=None,
+                       directions='Increase', config_name='default',
+                       check_intensity=None,
+                       peak_center_threshold=None,
+                       peak_center_threshold_window=None,
+                       **kw):
         if not self._alive:
             return
+
+        if check_intensity is None:
+            check_intensity = self.use_peak_center_threshold
+        if peak_center_threshold is None:
+            peak_center_threshold = self.peak_center_threshold
+        if peak_center_threshold_window is None:
+            peak_center_threshold_window = self.peak_center_threshold_window
 
         ion = self.ion_optics_manager
 
         if ion is not None:
-            if self.arar_age and check_intensity and self.use_peak_center_threshold:
-                iso = self.arar_age.get_isotope(isotope)
-                v = iso.get_intensity()
-                if v < self.peak_center_threshold1:
-                    self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
-                    ys = iso.ys[-self.peak_center_threshold_window:]
+            if self.isotope_group and check_intensity:
+                iso = self.isotope_group.get_isotope(isotope, detector)
+                if iso:
+                    # v = iso.get_intensity()
+                    # if v < self.peak_center_threshold1:
+                    #     self.debug('peak center: {}={}<{}'.format(isotope, v, self.peak_center_threshold1))
+                    ys = iso.ys[-peak_center_threshold_window:]
                     ym = ys.mean()
-                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold2))
-                    if ym < self.peak_center_threshold2:
+                    self.debug('peak center: mean={} threshold={}'.format(ym, self.peak_center_threshold))
+                    if ym < peak_center_threshold:
                         self.warning(
-                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold2))
+                            'Skipping peak center. intensities to small. {}<{}'.format(ym, self.peak_center_threshold))
                         return
+                else:
+                    self.debug('No isotope="{}", Det="{}" in isotope group. {}'.format(isotope, detector,
+                                                                                       self.isotope_group.isotope_keys))
 
             if not self.plot_panel:
                 p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
@@ -558,15 +623,16 @@ class AutomatedRun(Loggable):
                                        plot_panel=self.plot_panel,
                                        isotope=isotope,
                                        directions=directions,
+                                       config_name=config_name,
+                                       use_configuration_dac=False,
                                        **kw)
             self.peak_center = pc
             self.debug('do peak center. {}'.format(pc))
 
             ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter', timeout=300)
             self._update_persister_spec(peak_center=pc)
-            # if pc.result:
-            #     self._persister_action('save_peak_center_to_file', pc)
-            # self.persister.save_peak_center_to_file(pc)
+            if pc.result:
+                self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         pass
@@ -582,7 +648,8 @@ class AutomatedRun(Loggable):
         """
         cancel experiment if teststr evaluates to true
         """
-        self._conditional_appender('cancelation', kw, CancelationConditional)
+        self._conditional_appender('cancelation', kw, CancelationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_action(self, **kw):
         """
@@ -590,7 +657,8 @@ class AutomatedRun(Loggable):
 
         perform a specified action if teststr evaluates to true
         """
-        self._conditional_appender('action', kw, ActionConditional)
+        self._conditional_appender('action', kw, ActionConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_termination(self, **kw):
         """
@@ -598,7 +666,8 @@ class AutomatedRun(Loggable):
 
         terminate run and continue experiment if teststr evaluates to true
         """
-        self._conditional_appender('termination', kw, TerminationConditional)
+        self._conditional_appender('termination', kw, TerminationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_add_truncation(self, **kw):
         """
@@ -609,7 +678,8 @@ class AutomatedRun(Loggable):
         attr='', comp='',start_count=50, frequency=5,
         abbreviated_count_ratio=1.0
         """
-        self._conditional_appender('truncation', kw, TruncationConditional)
+        self._conditional_appender('truncation', kw, TruncationConditional, level=RUN,
+                                   location=self.measurement_script.name)
 
     def py_clear_conditionals(self):
         self.debug('$$$$$ Clearing conditionals')
@@ -630,9 +700,38 @@ class AutomatedRun(Loggable):
     def py_clear_actions(self):
         self.action_conditionals = []
 
+    def py_clear_modifications(self):
+        self.modification_conditionals = []
+
     # ===============================================================================
     # run termination
     # ===============================================================================
+    def abort_run(self, do_post_equilibration=True):
+        self._aborted = True
+        self.debug('Abort run do_post_equilibration={}'.format(do_post_equilibration))
+        # self.multi_collector.canceled = True
+        # self.collector.canceled = True
+
+        # self.aliquot='##'
+        self._persister_action('trait_set', save_enabled=False)
+
+        for s in ('extraction', 'measurement'):
+            script = getattr(self, '{}_script'.format(s))
+            if script is not None:
+                script.abort()
+
+        if self.peak_center:
+            self.debug('cancel peak center')
+            self.peak_center.cancel()
+
+        self.do_post_termination(do_post_equilibration=do_post_equilibration)
+
+        self.finish()
+
+        if self.spec.state != 'not run':
+            self.spec.state = 'aborted'
+            self.experiment_executor.refresh_table()
+
     def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
         terminate the measurement script immediately
@@ -642,6 +741,8 @@ class AutomatedRun(Loggable):
         don't save run
 
         """
+
+        self.debug('Cancel run state={} do_post_equilibration={}'.format(state, do_post_equilibration))
         # self.multi_collector.canceled = True
         self.collector.canceled = True
 
@@ -662,8 +763,9 @@ class AutomatedRun(Loggable):
         self.finish()
 
         if state:
-            if self.state != 'not run':
-                self.state = state
+            if self.spec.state != 'not run':
+                self.spec.state = state
+                self.experiment_executor.refresh_table()
 
     def truncate_run(self, style='normal'):
         """
@@ -686,12 +788,16 @@ class AutomatedRun(Loggable):
             # self.multi_collector.set_truncated()
             self.collector.set_truncated()
             self.truncated = True
-            self.state = 'truncated'
+            self.spec.state = 'truncated'
+            self.experiment_executor.refresh_table()
 
     # ===============================================================================
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
+
+        self.tripped_conditional = tripped
+
         self.experiment_executor.show_conditionals(active_run=self,
                                                    tripped=tripped,
                                                    kind='live')
@@ -705,11 +811,12 @@ class AutomatedRun(Loggable):
             self.measurement_script = None
 
         if self.extraction_script:
+            self.extraction_script.automated_run = None
+            self.extraction_script.runner = None
             self.extraction_script = None
-        if self.post_equilibration_script:
-            self.post_equilibration_script = None
-        if self.post_measurement_script:
-            self.post_measurement_script = None
+
+        self.post_equilibration_script = None
+        self.post_measurement_script = None
 
         if self.experiment_executor:
             self.experiment_executor.automated_run = None
@@ -719,25 +826,49 @@ class AutomatedRun(Loggable):
             self.collector.data_generator = None
             self.collector.data_writer = None
             self.collector.measurement_script = None
+            self.collector.console_display = None
 
         if self.plot_panel:
             self.plot_panel.info_func = None
             self.plot_panel.automated_run = None
-            self.plot_panel.arar_age = None
+            self.plot_panel.isotope_group = None
 
         if self.monitor:
             self.monitor.automated_run = None
 
-        if self.arar_age:
-            self.arar_age = None
+        if self.isotope_group:
+            self.isotope_group = None
 
         if self.persistence_spec:
             self.persistence_spec.spec = None
-            self.persistence_spec.arar_age = None
+            self.persistence_spec.isotope_group = None
 
-        self._persister_action('trait_set', persistence_spec=None)
+        self._persister_action('trait_set', persistence_spec=None, monitor=None)
+
+        self.monitor = None
         self.spec = None
+
+        self.extraction_line_manager = None
+        self.spectrometer_manager = None
+        # self.persister = None
+        # self.dvc_persister = None
+        # self.xls_persister = None
+        self.ion_optics_manager = None
+        self.runner = None
+        self.system_health = None
         # self.py_clear_conditionals()
+
+        # self.experiment_executor.tracker.create_snapshot()
+        # self.experiment_executor.tracker.stats.print_summary()
+        self.experiment_executor = None
+
+        # from pympler.refbrowser import ConsoleBrowser
+        #
+        # def output_function(o):
+        #     return str(type(o))
+        #
+        # cb = ConsoleBrowser(self, maxdepth=2, str_func=output_function)
+        # cb.print_tree()
 
     def finish(self):
         self.debug('----------------- finish -----------------')
@@ -745,8 +876,10 @@ class AutomatedRun(Loggable):
         if self.monitor:
             self.monitor.stop()
 
-        if self.state not in ('not run', 'canceled', 'success', 'truncated'):
-            self.state = 'failed'
+        if self.spec:
+            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
+                self.spec.state = 'failed'
+                self.experiment_executor.refresh_table()
 
         self.stop()
 
@@ -757,7 +890,9 @@ class AutomatedRun(Loggable):
 
     def start(self):
         self.debug('----------------- start -----------------')
+        self._aborted = False
         self.persistence_spec = PersistenceSpec()
+
         for p in (self.persister, self.xls_persister, self.dvc_persister):
             if p is not None:
                 p.per_spec = self.persistence_spec
@@ -824,6 +959,17 @@ class AutomatedRun(Loggable):
 
         return v
 
+    def get_ratio(self, r, non_ic_corr=True):
+        if self.isotope_group:
+            return self.isotope_group.get_ratio(r, non_ic_corr=non_ic_corr)
+
+    def get_reference_peakcenter_result(self):
+        if self.persistence_spec:
+            pc = self.persistence_spec.peak_center
+            if pc:
+                rn = pc.reference_detector.name
+                return pc.get_result(rn)
+
     def get_device_value(self, dev_name):
         return self.extraction_line_manager.get_device_value(dev_name)
 
@@ -846,11 +992,14 @@ class AutomatedRun(Loggable):
         return self._set_magnet_position(*args, **kw)
 
     def set_deflection(self, det, defl):
-        self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
+        # self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
+        # spectrometer = self.spectrometer_manager.spectrometer
+        # spectrometer.set_deflection(det, defl)
+        self.spectrometer_manager.set_deflection(det, defl)
 
     def protect_detector(self, det, protect):
-        protect = 'On' if protect else 'Off'
-        self.py_set_spectrometer_parameter('ProtectDetector', '{},{}'.format(det, protect))
+        self.spectrometer_manager.protect_detector(det, protect)
+        # self.py_set_spectrometer_parameter('ProtectDetector', '{},{}'.format(det, protect))
 
     def wait(self, t, msg=''):
         if self.experiment_executor:
@@ -897,36 +1046,54 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-    def post_measurement_save(self):
-        if self._measured:
-            if self.spectrometer_manager:
-                # get current spectrometer values
-                # maybe this should be done during pre_measurement_save
-                # self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                # defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                # gains=self.spectrometer_manager.make_gains_list(),
-                #                          active_detectors=self._active_detectors)
-                self._update_persister_spec(spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                                            defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                            gains=self.spectrometer_manager.make_gains_dict(),
-                                            active_detectors=self._active_detectors)
+    def post_finish(self):
+        if self.use_dvc_persistence:
+            if self.log_path:
+                self.dvc_persister.save_run_log_file(self.log_path)
+            else:
+                self.debug('no log path to save')
+
+    def save(self):
+        self.debug('post measurement save measured={} aborted={}'.format(self._measured, self._aborted))
+        if self._measured and not self._aborted:
+            # set filtering
+            self._set_filtering()
+
+            conds = (self.termination_conditionals, self.truncation_conditionals,
+                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
+
+            env = self._get_environmentals()
+
+            self._update_persister_spec(active_detectors=self._active_detectors,
+                                        conditionals=[c for cond in conds for c in cond],
+                                        tripped_conditional=self.tripped_conditional,
+                                        # laboratory=self.laboratory,
+                                        # instrument_name = self.instrument_name,
+                                        **env)
+
+            # self.spec.laboratory = self.laboratory
+            # self.spec.instrument_name= self.instrument_name
+            # add a result to the run spec.
+            self.spec.new_result(self)
 
             # save to database
-            self._persister_action('post_measurement_save')
+            self._persister_save_action('post_measurement_save')
 
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
 
             # save analysis. don't cancel immediately
-            ret = None
-            if self.system_health:
-                ret = self.system_health.add_analysis(self)
+            # ret = None
+            # if self.system_health:
+            #     ret = self.system_health.add_analysis(self)
 
             if self.persister.secondary_database_fail:
                 self.experiment_executor.cancel(cancel_run=True,
                                                 msg=self.persister.secondary_database_fail)
             else:
                 return True
+        else:
+            return True
 
     def get_previous_blanks(self):
         blanks = None
@@ -935,11 +1102,11 @@ class AutomatedRun(Loggable):
             pid, blanks, runid = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
-            blanks = dict(Ar40=ufloat(0, 0),
-                          Ar39=ufloat(0, 0),
-                          Ar38=ufloat(0, 0),
-                          Ar37=ufloat(0, 0),
-                          Ar36=ufloat(0, 0))
+            blanks = dict(Ar40=('', ufloat(0, 0)),
+                          Ar39=('', ufloat(0, 0)),
+                          Ar38=('', ufloat(0, 0)),
+                          Ar37=('', ufloat(0, 0)),
+                          Ar36=('', ufloat(0, 0)), )
 
         return pid, blanks
 
@@ -953,11 +1120,11 @@ class AutomatedRun(Loggable):
             baselines = self.experiment_executor.get_prev_baselines()
 
         if not baselines:
-            baselines = dict(Ar40=ufloat(0, 0),
-                             Ar39=ufloat(0, 0),
-                             Ar38=ufloat(0, 0),
-                             Ar37=ufloat(0, 0),
-                             Ar36=ufloat(0, 0))
+            baselines = dict(Ar40=('', ufloat(0, 0)),
+                             Ar39=('', ufloat(0, 0)),
+                             Ar38=('', ufloat(0, 0)),
+                             Ar37=('', ufloat(0, 0)),
+                             Ar36=('', ufloat(0, 0)), )
 
         return baselines
 
@@ -985,18 +1152,26 @@ class AutomatedRun(Loggable):
         auto_save_detector_ic = queue.auto_save_detector_ic
         self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(auto_save_detector_ic))
 
-        ext_name, ext_blob, ext_path = '', '', ''
+        ext_name, ext_blob = '', ''
         if self.extraction_script:
             ext_name = self.extraction_script.name
             ext_blob = self._assemble_extraction_blob()
-            # ext_path = self.extraction_script.script_path()
 
-        ms_name, ms_blob, ms_path, sfods, bsfods = '', '', '', {}, {}
+        ms_name, ms_blob, sfods, bsfods = '', '', {}, {}
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
-            # ms_path = self.measurement_script.script_path()
             sfods, bsfods = self._get_default_fods()
+
+        pe_name, pe_blob = '', ''
+        if self.post_equilibration_script:
+            pe_name = self.post_equilibration_script.name
+            pe_blob = self.post_equilibration_script.toblob()
+
+        pm_name, pm_blob = '', ''
+        if self.post_measurement_script:
+            pm_name = self.post_measurement_script.name
+            pm_blob = self.post_measurement_script.toblob()
 
         ext_pos = []
         if self.extraction_script:
@@ -1004,7 +1179,7 @@ class AutomatedRun(Loggable):
 
         self._update_persister_spec(save_as_peak_hop=False,
                                     run_spec=self.spec,
-                                    arar_age=self.arar_age,
+                                    isotope_group=self.isotope_group,
                                     positions=self.spec.get_position_list(),
                                     auto_save_detector_ic=auto_save_detector_ic,
                                     extraction_positions=ext_pos,
@@ -1015,13 +1190,20 @@ class AutomatedRun(Loggable):
                                     extraction_blob=ext_blob,
                                     measurement_name=ms_name,
                                     measurement_blob=ms_blob,
+                                    post_measurement_name=pm_name,
+                                    post_measurement_blob=pm_blob,
+                                    post_equilibration_name=pe_name,
+                                    post_equilibration_blob=pe_blob,
                                     previous_blank_id=pb[0],
                                     previous_blanks=pb[1],
                                     previous_blank_runid=pb[2],
                                     runscript_name=script_name,
                                     runscript_blob=script_blob,
                                     signal_fods=sfods,
-                                    baseline_fods=bsfods)
+                                    baseline_fods=bsfods,
+                                    intensity_scalar=self.intensity_scalar,
+                                    laboratory=self.laboratory,
+                                    instrument_name=self.instrument_name)
 
     # ===============================================================================
     # doers
@@ -1039,17 +1221,19 @@ class AutomatedRun(Loggable):
         # self.persister.pre_extraction_save()
 
         self.info_color = EXTRACTION_COLOR
-        msg = 'Extraction Started {}'.format(self.extraction_script.name)
+        script = self.extraction_script
+        msg = 'Extraction Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        self.state = 'extraction'
+        self.spec.state = 'extraction'
+        self.experiment_executor.refresh_table()
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
-        self.extraction_script.runner = self.runner
-        self.extraction_script.manager = self.experiment_executor
-        self.extraction_script.set_run_identifier(self.runid)
+        script.runner = self.runner
+        script.manager = self.experiment_executor
+        script.set_run_identifier(self.runid)
 
         syn_extractor = None
-        if self.extraction_script.syntax_ok(warn=False):
+        if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction:
                 p = os.path.join(paths.scripts_dir, 'syn_extraction', self.spec.syn_extraction)
                 p = add_extension(p, '.yaml')
@@ -1057,7 +1241,7 @@ class AutomatedRun(Loggable):
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 
-                    dur = self.extraction_script.calculate_estimated_duration(force=True)
+                    dur = script.calculate_estimated_duration(force=True)
                     syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
                                                            path=p,
                                                            extraction_duration=dur)
@@ -1066,22 +1250,45 @@ class AutomatedRun(Loggable):
                     self.warning(
                         'Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
         else:
-            self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
+            self.warning('Invalid script syntax for "{}"'.format(script.name))
             return
-        if self.extraction_script.execute():
+
+        try:
+            ex_result = script.execute()
+        except ExtractionException, e:
+            ex_result = False
+            self.debug('extraction exception={}'.format(e))
+
+        if ex_result:
             if syn_extractor:
                 syn_extractor.stop()
 
             # report the extraction results
-            r = self.extraction_script.output_achieved()
-            for ri in r:
-                self.info(ri)
+            ach, req = script.output_achieved()
+            self.info('Requested Output= {:0.3f}'.format(req))
+            self.info('Achieved Output=  {:0.3f}'.format(ach))
 
-            rblob = self.extraction_script.get_response_blob()
-            oblob = self.extraction_script.get_output_blob()
-            snapshots = self.extraction_script.snapshots
+            rblob = script.get_response_blob()
+            oblob = script.get_output_blob()
+            sblob = script.get_setpoint_blob()
+            snapshots = script.snapshots
+            videos = script.videos
 
-            self._persister_action('post_extraction_save', rblob, oblob, snapshots)
+            pid = script.get_active_pid_parameters()
+            self._update_persister_spec(pid=pid or '',
+                                        power_achieved=ach,
+                                        response_blob=rblob,
+                                        output_blob=oblob,
+                                        setpoint_blob=sblob,
+                                        snapshots=snapshots,
+                                        videos=videos)
+
+            self._persister_save_action('post_extraction_save')
+
+            env = self._get_environmentals()
+            if env:
+                set_environmentals(self.spec, env)
+
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
             self.info_color = None
@@ -1096,6 +1303,7 @@ class AutomatedRun(Loggable):
 
             self.do_post_equilibration()
             self.do_post_measurement()
+
             self.finish()
 
             self.heading('Extraction Finished unsuccessfully', color='red')
@@ -1125,7 +1333,18 @@ class AutomatedRun(Loggable):
         self.info_color = MEASUREMENT_COLOR
         msg = 'Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        self.state = 'measurement'
+        self.spec.state = 'measurement'
+        self.experiment_executor.refresh_table()
+
+        # get current spectrometer values
+        sm = self.spectrometer_manager
+        if sm:
+            self.debug('setting trap, emission, spec, defl, and gains')
+            self._update_persister_spec(spec_dict=sm.make_parameters_dict(),
+                                        defl_dict=sm.make_deflections_dict(),
+                                        gains=sm.make_gains_dict(),
+                                        trap=sm.read_trap_current(),
+                                        emission=sm.read_emission())
 
         self._persister_action('pre_measurement_save')
 
@@ -1140,18 +1359,18 @@ class AutomatedRun(Loggable):
             self.info_color = None
 
             self._measured = True
-            # return self.post_measurement_save()
             return True
+            # return True
         else:
             if use_post_on_fail:
                 self.do_post_equilibration()
                 self.do_post_measurement()
             self.finish()
 
-            self.heading('Measurement Finished unsuccessfully', color='red')
+            self.heading('Measurement Finished unsuccessfully. Aborted={}'.format(self._aborted), color='red')
             self.measuring = False
             self.info_color = None
-            return False
+            return self._aborted
 
     def do_post_measurement(self, script=None):
         if script is None:
@@ -1165,7 +1384,6 @@ class AutomatedRun(Loggable):
 
         msg = 'Post Measurement Started {}'.format(script.name)
         self.heading('{}'.format(msg))
-        # self.state = 'extraction'
         script.runner = self.runner
         script.manager = self.experiment_executor
 
@@ -1183,33 +1401,15 @@ class AutomatedRun(Loggable):
         if block:
             self._post_equilibration()
         else:
-            t = Thread(target=self._post_equilibration)
+            t = Thread(target=self._post_equilibration,
+                       name='post_equil')
+            t.setDaemon(True)
             t.start()
 
-    def _post_equilibration(self):
-        if self._equilibration_done:
-            return
-
-        self._equilibration_done = True
-
-        if not self._alive:
-            return
-
-        if self.post_equilibration_script is None:
-            return
-        msg = 'Post Equilibration Started {}'.format(self.post_equilibration_script.name)
-        self.heading('{}'.format(msg))
-        self.post_equilibration_script.runner = self.runner
-        self.post_equilibration_script.manager = self.experiment_executor
-
-        if self.post_equilibration_script.execute():
-            self.heading('Post Equilibration Finished')
-        else:
-            self.heading('Post Equilibration Finished unsuccessfully')
-
     def do_post_termination(self, do_post_equilibration=True):
-        oex = self.experiment_executor.executable
-        self.experiment_executor.executable = False
+        if self.experiment_executor:
+            oex = self.experiment_executor.executable
+            self.experiment_executor.executable = False
         self.heading('Post Termination Started')
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1219,11 +1419,15 @@ class AutomatedRun(Loggable):
         self.stop()
 
         self.heading('Post Termination Finished')
-        self.experiment_executor.executable = oex
+        if self.experiment_executor:
+            self.experiment_executor.executable = oex
 
     # ===============================================================================
     # utilities
     # ===============================================================================
+    def get_current_dac(self):
+        return self.spectrometer_manager.spectrometer.magnet.dac
+
     def assemble_report(self):
         signal_string = ''
         signals = self.get_baseline_corrected_signals()
@@ -1233,8 +1437,8 @@ class AutomatedRun(Loggable):
                                        for ai in self._active_detectors])
 
         age = ''
-        if self.arar_age:
-            age = self.arar_age.age
+        if self.isotope_group:
+            age = self.isotope_group.age
         age_string = 'age={}'.format(age)
 
         return '''runid={} timestamp={} {}
@@ -1249,10 +1453,11 @@ anaylsis_type={}
            signal_string, age_string)
 
     def get_baseline_corrected_signals(self):
-        d = dict()
-        for k, iso in self.arar_age.isotopes.iteritems():
-            d[k] = iso.get_baseline_corrected_value()
-        return d
+        if self.isotope_group:
+            d = dict()
+            for k, iso in self.isotope_group.isotopes.iteritems():
+                d[k] = (iso.detector, iso.get_baseline_corrected_value())
+            return d
 
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
@@ -1263,26 +1468,51 @@ anaylsis_type={}
     # ===============================================================================
     # private
     # ===============================================================================
+    def _get_environmentals(self):
+        env = {}
+        lclient = self.labspy_client
+        if lclient:
+            if lclient.connect():
+                for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
+                    try:
+                        env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
+                    except BaseException, e:
+                        self.debug('Get Labspy Environmentals: {}'.format(e))
+                        self.debug_exception()
+            else:
+                self.debug('failed to connect to labspy client. Could not retrieve environmentals')
+            self.debug('Enviromentals: {}'.format(pformat(env)))
+        else:
+            self.debug('LabspyClient not enabled. Could not retrieve enironmentals')
+        return env
+
     def _start(self):
-
-        if self._use_arar_age():
-            if self.arar_age is None:
-                # load arar_age object for age calculation
+        if self.isotope_group is None:
+            # load arar_age object for age calculation
+            if self.experiment_type == AR_AR:
                 from pychron.processing.arar_age import ArArAge
+                klass = ArArAge
+            else:
+                from pychron.processing.isotope_group import IsotopeGroup
+                klass = IsotopeGroup
 
-                self.arar_age = ArArAge()
+            self.isotope_group = klass()
 
-            es = self.extraction_script
-            if es is not None:
-                # get senstivity multiplier from extraction script
-                v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
-                self.arar_age.sensitivity_multiplier = v
+        es = self.extraction_script
+        if es is not None:
+            # get sensitivity multiplier from extraction script
+            v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
+            self.isotope_group.sensitivity_multiplier = v
 
-            ln = self.spec.labnumber
-            ln = convert_identifier(ln)
-            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.arar_age):
+        ln = self.spec.labnumber
+        ln = convert_identifier(ln)
+
+        self.debug('**************** Experiment Type: {}, {}'.format(self.experiment_type, AR_AR))
+        if self.experiment_type == AR_AR:
+            if not self.experiment_executor.datahub.load_analysis_backend(ln, self.isotope_group):
                 self.debug('failed load analysis backend')
                 return
+            self.isotope_group.calculate_decay_factors()
 
         self.py_clear_conditionals()
         # setup default/queue conditionals
@@ -1293,6 +1523,8 @@ anaylsis_type={}
             self._add_conditionals()
         except BaseException, e:
             self.warning('Failed adding conditionals {}'.format(e))
+            raise e
+
             return
 
         # add queue conditionals
@@ -1311,6 +1543,9 @@ anaylsis_type={}
             self.plot_panel.total_counts = 0
             self.plot_panel.is_peak_hop = False
             self.plot_panel.is_baseline = False
+            self.plot_panel.set_analysis_view(self.experiment_type)
+
+            # self.plot_panel.experiment_type = self.experiment_type
 
         self.multi_collector.canceled = False
         self.multi_collector.is_baseline = False
@@ -1344,12 +1579,90 @@ anaylsis_type={}
 
         return True
 
-    def _generate_ic_mftable(self, detectors, refiso):
+    def _set_filtering(self):
+        self.debug('Set filtering')
+
+        def _get_filter_outlier_dict(iso, kind):
+            if kind == 'baseline':
+                fods = self.persistence_spec.baseline_fods
+                key = iso.detector
+            else:
+                fods = self.persistence_spec.signal_fods
+                key = iso.name
+
+            try:
+                fod = fods[key]
+            except KeyError:
+                fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
+            return fod
+
+        for i in self.isotope_group.isotopes.itervalues():
+            fod = _get_filter_outlier_dict(i, 'signal')
+            self.debug('setting fod for {}= {}'.format(i.name, fod))
+            i.set_filtering(fod)
+
+            fod = _get_filter_outlier_dict(i, 'baseline')
+            i.baseline.set_filtering(fod)
+            self.debug('setting fod for {}= {}'.format(i.detector, fod))
+
+    def _update_persister_spec(self, **kw):
+        self.persistence_spec.trait_set(**kw)
+
+    def _persister_save_action(self, func, *args, **kw):
+        self.debug('persistence save...')
+        if self.use_db_persistence:
+            self.debug('persistence save - db')
+            getattr(self.persister, func)(*args, **kw)
+        if self.use_dvc_persistence:
+            self.debug('persistence save - dvc')
+            getattr(self.dvc_persister, func)(*args, **kw)
+        if self.use_xls_persistence:
+            self.debug('persistence save - xls')
+            getattr(self.xls_persister, func)(*args, **kw)
+
+    def _persister_action(self, func, *args, **kw):
+        getattr(self.persister, func)(*args, **kw)
+
+        for i, p in enumerate((self.xls_persister, self.dvc_persister)):
+            if p is None:
+                continue
+
+            try:
+                getattr(p, func)(*args, **kw)
+            except BaseException, e:
+                self.warning('{} persister action failed. {} func={}, excp={}'.format(i, p.__class__.__name__,
+                                                                                      func, e))
+                import traceback
+
+                traceback.print_exc()
+
+    def _post_equilibration(self):
+        if self._equilibration_done:
+            return
+
+        self._equilibration_done = True
+
+        if not self._alive:
+            return
+
+        if self.post_equilibration_script is None:
+            return
+        msg = 'Post Equilibration Started {}'.format(self.post_equilibration_script.name)
+        self.heading('{}'.format(msg))
+        self.post_equilibration_script.runner = self.runner
+        self.post_equilibration_script.manager = self.experiment_executor
+
+        if self.post_equilibration_script.execute():
+            self.heading('Post Equilibration Finished')
+        else:
+            self.heading('Post Equilibration Finished unsuccessfully')
+
+    def _generate_ic_mftable(self, detectors, refiso, peak_center_config, update_existing):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self, detectors, refiso):
+        if not e.make_mftable(self, detectors, refiso, peak_center_config, update_existing):
             ret = False
         return ret
 
@@ -1358,7 +1671,7 @@ anaylsis_type={}
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p is not None:
             self.info('adding default conditionals from {}'.format(p))
-            self._add_conditionals_from_file(p)
+            self._add_conditionals_from_file(p, level=SYSTEM)
         else:
             self.warning('no Default Conditionals file. {}'.format(p))
 
@@ -1372,40 +1685,20 @@ anaylsis_type={}
             p = get_path(paths.queue_conditionals_dir, name, ('.yaml', '.yml'))
             if p is not None:
                 self.info('adding queue conditionals from {}'.format(p))
-                self._add_conditionals_from_file(p)
+                self._add_conditionals_from_file(p, level=QUEUE)
 
             else:
                 self.warning('Invalid Conditionals file. {}'.format(p))
 
-    def _add_conditionals_from_file(self, p):
-        d = conditionals_from_file(p)
+    def _add_conditionals_from_file(self, p, level=None):
+        d = conditionals_from_file(p, level=level)
         for k, v in d.items():
             if k in ('actions', 'truncations', 'terminations', 'cancelations'):
                 var = getattr(self, '{}_conditionals'.format(k[:-1]))
                 var.extend(v)
 
-                # with open(p, 'r') as rfile:
-                # yd = yaml.load(rfile)
-                # cs = (('TruncationConditional', 'truncation', 'truncations'),
-                # ('ActionConditional', 'action', 'actions'),
-                # ('TerminationConditional', 'termination', 'terminations'),
-                # ('CancelationConditional', 'cancelation', 'cancelations'))
-                #     for klass, var, tag in cs:
-                #         yl = yd.get(tag)
-                #         if not yl:
-                #             continue
-                #
-                #         var = getattr(self, '{}_conditionals'.format(var))
-                #         conds = [conditional_from_dict(ti, klass) for ti in yl]
-                #         conds = [c for c in conds if c is not None]
-                #         if conds:
-                #             var.extend(conds)
-                #             # for ti in yl:
-                #             # cx =
-                #             # var.append(cx)
-
-    def _conditional_appender(self, name, cd, klass):
-        if not self.arar_age:
+    def _conditional_appender(self, name, cd, klass, level=None, location=None):
+        if not self.isotope_group:
             self.warning('No ArArAge to use for conditional testing')
             return
 
@@ -1414,34 +1707,19 @@ anaylsis_type={}
             self.debug('no attr for this {} cd={}'.format(name, cd))
             return
 
-        # for 2.0.4 backwards compatiblity
-        # comp = dictgetter(cd, ('teststr','check','comp'))
-        # if not comp:
-        # self.debug('not teststr for this conditional "{}" cd={}'.format(name, cd))
-        # return
-        #
-        # #for 2.0.4 backwards compatiblity
-        # start_count = dictgetter(cd, ('start','start_count'))
-        # if start_count is None:
-        # start_count = 50
-        # self.debug('defaulting to start_count={}'.format(start_count))
-        #
-        # self.info('adding {} {} {} {}'.format(name, attr, comp, start_count))
-
         if attr == 'age' and self.spec.analysis_type not in ('unknown', 'cocktail'):
             self.debug('not adding because analysis_type not unknown or cocktail')
 
-        if not self.arar_age.has_attr(attr):
-            self.warning('invalid {} attribute "{}"'.format(name, attr))
+        # don't check if isotope_group has the attribute. it may be added to isotope group later
+        obj = getattr(self, '{}_conditionals'.format(name))
+        con = conditional_from_dict(cd, klass, level=level, location=location)
+
+        if con:
+            self.info(
+                'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
+            obj.append(con)
         else:
-            obj = getattr(self, '{}_conditionals'.format(name))
-            con = conditional_from_dict(cd, klass)
-            if con:
-                self.info(
-                    'adding {} attr="{}" test="{}" start="{}"'.format(name, con.attr, con.teststr, con.start_count))
-                obj.append(con)
-            else:
-                self.warning('Failed adding {}, {}'.format(name, cd))
+            self.warning('Failed adding {}, {}'.format(name, cd))
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1508,7 +1786,7 @@ anaylsis_type={}
     def _add_active_detector(self, di):
         spec = self.spectrometer_manager.spectrometer
         det = spec.get_detector(di)
-        if not det in self._active_detectors:
+        if det not in self._active_detectors:
             self._active_detectors.append(det)
 
     def _set_active_detectors(self, dets):
@@ -1516,8 +1794,9 @@ anaylsis_type={}
         return [spec.get_detector(n) for n in dets]
 
     def _define_detectors(self, isotope, det):
-        spec = self.spectrometer_manager.spectrometer
-        spec.update_isotopes(isotope, det)
+        if self.spectrometer_manager:
+            spec = self.spectrometer_manager.spectrometer
+            spec.update_isotopes(isotope, det)
 
     def _activate_detectors(self, dets):
         """
@@ -1537,6 +1816,7 @@ anaylsis_type={}
             if plot panel detectors != active detectors  "create"
 
         """
+        self.debug('activate detectors')
 
         if self.plot_panel is None:
             create = True
@@ -1558,37 +1838,43 @@ anaylsis_type={}
 
         p.show_isotope_graph()
 
+        self.debug('clear isotope group')
+
         # for iso in self.arar_age.isotopes:
-        self.arar_age.clear_isotopes()
-        self.arar_age.clear_error_components()
-        self.arar_age.clear_blanks()
+        self.isotope_group.clear_isotopes()
+        self.isotope_group.clear_error_components()
+        self.isotope_group.clear_blanks()
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
             and not self.spec.analysis_type.startswith('background')):
-
             cb = True
-            pid, blanks = self.get_previous_blanks()
-
-            for iso, v in blanks.iteritems():
-                self.arar_age.set_blank(iso, v)
 
         for d in self._active_detectors:
-            self.arar_age.set_isotope(d.isotope, (0, 0),
-                                      detector=d.name,
-                                      correct_for_blank=cb)
+            self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
+            self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
+                                           correct_for_blank=cb)
 
-        self.arar_age.clear_baselines()
+        if (not self.spec.analysis_type.startswith('blank')
+            and not self.spec.analysis_type.startswith('background')):
+            pid, blanks = self.get_previous_blanks()
+            self.debug('setting previous blanks')
+            for iso, v in blanks.iteritems():
+                self.isotope_group.set_blank(iso, v[0], v[1])
+
+        self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
-            self.arar_age.set_baseline(iso, v)
+            self.isotope_group.set_baseline(iso, v[0], v[1])
 
+        self.debug('load analysis view')
         p.analysis_view.load(self)
 
     def _add_conditionals(self):
         klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
-                      'terminations': TerminationConditional, 'cancelations': CancelationConditional}
+                      'terminations': TerminationConditional, 'cancelations': CancelationConditional,
+                      'modifications': QueueModificationConditional}
 
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
@@ -1598,33 +1884,28 @@ anaylsis_type={}
                 self.debug('extract conditionals from file. {}'.format(p))
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
+                    failure = False
                     for kind, items in yd.iteritems():
                         try:
                             klass = klass_dict[kind]
-                            for i in items:
-                                try:
-                                    # trim off s
-                                    if kind.endswith('s'):
-                                        kind = kind[:-1]
-
-                                    self._conditional_appender(kind, i, klass)
-                                except BaseException, e:
-                                    self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, i))
-
                         except KeyError:
                             self.debug('Invalid conditional kind="{}"'.format(kind))
-                            #
-                            # for c in doc:
-                            # try:
-                            # attr = c['attr']
-                            # comp = c['check']
-                            # start = c['start']
-                            # freq = c.get('frequency', 1)
-                            # acr = c.get('abbreviated_count_ratio', 1)
-                            #             self.py_add_truncation(attr, comp, int(start), freq, acr)
-                            #         except BaseException:
-                            #             self.warning('Failed adding truncation. {}'.format(c))
+                            continue
 
+                        for cd in items:
+                            try:
+                                # trim off s
+                                if kind.endswith('s'):
+                                    kind = kind[:-1]
+
+                                self._conditional_appender(kind, cd, klass, location=p)
+                            except BaseException, e:
+                                self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
+                                failure = True
+
+                    if failure:
+                        if not self.confirmation_dialog('Failed to add Conditionals. Would you like to continue?'):
+                            self.cancel_run(do_post_equilibration=False)
             else:
                 try:
                     c, start = t.split(',')
@@ -1648,12 +1929,7 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _use_arar_age(self):
-        ln = self.spec.labnumber
-        return ln not in ('dg', 'pa')
-
     def _new_plot_panel(self, plot_panel, stack_order='bottom_to_top'):
-        from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
@@ -1668,15 +1944,15 @@ anaylsis_type={}
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
-                arar_age=self.arar_age)
+                isotope_group=self.isotope_group)
 
-        an = AutomatedRunAnalysisView(analysis_type=self.spec.analysis_type,
-                                      analysis_id=self.runid)
-        an.load(self)
-
-        plot_panel.trait_set(
-            plot_title=title,
-            analysis_view=an)
+        self.debug('*************** Set Analysis View {}'.format(self.experiment_type))
+        plot_panel.set_analysis_view(self.experiment_type,
+                                     analysis_type=self.spec.analysis_type,
+                                     analysis_id=self.runid)
+        # an = plot_panel.analysis_view
+        # an.load(self)
+        plot_panel.trait_set(plot_title=title)
 
         return plot_panel
 
@@ -1700,7 +1976,17 @@ anaylsis_type={}
             if outlet:
                 # close mass spec ion pump
                 for o in outlet:
-                    elm.close_valve(o, mode='script')
+                    for i in range(3):
+                        ok, changed = elm.close_valve(o, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Close "{}"'.format(o))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
@@ -1708,14 +1994,31 @@ anaylsis_type={}
 
                 # open inlet
                 for i in inlet:
-                    elm.open_valve(i, mode='script')
+                    for j in range(3):
+                        ok, changed = elm.open_valve(i, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Open "{}"'.format(i))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
 
         # set the passed in event
         evt.set()
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
+
         if self._alive:
+            # analyze the equilibration
+            try:
+                self._analyze_equilibration()
+            except TypeError, e:
+                self.debug('AutomatedRun._equilibrate _analyze_equilibration error. TypeError={}'.format(e))
+
             self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
                 for i in inlet:
@@ -1728,40 +2031,90 @@ anaylsis_type={}
                 self.debug('setting overlap event. next run ok to start extraction')
                 self.overlap_evt.set()
 
-    def _update_labels(self):
+    def _analyze_equilibration(self):
         if self.plot_panel:
-            if self.plot_panel.isotope_graph:
-                # update the plot_panel labels
-                plots = self.plot_panel.isotope_graph.plots
-                n = len(plots)
+            g = self.plot_panel.sniff_graph
+            xmi, xma = g.get_x_limits()
+            xma *= 1.25
+            g.set_x_limits(xmi, xma)
 
-                for i, det in enumerate(self._active_detectors):
-                    if i < n:
-                        plots[i].y_axis.title = det.isotope
+            fxs = linspace(xmi, xma)
+            for i, p in enumerate(g.plots):
+                try:
+                    xs = g.get_data(i)
+                except IndexError:
+                    continue
+
+                ys = g.get_data(i, axis=1)
+                if ys is None:
+                    continue
+
+                for ni, color, yoff in ((5, 'red', 30), (4, 'green', 10), (3, 'blue', -10), (2, 'orange', -30)):
+                    xsi, ysi = xs[-ni:], ys[-ni:]
+
+                    g.new_series(xsi, ysi, type='scatter', plotid=i, color=color,
+                                 marker_size=2.5)
+
+                    coeffs = polyfit(xsi, ysi, 1)
+                    fys = polyval(coeffs, fxs)
+                    g.new_series(fxs, fys, type='line', plotid=i, color=color)
+                    txt = 'Slope ({})={:0.3f}'.format(ni, coeffs[0])
+                    g.add_plot_label(txt, plotid=i, overlay_position='inside right',
+                                     font='modern 14',
+                                     bgcolor='white',
+                                     color=color,
+                                     y_offset=yoff)
+
+            g.redraw()
+
+    def _update_labels(self):
+        self.debug('update labels {}'.format(self.plot_panel))
+        if self.plot_panel:
+            for g in (self.plot_panel.isotope_graph, self.plot_panel.sniff_graph):
+                if g:
+                    self.debug('update labels "{}"'.format(g))
+                    # update the plot_panel labels
+                    plots = g.plots
+                    n = len(plots)
+
+                    names = []
+                    for i, det in enumerate(self._active_detectors):
+                        if i < n:
+                            name = det.isotope
+                            if name in names:
+                                name = '{}({})'.format(name, det.name)
+
+                            plots[i].y_axis.title = name
+                            self.debug('setting label {} {} {}'.format(i, det.name, name))
+                            names.append(name)
+
+                    g.refresh()
 
     def _update_detectors(self):
         for det in self._active_detectors:
-            self.arar_age.set_isotope_detector(det)
+            self.isotope_group.set_isotope_detector(det)
 
     def _set_magnet_position(self, pos, detector,
-                             dac=False, update_detectors=True,
+                             use_dac=False, update_detectors=True,
                              update_labels=True, update_isotopes=True,
                              remove_non_active=True):
         change = False
         ion = self.ion_optics_manager
         if ion is not None:
-            change = ion.position(pos, detector, dac, update_isotopes=update_isotopes)
+            change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
         if update_labels:
-            self._update_labels()
+            from pychron.core.ui.gui import invoke_in_main_thread
+            invoke_in_main_thread(self._update_labels)
+
         if update_detectors:
             self._update_detectors()
         if remove_non_active:
             # remove non active isotopes
-            for iso in self.arar_age.isotopes.keys():
+            for iso in self.isotope_group.isotopes.keys():
                 det = next((di for di in self._active_detectors if di.isotope == iso), None)
                 if det is None:
-                    self.arar_age.isotopes.pop(iso)
+                    self.isotope_group.isotopes.pop(iso)
 
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
@@ -1769,25 +2122,49 @@ anaylsis_type={}
 
         return change
 
+    def update_detector_isotope_pairing(self, detectors, isotopes):
+        self.debug('update detector isotope pairing')
+        self.debug('detectors={}'.format(detectors))
+        self.debug('isotopes={}'.format(isotopes))
+
+        for di in self._active_detectors:
+            di.isotope = ''
+
+        for di, iso in zip(detectors, isotopes):
+            self.debug('updating pairing {} - {}'.format(di, iso))
+            det = self.get_detector(di)
+            det.isotope = iso
+
+            # self._update_labels()
+            # self._update_detectors()
+
     def _get_data_generator(self):
         def gen():
             cnt = 0
-            fcnt = 3
+            fcnt = self.failed_intensity_count_threshold
+
             spec = self.spectrometer_manager.spectrometer
             self._intensities = {}
             while 1:
-                k, s = spec.get_intensities(tagged=True)
+                try:
+                    k, s = spec.get_intensities(tagged=True)
+                except NoIntensityChange:
+                    self.warning('Canceling Run. Intensity from mass spectrometer not changing')
+                    self.cancel_run(state='failed')
+                    yield None
+
                 if not k:
                     cnt += 1
-                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt), color='red')
+                    self.info('Failed getting intensity from mass spectrometer {}/{}'.format(cnt, fcnt))
                     if cnt >= fcnt:
-                        self.info('Canceling Run. Failed getting intensity from mass spectrometer',
-                                  color='red')
+                        self.warning('Canceling Run. Failed getting intensity from mass spectrometer')
 
                         # do we need to cancel the experiment or will the subsequent pre run
                         # checks sufficient to catch spectrometer communication errors.
                         self.cancel_run(state='failed')
                         yield None
+                    else:
+                        yield None, None
                 else:
                     # reset the counter
                     cnt = 0
@@ -1810,20 +2187,18 @@ anaylsis_type={}
                 ci['start'] = ncounts
 
         conds = [conditional_from_dict(ci, ActionConditional) for ci in conditionals]
-        self.arar_age.conditional_modifier = 'whiff'
+        self.isotope_group.conditional_modifier = 'whiff'
         self.collector.set_temporary_conditionals(conds)
         self.py_data_collection(None, ncounts, starttime, starttime_offset, series, fit_series, group='whiff')
         self.collector.clear_temporary_conditionals()
-        self.arar_age.conditional_modifier = None
+        self.isotope_group.conditional_modifier = None
 
         result = self.collector.measurement_result
-        # self.persister.whiff_result = result
-        # self._persister_action('set_persistence_spec', whiff_result=result)
         self._update_persister_spec(whiff_result=result)
         self.debug('WHIFF Result={}'.format(result))
         return result
 
-    def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
+    def _peak_hop(self, ncycles, ncounts, hops, grpname,
                   starttime, starttime_offset, series,
                   check_conditionals):
         """
@@ -1845,6 +2220,9 @@ anaylsis_type={}
         else:
             sc = 'red'
 
+        self.persister.build_peak_hop_tables(grpname, hops)
+        data_writer = self.persister.get_data_writer(grpname)
+
         return self._measure(grpname,
                              data_writer,
                              ncounts,
@@ -1860,11 +2238,12 @@ anaylsis_type={}
         if p:
             p._ncounts = ncounts
             p.is_baseline = False
-            p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
+            # p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
+            self.plot_panel.show_sniff_graph()
 
         gn = 'sniff'
 
-        self.persister.build_tables(gn, self._active_detectors)
+        self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
         check_conditionals = False
@@ -1909,8 +2288,8 @@ anaylsis_type={}
         m = self.collector
 
         m.trait_set(
-            console_display=self.experiment_executor.console_display,
             automated_run=self,
+            console_display=self.experiment_executor.console_display,
             measurement_script=script,
             detectors=self._active_detectors,
             collection_kind=grpname,
@@ -1921,29 +2300,106 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
+            experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         if self.plot_panel:
+            self.plot_panel.integration_time = period
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
             from pychron.core.ui.gui import invoke_in_main_thread
-
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
-            time.sleep(0.5)
+            if grpname == 'sniff':
+                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
+            elif grpname == 'baseline':
+                invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
+            if self.spec.analysis_type in ('unknown', 'cocktail'):
+                invoke_in_main_thread(self._setup_figure_graph)
+
+        time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
 
         # mem_log('post measure')
         if m.terminated:
             self.debug('measurement terminated')
-            self.cancel_run()
+            self.cancel_run(state='terminated')
         if m.canceled:
             self.debug('measurement collection canceled')
             self.cancel_run()
             self.experiment_executor.cancel(confirm=False, err=m.err_message)
 
         return not m.canceled
+
+    def _setup_figure_graph(self):
+        return
+
+        self.plot_panel.add_figure_graph(self.spec, self.experiment_executor.experiment_queue.executed_runs)
+
+    def _setup_baseline_graph(self, starttime_offset, color):
+        graph = self.plot_panel.baseline_graph
+        mi, ma = graph.get_x_limits()
+
+        max_ = ma
+        min_ = mi
+        tc = self.plot_panel.total_counts
+        if tc > ma or ma == Inf:
+            max_ = tc * self._integration_seconds
+
+        if starttime_offset > mi:
+            min_ = -starttime_offset
+
+        graph.set_x_limits(min_=min_, max_=max_)
+        series = 0
+        for k, iso in self.isotope_group.isotopes.iteritems():
+            idx = graph.get_plotid_by_ytitle(iso.detector)
+            if idx is not None:
+                try:
+                    graph.series[idx][series]
+                except IndexError, e:
+                    graph.new_series(marker='circle',
+                                     color=color,
+                                     type='scatter',
+                                     marker_size=1.25,
+                                     fit='linear',
+                                     plotid=idx,
+                                     use_error_envelope=False,
+                                     add_inspector=False,
+                                     add_tools=False)
+
+    def _setup_sniff_graph(self, starttime_offset, color):
+        graph = self.plot_panel.sniff_graph
+        mi, ma = graph.get_x_limits()
+
+        max_ = ma
+        min_ = mi
+        tc = self.plot_panel.total_counts
+        if tc > ma or ma == Inf:
+            max_ = tc * 1.1
+
+        if starttime_offset > mi:
+            min_ = -starttime_offset
+
+        graph.set_x_limits(min_=min_, max_=max_)
+
+        # series = self.collector.series_idx
+        series = 0
+        for k, iso in self.isotope_group.isotopes.iteritems():
+            idx = graph.get_plotid_by_ytitle(k)
+            if idx is not None:
+                try:
+                    graph.series[idx][series]
+                except IndexError, e:
+                    graph.new_series(marker='circle',
+                                     color=color,
+                                     type='scatter',
+                                     marker_size=1.25,
+                                     fit=None,
+                                     plotid=idx,
+                                     use_error_envelope=False,
+                                     add_inspector=False,
+                                     add_tools=False)
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
@@ -1970,29 +2426,34 @@ anaylsis_type={}
 
         series = self.collector.series_idx
 
-        regressing = False
-        for k, iso in self.arar_age.isotopes.iteritems():
+        if grpname == 'baseline':
+            print 'collector series_idx {}'.format(series)
+
+        # regressing = False
+        for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
-            # print 'ff', k, iso.name, idx
             if idx is not None:
                 try:
                     graph.series[idx][series]
                 except IndexError, e:
                     fit = None if grpname == 'sniff' else iso.get_fit(0)
-                    regressing = fit or regressing
+                    # regressing = fit or regressing
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
                                      marker_size=1.25,
                                      fit=fit,
                                      plotid=idx,
+                                     use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
 
+        regressing = grpname != 'sniff'
         scnt, fcnt = (2, 1) if regressing else (1, 0)
-        self.measurement_script.increment_series_counts(scnt, fcnt)
+        self.debug(
+            '"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))
 
-        return graph
+        self.measurement_script.increment_series_counts(scnt, fcnt)
 
     def _wait_for(self, predicate, msg):
         st = time.time()
@@ -2093,13 +2554,17 @@ anaylsis_type={}
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
+                                 automated_run=self,
                                  runner=self.runner)
         return ms
 
     def _extraction_script_factory(self, klass=None):
         root = paths.extraction_dir
-        return self._ext_factory(root, self.script_info.extraction_script_name,
-                                 klass=klass)
+        ext = self._ext_factory(root, self.script_info.extraction_script_name,
+                                klass=klass)
+        if ext is not None:
+            ext.automated_run = self
+        return ext
 
     def _post_measurement_script_factory(self):
         root = paths.post_measurement_dir
@@ -2157,8 +2622,8 @@ anaylsis_type={}
 
         return default
 
-    # def _get_runid(self):
-    #     return self.spec.runid
+        # def _get_runid(self):
+        #     return self.spec.runid
         # return make_runid(self.spec.labnumber,
         # self.spec.aliquot,
         # self.spec.step)
@@ -2187,10 +2652,10 @@ anaylsis_type={}
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _state_changed(self, old, new):
-        self.debug('state changed from {} to {}'.format(old, new))
-        if self.spec:
-            self.spec.state = self.state
+    # def _state_changed(self, old, new):
+    #     self.debug('state changed from {} to {}'.format(old, new))
+    #     if self.spec:
+    #         self.spec.state = self.spec.state
 
     def _runner_changed(self, new):
         self.debug('Runner runner:{}'.format(new))
@@ -2200,40 +2665,25 @@ anaylsis_type={}
                 setattr(sc, 'runner', new)
 
     # ===============================================================================
-    # property get/set
-    # ===============================================================================
-    @property
-    def elapsed_ms_pumptime(self):
-        return time.time() - self.experiment_executor.ms_pumptime_start
-
-    # ===============================================================================
     # defaults
     # ===============================================================================
-    # def _measurement_script_default(self):
-    #     return self._load_script('measurement')
-    #
-    # def _post_measurement_script_default(self):
-    #     return self._load_script('post_measurement')
-    #
-    # def _post_equilibration_script_default(self):
-    #     return self._load_script('post_equilibration')
-    #
-    # def _extraction_script_default(self):
-    #     return self._load_script('extraction')
-
-    #
     def _peak_hop_collector_default(self):
         from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 
         c = PeakHopCollector()
-        c.console_bind_preferences('pychron.experiment')
         return c
 
     def _multi_collector_default(self):
         from pychron.experiment.automated_run.multi_collector import MultiCollector
 
         c = MultiCollector()
-        c.console_bind_preferences('pychron.experiment')
         return c
+
+    # ===============================================================================
+    # property get/set
+    # ===============================================================================
+    @property
+    def elapsed_ms_pumptime(self):
+        return time.time() - self.experiment_executor.ms_pumptime_start
 
 # ============= EOF =============================================

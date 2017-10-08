@@ -472,6 +472,7 @@ class BaseExtractionLineTask(BaseManagerTask):
 
     @on_trait_change('window:opened')
     def _window_opened(self):
+        self.debug('window opened')
         man = self._get_el_manager()
         if man:
             do_after(1000, man.activate)

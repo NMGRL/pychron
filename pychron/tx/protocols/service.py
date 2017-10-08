@@ -16,24 +16,19 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import io
 import json
-import os
 import re
 import traceback
 
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
 
-
-# ============= local library imports  ==========================
-from twisted.logger import Logger, jsonFileLogObserver
-from pychron.paths import paths
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
 
 
 def default_err(failure):
+    print failure.getTraceback()
     failure.trap(BaseException)
     return failure
 
@@ -53,20 +48,29 @@ def nargs_err(failure):
     return InvalidArgumentsErrorCode('Foo', str(failure.value))
 
 
-path = os.path.join(paths.log_dir, 'pps.log.json')
-obs = jsonFileLogObserver(io.open(path, 'w'))
-logger = Logger(observer=obs)
 # logger = Logger()
 
 regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
 
 
+class MockLogger(object):
+    def __getattr__(self, item):
+        def mockfunc(*args, **kw):
+            pass
+
+        return mockfunc
+
+
 class ServiceProtocol(Protocol):
-    def __init__(self, *args, **kw):
+    def __init__(self, logger=None, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
         self._cmd_delim = ' '
         self._arg_delim = ','
+
+        if logger is None:
+            logger = MockLogger()
+
         self.debug = logger.debug
         self.warning = logger.warn
         self.info = logger.info
@@ -167,4 +171,3 @@ class ServiceProtocol(Protocol):
 # d = defer.Deferred()
 #     reactor.callLater(secs, d.callback, None)
 #     return d
-

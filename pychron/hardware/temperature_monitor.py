@@ -18,11 +18,11 @@
 from traits.api import Float, Property, Str
 from traits.trait_errors import TraitError
 from traitsui.api import Item, EnumEditor, VGroup
-# =============standard library imports ========================
-# import time
-# =============local library imports  ==========================
+
 from core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
+
+
 # from modbus.modbus_device import ModbusDevice
 # class TemperatureMonitor(ModbusDevice, Streamable):
 # def initialize(self):
@@ -101,7 +101,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
     id_query = '*R07'
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'address','General', 'address', optional=True, default=None)
+        self.set_attribute(config, 'address', 'General', 'address', optional=True, default=None)
         return super(DPi32TemperatureMonitor, self).load_additional_args(config)
 
     def id_response(self, response):
@@ -184,8 +184,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         # bits 7,6 meaningless for thermocouple
         bits = '00{}{}'.format(make_bitarray(TC_KEYS.index(v),
                                              width=4),
-                               input_class
-                               )
+                               input_class)
         value = '{:02X}'.format(int(bits, 2))
 
         self._write_command(commandindex, value=value)
@@ -193,26 +192,18 @@ class DPi32TemperatureMonitor(ISeriesDevice):
     def read_input_type(self):
         """
         """
-        # commandindex = '07'
-        #        com = self._build_command('R', commandindex)
-
-        # re = self.ask(com)
-        # if self.multipoint:
-        #     cmd = '{}R'.format(self.address), '07'
-        # else:
-        #     cmd = 'R', '07'
         cmd = 'R', '07'
         re = self.repeat_command(cmd)
+        self.debug('read input type {}'.format(re))
         if re is not None:
             re = re.strip()
-            if re[:3] == 'R07':
-                re = make_bitarray(int(re[3:], 16))
-                input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
-                if input_class == 'TC':
-                    self._input_type = TC_MAP[int(re[2:6], 2)]
-                self.debug('Input Class={}'.format(input_class))
-                self.debug('Input Type={}'.format(self._input_type))
-                return True
+            re = make_bitarray(int(re, 16))
+            input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
+            if input_class == 'TC':
+                self._input_type = TC_MAP[int(re[2:6], 2)]
+            self.debug('Input Class={}'.format(input_class))
+            self.debug('Input Type={}'.format(self._input_type))
+            return True
 
     def reset(self):
         """
@@ -221,12 +212,10 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         self.ask(c)
 
     def graph_builder(self, g):
-        g.new_plot(
-            padding=[20, 5, 5, 20],
-            scan_delay=self.scan_period * self.time_dict[self.scan_units] / 1000.0,
-            zoom=True,
-            pan=True,
-        )
+        g.new_plot(padding=[20, 5, 5, 20],
+                   scan_delay=self.scan_period * self.time_dict[self.scan_units] / 1000.0,
+                   zoom=True,
+                   pan=True)
         g.new_series()
 
     def get_control_group(self):

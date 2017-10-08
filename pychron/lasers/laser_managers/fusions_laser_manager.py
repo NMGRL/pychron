@@ -15,30 +15,19 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
-from apptools.preferences.preference_binding import bind_preference
-# =============standard library imports ========================
-# from threading import Thread, Timer as DoLaterTimer, Lock
-# import os
-# =============local library imports  ==========================
-# from pychron.graph.stream_graph import StreamGraph
-# from pychron.database.adapters.power_adapter import PowerAdapter
-# from pychron.managers.data_managers.h5_data_manager import H5DataManager
-# from pychron.database.data_warehouse import DataWarehouse
-# from pychron.core.helpers.timer import Timer
-from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
-from pychron.hardware.fiber_light import FiberLight
-# from pychron.core.helpers.paths import co2laser_db_root, co2laser_db, diodelaser_db
-# from pychron.progress_dialog import myProgressDialog
-# from pychron.lasers.power.power_calibration_manager import PowerCalibrationManager
 
 from laser_manager import LaserManager
-# from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
-# from pychron.viewable import Viewable
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.thread import Thread
+from pychron.hardware.fiber_light import FiberLight
+from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
+from pychron.response_recorder import ResponseRecorder
+
+
 # from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager
 
@@ -59,6 +48,8 @@ class FusionsLaserManager(LaserManager):
 
     laser_controller = Instance(FusionsLogicBoard)
     fiber_light = Instance(FiberLight)
+    response_recorder = Instance(ResponseRecorder)
+
     #    optics_view = Instance(OpticsView)
 
     #    beam = DelegatesTo('laser_controller')
@@ -122,8 +113,8 @@ class FusionsLaserManager(LaserManager):
             # ===============================================================================
 
     def extract(self, power, **kw):
-        self.enable_laser()
-        self.set_laser_power(power, **kw)
+        if self.enable_laser():
+            self.set_laser_power(power, **kw)
 
     def end_extract(self):
         self.disable_laser()
@@ -245,11 +236,11 @@ class FusionsLaserManager(LaserManager):
 
     def start_video_recording(self, name='video', *args, **kw):
         if self.use_video:
-            self.stage_manager.start_recording(basename=name)
+            return self.stage_manager.start_recording(basename=name)
 
     def stop_video_recording(self, *args, **kw):
         if self.use_video:
-            self.stage_manager.stop_recording()
+            return self.stage_manager.stop_recording()
 
     def degasser_factory(self):
         from pychron.mv.degas.degasser import Degasser
@@ -273,11 +264,11 @@ class FusionsLaserManager(LaserManager):
             else:
                 func()
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         if self.use_video:
-            return self.stage_manager.get_brightness()
+            return self.stage_manager.get_brightness(**kw)
         else:
-            return super(FusionsLaserManager, self).get_brightness()
+            return super(FusionsLaserManager, self).get_brightness(**kw)
 
     def is_degassing(self):
         if self._degas_thread:
@@ -335,6 +326,23 @@ class FusionsLaserManager(LaserManager):
         m = factory(motion_controller=stage_controller)
         self.open_view(m)
 
+    def get_response_blob(self):
+        return self.response_recorder.get_response_blob() if self.response_recorder else ''
+
+    def get_output_blob(self):
+        return self.response_recorder.get_output_blob() if self.response_recorder else ''
+
+    def set_response_recorder_period(self, p):
+        if self.response_recorder:
+            self.response_recorder.period = p
+
+    def start_response_recorder(self):
+        if self.response_recorder:
+            self.response_recorder.start()
+
+    def stop_response_recorder(self):
+        if self.response_recorder:
+            self.response_recorder.stop()
     # ========================= views =========================
 
     def get_control_buttons(self):
@@ -478,6 +486,7 @@ class FusionsLaserManager(LaserManager):
         """
         """
         return FiberLight(name='fiber_light')
+
 
 # def _optics_view_default(self):
 #        return OpticsView(laser_controller=self.laser_controller)

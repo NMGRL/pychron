@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 
 from traits.api import Bool, Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.status_monitor import StatusMonitor
@@ -31,16 +30,26 @@ class ClientExtractionLineManager(ExtractionLineManager):
 
     def bind_preferences(self):
         super(ClientExtractionLineManager, self).bind_preferences()
-
         bind_preference(self, 'use_status_monitor', 'pychron.extraction_line.use_status_monitor')
 
-    def start_status_monitor(self):
+    def start_status_monitor(self, oid=None):
+        if oid is None:
+            oid = id(self)
         self.info('starting status monitor')
-        self.status_monitor.start(self.switch_manager)
+        self.status_monitor.start(oid, self.switch_manager)
 
-    def stop_status_monitor(self):
+    def stop_status_monitor(self, oid=None, block=False):
+        if oid is None:
+            oid = id(self)
         self.info('stopping status monitor')
-        self.status_monitor.stop()
+        self.status_monitor.stop(oid, block=block)
+
+    def refresh_states(self):
+        vm = self.switch_manager
+        if vm:
+            vm.load_valve_owners(refresh=False)
+            vm.load_valve_lock_states(refresh=True)
+            vm.load_valve_states(refresh=True)
 
     def _reload_canvas_hook(self):
         vm = self.switch_manager
@@ -60,33 +69,25 @@ class ClientExtractionLineManager(ExtractionLineManager):
         if self.use_status_monitor:
             self.stop_status_monitor()
 
-    def _use_status_monitor_changed(self):
-        if self.use_status_monitor:
-            prefid = 'pychron.extraction_line'
-            bind_preference(self.status_monitor, 'state_freq',
-                            '{}.valve_state_frequency'.format(prefid))
-            bind_preference(self.status_monitor, 'checksum_freq',
-                            '{}.checksum_frequency'.format(prefid))
-            bind_preference(self.status_monitor, 'lock_freq',
-                            '{}.valve_lock_frequency'.format(prefid))
-            bind_preference(self.status_monitor, 'owner_freq',
-                            '{}.valve_owner_frequency'.format(prefid))
-            bind_preference(self.status_monitor, 'update_period',
-                            '{}.update_period'.format(prefid))
-        else:
+    def _use_status_monitor_changed(self, new):
+        if not new:
             if self.status_monitor.isAlive():
-                self.status_monitor.stop()
+                self.stop_status_monitor()
+        else:
+            self.start_status_monitor()
 
     def _status_monitor_default(self):
         sm = StatusMonitor()
+        prefid = 'pychron.extraction_line'
+        bind_preference(sm, 'state_freq', '{}.valve_state_frequency'.format(prefid))
+        bind_preference(sm, 'checksum_freq', '{}.checksum_frequency'.format(prefid))
+        bind_preference(sm, 'lock_freq', '{}.valve_lock_frequency'.format(prefid))
+        bind_preference(sm, 'owner_freq', '{}.valve_owner_frequency'.format(prefid))
+        bind_preference(sm, 'update_period', '{}.update_period'.format(prefid))
         return sm
 
     def _get_switch_manager_klass(self):
         from pychron.extraction_line.client_switch_manager import ClientSwitchManager
-
         return ClientSwitchManager
 
 # ============= EOF =============================================
-
-
-

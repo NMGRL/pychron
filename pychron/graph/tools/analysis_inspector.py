@@ -16,11 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Callable
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-from pychron.graph.tools.point_inspector import PointInspector
-
 from traitsui.menu import Action, Menu as MenuManager
+
+from pychron.graph.tools.point_inspector import PointInspector
+from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
 
@@ -29,6 +28,9 @@ class AnalysisPointInspector(PointInspector):
     value_format = Callable
     additional_info = Callable
     _selected_indices = List
+    index_tag = None
+    single_point = False
+    inspector_item_klass = AnalysisInspectorItem
 
     def contextual_menu_contents(self):
         """
@@ -37,6 +39,8 @@ class AnalysisPointInspector(PointInspector):
                           on_perform=self._recall_analysis),
                    Action(name='Set tag',
                           on_perform=self._set_tag),
+                   Action(name='Set Omit',
+                          on_perform=self._set_omit),
                    Action(name='Set INVALID',
                           on_perform=self._set_invalid))
         # menu = MenuManager(name='recall', *actions)
@@ -59,6 +63,11 @@ class AnalysisPointInspector(PointInspector):
         ai = self.analyses[0]
         ans = [self.analyses[i] for i in self._selected_indices]
         ai.trigger_tag(ans)
+
+    def _set_omit(self):
+        ai = self.analyses[0]
+        ans = [self.analyses[i] for i in self._selected_indices]
+        ai.trigger_omit(ans)
 
     def _set_invalid(self):
         ai = self.analyses[0]
@@ -83,41 +92,68 @@ class AnalysisPointInspector(PointInspector):
         event.handled = True
 
     def assemble_lines(self):
+
         lines = []
         if self.current_position:
             inds = self.get_selected_index()
+            # convert_index = self.convert_index
+            # index_tag = self.index_tag
+            # index_attr = self.index_attr
+
             if inds is not None:
                 n = len(inds)
+                component = self.component
+                ys = component.value.get_data()
+                xs = component.index.get_data()
+
                 for i, ind in enumerate(inds):
                     analysis = self.analyses[ind]
 
                     rid = analysis.record_id
-                    name = self.component.container.y_axis.title
-                    y = self.component.value.get_data()[ind]
+                    name = component.container.y_axis.title
+                    y = ys[ind]
+                    # x = xs[ind]
 
-                    if hasattr(self.component, 'yerror'):
-                        ye = self.component.yerror.get_data()[ind]
-                        pe = self.percent_error(y, ye)
-                        if self.value_format:
-                            ye = self.value_format(ye)
-                        if self.value_format:
-                            y = self.value_format(y)
+                    if hasattr(component, 'yerror'):
+                        try:
+                            ye = component.yerror.get_data()[ind]
+                            pe = self.percent_error(y, ye)
+                            if self.value_format:
+                                ye = self.value_format(ye)
+                            if self.value_format:
+                                y = self.value_format(y)
 
-                        y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                            y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                        except IndexError:
+                            pass
+
                     else:
                         if self.value_format:
                             y = self.value_format(y)
 
                     tag = analysis.tag
-                    info = ['Analysis= {}'.format(rid),
-                            'Tag= {}'.format(tag),
+                    info = [u'Analysis= {}'.format(rid),
+                            u'Tag= {}'.format(tag),
                             u'{}= {}'.format(name, y)]
+
+                    # if index_tag:
+                    # if index_attr:
+                    # x = nominal_value(analysis.get_value(index_attr))
+                    #     else:
+                    #         x = xs[ind]
+                    #     print x, index_attr, convert_index
+                    #     if convert_index:
+                    #         x = convert_index(x)
+                    #     else:
+                    #         x = '{:0.5f}'.format(x)
+                    #
+                    #     info.append('{}= {}'.format(index_tag, x))
 
                     if hasattr(analysis, 'status_text'):
                         info.insert(1, 'Status= {}'.format(analysis.status_text))
                     lines.extend(info)
                     if self.additional_info is not None:
-                        ad = self.additional_info(analysis)
+                        ad = self.additional_info(ind, xs[ind], ys[ind], analysis)
                         if isinstance(ad, (list, tuple)):
                             lines.extend(ad)
                         else:

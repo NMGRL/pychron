@@ -15,34 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from datetime import datetime
-from traits.api import Instance, Bool, Int
-from apptools.preferences.preference_binding import bind_preference
-
-
-# ============= standard library imports ========================
-import os
-from threading import Timer, Thread
 import hashlib
+import os
 import time
+from datetime import datetime
+from threading import Thread, Lock
+
 import yaml
-# ============= local library imports  ==========================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, Bool, Int
+
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
-from pychron.pychron_constants import SCRIPT_NAMES
 from pychron.paths import paths
+from pychron.pychron_constants import SCRIPT_NAMES
 
 
 def auto_connect(func):
     def wrapper(obj, *args, **kw):
-        if not obj.db.connected:
-            obj.connect()
+        with obj.session_lock:
+            if not obj.db.connected:
+                obj.connect()
 
-        if obj.db.connected:
-            with obj.db.session_ctx():
-                return func(obj, *args, **kw)
+            if obj.db.connected:
+                with obj.db.session_ctx(use_parent_session=False):
+                    return func(obj, *args, **kw)
 
     return wrapper
 
@@ -76,7 +75,8 @@ test_value: {} ({})'''.format(dev, tag, mcmp, val, unit)
 
 class LabspyClient(Loggable):
     """
-    Used to add experiments and runs to the database. Used in conjunction with ExperimentPlugin
+    Used to add experiments and runs to the database.
+    Used in conjunction with ExperimentPlugin
     """
     db = Instance(LabspyDatabaseAdapter)
 
@@ -84,17 +84,21 @@ class LabspyClient(Loggable):
     connection_status_period = Int
 
     _timer = None
+    session_lock = None
 
     def __init__(self, bind=True, *args, **kw):
         super(LabspyClient, self).__init__(*args, **kw)
         if bind:
             self.bind_preferences()
-            self.start()
+            # self.start()
+        self.session_lock = Lock()
 
     def bind_preferences(self):
         self.db.bind_preferences()
-        bind_preference(self, 'use_connection_status', 'pychron.labspy.use_connection_status')
-        bind_preference(self, 'connection_status_period', 'pychron.labspy.connection_status_period')
+        bind_preference(self, 'use_connection_status',
+                        'pychron.labspy.use_connection_status')
+        bind_preference(self, 'connection_status_period',
+                        'pychron.labspy.connection_status_period')
 
     def test_connection(self, **kw):
         return self.db.connect(**kw)
@@ -103,16 +107,28 @@ class LabspyClient(Loggable):
 
         self.debug('Start Connection status timer')
         if self.application and self.use_connection_status:
-            self.debug('timer started period={}'.format(self.connection_status_period))
+            self.debug(
+                'timer started period={}'.format(
+                    self.connection_status_period))
 
             devs = self.application.get_services(ICoreDevice)
             if devs:
-                t = Thread(target=self._connection_status, name='ConnectionStatus')
+                t = Thread(target=self._connection_status,
+                           name='ConnectionStatus')
+                t.setDaemon(True)
                 t.start()
+
             else:
                 self.debug('No devices to check for connection status')
-            # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': True})
-            # t.start()
+
+    def get_latest_lab_temperatures(self):
+        return self.db.get_latest_lab_temperatures()
+
+    def get_latest_lab_humiditys(self):
+        return self.db.get_latest_lab_humiditys()
+
+    def get_latest_lab_pneumatics(self):
+        return self.db.get_latest_lab_pneumatics()
 
     def _connection_status(self, verbose=False):
 
@@ -138,23 +154,19 @@ class LabspyClient(Loggable):
                                            dev.test_connection(),
                                            verbose=verbose)
                 except BaseException, e:
-                    self.debug('Connection status. update connection failed: error={}'.format(e))
+                    self.debug('Connection status. update connection failed: '
+                               'error={}'.format(e))
                     break
 
             et = time.time() - st
-            time.sleep(max(0, period-et))
-        # t = Timer(self.connection_status_period, self._connection_status, kwargs={'verbose': verbose})
-        # t.start()
+            time.sleep(max(0, period - et))
 
     @auto_connect
-    def add_experiment(self, exp):
+    def add_experiment(self, name, starttime, mass_spectrometer, username):
         # if self.db.connected:
         # with self.db.session_ctx():
-        hid = self._generate_hid(exp)
-        self.db.add_experiment(name=exp.name,
-                               start_time=exp.starttime,
-                               system=exp.mass_spectrometer,
-                               user=exp.username)
+        # hid = self._generate_hid(exp)
+        self.db.add_experiment(name, starttime, mass_spectrometer, username)
         # ExtractionDevice=exp.extract_device,
         # HashID=hid)
 
@@ -172,14 +184,17 @@ class LabspyClient(Loggable):
     @auto_connect
     def update_connection(self, ts, devname, com, addr, status, verbose=False):
         if verbose:
-            self.debug('Setting connection status for dev={},com={},addr={},status={}'.format(devname, com,
-                                                                                              addr, status))
+            self.debug(
+                'Setting connection status for dev={},com={},addr={},status={}'.format(
+                    devname, com,
+                    addr, status))
 
         appname, user = self.application.name.split('-')
-        self.db.set_connection(ts,
-                               appname.strip(),
-                               user.strip(),
-                               devname, com, addr, status)
+        with self.db.session_ctx():
+            self.db.set_connection(ts,
+                                   appname.strip(),
+                                   user.strip(),
+                                   devname, com, addr, status)
 
     @auto_connect
     def update_status(self, **kw):
@@ -197,17 +212,49 @@ class LabspyClient(Loggable):
     def add_run(self, run, exp):
         exp = self.db.get_experiment(self._generate_hid(exp))
         self.db.add_analysis(exp, self._run_dict(run))
+        ms = run.mass_spectrometer.capitalize()
+
+        config = self._get_configuration()
+
+        for name, units, atypes, value in config:
+            units = units or ''
+            if atypes[0] == 'all':
+                add = True
+            else:
+                add = run.analysis_type in atypes
+
+            if add:
+                args = []
+                if value == 'peak_center':
+                    value = 'get_reference_peakcenter_result'
+                elif '/' in value:
+                    args = (value,)
+                    value = 'get_ratio'
+
+                try:
+                    v = getattr(run, value)(*args)
+                except AttributeError:
+                    continue
+                    
+                self.db.add_measurement('{}Monitor'.format(ms), '{}{}'.format(ms, name), v, units)
 
     @auto_connect
     def add_measurement(self, dev, tag, val, unit):
         val = float(val)
-        self.debug('adding measurement dev={} process={} value={} ({})'.format(dev, tag, val, unit))
-        self.db.add_measurement(dev, tag, val, unit)
-        self._check_notifications(dev, tag, val, unit)
+        self.debug(
+            'adding measurement dev={} process={} value={} ({})'.format(dev,
+                                                                        tag,
+                                                                        val,
+                                                                        unit))
+        try:
+            self.db.add_measurement(dev, tag, val, unit)
+            self._check_notifications(dev, tag, val, unit)
+        except BaseException, e:
+            self.debug('failed adding measurement. {}'.format(e))
 
     def connect(self):
-        self.warning('not connected to db {}'.format(self.db.url))
-        self.db.connect()
+        self.warning('not connected to db {}'.format(self.db.public_url))
+        return self.db.connect()
 
     @property
     def notification_triggers(self):
@@ -215,9 +262,38 @@ class LabspyClient(Loggable):
         with open(p, 'r') as rfile:
             return [NotificationTrigger(i) for i in yaml.load(rfile)]
 
+    # private
+    def _get_configuration(self):
+        """
+        eg;
+         config = [('PeakCenter', 'DAC (V)', 'peak_center', ('all',)),
+                   ('Ar40/Ar36', '', 'Ar40/Ar36', ('air',))]
+
+        -
+         - PeakCenter
+         - DAC (V)
+         -
+          - all
+        -
+         - Ar40/Ar36
+         -
+         -
+          - air
+
+        :return:
+        """
+        config = []
+        p = paths.labspy_client_config
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                config = yaml.load(rfile)
+
+        return config
+
     def _check_notifications(self, dev, tag, val, unit):
         if not os.path.isfile(paths.notification_triggers):
-            self.debug('no notification trigger file available. {}'.format(paths.notification_triggers))
+            self.debug('no notification trigger file available. {}'.format(
+                paths.notification_triggers))
             return
 
         ns = []
@@ -228,7 +304,8 @@ class LabspyClient(Loggable):
                 ns.append(nt.notify(val, unit))
         self.debug('notifications: {}'.format(ns))
         if ns:
-            emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
+            emailer = self.application.get_service(
+                'pychron.social.email.emailer.Emailer')
             if emailer:
                 for addrs, sub, message in ns:
                     emailer.send(addrs, sub, message)
@@ -245,11 +322,15 @@ class LabspyClient(Loggable):
                 'start_time': spec.analysis_timestamp}
 
         d = {dbk: getattr(spec, k) for k, dbk in (('runid', 'Runid'),
-                                                  ('analysis_type', 'analysis_type'),
-                                                  ('analysis_timestamp', 'TimeStamp'),
+                                                  ('analysis_type',
+                                                   'analysis_type'),
+                                                  ('analysis_timestamp',
+                                                   'TimeStamp'),
                                                   ('sample', 'Sample'),
-                                                  ('extract_value', 'ExtractValue'),
-                                                  ('extract_units', 'ExtractUnits'),
+                                                  ('extract_value',
+                                                   'ExtractValue'),
+                                                  ('extract_units',
+                                                   'ExtractUnits'),
                                                   ('duration', 'Duration'),
                                                   ('cleanup', 'Cleanup'),
                                                   ('position', 'Position'),
@@ -276,6 +357,7 @@ class LabspyClient(Loggable):
 
 if __name__ == '__main__':
     from random import random
+
     # from pychron.paths import paths
 
     paths.build('_dev')
@@ -329,13 +411,16 @@ if __name__ == '__main__':
     #
     # def update_status(c):
     #     c.update_status(Error='Error big time')
-    #     c.update_status(Message='This is a long message', ShortMessage='This is a short message')
+    #     c.update_status(Message='This is a long message',
+    #                     ShortMessage='This is a short message')
 
     def add_measurements(c):
         for i in range(100):
             c.add_measurement('AirPressure', 'pneumatics', random(), 'PSI')
-            c.add_measurement('Environmental', 'temperature', random() * 2 + 70, 'C')
-            c.add_measurement('Environmental', 'humidity', random() * 5 + 50, '%')
+            c.add_measurement('Environmental', 'temperature', random() * 2 + 70,
+                              'C')
+            c.add_measurement('Environmental', 'humidity', random() * 5 + 50,
+                              '%')
 
             time.sleep(1)
 
@@ -365,165 +450,3 @@ if __name__ == '__main__':
     # exp = add_experiment(clt)
     # add_runs(clt, exp)
 # ============= EOF =============================================
-# class MeteorLabspyClient(LabspyClient):
-# host = Str
-# port = Int
-#     database_name = Str
-#
-#     _client = None
-#
-#     def __init__(self, *args, **kw):
-#         super(MeteorLabspyClient, self).__init__(*args, **kw)
-#         self.database_name = 'meteor'
-#
-#     def bind_preferences(self):
-#         bind_preference(self, 'host', 'pychron.labspy.host')
-#         bind_preference(self, 'port', 'pychron.labspy.port')
-#         bind_preference(self, 'database_name', 'pychron.labspy.database_name')
-#
-#     def test_connection(self, warn=True):
-#         if self.host and self.port:
-#             from pymongo import MongoClient
-#             from pymongo.errors import ConnectionFailure
-#
-#             url = 'mongodb://{}:{}/'.format(self.host, self.port)
-#             try:
-#                 self._client = MongoClient(url)
-#                 return True
-#             except ConnectionFailure:
-#                 if warn:
-#                     self.warning_dialog('failed connecting to database at {}'.format(url))
-#         return False
-#
-#     def add_experiment(self, exp):
-#         db = self.db
-#         if db:
-#             now = datetime.now()
-#             attrs = ('username', 'extract_device', 'mass_spectrometer', 'name', 'status')
-#             doc = {ai: getattr(exp, ai) for ai in attrs}
-#
-#             hid = self._generate_hid(exp)
-#             doc.update(**{'starttime': time.mktime(exp.starttime.timetuple()),
-#                           'timestamp': time.mktime(now.timetuple()),
-#                           'hash_id': hid})
-#
-#             db.experiments.insert(doc)
-#             # exp.hash_id = hid
-#
-#     def update_experiment(self, exp, err_msg):
-#         if self.db:
-#             db = self.db
-#             hid = self._generate_hid(exp)
-#             doc = db.experiments.find_one({'hash_id': hid})
-#             if doc:
-#                 db.experiments.update({'_id': doc['_id']},
-#                                       {'$set': {'status': err_msg or 'Finished',
-#                                                 'timestampf': time.mktime(datetime.now().timetuple())}})
-#
-#     def update_status(self, **kw):
-#         db = self.db
-#         if db:
-#             doc = db.state.find_one({})
-#             if not doc:
-#                 doc \
-#                     = kw
-#                 db.state.insert(doc)
-#             else:
-#                 db.state.update({'_id': doc['_id']}, {'$set': kw})
-#
-#     def _generate_hid(self, exp):
-#         md5 = hashlib.md5()
-#         md5.update(exp.name)
-#         md5.update(exp.spectrometer)
-#         md5.update(exp.starttime.isoformat())
-#         return md5.hexdigest()
-#
-#     def add_run(self, run, exp):
-#         db = self.db
-#         if db:
-#             # attrs = ('record_id', 'timestamp', 'experiment_name', 'state')
-#             # doc = {k: getattr(run, k) for k in attrs}
-#             doc = self._make_run_doc(run, exp)
-#             db.runs.insert(doc)
-#
-#     def add_device_post(self, devs):
-#         # clt = self._client
-#         # if not clt:
-#         # return
-#         #
-#         # db = clt[self.database_name]
-#
-#         db = self.db
-#         if db:
-#             now = datetime.now()
-#             # print now.isoformat(), now.strftime('%H:%M:%S')
-#             doc = {  # 'timestamp': now,
-#                      # 'timestampt': now.strftime('%H:%M:%S'),
-#                      'timestamp': time.mktime(now.timetuple())}
-#
-#             values = []
-#             for di in devs:
-#                 for vk, cv, ui in zip(di.value_keys, di.current_values, di.units):
-#                     values.append({'device': di.name,
-#                                    'name': vk,
-#                                    'value': cv,
-#                                    'units': ui})
-#
-#             doc['values'] = values
-#
-#             # pprint(doc, width=4)
-#             db.devices.insert(doc)
-#
-#     # private
-#     def _make_run_doc(self, run, exp):
-#         spec = run.spec
-#
-#         d = {k: getattr(spec, k) for k in ('runid',
-#                                            'analysis_type',
-#                                            'sample',
-#                                            'extract_value',
-#                                            'duration',
-#                                            'cleanup',
-#                                            'position',
-#                                            'comment',
-#                                            'material',
-#                                            'project',
-#                                            'mass_spectrometer',
-#                                            'extract_device',
-#                                            'state')}
-#
-#         d['experiment_name'] = exp.name
-#         if spec.analysis_timestamp:
-#             d['timestamp'] = time.mktime(spec.analysis_timestamp.timetuple())
-#             # d['date'] = spec.analysis_timestamp.strftime('%m/%d/%Y %I:%M:%S %p')
-#             # d['runtime'] = spec.analysis_timestamp.strftime('%I:%M:%S %p')
-#         else:
-#             d['date'] = ''
-#             d['timestamp'] = ''
-#             d['runtime'] = ''
-#
-#         for si in SCRIPT_NAMES:
-#             d[si] = getattr(spec, si)
-#
-#         return d
-#
-#     def _get_property(self):
-#         if self._client:
-#             return self._client[self.database_name]
-#
-#
-# def add_device(clt):
-#     class Dev():
-#         def __init__(self, name, values, units):
-#             self.name = name
-#             self.units = units
-#             self.value_keys = values
-#             self.current_values = [random() for k in values]
-#
-#
-#     a = Dev('pneumatic', ('pressure',), ('torr',))
-#     b = Dev('environment',
-#             ('temperature', 'humidity'), ('C', '%'))
-#     c = Dev('gauge', ('bone_ig',), ('torr',))
-#     d = Dev('gauge', ('microbone_ig',), ('torr',))
-#     clt.add_device_post([a, b, c, d])

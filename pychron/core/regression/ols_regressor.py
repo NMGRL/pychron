@@ -15,23 +15,16 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
-from traits.api import Int, Property
-# ============= standard library imports ========================
-from numpy import asarray, column_stack, ones, \
-    matrix, sqrt, dot, linalg
-
-from statsmodels.api import OLS
-# try:
-#
-# except ImportError:
-#     try:
-#         from scikits.statsmodels.api import OLS
-#     except ImportError:
-#         from pyface.message_dialog import warning
-#
-#         warning(None, 'statsmodels is required but was not found')
-
 import logging
+
+from numpy import asarray, column_stack, ones, \
+    matrix, sqrt, dot, linalg, zeros_like, hstack
+from statsmodels.api import OLS
+from traits.api import Int, Property
+
+from pychron.core.helpers.fits import FITS
+from pychron.pychron_constants import MSEM
+from pychron.pychron_constants import SEM
 
 logger = logging.getLogger('Regressor')
 
@@ -45,12 +38,21 @@ class OLSRegressor(BaseRegressor):
     constant = None
     _ols = None
 
-    def _get_degrees_of_freedom(self):
-        return len(self.coefficients)
+    def set_degree(self, d, refresh=True):
+        if isinstance(d, str):
+            d = d.lower()
+            fits = ['linear', 'parabolic', 'cubic']
+            if d in fits:
+                d = fits.index(d) + 1
+            else:
+                d = None
 
-    def __degree_changed(self):
-        if self._degree:
-            self.calculate()
+        if d is None:
+            d = 1
+
+        self._degree = d
+        if refresh:
+            self.dirty = True
 
     def get_exog(self, x):
         return self._get_X(x)
@@ -75,30 +77,43 @@ class OLSRegressor(BaseRegressor):
         return dot(exog, beta)
 
     def calculate(self, filtering=False):
-        cxs = self.pre_clean_xs
-        cys = self.pre_clean_ys
+        cxs = self.clean_xs
+        cys = self.clean_ys
 
+        integrity_check = True
         if not self._check_integrity(cxs, cys):
-            # logger.debug('A integrity check failed')
-            # import traceback
-            # traceback.print_stack()
-            return
+            if len(cxs) == 1 and len(cys) == 1:
+                cxs = hstack((cxs, cxs[0]))
+                cys = hstack((cys, cys[0]))
+                integrity_check = False
+                # cys.append(cys[0])
+            else:
+                self._result = None
+                # logger.debug('A integrity check failed')
+                # import traceback
+                # traceback.print_stack()
+                return
 
-        if not filtering:
-            #prevent infinite recursion
-            fx, fy = self.calculate_filtered_data()
+        if integrity_check:
+            if not filtering:
+                # prevent infinite recursion
+                fx, fy = self.calculate_filtered_data()
+            else:
+                fx, fy = cxs, cys
         else:
             fx, fy = cxs, cys
 
         X = self._get_X(fx)
+
         if X is not None:
-            if not self._check_integrity(X, fy):
+            if integrity_check and not self._check_integrity(X, fy):
+                self._result = None
                 logger.debug('B integrity check failed')
                 # self.debug('B integrity check failed')
                 return
 
             try:
-                ols = self._engine_factory(fy, X)
+                ols = self._engine_factory(fy, X, check_integrity=integrity_check)
                 self._ols = ols
                 self._result = ols.fit()
             except Exception, e:
@@ -106,8 +121,11 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def _engine_factory(self, fy, X):
-        return OLS(fy, X)
+    def calculate_error_envelope2(self, fx, fy):
+        from statsmodels.sandbox.regression.predstd import wls_prediction_std
+
+        prstd, iv_l, iv_u = wls_prediction_std(self._result)
+        return iv_l, iv_u, self._result.model.exog[::, 1]
 
     def predict(self, pos):
         return_single = False
@@ -117,14 +135,19 @@ class OLSRegressor(BaseRegressor):
 
         pos = asarray(pos)
 
-        X = self._get_X(xs=pos)
-        res = self._result
+        x = self._get_X(xs=pos)
 
+        res = self._result
         if res:
-            pred = res.predict(X)
+            pred = res.predict(x)
             if return_single:
                 pred = pred[0]
             return pred
+        else:
+            if return_single:
+                return 0
+            else:
+                return zeros_like(pos)
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
@@ -138,7 +161,7 @@ class OLSRegressor(BaseRegressor):
         x = asarray(x)
 
         if error_calc == 'CI':
-            e = self.calculate_ci_error(x[0])
+            e = self.calculate_ci_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)
 
@@ -146,7 +169,7 @@ class OLSRegressor(BaseRegressor):
             e = e[0]
         return e
 
-    def predict_error_algebraic(self, x, error_calc='sem'):
+    def predict_error_algebraic(self, x, error_calc='SEM'):
         """
         draper and smith 24
 
@@ -159,7 +182,7 @@ class OLSRegressor(BaseRegressor):
 
         def calc_error(Xk):
             a = 1 / n + (Xk - Xbar) ** 2 / ((xs - Xbar) ** 2).sum()
-            if error_calc == 'sem':
+            if error_calc == SEM:
                 var_Ypred = s * s * a
             else:
                 var_Ypred = s * s * (1 + a)
@@ -181,30 +204,17 @@ class OLSRegressor(BaseRegressor):
 
         def calc_hat(xi):
             Xk = self._get_X(xi).T
+
             covarM = matrix(self.var_covar)
             varY_hat = (Xk.T * covarM * Xk)
 
             return varY_hat[0, 0]
 
-        # def calc_sd(xi):
-        #     varY_hat = calc_hat(xi)
-        #     return sqrt(sef ** 2 + sef ** 2 * varY_hat)
-        #
-        # def calc_sem(xi):
-        #     varY_hat = calc_hat(xi)
-        #     return sef * sqrt(varY_hat)
-        #
-        # mswd=self.mswd
-        # def calc_modified_sem(xi):
-        #     varY_hat = calc_hat(xi)
-        #     m=1 if mswd<=1 else mswd**0.5
-        #     return sef * sqrt(varY_hat)* m
-
-        if error_calc == 'SEM':
+        if error_calc == SEM:
             def func(xi):
                 varY_hat = calc_hat(xi)
                 return sef * sqrt(varY_hat)
-        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        elif error_calc == MSEM:
             mswd = self.mswd
 
             def func(xi):
@@ -216,9 +226,12 @@ class OLSRegressor(BaseRegressor):
                 varY_hat = calc_hat(xi)
                 return sqrt(sef ** 2 + sef ** 2 * varY_hat)
 
-        return [func(xi) for xi in x]
-        # func = calc_sem if error_calc == 'SEM' else calc_sd
-        # return [func(xi) for xi in x]
+        if not self._result:
+            return zeros_like(x)
+        else:
+            return [func(xi) for xi in x]
+            # func = calc_sem if error_calc == 'SEM' else calc_sd
+            # return [func(xi) for xi in x]
 
     def predict_error_al(self, x, error_calc='sem'):
         """
@@ -270,44 +283,43 @@ class OLSRegressor(BaseRegressor):
         """
         if self._result:
             return self._result.params
+        else:
+            return [0, 0]
 
     def _calculate_coefficient_errors(self):
         if self._result:
             return self._result.bse
+        else:
+            return [0, 0]
+
+    def _engine_factory(self, fy, X, check_integrity=True):
+        return OLS(fy, X)
 
     def _get_degree(self):
         return self._degree
-
-    def set_degree(self, d, refresh=True):
-        if isinstance(d, str):
-            d = d.lower()
-            fits = ['linear', 'parabolic', 'cubic']
-            if d in fits:
-                d = fits.index(d) + 1
-            else:
-                d = None
-
-        if d is None:
-            d = 1
-
-        self._degree = d
-        if refresh:
-            self.dirty = True
 
     def _set_degree(self, d):
         self.set_degree(d)
 
     @property
     def summary(self):
-        return self._result.summary()
+        if self._result:
+            return self._result.summary()
 
     @property
     def var_covar(self):
-        return self._result.normalized_cov_params
+        if self._result:
+            return self._result.normalized_cov_params
+
+    def _get_degrees_of_freedom(self):
+        return len(self.coefficients)
+
+    def __degree_changed(self):
+        if self._degree:
+            self.calculate()
 
     def _get_fit(self):
-        fits = ['linear', 'parabolic', 'cubic']
-        return fits[self._degree - 1]
+        return FITS[self._degree - 1]
 
     def _set_fit(self, v):
         self._set_degree(v)
@@ -325,50 +337,8 @@ class OLSRegressor(BaseRegressor):
         if xs is None:
             xs = self.clean_xs
 
-        cols = [pow(xs, i) for i in range(self.degree + 1)]
-        X = column_stack(cols)
-        return X
-
-        # @cached_property
-        # def _get_mswd(self):
-        #     self.valid_mswd = False
-        #     if self._degree == 1:
-        #         # a = self.intercept
-        #         # b = self.slope
-        #         coeffs = self._calculate_coefficients()
-        #         if not len(coeffs):
-        #             self.calculate()
-        #             coeffs = self._calculate_coefficients()
-        #
-        #         if len(coeffs):
-        #             # x = self.xs
-        #             # y = self.ys
-        #             #
-        #             # sx = self.xserr
-        #             # sy = self.yserr
-        #
-        #             # if not len(sx):
-        #             #     sx=zeros(self.n)
-        #             # if not len(sy):
-        #             #     sy=zeros(self.n)
-        #
-        #             # x=self._clean_array(x)
-        #             # y=self._clean_array(y)
-        #             # sx=self._clean_array(sx)
-        #             # sy=self._clean_array(sy)
-        #             x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
-        #             if self._check_integrity(x, y) and \
-        #                     self._check_integrity(x, sx) and \
-        #                     self._check_integrity(x, sy):
-        #                 m = calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
-        #                 self.valid_mswd = validate_mswd(m, len(ys), k=2)
-        #                 return m
-        #             else:
-        #                 return 'NaN'
-        #         else:
-        #             return 'NaN'
-        #     else:
-        #         return super(OLSRegressor, self)._get_mswd()
+        cols = [pow(xs, i) for i in xrange(self.degree + 1)]
+        return column_stack(cols)
 
 
 class PolynomialRegressor(OLSRegressor):
@@ -394,33 +364,6 @@ class MultipleLinearRegressor(OLSRegressor):
         if c == 2:
             xs = column_stack((xs, ones(r)))
             return xs
-
-            # def predict_error_matrix(self, x, error_calc=None):
-            #     """
-            #         predict the error in y using matrix math
-            #         draper and smith chapter 2.4 page 56
-            #
-            #         Xk'=(1, x, x**2...x)
-            #     """
-            #     if error_calc is None:
-            #         error_calc=self.error_calc_type
-            #
-            #     def calc_error(xi, sef):
-            #         Xk = self._get_X(xi).T
-            #         # Xk=column_stack((xs/, ones(r)))
-            #         covarM = matrix(self.var_covar)
-            #         varY_hat = (Xk.T * covarM * Xk)
-            #         # print varY_hat
-            #         # varY_hat = sum(diag(varY_hat))
-            #         if error_calc == 'SEM':
-            #             se = sef * sqrt(varY_hat)
-            #         else:
-            #             se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
-            #
-            #         return se
-            #
-            #     sef = self.calculate_standard_error_fit()
-            #     return [calc_error(xi, sef) for xi in asarray(x)]
 
 
 if __name__ == '__main__':

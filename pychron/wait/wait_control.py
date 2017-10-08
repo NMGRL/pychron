@@ -16,15 +16,12 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str, Color, Button, Float, Bool
-from traitsui.api import View, Item, VGroup, HGroup, \
-    Spring, UItem, spring, RangeEditor
 # ============= standard library imports ========================
 from threading import Event
 import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.loggable import Loggable
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.helpers.timer import Timer
 
 
@@ -43,7 +40,8 @@ class WaitControl(Loggable):
     end_evt = None
 
     continue_button = Button('Continue')
-
+    pause_button = Button('Pause')
+    _paused = Bool
     _continued = Bool
     _canceled = Bool
     _no_update = False
@@ -67,10 +65,18 @@ class WaitControl(Loggable):
     def join(self, evt=None):
         if evt is None:
             evt = self.end_evt
-        time.sleep(0.25)
+
+        # time.sleep(0.25)
+
+        evt.wait(0.25)
+
         # while not self.end_evt.is_set():
-        while not evt.is_set():
-            time.sleep(0.05)
+        while not evt.wait(timeout=0.1):
+            pass
+        # while not evt.is_set():
+        #     # time.sleep(0.005)
+        #     evt.wait(0.005)
+
         self.debug('Join finished')
 
     def start(self, block=True, evt=None, duration=None, message=None):
@@ -101,6 +107,8 @@ class WaitControl(Loggable):
 
         if block:
             self.join(evt=evt)
+            if evt == self.end_evt:
+                self.end_evt = None
 
     def stop(self):
         self._end()
@@ -114,12 +122,14 @@ class WaitControl(Loggable):
         with no_update(self, fire_update_needed=False):
             self.high = self.duration
             self.current_time = self.duration
+            self._paused = False
 
     # ===============================================================================
     # private
     # ===============================================================================
 
     def _continue(self):
+        self._paused = False
         self._continued = True
         self._end()
         self.current_time = 0
@@ -133,11 +143,14 @@ class WaitControl(Loggable):
             self.end_evt.set()
 
     def _update_time(self):
+        if self._paused:
+            return
+
         ct = self.current_time
         if self.timer and self.timer.isActive():
             self.current_time -= 1
             ct -= 1
-            self.debug('Current Time={}/{}'.format(ct, self.duration))
+            # self.debug('Current Time={}/{}'.format(ct, self.duration))
             if ct <= 0:
                 self._end()
                 self._canceled = False
@@ -152,6 +165,9 @@ class WaitControl(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _pause_button_fired(self):
+        self._paused = not self._paused
+
     def _continue_button_fired(self):
         self._continue()
 

@@ -15,22 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Instance, Bool
-# ============= standard library imports ========================
-from datetime import datetime
-import time
-# ============= local library imports  ==========================
-from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
-from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
-from pychron.loggable import Loggable
+from traits.api import Instance, Bool, Dict
 
-# http://stackoverflow.com/q/3844931/
-from pychron.processing.analyses.dbanalysis import DBAnalysis
-from pychron.processing.analyses.exceptions import NoProductionError
+from pychron.dvc.dvc import DVC
+from pychron.experiment.utilities.identifier import make_aliquot_step, make_step, get_analysis_type
+from pychron.loggable import Loggable
+from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
+from pychron.pychron_constants import DETECTOR_IC
 
 
 def check_list(lst):
@@ -41,40 +33,105 @@ def check_list(lst):
     return not lst or [lst[0]] * len(lst) == lst
 
 
-def check_secondary_database_save(identifier):
+def check_massspec_database_save(identifier):
     ret = True
     if identifier == 'bu-debug':
         ret = False
-    elif get_analysis_type(identifier) == 'detector_ic':
+    elif get_analysis_type(identifier) == DETECTOR_IC:
         ret = False
     return ret
 
 
 class Datahub(Loggable):
-    mainstore = Instance(IsotopeDatabaseManager)
-    secondarystore = Instance(MassSpecDatabaseImporter, ())
+    mainstore = Instance(DVC)
+    stores = Dict
 
     bind_mainstore = True
     massspec_enabled = Bool
+    isotopedb_enabled = Bool
+
+    _new_runid = 0
+    _new_step = 0
+    _new_aliquot = 0
 
     def bind_preferences(self):
-        prefid = 'pychron.massspec.database'
 
+        # massspec
+        prefid = 'pychron.massspec.database'
         bind_preference(self, 'massspec_enabled', '{}.enabled'.format(prefid))
         if self.massspec_enabled:
-            bind_preference(self.secondarystore.db, 'name', '{}.name'.format(prefid))
-            bind_preference(self.secondarystore.db, 'host', '{}.host'.format(prefid))
-            bind_preference(self.secondarystore.db, 'username', '{}.username'.format(prefid))
-            bind_preference(self.secondarystore.db, 'password', '{}.password'.format(prefid))
+            from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 
-    def secondary_connect(self):
-        if self.massspec_enabled:
-            if self.secondarystore:
-                return self.secondarystore.connect()
+            store = MassSpecDatabaseImporter()
+            bind_preference(store.db, 'name', '{}.name'.format(prefid))
+            bind_preference(store.db, 'host', '{}.host'.format(prefid))
+            bind_preference(store.db, 'username', '{}.username'.format(prefid))
+            bind_preference(store.db, 'password', '{}.password'.format(prefid))
 
-    def has_secondary_store(self):
-        if self.massspec_enabled:
-            return self.secondarystore and self.secondarystore.db.connected
+            prefid = 'pychron.massspec.config'
+            bind_preference(store, 'reference_detector_name', '{}.reference_detector_name'.format(prefid))
+            bind_preference(store, 'reference_isotope_name', '{}.reference_isotope_name'.format(prefid))
+            bind_preference(store, 'use_reference_detector_by_isotope',
+                            '{}.use_reference_detector_by_isotope'.format(prefid))
+
+            self.stores['massspec'] = store
+
+        # isotopedb
+        prefid = 'pychron.pychron.database'
+        bind_preference(self, 'isotopedb_enabled', '{}.enabled'.format(prefid))
+        if self.isotopedb_enabled:
+            from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+            store = IsotopeDatabaseManager()
+            bind_preference(store.db, 'name', '{}.name'.format(prefid))
+            bind_preference(store.db, 'host', '{}.host'.format(prefid))
+            bind_preference(store.db, 'username', '{}.username'.format(prefid))
+            bind_preference(store.db, 'password', '{}.password'.format(prefid))
+            self.stores['isotopedb'] = store
+
+        self.stores['dvc'] = self.mainstore
+
+    def prepare_destory(self):
+        for s in ('massspec', 'isotopedb', 'dvc'):
+            try:
+                ss = self.stores[s]
+                ss.close_session()
+            except KeyError:
+                pass
+
+    def get_db(self, key):
+        try:
+            store = self.stores[key]
+            # store.create_session()
+            return store.db
+        except KeyError:
+            pass
+
+    def store_connect(self, key):
+
+        enabled = getattr(self, '{}_enabled'.format(key))
+        self.debug('{} enabled {}'.format(key, enabled))
+        if enabled:
+            try:
+                store = self.stores[key]
+            except KeyError:
+                return False
+
+            return store.connect()
+
+        else:
+            return True
+
+    # def secondary_connect(self):
+    #     self.debug('secondary enabled {}'.format(self.massspec_enabled))
+    #     if self.massspec_enabled:
+    #         if self.secondarystore:
+    #             return self.secondarystore.connect()
+    #     else:
+    #         return True
+
+    # def has_secondary_store(self):
+    #     if self.massspec_enabled:
+    #         return self.secondarystore and self.secondarystore.db.connected
 
     def is_conflict(self, spec):
         """
@@ -84,9 +141,12 @@ class Datahub(Loggable):
         self._new_step = -1
         self._new_aliquot = 1
         self.debug('check for conflicts')
-        if check_secondary_database_save(spec.identifier):
-            self.secondary_connect()
-            self.debug('connected to secondary')
+        if check_massspec_database_save(spec.identifier):
+            self.store_connect('massspec')
+            # self.secondary_connect()
+            self.debug('connected to massspec')
+
+        self.store_connect('isotopedb')
 
         if spec.is_step_heat():
             k = 'Stepheat'
@@ -131,40 +191,17 @@ class Datahub(Loggable):
                                                                                        spec.step,
                                                                                        spec.increment))
 
-    def load_analysis_backend(self, ln, arar_age):
-        db = self.mainstore.db
-        with db.session_ctx():
-            ln = db.get_labnumber(ln)
-            if ln:
-                an = DBAnalysis()
-                x = datetime.now()
-                now = time.mktime(x.timetuple())
-                an.timestamp = now
-                try:
-                    an.sync_irradiation(ln)
-                except NoProductionError:
-                    self.information_dialog('Irradiation={} Level={} has '
-                                            'no Correction/Production Ratio set defined'.format(an.irradiation,
-                                                                                                an.irradiation_level))
-                    return
+    def load_analysis_backend(self, ln, isotope_group):
+        dvc = self.mainstore
+        return dvc.load_analysis_backend(ln, isotope_group)
 
-                arar_age.trait_set(j=an.j,
-                                   production_ratios=an.production_ratios,
-                                   interference_corrections=an.interference_corrections,
-                                   chron_segments=an.chron_segments,
-                                   irradiation_time=an.irradiation_time,
-                                   timestamp=now)
-
-                arar_age.calculate_decay_factors()
-            return True
-
-    def add_experiment(self, exp):
-        db = self.mainstore.db
-        with db.session_ctx() as sess:
-            dbexp = db.add_experiment(exp.path)
-
-            sess.flush()
-            exp.database_identifier = dbexp.id
+    # def add_experiment(self, exp):
+    #     db = self.mainstore.db
+    #     with db.session_ctx() as sess:
+    #         dbexp = db.add_experiment(exp.path)
+    #
+    #         sess.flush()
+    #         exp.database_identifier = dbexp.id
 
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))
@@ -178,10 +215,11 @@ class Datahub(Loggable):
             pass
 
     def _get_greatest_aliquots(self, identifier):
-        if not check_secondary_database_save(identifier):
+        if not check_massspec_database_save(identifier):
             main = self.mainstore
             return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
         else:
+
             return zip(*[(store.precedence, store.db.name,
                           store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
                          for store in self.sorted_stores])
@@ -195,12 +233,14 @@ class Datahub(Loggable):
     def _datastores_default(self):
         return []
 
-    def _mainstore_default(self):
-        mainstore = IsotopeDatabaseManager(precedence=1,
-                                           connect=self.bind_mainstore,
-                                           bind=self.bind_mainstore)
-
-        return mainstore
+    # def _mainstore_default(self):
+    #     # mainstore = DVC(precedence=1,
+    #     #                 connect=self.bind_mainstore,
+    #     #                 bind=self.bind_mainstore)
+    #     mainstore = self.application.get_service('pychron.dvc.dvc.DVC')
+    #     mainstore.precedence = 1
+    #
+    #     return mainstore
 
     @property
     def new_runid(self):
@@ -210,15 +250,18 @@ class Datahub(Loggable):
 
     @property
     def sorted_stores(self):
-        if self._sorted_stores:
-            return self._sorted_stores
-        else:
-            r = sorted(filter(lambda x: x.is_connected(),
-                              (self.mainstore, self.secondarystore)),
-                       key=lambda x: x.precedence)
-            # r=sorted((self.mainstore, self.secondarystore))
-            self._sorted_stores = r
-            return r
+        return sorted(self.stores.itervalues(), key=lambda x: x.precedence)
+
+        # if self._sorted_stores:
+        #     return self._sorted_stores
+        # else:
+        #     stores =
+        #
+        #     r = sorted(filter(lambda x: x.is_connected(),
+        #                       (self.mainstore, self.secondarystore)),
+        #                key=lambda x: x.precedence)
+        #     # r=sorted((self.mainstore, self.secondarystore))
+        #     self._sorted_stores = r
+        #     return r
 
 # ============= EOF =============================================
-

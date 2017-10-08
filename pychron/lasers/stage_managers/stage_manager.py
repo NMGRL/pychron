@@ -15,43 +15,45 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+import os
+import time
+
+from numpy import array, asarray
 from traits.api import DelegatesTo, Instance, \
     Button, List, String, Event, Bool
-# from apptools.preferences.preference_binding import bind_preference
-# =============standard library imports =======================
-import os
-# from threading import Thread
-import time
-from numpy import array, asarray
-# =============local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
-from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
+
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
-# from pychron.core.helpers.color_generators import colors8i as colors
-
-from pychron.hardware.motion_controller import MotionController, PositionError, TargetPositionError
-from pychron.paths import paths
-# from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
-from pychron.lasers.points.points_programmer import PointsProgrammer
-# from pychron.core.geometry.scan_line import make_scan_lines
-from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.convex_hull import convex_hull
+from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.polygon_offset import polygon_offset
-from pychron.core.ui.thread import Thread
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
-
+from pychron.core.ui.thread import Thread
+from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
+from pychron.hardware.motion_controller import MotionController, \
+    TargetPositionError, ZeroDisplacementException
+from pychron.lasers.points.points_programmer import PointsProgrammer
 from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
-# from tray_calibration_manager import TrayCalibrationManager
-# from stage_component_editor import LaserComponentEditor
-# from pychron.canvas.canvas2D.markup.markup_items import CalibrationItem
-# from pattern.pattern_manager import PatternManager
+from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
+
+
+def distance_threshold(p1, p2, tol):
+    if p2 is None:
+        return True
+
+    x1, y1 = p1
+    x2, y2 = p2
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5 > tol
 
 
 class StageManager(BaseStageManager):
     """
     """
+
+    autocenter_button = Button
+
     stage_controller_klass = String('Newport')
 
     stage_controller = Instance(MotionController)
@@ -85,8 +87,11 @@ class StageManager(BaseStageManager):
     linear_move_history = List
 
     use_autocenter = Bool
+    keep_images_open = Bool(False)
 
     _default_z = 0
+    _cached_position = None
+    _cached_current_hole = None
 
     def __init__(self, *args, **kw):
         """
@@ -103,20 +108,31 @@ class StageManager(BaseStageManager):
         dev.parent = self
         return dev
 
-    def goto_position(self, v):
+    def goto_position(self, v, **kw):
         if XY_REGEX[0].match(v):
             self._move_to_calibrated_position(v)
         elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
             self.move_to_point(v)
 
         else:
-            self.move_to_hole(v)
+            self.move_to_hole(v, user_entry=True, **kw)
 
     def get_current_position(self):
         if self.stage_controller:
             x = self.stage_controller.x
             y = self.stage_controller.y
             return x, y
+
+    def get_current_hole(self):
+        pos = self.get_current_position()
+        if self.stage_map:
+            if distance_threshold(pos, self._cached_position, self.stage_map.g_dimension / 4):
+                h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.)
+                if h is not None:
+                    self._cached_current_hole = h
+                    self._cached_position = pos
+
+        return self._cached_current_hole
 
     def is_auto_correcting(self):
         return False
@@ -126,7 +142,7 @@ class StageManager(BaseStageManager):
         self.canvas.change_grid_visibility()
 
         bind_preference(self.canvas, 'show_laser_position', '{}.show_laser_position'.format(pref_id))
-        bind_preference(self.canvas, 'show_desired_position', '{}.show_laser_position'.format(pref_id))
+        bind_preference(self.canvas, 'show_desired_position', '{}.show_desired_position'.format(pref_id))
         bind_preference(self.canvas, 'desired_position_color', '{}.desired_position_color'.format(pref_id),
                         factory=ColorPreferenceBinding)
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
@@ -138,10 +154,8 @@ class StageManager(BaseStageManager):
         bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
-        #
+        bind_preference(self.canvas, 'show_hole', '{}.show_hole'.format(pref_id))
         bind_preference(self.canvas, 'scaling', '{}.scaling'.format(pref_id))
-        #
-        #        bind_preference(self.tray_calibration_manager, 'style', '{}.calibration_style'.format(pref_id))
         bind_preference(self.canvas, 'show_bounds_rect',
                         '{}.show_bounds_rect'.format(pref_id))
 
@@ -213,7 +227,8 @@ class StageManager(BaseStageManager):
         self.stage_controller.linear_move(*pos, **kw)
 
     def move_to_hole(self, hole, **kw):
-        self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
+        if self.stage_map.check_valid_hole(hole, **kw):
+            self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
 
     def move_to_point(self, pt):
         self._move(self._move_to_point, pt, name='move_to_point')
@@ -267,17 +282,24 @@ class StageManager(BaseStageManager):
     def relative_move(self, *args, **kw):
         self.stage_controller.relative_move(*args, **kw)
 
+    def key_released(self):
+        sc = self.stage_controller
+        sc.add_consumable((sc.update_axes, tuple()))
+
     def moving(self, force_query=False, **kw):
         moving = False
-        if self.stage_controller.timer is not None:
-            moving = self.stage_controller.timer.isActive()
-        elif force_query:
+        if force_query:
             moving = self.stage_controller.moving(**kw)
+        elif self.stage_controller.timer is not None:
+            moving = self.stage_controller.timer.isActive()
 
         return moving
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         return 0
+
+    def get_scores(self, **kw):
+        return 0, 0
 
     def define_home(self, **kw):
         self.stage_controller.define_home(**kw)
@@ -302,34 +324,30 @@ class StageManager(BaseStageManager):
         return pos
 
     def get_calibrated_xy(self):
-        pos = (self.stage_controller._x_position, self.stage_controller._y_position)
+        pos = (self.stage_controller.x, self.stage_controller.y)
         if self.stage_controller.xy_swapped():
             pos = pos[1], pos[0]
 
         pos = self.canvas.map_offset_position(pos)
         return self.get_calibrated_position(pos)
 
-    def get_calibrated_hole(self, x, y):
+    def get_calibrated_hole(self, x, y, tol):
         ca = self.canvas.calibration_item
         if ca is not None:
             smap = self.stage_map
 
-            rot = ca.rotation
-            cpos = ca.center
-
-            def _filter(hole, x, y, tol=0.1):
-                cx, cy = smap.map_to_calibration((hole.x, hole.y), cpos, rot)
-                return abs(cx - x) < tol and abs(cy - y) < tol
-
-            return next((si for si in smap.sample_holes
-                         if _filter(si, x, y)
-                         ), None)
+            xx, yy = smap.map_to_uncalibration((x, y), ca.center, ca.rotation)
+            return next((hole for hole in smap.sample_holes
+                         if abs(hole.x - xx) < tol and abs(hole.y - yy) < tol), None)
 
     def get_hole_xy(self, key):
         pos = self.stage_map.get_hole_pos(key)
         # map the position to calibrated space
         pos = self.get_calibrated_position(pos)
         return pos
+
+    def finish_move_to_hole(self, user_entry):
+        pass
 
     # private
     def _update_axes(self):
@@ -724,43 +742,47 @@ class StageManager(BaseStageManager):
         self.info('Move complete')
         self.update_axes()
 
-    def _move_to_hole(self, key, correct_position=True):
+    def _move_to_hole(self, key, correct_position=True, user_entry=False, autocenter_only=False):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
-        self.temp_hole = key
-        self.temp_position = self.stage_map.get_hole_pos(key)
 
-        pos = self.stage_map.get_corrected_hole_pos(key)
-        self.info('position {}'.format(pos))
-        if pos is not None:
-
-            if abs(pos[0]) < 1e-6:
-                pos = self.stage_map.get_hole_pos(key)
-                # map the position to calibrated space
-                pos = self.get_calibrated_position(pos, key=key)
-            else:
-                # check if this is an interpolated position
-                # if so probably want to do an autocentering routine
-                hole = self.stage_map.get_hole(key)
-                if hole.interpolated:
-                    self.info('using an interpolated value')
+        autocentered_position = False
+        if not autocenter_only:
+            self.temp_hole = key
+            self.temp_position = self.stage_map.get_hole_pos(key)
+            pos = self.stage_map.get_corrected_hole_pos(key)
+            self.info('position {}'.format(pos))
+            if pos is not None:
+                if abs(pos[0]) < 1e-6:
+                    pos = self.stage_map.get_hole_pos(key)
+                    # map the position to calibrated space
+                    pos = self.get_calibrated_position(pos, key=key)
                 else:
-                    self.info('using previously calculated corrected position')
-            try:
-                self.stage_controller.linear_move(block=True, *pos)
-                #            if self.tray_calibration_manager.calibration_style == 'MassSpec':
-            except TargetPositionError, e:
-                self.warning('Move to {} failed'.format(pos))
-                self.parent.emergency_shutoff(str(e))
-                return
+                    # check if this is an interpolated position
+                    # if so probably want to do an autocentering routine
+                    hole = self.stage_map.get_hole(key)
+                    if hole.interpolated:
+                        self.info('using an interpolated value')
+                    else:
+                        self.info('using previously calculated corrected position')
+                        autocentered_position = True
+                try:
+                    self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
+                except TargetPositionError, e:
+                    self.warning('(001) Move to {} failed'.format(pos))
+                    self.parent.emergency_shutoff(str(e))
+                    return
+                except ZeroDisplacementException:
+                    correct_position = False
+        try:
+            self._move_to_hole_hook(key, correct_position,
+                                autocentered_position)
+        except TargetPositionError, e:
+            self.warning('(002) Move failed. {}'.format(e))
+            self.parent.emergency_shutoff(str(e))
+            return
 
-            if not self.tray_calibration_manager.isCalibrating():
-                self._move_to_hole_hook(key, correct_position)
-            else:
-                self._move_to_hole_hook(key, correct_position)
-            self.info('Move complete')
-            # self.update_axes()  # update_hole=False)
-
-            #        self.move_thread = None
+        self.finish_move_to_hole(user_entry)
+        self.info('Move complete')
 
     def _move_to_hole_hook(self, *args):
         pass
@@ -769,28 +791,8 @@ class StageManager(BaseStageManager):
         pass
 
     # ===============================================================================
-    # Views
-    # ===============================================================================
-
-    # ===============================================================================
-
-    # ===============================================================================
     # Property Get / Set
     # ===============================================================================
-
-    # def _get_stage_maps(self):
-    #     if self._stage_maps:
-    #         return [s.name for s in self._stage_maps]
-    #     else:
-    #         return []
-    #
-    # def _get_stage_map(self):
-    #     if self._stage_map:
-    #         return self._stage_map.name
-
-    # def _get_stage_map_by_name(self, name):
-    #     return next((sm for sm in self._stage_maps if sm.name == name), None)
-
     def _set_stage_map(self, v):
         if v in self.stage_map_names:
             for root, ext in ((self.root, '.txt'), (paths.user_points_dir, '.yaml')):
@@ -1010,6 +1012,7 @@ class StageManager(BaseStageManager):
         pp.on_trait_change(self.move_polygon, 'polygon')
         pp.on_trait_change(self.move_polyline, 'line')
         return pp
+
 
 # ===============================================================================
 # mass spec hacks

@@ -38,11 +38,13 @@ Manual
          cd ~/Programming/pychron
          ls
 
-    #. checkout the version of Pychron you want to use. The current release is v2.1.0
+    #. checkout the version of Pychron you want to use. By default you should be on the "develop" branch. This is the
+     leading edge of pychron development will have buggy features. The current public release of pychron is v16.7. To
+      use the current release.
        ::
 
          cd ~/Programming/pychron
-         git checkout release/v2.1.0
+         git checkout release/v16.7
 
     #. Before you can launch Pychron you must install some dependencies.
        ::

@@ -15,21 +15,12 @@
 # ===============================================================================
 from collections import namedtuple
 
+
 def get_display_size():
     size = namedtuple('Size', 'width height')
-    # if IsQt():
-#        from PySide.QtGui import QDesktopWidget
-    from PySide.QtGui import QApplication
+    from pyface.qt.QtGui import QApplication
     desktop = QApplication.desktop()
     rect = desktop.screenGeometry()
     w, h = rect.width(), rect.height()
-#     else:
-#         import wx
-#         rect = wx.GetDisplaySize()
-#         w, h = rect.width, rect.height
-#
+
     return size(w, h)
-#
-# def IsQt():
-#     from traits.etsconfig.api import ETSConfig
-#     return ETSConfig.toolkit == "qt4"

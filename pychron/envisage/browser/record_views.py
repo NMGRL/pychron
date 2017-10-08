@@ -15,19 +15,36 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float, Property, Long
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import HasTraits, Str, Date, Long, Bool
+
 from pychron.experiment.utilities.identifier import get_analysis_type
 
 
-class RecordView(HasTraits):
+class RecordView(object):
     def __init__(self, dbrecord, *args, **kw):
         self._create(dbrecord)
         super(RecordView, self).__init__(*args, **kw)
 
     def _create(self, *args, **kw):
         pass
+
+
+class InterpretedAgeRecordView(object):
+    name = ''
+    identifier = ''
+    path = ''
+
+    def __init__(self, idn, path, obj):
+        self.identifier = idn
+        self.name = obj.get('name')
+        self.path = path
+        self.age = obj.get('age')
+        self.age_err = obj.get('age_err')
+        self.age_kind = obj.get('age_kind')
+
+    @property
+    def id(self):
+        return self.identifier
 
 
 class SampleImageRecordView(RecordView):
@@ -42,24 +59,31 @@ class SampleImageRecordView(RecordView):
 
 
 class SampleRecordView(RecordView):
-    name = Str
-    material = Str
-    project = Str
-    lat = Float
-    lon = Float
-    elevation = Float
-    lithology = Str
-    rock_type = Str
-    identifier = Str
+    name = ''
+    material = ''
+    project = ''
+    grainsize = ''
+    lat = 0
+    lon = 0
+    elevation = 0
+    lithology = ''
+    rock_type = ''
+    identifier = ''
+    principal_investigator = ''
+    note = ''
 
     def _create(self, dbrecord):
         if dbrecord.material:
             self.material = dbrecord.material.name
+            self.grainsize = dbrecord.material.grainsize or ''
+
         if dbrecord.project:
             self.project = dbrecord.project.name
+            if dbrecord.project.principal_investigator:
+                self.principal_investigator = dbrecord.project.principal_investigator.name
 
         for attr in ('name', 'lat', ('lon', 'long'),
-                     'elevation', 'lithology', 'location', 'igsn', 'rock_type'):
+                     'elevation', 'lithology', 'location', 'igsn', 'rock_type', 'note'):
             if isinstance(attr, tuple):
                 attr, dbattr = attr
             else:
@@ -73,30 +97,29 @@ class SampleRecordView(RecordView):
 
 
 class LabnumberRecordView(RecordView):
-    name = Str
-    material = Str
-    project = Str
-    labnumber = Str
-    identifier = Property
-    sample = Str
+    name = ''
+    material = ''
+    project = ''
+    labnumber = ''
+    sample = ''
 
-    lat = Float
-    lon = Float
-    elevation = Float
-    lithology = Str
+    lat = 0
+    lon = 0
+    elevation = 0
+    lithology = ''
 
-    alt_name = Str
-    low_post = Date  #
+    alt_name = ''
+    low_post = None
 
-    irradiation = Str
-    irradiation_level = Str
-    irradiation_and_level = Property
-    irradiation_pos = Str
+    irradiation = ''
+    irradiation_level = ''
+    irradiation_pos = ''
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ''
 
-        pos = dbrecord.irradiation_position
+        pos = dbrecord
+        # pos = dbrecord.irradiation_position
         if pos:
             self.irradiation_pos = str(pos.position)
             level = pos.level
@@ -132,12 +155,23 @@ class LabnumberRecordView(RecordView):
             except AttributeError:
                 pass
 
-    # mirror labnumber as identifier
-    def _get_identifier(self):
-        return self.labnumber
+                # import time
+                # for i in range(100):
+                #     time.sleep(0.001)
 
-    def _get_irradiation_and_level(self):
+    # def _get_identifier(self):
+    #     return self.labnumber
+
+    # def _get_irradiation_and_level(self):
+    #     return '{}{}'.format(self.irradiation, self.irradiation_level)
+    @property
+    def irradiation_and_level(self):
         return '{}{}'.format(self.irradiation, self.irradiation_level)
+
+    # mirror labnumber as identifier
+    @property
+    def identifier(self):
+        return self.labnumber
 
     @property
     def analysis_type(self):
@@ -156,18 +190,37 @@ class NameView(HasTraits):
         return self.name
 
 
-class ExperimentRecordView(NameView):
-    pass
-
-
 class ProjectRecordView(RecordView, NameView):
     name = Str
+    principal_investigator = Str
+    lab_contact = Str
+    checkin_date = Date
+    unique_id = Long
+
+    institution = Str
+    comment = Str
+    db_comment = Str
+    db_name = Str
+    dirty = Bool(False)
 
     def _create(self, dbrecord):
         if not isinstance(dbrecord, str):
             self.name = dbrecord.name
+            if dbrecord.principal_investigator:
+                self.principal_investigator = dbrecord.principal_investigator.name
+            self.unique_id = dbrecord.id
+            self.checkin_date = dbrecord.checkin_date
+            self.db_comment = self.comment = dbrecord.comment or ''
+            self.lab_contact = dbrecord.lab_contact or ''
+            self.institution = dbrecord.institution or ''
+
         else:
             self.name = dbrecord
+        self.db_name = self.name
+
+
+class RepositoryRecordView(NameView):
+    principal_investigator = Str
 
 
 class AnalysisGroupRecordView(RecordView):
@@ -186,5 +239,16 @@ class AnalysisRecordView(RecordView):
     def _create(self, dbrecord):
         for attr in ('record_id', 'tag'):
             setattr(self, attr, getattr(dbrecord, attr))
+
+
+class PrincipalInvestigatorRecordView(RecordView, NameView):
+    name = ''
+    email = ''
+    affiliation = ''
+
+    def _create(self, dbrecord):
+        self.name = dbrecord.name
+        self.email = dbrecord.email
+        self.affiliation = dbrecord.affiliation
 
 # ============= EOF =============================================

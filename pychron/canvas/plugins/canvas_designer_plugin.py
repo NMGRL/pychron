@@ -21,8 +21,10 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from pychron.canvas.designer.canvas_manager import CanvasManager
 from pychron.envisage.core.core_plugin import CorePlugin
+
+from pychron.canvas.designer.canvas_manager import CanvasManager
+
 
 class CanvasDesignerPlugin(CorePlugin):
     '''

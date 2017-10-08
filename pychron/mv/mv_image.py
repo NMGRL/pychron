@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance
-from traitsui.api import View, UItem
-from chaco.plot_containers import HPlotContainer
-from enable.component_editor import ComponentEditor
-from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
 from chaco.default_colormaps import hot
+from chaco.plot import Plot
+from chaco.plot_containers import HPlotContainer
+from enable.component_editor import ComponentEditor
+from traits.api import Instance
+from traitsui.api import View, UItem
+
 # ============= standard library imports ========================
 from numpy import ones, asarray
 # ============= local library imports  ==========================

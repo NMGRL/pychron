@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
-from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 import ConfigParser
 import os
@@ -126,6 +127,7 @@ class ReadoutView(Loggable):
     refresh_needed = Event
     refresh_period = Int(10, enter_set=True, auto_set=False)  # seconds
     use_word_query = Bool(True)
+    compare_to_config_enabled = Bool(True)
 
     _alive = False
 
@@ -161,21 +163,23 @@ class ReadoutView(Loggable):
         with open(path, 'r') as rfile:
             try:
                 yt = yaml.load(rfile)
-                yl, yd = yt
+                if yt:
+                    yl, yd = yt
 
-                for rd in yl:
-                    rr = Readout(spectrometer=self.spectrometer,
-                                 name=rd['name'],
-                                 min_value=rd.get('min', 0),
-                                 max_value=rd.get('max', 1),
-                                 compare=rd.get('compare', True))
-                    self.readouts.append(rr)
+                    for rd in yl:
+                        rr = Readout(spectrometer=self.spectrometer,
+                                     name=rd['name'],
+                                     min_value=rd.get('min', 0),
+                                     max_value=rd.get('max', 1),
+                                     compare=rd.get('compare', True))
+                        self.readouts.append(rr)
 
-                for rd in yd:
-                    rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                           name=rd['name'],
-                                           compare=rd.get('compare', True))
-                    self.deflections.append(rr)
+                    for rd in yd:
+                        if rd.get('enabled', False):
+                            rr = DeflectionReadout(spectrometer=self.spectrometer,
+                                                   name=rd['name'],
+                                                   compare=rd.get('compare', True))
+                            self.deflections.append(rr)
 
             except yaml.YAMLError:
                 return
@@ -211,10 +215,11 @@ class ReadoutView(Loggable):
             for d, r in zip(ds, self.readouts):
                 r.set_value(d)
 
-            keys = [r.name for r in self.deflections]
-            ds = self.spectrometer.get_deflection_word(keys)
-            for d, r in zip(ds, self.deflections):
-                r.set_value(d)
+            keys = [r.name for r in self.deflections if r.use_deflection]
+            if keys:
+                ds = self.spectrometer.get_deflection_word(keys)
+                for d, r in zip(ds, self.deflections):
+                    r.set_value(d)
 
         else:
             for rd in self.readouts:
@@ -228,7 +233,8 @@ class ReadoutView(Loggable):
         tol = 0.001
 
         spec = self.spectrometer
-        if not spec.simulation:
+
+        if not spec.simulation and self.compare_to_config_enabled:
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
                     if not r.compare:
@@ -259,7 +265,10 @@ class ReadoutView(Loggable):
 
     def traits_view(self):
         v = View(listeditor('readouts'),
-                 HGroup(spring, Item('refresh', show_label=False)))
+                 HGroup(Item('compare_to_config_enabled',label='Comp. Config',
+                             tooltip='If checked, compare the current values to the values in the configuration file.'
+                                     'Warn user if there is a mismatch'),
+                        spring, Item('refresh', show_label=False)))
         return v
 
 
@@ -285,8 +294,6 @@ def new_readout_view(rv):
     c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
                                                        sortable=False,
                                                        editable=False)), label='Deflections')
-    from pychron.spectrometer.readout_view import ReadoutHandler
-
     v = View(VGroup(a, Tabbed(b, c)),
              handler=ReadoutHandler(),
              title='Spectrometer Readout',

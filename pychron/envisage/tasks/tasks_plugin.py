@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 import random
 
-from traits.api import List, Tuple, HasTraits, Password
-from traitsui.api import View, Item
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
 from envisage.ui.tasks.action.preferences_action import PreferencesAction
@@ -28,19 +27,16 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import NO
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Tuple, HasTraits, Password
+from traitsui.api import View, Item
 
-# ============= standard library imports ========================
-import hashlib
-# ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
-from pychron.envisage.tasks.base_plugin import BasePlugin
-from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import ToggleFullWindowAction, EditInitializationAction, EditTaskExtensionsAction
-from pychron.envisage.tasks.preferences import GeneralPreferencesPane
+from pychron.envisage.tasks.base_plugin import BasePlugin
+from pychron.envisage.tasks.preferences import GeneralPreferencesPane, BrowserPreferencesPane
 from pychron.globals import globalv
-
-# logger = new_logger('PychronTasksPlugin')
+from pychron.paths import paths
 
 
 class PychronTasksPlugin(BasePlugin):
@@ -57,32 +53,24 @@ class PychronTasksPlugin(BasePlugin):
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
 
-    def _application_changed(self):
-        # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
-        defaults = (('show_random_tip', True),)
-        try:
-            self._set_preference_defaults(defaults, 'pychron.general')
-        except AttributeError, e:
-            print 'exception', e
+    # def _application_changed(self):
+    #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
+    #     defaults = (('show_random_tip', True),)
+    #     try:
+    #         self._set_preference_defaults(defaults, 'pychron.general')
+    #     except AttributeError, e:
+    #         print 'exception', e
 
     def start(self):
         self.info('Writing plugin file defaults')
-        for p, d, o in self.file_defaults:
-            try:
-                mod = __import__('pychron.file_defaults', fromlist=[d])
-                d = getattr(mod, d)
-            except BaseException, e:
-                print p, e
-                pass
-            try:
-                p = getattr(paths, p)
-            except AttributeError:
-                pass
+        paths.write_file_defaults(self.file_defaults)
 
-            if paths.write_default_file(p, d, o):
-                self.info('Wrote default file {} (overwrite: {})'.format(p, o))
-
+        self._set_user()
         self._random_tip()
+
+    def _set_user(self):
+        self.application.preferences.set('pychron.general.username', globalv.username)
+        self.application.preferences.save()
 
     def _random_tip(self):
         if globalv.random_tip_enabled and to_bool(self.application.preferences.get('pychron.general.show_random_tip')):
@@ -96,10 +84,15 @@ class PychronTasksPlugin(BasePlugin):
     def _my_tips_default(self):
         return ["Use <b>Help>What's New</b> to view the official ChangeLog for the current version",
                 'Turn Off Random Tip two ways:<br><b>1. Preferences>General></b> Uncheck "Random Tip".</b><br>'
-                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file']
+                '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
+                'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
+                'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
+                'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
+                'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
+                '<b>Help/Edit UI</b>.']
 
     def _preferences_panes_default(self):
-        return [GeneralPreferencesPane]
+        return [GeneralPreferencesPane, BrowserPreferencesPane]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=EditInitializationAction,
@@ -140,12 +133,11 @@ class mExitAction(ExitAction):
                 ret = confirm(None, 'Are you sure you want to Quit?')
                 if ret == NO:
                     return
-        try:
-            app.exit(force=True)
-        except RuntimeError:
-            import os
-
-            os._exit(0)
+        app.exit(force=True)
+        # try:
+        # except RuntimeError:
+        #     import os
+        #     os._exit(0)
 
 
 class myTasksPlugin(TasksPlugin):

@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, Property
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Int, Property
 from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -55,21 +55,35 @@ class RepoCentralPane(TraitsTaskPane):
         return v
 
 
+class RepoAdapter(TabularAdapter):
+    columns = [('Name', 'name')]
+
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        color = 'white'
+        if item.dirty:
+            color = 'red'
+        return color
+
+
 class SelectionPane(TraitsDockPane):
     id = 'pychron.repo.selection'
     name = 'Repositories'
 
     def traits_view(self):
-        repo_grp = VGroup(UItem('repository_names',
-                                editor=ListStrEditor(selected='selected_repository_name',
-                                                     editable=False)),
-                          show_border=True, label='Repository')
+        origin_grp = VGroup(UItem('repository_names',
+                                  editor=ListStrEditor(selected='selected_repository_name',
+                                                       editable=False)),
+                            show_border=True, label='Origin')
+
         local_grp = VGroup(UItem('local_names',
-                                 editor=ListStrEditor(selected='selected_local_repository_name',
-                                                      editable=False)),
+                                 editor=TabularEditor(adapter=RepoAdapter(),
+                                                      selected='selected_local_repository_name',
+                                                      # editable=False
+                                                      )),
                            show_border=True, label='Local')
 
-        v = View(VGroup(repo_grp, local_grp))
+        v = View(VGroup(local_grp, origin_grp))
         return v
 
 # ============= EOF =============================================

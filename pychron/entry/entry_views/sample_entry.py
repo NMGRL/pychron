@@ -14,52 +14,52 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import List, Str
-from traitsui.api import Item, EnumEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-# from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.entry.entry_views.entry import BaseEntry
-
-
-class SampleEntry(BaseEntry):
-    sample = Str
-    material = Str
-    materials = List
-    project = Str
-    projects = List
-
-    def edit_sample(self, sample, project, material):
-        db = self.db
-        with db.session_ctx():
-            dbsam = db.get_sample(sample, project, material)
-            if dbsam:
-                print 'fffff', dbsam
-
-    def _add_item(self):
-        dvc = self.dvc
-        project = self.project
-        sample = self.sample
-        material = self.material
-        self.info('Attempting to add Sample="{}", '
-                  'Project="{}", Material="{}"'.format(sample, project, material))
-
-        dbsam = dvc.get_sample(sample, project)
-        if dbsam is None:
-            dvc.add_sample(sample, project, material)
-            return True
-        else:
-            self.warning('{}, Project={}, Material={} already exists'.format(sample,
-                                                                             project,
-                                                                             material))
-
-    def traits_view(self):
-        v = self._new_view(Item('sample'),
-                           Item('project', editor=EnumEditor(name='projects')),
-                           Item('material', editor=EnumEditor(name='materials')),
-                           title='New Sample')
-        return v
+# # ============= enthought library imports =======================
+# from traits.api import List, Str
+# from traitsui.api import Item, EnumEditor
+#
+# # ============= standard library imports ========================
+# # ============= local library imports  ==========================
+# # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+# from pychron.entry.entry_views.entry import BaseEntry
+#
+#
+# class SampleEntry(BaseEntry):
+#     sample = Str
+#     material = Str
+#     materials = List
+#     project = Str
+#     projects = List
+#
+#     # def edit_sample(self, sample, project, material):
+#     #     db = self.db
+#     #     with db.session_ctx():
+#     #         dbsam = db.get_sample(sample, project, material)
+#     #         if dbsam:
+#     #             print 'fffff', dbsam
+#
+#     def _add_item(self):
+#         dvc = self.dvc
+#         project = self.project
+#         sample = self.sample
+#         material = self.material
+#         self.info('Attempting to add Sample="{}", '
+#                   'Project="{}", Material="{}"'.format(sample, project, material))
+#
+#         dbsam = dvc.get_sample(sample, project)
+#         if dbsam is None:
+#             dvc.add_sample(sample, project, material)
+#             return True
+#         else:
+#             self.warning('{}, Project={}, Material={} already exists'.format(sample,
+#                                                                              project,
+#                                                                              material))
+#
+#     def traits_view(self):
+#         v = self._new_view(Item('sample'),
+#                            Item('project', editor=EnumEditor(name='projects')),
+#                            Item('material', editor=EnumEditor(name='materials')),
+#                            title='New Sample')
+#         return v
 
 # ============= EOF =============================================

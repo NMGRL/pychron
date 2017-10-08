@@ -82,10 +82,11 @@ class RunParser(Loggable):
                      'comment',
                      'syn_extraction',
                      'overlap',
-                     'experiment_identifier',
+                     'repository_identifier',
                      ('conditionals', 'truncate'),
                      ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
+            # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 
@@ -94,6 +95,7 @@ class RunParser(Loggable):
                      'cleanup',
                      ('ramp_duration', 'ramp'),
                      'weight',
+                     'delay_after',
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam'),

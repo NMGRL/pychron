@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from PySide import QtCore
-from PySide.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
+from pyface.qt.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
 from traits.api import Str
 from traits.trait_types import Event
 # ============= standard library imports ========================

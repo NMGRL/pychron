@@ -17,13 +17,13 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from traits.api import Any
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.spectrometer.scan_manager import ScanManager
+from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 
 
@@ -39,6 +39,21 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.start()
 
+    # ===============================================================================
+    # tests
+    # ===============================================================================
+    def test_communication(self):
+        manager = self.spectrometer_manager
+        return manager.test_connection()
+
+    def test_intensity(self):
+        manager = self.spectrometer_manager
+        ret = manager.test_connection(force=False)
+        if ret and ret[0]:
+            ret = manager.test_intensity()
+
+        return ret
+
     def _inspector_task_factory(self):
         from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
 
@@ -53,7 +68,8 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         t = SpectrometerTask(manager=self.spectrometer_manager,
-                             scan_manager=self.scan_manager)
+                             scan_manager=self.scan_manager,
+                             application=self.application)
         return t
 
     def _factory_spectrometer(self):
@@ -99,6 +115,12 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         so3 = self.service_offer_factory(protocol=ReadoutView,
                                          factory=self._readout_view_factory)
         return [so, so1, so2, so3]
+
+    def _preferences_default(self):
+        return self._preferences_factory('spectrometer')
+
+    def _preferences_panes_default(self):
+        return [SpectrometerPreferencesPane]
 
     def _readout_view_factory(self):
         v = ReadoutView(spectrometer=self.spectrometer_manager.spectrometer)

@@ -21,7 +21,6 @@ import math
 import random
 
 from numpy import linspace, cos, sin, hstack
-
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
 
@@ -241,13 +240,13 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
 
 
 def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
-    '''
+    """
         cx,cy= center point to spiral around
         R = nominal spiral
         ns= number of spirals
         p= percent change in radius of spiral
         ss= step scalar ie min number of steps per rotation
-    '''
+    """
     stepfunc = lambda i: 2 * i + ss
     rfunc = lambda i, j: R * (1 + (i + j / 360.) * p)
     if direction == 'in':

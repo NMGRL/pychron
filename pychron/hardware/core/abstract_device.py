@@ -18,6 +18,8 @@
 from traits.api import Property, DelegatesTo, Instance, provides, CStr
 # =============standard library imports ========================
 # =============local library imports  ==========================
+from pychron.config_loadable import ConfigLoadable
+from pychron.config_mixin import ConfigMixin
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.core_device import CoreDevice
@@ -25,11 +27,15 @@ from pychron.hardware.core.scanable_device import ScanableDevice
 
 PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
                 Eurotherm='pychron.hardware.eurotherm',
-                NMGRLFurnaceDrive='pychron.hardware.linear_axis')
+                NMGRLFurnaceFeeder='pychron.hardware.furnace.nmgrl.feeder',
+                NMGRLFurnaceFunnel='pychron.hardware.furnace.nmgrl.funnel',
+                NMGRLFurnaceEurotherm='pychron.hardware.furnace.nmgrl.eurotherm',
+                MDriveMotor='pychron.hardware.mdrive',
+                RPiGPIO='pychron.hardware.rpi_gpio')
 
 
 @provides(ICoreDevice)
-class AbstractDevice(ScanableDevice, HasCommunicator):
+class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
     _cdevice = Instance(CoreDevice)
     communicator = DelegatesTo('_cdevice')
 

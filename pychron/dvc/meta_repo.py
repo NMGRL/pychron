@@ -16,32 +16,31 @@
 
 # ============= enthought library imports =======================
 import json
-
-from traits.api import Bool
-
-# ============= standard library imports ========================
-from datetime import datetime
 import os
 import shutil
 import time
-# ============= local library imports  ==========================
-from uncertainties import ufloat
+from datetime import datetime
+
+from traits.api import Bool
+from uncertainties import ufloat, std_dev
+
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
-from pychron.core.helpers.filetools import list_directory2, ilist_directory2, add_extension
-from pychron.dvc import jdump
+from pychron.core.helpers.filetools import list_directory2, add_extension, \
+    list_directory
+from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
 
 
 class MetaObject(object):
-    def __init__(self, path):
+    def __init__(self, path, new=False):
         self.path = path
         if os.path.isfile(path):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
-        else:
+        elif not new:
             print 'failed loading {} {}'.format(path, os.path.isfile(path))
 
     def _load_hook(self, path, rfile):
@@ -57,6 +56,17 @@ class Gains(MetaObject):
 
     def _load_hook(self, path, rfile):
         self.gains = json.load(rfile)
+
+
+def irradiation_holder_holes(name):
+    p = os.path.join(paths.meta_root, 'irradiation_holders', add_extension(name))
+    holder = IrradiationHolder(p)
+    return holder.holes
+
+
+def irradiation_chronology(name):
+    p = os.path.join(paths.meta_root, name, 'chronology.txt')
+    return Chronology(p)
 
 
 def dump_chronology(path, doses):
@@ -123,6 +133,13 @@ class Chronology(MetaObject):
         return [(p, convert_days(en - st), convert_days(analts - st)) for p, st, en in self._doses]
 
     @property
+    def total_duration_seconds(self):
+        dur = 0
+        for pwr, st, en in self._doses:
+            dur += (en - st).total_seconds()
+        return dur
+
+    @property
     def irradiation_time(self):
         try:
             d_o = self._doses[0][1]
@@ -141,11 +158,15 @@ class Chronology(MetaObject):
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
         # return d.strftime('%m-%d-%Y')
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
-        d = self.get_doses()[0][1]
-        return d.strftime('%m-%d-%Y')
+        date = ''
+        doses = self.get_doses()
+        if doses:
+            d = doses[0][1]
+            date = d.strftime('%m-%d-%Y')
+        return date
 
 
-class Production(MetaObject):
+class Production2(MetaObject):
     name = ''
     note = ''
 
@@ -168,10 +189,80 @@ class Production(MetaObject):
         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
 
     def dump(self):
-        with open(paths.meta_dir, 'w') as wfile:
+        with open(self.path, 'w') as wfile:
             for a in self.attrs:
                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
                 wfile.write('{}\n'.format(row))
+
+
+class Production(MetaObject):
+    name = ''
+    note = ''
+    reactor = 'Triga'
+    attrs = None
+
+    @property
+    def k_ca(self):
+        return 1 / self.Ca_K
+
+    @property
+    def k_cl(self):
+        return 1 / self.Cl_K
+
+    @property
+    def k_cl_err(self):
+        return std_dev(1 / ufloat(self.Cl_K, self.Cl_K_err))
+
+    @property
+    def k_ca_err(self):
+        return std_dev(1 / ufloat(self.Ca_K, self.Ca_K_err))
+
+    def _load_hook(self, path, rfile):
+        self.name = os.path.splitext(os.path.basename(path))[0]
+        obj = json.load(rfile)
+
+        attrs = []
+        for k, v in obj.iteritems():
+            if k == 'reactor':
+                self.reactor = v
+            else:
+                setattr(self, k, float(v[0]))
+                setattr(self, '{}_err'.format(k), float(v[1]))
+                attrs.append(k)
+
+        self.attrs = attrs
+
+    def update(self, d):
+        if self.attrs is None:
+            self.attrs = []
+
+        if isinstance(d, dict):
+            for k, v in d.iteritems():
+                setattr(self, k, v)
+                if not k.endswith('_err') and k not in self.attrs:
+                    self.attrs.append(k)
+        else:
+            attrs = []
+            for k in INTERFERENCE_KEYS + RATIO_KEYS:
+                attrs.append(k)
+                v = getattr(d, k)
+                if v is None:
+                    v = (0, 0)
+                setattr(self, k, v[0])
+                setattr(self, '{}_err'.format(k), v[1])
+            self.attrs = attrs
+
+    def to_dict(self, keys):
+        return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
+
+    def dump(self, path=None):
+        if path is None:
+            path = self.path
+
+        obj = {}
+        for a in self.attrs:
+            obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
+        dvc_dump(obj, path)
 
 
 class BaseHolder(MetaObject):
@@ -212,12 +303,10 @@ class Cached(object):
     def __call__(self, func):
         def wrapper(obj, name, *args, **kw):
             ret = None
-            # if kw.get('use_cache'):
-            if not hasattr(obj, '__cache__'):
+            if not hasattr(obj, '__cache__') or obj.__cache__ is None:
                 obj.__cache__ = {}
 
             cache = obj.__cache__[func] if func in obj.__cache__ else {}
-            clear = False
             if self.clear:
                 if getattr(obj, self.clear):
                     cache = {}
@@ -231,7 +320,6 @@ class Cached(object):
                 ret = func(obj, name, *args, **kw)
 
             cache[key] = ret
-            # obj.__cache__[key] = ret
             obj.__cache__[func] = cache
             return ret
 
@@ -243,35 +331,65 @@ cached = Cached
 
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
-    # clear_gain_cache = Bool
-    # clear_production_cache = Bool
-    # clear_chronology_cache = Bool
-    # clear_irradiation_holder_cache = Bool
-    # clear_load_holder_cache = Bool
 
-    # def __init__(self, path=None, *args, **kw):
-    #     super(MetaRepo, self).__init__(*args, **kw)
-    #     if path is None:
-    #         path = paths.meta_dir
-    #
-    #     paths.meta_dir = path
+    def get_molecular_weights(self):
+        p = os.path.join(paths.meta_root, 'molecular_weights.json')
+        return dvc_load(p)
+
+    def update_molecular_weights(self, wts, commit=False):
+        p = os.path.join(paths.meta_root, 'molecular_weights.json')
+        dvc_dump(wts, p)
+        self.add(p, commit=commit)
+
+    def add_unstaged(self, *args, **kw):
+        super(MetaRepo, self).add_unstaged(self.path, **kw)
 
     def save_gains(self, ms, gains_dict):
         p = self._gain_path(ms)
-        # with open(p, 'w') as wfile:
-        jdump(gains_dict, p)
+        dvc_dump(gains_dict, p)
 
         if self.add_paths(p):
             self.commit('Updated gains')
 
     def update_script(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('scripts', rootname), name, path_or_blob)
+        self._update_text(os.path.join('scripts', rootname.lower()), name, path_or_blob)
 
     def update_experiment_queue(self, rootname, name, path_or_blob):
-        self._update_text(os.path.join('experiments', rootname), name, path_or_blob)
+        self._update_text(os.path.join('experiments', rootname.lower()), name, path_or_blob)
 
-    def add_production(self, name, obj, commit=False):
-        p = self.get_production(name, force=True)
+    def update_level_production(self, irrad, name, prname):
+        prname = prname.replace(' ', '_')
+
+        pathname = add_extension(prname, '.json')
+
+        src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
+        if os.path.isfile(src):
+            self.update_productions(irrad,  name, prname)
+        elif prname.startswith('Global'):
+            prname = prname[7:]
+            pathname = add_extension(prname, '.json')
+            src = os.path.join(paths.meta_root, 'productions', pathname)
+            if os.path.isfile(src):
+                dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
+                if not os.path.isfile(dest):
+                    shutil.copyfile(src, dest)
+                self.update_productions(irrad, name, prname)
+            else:
+                self.warning_dialog('Invalid production name'.format(prname))
+        else:
+            self.warning_dialog('Invalid production name'.format(prname))
+
+    def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False, new=False):
+        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
+        prod = Production(p, new=new)
+
+        prod.update(params)
+        prod.dump()
+        if add:
+            self.add(p, commit=commit)
+
+    def add_production(self, irrad, name, obj, commit=False, add=True):
+        p = self.get_production(irrad, name, force=True)
 
         p.attrs = attrs = INTERFERENCE_KEYS + RATIO_KEYS
         kef = lambda x: '{}_err'.format(x)
@@ -288,17 +406,10 @@ class MetaRepo(GitRepoManager):
             setattr(p, ke, e)
 
         p.dump()
-        self.add(p.path, commit=commit)
+        if add:
+            self.add(p.path, commit=commit)
 
     def update_production(self, prod, irradiation=None):
-        # ip = db.get_irradiation_production(prod.name)
-        # if ip:
-        # if irradiation is None:
-        #     p = os.path.join(paths.meta_dir, 'productions', '{}.txt'.format(prod.name))
-        # else:
-        #     p = os.path.join(paths.meta_dir, irradiation, '{}.production.txt'.format(prod.name))
-        #
-        # ip = Production(p)
         ip = self.get_production(prod.name)
         self.debug('saving production {}'.format(prod.name))
 
@@ -312,28 +423,82 @@ class MetaRepo(GitRepoManager):
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
-    def add_level(self, irrad, level):
-        p = self.get_level_path(irrad, level)
-        jdump([], p)
+    def update_productions(self, irrad, level, production, add=True):
+        p = os.path.join(paths.meta_root, irrad, 'productions.json')
+        obj = dvc_load(p)
+        obj[level] = production
+        dvc_dump(obj, p)
+        if add:
+            self.add(p, commit=False)
+
+    def set_identifier(self, irradiation, level, pos, identifier):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        positions = self._get_level_positions(irradiation, level)
+        d = next((p for p in positions if p['position'] != pos), None)
+        if d:
+            d['identifier'] = identifier
+
+        dvc_dump(jd, p)
         self.add(p, commit=False)
 
     def get_level_path(self, irrad, level):
-        return os.path.join(paths.meta_dir, irrad, '{}.json'.format(level))
+        return os.path.join(paths.meta_root, irrad, '{}.json'.format(level))
 
-    def add_chronology(self, irrad, doses):
-        p = os.path.join(paths.meta_dir, irrad, 'chronology.txt')
+    def add_level(self, irrad, level, add=True):
+        p = self.get_level_path(irrad, level)
+        l = dict(z=0, positions=[])
+        dvc_dump(l, p)
+        if add:
+            self.add(p, commit=False)
 
-        Chronology.dump(p, doses)
-        self.add(p, commit=False)
+    def add_chronology(self, irrad, doses, add=True):
+        p = os.path.join(paths.meta_root, irrad, 'chronology.txt')
+
+        # Chronology.dump(p, doses)
+        dump_chronology(p, doses)
+        if add:
+            self.add(p, commit=False)
 
     def add_irradiation(self, name):
-        p = os.path.join(paths.meta_dir, name)
+        p = os.path.join(paths.meta_root, name)
         if not os.path.isdir(p):
             os.mkdir(p)
-            # self.add(p, commit=False)
 
-    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False):
-        p = os.path.join(paths.meta_dir, 'irradiation_holders', add_extension(name))
+    def add_position(self, irradiation, level, pos, add=True):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
+
+        pd = next((p for p in positions if p['position'] == pos), None)
+        if pd is None:
+            positions.append({'position': pos, 'decay_constants': {}})
+        # for pd in jd:
+        #     if pd['position'] == pos:
+
+        # njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
+        #                                          'decay_constants': decay,
+        #                                          'identifier': identifier,
+        #                                          'analyses': [{'uuid': ai.uuid,
+        #                                                        'record_id': ai.record_id,
+        #                                                        'status': ai.is_omitted()}
+        #                                                       for ai in analyses]} for ji in jd]
+
+        dvc_dump({'z': z, 'positions': positions}, p)
+        if add:
+            self.add(p, commit=False)
+
+    def add_irradiation_holder(self, name, blob, commit=False, overwrite=False, add=True):
+        root = os.path.join(paths.meta_root, 'irradiation_holders')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+        p = os.path.join(root, add_extension(name))
+
         if not os.path.isfile(p) or overwrite:
             with open(p, 'w') as wfile:
                 holes = list(iter_geom(blob))
@@ -341,34 +506,103 @@ class MetaRepo(GitRepoManager):
                 wfile.write('{},0.0175\n'.format(n))
                 for idx, (x, y, r) in holes:
                     wfile.write('{:0.4f},{:0.4f},{:0.4f}\n'.format(x, y, r))
-            self.add(p, commit=commit)
+            if add:
+                self.add(p, commit=commit)
 
-    def add_load_holder(self, name, path_or_txt, commit=False):
-        p = os.path.join(paths.meta_dir, 'load_holders', name)
+    def get_load_holders(self):
+        p = os.path.join(paths.meta_root, 'load_holders')
+        return list_directory(p, extension='.txt', remove_extension=True)
+
+    def add_load_holder(self, name, path_or_txt, commit=False, add=True):
+        p = os.path.join(paths.meta_root, 'load_holders', name)
         if os.path.isfile(path_or_txt):
             shutil.copyfile(path_or_txt, p)
         else:
             with open(p, 'w') as wfile:
                 wfile.write(path_or_txt)
-        self.add(p, commit=commit)
+        if add:
+            self.add(p, commit=commit)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, decay, analyses, add=True):
+    def update_level_z(self, irradiation, level, z):
         p = self.get_level_path(irradiation, level)
-        with open(p, 'r') as rfile:
-            jd = json.load(rfile)
+        obj = dvc_load(p)
 
-        njd = [ji if ji['position'] != pos else {'position': pos, 'j': j, 'j_err': e,
-                                                 'decay_constants': decay,
-                                                 'identifier': identifier,
-                                                 'analyses': [{'uuid': ai.uuid,
-                                                               'record_id': ai.record_id,
-                                                               'status': ai.is_omitted()}
-                                                              for ai in analyses]} for ji in jd]
+        try:
+            obj['z'] = z
+        except TypeError:
+            obj = {'z': z, 'positions': obj}
 
-        # n = {'decay_constants': decay, 'positions': njd}
-        # with open(p, 'w') as wfile:
-        #     json.dump(njd, wfile, indent=4)
-        jdump(njd, p)
+        dvc_dump(obj, p)
+
+    def remove_irradiation_position(self, irradiation, level, hole):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
+
+        # njd = [ji for ji in jd if not ji['position'] == hole]
+        npositions = [ji for ji in positions if not ji['position'] == hole]
+        obj = {'z': z, 'positions': npositions}
+        dvc_dump(obj, p)
+        self.add(p, commit=False)
+
+    def update_fluxes(self, irradiation, level, j, e, add=True):
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        print p
+        print jd
+        if isinstance(jd, list):
+            positions = jd
+        else:
+            positions = jd.get('positions')
+
+        if positions:
+            for ip in positions:
+                ip['j'] = j
+                ip['j_err'] = e
+
+            dvc_dump(jd, p)
+            if add:
+                self.add(p, commit=False)
+
+    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
+        if decay is None:
+            decay = {}
+        if analyses is None:
+            analyses = []
+
+        p = self.get_level_path(irradiation, level)
+        jd = dvc_load(p)
+        if isinstance(jd, list):
+            positions = jd
+            z = 0
+        else:
+            positions = jd['positions']
+            z = jd['z']
+
+        npos = {'position': pos, 'j': j, 'j_err': e,
+                'mean_j': mj, 'mean_j_err': me,
+                'decay_constants': decay,
+                'identifier': identifier,
+                'analyses': [{'uuid': ai.uuid,
+                              'record_id': ai.record_id,
+                              'status': ai.is_omitted()}
+                             for ai in analyses]}
+        if positions:
+            added = any((ji['position'] == pos for ji in positions))
+            npositions = [ji if ji['position'] != pos else npos for ji in positions]
+            if not added:
+                npositions.append(npos)
+        else:
+            npositions = [npos]
+
+        obj = {'z': z, 'positions': npositions}
+        dvc_dump(obj, p)
         if add:
             self.add(p, commit=False)
 
@@ -386,45 +620,67 @@ class MetaRepo(GitRepoManager):
         #         self.push()
 
     def get_irradiation_holder_names(self):
-        return list_directory2(os.path.join(paths.meta_dir, 'irradiation_holders'),
+        return list_directory2(os.path.join(paths.meta_root, 'irradiation_holders'),
                                extension='.txt',
                                remove_extension=True)
 
-    def get_irradiation_productions(self):
-        # list_directory2(os.path.join(paths.meta_dir, 'productions'),
-        # remove_extension=True)
-        prs = []
-        root = os.path.join(paths.meta_dir, 'productions')
-        for di in ilist_directory2(root, extension='.txt'):
-            pr = Production(os.path.join(root, di))
-            prs.append(pr)
-        return prs
+    def get_default_productions(self):
+        p = os.path.join(paths.meta_root, 'reactors.json')
+        if not os.path.isfile(p):
+            with open(p, 'w') as wfile:
+                from pychron.file_defaults import REACTORS_DEFAULT
+                wfile.write(REACTORS_DEFAULT)
+
+        with open(os.path.join(paths.meta_root, 'reactors.json'), 'r') as rfile:
+            return json.load(rfile)
+
+    # def get_irradiation_productions(self):
+    #     # list_directory2(os.path.join(paths.meta_dir, 'productions'),
+    #     # remove_extension=True)
+    #     prs = []
+    #     root = os.path.join(paths.meta_root, 'productions')
+    #     for di in ilist_directory2(root, extension='.json'):
+    #         pr = Production(os.path.join(root, di))
+    #         prs.append(pr)
+    #     return prs
 
     def get_flux(self, irradiation, level, position):
-        path = os.path.join(paths.meta_dir, irradiation, add_extension(level, '.json'))
-        j, e, lambda_k = 0, 0, None
-
-        if os.path.isfile(path):
-            with open(path) as rfile:
-                positions = json.load(rfile)
-            # if isinstance(positions, dict):
-            #     positions = positions['positions']
-
+        # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
+        j, je, lambda_k = 0, 0, None
+        standard_name, standard_material, standard_age = 'FC-2', 'sanidine', ufloat(28.201, 0)
+        positions = self._get_level_positions(irradiation, level)
+        if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
-                j, e = pos['j'], pos['j_err']
+                j, je = pos.get('j', 0), pos.get('j_err', 0)
                 dc = pos.get('decay_constants')
                 if dc:
-                    lambda_k = ufloat(dc['lambda_k_total'], dc['lambda_k_total_error'])
+                    # this was a temporary fix and likely can be removed
+                    if isinstance(dc, float):
+                        v, e = dc, 0
+                    else:
+                        v, e = dc.get('lambda_k_total', 0), dc.get('lambda_k_total_error', 0)
+                    lambda_k = ufloat(v, e)
+                mon = pos.get('monitor')
+                if mon:
+                    standard_name = mon.get('name', 'FC-2')
+                    sa = mon.get('age', 28.201)
+                    se = mon.get('error', 0)
+                    standard_age = ufloat(sa, se)
+                    standard_material = mon.get('material', 'sanidine')
 
-        return ufloat(j, e), lambda_k
+        fd = {'j': ufloat(j, je), 'lambda_k': lambda_k,
+              'standard_name': standard_name,
+              'standard_material': standard_material,
+              'standard_age': standard_age}
+        return fd
 
     def get_gains(self, name):
         g = self.get_gain_obj(name)
         return g.gains
 
     def _gain_path(self, name):
-        root = os.path.join(paths.meta_dir, 'spectrometers')
+        root = os.path.join(paths.meta_root, 'spectrometers')
         if not os.path.isdir(root):
             os.mkdir(root)
 
@@ -437,46 +693,53 @@ class MetaRepo(GitRepoManager):
         return Gains(p)
 
     @cached('clear_cache')
-    def get_production(self, pname, **kw):
-        root = os.path.join(paths.meta_dir, 'productions')
-        if not os.path.isdir(root):
-            os.mkdir(root)
-        p = os.path.join(root, add_extension(pname))
+    def get_production(self, irrad, level, **kw):
+        path = os.path.join(paths.meta_root, irrad, 'productions.json')
+        obj = dvc_load(path)
+        pname = obj[level]
+        p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
+
         ip = Production(p)
-        return ip
+        print 'new production id={}, irrad={}, level={}'.format(id(ip), irrad, level)
+        return pname, ip
 
     @cached('clear_cache')
     def get_chronology(self, name, **kw):
-        p = self._chron_name(name)
-        return Chronology(p)
+        return irradiation_chronology(name)
 
     @cached('clear_cache')
     def get_irradiation_holder_holes(self, name, **kw):
-        p = os.path.join(paths.meta_dir, 'irradiation_holders', add_extension(name))
-        holder = IrradiationHolder(p)
-        return holder.holes
+        return irradiation_holder_holes(name)
 
     @cached('clear_cache')
     def get_load_holder_holes(self, name, **kw):
-        p = os.path.join(paths.meta_dir, 'load_holders', add_extension(name))
+        p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
         holder = LoadHolder(p)
         return holder.holes
 
     # private
+    def _get_level_positions(self, irrad, level):
+        p = self.get_level_path(irrad, level)
+        obj = dvc_load(p)
+        if isinstance(obj, list):
+            positions = obj
+        else:
+            positions = obj.get('positions', [])
+        return positions
+
     def _chron_name(self, name):
-        return os.path.join(paths.meta_dir, name, 'chronology.txt')
+        return os.path.join(paths.meta_root, name, 'chronology.txt')
 
     def _update_text(self, tag, name, path_or_blob):
         if not name:
             self.debug('cannot update text with no name. tag={} name={}'.format(tag, name))
             return
 
-        root = os.path.join(paths.meta_dir, tag)
+        root = os.path.join(paths.meta_root, tag)
         if not os.path.isdir(root):
             r_mkdir(root)
 
         p = os.path.join(root, name)
-        # action = 'updated' if os.path.isfile(p) else 'added'
         if os.path.isfile(path_or_blob):
             shutil.copyfile(path_or_blob, p)
         else:
@@ -484,10 +747,5 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_blob)
 
         self.add(p, commit=False)
-        # if self.has_staged():
-        # self.commit('updated {} {}'.format(tag, action, name))
-
-        # hexsha = self.shell('hash-object', '--path', p)
-        # return hexsha
 
 # ============= EOF =============================================

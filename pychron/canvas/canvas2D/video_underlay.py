@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 from chaco.api import AbstractOverlay
+from traits.api import Any
+
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-# from pychron.image.video import Video
+
 
 class VideoUnderlay(AbstractOverlay):
     """
@@ -32,19 +34,19 @@ class VideoUnderlay(AbstractOverlay):
 
     def overlay(self, component, gc, *args, **kw):
         """
-
         """
         with gc:
-            gc.clip_to_rect(self.component.x, self.component.y,
-                            self.component.width, self.component.height)
-            gc.translate_ctm(self.component.x, self.component.y)
+            gc.clip_to_rect(component.x, component.y,
+                            component.width, component.height)
+            gc.translate_ctm(component.x, component.y)
 
             if self.video:
-                img = self.video.get_image_data(
-                                                size=(component.width,
-                                                      component.height)
-                                                )
+                img = self.video.get_image_data(size=(component.width,
+                                                      component.height))
                 if img is not None:
-                    gc.draw_image(img)
+                    try:
+                        gc.draw_image(img)
+                    except IndexError:
+                        pass
 
 # ============= EOF ====================================

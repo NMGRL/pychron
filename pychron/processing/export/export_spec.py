@@ -19,9 +19,9 @@ from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
-from pychron.core.regression.mean_regressor import MeanRegressor
 
 from pychron.loggable import Loggable
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -60,8 +60,8 @@ class MassSpecExportSpec(Loggable):
     update_rundatetime = Bool
     is_peak_hop = Bool
     peak_hop_detector = 'CDD'
-    ic_factor_v = Float
-    ic_factor_e = Float
+    # ic_factor_v = Float
+    # ic_factor_e = Float
 
     irradiation = Str
     level = Str
@@ -88,7 +88,7 @@ class MassSpecExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'),
                  ('power_requested', 'extract_value'),
-                 ('power_achieved', 'extract_value'),
+                 # ('power_achieved', 'extract_value'),
                  ('extract_value', 'extract_value'),
                  ('duration', 'duration'),
                  ('duration_at_request', 'duration'),
@@ -149,6 +149,11 @@ class MassSpecExportSpec(Loggable):
 
     # def open_file(self):
     # return self.data_manager.open_file(self.data_path)
+    def get_detector_by_isotope(self, key):
+        try:
+            return self.isotopes[key].detector
+        except KeyError:
+            return ''
 
     def iter_isotopes(self):
         return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
@@ -226,10 +231,10 @@ class MassSpecExportSpec(Loggable):
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
-# s_dict={'filter_outliers':filter_outliers,
-#                                    'iterations':iterations,
-#                                    'std_devs':std_devs}
-#         self.dirty=notify
+            # s_dict={'filter_outliers':filter_outliers,
+            #                                    'iterations':iterations,
+            #                                    'std_devs':std_devs}
+            #         self.dirty=notify
             fod = iso.baseline.filter_outliers_dict
             niter = fod.get('iterations', niter)
             nsigma = fod.get('std_devs', nsigma)
@@ -327,8 +332,8 @@ class MassSpecExportSpec(Loggable):
         #
         # return t, v
 
-    #@property
-    #def runid(self):
+    # @property
+    # def runid(self):
     #    return make_rid(self.labnumber, self.aliquot, self.step)
 
     def _set_position(self, pos):

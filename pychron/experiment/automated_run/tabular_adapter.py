@@ -19,13 +19,16 @@ from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int, Dict
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.strtools import to_bool
+from pychron.envisage.resources import icon
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR
+
 # ============= local library imports  ==========================
 COLORS = {'success': SUCCESS_COLOR,
           'extraction': EXTRACTION_COLOR,
@@ -34,15 +37,23 @@ COLORS = {'success': SUCCESS_COLOR,
           'truncated': TRUNCATED_COLOR,
           'failed': FAILED_COLOR,
           'end_after': END_AFTER_COLOR,
-          'invalid': 'red'}
+          'invalid': 'red',
+          'aborted': 'orange'}
+
+GRAY_BALL = icon('gray_ball')
+GREEN_BALL = icon('green_ball')
+ORANGE_BALL = icon('orange_ball')
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     all_columns = [
+        ('-', 'result'),
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
-        ('ExperimentID', 'experiment_identifier'),
+        ('Project', 'project'),
+        ('Material', 'material'),
+        ('RepositoryID', 'repository_identifier'),
         ('Position', 'position'),
         ('Extract', 'extract_value'),
         ('Units', 'extract_units'),
@@ -61,17 +72,19 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Post Eq.', 'post_equilibration_script'),
         ('Post Meas.', 'post_measurement_script'),
         ('Options', 'script_options'),
-        ('Comment', 'comment')]
+        ('Comment', 'comment'),
+        ('Delay After','delay_after')]
 
     columns = [('Labnumber', 'labnumber'),
-                   ('Aliquot', 'aliquot'), ]
+               ('Aliquot', 'aliquot'), ]
     font = 'arial 10'
     # all_columns = List
     # all_columns_dict = Dict
     # ===========================================================================
     # widths
     # ===========================================================================
-
+    result_width = Int(25)
+    repository_identifier_width = Int(90)
     labnumber_width = Int(80)
     aliquot_width = Int(60)
     sample_width = Int(50)
@@ -113,6 +126,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # non cell editable
     # ===========================================================================
     labnumber_text = Property
+    result_text = Property
     extraction_script_text = Property
     measurement_script_text = Property
     post_measurement_script_text = Property
@@ -124,13 +138,19 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
         item = getattr(obj, trait)[row]
-        return '{}= {}'.format(name, getattr(item, name))
+        if name == 'result':
+            if item.state in ('success', 'truncated'):
+                return item.result.summary
+        else:
+            return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
     def get_row_label(self, section, obj=None):
         return section + 1
 
     def get_bg_color(self, obj, trait, row, column=0):
-        item = self.item
+        # item = self.item
+        item = getattr(obj, trait)[row]
+        # print item.identifier, item.state, item.executable
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
@@ -146,18 +166,56 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                     # color = self.even_bg_color
                     color = self.even_bg_color
                 else:
-                    color = self.odd_bg_color  #'#E6F2FF'  # light gray blue
+                    color = self.odd_bg_color  # '#E6F2FF'  # light gray blue
                     # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
 
+    def get_image(self, obj, trait, row, column):
+        name = self.column_map[column]
+        if name == 'result':
+            item = getattr(obj, trait)[row]
+            if item.state == 'success':
+                return GREEN_BALL
+            elif item.state == 'truncated':
+                return ORANGE_BALL
+
+    def get_menu(self, obj, trait, row, column):
+        item = getattr(obj, trait)[row]
+        if item.state in ('success', 'truncated'):
+
+            evo_actions = [Action(name='Show All', action='show_evolutions'),
+                           Action(name='Show All w/Equilibration', action='show_evolutions_w_eq'),
+                           Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
+                           Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
+            for iso in item.result.isotope_group.iter_isotopes():
+                actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal/Baseline',
+                                  action='show_evolution_eq_bs_{}'.format(iso.name)),
+                           Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
+                m = MenuManager(*actions, name=iso.name)
+                evo_actions.append(m)
+
+            evo = MenuManager(*evo_actions, name='Evolutions')
+
+            success = MenuManager(Action(name='Summary', action='show_summary'),
+                                  evo)
+            return success
+
     # ============ non cell editable ============
+    def _get_result_text(self):
+        return ''
+
+    def _set_result_text(self, v):
+        pass
+
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at != 'unknown':
+        if at not in ('unknown', 'degas'):
             if at == 'blank_unknown':
-                if not ',' in p:
+                if ',' not in p:
                     p = ''
             else:
                 p = ''
@@ -321,6 +379,9 @@ class AutomatedRunMixin(object):
                            Action(name='Move to End', action='move_to_end'),
                            Action(name='Move to ...', action='move_to_row'),
                            name='Move')
+        copy = MenuManager(Action(name='Copy to Start', action='copy_to_start'),
+                           Action(name='Copy to End', action='copy_to_end'),
+                           name='Copy')
 
         blocks = MenuManager(Action(name='Make Block', action='make_block'),
                              Action(name='Repeat Block', action='repeat_block'),
@@ -330,7 +391,7 @@ class AutomatedRunMixin(object):
                               Action(name='Select Same Attributes...', action='select_same_attr'),
                               name='Select')
 
-        return MenuManager(move, jump, blocks, selects,
+        return MenuManager(move, copy, jump, blocks, selects,
                            Action(name='Unselect', action='unselect'),
                            Action(name='Toggle End After', action='toggle_end_after'),
                            Action(name='Toggle Skip', action='toggle_skip'))

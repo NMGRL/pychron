@@ -62,17 +62,15 @@ class MFTableHistory(HasTraits):
 
     def load_history(self):
         db = self.dbm.db
-        with db.session_ctx():
-            self.spectrometers = [mi.name for mi in db.get_mass_spectrometers()]
-            self._load_items()
+        self.spectrometers = [mi.name for mi in db.get_mass_spectrometers()]
+        self._load_items()
 
     def _load_items(self):
         db = self.dbm.db
-        with db.session_ctx():
-            items = db.get_mftables(self.spectrometer, limit=self.limit)
+        items = db.get_mftables(self.spectrometer, limit=self.limit)
 
-            self.items = [MFTableRecord(rid=int(i.id),
-                                        create_date=i.create_date) for i in items]
+        self.items = [MFTableRecord(rid=int(i.id),
+                                    create_date=i.create_date) for i in items]
 
     def _selected_changed(self, new):
         if new:
@@ -80,10 +78,8 @@ class MFTableHistory(HasTraits):
                 blob = new.blob
             else:
                 db = self.dbm.db
-                with db.session_ctx():
-                    item = db.get_mftable(new.rid)
-
-                    new.blob = blob = item.blob
+                item = db.get_mftable(new.rid)
+                new.blob = blob = item.blob
 
             self._assemble_table(blob)
 

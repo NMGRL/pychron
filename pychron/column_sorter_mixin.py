@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -24,12 +26,17 @@ class ColumnSorterMixin(HasTraits):
     _reverse_sort = False
     column_clicked = Any
 
-    def _column_clicked_changed(self, event):
-        values = event.editor.value
-        name, field = event.editor.adapter.columns[event.column]
-        self._reverse_sort = not self._reverse_sort
+    sort_suppress = False
 
-        self._sort_columns(values, name, field)
+    def _column_clicked_changed(self, event):
+        if event:
+            values = event.editor.value
+            name, field = event.editor.adapter.columns[event.column]
+
+            self._reverse_sort = not self._reverse_sort
+            self.sort_suppress = True
+            self._sort_columns(values, name, field)
+            self.sort_suppress = False
 
     def _sort_columns(self, values, name='', field=None):
         # get the field to sort on

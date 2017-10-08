@@ -15,30 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float, Bool, Property
-from traitsui.api import View, Controller, TableEditor, UItem
-# from traitsui.table_column import ObjectColumn
-# ============= standard library imports ========================
-import shutil
 import csv
-import os
 import hashlib
-from numpy import asarray, array, nonzero
-from scipy.optimize import leastsq
-# ============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
+import os
+import shutil
+
+from numpy import asarray, array, nonzero, polyval
+from scipy.optimize import leastsq, brentq
+from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
+
+from pychron.core.helpers.filetools import add_extension, backup
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
+from pychron.spectrometer import set_mftable_name, get_mftable_name
 
 
 def get_detector_name(det):
     if not isinstance(det, (str, unicode)):
         det = det.name
     return det
-
-
-def mass_cal_func(p, x):
-    return p[0]*x**2+p[1]*x+p[2]
 
 
 def least_squares(func, xs, ys, initial_guess):
@@ -69,10 +65,12 @@ class MagnetFieldTable(Loggable):
     spectrometer_name = Str
     use_local_archive = Bool
     use_db_archive = Bool
-    path = Property
-    _path = Str
+    path = Property(depends_on='_path_dirty')
+    _path_dirty = Event
+    mass_cal_func = 'parabolic'
+    _test_path = None
 
-    def __init__(self, *args, **kw):
+    def __init__(self, bind=True, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
         # p = paths.mftable
         # if not os.path.isfile(p):
@@ -81,7 +79,8 @@ class MagnetFieldTable(Loggable):
         # self.load_mftable()
 
         # if os.environ.get('RTD', 'False') == 'False':
-        self.bind_preferences()
+        if bind:
+            self.bind_preferences()
 
     def initialize(self, molweights):
         self.molweights = molweights
@@ -101,48 +100,121 @@ class MagnetFieldTable(Loggable):
         bind_preference(self, 'use_db_archive',
                         '{}.use_db_mftable_archive'.format(prefid))
 
-    def get_dac(self, det, isotope):
+    def backup(self):
+        backup(self.path, paths.mftable_backup_dir)
+
+    def map_dac_to_mass(self, dac, detname):
+        detname = get_detector_name(detname)
+
+        d = self._get_mftable()
+
+        _, xs, ys, p = d[detname]
+        if self.polynominal_mass_func:
+            def func(x, *args):
+                c = list(p)
+                c[-1] -= dac
+                return polyval(c, x)
+
+            try:
+                mass = brentq(func, 0, 200)
+                return mass
+            except ValueError, e:
+                self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+        else:
+            try:
+                idx = ys.index(dac)
+                return xs[idx]
+            except IndexError:
+                self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+
+    def map_mass_to_dac(self, mass, detname):
+
+        if isinstance(mass, str):
+            mass = self.molweights[mass]
+
+        self.debug('Mapping mass to dac mass func: "{}"'.format(self.mass_cal_func))
+        detname = get_detector_name(detname)
+        d = self._get_mftable()
+        _, xs, ys, p = d[detname]
+
+        if self.polynominal_mass_func:
+            self.debug('{} map mass coeffs = {}'.format(detname, p))
+            dac = polyval(p, mass)
+        else:
+            self.debug('using discrete mass mapping')
+            dac = self.get_dac(detname, mass)
+
+        return dac
+
+    def get_dac(self, det, mass):
         det = get_detector_name(det)
         d = self._get_mftable()
-        isos, xs, ys = map(array, d[det][:3])
-        refindex = min(nonzero(isos == isotope)[0])
-        return ys[refindex]
+        dac = next((d for i, m, d in zip(*d[det][:3]) if abs(m - mass) < 0.15), None)
+        return dac
 
-    def update_field_table(self, det, isotope, dac, message):
+        # isotope = next((i for i, m in self.molweights.iteritems() if abs(m-mass)<1e-5), None)
+        # if isotope is not None:
+        # isos, xs, ys = map(array, d[det][:3])
+        # isos, mws, dacs = map(array, d[det][:3])
+        # refindex = min(nonzero())
+        # refindex = min(nonzero(isos == isotope)[0])
+        # return ys[refindex]
+
+    @property
+    def polynominal_mass_func(self):
+        return self.mass_cal_func in ('linear', 'parabolic', 'cubic')
+
+    def update_field_table(self, det, isotope, dac, message='', save=True, report=False, update_others=True):
         """
 
             dac needs to be in axial units
+
+
+            update_others.  If false only
         """
         det = get_detector_name(det)
 
         self.info('update mftable {} {} {} message={}'.format(det, isotope, dac, message))
         d = self._get_mftable()
 
-        isos, xs, ys = map(array, d[det][:3])
+        # isos, xs, ys = map(array, d[det][:3])
+        isos, xs, ys = d[det][:3]
 
+        isos = array(isos)
         try:
             refindex = min(nonzero(isos == isotope)[0])
-
             delta = dac - ys[refindex]
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
-            for k, (iso, xx, yy, _) in d.iteritems():
-                ny = yy + delta
-                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
-                d[k] = iso, xx, ny, p
+            for k, (isoks, mws, dacs, _) in d.iteritems():
+                if not update_others and k != det:
+                    continue
 
-            self.dump(isos, d, message)
-            # self._mftable = isos, xs, ys
+                ndacs = [yi + delta if yi != NULL_STR else NULL_STR for yi in dacs]
+                xs, ny = self._clean_dacs(mws, ndacs)
+                initial_guess = self._get_initial_guess(ny, xs)
+                if initial_guess:
+                    p = least_squares(polyval, xs, ny, initial_guess)
+                else:
+                    p = None
+                d[k] = isoks, mws, ndacs, p
+
+            if save:
+                self.dump(isos, d, message)
+
+            if report:
+                self.print_table(isos, d)
 
         except ValueError:
             import traceback
 
             e = traceback.format_exc()
+            print e
             self.debug('Magnet update field table {}'.format(e))
 
     def set_path_name(self, name):
-        if self.path != self._name_to_path(name):
+        if name and self.path != name:
             self.path = name
             self.info('Using MFTable {}'.format(self.path))
             self.load_mftable()
@@ -161,6 +233,7 @@ class MagnetFieldTable(Loggable):
         fmt = lambda x: '{:0.5f}'.format(x)
         with open(p, 'w') as f:
             writer = csv.writer(f)
+            writer.writerow([self.mass_cal_func])
             writer.writerow(['iso'] + detectors)
             for fi in self.items:
                 writer.writerow(fi.to_csv(detectors, fmt))
@@ -171,15 +244,19 @@ class MagnetFieldTable(Loggable):
     def dump(self, isos, d, message):
         detectors = self._detectors
         p = self.path
+        self.debug('dump mftable to {}'.format(p))
         with open(p, 'w') as f:
             writer = csv.writer(f)
+            writer.writerow([self.mass_cal_func])
             writer.writerow(['iso'] + detectors)
 
             for i, iso in enumerate(isos):
                 a = [iso]
                 for hi in detectors:
                     iso, xs, ys, _ = d[hi]
-                    a.append('{:0.5f}'.format(ys[i]))
+
+                    fdac = self._format_dac(ys[i])
+                    a.append(fdac)
 
                 writer.writerow(a)
 
@@ -189,13 +266,23 @@ class MagnetFieldTable(Loggable):
     # @property
     # def mftable_path(self):
     # return os.path.join(paths.spectrometer_dir, 'mftable.csv')
+    def print_table(self, isos, d):
+        detectors = self._detectors
+        for i, iso in enumerate(isos):
+            a = [iso]
+            for hi in detectors:
+                iso, xs, ys, _ = d[hi]
+
+                a.append(self._format_dac(ys[i]))
+
+            print a
 
     @property
     def mftable_archive_path(self):
         return os.path.join(paths.spectrometer_dir,
                             '{}_mftable_archive'.format(self.spectrometer_name))
 
-    def load_mftable(self, load_items=False):
+    def load_mftable(self, path=None, load_items=False):
         """
             mftable format- first line is a header followed by
             Isotope, Dac_i, Dac_j,....
@@ -209,51 +296,79 @@ class MagnetFieldTable(Loggable):
                 Ar36,5.56072,5.456202,5.56072,5.56072,5.56072,5.56072
 
         """
-        # p = paths.mftable
-        p = self.path
+        if path is None:
+            path = self.path
 
-        self.debug('Using mftable located at {}'.format(p))
+        self.debug('Using mftable located at {}'.format(path))
 
         mws = self.molweights
 
-        self._set_mftable_hash(p)
+        self._set_mftable_hash(path)
         items = []
-        with open(p, 'U') as f:
+
+        with open(path, 'U') as f:
             reader = csv.reader(f)
             table = []
-            detectors = map(str.strip, reader.next()[1:])
+
+            line0 = next(reader)
+            if line0[0].strip() == 'iso':
+                detline = line0
+                mass_func = 'cubic'
+            else:
+                mass_func = line0[0].strip()
+                detline = next(reader)
+            detectors = map(str.strip, detline[1:])
+
+            self.mass_cal_func = mass_func
             for line in reader:
                 iso = line[0]
                 try:
                     mw = mws[iso]
                 except KeyError, e:
-                    self.warning('"{}" not in molweights {}'.formamolweights(iso, mw))
+                    self.warning('"{}" not in molweights {}'.format(iso, mws))
                     continue
 
-                dacs = map(float, line[1:])
+                # dacs = map(float, line[1:])
+                dacs = []
+                for di in line[1:]:
+                    try:
+                        di = float(di)
+                    except ValueError:
+                        di = NULL_STR
+                    dacs.append(di)
+
                 if load_items:
                     fi = FieldItem(isotope=iso)
                     for di, v in zip(detectors, dacs):
-                        fi.add_trait(di, Float(v))
-
+                        fi.add_trait(di, Str(v))
                     items.append(fi)
 
                 row = [iso, mw] + dacs
                 table.append(row)
 
-            self._report_mftable(detectors, items)
-            self.items = items
+            if load_items:
+                self._report_mftable(detectors, items)
+                self.items = items
 
             table = zip(*table)
             isos, mws = list(table[0]), list(table[1])
 
             d = {}
+
             for i, k in enumerate(detectors):
                 ys = table[2 + i]
-                try:
-                    c = least_squares(mass_cal_func, mws, ys, [ys[0], mws[0], 0])
-                except TypeError:
-                    c = (0, 1, ys[0])
+
+                xs, dacs = self._clean_dacs(mws, ys)
+                initial_guess = self._get_initial_guess(dacs, xs)
+                if initial_guess:
+                    try:
+                        c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
+                    except TypeError, e:
+                        import traceback
+                        traceback.print_exc()
+                        c = (0, 0, ys[0])
+                else:
+                    c = None
 
                 d[k] = (isos, mws, ys, c)
 
@@ -262,16 +377,42 @@ class MagnetFieldTable(Loggable):
             # for i, k in enumerate(detectors)}
             self._detectors = detectors
 
+    def _format_dac(self, dac):
+        return '{:0.5f}'.format(dac) if dac != NULL_STR else ''
+
+    def _clean_dacs(self, xx, dacs):
+        """
+        return xs, clean_dacs
+        @param dacs:
+        @return:
+        """
+        xs, dacs = zip(*((xx[i], y) for i, y in enumerate(dacs) if y != NULL_STR))
+        return xs, dacs
+
+    def _get_initial_guess(self, y, x):
+        initial_guess = None
+        mass_func = self.mass_cal_func
+        self.debug('get initial guess {}'.format(mass_func))
+        if mass_func == 'linear':
+            initial_guess = [0, y[0]]
+        elif mass_func == 'parabolic':
+            initial_guess = [0, 0, y[0]]
+        elif mass_func == 'cubic':
+            initial_guess = [0, 0, 0, y[0]]
+        return initial_guess
+
     def _report_mftable(self, detectors, items):
         self.debug('============ MFtable ===========')
         self.debug('{:<8s} {}'.format('Isotope', ''.join(['{:<7s}'.format(di) for di in detectors])))
         for it in items:
-            vs = ['{:0.4f}'.format(getattr(it, di)) for di in detectors]
+            dd = [getattr(it, di) for di in detectors]
+            vs = ['{:0.4f}'.format(di) if di != NULL_STR else NULL_STR for di in dd]
             self.debug('{:<8s} {}'.format(it.isotope, ' '.join(vs)))
         self.debug('================================')
 
     def _get_mftable(self):
         if not self._mftable or not self._check_mftable_hash():
+            self.debug('using mftable at {}'.format(self.path))
             self.load_mftable()
 
         return self._mftable
@@ -316,21 +457,31 @@ class MagnetFieldTable(Loggable):
             archive.close()
             self.info('locally archiving mftable')
 
-    def _name_to_path(self, name):
-        if name:
-            name = os.path.join(paths.spectrometer_dir, add_extension(name, '.csv'))
-        return name or ''
+    def _set_path(self, name):
+        set_mftable_name(name)
+        self.dirty = True
 
-    def _set_path(self, v):
-        self._path = self._name_to_path(v)
-
+    # @cached_property
     def _get_path(self):
-        if self._path:
-            p = self._path
-        else:
-            p = paths.mftable
+        p = self._test_path
+        if not p:
+            name = get_mftable_name()
+            p = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
         return p
 
+    def _name_to_path(self, name):
+        if name:
+            name = os.path.join(paths.mftable_dir, add_extension(name, '.csv'))
+        return name or ''
+        #
+        # def _set_path(self, v):
+        #     self._path = self._name_to_path(v)
+        #
+        # def _get_path(self):
+        #     if self._path:
+        #         p = self._path
+        #     else:
+        #         p = paths.mftable
+        #     return p
 
 # ============= EOF =============================================
-

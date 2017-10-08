@@ -15,27 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Float, Event, Any, Instance
+import os
+import time
+from math import pi
+
+import yaml
+from numpy import arange, sin
+from traits.api import Property, Float, Event, Instance
 from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
-# ============= standard library imports ========================
-from scipy import optimize
-# ============= local library imports  ==========================
-# from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
+
+from pychron.paths import paths
+from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
-def get_float(func):
-    def dec(*args, **kw):
-        try:
-            return float(func(*args, **kw))
-        except (TypeError, ValueError):
-            return 0.0
-
-    return dec
-
-
-class BaseMagnet(HasTraits):
+class BaseMagnet(SpectrometerDevice):
     dac = Property(Float, depends_on='_dac')
-    mass = Float
+    mass = Float(enter_set=True, auto_set=False)
 
     _dac = Float
     dacmin = Float(0.0)
@@ -47,15 +42,27 @@ class BaseMagnet(HasTraits):
     _massmax = Float(200.0)
 
     settling_time = 0.5
-    detector = Any
+    detector = Instance('pychron.spectrometer.base_detector.BaseDetector')
 
     dac_changed = Event
 
     mftable = Instance('pychron.spectrometer.mftable.MagnetFieldTable', ())
     confirmation_threshold_mass = Float
     use_deflection_correction = True
+    use_af_demagnetization = False
 
     _suppress_mass_update = False
+
+    # def __init__(self, *args, **kw):
+    #     super(BaseMagnet, self).__init__(*args, **kw)
+    #     self._lock = threading.Lock()
+    #     self._cond = threading.Condition((threading.Lock()))
+
+    def reload_mftable(self):
+        self.mftable.load_mftable()
+
+    def read_dac(self):
+        raise NotImplementedError
 
     def set_dac(self, *args, **kw):
         raise NotImplementedError
@@ -63,8 +70,8 @@ class BaseMagnet(HasTraits):
     def set_mftable(self, name):
         self.mftable.set_path_name(name)
 
-    def update_field_table(self, *args):
-        self.mftable.update_field_table(*args)
+    def update_field_table(self, *args, **kw):
+        self.mftable.update_field_table(*args, **kw)
 
     # ===============================================================================
     # persistence
@@ -86,13 +93,16 @@ class BaseMagnet(HasTraits):
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
 
             name = ''
-        # self.mftable.molweights = molweights
+
         self.mftable.initialize(molweights)
         self.mftable.spectrometer_name = name.lower()
 
         d = self.read_dac()
         if d is not None:
             self._dac = d
+
+        # load af demag
+        self._load_af_demag_configuration()
 
     # ===============================================================================
     # mapping
@@ -106,23 +116,7 @@ class BaseMagnet(HasTraits):
         :param detname: str, name of a detector, e.g H1
         :return: float, mass
         """
-        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
-        detname = get_detector_name(detname)
-
-        d = self.mftable.get_table()
-
-        _, xs, ys, p = d[detname]
-
-        def func(x, *args):
-            c = list(p)
-            c[-1] -= dac
-            return mass_cal_func(c, x)
-        try:
-            mass = optimize.brentq(func, 0, 200)
-            return mass
-
-        except ValueError:
-            self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
+        return self.mftable.map_dac_to_mass(dac, detname)
 
     def map_mass_to_dac(self, mass, detname):
         """
@@ -133,15 +127,11 @@ class BaseMagnet(HasTraits):
         :return: float, dac voltage
         """
 
-        from pychron.spectrometer.mftable import get_detector_name, mass_cal_func
-
-        detname = get_detector_name(detname)
-        d = self.mftable.get_table()
-        _, xs, ys, p = d[detname]
-
-        dac = mass_cal_func(p, mass)
-
-        self.debug('map mass to dac {} >> {}'.format(mass, dac))
+        dac = self.mftable.map_mass_to_dac(mass, detname)
+        self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
+        if dac is None:
+            self.warning('Could not map mass to dac. Returning current DAC {}'.format(self._dac))
+            dac = self._dac
 
         return dac
 
@@ -165,8 +155,7 @@ class BaseMagnet(HasTraits):
 
         m = self.map_dac_to_mass(dac, det.name)
         if m is not None:
-            molweights = self.spectrometer.molecular_weights
-            return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
+            return self.spectrometer.map_isotope(m)
 
     def mass_change(self, m):
         """
@@ -183,6 +172,91 @@ class BaseMagnet(HasTraits):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _wait_release(self):
+        self._lock.release()
+        # self._cond.notify()
+
+    def _wait_lock(self, timeout):
+        """
+        http://stackoverflow.com/questions/8392640/how-to-implement-a-lock-with-a-timeout-in-python-2-7
+        @param timeout:
+        @return:
+        """
+        with self._cond:
+            current_time = start_time = time.time()
+            while current_time < start_time + timeout:
+                if self._lock.acquire(False):
+                    return True
+                else:
+                    self._cond.wait(timeout - current_time + start_time)
+                    current_time = time.time()
+        return False
+
+    def _load_af_demag_configuration(self):
+        self.use_af_demagnetization = False
+
+        p = paths.af_demagnetization
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    yd = yaml.load(rfile)
+                except BaseException, e:
+                    self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                    return
+
+            if not isinstance(yd, dict):
+                self.warning_dialog('AF Demagnetization unavailable. Syntax error in file')
+                return
+
+            self.use_af_demagnetization = yd.get('enabled', True)
+            self.af_demag_threshold = yd.get('threshold', 1)
+
+    def _do_af_demagnetization(self, target, setfunc):
+
+        p = paths.af_demagnetization
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                try:
+                    yd = yaml.load(rfile)
+                except BaseException, e:
+                    self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                    return
+
+            period = yd.get('period', None)
+            if period is None:
+                frequency = yd.get('frequency')
+                if frequency is None:
+                    self.warning('AF Demagnetization unavailable. '
+                                 'Need to specify "period" or "frequency" in "{}"'.format(p))
+                    return
+                else:
+                    period = 1 / float(frequency)
+            else:
+                frequency = 1 / float(period)
+
+            duration = yd.get('duration')
+            if duration is None:
+                duration = 5
+                self.debug('defaulting to duration={}'.format(duration))
+
+            start_amplitude = yd.get('start_amplitude')
+            if start_amplitude is None:
+                self.warning('AF Demagnetization unavailable. '
+                             'Need to specify "start_amplitude" in "{}"'.format(p))
+                return
+
+            sx = arange(0.5 * period, duration, period)
+            slope = start_amplitude / float(duration)
+            dacs = slope * sx * sin(frequency * pi * sx)
+            self.info('Doing AF Demagnetization around target={}. '
+                      'duration={}, start_amplitude={}, period={}'.format(target, duration, start_amplitude, period))
+            for dac in reversed(dacs):
+                self.debug('set af dac raw:{} dac:{}'.format(dac, target + dac))
+                setfunc(target + dac)
+                time.sleep(period)
+        else:
+            self.warning('AF Demagnetization unavailable. {} not a valid file'.format(p))
+
     def _validate_mass_change(self, cm, m):
         ct = self.confirmation_threshold_mass
 
@@ -201,7 +275,7 @@ class BaseMagnet(HasTraits):
     def _mass_changed(self, old, new):
         if self._suppress_mass_update:
             return
-
+        self.debug('mass changed old={}, new={}'.format(old, new))
         if self._validate_mass_change(old, new):
             self._set_mass(new)
         else:
@@ -263,29 +337,24 @@ class BaseMagnet(HasTraits):
     # views
     # ===============================================================================
     def traits_view(self):
-        v = View(
-            VGroup(
-                VGroup(
-                    Item('dac', editor=RangeEditor(low_name='dacmin',
-                                                   high_name='dacmax',
-                                                   format='%0.5f')),
+        v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
+                                                              high_name='dacmax',
+                                                              format='%0.5f')),
 
-                    Item('mass', editor=RangeEditor(mode='slider', low_name='massmin',
-                                                    high_name='massmax',
-                                                    format='%0.3f')),
-                    HGroup(Spring(springy=False,
-                                  width=48),
-                           Item('massmin', width=-40), Spring(springy=False,
-                                                              width=138),
-                           Item('massmax', width=-55),
+                               Item('mass'),
+                                    # editor=RangeEditor(mode='slider', low_name='massmin',
+                                    #                            high_name='massmax',
+                                    #                            format='%0.3f')),
+                               HGroup(Spring(springy=False,
+                                             width=48),
+                                      Item('massmin', width=-40), Spring(springy=False,
+                                                                         width=138),
+                                      Item('massmax', width=-55),
 
-                           show_labels=False),
-                    show_border=True,
-                    label='Control')))
+                                      show_labels=False),
+                               show_border=True,
+                               label='Control')))
 
         return v
 
 # ============= EOF =============================================
-
-
-

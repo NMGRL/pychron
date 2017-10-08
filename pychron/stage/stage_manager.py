@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str, List, Instance, Bool, String
+from traits.api import Event, Str, List, Instance, String
 # ============= standard library imports ========================
 import os
 import pickle
@@ -28,7 +28,20 @@ from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap
 from pychron.stage.maps.laser_stage_map import LaserStageMap
-from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager
+from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
+
+
+def get_stage_map_names(root=None):
+    if root is None:
+        root = paths.map_dir
+
+    sms = list_directory2(root, '.txt', remove_extension=True)
+    print root, sms
+    sms = [si for si in sms if not si.endswith('.center')]
+    us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
+    if us:
+        sms.extend(us)
+    return sms
 
 
 class BaseStageManager(Manager):
@@ -41,25 +54,20 @@ class BaseStageManager(Manager):
     stage_map = Instance(BaseStageMap)
     canvas = Instance(MapCanvas)
 
-    root = Str(paths.map_dir)
+    # root = Str(paths.map_dir)
     calibrated_position_entry = String(enter_set=True, auto_set=False)
 
     move_thread = None
     temp_position = None
     temp_hole = None
-
-    use_modified = Bool(True)  # set true to use modified affine calculation
+    root = Str
+    # use_modified = Bool(True)  # set true to use modified affine calculation
 
     def goto_position(self, pos):
         raise NotImplementedError
 
     def refresh_stage_map_names(self):
-        sms = list_directory2(self.root, '.txt', remove_extension=True)
-
-        us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
-        if us:
-            sms.extend(us)
-
+        sms = get_stage_map_names(root=self.root)
         self.stage_map_names = sms
 
     def load(self):
@@ -74,46 +82,8 @@ class BaseStageManager(Manager):
             sm = sms[0]
 
         if sm:
+            self.stage_map_name = ''
             self.stage_map_name = sm
-            if self.stage_map:
-                self.canvas.set_map(self.stage_map)
-                self.canvas.request_redraw()
-
-                # self.stage_maps = []
-                # config = self.get_configuration()
-                # if config:
-                # load the stage maps
-
-                # mapfiles = self.config_get(config, 'General', 'mapfiles')
-                # self.stage_map_names = mapfiles.split(',')
-                # for mapfile in mapfiles.split(','):
-                #     path = os.path.join(paths.map_dir, mapfile.strip())
-                #     sm = StageMap(file_path=path)
-                #     sm.load_correction_file()
-                #     self.stage_maps.append(sm)
-
-                # load user points as stage map
-                # for di in os.listdir(paths.user_points_dir):
-                #     if di.endswith('.yaml'):
-                #         path = os.path.join(paths.user_points_dir, di)
-                # sm = self.stage_map_klass(file_path=path)
-                # self.stage_maps.append(sm)
-
-                # load the saved stage map
-                # sp = self._get_stage_map_by_name(self._load_previous_stage_map())
-                # if sp is not None:
-                #     sm = sp
-
-                # self.stage_map_name = sm
-
-                # load the points file
-                # self.canvas.load_points_file(self.points_file)
-
-                # load defaults
-                # self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
-
-                # self.canvas.set_map(sm)
-                # self.canvas.request_redraw()
 
     def kill(self):
         r = super(BaseStageManager, self).kill()
@@ -136,15 +106,23 @@ class BaseStageManager(Manager):
         # use a affine transform object to map
         canvas = self.canvas
         ca = canvas.calibration_item
+
+        # check if a calibration applies to this hole
+        hole_calibration = get_hole_calibration(smap.name, key)
+        if hole_calibration:
+            self.debug('Using hole calibration')
+            ca = hole_calibration
+
         if ca:
             rot = ca.rotation
             cpos = ca.center
             scale = ca.scale
 
-            self.debug('Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos, scale))
+            self.debug('Calibration parameters: '
+                       'rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos,
+                                                                   scale))
             pos = smap.map_to_calibration(pos, cpos, rot,
-                                          scale=scale,
-                                          use_modified=self.use_modified)
+                                          scale=scale)
 
         return pos
 
@@ -158,7 +136,7 @@ class BaseStageManager(Manager):
     def _update_axes(self):
         pass
 
-    def _move_to_hole(self, key, correct_position=True):
+    def _move_to_hole(self, key, correct_position=True, **kw):
         pass
 
     def _stop(self):
@@ -181,6 +159,9 @@ class BaseStageManager(Manager):
     def _canvas_factory(self):
         raise NotImplementedError
 
+    def _stage_map_changed_hook(self):
+        pass
+
     # handlers
     def _calibrated_position_entry_changed(self, new):
         self.debug('User entered calibrated position {}'.format(new))
@@ -189,14 +170,23 @@ class BaseStageManager(Manager):
     def _stage_map_name_changed(self, new):
         if new:
             self.debug('setting stage map to {}'.format(new))
-            sm = self.stage_map_klass(file_path=os.path.join(self.root, add_extension(new, '.txt')))
-            self.stage_map = sm
+            root = self.root
+            path = os.path.join(root, add_extension(new, '.txt'))
+            sm = self.stage_map_klass(file_path=path)
+
             self.tray_calibration_manager.load_calibration(stage_map=new)
 
             self.canvas.set_map(sm)
             self.canvas.request_redraw()
 
+            self.stage_map = sm
+
+            self._stage_map_changed_hook()
+
     # defaults
+    def _root_default(self):
+        return paths.map_dir
+
     def _tray_calibration_manager_default(self):
         t = TrayCalibrationManager(parent=self,
                                    canvas=self.canvas)
@@ -217,10 +207,48 @@ class BaseStageManager(Manager):
             self.info('loading previous stage map from {}'.format(p))
             with open(p, 'rb') as f:
                 try:
-                    return pickle.load(f)
+                    sm = pickle.load(f)
+                    if not sm.endswith('.center'):
+                        return sm
                 except pickle.PickleError:
                     pass
                     # def traits_view(self):
                     # self.initialize_stage()
 
 # ============= EOF =============================================
+
+# self.stage_maps = []
+# config = self.get_configuration()
+# if config:
+# load the stage maps
+
+# mapfiles = self.config_get(config, 'General', 'mapfiles')
+# self.stage_map_names = mapfiles.split(',')
+# for mapfile in mapfiles.split(','):
+#     path = os.path.join(paths.map_dir, mapfile.strip())
+#     sm = StageMap(file_path=path)
+#     sm.load_correction_file()
+#     self.stage_maps.append(sm)
+
+# load user points as stage map
+# for di in os.listdir(paths.user_points_dir):
+#     if di.endswith('.yaml'):
+#         path = os.path.join(paths.user_points_dir, di)
+# sm = self.stage_map_klass(file_path=path)
+# self.stage_maps.append(sm)
+
+# load the saved stage map
+# sp = self._get_stage_map_by_name(self._load_previous_stage_map())
+# if sp is not None:
+#     sm = sp
+
+# self.stage_map_name = sm
+
+# load the points file
+# self.canvas.load_points_file(self.points_file)
+
+# load defaults
+# self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
+
+# self.canvas.set_map(sm)
+# self.canvas.request_redraw()

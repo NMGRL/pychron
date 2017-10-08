@@ -15,16 +15,14 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-
 # =============standard library imports ========================
-import os
 import logging
-from logging.handlers import RotatingFileHandler
+import os
 import shutil
-# =============local library imports  =========================
+from logging.handlers import RotatingFileHandler
+
+from pychron.core.helpers.filetools import list_directory, unique_path2
 from pychron.paths import paths
-from pychron.core.helpers.filetools import list_directory
-from filetools import unique_path2
 
 NAME_WIDTH = 40
 gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-9s (%(threadName)-10s) %(message)s'.format(NAME_WIDTH)
@@ -79,28 +77,6 @@ def tail(f, lines=20):
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
 
 
-def set_exception_handler(func=None):
-    """
-        set sys.excepthook to func.  if func is None use a default handler
-
-        default handler formats and logs the traceback as critical and calls sys.__excepthook__
-        for normal exception handling
-
-    :return:
-    """
-    import sys
-    import traceback
-
-    root = logging.getLogger()
-    if func is None:
-        def func(exctype, value, tb):
-            for ti in traceback.format_exc():
-                root.critical(ti.strip())
-            sys.__excepthook__(exctype, value, tb)
-
-    sys.excepthook = func
-
-
 # def anomaly_setup(name):
 #     ld = logging.Logger.manager.loggerDict
 #     print 'anomaly setup ld={}'.format(ld)
@@ -113,14 +89,13 @@ def set_exception_handler(func=None):
 #         logger.addHandler(h)
 
 
-def logging_setup(name, use_archiver=True, **kw):
+def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     """
     """
     # set up deprecation warnings
     # import warnings
     #     warnings.simplefilter('default')
-
-    bdir = paths.log_dir
+    bdir = paths.log_dir if root is None else root
 
     # make sure we have a log directory
     # if not os.path.isdir(bdir):
@@ -136,32 +111,60 @@ def logging_setup(name, use_archiver=True, **kw):
                      root=bdir)
         a.clean()
 
-    # create a new logging file
-    logname = '{}.current.log'.format(name)
-    logpath = os.path.join(bdir, logname)
+    if use_file:
+        # create a new logging file
+        logname = '{}.current.log'.format(name)
+        logpath = os.path.join(bdir, logname)
 
-    if os.path.isfile(logpath):
-        backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log', width=5)
+        if os.path.isfile(logpath):
+            backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log', width=5)
 
-        shutil.copyfile(logpath, backup_logpath)
-        os.remove(logpath)
+            shutil.copyfile(logpath, backup_logpath)
+            os.remove(logpath)
 
-        ps = list_directory(bdir, filtername=logname, remove_extension=False)
-        for pi in ps:
-            _h, t = os.path.splitext(pi)
-            v = os.path.join(bdir, pi)
-            shutil.copyfile(v, '{}{}'.format(backup_logpath, t))
-            os.remove(v)
+            ps = list_directory(bdir, filtername=logname, remove_extension=False)
+            for pi in ps:
+                _h, t = os.path.splitext(pi)
+                v = os.path.join(bdir, pi)
+                shutil.copyfile(v, '{}{}'.format(backup_logpath, t))
+                os.remove(v)
 
     root = logging.getLogger()
     root.setLevel(gLEVEL)
     shandler = logging.StreamHandler()
-    rhandler = RotatingFileHandler(
-        logpath, maxBytes=1e7, backupCount=5)
-    for hi in (shandler, rhandler):
+
+    handlers = [shandler]
+    if use_file:
+        rhandler = RotatingFileHandler(
+            logpath, maxBytes=1e7, backupCount=50)
+        handlers.append(rhandler)
+
+    fmt = logging.Formatter(gFORMAT)
+    for hi in handlers:
         hi.setLevel(gLEVEL)
-        hi.setFormatter(logging.Formatter(gFORMAT))
+        hi.setFormatter(fmt)
         root.addHandler(hi)
+
+
+def add_root_handler(path, level=None, strformat=None, **kw):
+    if level is None:
+        level = gLEVEL
+    if format is None:
+        strformat = gFORMAT
+
+    root = logging.getLogger()
+    handler = logging.FileHandler(path, **kw)
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter(strformat))
+    root.addHandler(handler)
+
+    return handler
+
+
+def remove_root_handler(handler):
+    root = logging.getLogger()
+    root.removeHandler(handler)
+
 
 
 def new_logger(name):

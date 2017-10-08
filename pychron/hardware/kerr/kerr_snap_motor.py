@@ -18,11 +18,14 @@
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from kerr_motor import KerrMotor
+
+
 class KerrSnapMotor(KerrMotor):
     """
     Snap Motor
 
     """
+
     def _build_io(self):
         """
             picsrvsc.pdf p.35
@@ -71,8 +74,7 @@ class KerrSnapMotor(KerrMotor):
         gains = self._build_hexstr(p, d, i, il, ol, cl, el, sr, db, sm)
         return 'F6{}'.format(gains)
 
-
-#        return ''.join(['F6'] + map(hexfmt, [p, d, i, il, ol, cl, el, sr, db, sm]))
+# return ''.join(['F6'] + map(hexfmt, [p, d, i, il, ol, cl, el, sr, db, sm]))
 
 #    def _initialize_(self, *args, **kw):
 #        '''

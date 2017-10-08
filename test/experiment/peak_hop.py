@@ -20,7 +20,7 @@ from threading import Thread
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.processing.arar_age import ArArAge
 from pychron.spectrometer.ion_optics.ion_optics_manager import IonOpticsManager
-from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
+from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 
@@ -62,8 +62,8 @@ class PeakHopTestCase(unittest.TestCase):
         s.load(db_mol_weights=False)
         a.spectrometer_manager = s
         a.ion_optics_manager = ion
-        a.arar_age = ArArAge()
-        a.arar_age.j=ufloat(0.001, 1e-6)
+        a.isotope_group = ArArAge()
+        a.isotope_group.j=ufloat(0.001, 1e-6)
 
         a._alive = True
         a.uuid = '12345-ABCDE'
@@ -122,7 +122,7 @@ class PeakHopTestCase(unittest.TestCase):
         msi.connect()
         arun = self.arun
         arun.massspec_importer = msi
-        ret = arun.post_measurement_save()
+        ret = arun.save()
         self.assertTrue(ret)
 
         #def test_peak_hop_baseline_save(self):

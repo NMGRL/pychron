@@ -15,11 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property
-# from traitsui.api import View, Item, TextEditor
-from pychron.envisage.tasks.base_task import BaseHardwareTask
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
+from traits.api import Property
+
+from pychron.envisage.tasks.base_task import BaseHardwareTask
+from pychron.envisage.view_util import open_view
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
+
+
 # from pychron.lasers.tasks.panes.co2 import FusionsCO2Pane, FusionsCO2StagePane, \
 # FusionsCO2ControlPane
 # from pychron.lasers.tasks.laser_panes import PulsePane, OpticsPane, \
@@ -46,6 +49,8 @@ class BaseLaserTask(BaseHardwareTask):
     def prepare_destroy(self):
         self.manager.shutdown()
 
+    def show_laser_script_executor(self):
+        pass
 
 class FusionsTask(BaseLaserTask):
     def _default_layout_default(self):
@@ -60,6 +65,11 @@ class FusionsTask(BaseLaserTask):
     # ===============================================================================
     # action handlers
     # ===============================================================================
+    def show_laser_script_executor(self):
+        if self.manager:
+            ex = self.manager.laser_script_executor
+            open_view(ex)
+
     def show_motion_configure(self):
         if self.manager:
             self.manager.show_motion_controller_manager()
@@ -68,16 +78,16 @@ class FusionsTask(BaseLaserTask):
         if self.manager:
             pc = self.manager.power_calibration_manager
             if pc:
-                self.window.application.open_view(pc)
+                open_view(pc)
 
     def new_pattern(self):
         pm = PatternMakerView()
-        self.window.application.open_view(pm)
+        open_view(pm)
 
     def open_pattern(self):
         pm = PatternMakerView()
         if pm.load_pattern():
-            self.window.application.open_view(pm)
+            open_view(pm)
 
             # def open_pattern(self):
             #         if self.manager:

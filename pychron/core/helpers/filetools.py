@@ -17,11 +17,13 @@
 # ========== standard library imports ==========
 import glob
 import os
-import subprocess
-import shutil
 import re
-
+import shutil
+import subprocess
+import sys
 from datetime import datetime
+
+import yaml
 
 
 def subdirize(root, name, n=1, l=2, mode='r'):
@@ -49,6 +51,9 @@ def backup(p, backupdir, **kw):
     :return:
     """
     bp, _ = os.path.splitext(os.path.basename(p))
+    if not os.path.isdir(backupdir):
+        os.mkdir(backupdir)
+
     pp = unique_date_path(backupdir, bp, **kw)
     shutil.copyfile(p, pp)
     return bp, pp
@@ -69,16 +74,20 @@ def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
 
 
 def view_file(p, application='Preview', logger=None):
-    app_path = '/Applications/{}.app'.format(application)
-    if not os.path.exists(app_path):
-        app_path = '/Applications/Preview.app'
+    if sys.platform == 'darwin':
+        if application == 'Excel':
+            application = 'Microsoft Office 2011/Microsoft Excel'
 
-    try:
-        subprocess.call(['open', '-a', app_path, p])
-    except OSError:
-        if logger:
-            logger.debug('failed opening {} using {}'.format(p, app_path))
-        subprocess.call(['open', p])
+        app_path = '/Applications/{}.app'.format(application)
+        if not os.path.exists(app_path):
+            app_path = '/Applications/Preview.app'
+
+        try:
+            subprocess.call(['open', '-a', app_path, p])
+        except OSError:
+            if logger:
+                logger.debug('failed opening {} using {}'.format(p, app_path))
+            subprocess.call(['open', p])
 
 
 def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
@@ -115,6 +124,10 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
     else:
         for yi in gen('{}/*'.format(gfilter)):
             yield yi
+
+
+def list_subdirectories(root):
+    return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
 
 
 def list_directory2(root, extension=None, filtername=None, remove_extension=False):
@@ -206,15 +219,9 @@ def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
 
         unique_path2 solves this by finding the max path then incrementing by 1
     """
-    # find the max path in the root directory
-    # basename = '{}-*{}'.format(base, extension)
-    # cnt = 0
-    # for p in glob.iglob(os.path.join(root, basename)):
-    #     p = os.path.basename(p)
-    #     head, tail = os.path.splitext(p)
-    #     cnt = max(int(head.split('-')[1]), cnt)
-    #
-    # cnt += 1
+    if not extension.startswith('.'):
+        extension = '.{}'.format(extension)
+
     cnt = max_path_cnt(root, '{}-'.format(base), delimiter=delimiter, extension=extension)
     p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
     return p, cnt
@@ -259,7 +266,7 @@ def unique_path(root, base, extension='.txt'):
 
     """
     if extension:
-        if '.' not in extension:
+        if not extension.startswith('.'):
             extension = '.{}'.format(extension)
     else:
         extension = ''
@@ -273,6 +280,32 @@ def unique_path(root, base, extension='.txt'):
         cnt += 1
 
     return p, cnt
+
+
+def unique_path_from_manifest(root, base, extension='.txt'):
+    if not extension.startswith('.'):
+        extension = '.{}'.format(extension)
+    p = None
+    mp = os.path.join(root, 'manifest.yaml')
+    yd = {}
+    if os.path.isfile(mp):
+        with open(mp, 'r') as rfile:
+            yd = yaml.load(rfile)
+
+        v = yd.get(base, None)
+        if v:
+            cnt = v + 1
+            p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
+            yd[base] = cnt
+
+    if not p:
+        p, cnt = unique_path2(root, base, extension=extension)
+        yd[base] = cnt
+
+    with open(mp, 'w') as wfile:
+        yaml.dump(yd, wfile)
+
+    return p
 
 
 def parse_xy(p, delimiter=','):

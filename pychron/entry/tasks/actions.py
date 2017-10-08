@@ -15,12 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from pyface.action.action import Action
-# from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class AddMolecularWeightAction(Action):
@@ -41,18 +40,6 @@ class AddFluxMonitorAction(Action):
         app = event.task.window.application
         s = app.get_service('pychron.entry.editors.flux_monitor_editor.FluxMonitorEditor')
         s.add_flux_monitor()
-
-
-class LabnumberEntryAction(Action):
-    name = 'Labnumber Entry'
-    dname = 'Labnumber Entry'
-    # accelerator = 'Ctrl+Shift+l'
-    id = 'pychron.labnumber_entry'
-
-    def perform(self, event):
-        pid = 'pychron.entry.irradiation.task'
-        app = event.task.window.application
-        app.get_task(pid)
 
 
 class SensitivityEntryAction(Action):
@@ -81,6 +68,25 @@ class AddSensitivityAction(TaskAction):
     method = 'add'
 
 
+class DatabaseSaveAction(TaskAction):
+    name = 'Database Save'
+    dname = 'Database Save'
+    description = 'Save current changes to the database'
+    method = 'save_to_db'
+    image = icon('database_save')
+
+
+class ClearSelectionAction(TaskAction):
+    name = 'Clear Selection'
+    image = icon('table_lightning')
+    method = 'clear_selection'
+
+
+class RecoverAction(TaskAction):
+    name = 'Recover'
+    method = 'recover'
+
+
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
     dname = 'Save PDF'
@@ -89,31 +95,31 @@ class SavePDFAction(TaskAction):
     method = 'save_pdf'
 
 
-class SaveLabbookPDFAction(TaskAction):
-    name = 'Save Labbook'
-    dname = 'Save Labbook'
+class MakeIrradiationBookPDFAction(TaskAction):
+    name = 'Make Irradiation Book'
+    dname = 'Make Irradiation Book'
     image = icon('file_pdf')
 
-    method = 'save_labbook_pdf'
+    method = 'make_irradiation_book_pdf'
 
 
-class GenerateLabnumbersAction(TaskAction):
-    name = 'Generate Labnumbers'
-    dname = 'Generate Labnumbers'
+class GenerateIdentifiersAction(TaskAction):
+    name = 'Generate Identifiers'
+    # dname = 'Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'generate_labnumbers'
+    method = 'generate_identifiers'
 
     ddescription = 'Automatically generate labnumbers (aka identifiers) for each irradiation position in the ' \
                    'currently selected irradiation.'
 
 
-class PreviewGenerateLabnumbersAction(TaskAction):
-    name = 'Preview Generate Labnumbers'
-    dname = 'Preview Generate Labnumbers'
+class PreviewGenerateIdentifiersAction(TaskAction):
+    name = 'Preview Generate Identifiers'
+    # dname = 'Preview Generate Labnumbers'
     image = icon('table_lightning')
 
-    method = 'preview_generate_labnumbers'
+    method = 'preview_generate_identifiers'
 
 
 class ImportIrradiationAction(TaskAction):
@@ -141,13 +147,36 @@ class ImportIrradiationFileAction(TaskAction):
                    'to generate a boilerplate irradiation template'
 
 
-class MakeIrradiationTemplateAction(TaskAction):
+class MakeIrradiationTemplateAction(Action):
     name = 'Irradiation Template'
     dname = 'Irradiation Template'
     image = icon('file_xls')
 
-    method = 'make_irradiation_load_template'
     ddescription = 'Make an Excel irradiation template that can be used to import irradiation information.'
+
+    def perform(self, event):
+        from pyface.file_dialog import FileDialog
+        dialog = FileDialog(action='save as', default_filename='IrradiationTemplate.xls')
+
+        from pyface.constant import OK
+        if dialog.open() == OK:
+            path = dialog.path
+            if path:
+                from pychron.core.helpers.filetools import add_extension
+                path = add_extension(path, '.xls')
+
+                from pychron.entry.loaders.irradiation_template import IrradiationTemplate
+                i = IrradiationTemplate()
+                i.make_template(path)
+
+                from pyface.confirmation_dialog import confirm
+                if confirm(None, 'Template saved to {}.\n\nWould you like to open the template?'):
+                    from pychron.core.helpers.filetools import view_file
+                    application = 'Microsoft Office 2011/Microsoft Excel'
+                    view_file(path, application=application)
+
+                    # from pyface.message_dialog import information
+                    # information(None, 'Template saved to {}'.format(path))
 
 
 class ImportSamplesAction(TaskAction):
@@ -168,22 +197,32 @@ class ExportIrradiationAction(TaskAction):
     method = 'export_irradiation'
 
 
-class GenerateIrradiationTableAction(Action):
+class GenerateIrradiationTableAction(TaskAction):
     name = 'Generate Irradiation Table'
     dname = 'Generate Irradiation Table'
     accelerator = 'Ctrl+0'
 
-    ddescription = 'Do not use!'
+    # ddescription = 'Do not use!'
 
     def perform(self, event):
-        from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # from pychron.entry.irradiation_table_writer import IrradiationTableWriter
+        # a = IrradiationTableWriter()
+        # a.make()
 
-        a = IrradiationTableWriter()
-        a.make()
+        from pychron.entry.irradiation_xls_writer import IrradiationXLSTableWriter
+        dvc = self.task.window.application.get_service(DVC_PROTOCOL)
+        if dvc is not None:
+            if dvc.db.connect():
+                names = dvc.get_irradiation_names()
+
+                a = IrradiationXLSTableWriter(dvc=dvc)
+                a.make(names)
+        else:
+            from pyface.message_dialog import warning
+            warning(None, 'DVC Plugin is required. Please enable')
 
 
 class ImportIrradiationHolderAction(Action):
-
     name = 'Import Irradiation Holder'
     dname = 'Import Irradiation Holder'
 
@@ -202,4 +241,16 @@ class TransferJAction(TaskAction):
     name = 'Transfer J Data...'
     dname = 'Transfer J Data'
     method = 'transfer_j'
+
+
+class GetIGSNAction(TaskAction):
+    name = 'Get IGSNs'
+    dname = 'Get IGSNs'
+    method = 'get_igsns'
+
+
+class GenerateStatusReportAction(TaskAction):
+    name = 'Status Report...'
+    dname = 'Status Report...'
+    method = 'generate_status_report'
 # ============= EOF =============================================

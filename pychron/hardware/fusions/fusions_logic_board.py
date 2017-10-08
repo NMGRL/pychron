@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.hardware.kerr.kerr_manager import KerrManager
-from pychron.hardware.meter_calibration import MeterCalibration
 
 '''
 Fusions Control board

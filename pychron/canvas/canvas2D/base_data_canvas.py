@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from traits.api import Tuple, Bool, on_trait_change
-from enable.api import Pointer
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
+from enable.api import Pointer
+from traits.api import Tuple, Bool, on_trait_change
+
 # =============standard library imports ========================
 from numpy import hstack
 # =============local library imports  ==========================
@@ -158,9 +159,7 @@ class BaseDataCanvas(DataView):
 
     @on_trait_change('show_grids')
     def change_grid_visibility(self):
-        print 'change visiblity', self.show_grids
         try:
-
             self.x_grid.visible = self.show_grids
             self.y_grid.visible = self.show_grids
             self.request_redraw()

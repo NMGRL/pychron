@@ -19,10 +19,9 @@
 from sqlalchemy import Column, Float, DateTime, BLOB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
-# ============= local library imports  ==========================
+
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-
 from util import Base
 
 

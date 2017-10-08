@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import os
-import gc
-import sys
 import cPickle
+import gc
+import os
+import sys
 from itertools import groupby
-
-import psutil
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 from pychron.core.helpers.filetools import unique_path
 
@@ -67,11 +69,12 @@ def mem_log_func(func, *args, **kw):
 
 
 def mem_available():
-    mem = psutil.virtual_memory().free
-    return mem * 1024. ** -2
-
-
-#     mem=_get_current_mem()
+    if psutil:
+        mem = psutil.virtual_memory().free
+        mem *= 1024. ** -2
+    else:
+        mem = 16
+    return mem
 
 
 def mem_dump(path):
@@ -128,10 +131,11 @@ def mem_sort():
 # with open(os.path.join(root, 'gcmem.txt'), 'w') as fp:
 
 def _get_current_mem():
-    PID = os.getpid()
-    proc = psutil.Process(PID)
-    mem = proc.get_memory_info()
-    return mem.rss / 1024. ** 2
+    if psutil:
+        PID = os.getpid()
+        proc = psutil.Process(PID)
+        mem = proc.get_memory_info()
+        return mem.rss / 1024. ** 2
 
 
 class MemCTX(object):

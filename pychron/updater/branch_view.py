@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traitsui.api import View, UItem, HGroup, VGroup
 from traitsui.editors import EnumEditor
 from traitsui.handler import Controller
 # ============= standard library imports ========================
@@ -24,24 +23,34 @@ from traitsui.handler import Controller
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
+class NewBranchView(Controller):
+    def traits_view(self):
+        v = View(UItem('new_branch_name'),
+                 title='New Branch Name',
+                 width=300,
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
+        return v
+
+
 class ManageBranchView(Controller):
     def traits_view(self):
         v = View(
             VGroup(
                 VGroup(HGroup(UItem('branch', editor=EnumEditor(name='all_branches')),
-                              icon_button_editor('build_button', 'bricks',
-                                                 tooltip='Build selected branch and set as current application'),
-                              icon_button_editor('checkout_branch_button', 'foo', tooltip='Checkout selected branch'),
+                              # icon_button_editor('build_button', 'bricks',
+                              #                    tooltip='Build selected branch and set as current application'),
+                              icon_button_editor('checkout_branch_button', 'bricks',
+                                                 tooltip='Checkout selected branch'),
+                              icon_button_editor('pull_button', 'arrow_down',
+                                                 tooltip='Update Branch'),
                               show_border=True,
-                              label='Current Branch')),
-                VGroup(UItem('edit_branch', editor=EnumEditor(name='branches')),
-                       UItem('delete_button', enabled_when='delete_enabled'),
-                       show_border=True)),
+                              label='Current Branch'))),
+            # VGroup(UItem('edit_branch', editor=EnumEditor(name='branches')),
+            #        UItem('delete_button', enabled_when='delete_enabled'),
+            #        show_border=True)),
             title='Manage Branch View',
             buttons=['OK', 'Cancel'])
         return v
 
 # ============= EOF =============================================
-
-
-

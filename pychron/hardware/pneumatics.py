@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.adc.adc_device import PolynomialMapperMixin
@@ -26,6 +27,7 @@ from pychron.tx.registry import tx_register_functions, register, registered_func
 
 class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
     scan_func = 'get_pressure'
+    nbits = Int(8)
 
     def __init__(self, *args, **kw):
         super(Pneumatics, self).__init__(*args, **kw)
@@ -35,10 +37,17 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
 
     def load_additional_args(self, config):
         self.load_mapping(config)
+        self.set_attribute(config, 'nbits', 'General', 'nbits', cast='int')
+        if self.nbits not in (8,12):
+            self.warning('nbits must be 8 or 12')
+            self.nbits = 8
         return super(Pneumatics, self).load_additional_args(config)
 
     @register('GetPneumaticsPressure')
     def get_pressure(self, **kw):
+        if 'nbits' not in kw:
+            kw['nbits'] = self.nbits
+
         v = self.get(**kw)
         if v is not None:
             if self.poly_mapper:

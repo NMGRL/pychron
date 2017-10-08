@@ -20,23 +20,26 @@ from traits.api import  List
 # ============= local library imports  ==========================
 from pychron.monitors.co2_laser_monitor import CO2LaserMonitor
 from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
-from pychron.remote_hardware.errors.laser_errors import SetpointErrorCode
 
 
 class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
 
     internal_meter_buffer = List
 
-    def update_imb(self, obj, name, old, new):
-        if new is not None:
-            self._add_to_buffer(new)
+    def reset(self):
+        super(FusionsCO2LaserMonitor, self).reset()
+        self.internal_meter_buffer = []
+
+    # def update_imb(self, obj, name, old, new):
+    #     if new is not None:
+    #         self._add_to_buffer(new)
 
     def stop(self):
-        if self.setpoint and self.internal_meter_buffer:
-            tol = 4
-            if self.internal_meter_buffer:
-                if abs(max(self.internal_meter_buffer) - self.setpoint) > tol:
-                    self.manager.error_code = SetpointErrorCode(self.setpoint)
+        # if self.setpoint and self.internal_meter_buffer:
+        #     tol = 4
+        #     if self.internal_meter_buffer:
+        #         if abs(max(self.internal_meter_buffer) - self.setpoint) > tol:
+        #             self.manager.error_code = SetpointErrorCode(self.setpoint)
 
         super(FusionsCO2LaserMonitor, self).stop()
 
@@ -44,11 +47,12 @@ class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
         if self.setpoint:
             self.info('Check setpoint')
             manager = self.manager
-            manager.get_laser_watts()
-#        self._add_to_buffer(w)
+            w = manager.get_laser_watts()
+            if w is not None:
+                self._add_to_buffer(w)
 
     def _add_to_buffer(self, n):
-        trim = 50
+        trim = 500
         self.internal_meter_buffer.append(n)
         self.internal_meter_buffer = self.internal_meter_buffer[-trim:]
 #            avg = sum(self.internal_meter_buffer) / len(self.internal_meter_buffer)

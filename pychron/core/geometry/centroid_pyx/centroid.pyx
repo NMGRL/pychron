@@ -4,7 +4,6 @@ see http://paulbourke.net/geometry/polyarea/
 
 '''
 # @PydevCodeAnalysisIgnore
-import numpy as np
 cimport numpy as np
 def _area(np.ndarray[np.float64_t, ndim=2] data):
 	cdef int n = data.shape[0]

@@ -15,19 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from chaco.abstract_overlay import AbstractOverlay
-from chaco.scatterplot import render_markers
-from traits.api import Any, Bool, Tuple
-# ============= standard library imports ========================
-import os
 import cStringIO
-# ============= local library imports  ==========================
-from pychron.hardware.motion_controller import PositionError
-
-from pychron.paths import paths
-from pychron.lasers.pattern.patternable import Patternable
+import os
 import time
-from threading import Thread
+from threading import Thread, current_thread, Event
+
+from chaco.abstract_overlay import AbstractOverlay
+from chaco.default_colormaps import hot
+from chaco.scatterplot import render_markers
+from numpy import polyfit, linspace, hstack, array, average, zeros_like
+from traits.api import Any, Bool, List
+
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.envisage.view_util import open_view
+from pychron.hardware.motion_controller import PositionError
+from pychron.lasers.pattern.dragonfly_pattern import dragonfly
+from pychron.lasers.pattern.patternable import Patternable
+from pychron.paths import paths
 
 
 class PeriodCTX:
@@ -39,17 +43,23 @@ class PeriodCTX:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            et = time.time() - self.st
+            et = time.time() - self._st
             time.sleep(max(0, self._duration - et))
 
 
 class CurrentPointOverlay(AbstractOverlay):
-    point = Tuple((0, 0))
+    _points = List
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        with gc:
-            pts = self.component.map_screen([self.point])
-            render_markers(gc, pts, 'circle', 3, 'green', 1, 'green')
+        if self._points:
+            with gc:
+                pts = self.component.map_screen(self._points)
+                render_markers(gc, pts[1:], 'circle', 3, (0, 1, 0), 1, (0, 1, 0))
+                render_markers(gc, pts[:1], 'circle', 3, (1, 1, 0), 1, (1, 1, 0))
+
+    def add_point(self, pt):
+        self._points.append(pt)
+        self._points = self._points[-3:]
 
 
 class PatternExecutor(Patternable):
@@ -154,52 +164,126 @@ class PatternExecutor(Patternable):
     def show_pattern(self):
         self.pattern.window_x = 50
         self.pattern.window_y = 50
-        self.open_view(self.pattern, view='graph_view')
+        open_view(self.pattern, view='graph_view')
 
     def execute(self, block=False):
         """
             if block is true wait for patterning to finish
             before returning
         """
-        self.start(show=self.show_patterning)
+        if not self.pattern:
+            return
 
-        t = Thread(target=self._execute)
-        t.start()
+        self.start(show=self.show_patterning)
+        evt = None
+        if current_thread().name != 'MainThread':
+            evt = Event()
+            invoke_in_main_thread(self._pre_execute, evt)
+            while not evt.is_set():
+                time.sleep(0.05)
+        else:
+            self._pre_execute(evt)
+
+        self.debug('execute xy pattern')
+
+        xyp = self.pattern.xy_pattern_enabled
+        t = None
+        if xyp:
+            t = Thread(target=self._execute_xy_pattern)
+            t.start()
+
+        pp = self.pattern.power_pattern
+        pt = None
+        if pp:
+            self.debug('execute power pattern')
+            pt = Thread(target=self._execute_power_pattern)
+            pt.start()
+
+        zp = self.pattern.z_pattern
+        zt = None
+        if zp:
+            self.debug('execute z pattern')
+            zt = Thread(target=self._execute_z_pattern)
+            zt.start()
 
         if block:
-            t.join()
+            if t:
+                t.join()
+            if zt:
+                zt.join()
+            if pt:
+                pt.join()
 
             self.finish()
 
-    def _execute(self):
+    def _pre_execute(self, evt):
+        self.debug('pre execute')
+        pattern = self.pattern
+
+        kind = pattern.kind
+        if kind == 'SeekPattern':
+            from pychron.graph.graph import Graph
+
+            g = Graph(window_x=1000, window_y=100, window_height=900)
+            self._info = open_view(g)
+            self._seek_graph = g
+
+        if evt is not None:
+            evt.set()
+        self.debug('pre execute finished')
+
+    def _execute_power_pattern(self):
         pat = self.pattern
-        if pat:
-            # self.info('enabling laser')
-            # self.laser_manager.enable_device(clear_setpoint=False)
+        self.info('starting power pattern {}'.format(pat.name))
 
-            self.info('starting pattern {}'.format(pat.name))
+        def func(v):
+            self.laser_manager.set_laser_power(v)
+
+        self._execute_(func, pat.power_values(), pat.power_sample, 'power pattern setpoint={value}')
+
+    def _execute_z_pattern(self):
+        pat = self.pattern
+        self.info('starting power pattern {}'.format(pat.name))
+
+        def func(v):
+            self.controller.set_z(v)
+
+        self._execute_(func, pat.z_values(), pat.z_sample, 'z pattern z={value}')
+
+    def _execute_(self, func, vs, period, msg):
+        for v in vs:
             st = time.time()
-            pat.cx, pat.cy = self.controller.x, self.controller.y
-            try:
-                for ni in xrange(pat.niterations):
-                    if not self.isPatterning():
-                        break
+            self.debug(msg.format(value=v))
+            func(v)
 
-                    self.info('doing pattern iteration {}'.format(ni))
-                    self._execute_iteration()
+            et = st - time.time()
+            p = period - et
+            time.sleep(p)
 
-                self.controller.linear_move(pat.cx, pat.cy)
-                if pat.disable_at_end:
-                    self.laser_manager.disable_device()
-                self.finish()
-                self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+    def _execute_xy_pattern(self):
+        pat = self.pattern
+        self.info('starting pattern {}'.format(pat.name))
+        st = time.time()
+        pat.cx, pat.cy = self.controller.x, self.controller.y
+        try:
+            for ni in xrange(pat.niterations):
+                if not self.isPatterning():
+                    break
 
-            except PositionError, e:
-                self.finish()
-                # self.laser_manager.disable_device()
-                self.controller.stop()
-                self.laser_manager.emergency_shutoff(str(e))
-                # self.warning(str(e))
+                self.info('doing pattern iteration {}'.format(ni))
+                self._execute_iteration()
+
+            self.controller.linear_move(pat.cx, pat.cy, block=True)
+            if pat.disable_at_end:
+                self.laser_manager.disable_device()
+
+            self.finish()
+            self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+
+        except PositionError, e:
+            self.finish()
+            self.controller.stop()
+            self.laser_manager.emergency_shutoff(str(e))
 
     def _execute_iteration(self):
         controller = self.controller
@@ -212,7 +296,7 @@ class PatternExecutor(Patternable):
             elif kind == 'CircularContourPattern':
 
                 self._execute_contour(controller, pattern)
-            elif kind == 'SeekPattern':
+            elif kind in ('SeekPattern', 'DragonFlyPattern'):
                 self._execute_seek(controller, pattern)
             elif kind == 'DegasPattern':
                 self._execute_lumen_degas(controller, pattern)
@@ -304,172 +388,220 @@ class PatternExecutor(Patternable):
                 lm.set_laser_power(out)
                 invoke_in_main_thread(update, (cl, err, out, csrc, src))
 
-    def _execute_seek(self, controller, pattern):
-        from pychron.core.ui.gui import invoke_in_main_thread
-        from pychron.graph.graph import Graph
+    def _setup_seek_graph(self, pattern):
+        g = self._seek_graph
 
-        duration = pattern.duration
-        g = Graph()
-        g.edit_traits()
-        g.new_plot()
+        g.new_plot(padding_top=20)
         s, p = g.new_series()
-
-        g.new_plot()
-        g.new_series(type='line')
-
+        p.aspect_ratio = 1.0
         cp = CurrentPointOverlay(component=s)
         s.overlays.append(cp)
-        w = 2
-        g.set_x_limits(-w, w)
-        g.set_y_limits(-w, w)
-        om = 60
-        g.set_x_limits(max_=om, plotid=1)
+
+        r = pattern.perimeter_radius
+        xs = linspace(-r, r)
+        xs2 = xs[::-1]
+        ys = (r ** 2 - xs ** 2) ** 0.5
+        ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
+
+        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type='line')
+
+        g.set_x_title('X (mm)', plotid=0)
+        g.set_y_title('Y (mm)', plotid=0)
+
+        g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
+        g.new_series(type='line')
+        g.new_series()
+        g.set_y_title('Density', plotid=1)
+        g.set_x_title('Time (s)', plotid=1)
+
+        g.new_plot(padding_bottom=20, padding_right=20, padding_left=60)
+        g.new_series()
+        g.set_y_title('Score', plotid=2)
+        g.set_x_title('Time (s)', plotid=2)
+
+        # name = 'imagedata{:03d}'.format(i)
+        # plotdata.set_data(name, ones(wh))
+
+        imgplot = g.new_plot(padding=10)
+        imgplot.x_axis.visible = False
+        imgplot.y_axis.visible = False
+        imgplot.x_grid.visible = False
+        imgplot.y_grid.visible = False
+
+        frm = self.laser_manager.stage_manager.video.get_cached_frame()
+        imgplot.data.set_data('imagedata', zeros_like(frm))
+        imgplot.img_plot('imagedata', colormap=hot)
+
+        g.set_x_limits(-r, r)
+        g.set_y_limits(-r, r)
+
+        total_duration = pattern.total_duration
+        g.set_y_limits(min_=-0.1, max_=1.1, plotid=1)
+        g.set_x_limits(max_=total_duration * 1.1, plotid=1)
+
+        g.set_x_limits(max_=total_duration * 1.1, plotid=2)
+        g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
+        return imgplot, cp
+
+    def _execute_seek(self, controller, pattern):
+        from pychron.core.ui.gui import invoke_in_main_thread
+        # from pychron.graph.graph import Graph
+        duration = pattern.duration
+        total_duration = pattern.total_duration
+
+        imgplot, cp = self._setup_seek_graph(pattern)
 
         lm = self.laser_manager
         sm = lm.stage_manager
+        ld = sm.lumen_detector
+
+        ld.mask_kind = pattern.mask_kind
+        ld.custom_mask = pattern.custom_mask_radius
+
+        osdp = sm.canvas.show_desired_position
+        sm.canvas.show_desired_position = False
 
         st = time.time()
+        self.debug('Pre seek delay {}'.format(pattern.pre_seek_delay))
+        time.sleep(pattern.pre_seek_delay)
 
-        def update_graph(zs, zz, xx, yy):
-            cp.point = (xx, yy)
-            g.add_datum((xx, yy), plotid=0)
-            t = time.time() - st
-            g.add_datum((t, zz),
-                        update_y_limits=True,
-                        plotid=1)
+        self.debug('starting seek')
+        self.debug('total duration {}'.format(total_duration))
+        self.debug('dwell duration {}'.format(duration))
 
-            g.add_datum((t,) * len(zs), zs,
-                        update_y_limits=True,
-                        plotid=1, series=1)
-            g.set_x_limits(max_=max(om, t + 10), plotid=1)
-            g.redraw()
+        if pattern.kind == 'DragonFly':
+            self._dragonfly(st, controller, pattern, imgplot, cp)
+        else:
+            self._hill_climber(st, controller, pattern, imgplot, cp)
 
-        pp = os.path.join(paths.data_dir, 'seek_pattern.txt')
-        with open(pp, 'w') as wfile:
-            cx, cy = pattern.cx, pattern.cy
-            wfile.write('{},{}\n'.format(cx, cy))
-            wfile.write('#z,     x,     y,     n\n')
-            gen = pattern.point_generator()
-            for x, y in gen:
-                if not self._alive:
+        sm.canvas.show_desired_position = osdp
+        invoke_in_main_thread(self._info.dispose)
+
+    def _dragonfly(self, st, controller, pattern, imgplot, cp):
+        dragonfly(st, pattern, self.laser_manager, controller, imgplot, cp)
+
+    def _hill_climber(self, st, controller, pattern, imgplot, cp):
+        g = self._seek_graph
+        lines = []
+        cx, cy = pattern.cx, pattern.cy
+        prev_xy = None
+        prev_xy2 = None
+
+        sm = self.laser_manager.stage_manager
+        linear_move = controller.linear_move
+        get_scores = sm.get_scores
+        moving = sm.moving
+        update_axes = sm.update_axes
+        set_data = imgplot.data.set_data
+
+        sat_threshold = pattern.saturation_threshold
+        total_duration = pattern.total_duration
+        duration = pattern.duration
+
+        for i, (x, y) in enumerate(pattern.point_generator()):
+
+            ax, ay = cx + x, cy + y
+            if not self._alive:
+                break
+
+            if time.time() - st > total_duration:
+                break
+
+            use_update_point = True
+            if avg_sat_score < sat_threshold:
+                use_update_point = True
+                try:
+                    linear_move(ax, ay, block=False, velocity=pattern.velocity,
+                                update=False,
+                                immediate=True)
+                except PositionError:
                     break
+            else:
+                self.debug('Saturation target reached. not moving')
 
-                with PeriodCTX(1):
-                    # x, y = gen.next()
-                    # x, y = pattern.next_point
-                    controller.linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity)
+            density_scores = []
+            ts = []
+            saturation_scores = []
+            positions = []
 
-                    mt = time.time()
-                    zs = []
-                    while sm.moving():
-                        _, _, v = sm.get_brightness()
-                        zs.append(v)
+            def measure_scores(update=False):
+                if update:
+                    update_axes()
 
-                    while 1:
-                        if time.time() - mt > duration:
-                            break
-                        _, _, v = sm.get_brightness()
-                        zs.append(v)
+                positions.append((controller.x, controller.y))
+                score_density, score_saturation, img = get_scores()
 
-                    if zs:
-                        n = len(zs)
-                        z = sum(zs) / float(n)
-                        self.debug('XY:({},{}) Z:{}, N:{}'.format(x, y, z, n))
-                        pattern.set_point(z, x, y)
+                density_scores.append(score_density)
+                saturation_scores.append(score_saturation)
 
-                        wfile.write('{:0.5f},{:0.3f},{:0.3f},{}\n'.format(z, x, y, n))
+                set_data('imagedata', img)
+                ts.append(time.time() - st)
+                time.sleep(0.1)
 
-                        invoke_in_main_thread(update_graph, zs, z, x, y)
-        g.close_ui()
-        # if len(triangle) < 3:
-        #     z = lm.get_brightness()
-        #     triangle.append((z, x, y))
-        # else:
-        #     nx,ny = triangulator(triangle)
+            while moving(force_query=True):
+                measure_scores(update=True)
 
+            mt = time.time()
+            while time.time() - mt < duration:
+                measure_scores()
 
-        # def _execute_seek(self, controller, pattern):
-        #
-        #     # =======================================================================
-        #     # monitor input
-        #     # =======================================================================
-        #     def _monitor_input(pevt, fevt, threshold=1, deadband=0.5, period=0.25):
-        #         """
-        #             periodically get input value
-        #             if input value greater than threshold set pause event
-        #             if input value last than threshold-deadband and was paused, clear paused flag
-        #         """
-        #         get_value = lambda: 1
-        #         flag = False
-        #         while not fevt.is_set() and self.isPatterning():
-        #             v = get_value()
-        #             if v > threshold:
-        #                 pevt.set()
-        #                 flag = True
-        #             elif flag and v < (threshold - deadband):
-        #                 pevt.clear()
-        #                 flag = False
-        #             time.sleep(period)
-        #
-        #     # =======================================================================
-        #     # control motion
-        #     # =======================================================================
-        #     """
-        #         if paused and not already stopped, stop motion
-        #         if not paused not but was paused move to newt_point
-        #     """
-        #
-        #     def _control_motion(self, pevt, fevt, q):
-        #         flag = False
-        #         while not fevt.is_set() and self.isPatterning():
-        #             if pevt.is_set():
-        #                 if not flag:
-        #                     flag = True
-        #                     controller.stop()
-        #                 time.sleep(0.1)
-        #
-        #             else:
-        #                 if flag:
-        #                     try:
-        #                         np = q.get_nowait()
-        #                         controller.linear_move(*np, block=False,
-        #                                                velocity=pattern.velocity)
-        #                     except Empty:
-        #                         self.debug('No next point avaliable')
-        #                     flag = False
-        #
-        #                 time.sleep(0.1)
-        #
-        #     finished = Event()
-        #     paused = Event()
-        #     q = Queue()
-        #     mt = Thread(target=_monitor_input,
-        #                 args=(paused, finished),
-        #                 name='seek.monitor_input')
-        #
-        #     ct = Thread(target=_control_motion,
-        #                 args=(paused, finished, q),
-        #                 name='seek.monitor_input')
-        #     mt.start()
-        #     ct.start()
-        #
-        #     duration = 10
-        #     st = time.time()
-        #     while 1:
-        #
-        #         if time.time() - st > duration:
-        #             break
-        #
-        #         x, y = pattern.next_point()
-        #         # pts = pattern.points_factory()
-        #         # for x, y in pts:
-        #         #     if not self.isPatterning():
-        #         #         break
-        #
-        #         q.put((x, y))
-        #         controller.linear_move(x, y, block=True,
-        #                                velocity=pattern.velocity)
-        #
-        #     finished.set()
+            if density_scores:
+                n = len(density_scores)
+
+                density_scores = array(density_scores)
+                saturation_scores = array(saturation_scores)
+
+                weights = [1 / ((xi - ax) ** 2 + (yi - ay) ** 2) for xi, yi in positions]
+
+                avg_score = average(density_scores, weights=weights)
+                avg_sat_score = average(saturation_scores, weights=weights)
+
+                if prev_xy:
+                    weights = [1 / ((xi - prev_xy[0]) ** 2 + (yi - prev_xy[1]) ** 2) for xi, yi in positions]
+                    avg_score_prev = average(density_scores, weights=weights)
+                    if prev_xy2:
+                        weights = [1 / ((xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2) for xi, yi in positions]
+                        avg_score_prev2 = average(density_scores, weights=weights)
+
+                score = avg_score
+                m, b = polyfit(ts, density_scores, 1)
+                if m > 0:
+                    score *= (1 + m)
+
+                if use_update_point:
+                    pattern.update_point(score, x, y)
+                else:
+                    pattern.set_point(score, x, y)
+                    if prev_xy:
+                        pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
+                        if prev_xy2:
+                            pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
+
+                lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
+                self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
+                self.debug('Density. AVG:{:0.2f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
+                self.debug('Modified Density Score: {}'.format(score))
+                self.debug('Saturation. AVG:{:0.2f}'.format(avg_sat_score))
+
+                cp.add_point((x, y))
+
+                g.add_datum((x, y), plotid=0)
+                t = time.time() - st
+                g.add_datum((t, avg_score), plotid=1)
+
+                g.add_bulk_data(ts, density_scores, plotid=1, series=1)
+
+                g.add_datum((t, score),
+                            ypadding='0.1',
+                            ymin_anchor=-0.1,
+                            update_y_limits=True, plotid=2)
+
+            update_axes()
+            if prev_xy:
+                prev_xy2 = prev_xy
+            prev_xy = (ax, ay)
+
+            # invoke_in_main_thread(g.redraw, force=False)
+            # invoke_in_main_thread(update_graph, ts, zs, z, x, y)
 
 # ============= EOF =============================================

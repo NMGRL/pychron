@@ -18,12 +18,16 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+def camel_case(name, delimiters=None):
+    if delimiters is None:
+        delimiters = ('_', '/', ' ')
 
-# ============= EOF =============================================
+    name = '{}{}'.format(name[0].upper(), name[1:])
+    for d in delimiters:
+        if d in name:
+            name = ''.join(a.title() for a in name.split(d))
 
-def camel_case(name):
-    args = name.split('_')
-    return ''.join(map(str.capitalize, args))
+    return name
 
 
 def to_list(a, delimiter=',', mapping=None):
@@ -49,13 +53,15 @@ def to_bool(a):
     elif isinstance(a, (int, float)):
         return bool(a)
 
-    tks = ['true', 't', 'yes', 'y', '1', 'ok']
-    fks = ['false', 'f', 'no', 'n', '0']
+    tks = ['true', 't', 'yes', 'y', '1', 'ok', 'open']
+    fks = ['false', 'f', 'no', 'n', '0', 'closed']
 
-    if a is not None:
-        a = str(a).strip().lower()
+    # if a is not None:
+    #     a = str(a).strip().lower()
 
+    a = str(a).strip().lower()
     if a in tks:
         return True
     elif a in fks:
         return False
+# ============= EOF =============================================

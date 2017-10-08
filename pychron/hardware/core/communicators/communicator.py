@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import time
-from threading import Lock
+from threading import Lock, RLock
 # ============= local library imports  ==========================
-from pychron.config_loadable import ConfigLoadable
+from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
 def prep_str(s):
@@ -56,7 +56,7 @@ def process_response(re, replace=None, remove_eol=True):
     return re
 
 
-class Communicator(ConfigLoadable):
+class Communicator(HeadlessConfigLoadable):
     """
     Base class for all communicators, e.g. SerialCommunicator, EthernetCommunicator
     """
@@ -72,10 +72,17 @@ class Communicator(ConfigLoadable):
         """
         """
         super(Communicator, self).__init__(*args, **kw)
-        self._lock = Lock()
+        self._lock = RLock()
 
     def load(self, config, path):
         self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           default=chr(13),
+                           optional=True)
+
+        if self.write_terminator == 'chr(10)':
+            self.write_terminator = chr(10)
+
         return True
 
     def close(self):
@@ -136,4 +143,7 @@ class Communicator(ConfigLoadable):
 
         self.info(msg)
 
+    @property
+    def lock(self):
+        return self._lock
 # ============= EOF ====================================

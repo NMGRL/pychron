@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide import QtGui, QtCore
-from PySide.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
-from traits.api import Str, Bool, Event
+from pyface.qt import QtGui, QtCore
+from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
+from traits.api import Str, Bool, Event, List
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.constants import OKColor, ErrorColor
 from traitsui.qt4.enum_editor import SimpleEditor
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
+from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
 
 
@@ -61,6 +61,7 @@ class ComboBoxWidget(QWidget):
 class _ComboboxEditor(SimpleEditor):
     # _no_enum_update = 0
     refresh = Event
+    _onames = List
 
     def init(self, parent):
         super(_ComboboxEditor, self).init(parent)
@@ -68,6 +69,9 @@ class _ComboboxEditor(SimpleEditor):
         self.control = control = self.create_combo_box()
         if self.factory.addable:
             control = control.combo
+
+        if self.factory.use_filter:
+            self._onames = self.names
 
         control.addItems(self.names)
 
@@ -132,10 +136,27 @@ class _ComboboxEditor(SimpleEditor):
 
             self._no_enum_update += 1
             try:
+
                 self.value = value
                 self._set_background(OKColor)
                 if self.factory.addable:
                     self.control.button.setEnabled(True)
+
+                if self.factory.use_filter:
+                    vv = self._value()
+
+                    if value and value not in vv:
+                        names = fuzzyfinder(value, vv)
+                    else:
+                        names = self.names
+
+                    self.control.clear()
+                    self.control.addItems(names)
+                    try:
+                        self.control.setEditText(self.str_value)
+                    except:
+                        self.control.setEditText('')
+
             except TraitError, excp:
                 if self.factory.addable:
                     self.control.button.setEnabled(False)
@@ -172,8 +193,6 @@ class ComboboxEditor(BasicEditorFactory):
     use_strict_values = Bool(False)
     addable = Bool(False)
     refresh = Str
+    use_filter = Bool(True)
 
 # ============= EOF =============================================
-
-
-

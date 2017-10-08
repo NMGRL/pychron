@@ -15,26 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import re
+
+from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
 from traitsui.api import View, VGroup, UItem, HGroup, Item
-from apptools.preferences.api import PreferencesHelper
-# ============= standard library imports ========================
-import re
-# ============= local library imports  ==========================
 from traitsui.list_str_adapter import ListStrAdapter
 
-
-# def button_editor(trait, name, editor_kw=None, **kw):
-# if editor_kw is None:
-#        editor_kw = {}
-#
-#    image = ImageResource(name=name,
-#                          search_path=paths.icon_search_path)
-#    return UItem(trait,
-#                 style='custom',
-#                 editor=ButtonEditor(image=image, **editor_kw),
-#                 **kw)
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -49,18 +37,25 @@ class FavoritesAdapter(ListStrAdapter):
 
 
 class BasePreferencesHelper(PreferencesHelper):
-    def _get_value(self, name, value):
-        if 'color' in name:
-            try:
-                value = value.split('(')[1]
-                value = value[:-1]
-                value = map(float, value.split(','))
-                value = ','.join(map(lambda x: str(int(x * 255)), value))
-            except IndexError:
-                value = super(BasePreferencesHelper, self)._get_value(name, value)
-        else:
-            value = super(BasePreferencesHelper, self)._get_value(name, value)
-        return value
+    pass
+    # def _get_value(self, name, value):
+    #     if 'color' in name:
+    #         print name, value, type(value)
+    #
+    #         pass
+    #         # print name, value, type(value)
+    #         # value = extract_color(value)
+    #         # try:
+    #         #     value = extract_color
+    #         #     # value = value.split('(')[1]
+    #         #     # value = value[:-1]
+    #         #     # value = map(float, value.split(','))
+    #         #     # value = ','.join(map(lambda x: str(int(x * 255)), value))
+    #         # except IndexError:
+    #         #     value = super(BasePreferencesHelper, self)._get_value(name, value)
+    #     else:
+    #         value = super(BasePreferencesHelper, self)._get_value(name, value)
+    #     return value
 
 
 REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
@@ -96,7 +91,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
 
         if self.remote.strip():
             try:
-                cmd = 'https://github.com/{}'.format(self.remote)
+                cmd = 'https://github.com/{}.git'.format(self.remote)
                 urllib2.urlopen(cmd)
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
@@ -207,5 +202,4 @@ class BaseConsolePreferencesPane(PreferencesPane):
                         show_border=True,
                         label=self.label))
         return v
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

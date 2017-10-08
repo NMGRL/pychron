@@ -15,27 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import time
+from itertools import groupby
+
+from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
-from traitsui.api import View, Item
-from pyface.timer.do_later import do_later
-# ============= standard library imports ========================
-import time
-from itertools import groupby
-import os
-# ============= local library imports  ==========================
+from traitsui.api import View, Item, UItem
+
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.helpers.filetools import replace_extension
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
+from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.queue.select_attr_view import SelectAttrView
-from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-# from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class RepeatRunBlockView(HasTraits):
@@ -66,6 +66,8 @@ class ExperimentQueue(BaseExperimentQueue):
     executed_selected = Any
     dclicked = Any
     database_identifier = Long
+    display_executed_runs = Property(depends_on='executed_runs[]')
+    n_executed_display = Int(5)
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
@@ -81,6 +83,7 @@ class ExperimentQueue(BaseExperimentQueue):
 
     refresh_blocks_needed = Event
     _auto_save_time = 0
+    _temp_analysis = None
 
     def auto_save(self):
         if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
@@ -152,6 +155,12 @@ class ExperimentQueue(BaseExperimentQueue):
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
 
+    def copy_selected_first(self):
+        self._copy_selected(0)
+
+    def copy_selected_last(self):
+        self.information_dialog('"Copy to End" Not Implemented')
+
     def jump_to_end(self):
         self.automated_runs_scroll_to_row = len(self.automated_runs) - 1
 
@@ -174,15 +183,23 @@ class ExperimentQueue(BaseExperimentQueue):
         hs = list(attrs)
 
         ev = SelectAttrView(available_attributes=hs)
-        info = ev.edit_traits()
-        if info.result:
-            if ev.attributes:
+        ev.on_trait_change(self._handle_select_attributes, 'attributes')
+        ev.edit_traits()
+        # if info.result:
+            # if ev.attributes:
+            #
+            #     s = self.selected[0]
+            #     def test(v):
+            #         return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
+            #
+            #     self._select_same(test)
+    def _handle_select_attributes(self, attributes):
+        if attributes:
+            s = self.selected[0]
+            def test(v):
+                return all([getattr(v, k) == getattr(s, k) for k in attributes])
 
-                s = self.selected[0]
-                def test(v):
-                    return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
-
-                self._select_same(test)
+            self._select_same(test)
 
     def _select_same(self, test):
         self.selected = [si for si in self.cleaned_automated_runs if test(si)]
@@ -204,6 +221,41 @@ class ExperimentQueue(BaseExperimentQueue):
     def select_run_idx(self, idx):
         if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
+
+    def show_evolutions(self, isotopes=None, **kw):
+        if self.executed_selected:
+            dvc = self.application.get_service(DVC_PROTOCOL)
+            if dvc:
+                spec = self.executed_selected[0]
+
+                analysis = None
+                if self._temp_analysis and spec.uuid == self._temp_analysis[0].uuid:
+                    analysis = self._temp_analysis
+
+                with dvc.session_ctx(use_parent_session=False):
+                    if analysis is None:
+                        analysis = dvc.get_analysis(spec.uuid)
+
+                    if analysis:
+                        for ai in analysis:
+                            ai.show_isotope_evolutions(isotopes=isotopes, **kw)
+
+                self._temp_analysis = analysis
+
+    def show_summary(self):
+        """
+        show a summary view for ``spec`` using its ``result``
+        :return:
+        """
+        if self.executed_selected:
+            from pychron.core.ui.text_editor import myTextEditor
+            v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
+                                                                          fontsize=14)),
+                     title='Summary',
+                     width=900,
+                     kind='livemodal',
+                     resizable=True)
+            open_view(self.executed_selected[0].result, view=v)
 
     def reset(self):
         """
@@ -243,8 +295,10 @@ class ExperimentQueue(BaseExperimentQueue):
 
         self._no_update = True
         if run is not None:
+
             self.automated_runs.remove(run)
             self.executed_runs.append(run)
+
             idx = len(self.executed_runs) - 1
             invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
             # self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
@@ -311,10 +365,18 @@ class ExperimentQueue(BaseExperimentQueue):
         self._set_meta_param('auto_save_detector_ic', meta, bool_default)
         self.debug('$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
 
+    def _get_display_executed_runs(self):
+        return self.executed_runs[-self.n_executed_display:]
+
     def _get_execution_ratio(self):
         ex = len(self.executed_runs)
         tc = len(self.cleaned_automated_runs) + ex
         return '{}/{}'.format(ex, tc)
+
+    def _copy_selected(self, idx):
+        with no_update(self):
+            for si in reversed(self.selected):
+                self.automated_runs.insert(idx, si.tocopy())
 
     def _move_selected(self, idx):
         with no_update(self):

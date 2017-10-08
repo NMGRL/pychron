@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Float, Str, Int, List, String
-from traitsui.api import View, Item, HGroup, spring, Readonly
+from traits.api import HasTraits, Float, Str, Int, List, String
+from traitsui.api import View, HGroup, spring, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt

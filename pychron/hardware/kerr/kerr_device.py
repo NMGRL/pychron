@@ -14,38 +14,38 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # =============enthought library imports=======================
 from traits.api import Any, Str
 
 # =============standard library imports ========================
 import ConfigParser
+import time
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
-import time
+
+
 class KerrDevice(ConfigLoadable):
-    '''
+    """
         Base class for Kerr devices
-    '''
+    """
     parent = Any
     address = Str('01')
 
     def ask(self, cmd, **kw):
-        '''         
-        '''
+        """
+        """
         if self.parent:
             return self.parent.ask(cmd, **kw)
 
     def tell(self, cmd, **kw):
-        '''
-        '''
+        """
+        """
         if self.parent:
             self.parent.tell(cmd, **kw)
 
     def load(self, path):
-        '''
-        '''
+        """
+        """
 
         config = ConfigParser.ConfigParser()
         config.read(path)
@@ -57,18 +57,17 @@ class KerrDevice(ConfigLoadable):
 #        pass
 
     def _execute_hex_commands(self, commands, delay=None, **kw):
-        '''
-        '''
+        """
+        """
         # commands list of tuples (addr,hex-command,delay,description)
         for cmd in commands:
             self._execute_hex_command(cmd, **kw)
             if delay:
                 time.sleep(delay * 0.001)
 
-
     def _execute_hex_command(self, cmd, tell=False, nbytes=2, **kw):
-        '''
-        '''
+        """
+        """
         addr, cmd, delay, desc = cmd
 
         cmd = self._build_command(addr, cmd)
@@ -83,8 +82,8 @@ class KerrDevice(ConfigLoadable):
         return r
 
     def _build_command(self, addr, cmd):
-        '''
-        '''
+        """
+        """
         cmd = '{}{}'.format(addr, cmd)
 
         if self._check_command_len(cmd):
@@ -92,11 +91,11 @@ class KerrDevice(ConfigLoadable):
             return 'AA{}{}'.format(cmd, chsum)
 
     def _check_command_len(self, cmd):
-        '''
+        """
             the high nibble of the command sequence indicates the number of
             data bits to follow
-        
-        '''
+
+        """
         high_nibble = int(cmd[2:3], 16)
         data_bits = cmd[4:]
         cb = high_nibble == len(data_bits) / 2
@@ -105,8 +104,8 @@ class KerrDevice(ConfigLoadable):
         return cb
 
     def _calc_checksum(self, cmd):
-        '''
-        '''
+        """
+        """
         s = 0
         for i in range(0, len(cmd), 2):
             bit = cmd[i:i + 2]
@@ -116,8 +115,8 @@ class KerrDevice(ConfigLoadable):
         return r[-2:]
 
     def _check_bits(self, bits):
-        '''
-        '''
+        """
+        """
         rbits = []
         if isinstance(bits, int):
             for i in range(16):

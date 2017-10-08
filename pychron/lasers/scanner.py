@@ -15,24 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Instance, List, Bool, Event, \
-    Property, Float, Tuple, File, Int
-from traitsui.api import View, Item, UItem, ButtonEditor
+import os
 # ============= standard library imports ========================
 import time
-import os
+
 import yaml
-# ============= local library imports  ==========================
-from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-from pychron.graph.stream_graph import StreamStackedGraph
+from traits.api import Instance, List, Bool, Event, Property, Float, Tuple, File, Int
+from traitsui.api import View, Item, UItem, ButtonEditor, Controller
+
 from pychron.core.helpers.timer import Timer
-from pychron.loggable import Loggable
-from pychron.application_controller import ApplicationController
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.core.ui.thread import Thread
+# ============= local library imports  ==========================
+from pychron.envisage.view_util import open_view
+from pychron.graph.stream_graph import StreamStackedGraph
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.loggable import Loggable
+from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
-class ScannerController(ApplicationController):
+class ScannerController(Controller):
     execute_button = Event
     execute_label = Property(depends_on='model._scanning')
 
@@ -46,7 +47,7 @@ class ScannerController(ApplicationController):
         graph = self.model.make_graph()
         if self.model.execute():
             self.model.do_scan()
-            self.open_view(graph)
+            open_view(graph)
 
     def _get_execute_label(self):
         return 'Stop' if self.model._scanning else 'Start'
@@ -108,7 +109,7 @@ class Scanner(Loggable):
         if name is None:
             name = function.func_name
 
-        #        g = self.graph
+        # g = self.graph
         #        func = self.functions
         #        kw = dict(ytitle=name,)
         #        n = len(func)
@@ -156,8 +157,7 @@ class Scanner(Loggable):
             self._write_metadata()
 
             # make header row
-            header = ['t'] + \
-                     self._make_func_names() + \
+            header = ['t'] + self._make_func_names() + \
                      [n for n, _ in self.static_values]
             self.data_manager.write_to_frame(header)
 
@@ -192,30 +192,30 @@ class Scanner(Loggable):
             # start a control thread
             self._control_thread = Thread(target=self._control,
                                           args=(yd,)
-            )
+                                          )
             self._control_thread.start()
             self.info('control started')
-        #        if self.manager:
-        #            if self.manager.enable_device():
-        #
-        #                # starts automatically
-        #                self.debug('scan starting')
-        #                self._timer = Timer(sp, self._scan)
-        #
-        #                self.info('scan started')
-        #                self._scanning = True
-        #    #            yd = self._read_control_path()
-        #                if yd is not None:
-        #                    # start a control thread
-        #                    self._control_thread = Thread(target=self._control,
-        #                                                  args=(yd,)
-        #                                                  )
-        #                    self._control_thread.start()
-        #                    self.info('control started')
-        #            else:
-        #                self.warning('Could not enable device')
-        #        else:
-        #            self.warning('no manager available')
+            #        if self.manager:
+            #            if self.manager.enable_device():
+            #
+            #                # starts automatically
+            #                self.debug('scan starting')
+            #                self._timer = Timer(sp, self._scan)
+            #
+            #                self.info('scan started')
+            #                self._scanning = True
+            #    #            yd = self._read_control_path()
+            #                if yd is not None:
+            #                    # start a control thread
+            #                    self._control_thread = Thread(target=self._control,
+            #                                                  args=(yd,)
+            #                                                  )
+            #                    self._control_thread.start()
+            #                    self.info('control started')
+            #            else:
+            #                self.warning('Could not enable device')
+            #        else:
+            #            self.warning('no manager available')
 
     def _control(self, ydict):
         self.start_control_hook(ydict)
@@ -231,7 +231,7 @@ class Scanner(Loggable):
         self.set_static_value('Setpoint', 0)
         time.sleep(start_delay)
         for args in setpoints:
-            t=args[0]
+            t = args[0]
             if self._scanning:
                 self.setpoint = t
                 self._set_power_hook(t)
@@ -244,7 +244,7 @@ class Scanner(Loggable):
             self.set_static_value('Setpoint', 0)
             self._set_power_hook(0)
             # if self.manager:
-                # self.manager.set_laser_temperature(0)
+            # self.manager.set_laser_temperature(0)
 
             time.sleep(end_delay)
             self.stop()
@@ -311,6 +311,7 @@ class Scanner(Loggable):
             self.warning_dialog('No Scanner Control file found at {}'.format(self.control_path))
             self._warned = True
 
+
 # ===============================================================================
 # defaults
 # ===============================================================================
@@ -352,7 +353,7 @@ class PIDScanner(Scanner):
                 tc.set_dead_band(self.dead_band)
 
             else:
-                self.debug('no manager temperature controol available')
+                self.debug('no manager temperature control available')
 
         else:
             self.debug('no manager available')

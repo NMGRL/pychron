@@ -17,27 +17,18 @@
 # ============= enthought library imports =======================
 import time
 
-from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
+from Image import Image as PImage
+from chaco.data_range_1d import DataRange1D
+from chaco.default_colormaps import color_map_name_dict
+from kiva.agg.agg import GraphicsContextArray
+from numpy import array
+from traits.api import Float, Any, Bool, Str, Property, List, \
+    Int, \
     Color, String, Either
 from traitsui.api import VGroup, Item, Group
-from chaco.default_colormaps import color_map_name_dict
-from chaco.data_range_1d import DataRange1D
-from kiva.agg.agg import GraphicsContextArray
 
-# ============= standard library imports ========================
-import Image as PImage
-import math
-from numpy import array
-# ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive, Primitive
-from pychron.core.geometry.convex_hull import convex_hull
-
-
-def calc_rotation(x1, y1, x2, y2):
-    rise = y2 - y1
-    run = x2 - x1
-
-    return math.degrees(math.atan2(rise, run))
+from pychron.canvas.canvas2D.scene.primitives.calibration import calc_rotation
 
 
 class Point(QPrimitive):
@@ -51,7 +42,7 @@ class Point(QPrimitive):
         if self.canvas:
             self.canvas.request_redraw()
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         gc.arc(x, y, self.radius, 0, 360)
         gc.fill_path()
@@ -70,7 +61,7 @@ class Rectangle(QPrimitive):
     fill = True
     use_border = True
 
-    def _render_(self, gc):
+    def _render(self, gc):
 
         x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
@@ -149,7 +140,7 @@ class Line(QPrimitive):
             else:
                 self.primitives.append(self.start_point)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         gc.set_line_width(self.width)
         if self.start_point and self.end_point:
             x, y = self.start_point.get_xy()
@@ -190,7 +181,7 @@ class Triangle(QPrimitive):
         super(Triangle, self).__init__(0, 0, **kw)
         self.points = []
 
-    def _render_(self, gc):
+    def _render(self, gc):
         points = self.points
         func = self.canvas.map_screen
         if points:
@@ -231,7 +222,7 @@ class Circle(QPrimitive):
         super(Circle, self).__init__(x, y, *args, **kw)
         self.radius = radius
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         r = self.radius
         if self.space == 'data':
@@ -240,13 +231,15 @@ class Circle(QPrimitive):
         gc.arc(x, y, r, 0, 360)
         gc.stroke_path()
 
+        # print self.fill, self.fill_color
         if self.fill:
             if self.fill_color:
                 gc.set_fill_color(self._convert_color(self.fill_color))
             gc.arc(x, y, r, 0, 360)
             gc.fill_path()
 
-        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety, r / 4., r / 2.)
+        self._render_name(gc, x + self.name_offsetx, y + self.name_offsety,
+                          r / 4., r / 2.)
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -266,7 +259,7 @@ class Span(Line):
     continued_line = False
     fill = None  # (0.78,0.78, 0.78,1)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.start_point.get_xy()
         x1, y1 = self.end_point.get_xy()
         hd = self.map_dimension(self.hole_dim)
@@ -369,9 +362,11 @@ class LoadIndicator(Circle):
         self.primitives.append(lb)
         return lb
 
-    def _render_(self, gc):
+    def _render(self, gc):
         c = (0, 0, 0)
-        if self.fill and self.fill_color and sum(self.fill_color.toTuple()[:3]) < 1.5:
+        color = self.fill_color
+        fc = sum((color.red(), color.green(), color.blue()))
+        if self.fill and self.fill_color and fc < 1.5:
             c = (255, 255, 255)
 
         self.text_color = c
@@ -383,8 +378,8 @@ class LoadIndicator(Circle):
         if self.space == 'data':
             r = self.map_dimension(r)
 
-        self.name_offsetx = r - 2
-        self.name_offsety = r - 2
+        self.name_offsetx = r
+        self.name_offsety = r
 
         if self.state:
             with gc:
@@ -395,7 +390,7 @@ class LoadIndicator(Circle):
 
         nr = r * 0.25
 
-        super(LoadIndicator, self)._render_(gc)
+        super(LoadIndicator, self)._render(gc)
         if self.degas_indicator:
             gc.set_fill_color(self._convert_color(self.degas_color))
             gc.arc(x, y + 2 * nr, nr, 0, 360)
@@ -409,39 +404,6 @@ class LoadIndicator(Circle):
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
             pm.render(gc)
-
-
-class CalibrationObject(HasTraits):
-    tweak_dict = Dict
-    cx = Float
-    cy = Float
-    rx = Float
-    ry = Float
-
-    rotation = Property(depends_on='rx,ry,_rotation')
-    _rotation = Float
-    center = Property(depends_on='cx,cy')
-    scale = Float(1)
-
-    def _set_rotation(self, rot):
-        self._rotation = rot
-
-    def _get_rotation(self):
-        if not (self.rx and self.rx):
-            return self._rotation
-
-        return calc_rotation(self.cx, self.cy, self.rx, self.ry)
-
-    def _get_center(self):
-        return self.cx, self.cy
-
-    def set_right(self, x, y):
-        self.rx = x
-        self.ry = y
-
-    def set_center(self, x, y):
-        self.cx = x
-        self.cy = y
 
 
 class Label(QPrimitive):
@@ -460,7 +422,7 @@ class Label(QPrimitive):
     def _get_text(self):
         return self.text
 
-    def _render_(self, gc):
+    def _render(self, gc):
         ox, oy = self.get_xy()
         loffset = 3
         x, y = ox + loffset, oy + loffset
@@ -507,7 +469,7 @@ class Label(QPrimitive):
 
 
 class ValueLabel(Label):
-    value = Either(Float, Int, Str)
+    value = Either(Int, Float, Str)
 
     def _get_text(self):
         return self.text.format(self.value)
@@ -530,7 +492,7 @@ class Indicator(QPrimitive):
         self.vline = Line(Point(x, y - h, **kw),
                           Point(x, y + h, **kw), **kw)
 
-    def _render_(self, gc, *args, **kw):
+    def _render(self, gc, *args, **kw):
         with gc:
             if self.spot_color:
                 sc = self._convert_color(self.spot_color)
@@ -590,8 +552,8 @@ class PointIndicator(Indicator):
         super(PointIndicator, self).adjust(dx, dy)
         self.label.adjust(dx, dy)
 
-    def _render_(self, gc, *args, **kw):
-        super(PointIndicator, self)._render_(gc)
+    def _render(self, gc, *args, **kw):
+        super(PointIndicator, self)._render(gc)
 
         if not self.use_simple_render:
 
@@ -617,7 +579,7 @@ class PointIndicator(Indicator):
 class Dot(QPrimitive):
     radius = 5
 
-    def _render_(self, gc):
+    def _render(self, gc):
         x, y = self.get_xy()
         gc.arc(x, y, self.radius, 0, 360)
         gc.fill_path()
@@ -651,7 +613,7 @@ class PolyLine(QPrimitive):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         for pi in self.primitives:
             pi.render(gc)
 
@@ -662,7 +624,7 @@ class BorderLine(Line, Bordered):
     clear_vorientation = False
     clear_horientation = False
 
-    def _render_(self, gc):
+    def _render(self, gc):
         gc.save_state()
         with gc:
             gc.set_line_width(self.width + self.border_width)
@@ -676,7 +638,7 @@ class BorderLine(Line, Bordered):
             gc.line_to(x1, y1)
             gc.draw_path()
 
-        super(BorderLine, self)._render_(gc)
+        super(BorderLine, self)._render(gc)
 
 
 class Polygon(QPrimitive):
@@ -715,7 +677,7 @@ class Polygon(QPrimitive):
         self.points.append(pt)
         self.primitives.append(pt)
 
-    def _render_(self, gc):
+    def _render(self, gc):
         with gc:
             self.indicator.render(gc)
 
@@ -736,6 +698,7 @@ class Polygon(QPrimitive):
 
             else:
                 if len(pts) > 2 and self.use_convex_hull:
+                    from pychron.core.geometry.convex_hull import convex_hull
                     pts = convex_hull(pts)
 
                 if pts is not None and len(pts) > 2:
@@ -753,7 +716,7 @@ class Image(QPrimitive):
     _image_cache_valid = False
     scale = None
 
-    def _render_(self, gc):
+    def _render(self, gc):
         if not self._image_cache_valid:
             self._compute_cached_image()
 
@@ -810,7 +773,8 @@ class Animation(object):
             self.cnt -= self.cnt_tol
 
     def refresh_required(self):
-        if not self._last_refresh or time.time() - self._last_refresh > self.tol:
+        if not self._last_refresh or \
+                                time.time() - self._last_refresh > self.tol:
             self._last_refresh = time.time()
             return True
 

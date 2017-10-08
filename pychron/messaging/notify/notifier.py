@@ -15,43 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from _socket import gethostname, gethostbyname
 from threading import Thread, Lock
 
+import zmq
 from traits.api import Int, Dict
 
-# ============= standard library imports ========================
-import zmq
-# ============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.messaging.broadcaster import Broadcaster
 
 
-class Notifier(Loggable):
-    port = Int
-    _sock = None
-    _req_sock = None
-
+class Notifier(Broadcaster):
     _handlers = Dict
-
-    @property
-    def url(self):
-        host = gethostbyname(gethostname())
-        return '{}:{}'.format(host, self.port)
-
-    def __init__(self, *args, **kw):
-        self._lock=Lock()
-        super(Notifier, self).__init__(*args, **kw)
-
-    def _port_changed(self):
-        self.setup(self.port)
+    port = Int
+    _lock = None
 
     def setup(self, port):
         if port:
+            self._lock = Lock()
 
             context = zmq.Context()
-            sock = context.socket(zmq.PUB)
-            sock.bind('tcp://*:{}'.format(port))
-            self._sock = sock
+            self._setup_publish(context, port)
 
             self._req_sock = context.socket(zmq.REP)
             self._req_sock.bind('tcp://*:{}'.format(port + 1))
@@ -62,28 +44,6 @@ class Notifier(Loggable):
 
     def add_request_handler(self, name, func):
         self._handlers[name] = func
-
-    def _handle_request(self):
-        sock = self._req_sock
-
-        poll = zmq.Poller()
-        poll.register(self._req_sock, zmq.POLLIN)
-
-        while sock:
-            socks = dict(poll.poll(1000))
-            with self._lock:
-                try:
-                    if socks.get(sock) == zmq.POLLIN:
-                        resp = sock.recv()
-                        if resp == 'ping':
-                            sock.send('echo')
-                        elif resp in self._handlers:
-                            func = self._handlers[resp]
-                            sock.send(func())
-                except zmq.ZMQBaseError:
-                    pass
-
-        poll.unregister(self._req_sock)
 
     def close(self):
         with self._lock:
@@ -97,11 +57,6 @@ class Notifier(Loggable):
                 self._req_sock.close()
                 self._req_sock = None
 
-    def send_message(self, msg, verbose=True):
-        if verbose:
-            self.info('pushing message - {}'.format(msg))
-        self._send(msg)
-
     def send_notification(self, uuid, tag='RunAdded'):
         msg = '{} {}'.format(tag, uuid)
         self.info('pushing notification - {}'.format(msg))
@@ -112,14 +67,32 @@ class Notifier(Loggable):
         self.info('push console message - {}'.format(msg))
         self._send(msg)
 
-    def _send(self, msg):
-        with self._lock:
-            if self._sock:
+    # private
+    def _port_changed(self):
+        self.setup(self.port)
+
+    def _handle_request(self):
+        sock = self._req_sock
+
+        poll = zmq.Poller()
+        poll.register(self._req_sock, zmq.POLLIN)
+
+        while sock:
+            socks = dict(poll.poll(1000))
+            with self._lock:
                 try:
-                    self._sock.send(msg)
-                except zmq.ZMQBaseError, e:
-                    self.warning('failed sending message: error {}: {}'.format(e, msg))
-            else:
-                self.debug('notifier not setup')
+                    if socks.get(sock) == zmq.POLLIN:
+                        req = sock.recv()
+                        if req == 'ping':
+                            sock.send('echo')
+                        elif req in self._handlers:
+                            func = self._handlers[req]
+                            sock.send(func())
+                except zmq.ZMQBaseError:
+                    pass
+
+        poll.unregister(self._req_sock)
+
+
 
 # ============= EOF =============================================

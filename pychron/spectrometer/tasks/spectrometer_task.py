@@ -15,17 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import Thread
+
 from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
 from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, VSplitter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
-from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor
+from pychron.spectrometer.tasks.editor import PeakCenterEditor, ScanEditor, CoincidenceEditor, ScannerEditor
 from pychron.spectrometer.tasks.spectrometer_actions import StopScanAction
 from pychron.spectrometer.tasks.spectrometer_panes import ControlsPane, \
-    ReadoutPane, IntensitiesPane, RecordControlsPane, ScannerPane
+    ReadoutPane, IntensitiesPane, RecordControlsPane, DACScannerPane, MassScannerPane
 
 
 class SpectrometerTask(EditorTask):
@@ -34,6 +38,54 @@ class SpectrometerTask(EditorTask):
     id = 'pychron.spectrometer'
     _scan_editor = Instance(ScanEditor)
     tool_bars = [SToolBar(StopScanAction(), )]
+
+    def populate_mftable(self):
+        sm = self.scan_manager
+        cfg = sm.setup_populate_mftable()
+        if cfg:
+            def func():
+                refiso = cfg.isotope
+                ion = sm.ion_optics_manager
+                ion.backup_mftable()
+
+                odefl = []
+                dets = cfg.get_detectors()
+                self.debug('setting deflections')
+                for det, defl in dets:
+                    odefl.append((det, sm.spectrometer.get_deflection(det)))
+                    sm.spectrometer.set_deflection(det, defl)
+
+                for di in dets:
+                    ion.setup_peak_center(detector=[di.name], isotope=refiso,
+                                          config_name=cfg.peak_center_config.active_item.name,
+                                          standalone_graph=False,
+                                          new=True,
+                                          show_label=True, use_configuration_dac=False)
+
+                    ion.peak_center.update_others = False
+                    name = 'Pop MFTable {}-{}'.format(di.name, refiso)
+                    invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=ion.peak_center,
+                                                                              name=name))
+
+                    self._on_peak_center_start()
+                    ion.do_peak_center(new_thread=False, save=True, warn=True)
+                    self._on_peak_center_end()
+                    if not ion.peak_center.isAlive():
+                        break
+
+                self.debug('unset deflections')
+                for det, defl in odefl:
+                    sm.spectrometer.set_deflection(det, defl)
+
+                fp = cfg.get_finish_position()
+                self.debug('move to end position={}'.format(fp))
+                if fp:
+                    iso, det = fp
+                    if iso and det:
+                        ion.position(iso, det)
+
+            t = Thread(target=func)
+            t.start()
 
     def stop_scan(self):
         self.debug('stop scan fired')
@@ -58,9 +110,16 @@ class SpectrometerTask(EditorTask):
             man.do_coincidence_scan()
 
     def do_peak_center(self):
-        es = [int(e.name.split(' ')[-1])
-              for e in self.editor_area.editors
-              if isinstance(e, PeakCenterEditor)]
+        # es = [int(e.name.split(' ')[-1])
+        #       for e in self.editor_area.editors
+        #       if isinstance(e, PeakCenterEditor)]
+        es = []
+        for e in self.editor_area.editors:
+            if isinstance(e, PeakCenterEditor):
+                try:
+                    es.append(int(e.name.split(' ')[-1]))
+                except ValueError:
+                    pass
 
         i = max(es) + 1 if es else 1
 
@@ -125,7 +184,8 @@ class SpectrometerTask(EditorTask):
         panes = [
             ControlsPane(model=self.scan_manager),
             RecordControlsPane(model=self.scan_manager),
-            ScannerPane(model=self.scan_manager),
+            MassScannerPane(model=self.scan_manager),
+            DACScannerPane(model=self.scan_manager),
             ReadoutPane(model=self.scan_manager),
             IntensitiesPane(model=self.scan_manager)]
 
@@ -163,16 +223,23 @@ class SpectrometerTask(EditorTask):
         # g = ScanPane(model=self.scan_manager)
         # return g
 
-    @on_trait_change('scan_manager:scanner:new_scanner')
-    def _handle_scan_event(self):
+    @on_trait_change('scan_manager:mass_scanner:new_scanner')
+    def _handle_mass_scan_event(self):
+        self._scan_event(self.scan_manager.mass_scanner)
+
+    @on_trait_change('scan_manager:dac_scanner:new_scanner')
+    def _handle_dac_scan_event(self):
+        self._scan_event(self.scan_manager.dac_scanner)
+
+    def _scan_event(self, scanner):
         sim = self.scan_manager.spectrometer.simulation
         name = 'Magnet Scan (Simulation)' if sim else 'Magnet Scan'
 
         editor = next((e for e in self.editor_area.editors if e.id == 'pychron.scanner'), None)
         if editor is not None:
-            self.scan_manager.scanner.reset()
+            scanner.reset()
         else:
-            editor = ScanEditor(model=self.scan_manager.scanner, name=name, id='pychron.scanner')
+            editor = ScannerEditor(model=scanner, name=name, id='pychron.scanner')
             self._open_editor(editor, activate=False)
             self.split_editors(0, 1, h2=300, orientation='vertical')
 

@@ -15,24 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Str, List, Bool, Int, CInt
+from traits.api import Any, Str, List, Bool, Int, CInt, Instance
 from traitsui.api import View
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.item import Item
+
+from pychron.core.progress import open_progress
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.loggable import Loggable
 from pychron.persistence_loggable import PersistenceMixin
 
 
 def get_maxs(lns):
-    lns = [int(li or 0) for li in lns]
+    def func(li):
+        try:
+            x = int(li)
+        except ValueError:
+            x = 0
+        return x
+
+    lns = map(func, lns)
+
     return map(max, group_runs(lns))
 
 
 def group_runs(li, tolerance=1000):
     out = []
     last = li[0]
+
     for x in li:
         if abs(x - last) > tolerance:
             yield out
@@ -44,6 +53,7 @@ def group_runs(li, tolerance=1000):
 
 class IdentifierGenerator(Loggable, PersistenceMixin):
     db = Any
+    dvc = Instance('pychron.dvc.dvc.DVC')
     # default_j = Float(1e-4)
     # default_j_err = Float(1e-7)
 
@@ -87,20 +97,21 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             self.dump()
             return True
 
-    def preview(self, prog, positions, irradiation, level):
+    def preview(self, positions, irradiation, level):
         self.irradiation_positions = positions
         self.irradiation = irradiation
         self.level = level
         self.is_preview = True
 
-        self.generate_identifiers(prog)
+        self.generate_identifiers()
 
     def generate_identifiers(self, *args, **kw):
-        db = self.db
-        with db.session_ctx(commit=True):
-            self._generate_labnumbers(*args)
+        self._generate_labnumbers(*args)
 
-    def _generate_labnumbers(self, prog, offset=None, level_offset=None):
+        if not self.is_preview:
+            self.dvc.meta_commit('Generate identifiers')
+
+    def _generate_labnumbers(self, offset=None, level_offset=None):
         """
             get last labnumber
 
@@ -118,7 +129,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         mongen, unkgen, n = self._position_generator(offset, level_offset)
 
         if n:
-            prog.max = n - 1
+            prog = open_progress(n)
+            # prog.max = n - 1
             for gen in (mongen, unkgen):
                 for pos, ident in gen:
                     po = pos.position
@@ -127,6 +139,9 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                         self._set_position_identifier(pos, ident)
                     else:
                         pos.identifier = ident
+                        self.dvc.set_identifier(pos.level.irradiation.name,
+                                                pos.level.name,
+                                                pos.position, ident)
 
                     # self._add_default_flux(pos)
                     msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
@@ -138,7 +153,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
     def _set_position_identifier(self, dbpos, ident):
         ipos = self._get_irradiated_position(dbpos)
         if ipos:
-            ipos.labnumber = str(ident)
+            ident = str(ident)
+            ipos.identifier = ident
 
     def _get_irradiated_position(self, dbpos):
         if dbpos.level.name == self.level:
@@ -249,7 +265,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         test = monkey(not is_monitor)
         for level in levels:
             i = 0
-            for position in level.positions:
+            for position in sorted(level.positions, key=lambda x: x.position):
                 if not has_sample(position):
                     continue
 

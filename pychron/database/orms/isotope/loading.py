@@ -16,13 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, DateTime, Boolean
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-# ============= local library imports  ==========================
 from pychron.database.core.base_orm import BaseMixin
 from pychron.database.orms.isotope.util import foreignkey
 from util import Base
@@ -51,6 +50,5 @@ class loading_PositionsTable(Base, BaseMixin):
     position = Column(Integer)
     weight = Column(Float)
     note = Column(BLOB)
-
 
 # ============= EOF =============================================

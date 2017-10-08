@@ -17,10 +17,11 @@
 
 
 # ============= enthought library imports =======================
+from pyface.timer.api import Timer
 from traits.api import Str, Int, Instance, Bool, Property, Event, Button, String
 from traitsui.api import View, Item, Group, HGroup, VGroup, \
     ButtonEditor, Handler
-from pyface.timer.api import Timer
+
 # ============= standard library imports ========================
 import threading
 import datetime

@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 
 from pychron.core.ui import set_qt
 
-
 set_qt()
 
 # ============= standard library imports ========================

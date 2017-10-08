@@ -1,8 +1,8 @@
 
 __author__ = 'ross'
 
-import unittest
 import os
+import unittest
 
 use_logger = False
 
@@ -18,15 +18,28 @@ def suite():
         from pychron.core.helpers.logger_setup import logging_setup
         logging_setup('unittests')
 
-    from pychron.entry.tests.sample_loader import SampleLoaderTestCase
+    from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase1
+    from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
+    from pychron.spectrometer.tests.mftable import MFTableTestCase, DiscreteMFTableTestCase
+    from pychron.data_mapper.tests.usgs_menlo_file_source import USGSMenloFileSourceUnittest
+    from pychron.data_mapper.tests.nmgrl_legacy_source import NMGRLLegacySourceUnittest
+    from pychron.experiment.tests.peak_hop_parse import PeakHopTxtCase
+    from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
+    from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
+    from pychron.core.tests.spell_correct import SpellCorrectTestCase
+    from pychron.core.tests.filtering_tests import FilteringTestCase
+    from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
+    from pychron.experiment.tests.repository_identifier import ExperimentIdentifierTestCase
+
+    from pychron.stage.tests.stage_map import StageMapTestCase, \
+        TransformTestCase
+    # from pychron.entry.tests.sample_loader import SampleLoaderTestCase
     from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
-    from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
+    from pychron.core.helpers.tests.strtools import CamelCaseTestCase
+    # from pychron.processing.tests.analysis_modifier import AnalysisModifierTestCase
     from pychron.experiment.tests.backup import BackupTestCase
     from pychron.core.xml.tests.xml_parser import XMLParserTestCase
-    from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
-    from pychron.entry.tests.irradiation_loader import XLSIrradiationLoaderParseTestCase, \
-        XLSIrradiationLoaderLoadTestCase
-    from pychron.entry.tests.massspec_irrad_export import MassSpecIrradExportTestCase
+    # from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
         FilterOLSRegressionTest, OLSRegressionTest2
     from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
@@ -45,14 +58,33 @@ def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    tests = (SampleLoaderTestCase,
-             AnalysisModifierTestCase,
+    tests = (
+             # data mappers
+             USGSMenloFileSourceUnittest,
+             NMGRLLegacySourceUnittest,
+
+             MFTableTestCase,
+             DiscreteMFTableTestCase,
+             PeakHopTxtCase,
+             PeakHopYamlCase1,
+             PeakHopYamlCase2,
+             CalibrationObjectTestCase,
+             DurationTrackerTestCase,
+             SpellCorrectTestCase,
+             # SimilarTestCase,
+             FilteringTestCase,
+             MultiPeakDetectionTestCase,
+             ExperimentIdentifierTestCase,
+             StageMapTestCase,
+             TransformTestCase,
+             # SampleLoaderTestCase,
+             # AnalysisModifierTestCase,
              BackupTestCase,
-             MassSpecIrradExportTestCase,
+             # MassSpecIrradExportTestCase,
              XMLParserTestCase,
-             XLSIrradiationLoaderLoadTestCase,
-             XLSIrradiationLoaderParseTestCase,
-             XLSAnalysisLoaderTestCase,
+
+             # XLSAnalysisLoaderTestCase,
+
              RatioTestCase,
              InterpolationTestCase,
              DocstrContextTestCase,
@@ -71,7 +103,8 @@ def suite():
              ParseConditionalsTestCase,
              IdentifierTestCase,
              CommentTemplaterTestCase,
-             FloatfmtTestCase)
+             FloatfmtTestCase,
+             CamelCaseTestCase)
 
     for t in tests:
         suite.addTest(loader.loadTestsFromTestCase(t))

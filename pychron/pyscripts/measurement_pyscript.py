@@ -16,18 +16,20 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
 import ast
-import time
 import os
+import time
+from ConfigParser import ConfigParser
+
 import yaml
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.filetools import fileiter
 from pychron.paths import paths
 from pychron.pychron_constants import MEASUREMENT_COLOR
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry, CTXObject
 from pychron.pyscripts.valve_pyscript import ValvePyScript
+from pychron.spectrometer import get_spectrometer_config_path, set_spectrometer_config_name
 
 ESTIMATED_DURATION_FF = 1.0
 
@@ -60,7 +62,6 @@ class MeasurementPyScript(ValvePyScript):
     _series_count = 0
     _baseline_series = None
 
-    _detectors = None
     _fit_series_count = 0
 
     def gosub(self, *args, **kw):
@@ -97,6 +98,10 @@ class MeasurementPyScript(ValvePyScript):
         self._series_count += s
         self._fit_series_count += f
 
+    def reset_series(self):
+        self._series_count = 0
+        self._fit_series_count = 0
+
     # ===============================================================================
     # commands
     # ===============================================================================
@@ -112,7 +117,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def generate_ic_mftable(self, detectors, refiso='Ar40', calc_time=False):
+    def generate_ic_mftable(self, detectors, refiso='Ar40', peak_center_config='', update_existing=True,
+                            calc_time=False):
         """
         Generate an IC MFTable. Use this when doing a Detector Intercalibration.
         peak centers the ``refiso`` on a list of ``detectors``. MFTable saved as ic_mftable
@@ -129,7 +135,8 @@ class MeasurementPyScript(ValvePyScript):
             self._estimated_duration += len(detectors) * 30
             return
 
-        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso):
+        if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config,
+                                        update_existing):
             self.cancel()
 
     @verbose_skip
@@ -194,6 +201,7 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def baselines(self, ncounts=1, mass=None, detector='',
+                  use_dac=False,
                   integration_time=1.04,
                   settling_time=4, calc_time=False):
         """
@@ -205,6 +213,8 @@ class MeasurementPyScript(ValvePyScript):
         :type mass: float
         :param detector: name of detector
         :type detector: str
+        :param use_dac: If True interpret mass as a DAC value instead of amu
+        :type use_dac: bool
         :param integration_time: integration time in seconds
         :type integration_time: float
         :param settling_time: delay between magnet positioning and measurement in seconds
@@ -231,6 +241,7 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero_offset,
                                         mass,
                                         detector,
+                                        use_dac=use_dac,
                                         fit_series=self._fit_series_count,
                                         settling_time=settling_time,
                                         series=series):
@@ -254,7 +265,31 @@ class MeasurementPyScript(ValvePyScript):
 
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
-                hops = [eval(li) for li in fileiter(rfile)]
+                head, ext = os.path.splitext(p)
+                if ext in ('.yaml', '.yml'):
+                    hops = yaml.load(rfile)
+                elif ext in ('.txt',):
+                    def hop_factory(l):
+                        pairs, counts, settle = eval(l)
+
+                        # isos, dets = zip(*(p.split(':') for p in pairs.split(',')))
+                        # items = (p.split(':') for p in pairs.split(','))
+                        items = []
+                        for p in pairs.split(','):
+                            args = p.split(':')
+                            defl = args[2] if len(args) == 3 else None
+                            items.append((args[0], args[1], defl))
+
+                        # n = len(isos)
+                        cc = [{'isotope': i, 'detector': d, 'active': True,
+                               'deflection': de, 'is_baseline': False, 'protect': False} for i, d, de in items]
+
+                        h = {'counts': counts, 'settle': settle,
+                             'cup_configuration': cc,
+                             'positioning': {'detector': cc[0]['detector'], 'isotope': cc[0]['isotope']}}
+                        return h
+
+                    hops = [hop_factory(li) for li in fileiter(rfile)]
                 return hops
 
         else:
@@ -275,7 +310,7 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, mftable='mftable', calc_time=False):
+    def peak_hop(self, ncycles=5, hops=None, mftable=None, calc_time=False):
         """
         Peak hop ion beams. Hops usually defined in a separate file.
         if mftable == 'ic_mftable' use the ic_mftable generated during detector intercalibration.
@@ -290,7 +325,7 @@ class MeasurementPyScript(ValvePyScript):
 
         integration_time = 1.1
 
-        counts = sum([ci * integration_time + s for _h, ci, s in hops]) * ncycles
+        counts = sum([h['counts'] * integration_time + h['settle'] for h in hops]) * ncycles
         if calc_time:
             # counts = sum of counts for each hop
             self._estimated_duration += (counts * ESTIMATED_DURATION_FF)
@@ -311,11 +346,11 @@ class MeasurementPyScript(ValvePyScript):
             # self._series_count += 2
             # self._fit_series_count += 1
 
-    @count_verbose_skip
+    @verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40',
+    def peak_center(self, detector='', isotope='',
                     integration_time=1.04, save=True, calc_time=False,
-                    directions='Increase'):
+                    directions='Increase', config_name='default'):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
 
@@ -333,7 +368,7 @@ class MeasurementPyScript(ValvePyScript):
         self._automated_run_call('py_peak_center', detector=detector,
                                  isotope=isotope, integration_time=integration_time,
                                  directions=directions,
-                                 save=save)
+                                 save=save, config_name=config_name)
 
     @verbose_skip
     @command_register
@@ -457,31 +492,28 @@ class MeasurementPyScript(ValvePyScript):
         peak_center = kw.get('peak_center', False)
 
         if dets:
-            self._detectors = dict()
             self._automated_run_call('py_activate_detectors', list(dets), peak_center=peak_center)
-            for di in list(dets):
-                self._detectors[di] = 0
 
     @verbose_skip
     @command_register
-    def position_magnet(self, pos, detector='AX', dac=False):
+    def position_magnet(self, pos, detector='AX', use_dac=False):
         """
 
         :param pos: location to set magnetic field
         :type pos: str, float
         :param detector: detector to position ``pos``
         :type pos: str
-        :param dac: is the ``pos`` a DAC voltage
-        :type dac: bool
+        :param use_dac: is the ``pos`` a DAC voltage
+        :type use_dac: bool
 
         examples::
 
-            position_magnet(4.54312, dac=True) # detector is not relevant
+            position_magnet(4.54312, use_dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
 
         """
-        self._automated_run_call('py_position_magnet', pos, detector, dac=dac)
+        self._automated_run_call('py_position_magnet', pos, detector, use_dac=use_dac)
 
     @verbose_skip
     @command_register
@@ -748,6 +780,17 @@ class MeasurementPyScript(ValvePyScript):
             if v is not None:
                 func('SetDeflection', '{},{}'.format(dn, v))
 
+    @verbose_skip
+    @command_register
+    def set_spectrometer_configuration(self, name):
+        set_spectrometer_config_name(name)
+        self._automated_run_call('py_send_spectrometer_configuration')
+
+    @verbose_skip
+    @command_register
+    def set_isotope_group(self, name):
+        self._automated_run_call('py_set_isotope_group', name)
+
     @property
     def truncated(self):
         """
@@ -755,7 +798,7 @@ class MeasurementPyScript(ValvePyScript):
 
         :return: bool
         """
-        return self._automated_run_call(lambda: self.automated_run.truncated)
+        return self._automated_run_call(lambda: self.automated_run.truncated) or self.is_truncated()
 
     @property
     def eqtime(self):
@@ -796,7 +839,7 @@ class MeasurementPyScript(ValvePyScript):
         """
         if self.automated_run:
             return self.automated_run.spec.use_cdd_warming
-        # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
+            # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
     # private
     def _get_deflection_from_file(self, name):
@@ -821,7 +864,11 @@ class MeasurementPyScript(ValvePyScript):
 
     def _get_config(self):
         config = ConfigParser()
-        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        try:
+            p = get_spectrometer_config_path()
+        except IOError:
+            p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+
         config.read(p)
 
         return config
@@ -867,10 +914,8 @@ class MeasurementPyScript(ValvePyScript):
         self._series_count = 0
         self._fit_series_count = 0
         self._time_zero = None
-        self._detectors = None
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
-
 
 # ============= EOF =============================================

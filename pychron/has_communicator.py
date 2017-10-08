@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# from traits.api import HasTraits
-# from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -72,4 +70,14 @@ class HasCommunicator(object):
             self.communicator = communicator
             return True
 
+    @property
+    def simulation(self):
+        sim = True
+        if self.communicator:
+            sim = self.communicator.simulation
+        return sim
+
+    def ask(self, *args, **kw):
+        if self.communicator:
+            return self.communicator.ask(*args, **kw)
 # ============= EOF =============================================

@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Property
-from traitsui.api import View, UItem, ListEditor, InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.wait.wait_control import WaitControl

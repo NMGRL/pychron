@@ -27,4 +27,3 @@ MOLECULAR_WEIGHTS = dict(Ar40=39.9624,
                          Ar41=40.962,
                          Ar33=33.5,
                          )
-

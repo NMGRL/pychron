@@ -15,14 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, VGroup, \
-    HGroup, spring, UItem, ButtonEditor, Group
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from traitsui.api import View, Item, VGroup, \
+    HGroup, spring, UItem, ButtonEditor, Group, EnumEditor
 
+from pychron.core.ui.led_editor import LEDEditor
+from pychron.core.ui.qt.reference_mark_editor import ReferenceMarkEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, AxesPane, SupplementalPane
-from pychron.core.ui.led_editor import LEDEditor
-
 
 
 # ============= standard library imports ========================
@@ -37,6 +38,19 @@ class FusionsUVPane(BaseLaserPane):
 
 class FusionsUVStagePane(StageControlPane):
     id = 'pychron.fusions.uv.stage'
+
+    def _get_tabs(self):
+        tabs = super(FusionsUVStagePane, self)._get_tabs()
+        refmark_grp = VGroup(
+            HGroup(UItem('object.reference_marks.mark', editor=EnumEditor(name='object.reference_marks.mark_ids')),
+                   icon_button_editor('add_reference_mark_button', 'add')),
+            Item('object.reference_marks.mark_display', editor=ReferenceMarkEditor()),
+            UItem('reset_reference_marks_button'),
+            Item('object.reference_marks.spacing'),
+            Item('save_reference_marks_canvas_button'),
+            label='Ref. Marks')
+        tabs.content.append(refmark_grp)
+        return tabs
 
 
 class FusionsUVAxesPane(AxesPane):
@@ -72,10 +86,10 @@ class FusionsUVControlPane(TraitsDockPane):
                 Item('action_readback', width=100, style='readonly', label='Action'),
                 Item('status_readback', style='readonly', label='Status')),
             HGroup(button_editor('fire_button', 'fire_label'),
-                   Item('mode', show_label=False),
+                   Item('fire_mode', show_label=False),
                    enabled_when='object.enabled and object.status_readback=="Laser On"'),
             HGroup(
-                Item('burst_shot', label='N Burst', enabled_when='mode=="Burst"'),
+                Item('burst_shot', label='N Burst', enabled_when='fire_mode=="Burst"'),
                 Item('reprate', label='Rep. Rate')),
             HGroup(
                 Item('burst_readback', label='Burst Rem.', width=50, style='readonly'),

@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+# ============= standard library imports ========================
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Table, TableStyle
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 from pychron.core.pdf.items import FooterRow, FootNoteRow, Row
 from pychron.core.pdf.options import PDFTableOptions
@@ -80,6 +79,7 @@ class BasePDFTableWriter(BasePDFWriter):
             for s, e in ri.spans:
                 style.add('SPAN', (s, idx), (e, idx))
 
+        style.add('NOSPLIT', (0, -2), (-1, -1))
         # render rows
         rows = [di.render() if hasattr(di, 'render') else di
                 for di in data]
@@ -138,6 +138,4 @@ class BasePDFTableWriter(BasePDFWriter):
 
             t._argW = cs
 
-
 # ============= EOF =============================================
-

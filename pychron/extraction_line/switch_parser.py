@@ -38,8 +38,9 @@ class SwitchParser(XMLParser):
     def get_groups(self, element=True):
         tree = self.get_root()
         #        tree = self._tree
-        return [tree]+[g if element else g.text.strip()
-                for g in tree.findall('group')]
+        # return [tree]+[g if element else g.text.strip()
+        #         for g in tree.findall('group')]
+        return [g if element else g.text.strip() for g in tree.findall('group')]
 
     def get_manual_valves(self, **kw):
         return self._get_items('manual_valve', **kw)

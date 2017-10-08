@@ -18,11 +18,10 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
-
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
     as FigureCanvas
+from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
 
 # noinspection PyUnresolvedReferences
 from mpl_toolkits.mplot3d import Axes3D

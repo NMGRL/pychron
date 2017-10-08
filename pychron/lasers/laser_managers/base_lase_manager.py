@@ -17,14 +17,14 @@
 # ============= enthought library imports =======================
 import os
 import time
+
 from traits.api import Instance, Event, Bool, Any, Property, Str, Float, provides
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
+from pychron.core.helpers.filetools import list_directory
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.meter_calibration import MeterCalibration
-from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.core.helpers.filetools import list_directory
+from pychron.managers.manager import Manager
 from pychron.paths import paths
 
 
@@ -43,7 +43,7 @@ class BaseLaserManager(Manager):
     stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
 
     requested_power = Any
-    status_text = Str
+    status_text = Property(depends_on='_requested_power, enabled')
     pulse = Any
     laser_controller = Any
     mode = 'normal'
@@ -62,7 +62,7 @@ class BaseLaserManager(Manager):
         if self.mode == 'client':
             return self._test_connection()
         else:
-            return True
+            return True, None
 
     def initialize_video(self):
         if self.use_video:
@@ -105,12 +105,6 @@ class BaseLaserManager(Manager):
     def get_motor(self, name):
         pass
 
-    def get_response_blob(self):
-        return ''
-
-    def get_output_blob(self):
-        return ''
-
     def enable_device(self, **kw):
         return self.enable_laser(**kw)
 
@@ -118,6 +112,9 @@ class BaseLaserManager(Manager):
         self.disable_laser()
 
     def enable_laser(self, **kw):
+        pass
+
+    def set_laser_power(self, *args, **kw):
         pass
 
     def disable_laser(self):
@@ -129,28 +126,36 @@ class BaseLaserManager(Manager):
         patterns = list_directory(p, extension)
         return ['', ] + patterns
 
-#     def new_pattern_maker(self):
-#         pm = PatternMakerView()
-#         self.open_view(pm)
-#
-#     def open_pattern_maker(self):
-#         pm = PatternMakerView(
-#                               executor=self.pattern_executor
-#                               )
-#         if pm.load_pattern():
-#             self.open_view(pm)
+    #     def new_pattern_maker(self):
+    #         pm = PatternMakerView()
+    #         self.open_view(pm)
+    #
+    #     def open_pattern_maker(self):
+    #         pm = PatternMakerView(
+    #                               executor=self.pattern_executor
+    #                               )
+    #         if pm.load_pattern():
+    #             self.open_view(pm)
 
-    def execute_pattern(self, name=None, block=False):
+    def execute_pattern(self, name=None, block=False, lase=False):
         if not self.stage_manager.temp_hole:
             self.information_dialog('Need to specify a hole')
             return
 
         pm = self.pattern_executor
+        self.debug('execute pattern {}, block={}, lase={}'.format(name, block, lase))
         if pm.load_pattern(name):
             pm.set_stage_values(self.stage_manager)
+
+            if lase:
+                pm.pattern.disable_at_end = True
+                if not self.enable_laser():
+                    return
+                self.set_laser_power(self.pulse.power, verbose=True)
+
             pm.execute(block)
 
-    def get_brightness(self):
+    def get_brightness(self, **kw):
         return 0
 
     def stop_pattern(self):
@@ -180,6 +185,21 @@ class BaseLaserManager(Manager):
         pass
 
     def get_achieved_output(self):
+        pass
+
+    def get_response_blob(self):
+        pass
+
+    def get_output_blob(self):
+        pass
+
+    def set_response_recorder_period(self, v):
+        pass
+
+    def start_response_recorder(self):
+        pass
+
+    def stop_response_recorder(self):
         pass
 
     def calculate_calibrated_power(self, request, calibration='watts', verbose=True):
@@ -279,6 +299,15 @@ class BaseLaserManager(Manager):
     # ===============================================================================
     # getter/setters
     # ===============================================================================
+    def _get_status_text(self):
+        s = 'Laser OFF'
+        if self.enabled:
+            s = 'Laser Enabled'
+            if self._requested_power:
+                s = 'Laser ON {}({})'.format(self._requested_power, self.units)
+
+        return s
+
     def _get_enable_label(self):
         """
         """
@@ -319,7 +348,7 @@ class BaseLaserManager(Manager):
             sm.stage_controller.parent = sm
             if self.plugin_id:
                 sm.bind_preferences(self.plugin_id)
-#             sm.visualizer = self.stage_manager.visualizer
+            #             sm.visualizer = self.stage_manager.visualizer
 
             sm.load()
 
@@ -356,4 +385,5 @@ class BaseLaserManager(Manager):
                              controller=controller,
                              laser_manager=self)
         return pm
+
 # ============= EOF =============================================

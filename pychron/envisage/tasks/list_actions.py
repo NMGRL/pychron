@@ -15,15 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import Str
-# ============= standard library imports ========================
 import os
+import time
+from Queue import Queue, Empty
+from threading import Thread
 
-# ============= local library imports  ==========================
+import yaml
+from pyface.tasks.action.task_action import TaskAction
+from traits.api import Str, Bool
 from traitsui.menu import Action
+
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.paths import paths
 
 
 class ShowMotionConfigureAction(TaskAction):
@@ -38,23 +44,140 @@ class ListAction(Action):
 class PatternAction(ListAction):
     pattern_path = Str
     manager_name = Str
+    lase = Bool(False)
 
     def perform(self, event):
         app = event.task.application
         man = app.get_service(ILaserManager, 'name=="{}"'.format(self.manager_name))
-        man.execute_pattern(self.pattern_path)
+        man.execute_pattern(self.pattern_path, lase=self.lase)
+
+
+from traits.api import HasTraits, Int
+from traitsui.api import View, Item
+
+
+class HopConfig(HasTraits):
+    ncycles = Int(1)
+
+    def traits_view(self):
+        v = View(Item('ncycles', label='Cycles'),
+                 buttons=['OK', 'Cancel'],
+                 title='Configure Magnet Hops')
+        return v
+
+
+class HopsAction(ListAction):
+    hop_name = Str
+    _alive = False
+
+    def perform(self, event):
+
+        hc = HopConfig()
+        info = hc.edit_traits(kind='livemodal')
+        if not info.result:
+            return
+
+        p = os.path.join(paths.hops_dir, add_extension(self.hop_name, ext='.yaml'))
+        with open(p, 'r') as rfile:
+            hops = yaml.load(rfile)
+
+        prog = self._open_prog(hc.ncycles, hops)
+
+        msg_queue = Queue()
+        app = event.task.application
+
+        self._alive = True
+        producer = Thread(target=self._perform, args=(app, hc.ncycles, hops, msg_queue))
+        producer.setDaemon(True)
+        producer.start()
+
+        consumer = Thread(target=self._consumer, args=(prog, msg_queue))
+        consumer.setDaemon(True)
+        consumer.start()
+
+    def _open_prog(self, ncycle, hops):
+        from pychron.core.progress import open_progress
+
+        t = 0
+        nhops = len(hops)
+        for hop in hops:
+            hop = parse_hop(hop)
+            settle = hop['settle']
+            t += settle
+
+        return open_progress(int(t * ncycle + ncycle + nhops))
+
+    def _consumer(self, prog, mq):
+        while self._alive:
+            if prog.canceled:
+                self._alive = False
+                break
+
+            try:
+                msg = mq.get(timeout=0.1)
+                invoke_in_main_thread(prog.change_message, msg)
+            except Empty:
+                pass
+        prog.close()
+
+    def _perform(self, app, ncycles, hops, msg_queue):
+        ion = app.get_service('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
+        spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        for cycle in xrange(ncycles):
+            for hop in hops:
+                if not self._alive:
+                    break
+
+                hop = parse_hop(hop)
+                dets = hop['detectors']
+                defls = hop['deflections']
+                settle = hop['settle']
+                pdets = hop['protect_detectors']
+
+                use_dac = False
+                positioning = hop['positioning']
+                if 'dac' in positioning:
+                    use_dac = True
+                    pos = positioning['dac']
+                    detector = ''
+                else:
+                    detector = positioning['detector']
+                    pos = positioning['isotope']
+
+                zd = zip(dets, defls)
+
+                # set deflections
+                deflect = len([d for d in defls if d is not None])
+                if deflect:
+                    for det, defl in zd:
+                        spec.set_deflection(det, defl)
+
+                for pd in pdets:
+                    spec.protect_detector(pd, True)
+
+                msg_queue.put('Position {} {}'.format(pos, detector))
+                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False)
+
+                for pd in pdets:
+                    spec.protect_detector(pd, False)
+
+                for i in xrange(settle):
+                    msg_queue.put('Position {} {}. Settle {}'.format(pos, detector, settle - i))
+                    time.sleep(1)
+
+        self._alive = False
 
 
 class ProcedureAction(ListAction):
     script_path = Str
 
-    def __init__(self, *args, **kw):
-        super(ProcedureAction, self).__init__(*args, **kw)
-
-        ex = self.application.get_plugin('pychron.experiment.plugin')
-        if ex:
-            ex = ex.experimentor.executor
-            ex.on_trait_change(self._update_alive, 'alive')
+    # def __init__(self, *args, **kw):
+    #     super(ProcedureAction, self).__init__(*args, **kw)
+    #
+    #     ex = self.application.get_plugin('pychron.experiment.plugin')
+    #     if ex:
+    #         ex = ex.experimentor.executor
+    #         ex.on_trait_change(self._update_alive, 'alive')
 
     def _update_alive(self, new):
         self.enabled = not new

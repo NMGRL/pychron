@@ -16,8 +16,7 @@
 
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import HasTraits, Button
-from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -36,7 +35,7 @@ class UsersPlugin(BaseTaskPlugin):
                             )]
 
     def _users_task_factory(self):
-        t = UsersTask()
+        t = UsersTask(application=self.application)
         return t
 
 # ============= EOF =============================================

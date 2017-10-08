@@ -106,27 +106,25 @@ class SensitivityEntry(BaseEntry):
 
     @database_enabled()
     def _load_records(self):
-        db = self.db
-        with db.session_ctx():
-            recs = self.db.get_sensitivities()
-            self.records = [SensitivityRecord(ri)
-                            for ri in recs]
+        recs = self.db.get_sensitivities()
+        self.records = [SensitivityRecord(ri)
+                        for ri in recs]
 
     @database_enabled()
     def save(self):
         db = self.db
-        with db.session_ctx():
-            for si in self.records:
-                dbrecord = db.get_sensitivity(si.primary_key)
-                if dbrecord is None:
-                    dbrecord = db.add_sensitivity(si.mass_spectrometer,
-                                                  sensitivity=si.sensitivity,
-                                                  note=si.note)
-                else:
-                    dbrecord.sensitivity = si.sensitivity
-                    dbrecord.note = si.note
+        for si in self.records:
+            dbrecord = db.get_sensitivity(si.primary_key)
+            if dbrecord is None:
+                dbrecord = db.add_sensitivity(si.mass_spectrometer,
+                                              sensitivity=si.sensitivity,
+                                              note=si.note)
+            else:
+                dbrecord.sensitivity = si.sensitivity
+                dbrecord.note = si.note
 
-                si.flush(dbrecord)
+            si.flush(dbrecord)
+        db.commit()
 
     def add(self):
         rec = SensitivityRecord()

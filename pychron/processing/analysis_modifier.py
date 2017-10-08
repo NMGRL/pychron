@@ -15,25 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from copy import copy
-import os
-
 from traits.api import Instance, HasTraits, List, Str, Bool, Event, Int
 from traitsui.api import View, VGroup, Item, EnumEditor
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.editors import TabularEditor
 from traitsui.group import HGroup
 from traitsui.item import UItem
 from traitsui.tabular_adapter import TabularAdapter
+# ============= standard library imports ========================
+from copy import copy
+import os
+# ============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.processing.tasks.analysis_edit.selection_view import AnalysisAdapter
 
 
 class AnalysisAdapter(TabularAdapter):
@@ -69,10 +66,9 @@ class AnalysisModifierView(HasTraits, PersistenceMixin):
 
         super(AnalysisModifierView, self).__init__(*args, **kw)
         self.db = db
-        with db.session_ctx():
-            self.irradiations = [i.name for i in db.get_irradiations()]
-            if self.irradiations:
-                self.irradiation = self.irradiations[0]
+        self.irradiations = [i.name for i in db.get_irradiations()]
+        if self.irradiations:
+            self.irradiation = self.irradiations[0]
 
         self.load()
 
@@ -81,13 +77,12 @@ class AnalysisModifierView(HasTraits, PersistenceMixin):
     def _irradiation_changed(self, new):
         if new:
             db = self.db
-            with db.session_ctx():
-                dbirrad = db.get_irradiation(new)
-                if dbirrad:
-                    self.levels = [li.name for li in dbirrad.levels]
-                    if self.levels:
-                        self.level = ''
-                        self.level = self.levels[0]
+            dbirrad = db.get_irradiation(new)
+            if dbirrad:
+                self.levels = [li.name for li in dbirrad.levels]
+                if self.levels:
+                    self.level = ''
+                    self.level = self.levels[0]
         else:
             self.levels = []
             self.level = ''
@@ -95,12 +90,11 @@ class AnalysisModifierView(HasTraits, PersistenceMixin):
     def _level_changed(self, new):
         if new:
             db = self.db
-            with db.session_ctx():
-                level = db.get_irradiation_level(self.irradiation, new)
-                if level:
-                    self.identifiers = [li.labnumber.identifier for li in level.positions]
-                    if self.identifiers:
-                        self.identifier = self.identifiers[0]
+            level = db.get_irradiation_level(self.irradiation, new)
+            if level:
+                self.identifiers = [li.labnumber.identifier for li in level.positions]
+                if self.identifiers:
+                    self.identifier = self.identifiers[0]
         else:
             self.identifiers = []
             self.identifier = ''
@@ -211,14 +205,14 @@ class AnalysisModifier(Loggable):
             self.debug('Not connected to main db')
             return
 
-        with db.session_ctx(commit=not self.dry):
-            for ai, ni in zip(ans, new_ans):
-                dbln = db.get_labnumber(ni.identifier)
-                dban = db.get_analysis_uuid(ai.uuid)
-                dban.labnumber = dbln
-                dban.aliquot = ni.aliquot
-                dban.step = ni.step
-                db.increment = ni.increment
+        for ai, ni in zip(ans, new_ans):
+            dbln = db.get_labnumber(ni.identifier)
+            dban = db.get_analysis_uuid(ai.uuid)
+            dban.labnumber = dbln
+            dban.aliquot = ni.aliquot
+            dban.step = ni.step
+            db.increment = ni.increment
+        db.commit()
 
     def _modify_secondary(self, ans, new_ans):
         self.info('modifying analyses in secondary db. dry={}'.format(self.dry))
@@ -227,40 +221,26 @@ class AnalysisModifier(Loggable):
             self.debug('Not connected to secondary db')
             return
 
-        with db.session_ctx(commit=not self.dry):
-            for ai, ni in zip(ans, new_ans):
-                rid = ai.record_id
-                dban = db.get_analysis_rid(rid)
-                if dban:
-                    ident = ni.identifier
-                    dbirradpos = db.get_irradiation_position(ident)
-                    if dbirradpos:
-                        dban.RID = make_runid(ident, ni.aliquot, ni.step)
-                        self.debug('setting {} to {}'.format(ident, dban.RID))
-                        dban.Aliquot = '{:02d}'.format(int(ni.aliquot))
-                        dban.Increment = ni.step
-                        dban.Aliquot_pychron = ni.aliquot
+        for ai, ni in zip(ans, new_ans):
+            rid = ai.record_id
+            dban = db.get_analysis_rid(rid)
+            if dban:
+                ident = ni.identifier
+                dbirradpos = db.get_irradiation_position(ident)
+                if dbirradpos:
+                    dban.RID = make_runid(ident, ni.aliquot, ni.step)
+                    self.debug('setting {} to {}'.format(ident, dban.RID))
+                    dban.Aliquot = '{:02d}'.format(int(ni.aliquot))
+                    dban.Increment = ni.step
+                    dban.Aliquot_pychron = ni.aliquot
 
-                        dban.IrradPosition = ident
-                        dban.RedundantSampleID = dbirradpos.SampleID
-                    else:
-                        self.unique_warning('Labnumber {} does not exist in Secondary DB'.format(ident))
+                    dban.IrradPosition = ident
+                    dban.RedundantSampleID = dbirradpos.SampleID
                 else:
-                    self.warning('Analysis {} does not exist in Secondary DB'.format(rid))
-
-                    # for ai in ans:
-                    # rid = ai.record_id
-                    # dban = db.get_analysis_rid(rid)
-                    # if dban:
-                    #         dbirradpos = db.get_irradiation_position(new_labnumber)
-                    #         if dbirradpos:
-                    #             dban.RID = make_runid(new_labnumber, dban.Aliquot, dban.Increment)
-                    #             dban.IrradPosition = new_labnumber
-                    #             dban.RedundantSampleID = dbirradpos.SampleID
-                    #         else:
-                    #             self.warning('Labnumber {} does not exist in Secondary DB'.format(rid))
-                    #     else:
-                    #         self.warning('Analysis {} does not exist in Secondary DB'.format(rid))
+                    self.unique_warning('Labnumber {} does not exist in Secondary DB'.format(ident))
+            else:
+                self.warning('Analysis {} does not exist in Secondary DB'.format(rid))
+        db.commit()
 
     def _main_db_default(self):
         from apptools.preferences.preference_binding import bind_preference

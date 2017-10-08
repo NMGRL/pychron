@@ -16,18 +16,20 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Property
 from pyface.action.api import Action
-from pyface.timer.do_later import do_later
 from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
-
+from pyface.timer.do_later import do_later
+from traits.api import Property
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.envisage.tasks.actions import myTaskAction
-from pychron.paths import paths
 
+from pychron.envisage.tasks.actions import myTaskAction
+from pychron.envisage.view_util import open_view
+from pychron.paths import paths
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+
+
+# ============= standard library imports ========================
 
 
 def get_manager(event, protocol):
@@ -97,12 +99,18 @@ class ViewReadoutAction(Action):
 
         rv = app.get_service('pychron.spectrometer.readout_view.ReadoutView')
         v = new_readout_view(rv)
-        app.open_view(rv, view=v)
+        open_view(rv, view=v)
 
 
 class SendConfigAction(myTaskAction):
     name = 'Send Configuration'
     method = 'send_configuration'
+    task_ids = ['pychron.spectrometer']
+
+
+class PopulateMFTableAction(myTaskAction):
+    name = 'Populate MF Table'
+    method = 'populate_mftable'
     task_ids = ['pychron.spectrometer']
 
 
@@ -157,6 +165,14 @@ class SpectrometerParametersAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         man.open_parameters()
+
+
+class ReloadMFTableAction(Action):
+    name = 'Reload MFTable'
+
+    def perform(self, event):
+        man = get_manager(event, SPECTROMETER_PROTOCOL)
+        man.reload_mftable()
 
 
 class PeakCenterAction(TaskAction):

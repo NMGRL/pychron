@@ -3,7 +3,6 @@ import unittest
 
 from pychron.processing.permutator.permutator import Permutator
 
-
 __author__ = 'argonlab2'
 
 

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import weakref
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -36,24 +35,28 @@ def destroyed(obj, name, old, new):
 
 
 def add_view(info):
-    __views__.append(weakref.ref(info)())
+    __views__.append(info)
 
 
 def close_views():
-    # print len(__views__)
-    for v in __views__[:]:
-        # print 'dispose {}'.format(v)
-        try:
-            v.dispose(abort=True)
-        except BaseException, e:
-            print v, e
+    global __views__
+    if __views__:
+        # print len(__views__)
+        for v in __views__:
+            # print 'dispose {}'.format(v)
+            try:
+                v.dispose(abort=True)
+            except BaseException, e:
+                print v, e
+    __views__ = None
 
 
 def report_view_stats():
-    print 'report view stats'
-    print '-------------------------'
-    for v in __views__:
-        print v
-    print '-------------------------'
+    if __views__:
+        print 'report view stats'
+        print '-------------------------'
+        for v in __views__:
+            print v
+        print '-------------------------'
 
 # ============= EOF =============================================

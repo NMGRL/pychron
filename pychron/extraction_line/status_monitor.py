@@ -15,23 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+from threading import Event, Thread
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import Int, List
 
-
-from threading import Event
-
-from pyface.timer.do_later import do_after
-from traits.api import Int
-
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 
 
 class StatusMonitor(Loggable):
     # valve_manager = None
     _stop_evt = None
-    _clients = 0
+    _finished_evt = None
+    _clients = List
 
     state_freq = Int(3)
     checksum_freq = Int(3)
@@ -40,58 +37,105 @@ class StatusMonitor(Loggable):
     owner_freq = Int(5)
     update_period = Int(1)
 
-    def start(self, vm):
+    def start(self, oid, vm):
+        self.debug('start {}'.format(oid))
         if not self._clients:
+            p = self.update_period
+            s, c, l, o = self.state_freq, self.checksum_freq, self.lock_freq, self.owner_freq
+            self.debug('StatusMonitor period={}. '
+                       'Frequencies(state={}, checksum={}, lock={}, owner={})'.format(p, s, c, l, o))
             if self._stop_evt:
                 self._stop_evt.set()
-                self._stop_evt.wait(0.25)
+                time.sleep(1.5*self.update_period)
+                # self._stop_evt.wait(self.update_period)
 
             self._stop_evt = Event()
-
-            self._iter(1, vm)
+            t = Thread(target=self._run, args=(vm,))
+            t.setName('StatusMonitor({})'.format(oid))
+            t.setDaemon(True)
+            t.start()
         else:
             self.debug('Monitor already running')
 
-        self._clients += 1
+        if oid not in self._clients:
+            self._clients.append(oid)
 
     def isAlive(self):
         if self._stop_evt:
             return not self._stop_evt.isSet()
 
-    def stop(self):
-        self._clients -= 1
+    def stop(self, oid, block=True):
+        self.debug('stop {}'.format(oid))
+        try:
+            self._clients.remove(oid)
+        except ValueError:
+            pass
 
         if not self._clients:
             self._stop_evt.set()
             self.debug('Status monitor stopped')
+
+            if block:
+                time.sleep(1.5*self.update_period)
+                # self._stop_evt.wait(2*self.update_period)
+
         else:
             self.debug('Alive clients {}'.format(self._clients))
 
-    def _iter(self, i, vm):
+    def _run(self, vm):
         if vm is None:
             self.debug('No valve manager')
-            return
+        else:
+            i = 0
+            while 1:
+                time.sleep(self.update_period)
+                if self._stop_evt.is_set():
+                    break
 
-        if not i % self.state_freq:
+                if self._iter(i, vm):
+                    break
+
+                if i > 100:
+                    i = 0
+                i += 1
+
+        self.debug('Status monitor finished')
+
+    def _iter(self, i, vm):
+        if globalv.valve_debug:
+            self.debug('status monitor iteration i={}'.format(i))
+        if self._stop_evt.is_set():
+            self.debug('stop_event set. no more iterations')
+            return True
+
+        delay = self.update_period/2.
+        if self.state_freq and not i % self.state_freq:
+            if globalv.valve_debug:
+                self.debug('load valve states')
             vm.load_valve_states()
+            time.sleep(delay)
 
-        if not i % self.lock_freq:
+        if self.lock_freq and not i % self.lock_freq:
+            if globalv.valve_debug:
+                self.debug('load lock states')
             vm.load_valve_lock_states()
+            time.sleep(delay)
 
-        if not i % self.owner_freq:
+        if self.owner_freq and not i % self.owner_freq:
+            if globalv.valve_debug:
+                self.debug('load owners')
             vm.load_valve_owners()
+            time.sleep(delay)
 
-        if not i % self.checksum_freq:
+        if self.checksum_freq and not i % self.checksum_freq:
             if not vm.state_checksum:
                 self.debug('State checksum failed')
 
-        #         vm.load_valve_states()
-        #         vm.load_valve_lock_states()
-        #         vm.load_valve_owners()
+        return self._stop_evt.is_set()
 
-        if i > 100:
-            i = 0
-        if not self._stop_evt.isSet():
-            do_after(self.update_period * 1000, self._iter, i + 1, vm)
+        # if i > 100:
+        #     i = 0
+        # if not self._stop_evt.is_set():
+        #     do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
-            # ============= EOF =============================================
+# ============= EOF =============================================

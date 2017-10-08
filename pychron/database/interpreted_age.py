@@ -1,4 +1,3 @@
-from traits.has_traits import HasTraits
 from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool
 from traits.traits import Property
 from traitsui.group import HGroup
@@ -6,12 +5,12 @@ from traitsui.item import Item
 from traitsui.view import View
 
 from pychron.core.helpers.formatting import floatfmt
-
+from pychron.processing.analyses.analysis import IdeogramPlotable
 
 __author__ = 'ross'
 
 
-class InterpretedAge(HasTraits):
+class InterpretedAge(IdeogramPlotable):
     create_date = TDate
     id = Long
 
@@ -40,6 +39,13 @@ class InterpretedAge(HasTraits):
     display_age_err = Property
     display_age_units = Str('Ma')
 
+    def _value_string(self, t):
+        if t == 'uF':
+            a, e = self.F, self.F_err
+        elif t == 'uage':
+            a, e = self.uage.nominal_value, self.uage.std_dev
+        return a, e
+
     def _get_display_age(self):
         a = self.age
         return self._scale_age(a)
@@ -56,8 +62,8 @@ class InterpretedAge(HasTraits):
 
         return a
 
-    def traits_view(self):
-        return View(HGroup(Item('age_kind',
+
+interpreted_age_view = View(HGroup(Item('age_kind',
                                 style='readonly', show_label=False),
                            Item('display_age', format_func=lambda x: floatfmt(x, 3),
                                 label='Age',

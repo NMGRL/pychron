@@ -35,8 +35,7 @@ class VideoCanvas(SceneCanvas):
         super(VideoCanvas, self).__init__(*args, **kw)
 
         self.video_underlay = VideoUnderlay(component=self,
-                                            video=self.video
-                                            )
+                                            video=self.video)
 
         self.underlays.insert(0, self.video_underlay)
 

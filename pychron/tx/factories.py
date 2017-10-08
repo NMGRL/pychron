@@ -16,10 +16,16 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import io
+import os
+
 from twisted.internet.protocol import Factory
-# ============= local library imports  ==========================
-from pychron.tx.protocols.valve import ValveProtocol
+from twisted.logger import Logger
+from twisted.logger import jsonFileLogObserver
+
+from pychron.tx.protocols.furnace import FurnaceProtocol
 from pychron.tx.protocols.laser import LaserProtocol
+from pychron.tx.protocols.valve import ValveProtocol
 
 
 class LaserFactory(Factory):
@@ -31,7 +37,7 @@ class LaserFactory(Factory):
     def buildProtocol(self, addr):
         if self._name is None:
             raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr)
+        return LaserProtocol(self._app, self._name, addr, self.logger)
 
 
 class FusionsCO2Factory(LaserFactory):
@@ -46,11 +52,31 @@ class FusionsUVFactory(LaserFactory):
     _name = 'FusionsUV'
 
 
-class ValveFactory(Factory):
+from pychron.paths import paths
+
+path = os.path.join(paths.log_dir, 'pps.log.json')
+
+logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
+
+
+class BaseFactory(Factory):
+    protocol_klass = None
+
     def __init__(self, application=None):
         self._app = application
 
     def buildProtocol(self, addr):
-        return ValveProtocol(self._app, addr)
+        if self.protocol_klass is None:
+            raise NotImplementedError
+
+        return self.protocol_klass(self._app, addr, logger)
+
+
+class ValveFactory(BaseFactory):
+    protocol_klass = ValveProtocol
+
+
+class FurnaceFactory(BaseFactory):
+    protocol_klass = FurnaceProtocol
 
 # ============= EOF =============================================

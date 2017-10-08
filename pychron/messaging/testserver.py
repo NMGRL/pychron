@@ -16,10 +16,8 @@
 
 
 
-import socket
-
-
 import os
+import socket
 
 
 def server(kind, addr):

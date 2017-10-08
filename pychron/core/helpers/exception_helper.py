@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import threading
+
+import traits.trait_notifiers
+from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
-import traits.trait_notifiers
-from pyface.message_dialog import warning
 # ============= standard library imports ========================
-import keyring as keyring
 import base64
 import json
 import requests
@@ -32,6 +33,7 @@ import os
 import pickle
 # ============= local library imports  ==========================
 from pychron.github import GITHUB_API_URL
+from pychron.globals import globalv
 from pychron.paths import paths
 
 LABELS = ['Bug',
@@ -89,7 +91,6 @@ def report_issues():
         with open(p, 'r') as rfile:
             issues = pickle.load(rfile)
 
-            warn_no_password = False
             for issue in issues:
                 result = create_issue(issue)
 
@@ -108,9 +109,7 @@ def create_issue(issue):
     cmd = '{}/repos/{}/pychron/issues'.format(GITHUB_API_URL, org)
 
     usr = os.environ.get('GITHUB_USER')
-    pwd = keyring.get_password('github', usr)
-    if pwd is None:
-        pwd = os.environ.get('GITHUB_PASSWORD')
+    pwd = os.environ.get('GITHUB_PASSWORD')
 
     if not pwd:
         warning(None, 'No password set for "{}". Contact Developer.\n'
@@ -120,8 +119,18 @@ def create_issue(issue):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
 
-    r = requests.post(cmd, data=json.dumps(issue), headers=headers)
-    return r.status_code == 201
+    kw = {'data': json.dumps(issue),
+          'headers': headers}
+
+    if globalv.cert_file:
+        kw['verify'] = globalv.cert_file
+
+    r = requests.post(cmd, **kw)
+
+    if r.status_code == 401:
+        warning(None, 'Failed to submit issue. Username/Password incorrect.')
+
+    return r.status_code in (201, 422)
 
 
 class ExceptionModel(HasTraits):
@@ -129,10 +138,24 @@ class ExceptionModel(HasTraits):
     description = Str
     labels = List
     exctext = Str
-
+    branch = Str
     helpstr = Str("""<p align="center"><br/> <font size="14" color="red"><b>There was a Pychron error<br/>
 Please consider submitting a bug report to the developer</b></font><br/>
 Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of the bug. Then click <b>Submit</b><br/></p>""")
+
+    @property
+    def active_branch(self):
+        return globalv.active_branch
+
+    @property
+    def active_analyses(self):
+        ret = ''
+        if globalv.active_analyses:
+            try:
+                ret = ','.join([ai.record_id for ai in globalv.active_analyses])
+            except AttributeError, e:
+                ret = '{}\n\n{}'.format(e, str(globalv.active_analyses))
+        return ret
 
 
 class ExceptionHandler(Controller):
@@ -162,24 +185,27 @@ class ExceptionHandler(Controller):
 
     def _make_issue(self):
         m = self.model
-        issue = {'title': m.title,
+        issue = {'title': m.title or 'No Title Provided',
                  'labels': m.labels,
                  'body': self._make_body()}
         return issue
 
     def _make_body(self):
         m = self.model
-        return '{}\n\n```\n{}\n```'.format(m.description, m.exctext)
+        return 'active branch={}\n\nactive analyses={}\n\n{}\n\n```\n{}\n```'.format(m.active_branch,
+                                                                                     m.active_analyses,
+                                                                                     m.description, m.exctext)
 
     def traits_view(self):
-        v = View(VGroup(
-            UItem('helpstr',
-                  style='readonly'),
-            Item('title'),
-                        HGroup(
-                            VGroup(UItem('labels', style='custom', editor=CheckListEditor(values=LABELS)),
-                                   show_border=True, label='Labels (optional)'),
-                            VGroup(UItem('description', style='custom'), show_border=True, label='Description (optional)')),
+        v = View(VGroup(UItem('helpstr',
+                              style='readonly'),
+                        Item('title'),
+                        HGroup(VGroup(UItem('labels', style='custom',
+                                            editor=CheckListEditor(values=LABELS, cols=2)),
+                                      show_border=True, label='Labels (optional)',
+                                      scrollable=True),
+                               VGroup(UItem('description', style='custom'), show_border=True,
+                                      label='Description (optional)')),
                         UItem('exctext',
                               style='custom',
                               editor=TextEditor(read_only=True))),
@@ -189,46 +215,91 @@ class ExceptionHandler(Controller):
         return v
 
 
-def except_handler(exctype, value, tb):
-    if exctype == RuntimeError:
-        warning(None, 'RunTimeError: {}'.format(value))
-    elif value == "'NoneType' object has no attribute 'text'":
-        pass
-    elif value == "'NoneType' object has no attribute 'size'":
-        pass
-    else:
-        lines = traceback.format_exception(exctype, value, tb)
-        if not exctype == KeyboardInterrupt:
-            em = ExceptionModel(exctext=''.join(lines),
-                                labels=['Bug'])
-            ed = ExceptionHandler(model=em)
-            ed.edit_traits()
+def ignored_exceptions(exctype, value, tb):
+    """
+        Do not open an Exception view for these exceptions
+    """
+    # if exception was not generated from pychron. This should obviate the subsequent if statements
+    tb = traceback.extract_tb(tb)
 
-        root = logging.getLogger()
-        root.critical('============ Exception ==============')
-        for ti in lines:
-            ti = ti.strip()
-            if ti:
-                root.critical(ti)
-        root.critical('============ End Exception ==========')
+    if '/pychron/' not in tb[0][0] and '/pychron/' not in tb[-1][0]:
+        print 'ignore exception'
+        return True
+
+    if exctype in (RuntimeError, KeyboardInterrupt):
+        return True
+
+    if value in ("'NoneType' object has no attribute 'text'",
+                 "'NoneType' object has no attribute 'size'",
+                 "too many indices for array"):
+        return True
+
+
+def except_handler(exctype, value, tb):
+    lines = traceback.format_exception(exctype, value, tb)
+
+    root = logging.getLogger()
+    root.critical('============ Exception ==============')
+    for ti in lines:
+        ti = ti.strip()
+        if ti:
+            root.critical(ti)
+    root.critical('============ End Exception ==========')
+
+    if not ignored_exceptions(exctype, value, tb):
+        em = ExceptionModel(exctext=''.join(lines),
+                            labels=['Bug'])
+        ed = ExceptionHandler(model=em)
+        from pychron.core.ui.gui import invoke_in_main_thread
+        invoke_in_main_thread(ed.edit_traits)
 
 
 def traits_except_handler(obj, name, old, new):
     except_handler(*sys.exc_info())
 
 
-def set_exception_handler(func=None):
+def set_thread_exception_handler():
     """
-        set sys.excepthook to func.  if func is None use a default handler
+    taken from http://bugs.python.org/issue1230540
 
-        default handler formats and logs the traceback as critical and calls sys.__excepthook__
-        for normal exception handling
 
-    :return:
+    Workaround for sys.excepthook thread bug
+    From
+http://spyced.blogspot.com/2007/06/workaround-for-sysexcepthook-bug.html
+
+(https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
+    Call once from __main__ before creating any threads.
+    If using psyco, call psyco.cannotcompile(threading.Thread.run)
+    since this replaces a new-style class method.
+    """
+    init_old = threading.Thread.__init__
+
+    def init(self, *args, **kwargs):
+        init_old(self, *args, **kwargs)
+        run_old = self.run
+
+        def run_with_except_hook(*args, **kw):
+            try:
+                run_old(*args, **kw)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                from pychron.core.ui.gui import invoke_in_main_thread
+                invoke_in_main_thread(sys.excepthook, *sys.exc_info())
+
+        self.run = run_with_except_hook
+
+    threading.Thread.__init__ = init
+
+
+def set_exception_handler():
+    """
+
     """
 
     sys.excepthook = except_handler
     traits.trait_notifiers.handle_exception = traits_except_handler
+    set_thread_exception_handler()
 
 
 if __name__ == '__main__':

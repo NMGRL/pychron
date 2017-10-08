@@ -22,20 +22,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import math
-import struct
-
-#from pychron.core.ui import set_toolkit
-#set_toolkit('qt4')
-#paths.build('_dev')
-#logging_setup('prox')
-
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+import math
+import struct
 # ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
-from pychron.hardware.polyinomial_mapper import PolynomialMapper
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -61,7 +53,6 @@ TWELVE_BIT_BANKS = [196, 197, 198]
 
 class ProXRADC(NCDDevice):
     max_voltage = 5
-
 
     def read_device_info(self):
         cmdstr = self._make_cmdstr(254, 246)
@@ -114,8 +105,10 @@ class ProXRADC(NCDDevice):
             volts = self._map_to_voltage(resp, nbits, nbytes)[0]
         else:
             volts = self.get_random_value()
-        return volts
 
+        if verbose:
+            self.debug('bank={} nbits={} volts={}'.format(bank_idx, nbits, volts))
+        return volts
 
     def _parse_response(self, v):
         if not v:
@@ -146,23 +139,33 @@ class ProXRADC(NCDDevice):
 
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.paths import paths
 
-    logging_setup('adc')
+    paths.build('_dev')
+
+    logging_setup('adc', use_archiver=False)
 
     # paths.build('_dev')
 
     a = ProXRADC(name='ProXRADC')
-    #a = MultiBankADCExpansion(name='proxr_adc')
+    # a = MultiBankADCExpansion(name='proxr_adc')
     # a.bootstrap()
     a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
     a.open()
-    #print 'read bank', a.read_bank()
+    # print 'read bank', a.read_bank()
     a.read_bank(nbits=12)
     a.read_bank(1, nbits=12)
     a.read_bank(2, nbits=12)
 
-    #print a._communicator.handle
-    #a.read_device_info()
-    #print 'read channel 0',a.read_channel(0, nbits=8)
-    #print 'read channel 0 12bit',a.read_channel(0, nbits=12)
+    import time
+
+    for i in range(100):
+        # a.read_channel(0)
+        a.read_bank()
+        time.sleep(0.5)
+
+        # print a._communicator.handle
+        # a.read_device_info()
+        # print 'read channel 0',a.read_channel(0, nbits=8)
+        # print 'read channel 0 12bit',a.read_channel(0, nbits=12)
 # ============= EOF =============================================

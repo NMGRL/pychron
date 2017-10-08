@@ -15,31 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Str
-from envisage.ui.tasks.task_factory import TaskFactory
-from pyface.tasks.action.schema_addition import SchemaAddition
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.tasks.action.schema import SMenu
-# ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
+
+from envisage.ui.tasks.task_extension import TaskExtension
+from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema import SMenu
+from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List, Str
+
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.strtools import to_bool
+from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.envisage.initialization.initialization_parser import InitializationParser
-from pychron.paths import paths
-from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction
+from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction, \
+    LaserScriptExecuteAction
 from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
+from pychron.paths import paths
 
 
-def pattern_action(name, application, manager_name):
+def pattern_action(name, application, manager_name, lase=False):
     a = PatternAction(id='pattern.action.{}'.format(name),
                       name=name.capitalize(),
                       application=application,
                       manager_name=manager_name,
-                      pattern_path=os.path.join(paths.pattern_dir, name))
+                      pattern_path=os.path.join(paths.pattern_dir, name),
+                      lase=lase)
     return lambda: a
 
 
@@ -66,6 +68,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 class BaseLaserPlugin(BaseTaskPlugin):
     managers = List(contributes_to='pychron.hardware.managers')
     klass = None
+
     # name = None
 
     def _service_offers_default(self):
@@ -107,11 +110,15 @@ class BaseLaserPlugin(BaseTaskPlugin):
                         attr, func = attr
 
                     try:
-                        v = tag.find(attr).text.strip()
-                        if func:
-                            v = func(v)
+                        elem = tag.find(attr)
+                        if elem is not None:
+                            v = elem.text.strip()
+                            if func:
+                                v = func(v)
 
-                        params[attr] = v
+                            params[attr] = v
+                        else:
+                            self.debug('No communications attribute {}'.format(attr))
                     except Exception, e:
                         print 'client comms fail a', attr, e
             except Exception, e:
@@ -155,8 +162,8 @@ class FusionsPlugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
+
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,
@@ -200,17 +207,30 @@ class FusionsPlugin(BaseLaserPlugin):
         exts = [TaskExtension(actions=actions)]
 
         actions = [SchemaAddition(factory=ShowMotionConfigureAction,
+                                  path='MenuBar/laser.menu'),
+                   SchemaAddition(factory=LaserScriptExecuteAction,
                                   path='MenuBar/laser.menu')]
+        lactions = []
         for f in list_directory2(paths.pattern_dir, extension='.lp', remove_extension=True):
             actions.append(SchemaAddition(id='pattern.{}'.format(f),
                                           factory=pattern_action(f, self.application, self.name),
                                           path='MenuBar/laser.menu/patterns.menu'))
+            lactions.append(SchemaAddition(id='pattern.lase.{}'.format(f),
+                                           factory=pattern_action(f, self.application, self.name, lase=True),
+                                           path='MenuBar/laser.menu/patterns.lase.menu'))
 
         if actions:
+
             actions.insert(0, SchemaAddition(id='patterns.menu',
                                              factory=lambda: SMenu(name='Execute Patterns', id='patterns.menu'),
                                              path='MenuBar/laser.menu'))
 
+            lactions.insert(0, SchemaAddition(id='patterns.lase.menu',
+                                              factory=lambda: SMenu(name='Execute and Lase Patterns',
+                                                                    id='patterns.lase.menu'),
+                                              path='MenuBar/laser.menu'))
+
+            exts.append(TaskExtension(actions=lactions))
             exts.append(TaskExtension(actions=actions))
         else:
             self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))

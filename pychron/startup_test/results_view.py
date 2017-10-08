@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
 from threading import Thread
+
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-import time
-from traits.api import Instance, Int, Property, Any, Str, String, Bool
+from traits.api import Instance, Int, Property, String, Bool
 from traitsui.api import View, Controller, UItem, TabularEditor, VGroup, UReadonly
-from pyface.timer.do_later import do_after
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -150,6 +151,7 @@ class ResultsView(Controller):
                  title='Test Results',
 
                  buttons=buttons,
+                 height=500,
                  width=650,
                  kind='livemodal',
                  resizable=True)

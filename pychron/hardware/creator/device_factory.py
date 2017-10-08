@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import yaml
 from mako.template import Template
 from traitsui.handler import Controller
-import yaml
 
 from pychron.core.ui import set_qt
-
 
 set_qt()
 

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List
+from traits.api import Bool
 from traitsui.api import View, UItem, Item, HGroup, EnumEditor, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,15 +28,16 @@ class CoincidenceConfigHandler(PeakCenterConfigHandler):
 
 
 class CoincidenceConfig(PeakCenterConfig):
-    additional_detectors = List
-    available_detectors = List
+    # additional_detectors = List
+    # available_detectors = List
     use_nominal_dac = Bool
-    pickle_name = 'coincidence_config.p'
 
-    def _detector_changed(self, new):
-        super(CoincidenceConfig, self)._detector_changed(new)
-        if new:
-            self.available_detectors = [d.name for d in self.detectors if d.name != new.name]
+    # pickle_name = 'coincidence_config.p'
+
+    # def _detector_changed(self, new):
+    #     super(CoincidenceConfig, self)._detector_changed(new)
+    #     if new:
+    #         self.available_detectors = [d.name for d in self.detectors if d.name != new.name]
 
     def traits_view(self):
         rgrp = HGroup(

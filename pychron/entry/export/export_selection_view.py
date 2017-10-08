@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Enum, List, Instance, File, Str, Password, Any, Dict
-from traitsui.api import View, Item, TabularEditor, UItem, VGroup, InstanceEditor, ListStrEditor
+from traits.api import HasTraits, Enum, List, Instance, File, Str, Password, Dict
+from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, ListStrEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter

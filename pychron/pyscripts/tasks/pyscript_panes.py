@@ -18,17 +18,17 @@
 import os
 
 from pyface.action.menu_manager import MenuManager
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import List, Instance, Str, Property, Any, String, Button, Int
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
-from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 

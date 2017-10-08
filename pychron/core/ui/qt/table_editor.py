@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from PySide.QtGui import QFont, QFontMetrics
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QFont, QFontMetrics
 from traits.api import Event, Callable, Bool
-from traitsui.qt4.table_editor import TableView
 from traitsui.editors.table_editor import TableEditor
-from PySide.QtCore import Qt
+from traitsui.qt4.table_editor import TableView
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

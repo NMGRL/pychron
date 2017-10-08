@@ -14,30 +14,26 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
-from pychron.core.ui import set_qt
-set_qt()
-
 # ============= enthought library imports =======================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
-
-from traits.api import Str, Button, List
-from traitsui.api import View, HGroup, UItem, VGroup, EnumEditor, Item
-from traitsui.handler import Controller
-
-# ============= standard library imports ========================
 import ast
 import os
+
 import yaml
-# ============= local library imports  ==========================
-from pychron.paths import paths
-from pychron.core.ui.table_editor import myTableEditor
-from pychron.processing.fits.filter_fit_selector import FilterFitSelector, FilterFit
+from traits.api import Str, Button, List
+from traitsui.api import View, HGroup, UItem, VGroup, Item
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.handler import Controller
+from traitsui.table_column import ObjectColumn
+
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.ui.enum_editor import myEnumEditor
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.paths import paths
+from pychron.processing.fits.filter_fit_selector import FilterFitSelector
+from pychron.processing.fits.fit import FilterFit
+
 
 class MeasurementFit(FilterFit):
     is_baseline = False
@@ -146,18 +142,18 @@ class MeasurementFitsSelectorView(Controller):
         return g
 
     def _get_auto_group(self):
-        return HGroup(UItem('global_fit', editor=EnumEditor(name='fit_types')),
-                      UItem('global_error_type', editor=EnumEditor(name='error_types')))
+        return HGroup(UItem('global_fit', editor=myEnumEditor(name='fit_types')),
+                      UItem('global_error_type', editor=myEnumEditor(name='error_types')))
 
     def _get_fit_group(self):
         cols = [ObjectColumn(name='name', editable=False,
                              tooltip='If name is an isotope e.g Ar40 '
                                      'fit is for a signal, if name is a detector e.g H1 fit is for a baseline'),
                 ObjectColumn(name='fit',
-                             editor=EnumEditor(name='fit_types'),
+                             editor=myEnumEditor(name='fit_types'),
                              width=75),
                 ObjectColumn(name='error_type',
-                             editor=EnumEditor(name='error_types'),
+                             editor=myEnumEditor(name='error_types'),
                              label='Error',
                              width=75),
                 CheckboxColumn(name='filter_outliers', label='Out.'),
@@ -179,7 +175,7 @@ class MeasurementFitsSelectorView(Controller):
     def traits_view(self):
 
         name_grp = HGroup(
-            UItem('name', editor=EnumEditor(name='available_names')),
+            UItem('name', editor=myEnumEditor(name='available_names')),
             icon_button_editor('controller.duplicate_button', 'duplicate'))
         v = View(VGroup(name_grp,
                         self._get_toggle_group(),

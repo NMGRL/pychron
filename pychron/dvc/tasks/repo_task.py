@@ -14,43 +14,52 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+# ============= standard library imports ========================
+import os
 
+# ============= enthought library imports =======================
+from git import Repo
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any
+from traits.api import List, Str, Any, HasTraits, Bool
 
-# ============= standard library imports ========================
-from git import Repo
-import os
-# ============= local library imports  ==========================
-from pychron.core.progress import open_progress
-from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction
+from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
+    FindChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
+from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import get_commits
 from pychron.github import Organization
 from pychron.paths import paths
 
 
+# ============= local library imports  ==========================
+
+
+class RepoItem(HasTraits):
+    name = Str
+    dirty = Bool
+
+
 class ExperimentRepoTask(BaseTask):
     name = 'Experiment Repositories'
 
     selected_repository_name = Str
-    selected_local_repository_name = Str
+    selected_local_repository_name = RepoItem
 
     repository_names = List
     organization = Str
+    oauth_token = Str
 
     local_names = List
     tool_bars = [SToolBar(CloneAction(),
                           AddBranchAction(),
                           CheckoutBranchAction(),
                           PushAction(),
-                          PullAction()
-                          )]
+                          PullAction(),
+                          FindChangesAction())]
 
     commits = List
     _repo = None
@@ -60,21 +69,51 @@ class ExperimentRepoTask(BaseTask):
 
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
+        self._preference_binder('pychron.github', ('oauth_token',))
         org = Organization(self.organization)
-        self.repository_names = org.repos
+        org._oauth_token = self.oauth_token
+
+        self.repository_names = org.repo_names
         self.refresh_local_names()
+        self.find_changes()
 
     def refresh_local_names(self):
-        ns = []
-        for i in os.listdir(paths.experiment_dataset_dir):
+        # ns = []
+        # for i in os.listdir(paths.repository_dataset_dir):
+        #     if i.startswith('.'):
+        #         continue
+        #
+        #     root = os.path.join(paths.repository_dataset_dir, i)
+        #     if os.path.isdir(root):
+        #         ns.append(i)
+
+        self.local_names = [RepoItem(name=i) for i in sorted(self.list_repos())]
+
+    def find_changes(self, remote='origin', branch='master'):
+        for item in self.local_names:
+            name = item.name
+        # for name in self.list_repos():
+            r = Repo(os.path.join(paths.repository_dataset_dir, name))
+            line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
+            item.dirty = bool(line)
+            # if line:
+            #     changed.append(name)
+
+        # print changed
+        # r = GitRepoManager()
+        # r.open_repo(name, root=root)
+        #
+        # r.has_unpushed_commits()
+        self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
+
+    def list_repos(self):
+        for i in os.listdir(paths.repository_dataset_dir):
             if i.startswith('.'):
                 continue
 
-            root = os.path.join(paths.experiment_dataset_dir, i)
-            if os.path.isdir(root):
-                ns.append(i)
-
-        self.local_names = ns
+            d = os.path.join(paths.repository_dataset_dir, i)
+            if os.path.isdir(d):
+                yield i
 
     def pull(self):
         self._repo.smart_pull(quiet=False)
@@ -88,7 +127,7 @@ class ExperimentRepoTask(BaseTask):
             if info.result:
                 if a.url and a.name:
                     self._repo.create_remote(a.url, a.name)
-                    self._repo.push()
+                    self._repo.push(remote=a.name)
         else:
             self._repo.push()
 
@@ -97,26 +136,28 @@ class ExperimentRepoTask(BaseTask):
         if name == 'meta':
             root = paths.dvc_dir
         else:
-            root = paths.experiment_dataset_dir
+            root = paths.repository_dataset_dir
 
         path = os.path.join(root, name)
         if not os.path.isdir(path):
             self.debug('cloning repository {}'.format(name))
-            url = 'https://github.com/{}/{}.git'.format(self.organization, name)
-            prog = open_progress(n=3)
-            prog.change_message('Cloning repository {}'.format(url))
-            Repo.clone_from(url, path)
-            prog.change_message('Cloning Complete')
-            prog.close()
+            service = self.application.get_service(IGitHost)
+
+            service.clone_from(name, path, self.organization)
+            # url = 'https://github.com/{}/{}.git'.format(self.organization, name)
+            # prog = open_progress(n=3)
+            # prog.change_message('Cloning repository {}'.format(url))
+            # Repo.clone_from(url, path)
+            # prog.change_message('Cloning Complete')
+            # prog.close()
             self.refresh_local_names()
 
     def add_branch(self):
         self.info('add branch')
         commit = self.selected_commit
 
-        self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD')
-
-        self._refresh_branches()
+        if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+            self._refresh_branches()
 
     def checkout_branch(self):
         self.info('checkout branch {}'.format(self.branch))
@@ -138,8 +179,9 @@ class ExperimentRepoTask(BaseTask):
             self._branch_changed(self.branch)
 
     def _selected_local_repository_name_changed(self, new):
+        print 'asdfsad', new
         if new:
-            root = os.path.join(paths.experiment_dataset_dir, new)
+            root = os.path.join(paths.repository_dataset_dir, new.name)
             # print root, new, os.path.isdir(root)
             if os.path.isdir(root):
                 repo = GitRepoManager()

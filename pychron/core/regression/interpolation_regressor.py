@@ -14,13 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str
 
 from pychron.core.regression.base_regressor import BaseRegressor
 
-# ============= standard library imports ========================
-from numpy import where, polyval, polyfit
+
 # ============= local library imports  ==========================
 
 
@@ -41,13 +42,15 @@ class InterpolationRegressor(BaseRegressor):
         func = getattr(self, '{}_predictors'.format(kind))
         if not hasattr(xs, '__iter__'):
             xs = (xs,)
-        xs = (func(xi, attr) for xi in xs)
 
-        #filter out None values. None values will occur if integrity checks on xs,ys and yserr fail
-        #if preceding and no value found use the first following value e.g index 0
+        exc = self.get_excluded()
+        xs = (func(xi, exc, attr) for xi in xs)
+
+        # filter out None values. None values will occur if integrity checks on xs,ys and yserr fail
+        # if preceding and no value found use the first following value e.g index 0
         return [xi for xi in xs if xi is not None]
 
-    def preceding_predictors(self, timestamp, attr='value'):
+    def preceding_predictors(self, timestamp, exc, attr='value'):
         xs = self.xs
         ys = self.ys
         es = self.yserr
@@ -58,25 +61,26 @@ class InterpolationRegressor(BaseRegressor):
             except IndexError:
                 ti = 0
 
+            while ti in exc and ti > 0:
+                ti -= 1
+
             if attr == 'value':
                 return ys[ti]
             else:
                 return es[ti]
 
-    def bracketing_average_predictors(self, tm, attr='value'):
+    def bracketing_average_predictors(self, tm, exc, attr='value'):
         try:
-            pb, ab, _ = self._bracketing_predictors(tm, attr)
+            pb, ab, _ = self._bracketing_predictors(tm, exc, attr)
 
             return (pb + ab) / 2.0
         except TypeError:
             return 0
 
-    def bracketing_interpolate_predictors(self, tm, attr='value'):
-        xs = self.xs
+    def bracketing_interpolate_predictors(self, tm, exc, attr='value'):
         try:
-            pb, ab, ti = self._bracketing_predictors(tm, attr)
+            pb, ab, x = self._bracketing_predictors(tm, exc, attr)
 
-            x = [xs[ti], xs[ti + 1]]
             y = [pb, ab]
 
             if attr == 'error':
@@ -94,21 +98,29 @@ class InterpolationRegressor(BaseRegressor):
         except TypeError:
             return 0
 
-    def _bracketing_predictors(self, tm, attr):
+    def _bracketing_predictors(self, tm, exc, attr):
         xs = self.xs
         ys = self.ys
         es = self.yserr
 
         try:
             ti = where(xs < tm)[0][-1]
-            if attr == 'value':
-                pb = ys[ti]
-                ab = ys[ti + 1]
-            else:
-                pb = es[ti]
-                ab = es[ti + 1]
 
-            return pb, ab, ti
+            li = ti
+            hi = ti + 1
+            while li in exc and li > 0:
+                li -= 1
+            while hi in exc and hi < self.n:
+                hi += 1
+
+            if attr == 'value':
+                pb = ys[li]
+                ab = ys[hi]
+            else:
+                pb = es[li]
+                ab = es[hi]
+
+            return pb, ab, (xs[li], xs[hi])
         except IndexError:
             return 0
 

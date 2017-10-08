@@ -18,8 +18,6 @@
 from traits.api import Str, List, Enum
 from traitsui.api import Item, VGroup, CheckListEditor
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.entry.entry_views.entry import BaseEntry
 from pychron.hardware.core.data_helper import make_bitarray
 
@@ -52,7 +50,8 @@ class UserEntry(BaseEntry):
         :param name:
         :return:
         """
-        db = self.db
+
+        db = self.get_database()
         with db.session_ctx():
             dbuser = db.get_user(name)
             if dbuser:
@@ -61,7 +60,7 @@ class UserEntry(BaseEntry):
                 self.user = name
                 self._add_item(db)
 
-            return self.user
+        return self.user
 
     def _add_item(self, db):
         name = self.user
@@ -78,7 +77,8 @@ class UserEntry(BaseEntry):
 
         self.email = dbuser.email or ''
         self.affiliation = dbuser.affiliation or ''
-        self.categories = parse_categories(dbuser.category, self.available_categories)
+        category = dbuser.category or 0
+        self.categories = parse_categories(category, self.available_categories)
         info = self.edit_traits()
         if info.result:
             if self.user == self.original_user:
@@ -89,22 +89,22 @@ class UserEntry(BaseEntry):
                 self._add_item(self.db)
 
     def _add_user_db(self, db, name):
-        if not db.get_user(name):
-            c = make_categories(self.categories, self.available_categories)
-            db.add_user(name, email=self.email,
-                        category=c,
-                        affiliation=self.affiliation)
-            return True
+        with db.session_ctx():
+            if not db.get_user(name):
+                c = make_categories(self.categories, self.available_categories)
+                db.add_user(name, email=self.email,
+                            category=c,
+                            affiliation=self.affiliation)
+                return True
 
     def traits_view(self):
-        v = self._new_view(
-
-            VGroup(Item('user', style=self.user_style),
+        g = VGroup(Item('user', style=self.user_style),
                    Item('email'),
                    Item('affiliation'),
                    Item('categories',
                         style='custom',
-                        editor=CheckListEditor(name='available_categories', cols=3))))
+                        editor=CheckListEditor(name='available_categories', cols=3)))
+        v = self._new_view(g, title='Edit User')
         return v
 
 # ============= EOF =============================================

@@ -31,26 +31,9 @@ class MultiCollector(DataCollector):
     """
 
     def _iter_hook(self, i):
-        if i % 50 == 0:
+        if i % 25 == 0:
             self.info('collecting point {}'.format(i))
-            #                mem_log('point {}'.format(i), verbose=True)
 
-        # get the data
-        try:
-            data = self._get_data()
-        except (AttributeError, TypeError, ValueError), e:
-            self.debug('failed getting data {}'.format(e))
-            return
+        return self._iteration(i)
 
-        if not data:
-            return
-
-        x = self._get_time()
-        # save the data
-        self._save_data(x, *data)
-        # plot the data
-        self.plot_data(i, x, *data)
-
-        return True
-
-        # ============= EOF =============================================
+# ============= EOF =============================================

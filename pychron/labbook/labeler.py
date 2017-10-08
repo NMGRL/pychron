@@ -64,29 +64,26 @@ class Labeler(Loggable):
     def remove_label_from_path(self, path, label):
         self.info('removing label="{}" from path="{}"'.format(label, path))
         db = self.db
-        with db.session_ctx() as sess:
-            dp = db.get_path(path)
-            if dp:
-                dl = db.get_label(label)
-                if dl:
-                    dp.labels.remove(dl)
+        dp = db.get_path(path)
+        if dp:
+            dl = db.get_label(label)
+            if dl:
+                dp.labels.remove(dl)
 
     def add_label_to_path(self, path, label):
         self.info('adding label="{}" to path="{}"'.format(label, path))
         db = self.db
-        with db.session_ctx() as sess:
-            dp = db.get_path(path)
-            if not dp:
-                dp = db.add_path(path)
-                sess.flush()
-            db.add_label_association(dp, label)
+        dp = db.get_path(path)
+        if not dp:
+            dp = db.add_path(path)
+            db.flush()
+        db.add_label_association(dp, label)
 
     def get_path(self, p):
-        with self.db.session_ctx():
-            dp = self.db.get_path(p)
-            if dp:
-                return Path(relpath=dp.relpath, labels=[(Label(text=lb.text,
-                                                               color=lb.color)) for lb in dp.labels])
+        dp = self.db.get_path(p)
+        if dp:
+            return Path(relpath=dp.relpath, labels=[(Label(text=lb.text,
+                                                           color=lb.color)) for lb in dp.labels])
 
     def new_label(self):
         v = NewLabelView()
@@ -100,23 +97,21 @@ class Labeler(Loggable):
         self.db.add_label(text, color)
 
     def get_label(self, text):
-        with self.db.session_ctx():
-            lb = self.db.get_label(text)
-            if lb:
-                return Label(text=lb.text, color=lb.color)
+        lb = self.db.get_label(text)
+        if lb:
+            return Label(text=lb.text, color=lb.color)
 
     def delete_label(self, text):
         self.db.delete_label(text)
 
     def load_labels_for_path(self, path):
         ls = []
-        with self.db.session_ctx():
-            dp = self.db.get_path(path)
-            if dp:
-                labels = [li.text for li in dp.labels]
-                ls = [Label(text=li.text, color=li.color) for li in dp.labels]
-                for li in self.labels:
-                    li.active = li.text in labels
+        dp = self.db.get_path(path)
+        if dp:
+            labels = [li.text for li in dp.labels]
+            ls = [Label(text=li.text, color=li.color) for li in dp.labels]
+            for li in self.labels:
+                li.active = li.text in labels
 
         self.selected = []
         self.refresh_needed = True
@@ -133,13 +128,12 @@ class Labeler(Loggable):
             self.selected = []
             self.refresh_needed = True
 
-    #private
+    # private
     def _refresh_labels(self):
-        with self.db.session_ctx():
-            labels = self.db.get_labels()
-            self.labels = [Label(text=li.text,
-                                 color=li.color,
-                                 cnt=li.cnt) for li in labels]
+        labels = self.db.get_labels()
+        self.labels = [Label(text=li.text,
+                             color=li.color,
+                             cnt=li.cnt) for li in labels]
 
     def _db_default(self):
         path = os.path.join(paths.labbook_dir, 'labels.db')

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from pyface.api import FileDialog, OK, DirectoryDialog
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
     ButtonEditor, spring
-from pyface.api import FileDialog, OK, DirectoryDialog
+
 # =============standard library imports ========================
 import os
 from threading import Thread
@@ -72,10 +73,10 @@ class ManagerHandler(ViewableHandler):
 class AppHandler(ManagerHandler):
     def closed(self, info, isok):
         info.object.kill()
-        from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
-        gLoggerDisplay.close_ui()
-        gWarningDisplay.close_ui()
-        gMessageDisplay.close_ui()
+        # from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay, gMessageDisplay
+        # gLoggerDisplay.close_ui()
+        # gWarningDisplay.close_ui()
+        # gMessageDisplay.close_ui()
 
         return True
 

@@ -1,0 +1,139 @@
+# ===============================================================================
+# Copyright 2013 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
+
+# ============= enthought library imports =======================
+from traits.api import Instance, Str, Int
+from traitsui.api import View, UItem, InstanceEditor
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+
+
+class RecallEditor(BaseTraitsEditor):
+    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
+    analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
+
+    # measurement_adapter = Instance(MeasurementTabularAdapter, ())
+    # extraction_adapter = Instance(ExtractionTabularAdapter, ())
+    basename = Str
+    instance_id = Int
+
+    def __init__(self, analysis, av, *args, **kw):
+        self.analysis = analysis
+        self.analysis_view = av
+        self.basename = analysis.record_id
+        super(RecallEditor, self).__init__(*args, **kw)
+
+    def set_name(self, record_id):
+        r = record_id
+        if self.instance_id:
+            r = '{} #{}'.format(r, self.instance_id + 1)
+
+        self.name = r
+
+    def traits_view(self):
+        v = View(UItem('analysis_view', style='custom', editor=InstanceEditor()))
+        return v
+
+        # ============= EOF =============================================
+        # def _model_changed(self, new):
+    #     if new:
+    #         av = new.analysis_view
+    #         av.application = self.application
+    # def _analysis_view_changed(self, av):
+    #     if av:
+    #         if hasattr(av, 'history_view'):
+    #             av.on_trait_change(self.handle_load_ages, 'history_view:load_ages_needed')
+    #             av.on_trait_change(self.handle_load_analyses, 'history_view:blank_selected_:selected')
+    #             av.on_trait_change(self.handle_apply_blank_change, 'history_view:apply_blank_change_needed')
+    #             av.on_trait_change(self.handle_show_iso_evo, 'main_view:show_iso_evo_needed')
+    #
+    # # @on_trait_change('analysis_view:history_view:load_ages_needed')
+    # def handle_load_ages(self, obj):
+    #     left, right = obj
+    #
+    #     oid = self.model.selected_blanks_id
+    #
+    #     self.manager.apply_blank_history(self.model, left.id)
+    #     left.age = self.model.uage.nominal_value
+    #
+    #     self.manager.apply_blank_history(self.model, right.id)
+    #     right.age = self.model.uage.nominal_value
+    #
+    #     self.manager.apply_blank_history(self.model, oid)
+    #
+    #     # meas_analysis=db.get_analysis_uuid(self.model.uuid)
+    #     # orig = meas_analysis.selected_histories.selected_blanks_id
+    #     # meas_analysis.selected_histories.selected_blanks_id = orig
+    #     # self.model.sync_blanks(meas_analysis)
+    #
+    # # @on_trait_change('analysis_view:history_view:blank_selected_:selected')
+    # def handle_load_analyses(self, obj):
+    #     db = self.manager.db
+    #     with db.session_ctx():
+    #         dbblank = db.get_blank(obj.id)
+    #         obj.analyses = [AnalysisRecord(id=ai.analysis.id,
+    #                                        record_id=ai.analysis.record_id) for ai in dbblank.analysis_set]
+    #
+    # # @on_trait_change('analysis_view:history_view:apply_blank_change_needed')
+    # def handle_apply_blank_change(self, obj):
+    #
+    #     apply_to_session, obj = obj
+    #     if apply_to_session:
+    #         self.manager.apply_session_blank_history(self.model, obj.id)
+    #     else:
+    #         self.manager.apply_blank_history(self.model,
+    #                                          obj.id)
+    #
+    # # @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
+    # def handle_show_iso_evo(self, obj):
+    #     from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+    #
+    #     self.manager.load_raw_data(self.model)
+    #
+    #     g = StackedRegressionGraph()
+    #     for ni in obj[::-1]:
+    #         iso = next((i for i in self.model.isotopes.itervalues() if i.name == ni.name), None)
+    #         g.new_plot(padding=[60, 10, 10, 40])
+    #         g.new_series(iso.xs, iso.ys,
+    #                      fit=iso.fit,
+    #                      filter_outliers_dict=iso.filter_outliers_dict)
+    #         g.set_x_limits(min_=0, max_=iso.xs[-1] * 1.1)
+    #         g.set_x_title('Time (s)')
+    #         g.set_y_title(iso.name)
+    #
+    #     g.refresh()
+    #     g.window_title = '{} {}'.format(self.name, ','.join([i.name for i in obj]))
+    #     self.manager.application.open_view(g)
+    #
+    # def set_items(self, item):
+    #     if isinstance(item, (tuple, list)):
+    #         item = item[0]
+    #
+    #     self.model = item
+    #     self.analysis_view = self.model.analysis_view
+    #
+    #     # set name
+    #     r = self.analysis_view.analysis_id
+    #     if self.instance_id:
+    #         r = '{} #{}'.format(r, self.instance_id + 1)
+    #
+    #     self.name = r
+    #
+    #     # set basename
+    #     self.basename = self.analysis_view.analysis_id
+    #

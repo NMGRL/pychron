@@ -15,24 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from traits.api import HasTraits, cached_property, List, Str, Instance, \
-    Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, RGBColor
-from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
-# ============= standard library imports ========================
 import os
 from datetime import datetime
-from matplotlib.cm import get_cmap, cmap_d
 from itertools import groupby
-# ============= local library imports  ==========================
-from pychron.canvas.utils import load_holder_canvas
-from pychron.core.helpers.filetools import view_file
-from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
+from chaco.default_colormaps import color_map_name_dict, color_map_dict
+from traits.api import HasTraits, cached_property, List, Str, Instance, \
+    Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, \
+    RGBColor
+from traitsui.api import View, Item, EnumEditor, UItem, ListStrEditor
+from xlwt import Workbook
+
+from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.canvas.utils import load_holder_canvas
+from pychron.core.helpers.filetools import view_file, unique_path
+from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
+from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
+from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 def make_bound(st):
@@ -47,23 +51,6 @@ def make_position_str(pos):
     s = ''
     if pos:
         ss = group_position(pos, make_bound)
-        # pos = sorted(pos)
-        #
-        # pp = pos[0]
-        # stack = [pp]
-        # ss = []
-        #
-        # for pi in pos[1:]:
-        # if not pp + 1 == pi:
-        # ss.append(make_bound(stack))
-        #         stack = []
-        #
-        #     stack.append(pi)
-        #     pp = pi
-        #
-        # if stack:
-        #     ss.append(make_bound(stack))
-
         s = ','.join(ss)
     return s
 
@@ -109,11 +96,10 @@ class LoadPosition(HasTraits):
                                 self.irrad_position)
 
 
-maps = [m for m in cmap_d if not m.endswith("_r")]
+maps = color_map_name_dict.keys()
 
 
 class LoadingManager(DVCIrradiationable):
-    # db = Instance('pychron.dvc.dvc_database.DVCDatabase')
     _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
     username = Str
@@ -143,7 +129,7 @@ class LoadingManager(DVCIrradiationable):
     # table signal/events
     refresh_table = Event
     scroll_to_row = Int
-    selected_positions = Any
+    selected_positions = List
 
     load_name = Str
     loads = List
@@ -177,9 +163,11 @@ class LoadingManager(DVCIrradiationable):
     interaction_mode = Enum('Entry', 'Info', 'Edit')
     suppress_update = False
 
+    use_measured = Bool(False)
+
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
-        self.dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        self.dvc = self.application.get_service(DVC_PROTOCOL)
 
     def load(self):
         if self.canvas:
@@ -192,59 +180,80 @@ class LoadingManager(DVCIrradiationable):
         if self.canvas:
             self.canvas.clear_all()
 
+    def get_selection(self):
+        from pychron.loading.load_view_selection import LoadViewSelectionModel, LoadViewSelectionController
+
+        self.setup()
+        if self.loads:
+            self.use_measured = True
+            self.load_name = self.loads[-1]
+            oeditable = self.canvas.editable
+            self.canvas.editable = False
+            lvsm = LoadViewSelectionModel(manager=self)
+            lvc = LoadViewSelectionController(model=lvsm)
+            info = open_view(lvc)
+            self.canvas.editable = oeditable
+            self.use_measured = False
+            if info.result:
+                return lvsm.selected_positions
+        else:
+            self.warning_dialog('No Loads available')
+
     def load_load_by_name(self, loadtable, group_labnumbers=True):
 
         self.canvas = self.make_canvas(loadtable)
 
-        with self.dvc.db.session_ctx():
-            if isinstance(loadtable, (str, unicode)):
-                loadtable = self.dvc.db.get_loadtable(loadtable)
+        if isinstance(loadtable, (str, unicode)):
+            loadtable = self.dvc.db.get_loadtable(loadtable)
 
-            self.positions = []
-            if not loadtable:
-                return
+        self.positions = []
+        if not loadtable:
+            return
 
-            for ln, poss in groupby(loadtable.loaded_positions,
-                                    key=lambda x: x.identifier):
-                dbpos = self.dvc.db.get_identifier(ln)
-                sample = ''
-                project = ''
-                if dbpos.sample:
-                    sample = dbpos.sample.name
-                    project = dbpos.sample.project.name
+        for ln, poss in groupby(loadtable.loaded_positions,
+                                key=lambda x: x.identifier):
+            dbpos = self.dvc.db.get_identifier(ln)
+            sample = ''
+            project = ''
+            if dbpos.sample:
+                sample = dbpos.sample.name
+                project = dbpos.sample.project.name
 
-                dblevel = dbpos.level
-                irrad = dblevel.irradiation.name
-                level = dblevel.name
-                irradpos = dbpos.position
-                irradiation = '{} {}{}'.format(irrad, level, irradpos)
+            dblevel = dbpos.level
+            irrad = dblevel.irradiation.name
+            level = dblevel.name
+            irradpos = dbpos.position
+            irradiation = '{} {}{}'.format(irrad, level, irradpos)
 
-                pos = []
-                for pi in poss:
-                    pid = str(pi.position)
-                    item = self.canvas.scene.get_item(pid)
-                    if item:
-                        item.fill = True
-                        item.add_labnumber_label(
-                            dbpos.identifier,
-                            # ox=-10, oy=-10,
-                            visible=self.show_labnumbers)
+            pos = []
+            for pi in poss:
+                pid = str(pi.position)
+                item = self.canvas.scene.get_item(pid)
+                if item:
+                    item.fill = True
+                    item.add_labnumber_label(
+                        dbpos.identifier,
+                        # ox=-10, oy=-10,
+                        visible=self.show_labnumbers)
 
-                        oy = -10 if not self.show_labnumbers else -20
-                        wt = '' if pi.weight is None else str(pi.weight)
-                        item.add_weight_label(wt, oy=oy, visible=self.show_weights)
-                        item.weight = pi.weight
-                        item.note = pi.note
-                        item.sample = sample
-                        item.irradiation = irradiation
+                    oy = -10 if not self.show_labnumbers else -20
+                    wt = '' if pi.weight is None else str(pi.weight)
+                    item.add_weight_label(wt, oy=oy,
+                                          visible=self.show_weights)
+                    item.weight = pi.weight
+                    item.note = pi.note
+                    item.sample = sample
+                    item.irradiation = irradiation
 
-                    pos.append(pid)
+                pos.append(pid)
 
-                if group_labnumbers:
-                    self._add_position(pos, ln, sample, project, irrad, level, irradpos)
-                else:
-                    for pi in pos:
-                        self._add_position([pi], ln, sample, project, irrad, level, irradpos)
+            if group_labnumbers:
+                self._add_position(pos, ln, sample, project, irrad, level,
+                                   irradpos)
+            else:
+                for pi in pos:
+                    self._add_position([pi], ln, sample, project, irrad,
+                                       level, irradpos)
 
         self.positions = sorted(self.positions, key=lambda x: x.positions[0])
         self._set_group_colors()
@@ -252,59 +261,102 @@ class LoadingManager(DVCIrradiationable):
 
     def make_canvas(self, new, editable=True):
         db = self.dvc.db
-        with db.session_ctx():
 
-            #         with session(None) as s:
-            lt = db.get_loadtable(new)
-            c = self.canvas
-            if not c:
-                c = LoadingCanvas(
-                    view_x_range=(-2, 2),
-                    view_y_range=(-2, 2),
-                    editable=editable)
+        lt = db.get_loadtable(new)
+        c = self.canvas
+        if not c:
+            c = LoadingCanvas(
+                view_x_range=(-2, 2),
+                view_y_range=(-2, 2),
+                editable=editable)
 
-            if lt and lt.holderName:
-                holes = self.dvc.get_load_holder_holes(lt.holderName)
-                load_holder_canvas(c, holes,
-                                   show_hole_numbers=self.show_hole_numbers)
+        if lt and lt.holderName:
+            self.tray = lt.holderName
+            holes = self.dvc.get_load_holder_holes(lt.holderName)
+            load_holder_canvas(c, holes,
+                               show_hole_numbers=self.show_hole_numbers)
 
-                for pi in lt.loaded_positions:
-                    item = c.scene.get_item(str(pi.position))
-                    if item:
-                        item.fill = True
-                        item.identifier = pi.identifier
-                        item.add_labnumber_label(item.identifier)
+            for pi in lt.loaded_positions:
+                item = c.scene.get_item(str(pi.position))
+                if item:
+                    item.fill = True
+                    item.identifier = pi.identifier
+                    item.add_labnumber_label(item.identifier)
 
-                for pi in lt.measured_positions:
-                    item = c.scene.get_item(str(pi.position))
-                    if item:
-                        if pi.is_degas:
-                            item.degas_indicator = True
-                        else:
-                            item.measured_indicator = True
+            for pi in lt.measured_positions:
+                item = c.scene.get_item(str(pi.position))
+                if item:
+                    if pi.is_degas:
+                        item.degas_indicator = True
+                    else:
+                        item.measured_indicator = True
 
         self._set_group_colors(c)
         return c
 
     def setup(self):
-        if self.dvc.db.connected:
+        db = self.dvc.db
+        if db.connected:
             ls = self._get_load_names()
             if ls:
                 self.loads = ls
 
-            # ts = self._get_trays()
-            ts = self.dvc.db.get_load_holders()
+            ts = self.dvc.get_load_holders()
             if ts:
                 self.trays = ts
 
-            us = self.dvc.db.get_users()
+            us = db.get_usernames()
             if us:
                 self.available_user_names = us
 
-            # ls = self._get_last_load()
             return True
 
     # actions
+    def generate_results(self):
+        self.debug('generate results')
+        dvc = self.dvc
+        db = dvc.db
+
+        positions = sorted([pp for p in self.positions
+                            for pp in p.positions])
+
+        wb = Workbook()
+        sh = wb.add_sheet('Results')
+
+        for i, attr in enumerate(('Analysis', 'Position', 'Age',
+                                  'Error', 'Weight', 'Note')):
+            wb.sheet(0, i, attr)
+
+        wb.nrows = 1
+
+        def func(x, prog, i, n):
+            dbmps = db.get_measured_positions(self.load_name, x)
+            dbpos = db.get_load_position(self.load_name, x)
+
+            weight, note = dbpos.weight, dbpos.note
+
+            for dbmp in dbmps:
+                rid = dbmp.analysis.record_id
+                # rid = 1
+                if prog:
+                    prog.change_message('Write results for {},{}'.format(rid, x))
+
+                # ai = dvc.make_analyses((rid,))
+                age, error = 0, 0
+
+                sh.write(wb.nrows, 0, rid)
+                sh.write(wb.nrows, 1, x)
+                sh.write(wb.nrows, 2, age)
+                sh.write(wb.nrows, 3, error)
+                sh.write(wb.nrows, 4, weight)
+                sh.write(wb.nrows, 5, note)
+                wb.nrows += 1
+
+        progress_iterator(positions, func, threshold=1)
+
+        path, _ = unique_path(paths.load_results_dir, self.load_name, extension='.xls')
+        wb.save(path)
+
     def configure_pdf(self):
         options = self._pdf_writer.options
 
@@ -314,12 +366,14 @@ class LoadingManager(DVCIrradiationable):
         options.top_margin = 0.5
         options.bottom_margin = 0.5
 
-        options.load_yaml()
+        options.load()
         info = options.edit_traits()
         if info.result:
-            options.dump_yaml()
+            options.dump()
 
     def save_pdf(self):
+        self.debug('save pdf')
+
         # p = LoadingPDFWriter()
         ln = self.load_name
         if ln:
@@ -366,13 +420,23 @@ class LoadingManager(DVCIrradiationable):
         else:
             self.information_dialog('Please select a load')
 
-    def save(self, save_positions=True):
+    def save_tray_pdf(self):
+        p = os.path.join(paths.loading_dir, self.tray)
+        gc = PdfPlotGraphicsContext(filename=p)
+        gc.render_component(self.canvas)
+        gc.save()
+
+    def save(self, save_positions=True, inform=False):
         self.debug('saving load to database')
-        with self.dvc.db.session_ctx():
-            self._save_load()
-            if save_positions:
-                self._save_positions(self.load_name)
-            self.dirty = False
+        self._save_load()
+        if save_positions:
+            self._save_positions(self.load_name)
+        self.dirty = False
+
+        if inform:
+            msg = 'Saved {} to database'.format(self.load_name)
+            self.information_dialog(msg)
+
         return True
 
     def set_edit(self):
@@ -393,7 +457,6 @@ class LoadingManager(DVCIrradiationable):
         self.interaction_mode = 'Info'
 
     # private
-
     def _get_load_names(self):
         return self.dvc.db.get_loads()
         # with self.dvc.db.session_ctx():
@@ -411,10 +474,9 @@ class LoadingManager(DVCIrradiationable):
     def _get_last_load(self, set_tray=True):
 
         # with self.dvc.db.session_():
-        with self.dvc.db.session_ctx():
-            lt = self.dvc.db.get_loadtable()
-            if lt:
-                self.load_name = lt.name
+        lt = self.dvc.db.get_loadtable()
+        if lt:
+            self.load_name = lt.name
                 #                 if set_tray and lt.holder_:
                 #                     self.load_load(lt, set_tray=set_tray)
 
@@ -500,7 +562,6 @@ class LoadingManager(DVCIrradiationable):
             idx = self.labnumbers.index(self.labnumber)
             try:
                 self.labnumber = self.labnumbers[idx + 1]
-                print self.labnumber, idx
                 self.refresh_labnumber = True
             except IndexError:
                 idx = self.levels.index(self.level)
@@ -508,7 +569,7 @@ class LoadingManager(DVCIrradiationable):
                     self.level = self.levels[idx + 1]
                     self.labnumber = self.labnumbers[0]
                     self.refresh_level = True
-                    print 'increment level', self.level
+                    self.debug('increment level {}'.format(self.level))
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
@@ -517,9 +578,7 @@ class LoadingManager(DVCIrradiationable):
                         self.labnumber = self.labnumbers[0]
                         self.refresh_irradiation = True
                     except IndexError:
-                        pass
-
-                        print self.level, self.levels, self.level in self.levels, self.labnumber
+                        print 'lm autoincrement', self.level, self.levels, self.level in self.levels, self.labnumber
 
     def _set_position(self, canvas_hole):
 
@@ -529,7 +588,8 @@ class LoadingManager(DVCIrradiationable):
         else:
             self._new_position_group(canvas_hole)
 
-    def _add_position(self, pos, identifier, sample, project, irradiation, level, ipos):
+    def _add_position(self, pos, identifier, sample, project, irradiation,
+                      level, ipos):
         pos = map(int, pos)
         lp = LoadPosition(labnumber=identifier,
                           sample=sample,
@@ -540,26 +600,6 @@ class LoadingManager(DVCIrradiationable):
                           positions=pos)
         self.positions.append(lp)
 
-        # ln = self.dvc.db.get_labnumber(ln)
-        # ip = ln.irradiation_position
-        # level = ip.level
-        # irrad = level.irradiation
-        # sample = ''
-        # project = ''
-        # if ln.sample:
-        # sample = ln.sample.name
-        #     if ln.sample.project:
-        #         project = ln.sample.project.name
-
-        # lp = LoadPosition(labnumber=ln.identifier,
-        #                   sample=sample,
-        #                   project=project,
-        #                   irradiation=irrad.name,
-        #                   level=level.name,
-        #                   irrad_position=int(ip.position),
-        #                   positions=pos)
-
-
     def _save_load(self):
         db = self.dvc.db
         nln = self.new_load_name
@@ -568,7 +608,14 @@ class LoadingManager(DVCIrradiationable):
             if nln == lln:
                 return 'duplicate name'
             else:
-                self.info('adding load {} {} to database'.format(nln, self.tray))
+                self.info(
+                    'adding load {} {} to database'.format(nln, self.tray))
+
+                dbtray = db.get_load_holder(self.tray)
+                if dbtray is None:
+                    db.add_load_holder(self.tray)
+                    db.flush()
+
                 db.add_load(nln, holder=self.tray)
                 db.flush()
                 ls = self._get_load_names()
@@ -578,72 +625,68 @@ class LoadingManager(DVCIrradiationable):
 
     def _save_positions(self, name):
         db = self.dvc.db
-        with db.session_ctx() as sess:
-            lt = db.get_loadtable(name=name)
+        lt = db.get_loadtable(name=name)
 
-            for li in lt.loaded_positions:
-                sess.delete(li)
+        for li in lt.loaded_positions:
+            db.delete(li)
 
-            for pi in self.positions:
-                ln = pi.labnumber
-                self.info('updating positions for load:{}, labnumber: {}'.format(lt.name, ln))
-                scene = self.canvas.scene
-                for pp in pi.positions:
-                    ip = scene.get_item(str(pp))
-                    self.debug('weight: {} note: {}'.format(ip.weight, ip.note))
+        for pi in self.positions:
+            ln = pi.labnumber
+            self.info('updating positions for load:{}, labnumber: {}'.format(lt.name, ln))
+            scene = self.canvas.scene
+            for pp in pi.positions:
+                ip = scene.get_item(str(pp))
+                self.debug('weight: {} note: {}'.format(ip.weight, ip.note))
 
-                    i = db.add_load_position(ln,
-                                             position=pp,
-                                             weight=ip.weight,
-                                             note=ip.note)
-                    lt.loaded_positions.append(i)
+                i = db.add_load_position(ln,
+                                         position=pp,
+                                         weight=ip.weight,
+                                         note=ip.note)
+                lt.loaded_positions.append(i)
+        db.commit()
 
     @cached_property
     def _get_labnumbers(self):
         db = self.dvc.db
         r = []
         if db.connected:
-            with db.session_ctx():
-                level = db.get_irradiation_level(self.irradiation,
-                                                 self.level)
-                if level:
-                    #             self._positions = [str(li.position) for li in level.positions]
-                    r = sorted([li.identifier
-                                for li in level.positions if li.identifier])
-                    if r:
-                        self.labnumber = r[0]
+            level = db.get_irradiation_level(self.irradiation,
+                                             self.level)
+            if level:
+                #             self._positions = [str(li.position) for li in level.positions]
+                r = sorted([li.identifier
+                            for li in level.positions if li.identifier])
+                if r:
+                    self.labnumber = r[0]
         return r
 
     def _get_irradiation_position_record(self):
-        with self.dvc.db.session_ctx():
-            level = self.dvc.db.get_irradiation_level(self.irradiation,
-                                                      self.level)
-            if level:
-                return next((pi for pi in level.positions
-                             if pi.identifier == self.labnumber), None)
+        level = self.dvc.db.get_irradiation_level(self.irradiation,
+                                                  self.level)
+        if level:
+            return next((pi for pi in level.positions
+                         if pi.identifier == self.labnumber), None)
 
     @cached_property
     def _get_project(self):
         project = ''
         if self.dvc.db.connected:
-            with self.dvc.db.session_ctx():
-                pos = self._get_irradiation_position_record()
-                try:
-                    project = pos.sample.project.name
-                except AttributeError:
-                    pass
+            pos = self._get_irradiation_position_record()
+            try:
+                project = pos.sample.project.name
+            except AttributeError:
+                pass
         return project
 
     @cached_property
     def _get_sample(self):
         sample = ''
         if self.dvc.db.connected:
-            with self.dvc.db.session_ctx():
-                pos = self._get_irradiation_position_record()
-                try:
-                    sample = pos.sample.name
-                except AttributeError:
-                    pass
+            pos = self._get_irradiation_position_record()
+            try:
+                sample = pos.sample.name
+            except AttributeError:
+                pass
         return sample
 
     @cached_property
@@ -654,10 +697,9 @@ class LoadingManager(DVCIrradiationable):
     def _get_irradiation_hole(self):
         ir = ''
         if self.dvc.db.connected:
-            with self.dvc.db.session_ctx():
-                pos = self._get_irradiation_position_record()
-                if pos is not None:
-                    ir = pos.position
+            pos = self._get_irradiation_position_record()
+            if pos is not None:
+                ir = pos.position
         return ir
 
     def _new_load_view(self):
@@ -665,35 +707,34 @@ class LoadingManager(DVCIrradiationable):
                  Item('tray', editor=EnumEditor(name='trays')),
                  kind='livemodal',
                  title='New Load Name',
+                 width=300,
                  buttons=['OK', 'Cancel'])
         return v
 
-    # ===============================================================================
+    # ==========================================================================
     # handlers
-    # ===============================================================================
+    # ==========================================================================
     def _archive_button_fired(self):
         ls = LoadSelection(loads=self.loads)
         info = ls.edit_traits()
         if info.result:
             db = self.dvc.db
-            with db.session_ctx():
-                loads = db.get_loads(names=ls.selected)
-                for li in loads:
-                    li.archived = True
-
+            loads = db.get_loads(names=ls.selected)
+            for li in loads:
+                li.archived = True
+            db.commit()
             self.loads = self._get_load_names()
 
     def _add_button_fired(self):
         db = self.dvc.db
-        with db.session_ctx():
-            ln = db.get_latest_load()
+        ln = db.get_latest_load()
 
-            try:
-                ln = ln.name
-                nv = int(ln) + 1
-            except (ValueError, IndexError, AttributeError), e:
-                print 'lm add button exception', e
-                nv = 1
+        try:
+            ln = ln.name
+            nv = int(ln) + 1
+        except (ValueError, IndexError, AttributeError), e:
+            print 'lm add button exception', e
+            nv = 1
 
         self.new_load_name = nv
 
@@ -706,22 +747,23 @@ class LoadingManager(DVCIrradiationable):
     def _delete_button_fired(self):
         ln = self.load_name
         if ln:
-            if not self.confirmation_dialog('Are you sure you want to delete {}?'.format(ln)):
+            if not self.confirmation_dialog(
+                    'Are you sure you want to delete {}?'.format(ln)):
                 return
 
-            with self.dvc.db.session_ctx() as sess:
-                # delete the load and any associated records
-                dbload = self.dvc.db.get_loadtable(name=ln)
-                if dbload:
-                    for ps in (dbload.loaded_positions, dbload.measured_positions):
-                        for pos in ps:
-                            sess.delete(pos)
+            db = self.dvc.db
+            # delete the load and any associated records
+            dbload = db.get_loadtable(name=ln)
+            if dbload:
+                for ps in (
+                        dbload.loaded_positions, dbload.measured_positions):
+                    for pos in ps:
+                        db.delete(pos)
 
-                    sess.delete(dbload)
-                    sess.commit()
+                db.delete(dbload)
+                db.commit()
 
             self._refresh_loads()
-
 
     def _refresh_loads(self):
         self.loads = self._get_load_names()
@@ -740,9 +782,9 @@ class LoadingManager(DVCIrradiationable):
             for lp in self.positions:
                 for pid in lp.positions:
                     item = self.canvas.scene.get_item(str(pid))
-
                     item.labnumber_label.visible = new
                     item.weight_label.oy = -20 if new else -10
+                    item.labnumber_label.request_layout()
 
             self.canvas.request_redraw()
 
@@ -752,6 +794,7 @@ class LoadingManager(DVCIrradiationable):
                 for pid in lp.positions:
                     item = self.canvas.scene.get_item(str(pid))
                     item.weight_label.visible = new
+                    item.weight_label.request_layout()
 
             self.canvas.request_redraw()
 
@@ -786,25 +829,36 @@ class LoadingManager(DVCIrradiationable):
 
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
+        if not new:
+            return
+
         if not self.load_name:
             self.warning_dialog('Select a load')
             return
 
         if not self.canvas.editable:
-            ps = self.canvas.get_selection()
-            pp = []
-            for p in ps:
-                po = next((ppp for ppp in self.positions if int(p.name) in ppp.positions))
-                pp.append(po)
+            if self.use_measured:
+                if new.measured_indicator:
+                    p = next((p for p in self.selected_positions if int(new.name) in p.positions), None)
+                    if p:
+                        self.selected_positions.remove(p)
+                    else:
+                        self.selected_positions.append(LoadPosition(positions=[int(new.name)],
+                                                                    labnumber=new.identifier))
+            else:
+                pp = []
+                ps = self.canvas.get_selection()
+                for p in ps:
+                    po = next((ppp for ppp in self.positions if
+                               int(p.name) in ppp.positions), None)
+                    if po:
+                        pp.append(po)
 
-            self.selected_positions = pp
+                self.selected_positions = pp
             return
 
         if not self.username:
             self.warning_dialog('Set a username')
-            return
-
-        if not new:
             return
 
         if self.canvas.event_state in ('edit', 'info'):
@@ -848,7 +902,7 @@ class LoadingManager(DVCIrradiationable):
             canvas = self.canvas
 
         if self.use_cmap:
-            c = get_cmap(self.cmap_name)
+            c = color_map_dict[self.cmap_name]
         else:
             c = lambda x: (1, 1, 0, 1)
 
@@ -870,6 +924,6 @@ class LoadingManager(DVCIrradiationable):
             p.color = color
             for pp in p.positions:
                 pp = scene.get_item(str(pp), klass=LoadIndicator)
-                pp.fill_color = color
+                pp.fill_color = ','.join(map(lambda x: str(int(x * 255)), color))
 
 # ============= EOF =============================================

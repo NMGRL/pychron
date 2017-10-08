@@ -5,3 +5,5 @@ Configuration
 
   plugins
   el_canvas
+  startup_tests
+  tray_map

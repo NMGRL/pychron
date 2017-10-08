@@ -75,7 +75,7 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
             #1/e**2=2e-8
             #e**-0.5
 
-    def _engine_factory(self, fy, X):
+    def _engine_factory(self, fy, X, check_integrity=True):
         if self.use_weighted_fit:
             return WLS(fy, X, weights=self._get_weights())
         else:

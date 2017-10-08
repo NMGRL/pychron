@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 from traits.api import Dict
 # ============= standard library imports ========================
-import weakref
 import os
 from numpy.core.numeric import Inf
 # ============= local library imports  ==========================
@@ -91,18 +90,11 @@ class ExtractionLineScene(Scene):
                 # if x <= px <= x + w and y <= py <= y + h:
                 # return c
 
-    def _get_floats(self, elem, name):
-        return map(float, elem.find(name).text.split(','))
-
-    def _make_color(self, c):
-        if not isinstance(c, str):
-            c = ','.join(map(str, map(int, c)))
-            c = '({})'.format(c)
-        return c
-
-    def _new_rectangle(self, elem, c, bw=3,
+    def _new_rectangle(self, cp, elem, c, bw=3,
                        layer=1,
-                       origin=None, type_tag=''):
+                       origin=None, klass=None, type_tag=''):
+        if klass is None:
+            klass = RoundedRectangle
         if origin is None:
             ox, oy = 0, 0
         else:
@@ -110,9 +102,11 @@ class ExtractionLineScene(Scene):
 
         key = elem.text.strip()
         display_name = elem.get('display_name', key)
+        # print key, display_name
         fill = to_bool(elem.get('fill', 'T'))
 
-        x, y = self._get_floats(elem, 'translation')
+        # x, y = self._get_floats(elem, 'translation')
+        x, y = self._get_translation(cp, elem)
         w, h = self._get_floats(elem, 'dimension')
 
         color = elem.find('color')
@@ -128,8 +122,6 @@ class ExtractionLineScene(Scene):
         # elif
         # else:
         # klass = RoundedRectangle
-
-        klass = KLASS_MAP.get(type_tag, RoundedRectangle)
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
@@ -270,7 +262,7 @@ class ExtractionLineScene(Scene):
                          width=width)
                 self.add_item(l, layer=layer)
 
-    def _new_label(self, label, name, c,
+    def _new_label(self, cp, label, name, c,
                    layer=1,
                    origin=None, klass=None, **kw):
         if origin is None:
@@ -279,10 +271,12 @@ class ExtractionLineScene(Scene):
             ox, oy = origin
         if klass is None:
             klass = Label
-        x, y = 0, 0
-        trans = label.find('translation')
-        if trans is not None:
-            x, y = map(float, trans.text.split(','))
+
+        x, y = self._get_translation(cp, label)
+        # x, y = 0, 0
+        # trans = label.find('translation')
+        # if trans is not None:
+        #     x, y = map(float, trans.text.split(','))
 
         c = self._make_color(c)
         l = klass(ox + x, oy + y,
@@ -298,7 +292,7 @@ class ExtractionLineScene(Scene):
         self.add_item(l, layer=layer)
         return l
 
-    def _new_image(self, image):
+    def _new_image(self, cp, image):
         path = image.text.strip()
         if not os.path.isfile(path):
             for di in (paths.app_resources, paths.icons, paths.resources):
@@ -309,7 +303,8 @@ class ExtractionLineScene(Scene):
                         break
 
         if os.path.isfile(path):
-            x, y = self._get_floats(image, 'translation')
+            # x, y = self._get_floats(image, 'translation')
+            x, y = self._get_translation(cp, image)
             scale = None
             if image.find('scale') is not None:
                 scale = self._get_floats(image, 'scale')
@@ -321,9 +316,11 @@ class ExtractionLineScene(Scene):
         ox, oy = origin
         ndict = dict()
         vp = SwitchParser(vpath)
+
         for s in cp.get_elements('switch'):
             key = s.text.strip()
-            x, y = self._get_floats(s, 'translation')
+            x, y = self._get_translation(cp, s)
+            # x, y = self._get_floats(s, 'translation')
             radius = 0.75
             r = s.find('radius')
             if r:
@@ -340,13 +337,18 @@ class ExtractionLineScene(Scene):
                     y = 22
                 v.set_label(label, x, y)
 
+            associations = s.findall('association')
+            if associations:
+                for a in associations:
+                    v.associations.append(a.text.strip())
+
             self.add_item(v, layer=1)
             ndict[key] = v
 
         for v in cp.get_elements('valve'):
             key = v.text.strip()
-            x, y = self._get_floats(v, 'translation')
-
+            # x, y = self._get_floats(v, 'translation')
+            x, y = self._get_translation(cp, v)
             # get the description from valves.xml
             vv = vp.get_valve(key)
             desc = ''
@@ -371,14 +373,16 @@ class ExtractionLineScene(Scene):
 
         for rv in cp.get_elements('rough_valve'):
             key = rv.text.strip()
-            x, y = self._get_floats(rv, 'translation')
+            # x, y = self._get_floats(rv, 'translation')
+            x, y = self._get_translation(cp, rv)
             v = RoughValve(x + ox, y + oy, name=key)
             self.add_item(v, layer=1)
             ndict[key] = v
 
         for mv in cp.get_elements('manual_valve'):
             key = mv.text.strip()
-            x, y = self._get_floats(mv, 'translation')
+            x, y = self._get_translation(cp, mv)
+            # x, y = self._get_floats(mv, 'translation')
             vv = vp.get_manual_valve(key)
 
             desc = ''
@@ -403,13 +407,13 @@ class ExtractionLineScene(Scene):
             else:
                 c = (204, 204, 204)
             name = '{:03}'.format(i)
-            self._new_label(l, name, c)
+            self._new_label(cp, l, name, c)
 
         for i, line in enumerate(cp.get_elements('line')):
             self._new_line(line, 'l{}'.format(i))
 
         for i, image in enumerate(cp.get_elements('image')):
-            self._new_image(image)
+            self._new_image(cp, image)
 
     def _load_connections(self, cp, origin, color_dict):
         for i, conn in enumerate(cp.get_elements('connection')):
@@ -430,14 +434,15 @@ class ExtractionLineScene(Scene):
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',
                     'turbo', 'getter', 'tank',
-                    'ionpump', 'gauge'):
+                    'ionpump', 'gauge', 'rectangle'):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
                 else:
                     c = (204, 204, 204)
 
-                self._new_rectangle(b, c, bw=5, origin=origin, type_tag=key)
+                klass = KLASS_MAP.get(key, RoundedRectangle)
+                self._new_rectangle(cp, b, c, bw=5, origin=origin, klass=klass, type_tag=key)
 
     def _load_pipettes(self, cp, origin, color_dict):
         if 'pipette' in color_dict:
@@ -446,7 +451,7 @@ class ExtractionLineScene(Scene):
             c = (204, 204, 204)
 
         for p in cp.get_elements('pipette'):
-            rect = self._new_rectangle(p, c, bw=5,
+            rect = self._new_rectangle(cp, p, c, bw=5,
                                        origin=origin, type_tag='pipette')
             # add vlabel
             vlabel = p.find('vlabel')
@@ -456,7 +461,7 @@ class ExtractionLineScene(Scene):
                 if origin:
                     ox, oy = origin
 
-                self._new_label(vlabel, name, c,
+                self._new_label(cp, vlabel, name, c,
                                 origin=(ox + rect.x, oy + rect.y),
                                 klass=ValueLabel,
                                 value=0)
@@ -476,7 +481,7 @@ class ExtractionLineScene(Scene):
             lox, loy = self._get_floats(legend, 'origin')
             for b in legend.findall('rect'):
                 # print b
-                rect = self._new_rectangle(b, c, bw=5, origin=(ox + lox, oy + loy),
+                rect = self._new_rectangle(cp, b, c, bw=5, origin=(ox + lox, oy + loy),
                                            type_tag='rect',
                                            layer='legend')
 
@@ -487,7 +492,7 @@ class ExtractionLineScene(Scene):
 
             for i, label in enumerate(legend.findall('llabel')):
                 name = '{:03d}label'.format(i)
-                ll = self._new_label(label, name, c,
+                ll = self._new_label(cp, label, name, c,
                                      layer='legend',
                                      origin=(ox + lox, oy + loy))
                 maxx = max(maxx, ll.x)
@@ -551,7 +556,7 @@ class ExtractionLineScene(Scene):
                     ox, oy = map(float, o.text.split(','))
 
                 for i, image in enumerate(cp.get_elements('image')):
-                    self._new_image(image)
+                    self._new_image(cp, image)
 
         return (ox, oy), color_dict
 

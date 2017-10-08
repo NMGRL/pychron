@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from git.exc import GitCommandError
+import os
+from datetime import datetime
+
+from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
-# ============= standard library imports ========================
-from datetime import datetime
-import os
-from git import Repo, Blob, Diff
 
 
 # ============= local library imports  ==========================
@@ -58,27 +57,51 @@ def from_gitlog(obj, path, tag):
     return g
 
 
+def gitlog(repo, branch=None, args=None, path=None):
+    cmd = []
+    if branch:
+        cmd.append(branch)
+
+    fmt = '%H|%cn|%ce|%ct|%s'
+    cmd.append('--pretty={}'.format(fmt))
+
+    if args:
+        cmd.extend(args)
+
+    if path:
+        cmd.extend(['--', path])
+    return repo.git.log(*cmd)
+
+
+def get_head_commit(repo):
+    txt = gitlog(repo, args=('-n', '1', 'HEAD'))
+    return from_gitlog(txt.strip(), '', '')
+
+
 def get_commits(repo, branch, path, tag, *args):
     if isinstance(repo, (str, unicode)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
 
-    fmt = 'format:%H|%cn|%ce|%ct|%s'
+    txt = gitlog(repo, branch=branch, args=args, path=path)
 
-    cmd = ['git', 'log', branch, '--pretty={}'.format(fmt)]
-    cmd.extend(args)
-    if path:
-        cmd.extend(['--', path])
+    return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 
-    proc = repo.git.execute(cmd, as_process=True)
-    try:
-        proc.wait()
-    except GitCommandError:
-        return []
-
-    if not proc.returncode:
-        return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
+    # print ' '.join(cmd)
+    # print repo.git.execute(' '.join(cmd))
+    # return []
+    # proc = repo.git.execute(cmd, as_process=True)
+    # try:
+    #     proc.wait()
+    # except GitCommandError, e:
+    #     print 'eee', e
+    #     return []
+    # print 'ret', proc.returncode
+    # if not proc.returncode:
+    #     for l in proc.stdout:
+    #         print l.strip()
+    #     return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
 
 def get_diff(repo, a, b, path, change_type='M'):
@@ -98,9 +121,29 @@ def get_diff(repo, a, b, path, change_type='M'):
 
 def fu(repo, text):
     for header in Diff.re_header.finditer(text):
-        a_path, b_path, similarity_index, rename_from, rename_to, \
-        old_mode, new_mode, new_file_mode, deleted_file_mode, \
-        a_blob_id, b_blob_id, b_mode = header.groups()
+        groups = header.groups()
+
+        a_path_fallback = groups[0]
+        b_path_fallback = groups[1]
+        old_mode = groups[2]
+        new_mode = groups[3]
+        rename_from = groups[4]
+        rename_to = groups[5]
+        new_file_mode = groups[6]
+        deleted_file_mode = groups[7]
+        a_blob_id = groups[8]
+        b_blob_id = groups[9]
+        b_mode = groups[10]
+        a_path = groups[11]
+        b_path = groups[12]
+
+        # print groups
+        # print len(groups)
+        # a_path, b_path, \
+        # similarity_index, rename_from, rename_to, \
+        # old_mode, new_mode, new_file_mode, deleted_file_mode, \
+        # a_blob_id, b_blob_id, b_mode = header.groups()
+
         # new_file, deleted_file = bool(new_file_mode), bool(deleted_file_mode)
 
         # Our only means to find the actual text is to see what has not been matched by our regex,

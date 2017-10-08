@@ -17,9 +17,11 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import subprocess
 import os
+import subprocess
 from os import path
+
+
 # ============= local library imports  ==========================
 
 def ifort_build(name, out):

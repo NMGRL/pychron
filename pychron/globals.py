@@ -21,6 +21,7 @@ from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
+    cert_file = None
     prev_db_kind = None
     dev_pwd = '6e06f5d370baef1a115ae2f134fae22fbfbe79dc'  # Argon
     # use_shared_memory = False
@@ -42,6 +43,7 @@ class Globals(object):
     ignore_chiller_unavailable = False
     ignore_initialization_required = False
     ignore_initialization_questions = False
+    ignore_shareable = False
 
     video_test = False
     #    video_test = True
@@ -69,6 +71,8 @@ class Globals(object):
     spectrometer_debug = False
     system_monitor_debug = False
     figure_debug = False
+    browser_debug = False
+    auto_pipeline_debug = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -78,6 +82,13 @@ class Globals(object):
     use_logger_display = True
     use_warning_display = True
     recall_debug = False
+    pipeline_debug = False
+
+    pipeline_template = None
+    select_default_data = True
+    run_pipeline = False
+
+    valve_debug = False
 
     dev_confirm_exit = True
     username = 'root'
@@ -88,6 +99,15 @@ class Globals(object):
     random_tip_enabled = True
     client_only_locking = True
 
+    irradiation_pdf_debug = False
+    entry_labbook_debug = False
+    entry_irradiation_import_from_file_debug = False
+
+    active_analyses = None
+    active_branch = None
+
+    own_spectrometer = None
+
     def build(self, ip):
 
         for attr, func in [('use_ipc', to_bool),
@@ -96,6 +116,7 @@ class Globals(object):
                            ('ignore_chiller_unavailable', to_bool),
                            ('ignore_initialization_required', to_bool),
                            ('ignore_initialization_questions', to_bool),
+                           ('ignore_shareable', to_bool),
                            ('show_infos', to_bool),
                            ('show_warnings', to_bool),
                            ('video_test', to_bool),
@@ -105,7 +126,16 @@ class Globals(object):
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
                            ('recall_debug', to_bool),
+
+                           ('auto_pipeline_debug', to_bool),
+                           ('pipeline_debug', to_bool),
+                           ('run_pipeline', to_bool),
+                           ('select_default_data', to_bool),
+                           ('pipeline_template', str),
+
                            ('figure_debug', to_bool),
+                           ('browser_debug', to_bool),
+                           ('valve_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),
                            ('use_startup_tests', to_bool),
@@ -113,8 +143,13 @@ class Globals(object):
                            ('dev_confirm_exit', to_bool),
                            ('random_tip_enabled', to_bool),
                            ('test_experiment_set', str),
+                           ('own_spectrometer', str),
                            ('system_monitor_debug', to_bool),
-                           ('client_only_locking', to_bool)]:
+                           ('entry_labbook_debug', to_bool),
+                           ('irradiation_pdf_debug', to_bool),
+                           ('entry_irradiation_import_from_file_debug', to_bool),
+                           ('client_only_locking', to_bool),
+                           ('cert_file', str)]:
             a = ip.get_global(attr)
             if a:
                 setattr(globalv, attr, func(a))

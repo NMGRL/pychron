@@ -22,7 +22,7 @@ from pychron.loggable import Loggable
 
 
 class BaseIrradiationExporter(Loggable):
-    source = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+    source = Instance('pychron.dvc.dvc.DVC')
 
     def do_export(self, irradiations):
         """
@@ -30,11 +30,10 @@ class BaseIrradiationExporter(Loggable):
         """
         if self.setup():
             db = self.source
-            with db.session_ctx():
-                for irr in irradiations:
-                    dbirr = db.get_irradiation(irr)
-                    self.info('exporting irradiation {}'.format(dbirr.name))
-                    self._export(dbirr)
+            for irr in irradiations:
+                dbirr = db.get_irradiation(irr)
+                self.info('exporting irradiation {}'.format(dbirr.name))
+                self._export(dbirr)
 
     def setup(self):
         return True

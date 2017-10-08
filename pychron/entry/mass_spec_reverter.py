@@ -20,13 +20,14 @@ set_qt()
 # ============= enthought library reverts =======================
 from traits.api import Any, Str
 # ============= standard library imports ========================
+import os
 import struct
 from numpy import array
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import pathtolist
 from pychron.loggable import Loggable
 from pychron.core.helpers.logger_setup import logging_setup
-from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
+from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import convert_identifier_to_int, strip_runid
 
@@ -61,9 +62,9 @@ class MassSpecReverter(Loggable):
         db = src.db
         db.trait_set(name='pychrondata',
                      kind='mysql',
-                     host='129.138.12.160',
+                     host=os.environ.get('HOST'),
                      username='root',
-                     password='DBArgon')
+                     password=os.environ.get('DB_PWD'))
         self.source = src
 
     def setup_destination(self):
@@ -71,7 +72,7 @@ class MassSpecReverter(Loggable):
         dest.trait_set(name='massspecdata_crow',
                        kind='mysql',
                        username='root',
-                       password='Argon')
+                       password=os.environ.get('DB_PWD'))
         self.destination = dest
 
     def _connect_to_source(self):
@@ -92,20 +93,18 @@ class MassSpecReverter(Loggable):
     def _reimport_rid(self, rid):
         self.debug('========= Reimport {} ========='.format(rid))
 
-        db = self.source.db
         dest = self.destination
-        with db.session_ctx():
-            src_an = self._get_analysis_from_source(rid)
-            if src_an is None:
-                self.warning('could not find {}'.format(rid))
-            else:
-                with dest.session_ctx():
-                    dest_an = dest.get_analysis_rid(rid)
-                    for iso in dest_an.isotopes:
-                        pb, pbnc = self._generate_blobs(src_an, iso.Label)
-                        pt = iso.peak_time_series[0]
-                        pt.PeakTimeBlob = pb
-                        pt.PeakNeverBslnCorBlob = pbnc
+        src_an = self._get_analysis_from_source(rid)
+        if src_an is None:
+            self.warning('could not find {}'.format(rid))
+        else:
+            dest_an = dest.get_analysis_rid(rid)
+            for iso in dest_an.isotopes:
+                pb, pbnc = self._generate_blobs(src_an, iso.Label)
+                pt = iso.peak_time_series[0]
+                pt.PeakTimeBlob = pb
+                pt.PeakNeverBslnCorBlob = pbnc
+            dest.commit()
 
     def _generate_blobs(self, src, isok):
         dbiso = next((i for i in src.isotopes if i.molecular_weight.name == isok and i.kind == 'signal'), None)
@@ -128,11 +127,11 @@ class MassSpecReverter(Loggable):
         return array(sx), array(sy)
 
     def _get_analysis_from_source(self, rid):
-        if rid.count('-')>1:
-            args=rid.split('-')
-            step=None
-            lan='-'.join(args[:-1])
-            aliquot=args[-1]
+        if rid.count('-') > 1:
+            args = rid.split('-')
+            step = None
+            lan = '-'.join(args[:-1])
+            aliquot = args[-1]
         else:
             lan, aliquot, step = strip_runid(rid)
             lan = convert_identifier_to_int(lan)
@@ -177,30 +176,30 @@ class MassSpecReverter(Loggable):
         dest = self.destination
         # with db.session_ctx():
         self.debug('========= Revert {} ========='.format(rid))
-        with dest.session_ctx() as sess:
-            dest_an = dest.get_analysis_rid(rid)
-            for iso in dest_an.isotopes:
-                isol = iso.Label
-                self.debug('{} reverting isotope id = {}'.format(isol, iso.IsotopeID))
+        dest_an = dest.get_analysis_rid(rid)
+        for iso in dest_an.isotopes:
+            isol = iso.Label
+            self.debug('{} reverting isotope id = {}'.format(isol, iso.IsotopeID))
 
-                # fix IsotopeTable.NumCnts
-                n = len(iso.peak_time_series[0].PeakTimeBlob) / 8
-                self.debug('{} fixing NumCnts. current={} new={}'.format(isol, iso.NumCnts, n))
-                iso.NumCnts = n
+            # fix IsotopeTable.NumCnts
+            n = len(iso.peak_time_series[0].PeakTimeBlob) / 8
+            self.debug('{} fixing NumCnts. current={} new={}'.format(isol, iso.NumCnts, n))
+            iso.NumCnts = n
 
-                nf = len(iso.peak_time_series)
-                if nf > 1:
-                    self.debug('{} deleting {} refits'.format(isol, nf - 1))
-                    # delete peak time blobs
-                    for i, pt in enumerate(iso.peak_time_series[1:]):
-                        self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
-                        sess.delete(pt)
+            nf = len(iso.peak_time_series)
+            if nf > 1:
+                self.debug('{} deleting {} refits'.format(isol, nf - 1))
+                # delete peak time blobs
+                for i, pt in enumerate(iso.peak_time_series[1:]):
+                    self.debug('{} A {:02d} deleting pt series {}'.format(isol, i + 1, pt.Counter))
+                    dest.delete(pt)
 
-                    # delete isotope results
-                    for i, ir in enumerate(iso.results[1:]):
-                        self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
-                        sess.delete(ir)
+                # delete isotope results
+                for i, ir in enumerate(iso.results[1:]):
+                    self.debug('{} B {:02d} deleting results {}'.format(isol, i + 1, ir.Counter))
+                    dest.delete(ir)
 
+        dest.commit()
 
 if __name__ == '__main__':
     m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert.txt')
@@ -217,6 +216,3 @@ if __name__ == '__main__':
 # db = self.source.db
 # with db.session_ctx():
 #         pass
-
-
-

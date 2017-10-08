@@ -17,17 +17,16 @@
 # ============= enthought library imports =======================
 from pickle import dumps
 
-from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
+from pyface.qt import QtCore, QtGui
+from pyface.qt.QtGui import QColor, QHeaderView, QApplication
+from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
-# ============= standard library imports ========================
-from PySide import QtCore, QtGui
-from PySide.QtGui import QColor, QHeaderView, QApplication
-# ============= local library imports  ==========================
+
 from pychron.core.helpers.ctx_managers import no_update
 
 
@@ -35,14 +34,14 @@ class myTabularEditor(TabularEditor):
     key_pressed = Str
     rearranged = Str
     pasted = Str
-    autoscroll = Bool(True)
+    autoscroll = Bool(False)
     # copy_cache = Str
 
     # link_copyable = Bool(True)
     pastable = Bool(True)
 
     paste_function = Str
-    drop_factory = Str
+    drop_factory = Either(Str, Callable)
     col_widths = Str
     drag_external = Bool(False)
     drag_enabled = Bool(True)
@@ -50,7 +49,11 @@ class myTabularEditor(TabularEditor):
     bgcolor = Color
     row_height = Int
     mime_type = Str('pychron.tabular_item')
+
     # scroll_to_row_hint = 'top'
+
+    # def _bgcolor_default(self):
+    #     return '#646464'
 
     def _get_klass(self):
         return _TabularEditor
@@ -89,9 +92,12 @@ class TabularKeyEvent(object):
 class UnselectTabularEditorHandler(Handler):
     refresh_name = Str('refresh_needed')
     selected_name = Str('selected')
+    multiselect = Bool(True)
 
     def unselect(self, info, obj):
-        setattr(obj, self.selected_name, [])
+        v = [] if self.multiselect else None
+
+        setattr(obj, self.selected_name, v)
         setattr(obj, self.refresh_name, True)
 
 
@@ -111,6 +117,11 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def move_to_row(self, info, obj):
         obj.move_selected_to_row()
 
+    def copy_to_start(self, info, obj):
+        obj.copy_selected_first()
+
+    def copy_to_end(self, info, obj):
+        obj.copy_selected_last()
 
 class ItemDelegate(_ItemDelegate):
     pass
@@ -138,8 +149,8 @@ class _TableView(TableView):
 
     def __init__(self, editor, layout=None, *args, **kw):
         super(_TableView, self).__init__(editor, *args, **kw)
-        self.setItemDelegate(ItemDelegate(self))
 
+        # self.setItemDelegate(ItemDelegate(self))
         # self.setup_consumer(main=True)
         editor = self._editor
 
@@ -156,14 +167,14 @@ class _TableView(TableView):
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
-        else:
-            if editor.factory.row_height:
-                height = editor.factory.row_height
+
+        if editor.factory.row_height:
+            height = editor.factory.row_height
 
         if height:
             vheader.setDefaultSectionSize(height)
-
-        vheader.ResizeMode(QHeaderView.ResizeToContents)
+        else:
+            vheader.ResizeMode(QHeaderView.ResizeToContents)
 
     def set_bg_color(self, bgcolor):
         if isinstance(bgcolor, tuple):
@@ -172,7 +183,7 @@ class _TableView(TableView):
             elif len(bgcolor) == 4:
                 bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
         elif isinstance(bgcolor, QColor):
-            bgcolor = 'rgba({},{},{},{})'.format(*bgcolor.toTuple())
+            bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
         self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
 
     def set_vertical_header_font(self, fnt):
@@ -196,9 +207,7 @@ class _TableView(TableView):
         if self._editor.factory.drag_external:
             idxs = self.selectedIndexes()
             rows = sorted(list(set([idx.row() for idx in idxs])))
-            drag_object = [
-                (ri, self._editor.value[ri])
-                for ri in rows]
+            drag_object = [(ri, self._editor.value[ri]) for ri in rows]
 
             md = PyMimeData.coerce(drag_object)
 
@@ -219,8 +228,12 @@ class _TableView(TableView):
             md = PyMimeData.coerce(ed)
             if md is None:
                 return
-            elif not hasattr(ed.instance(), '__iter__'):
-                return
+            else:
+                try:
+                    if not hasattr(ed.instance(), '__iter__'):
+                        return
+                except AttributeError:
+                    return
 
             # We might be able to handle it (but it depends on what the final
             # target is).
@@ -254,11 +267,15 @@ class _TableView(TableView):
                 rows = [ri for ri, _ in data]
                 model.moveRows(rows, row)
             else:
+                data = [di for _, di in data]
                 with no_update(self._editor.object):
                     for i, di in enumerate(reversed(data)):
                         if isinstance(di, tuple):
                             di = di[1]
                         model.insertRow(row=row, obj=df(di))
+
+                    for i, di in enumerate(reversed(df(data))):
+                        model.insertRow(row=row, obj=di)
 
             e.accept()
             self._dragging = None
@@ -282,8 +299,7 @@ class _TableView(TableView):
             self._copy()
 
         elif event.matches(QtGui.QKeySequence.Cut):
-            self._cut_indices = [ci.row() for ci in
-                                 self.selectionModel().selectedRows()]
+            self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
 
             # self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
             # self._copy_cache = self._get_selection(self._cut_indices)
@@ -300,10 +316,15 @@ class _TableView(TableView):
     # private
     def _copy(self):
         rows = sorted({ri.row() for ri in self.selectedIndexes()})
-        copy_object = [(ri, self._editor.value[ri]) for ri in rows]
+        copy_object = [(ri, self._editor.value[ri].tocopy()) for ri in rows]
         # copy_object = [ri.row(), self._editor.value[ri.row()]) for ri in self.selectedIndexes()]
         mt = self._editor.factory.mime_type
-        pdata = dumps(copy_object)
+        try:
+            pdata = dumps(copy_object)
+        except BaseException, e:
+            print 'tabular editor copy failed'
+            self._editor.value[rows[0]].tocopy(verbose=True)
+            return
 
         qmd = PyMimeData()
         qmd.MIME_TYPE = mt
@@ -338,12 +359,12 @@ class _TableView(TableView):
 
             self._cut_indices = None
 
-            paste_func = self.paste_func
-            if paste_func is None:
-                paste_func = lambda x: x.clone_traits()
+            # paste_func = self.paste_func
+            # if paste_func is None:
+            #     paste_func = lambda x: x.clone_traits()
 
             for ri, ci in reversed(items):
-                model.insertRow(idx, obj=paste_func(ci))
+                model.insertRow(idx, obj=ci)
 
     # def _paste(self):
     # selection = self.selectedIndexes()
@@ -554,6 +575,7 @@ class _TabularEditor(qtTabularEditor):
             slot = self._on_rows_selection
         else:
             slot = self._on_row_selection
+
         signal = 'selectionChanged(QItemSelection,QItemSelection)'
         QtCore.QObject.connect(self.control.selectionModel(),
                                QtCore.SIGNAL(signal), slot)
@@ -632,8 +654,13 @@ class _TabularEditor(qtTabularEditor):
 
         if hasattr(self.object, factory.paste_function):
             control.paste_func = getattr(self.object, factory.paste_function)
-        if hasattr(self.object, factory.drop_factory):
-            control.drop_func = getattr(self.object, factory.drop_factory)
+
+        if factory.drop_factory:
+            if hasattr(factory.drop_factory, '__call__'):
+                control.drop_factory = factory.drop_factory
+
+            elif hasattr(self.object, factory.drop_factory):
+                control.drop_factory = getattr(self.object, factory.drop_factory)
 
         # control.link_copyable = factory.link_copyable
         control.pastable = factory.pastable
@@ -642,9 +669,9 @@ class _TabularEditor(qtTabularEditor):
         QtCore.QObject.connect(control.horizontalHeader(), signal,
                                self._on_column_resize)
 
-    def dispose(self):
-        # self.control._should_consume = False
-        super(_TabularEditor, self).dispose()
+    # def dispose(self):
+    #     # self.control._should_consume = False
+    #     super(_TabularEditor, self).dispose()
 
     def refresh_editor(self):
         if self.control:
@@ -670,7 +697,7 @@ class _TabularEditor(qtTabularEditor):
     def _on_column_resize(self, idx, old, new):
         control = self.control
         header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in range(header.count())]
+        cs = [header.sectionSize(i) for i in xrange(header.count())]
         self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):
@@ -690,7 +717,8 @@ class _TabularEditor(qtTabularEditor):
 
     def _scroll_to_row_changed(self, row):
         row = min(row, self.model.rowCount(None)) - 1
-        qtTabularEditor._scroll_to_row_changed(self, 0)
-        qtTabularEditor._scroll_to_row_changed(self, row)
+        super(_TabularEditor, self)._scroll_to_row_changed(0)
+        super(_TabularEditor, self)._scroll_to_row_changed(row)
+
 
 # ============= EOF =============================================

@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Int, Dict
-# ============= standard library imports ========================
-from threading import Event, Thread, Lock
-from Queue import Empty, LifoQueue
 import hashlib
-import time
-import os
 import inspect
-import traceback
-import yaml
+import os
 import sys
-import weakref
-# ============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller
-from pychron.paths import paths
-from pychron.loggable import Loggable
+import time
+import traceback
+from Queue import Empty, LifoQueue
+from threading import Event, Thread, Lock
+
+import yaml
+from traits.api import Str, Any, Bool, Property, Int, Dict
+
 from pychron.globals import globalv
+from pychron.loggable import Loggable
+from pychron.paths import paths
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -82,7 +80,7 @@ def verbose_skip(func):
             if an < min_args:
                 raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
                                                                                                          args, kw))
-            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
                 return 0
 
             obj.debug('{} {} {}'.format(fname, args, kw))
@@ -94,7 +92,7 @@ def verbose_skip(func):
 
 def skip(func):
     def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated():
+        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
             return
         return func(obj, *args, **kw)
 
@@ -113,7 +111,7 @@ def calculate_duration(func):
 
 def count_verbose_skip(func):
     def decorator(obj, *args, **kw):
-        if obj.is_truncated() or obj.is_canceled():
+        if obj.is_truncated() or obj.is_canceled() or obj.is_aborted():
             return 0
 
         fname = func.__name__
@@ -170,9 +168,6 @@ named_register = makeNamedRegistry(command_register)
 '''
 
 
-# __CACHED_DURATIONS__ = {}
-
-
 class PyScript(Loggable):
     text = Property
     syntax_checked = Bool
@@ -195,7 +190,8 @@ class PyScript(Loggable):
 
     _interval_stack = None
 
-    _cancel = Bool(False)
+    _aborted = False
+    _cancel = False
     _completed = False
     _truncate = False
 
@@ -211,9 +207,9 @@ class PyScript(Loggable):
     interpolation_path = Str
 
     _interpolation_context = None
-    # def __init__(self, *args, **kw):
-    # super(PyScript, self).__init__(*args, **kw)
-    # self._block_lock = Lock()
+
+    def is_aborted(self):
+        return self._aborted
 
     def is_canceled(self):
         return self._cancel
@@ -245,29 +241,11 @@ class PyScript(Loggable):
             self.test()
             # self.debug('pyscript estimated duration= {}'.format(self._estimated_duration))
 
-        # if not ctx:
-        # calc_dur()
-        # return self.get_estimated_duration()
-
-        # h = self._generate_ctx_hash(ctx)
-        # calc_dur()
-
         # self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
         if force or not self.syntax_checked or not ctx:
             calc_dur()
 
         return self.get_estimated_duration()
-
-        #     try:
-        #         self._get_cached_duration(h)
-        #         # self.debug('current context in the cached durations')
-        #     except KeyError:
-        #         calc_dur()
-
-        # d = self.get_estimated_duration()
-        # print 'get estafsdas {}'.format(d)
-        # self._update_cached_duration(h, d)
-        # return d
 
     def traceit(self, frame, event, arg):
         if event == "line":
@@ -333,15 +311,6 @@ class PyScript(Loggable):
 
             self.testing_syntax = False
 
-    # def compile_snippet(self, snippet):
-    #     try:
-    #         code = compile(snippet, '<string>', 'exec')
-    #     except Exception, e:
-    #         self.debug(traceback.format_exc())
-    #         return e
-    #     else:
-    #         return code
-
     def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
         if snippet is None:
@@ -386,30 +355,13 @@ class PyScript(Loggable):
             try:
                 if argv is None:
                     argv = tuple()
+
+                st = time.time()
                 func(*argv)
-                self.debug('executed {}'.format(self._estimated_duration))
+                self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
+                                                                                        time.time() - st))
             except Exception, e:
                 return traceback.format_exc()
-
-                # sys.settrace(self._tracer)
-                # code_or_err = self.compile_snippet(snippet)
-                # if not isinstance(code_or_err, Exception):
-                #     try:
-                #         exec code_or_err in safe_dict
-                #         func = safe_dict['main']
-                #     except KeyError, e:
-                #         print 'exception', e, safe_dict.keys()
-                #         self.debug('{} {}'.format(e, traceback.format_exc()))
-                #         return MainError()
-                #
-                #     try:
-                #         if argv is None:
-                #             argv = tuple()
-                #         func(*argv)
-                #     except Exception, e:
-                #         return traceback.format_exc()
-                # else:
-                #     return code_or_err
 
     def syntax_ok(self, warn=True):
         try:
@@ -496,6 +448,20 @@ class PyScript(Loggable):
 
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
+
+    def abort(self):
+        self._aborted = True
+        if self._gosub_script is not None:
+            if not self._gosub_script.is_aborted():
+                self._gosub_script.abort()
+
+        if self.parent_script:
+            if not self.parent_script.is_aborted():
+                self.parent_script.abort()
+
+        if self._wait_control:
+            self._wait_control.stop()
+        self._abort_hook()
 
     def cancel(self, **kw):
         self._cancel = True
@@ -615,7 +581,7 @@ class PyScript(Loggable):
             return
 
         try:
-            _, f, n = self._interval_stack.get(timeout=0.01)
+            f, n = self._interval_stack.get(timeout=0.01)
         except Empty:
             raise IntervalError()
 
@@ -631,6 +597,8 @@ class PyScript(Loggable):
 
         if not self._cancel:
             f.clear()
+
+        self._interval_stack.task_done()
 
     @calculate_duration
     @command_register
@@ -657,9 +625,11 @@ class PyScript(Loggable):
             self.console_info('BEGIN INTERVAL {} waiting for {}'.format(name, duration))
             t = Thread(name=name,
                        target=wait, args=(duration, f, name))
-            t.start()
 
-        self._interval_stack.put((t, f, name))
+        self._interval_stack.put((f, name))
+        # only start the thread after item pushed onto stack
+        if t:
+            t.start()
 
     @count_verbose_skip
     @command_register
@@ -758,6 +728,9 @@ class PyScript(Loggable):
 
         if self._cancel:
             self.console_info('{} canceled'.format(self.name))
+        elif self._aborted:
+            self.console_info('{} aborted'.format(self.name))
+            self._completed = True
         else:
             self.console_info('{} completed successfully'.format(self.name))
             self._completed = True
@@ -767,19 +740,34 @@ class PyScript(Loggable):
         if app is None:
             if self.manager:
                 app = self.manager.application
+
+        if app is None:
+            self.debug('no application available. self.manager = {}'.format(self.manager))
         return app
 
-    def _manager_action(self, func, name=None, protocol=None, *args, **kw):
+    def _manager_action(self, func, name=None, protocol=None, protocols=None, *args, **kw):
         man = self.manager
+
+        app = self._get_application()
+        if app is None:
+            return
+
         if protocol:
-            app = self._get_application()
-            if app is not None:
-                app_args = (protocol,)
-                if name is not None:
-                    app_args = (protocol, 'name=="{}"'.format(name))
+            app_args = (protocol,)
+            if name is not None:
+                app_args = (protocol, 'name=="{}"'.format(name))
 
-                man = app.get_service(*app_args)
+            man = app.get_service(*app_args)
+        elif protocols:
+            for p in protocols:
+                if name:
+                    man = app.get_service(p, 'name=="{}"'.format(name))
+                else:
+                    man = app.get_service(p, 'name=="{}"'.format(name))
+                if man:
+                    break
 
+        # self.debug('manager action {}'.format(man))
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]
@@ -793,8 +781,8 @@ class PyScript(Loggable):
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
         elif name:
-            self.warning('could not find manager name="{}" func="{}"'.format(name,
-                                                                             ','.join([f for f, _, _ in func])))
+            msg = ','.join([f for f, _, _ in func])
+            self.warning('could not find manager name="{}" func="{}"'.format(name, msg))
 
     # ==============================================================================
     # Sleep/ Wait
@@ -813,8 +801,6 @@ class PyScript(Loggable):
             wd = self.manager.get_wait_control()
         else:
             wd = self._wait_control
-
-        print self.manager, wd
 
         if wd is None:
             wd = WaitControl()
@@ -932,6 +918,9 @@ class PyScript(Loggable):
     #     return __CACHED_DURATIONS__[h]
 
     def _cancel_hook(self, **kw):
+        pass
+
+    def _abort_hook(self):
         pass
 
     def _finish(self):

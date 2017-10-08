@@ -13,25 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pyface.confirmation_dialog import confirm
 from pyface.message_dialog import information
-from traits.has_traits import on_trait_change
-from traits.trait_types import List, Event
+from traits.trait_types import List
+
 from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
 import os
-from traits.api import HasTraits, Button, Str, Int, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup
+from traits.api import HasTraits, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TableEditor
-from traitsui.handler import Controller
-from traitsui.key_bindings import KeyBindings, KeyBinding
-from traitsui.table_column import ObjectColumn
 import yaml
-from pychron.globals import globalv
 from pychron.paths import paths
 # from pychron.core.ui.keybinding_editor import KeyBindingEditor
 
@@ -42,7 +35,8 @@ from pychron.paths import paths
 
 
 def key_bindings_path():
-    return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
+    return os.path.join(paths.appdata_dir, 'key_bindings')
+    # return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
 
 
 def load_key_map():

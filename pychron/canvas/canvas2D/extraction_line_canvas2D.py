@@ -15,23 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any, Str, on_trait_change, Bool
-from pyface.action.menu_manager import MenuManager
-from traitsui.menu import Action
-from pyface.qt.QtGui import QToolTip
-
-# ============= standard library imports ========================`
 import os
-# ============= local library imports  ==========================
+
+from pyface.action.menu_manager import MenuManager
+from pyface.qt.QtGui import QToolTip
+from traits.api import Any, Str, on_trait_change, Bool
+from traitsui.menu import Action
+
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionLineInfoTool, ExtractionLineInfoOverlay
+from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.connections import Elbow
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
-from pychron.canvas.scene_viewer import SceneCanvas
-from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
-import weakref
+from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.globals import globalv
 
 W = 2
@@ -45,6 +43,8 @@ class ExtractionLineAction(Action):
 class ExtractionLineCanvas2D(SceneCanvas):
     """
     """
+    scene_klass = ExtractionLineScene
+
     use_backbuffer = True
     border_visible = False
     active_item = Any
@@ -69,6 +69,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
     volume_key = Str
     confirm_open = Bool(True)
 
+    force_actuate_enabled = True
+
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
@@ -92,20 +94,20 @@ class ExtractionLineCanvas2D(SceneCanvas):
         """
         """
         switch = self._get_switch_by_name(name)
-        # print 'update state {} {}'.format(name, switch)
         if switch is not None:
             switch.state = nstate
-        self.draw_valid = False
 
-        if refresh:
-            self.request_redraw()
+            if refresh:
+                print 'referehs {} {}'.format(name, nstate)
+                self.draw_valid = False
+                self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.owned = owned
         self.draw_valid = False
-        self.request_redraw()
+        self.invalidate_and_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
         switch = self._get_switch_by_name(name)
@@ -113,7 +115,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.soft_lock = lockstate
             # self.request_redraw()
         self.draw_valid = False
-        self.request_redraw()
+        self.invalidate_and_redraw()
 
     def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):
         if canvas_path is None:
@@ -123,7 +125,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if valves_path is None:
             valves_path = self.manager.application.preferences.get('pychron.extraction_line.valves_path')
 
-        if os.path.isfile(canvas_path):
+        if canvas_path and os.path.isfile(canvas_path):
             self.scene.load(canvas_path, canvas_config_path, valves_path, self)
             self.invalidate_and_redraw()
 
@@ -135,7 +137,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
         pass
 
     def normal_mouse_move(self, event):
-
         item = self._over_item(event)
         if item is not None:
             self.event_state = 'select'
@@ -162,13 +163,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
         try:
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
-        except AttributeError:
-            pass
+
+        except AttributeError, e:
+            print 'select mouse move {}'.format(e)
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):
         item = self.active_item
-
         if item is not None:
             self._show_menu(event, item)
         event.handled = True
@@ -188,13 +189,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
             state = item.state
             state = not state
             mode = 'normal'
-            try:
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
-            except TypeError:
-                ok, change = True, True
+            # try:
+            if state:
+                ok, change = self.manager.open_valve(item.name, mode=mode)
+            else:
+                ok, change = self.manager.close_valve(item.name, mode=mode)
+                # except TypeError, e:
+                # ok, change = True, True
 
         else:
             if not isinstance(item, BaseValve):
@@ -240,6 +241,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if ok:
             item.state = state
 
+        if change and ok:
+            self._select_hook(item)
+
         if change:
             self.invalidate_and_redraw()
 
@@ -250,10 +254,32 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self.manager.set_software_lock(item.name, lock)
             self.request_redraw()
 
+    def on_force_close(self):
+        self._force_actuate(self.manager.close_valve, False)
+
+    def on_force_open(self):
+        self._force_actuate(self.manager.open_valve, True)
+
+    def _force_actuate(self, func, state):
+        item = self._active_item
+        if item:
+            ok, change = func(item.name, mode='normal', force=True)
+            if ok:
+                item.state = state
+
+            if change and ok:
+                self._select_hook(item)
+
+            if change:
+                self.invalidate_and_redraw()
+
     def iter_valves(self):
         return (i for i in self.scene.valves.itervalues())
 
     # private
+    def _select_hook(self, item):
+        pass
+
     @on_trait_change('display_volume, volume_key')
     def _update_tool(self, name, new):
         self.tool.trait_set(**{name: new})
@@ -263,7 +289,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.request_redraw()
 
     def _get_switch_by_name(self, name):
-        return next((i for i in self.iter_valves() if i.name == name), None)
+        if self.scene and self.scene.valves:
+            s = next((i for i in self.iter_valves() if i.name == name), None)
+            if s is None:
+                names = [i.name for i in self.iter_valves()]
+                print 'No switch with name "{}". Names={}'.format(name, names)
+
+            return s
 
     def _get_object_by_name(self, name):
         return self.scene.get_item(name)
@@ -281,7 +313,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
+
         if self.manager.mode != 'client' or not globalv.client_only_locking:
+            # print self.active_item, isinstance(self.active_item, Switch)
+            # if isinstance(self.active_item, Switch):
             if isinstance(self.active_item, BaseValve):
                 t = 'Lock'
                 if obj.soft_lock:
@@ -290,15 +325,18 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 action = self._action_factory(t, 'on_lock')
                 actions.append(action)
 
+            if self.force_actuate_enabled:
+                action = self._action_factory('Force Close', 'on_force_close')
+                actions.append(action)
+
+                action = self._action_factory('Force Open', 'on_force_open')
+                actions.append(action)
+
         if actions:
             menu_manager = MenuManager(*actions)
 
             self._active_item = self.active_item
             menu = menu_manager.create_menu(event.window.control, None)
             menu.show()
-
-    def _scene_default(self):
-        s = ExtractionLineScene(canvas=self)
-        return s
 
 # ============= EOF ====================================

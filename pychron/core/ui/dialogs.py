@@ -21,7 +21,7 @@ from pychron.core.ui.factory import toolkit_factory
 
 myMessageDialog = toolkit_factory('dialogs', 'myMessageDialog')
 myConfirmationDialog = toolkit_factory('dialogs', 'myConfirmationDialog')
-
+RememberConfirmationDialog = toolkit_factory('dialogs', 'RememberConfirmationDialog')
 
 
 

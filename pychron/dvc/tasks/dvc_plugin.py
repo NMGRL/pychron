@@ -23,51 +23,76 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
-from pychron.dvc.tasks.actions import PullAnalysesAction
-from pychron.dvc.tasks.preferences import DVCPreferencesPane, DVCDBConnectionPreferencesPane
+from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction
+from pychron.dvc.tasks.dvc_preferences import DVCPreferencesPane, \
+    DVCDBConnectionPreferencesPane, DVCExperimentPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.git.hosts import IGitHost
 
 
 class DVCPlugin(BaseTaskPlugin):
+    name = 'DVC'
     _fetched = False
 
     def start(self):
         super(DVCPlugin, self).start()
 
         dvc = self.application.get_service(DVC)
-        # if not self._fetched:
-        #     dvc.meta_repo.smart_pull()
+        if not self._fetched:
+            dvc.initialize()
 
-    # def stop(self):
-    #     dvc = self.application.get_service(DVC)
-    #     prog = open_progress(n=2)
-    #     prog.change_message('Pushing changes to meta repository')
-    #     dvc.meta_repo.cmd('push', '-u','origin','master')
+        service = self.application.get_service(IGitHost)
+        if not service:
+            self.information_dialog('No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)')
+
+    def stop(self):
+        # dvc = self.application.get_service(DVC)
+        # prog = open_progress(n=2)
+        # prog.change_message('Pushing changes to meta repository')
+        # dvc.meta_repo.cmd('push', '-u','origin','master')
+
+        dvc = self.application.get_service(DVC)
+        with dvc.session_ctx(use_parent_session=False):
+            names = dvc.get_usernames()
+            self.debug('dumping usernames {}'.format(names))
+            if names:
+                from pychron.envisage.user_login import dump_user_file
+                dump_user_file(names)
+
+    def test_database(self):
+        ret, err = True, ''
+        dvc = self.application.get_service(DVC)
+        db = dvc.db
+        connected = db.connect(warn=False)
+        if not connected:
+            ret = False
+            err = db.connection_error
+        return ret, err
 
     def test_dvc_fetch_meta(self):
+        ret, err = False, ''
         dvc = self.application.get_service(DVC)
-        # dvc.fetch_meta()
-        dvc.meta_repo.smart_pull()
-        self._fetched = True
+        dvc.open_meta_repo()
+        dvc.meta_pull()
+        ret = self._fetched = True
+
+        return ret, err
 
     def _service_offers_default(self):
-        p = {'dvc': self.dvc_factory()}
-        self.debug('DDDDD {}'.format(p))
+        # p = {'dvc': self.dvc_factory()}
+        # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=DVCPersister,
                                         factory=DVCPersister,
-                                        properties=p,
-                                        )
-        # so1 = self.service_offer_factory(protocol=DVCDatabase,
-        # factory=DVCDatabase)
-        # so2 = self.service_offer_factory(protocol=MetaRepo,
-        # factory=MetaRepo)
+                                        properties={'dvc': self.dvc_factory()})
+
         so2 = self.service_offer_factory(protocol=DVC,
                                          factory=self.dvc_factory)
+
         return [so, so2]
 
     def dvc_factory(self):
-        d = DVC()
+        d = DVC(application=self.application)
         # d.initialize()
 
         return d
@@ -78,10 +103,10 @@ class DVCPlugin(BaseTaskPlugin):
         return r
 
     def _preferences_default(self):
-        return [self._make_preferences_path('dvc')]
+        return self._preferences_factory('dvc')
 
     def _preferences_panes_default(self):
-        return [DVCPreferencesPane, DVCDBConnectionPreferencesPane]
+        return [DVCPreferencesPane, DVCDBConnectionPreferencesPane, DVCExperimentPreferencesPane]
 
     # def _tasks_default(self):
     #     ts = [TaskFactory(id='pychron.canvas_designer',
@@ -105,9 +130,15 @@ class DVCPlugin(BaseTaskPlugin):
         #         repo.commit('added {}'.format(db.path))
 
     def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(factory=PullAnalysesAction,
-                                                      path='MenuBar/data.menu')]), ]
+        actions = [SchemaAddition(factory=WorkOfflineAction,
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=UseOfflineDatabase,
+                                  path='MenuBar/tools.menu'),
+                   SchemaAddition(factory=ShareChangesAction,
+                                  path='MenuBar/tools.menu'),
+                   # SchemaAddition(factory=PullAction),
+                   ]
+
+        return [TaskExtension(actions=actions), ]
+
 # ============= EOF =============================================
-
-
-

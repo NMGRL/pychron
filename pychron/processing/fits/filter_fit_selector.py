@@ -15,30 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Int, Str, Button
+from traits.api import Bool, Button
 from traits.has_traits import on_trait_change
 from traitsui.api import EnumEditor, ButtonEditor
 from traitsui.api import HGroup, UItem
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-from pychron.processing.fits.fit import Fit
-from pychron.processing.fits.fit_selector import FitSelector, ObjectColumn, CheckboxColumn
-
-class FilterFit(Fit):
-    filter_outliers = Bool
-    filter_iterations = Int
-    filter_std_devs = Int
-    truncate = Str
-    include_baseline_error = Bool
-
-    def _filter_outliers_changed(self):
-        if self.filter_outliers:
-            if not self.filter_iterations:
-                self.filter_iterations = 1
-            if not self.filter_std_devs:
-                self.filter_std_devs = 2
+from pychron.processing.fits.fit import FilterFit
+from pychron.processing.fits.fit_selector import ObjectColumn, CheckboxColumn, FitSelector
 
 
 class FilterFitSelector(FitSelector):

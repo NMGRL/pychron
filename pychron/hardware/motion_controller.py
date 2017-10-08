@@ -22,6 +22,7 @@ from traitsui.api import View, VGroup, Item, RangeEditor
 import os
 import time
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
@@ -48,7 +49,12 @@ class TargetPositionError(BaseException):
         dx = self._x - self._tx
         dy = self._y - self._ty
         return 'PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}'.format(dx, dy, self._x, self._y,
-                                                                               self._tx, self._ty)
+                                                                                         self._tx, self._ty)
+
+
+class ZeroDisplacementException(BaseException):
+    pass
+
 
 
 class MotionController(CoreDevice):
@@ -97,6 +103,7 @@ class MotionController(CoreDevice):
         self.parent.canvas.set_stage_position(self._x_position,
                                               self._y_position)
 
+    @caller
     def timer_factory(self, func=None, period=150):
         """
 
@@ -126,6 +133,7 @@ class MotionController(CoreDevice):
         timer.set_interval(period)
         return timer
 
+    @caller
     def set_z(self, v, **kw):
 
         self.single_axis_move('z', v, **kw)
@@ -238,47 +246,67 @@ class MotionController(CoreDevice):
     def _z_inprogress_update(self):
         """
         """
-        # stopped = False
-        m = self._moving(axis='z')
-        if not m:
-            self._not_moving_count += 1
 
-        if self._not_moving_count > 1:
-            self._not_moving_count = 0
-            self.timer.Stop()
-            self.debug('stop timer')
-            # stopped = True
+        self._check_moving(axis='z', verbose=True)
 
         z = self.get_current_position('z')
         self.z_progress = z
 
-    #         self.debug('z inprogress {}. moving={} stopped={}'.format(z, m, stopped))
+    def _check_moving(self, axis=None, verbose=False):
+        m = self._moving(axis=axis, verbose=verbose)
+        if verbose:
+            self.debug('is moving={}'.format(m))
 
-    def _inprogress_update(self):
-        """
-        """
-
-        m = self._moving()
-        # self.debug('moving {}'.format(m))
+        stopped = False
         if not m:
             self._not_moving_count += 1
         else:
             self._not_moving_count = 0
 
         if self._not_moving_count > 1:
-            self.debug('not moving')
+            if verbose:
+                self.debug('not moving cnt={}'.format(self._not_moving_count))
             self._not_moving_count = 0
             if self.timer:
+                if verbose:
+                    self.debug('stop timer')
                 self.timer.Stop()
+            stopped = True
+        return stopped
 
+    def _inprogress_update(self):
+        """
+        """
+        stopped = self._check_moving()
+        if stopped:
             self.parent.canvas.clear_desired_position()
             self.update_axes()
         else:
-
             xy = self.get_current_xy()
             if xy:
                 self._validate_xy(*xy)
                 self.parent.canvas.set_stage_position(*xy)
+
+                # # self.debug('moving {}'.format(m))
+                # if not m:
+                #     self._not_moving_count += 1
+                # else:
+                #     self._not_moving_count = 0
+                #
+                # if self._not_moving_count > 1:
+                #     self.debug('not moving')
+                #     self._not_moving_count = 0
+                #     if self.timer:
+                #         self.timer.Stop()
+                #
+                #     self.parent.canvas.clear_desired_position()
+                #     self.update_axes()
+                # else:
+                #
+                #     xy = self.get_current_xy()
+                #     if xy:
+                #         self._validate_xy(*xy)
+                #         self.parent.canvas.set_stage_position(*xy)
 
     def _validate_xy(self, x, y):
         if self._homing:
@@ -307,6 +335,7 @@ class MotionController(CoreDevice):
     def _block(self, axis=None, event=None):
         """
         """
+        self.debug('block')
         if event is not None:
             event.clear()
 
@@ -316,21 +345,23 @@ class MotionController(CoreDevice):
                 return self.timer.isActive()
 
             func = timerActive
+            period = 0.05
         else:
             def moving():
                 return self._moving(axis=axis)
 
             func = moving
+            period = 0.1
 
         i = 0
-        #         fn = func.func_name
-        #         n = 10
+        # fn = func.func_name
+        # n = 10
         while 1:
             a = func()
-            #             if i % n == 0:
-            #                 self.debug('blocking {} {}'.format(fn, a))
+            # if i % n == 0:
+            #     self.debug('blocking {} {}'.format(fn, a))
 
-            time.sleep(0.1)
+            time.sleep(period)
             if i > 100:
                 i = 0
             if not a:
@@ -384,19 +415,19 @@ class MotionController(CoreDevice):
 
         mi = ax.negative_limit
         ma = ax.positive_limit
-        self.debug('validate {} {} {}'.format(v, key, cur))
+        self.debug('validate axis={} value={} current={}'.format(key, v, cur))
         try:
             v = float(v)
             if not mi <= v <= ma:
+                self.debug('value not between {}, {}'.format(mi, ma))
                 v = None
-
-            if v is not None:
-                if abs(v - cur) <= 0.001:
-                    v = None
+            #
+            # if v is not None:
+            #     if abs(v - cur) <= 0.001:
+            #         v = None
         except ValueError:
             v = None
 
-        self.debug('validate return {}'.format(v))
         return v
 
     def _get_xaxes_max(self):

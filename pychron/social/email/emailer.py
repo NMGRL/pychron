@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, Str, List, Enum, Bool, Int
-from traitsui.api import View
+import os
 # ============= standard library imports ========================
 import smtplib
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import HasTraits, Str, Enum, Bool, Int
+from traitsui.api import View
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -74,13 +78,14 @@ class Emailer(Loggable):
                 server.quit()
                 return True
         except (smtplib.SMTPServerDisconnected, BaseException), e:
+            print e
             if warn:
                 self.warning('SMTPServer not properly configured')
             server = None
 
         return server
 
-    def send(self, addrs, sub, msg):
+    def send(self, addrs, sub, msg, paths=None):
         self.debug('Send email. addrs: {}'.format(addrs, sub))
         self.debug('========= Message ========')
         for m in msg.split('\n'):
@@ -92,7 +97,7 @@ class Emailer(Loggable):
             if isinstance(addrs, (str, unicode)):
                 addrs = [addrs]
 
-            msg = self._message_factory(addrs, sub, msg)
+            msg = self._message_factory(addrs, sub, msg, paths)
             try:
                 server.sendmail(self.sender, addrs, msg.as_string())
                 server.quit()
@@ -102,13 +107,21 @@ class Emailer(Loggable):
         else:
             self.warning('Failed connecting to server')
 
-    def _message_factory(self, addrs, sub, txt):
+    def _message_factory(self, addrs, sub, txt, paths):
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
         msg['To'] = ','.join(addrs)
         msg['Subject'] = sub
-
         msg.attach(MIMEText(txt))
+
+        if paths:
+            for p in paths:
+                name = os.path.basename(p)
+                with open(p, 'rb') as rfile:
+                    part = MIMEBase('application', "octet-stream")
+                    part.set_payload(rfile.read())
+                    part['Content-Disposition'] = 'attachment; filename="{}"'.format(name)
+                    msg.attach(part)
         return msg
 
         # def broadcast(self, text, level=0, subject=None):

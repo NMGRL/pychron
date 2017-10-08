@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    on_trait_change, Any, DelegatesTo, List, Str
+    on_trait_change, DelegatesTo, List, Str
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.auto_gen_config import AutoGenConfig
 from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
@@ -29,14 +29,11 @@ from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.undoer import ExperimentUndoer
 from pychron.pychron_constants import LINE_STR
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.loggable import Loggable
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
-class ExperimentFactory(Loggable, ConsumerMixin):
-    db = Any
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class ExperimentFactory(DVCAble): #, ConsumerMixin):
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
 
@@ -76,8 +73,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     # can_edit_scripts = Bool(True)
 
     def __init__(self, *args, **kw):
-        super(ExperimentFactory, self).__init__(*args, **kw)
-        self.setup_consumer(self._add_run, main=True)
+        super(ExperimentFactory, self).__init__(auto_setup=False, *args, **kw)
+        # self.setup_consumer(self._add_run, main=True)
+        pass
 
     def undo(self):
         self.info('undo')
@@ -91,7 +89,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                   'email', 'use_email',
                   'use_group_email',
                   'load_name',
-                  'delay_before_analyses', 'delay_between_analyses',
+                  'delay_after_blank',
+                  'delay_between_analyses',
+                  'delay_after_air',
                   'queue_conditionals_name', 'username'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
@@ -119,13 +119,13 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 setattr(eq, a, v)
 
     def activate(self, load_persistence=True):
-        self.start_consuming()
+        # self.start_consuming()
         self._load_persistence_flag = load_persistence
         self.queue_factory.activate(load_persistence)
         self.run_factory.activate(load_persistence)
 
     def destroy(self):
-        self.stop_consuming()
+        # self.stop_consuming()
         self.run_factory.deactivate()
         self.queue_factory.deactivate()
 
@@ -144,6 +144,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             ret = ret and self.labnumber
         return ret
     '''
+
     def _add_run(self, *args, **kw):
 
         if not self.ok_add:
@@ -160,7 +161,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                     missing.append('"Labnumber"')
 
             f = 'a value'
-            if len(missing)>1:
+            if len(missing) > 1:
                 f = 'values'
             self.warning_dialog('Please set {} for {}'.format(f, ','.join(missing)))
             return
@@ -210,7 +211,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             use consumermixin.add_consumable instead of frequency limiting
         """
         self.debug('add run fired')
-        self.add_consumable(5)
+        # self.add_consumable(5)
+        do_later(self._add_run)
 
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode
@@ -229,15 +231,18 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def _queue_changed(self, new):
         self.undoer.queue = new
 
-    @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name,
-email, use_email, use_group_email,
-queue_conditionals_name]''')
+#     @on_trait_change('''queue_factory:[mass_spectrometer,
+# extract_device, delay_+, tray, username, load_name,
+# email, use_email, use_group_email,
+# queue_conditionals_name, repository_identifier]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name, new))
         if self.queue:
             self.queue.trait_set(**{name: new})
             self.queue.changed = True
+            if name == 'repository_identifier':
+                for a in self.queue.automated_runs:
+                    a.repository_identifier = new
 
         if name == 'mass_spectrometer':
             self.debug('_update_queue "{}"'.format(new))
@@ -317,8 +322,8 @@ queue_conditionals_name]''')
         else:
             klass = AutomatedRunFactory
 
-        rf = klass(db=self.db,
-                   dvc=self.dvc,
+        rf = klass(dvc=self.dvc,
+                   iso_db_man=self.iso_db_man,
                    application=self.application,
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
@@ -331,20 +336,20 @@ queue_conditionals_name]''')
         return rf
 
     # handlers
-    def _generate_runs_from_load(self, ):
-        def gen():
-            db = self.db
-            load_name = self.load_name
-            with db.session_ctx():
-                dbload = self.db.get_loadtable(load_name)
-                for poss in dbload.loaded_positions:
-                    # print poss
-                    ln_id = poss.lab_identifier
-                    dbln = self.db.get_labnumber(ln_id, key='id')
-
-                    yield dbln.identifier, dbln.sample.name, str(poss.position)
-
-        return gen
+    # def _generate_runs_from_load(self, ):
+    #     def gen():
+    #         dvc = self.dvc
+    #         load_name = self.load_name
+    #         with dvc.session_ctx():
+    #             dbload = dvc.get_loadtable(load_name)
+    #             for poss in dbload.loaded_positions:
+    #                 # print poss
+    #                 ln_id = poss.lab_identifier
+    #                 dbln = dvc.get_labnumber(ln_id, key='id')
+    #
+    #                 yield dbln.identifier, dbln.sample.name, str(poss.position)
+    #
+    #     return gen
 
     def _edit_queue_config_button_fired(self):
         self.auto_gen_config.run_blocks = self.run_factory.run_blocks
@@ -353,17 +358,18 @@ queue_conditionals_name]''')
         if info.result:
             self.auto_gen_config.dump()
 
-    def _generate_queue_button_fired(self):
-        pd = myProgressDialog()
-        pd.open()
-
-        ans = list(self._generate_runs_from_load()())
-        self._gen_func(pd, ans)
-        # t=Thread(target=self._gen_func, args=(pd, ans))
-        # t.start()
+    # def _generate_queue_button_fired(self):
+    #     pd = myProgressDialog()
+    #     pd.open()
+    #
+    #     ans = list(self._generate_runs_from_load()())
+    #     self._gen_func(pd, ans)
+    #     # t=Thread(target=self._gen_func, args=(pd, ans))
+    #     # t.start()
 
     def _gen_func(self, pd, ans):
         import time
+
         pd.max = 100
         self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ generate queue')
         auto_gen_config = self.auto_gen_config
@@ -436,7 +442,7 @@ queue_conditionals_name]''')
         q.changed = True
         rf.update_info_needed = True
         rf.suppress_meta = False
-        print 'totaltime', time.time()-st
+        print 'totaltime', time.time() - st
         pd.close()
         rf.labnumber = ''
         rf.sample = ''
@@ -444,10 +450,6 @@ queue_conditionals_name]''')
     def _dvc_changed(self):
         self.queue_factory.dvc = self.dvc
         self.run_factory.dvc = self.dvc
-
-    def _db_changed(self):
-        self.queue_factory.db = self.db
-        self.run_factory.db = self.db
 
     def _application_changed(self):
         self.run_factory.application = self.application
@@ -475,9 +477,14 @@ queue_conditionals_name]''')
         return self._run_factory_factory()
 
     def _queue_factory_default(self):
-        eq = ExperimentQueueFactory(db=self.db,
-                                    dvc=self.dvc,
+        eq = ExperimentQueueFactory(dvc=self.dvc,
+                                    iso_db_man=self.iso_db_man,
                                     application=self.application)
+
+        eq.on_trait_change(self._update_queue, '''mass_spectrometer,
+extract_device, delay_+, tray, username, load_name,
+email, use_email, use_group_email,
+queue_conditionals_name, repository_identifier''')
         # eq.activate()
         return eq
 

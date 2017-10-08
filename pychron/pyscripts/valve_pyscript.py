@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
-# ============= standard library imports ========================
 import time
-# ============= local library imports  ==========================
+
+from traits.api import Any
+
 from pychron.globals import globalv
 from pychron.pychron_constants import NULL_STR
 from pychron.pyscripts.pyscript import PyScript, verbose_skip, makeRegistry, \
@@ -33,6 +33,7 @@ named_register = makeNamedRegistry(command_register)
 class ValvePyScript(PyScript):
     runner = Any
     allow_lock = False
+    retry_actuation = True
 
     def get_command_register(self):
         return command_register.commands.items()
@@ -75,36 +76,30 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @named_register('open')
     def _m_open(self, name=None, description=''):
-        st = time.time()
-        # if description is None:
-        #     description = NULL_STR
-
-        self.console_info('opening name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
-
-        result = self._manager_action([('open_valve', (name,), dict(
-            mode='script',
-            description=description))], protocol=ELPROTOCOL)
-        et = time.time() - st
-        self.debug('---------------------------------------- open {} ({}) result={}, '
-                   'time={:0.2f} sec'.format(name, description, result, et))
-        if result is not None:
-            self._finish_valve_change('open', result, name, description)
+        self._valve_actuation('open', name, description)
 
     @verbose_skip
     @command_register
     def close(self, name=None, description=''):
+        self._valve_actuation('close', name, description)
 
-        if description is None:
-            description = '---'
+    def _valve_actuation(self, action, name, description):
+        self.console_info('{} name={} desc={}'.format(action, name or NULL_STR, description or NULL_STR))
 
-        self.console_info('closing name={} desc={}'.format(name or NULL_STR, description or NULL_STR))
-        result = self._manager_action([('close_valve', (name,), dict(
+        result = self._manager_action([('{}_valve'.format(action), (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
 
-        self.debug('---------------------------------------- close {} ({}) result={}'.format(name, description, result))
+        self.debug('-------------------------- {} {} ({}) result={}'.format(action, name, description, result))
         if result is not None:
-            self._finish_valve_change('close', result, name, description)
+            if not self._finish_valve_change(action, result, name, description):
+                if not globalv.experiment_debug:
+                    from pychron.core.ui.gui import invoke_in_main_thread
+                    msg = 'Failed to {} valve name="{}", description="{}"'.format(action, name, description)
+                    invoke_in_main_thread(self.warning_dialog, msg)
+                    self.cancel()
+                else:
+                    self.debug('Experiment debug mode. not canceling')
 
     @verbose_skip
     @command_register
@@ -125,7 +120,15 @@ class ValvePyScript(PyScript):
             return r
 
     # private
-    def _finish_valve_change(self, action, result, name, description):
+    def _finish_valve_change(self, action, result, name, description, retry=1):
+        """
+        :param action: 
+        :param result: 
+        :param name: 
+        :param description: 
+        :param retry: 
+        :return: 
+        """
         ok, changed = result[0]
         if changed:
             time.sleep(0.25)
@@ -133,13 +136,39 @@ class ValvePyScript(PyScript):
         locked = self._manager_action([('get_software_lock', (name,), dict(
             mode='script',
             description=description))], protocol=ELPROTOCOL)
-        if not ok and not locked:
-            self.console_info('Failed to {} valve {} {}'.format(action, name, description))
 
-            if not globalv.experiment_debug:
-                self.cancel()
-            else:
-                self.debug('Experiment debug mode. not canceling')
+        # if action == 'close':
+        # ok = not ok
+        self.debug('action={}, ok={}, locked={}'.format(action, ok, locked))
+        change_ok = True
+        if not ok and not locked[0]:
+            msg = 'Failed to {} valve Name="{}", Description="{}"'.format(action, name or '', description or '')
+            self.console_info(msg)
+            change_ok = False
+            if self.retry_actuation and retry < 100:
+                time.sleep(1)
+                msg = 'Retry actuation. i={} Action="{}", Name="{}", Description="{}"'.format(retry, action, name or '',
+                                                                                              description or '')
+                self.console_info(msg)
+
+                result = self._manager_action([('{}_valve'.format(action), (name,), dict(
+                    mode='script',
+                    description=description))], protocol=ELPROTOCOL)
+
+                if result is not None:
+                    change_ok = self._finish_valve_change(action, result, name, description, retry=retry + 1)
+
+        return change_ok
+
+        # return not cancel
+        # if cancel:
+        #     if not globalv.experiment_debug:
+        #         # self.warning_dialog(msg)
+        #         self.cancel()
+        #     else:
+        #         self.debug('Experiment debug mode. not canceling')
+        # else:
+        #     return True
 
     def _get_valve_state(self, name, description):
         return self._manager_action([('get_valve_state', (name,), dict(

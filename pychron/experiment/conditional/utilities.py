@@ -27,6 +27,7 @@ from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLE
 def interpolate_teststr():
     pass
 
+
 def get_teststr_attr_func(token):
     for args in (
             (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),
@@ -34,7 +35,7 @@ def get_teststr_attr_func(token):
             (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
             (ACTIVE_REGEX, 'not attr in data[0]'),
             (CP_REGEX, 'aa.get_current_intensity(attr)'),
-            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
+            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr, default=None)'),
             (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
             (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
             (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),
@@ -62,10 +63,10 @@ def get_teststr_attr_func(token):
 
         def func(obj, data, window):
             if window:
-                vs = obj.arar_age.get_values(attr, window)
+                vs = obj.isotope_group.get_values(attr, window)
                 v = ufloat(vs.mean(), vs.std())
             else:
-                v = obj.arar_age.get_value(attr)
+                v = obj.isotope_group.get_value(attr)
             return v
 
     if token.startswith('not'):
@@ -78,7 +79,7 @@ def get_teststr_attr_func(token):
 # wrappers
 def wrapper(fstr, token, ai):
     return lambda obj, data, window: eval(fstr, {'attr': ai,
-                                                 'aa': obj.arar_age,
+                                                 'aa': obj.isotope_group,
                                                  'obj': obj,
                                                  'data': data, 'window': window})
 
@@ -112,7 +113,7 @@ def between_wrapper(fstr, token, ai):
         return wrapper(fstr, token, ai)
 
 
-#teststr
+# teststr
 def teststr_func(token):
     c = remove_attr(token)
     a = extract_attr(token)
@@ -231,6 +232,9 @@ def remove_comp(s):
 def extract_attr(key):
     """
     """
+    if key.startswith('L2(CDD)'):
+        return 'L2(CDD)'
+
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(',')
         key = aa[0]
@@ -253,6 +257,3 @@ def extract_attr(key):
     return key
 
 # ============= EOF =============================================
-
-
-

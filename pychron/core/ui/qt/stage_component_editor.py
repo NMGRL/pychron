@@ -16,10 +16,12 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Event, Str
+from pyface.qt.QtCore import Qt
 from enable.component_editor import ComponentEditor, _ComponentEditor
 from enable.window import Window as EWindow
-from PySide.QtCore import Qt
+from traits.api import Event, Str
+
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================

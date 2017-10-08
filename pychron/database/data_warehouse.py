@@ -17,10 +17,10 @@
 
 
 import os
+
 from datetime import datetime
 
 from pychron.loggable import Loggable
-
 
 MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', \
                'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']

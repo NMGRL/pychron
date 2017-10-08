@@ -16,23 +16,20 @@
 
 
 # ============= enthought library imports =======================
+import time
+from threading import Thread
+
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
-# ============= standard library imports ========================
-import time
-
-# ============= local library imports  ==========================
 from fusions_laser_manager import FusionsLaserManager
-from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
-from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
-# from pychron.lasers.laser_managers.laser_shot_history import LaserShotHistory
-from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
-# from pychron.machine_vision.mosaic_manager import MosaicManager
-from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
-from pychron.stage.maps.laser_stage_map import UVLaserStageMap
-from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
 from pychron.core.geometry.geometry import calc_point_along_line
-from threading import Thread
+from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
+from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
+from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
+from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
+from pychron.lasers.reference_marks import ReferenceMarks
+from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
+from pychron.stage.maps.laser_stage_map import UVLaserStageMap
 
 
 class FusionsUVManager(FusionsLaserManager):
@@ -52,7 +49,7 @@ class FusionsUVManager(FusionsLaserManager):
     fire_button = Event
     fire_label = Property(depends_on='firing')
     firing = DelegatesTo('atl_controller')
-    mode = Enum('Burst', 'Continuous', 'Single')
+    fire_mode = Enum('Burst', 'Continuous', 'Single')
 
     gas_handler = Instance(UVGasHandlerManager)
 
@@ -71,6 +68,10 @@ class FusionsUVManager(FusionsLaserManager):
     _is_tracing = False
     _cancel_tracing = False
 
+    add_reference_mark_button = Button
+    reset_reference_marks_button = Button('Reset')
+    reference_marks = Instance(ReferenceMarks, ())
+    save_reference_marks_canvas_button = Button('Save')
     # dbname = paths.uvlaser_db
     # db_root = paths.uvlaser_db_root
 
@@ -311,22 +312,74 @@ class FusionsUVManager(FusionsLaserManager):
         self.firing = False
         return resp
 
+    def _add_reference_mark(self):
+
+        if not self.enabled:
+            self.warning_dialog('Please enable the laser and wait for it to warm up')
+            return
+
+        if not self.is_ready():
+            self.warning_dialog('Please wait for the laser to warm up')
+            return
+
+        refmarks = self.reference_marks
+        if not refmarks.check_mark():
+            if not self.confirmation_dialog('Reference Mark "{}" already exists. Are you sure you want to add it '
+                                            'again?'.format(refmarks.mark)):
+                return
+
+        if not self.atl_controller.burst_shot:
+            self.warning_dialog('Please set nbursts')
+            return
+
+        sm = self.stage_manager
+        cx, cy = sm.get_current_position()
+        self.debug('Making reference mark "{}":{}'.format(refmarks.mark, refmarks.get_mark()))
+        for x, y in refmarks.make_mark():
+            self.debug('mark x={}, y={}'.format(x, y))
+            sm.linear_move(cx + x, cy - y, use_calibration=False, block=True)
+            time.sleep(0.25)
+            ret = self.fire_laser('burst')
+            if isinstance(ret, str):
+                self.warning('make mark failed')
+                break
+
+            while self.is_firing():
+                time.sleep(0.1)
+        else:
+            self.info('mark mark complete')
+            refmarks.set_made((cx, cy))
+
+    def _save_reference_marks_canvas(self):
+        pass
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _save_reference_marks_canvas_button_fired(self):
+        self._save_reference_marks_canvas()
+
+    def _add_reference_mark_button_fired(self):
+        t = Thread(target=self._add_reference_mark)
+        t.start()
+
+    def _reset_reference_marks_button_fired(self):
+        if self.confirmation_dialog('Are you sure you want to continue?'):
+            self.reference_marks.reset()
+
     def _fire_button_fired(self):
         if self.firing:
             self.info('stopping laser')
             self.atl_controller.laser_stop()
         else:
             self.info('firing laser')
-            if self.mode == 'Single':
+            if self.fire_mode == 'Single':
                 self.atl_controller.laser_single_shot()
             else:
                 self.atl_controller.laser_run()
 
-    def _mode_changed(self):
-        if self.mode == 'Burst':
+    def _fire_mode_changed(self):
+        if self.fire_mode == 'Burst':
             self.atl_controller.set_burst_mode(True)
         else:
             self.atl_controller.set_burst_mode(False)
@@ -343,9 +396,8 @@ class FusionsUVManager(FusionsLaserManager):
     def _stage_manager_default(self):
         args = dict(name='stage',
                     configuration_dir_name='fusions_uv',
-                    stage_controller_class='Aerotech',
-                    stage_map_klass=UVLaserStageMap,
-                    use_modified=False)
+                    stage_controller_klass='Aerotech',
+                    stage_map_klass=UVLaserStageMap)
 
         return self._stage_manager_factory(args)
 
@@ -362,7 +414,7 @@ class FusionsUVManager(FusionsLaserManager):
         #        uv.bootstrap()
         return uv
 
-    def _mode_default(self):
+    def _fire_mode_default(self):
         return 'Burst'
 
     def _laser_script_executor_default(self):

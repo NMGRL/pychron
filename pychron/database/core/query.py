@@ -27,6 +27,15 @@ now = datetime.now()
 one_year = timedelta(days=365)
 
 
+def in_func(q, col, values):
+    if values:
+        if not hasattr(values, '__iter__'):
+            q = q.filter(col == values)
+        else:
+            q = q.filter(col.in_(values))
+    return q
+
+
 def compile_query(query):
     from sqlalchemy.sql import compiler
     #    try:
@@ -211,7 +220,7 @@ class Query(HasTraits):
             if comp == 'between':
                 d = (d, datetime.strptime(self.rcriterion, fmt))
             else:
-                d = (d, )
+                d = (d,)
 
             attr = cast(attr, Date)
             # q = q.filter(getattr(attr, comp)(*d))
@@ -322,7 +331,7 @@ class Query(HasTraits):
         return cs
 
     def _cumulate_joins(self):
-        ps = self.parent_parameters  #+[self.parameter]
+        ps = self.parent_parameters  # +[self.parameter]
         if ps:
             tjs = []
 
@@ -335,9 +344,9 @@ class Query(HasTraits):
             return tjs
 
     def _cumulate_filters(self):
-        ps = self.parent_parameters  #+[self.parameter]
-        pc = self.parent_comparators  #+[self.comparator]
-        pr = self.parent_criterions  #+[self.criterion]
+        ps = self.parent_parameters  # +[self.parameter]
+        pc = self.parent_comparators  # +[self.comparator]
+        pr = self.parent_criterions  # +[self.criterion]
         if ps:
             tfs = []
             for pi, co, ci in zip(ps,
@@ -426,7 +435,6 @@ class PowerMapQuery(DateQuery):
 
 class VideoQuery(DateQuery):
     pass
-
 
 # ============= EOF =============================================
 #        elif 'runtime' in param:

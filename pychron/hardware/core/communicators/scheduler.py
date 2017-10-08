@@ -15,43 +15,44 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float
+from traits.api import Float, HasTraits
 
 # ============= standard library imports ========================
 from threading import Lock
 
 # ============= local library imports  ==========================
-from pychron.loggable import Loggable
+
 
 # SINGLE_ITEM_BUF = True
 # SINGLE_ITEM_BUF=False
-class CommunicationScheduler(Loggable):
-    '''
-    
-        
-        this class should be used when working with multiple rs485 devices on the same port. 
-        
-        it uses a simple lock and sleep cycle to avoid collision on the data lines
-        
-        when setting up the devices use device.set_scheduler to set the shared scheduler
-        
-    '''
+class CommunicationScheduler(HasTraits):
+    """
 
-#    collision_delay = Float(125)
+
+        this class should be used when working with multiple rs485 devices on the same port.
+
+        it uses a simple lock and sleep cycle to avoid collision on the data lines
+
+        when setting up the devices use device.set_scheduler to set the shared scheduler
+
+    """
+
+    #    collision_delay = Float(125)
     collision_delay = Float(50)
 
     def __init__(self, *args, **kw):
         super(CommunicationScheduler, self).__init__(*args, **kw)
         self._lock = Lock()
-#        self._condition = Condition()
-#        self._command_queue = Queue()
-#        self._buffer = Queue()
-#
-#        consumer = Consumer(self._command_queue,
-#                            self._buffer,
-# #                            self._condition,
-#                            self.collision_delay)
-#        consumer.start()
+
+    #        self._condition = Condition()
+    #        self._command_queue = Queue()
+    #        self._buffer = Queue()
+    #
+    #        consumer = Consumer(self._command_queue,
+    #                            self._buffer,
+    # #                            self._condition,
+    #                            self.collision_delay)
+    #        consumer.start()
 
     def schedule(self, func, args=None, kwargs=None):
         if args is None:
@@ -59,21 +60,20 @@ class CommunicationScheduler(Loggable):
         if kwargs is None:
             kwargs = dict()
 
-#        while SINGLE_ITEM_BUF and not self._buffer.empty():
-#            time.sleep(0.0001)
-#
-#        self._command_queue.put((func, args, kwargs))
-#
-#        try:
-#            r = self._buffer.get(timeout=0.5)
-#        except Empty:
-#            r = None
+        #        while SINGLE_ITEM_BUF and not self._buffer.empty():
+        #            time.sleep(0.0001)
+        #
+        #        self._command_queue.put((func, args, kwargs))
+        #
+        #        try:
+        #            r = self._buffer.get(timeout=0.5)
+        #        except Empty:
+        #            r = None
 
         with self._lock:
             r = func(*args, **kwargs)
 
         return r
-
 
 # class Consumer(Thread):
 #

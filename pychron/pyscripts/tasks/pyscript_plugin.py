@@ -15,18 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
+from envisage.ui.tasks.task_factory import TaskFactory
+from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.action.task_action import TaskAction
-from pyface.tasks.action.schema import SMenu
 
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
@@ -91,16 +87,17 @@ class PyScriptPlugin(BaseTaskPlugin):
     def _visual_task_factory(self):
         from pychron.pyscripts.tasks.visual_el_programmer.visual_el_programmer_task import VisualElProgrammerTask
 
-        return VisualElProgrammerTask()
+        return VisualElProgrammerTask(application=self.application)
 
     def _task_factory(self):
         from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
 
-        return PyScriptTask()
+        return PyScriptTask(application=self.application)
 
     def _preferences_panes_default(self):
         return [PyScriptPreferencesPane]
 
     def _preferences_default(self):
-        return ['file://{}'.format(os.path.join(paths.preferences_dir, 'script.ini'))]
+        return self._preferences_factory('script')
+
 # ============= EOF =============================================

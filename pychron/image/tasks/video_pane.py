@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
     on_trait_change, Bool, Range
 from traitsui.api import View, Item, UItem, EnumEditor
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.ui.stage_component_editor import VideoComponentEditor

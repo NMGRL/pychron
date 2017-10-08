@@ -85,6 +85,9 @@ class DashboardServer(Loggable):
         if self.devices:
             self.start_poll()
 
+        if self.labspy_client:
+            self.labspy_client.start()
+
     def deactivate(self):
         pass
 
@@ -352,7 +355,7 @@ class DashboardServer(Loggable):
 
 
 # ============= EOF =============================================
- # def _load_devices(self):
+    # def _load_devices(self):
     # # read devices from config
     # app = self.application
     #

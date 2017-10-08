@@ -15,18 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.component_editor import ComponentEditor
+from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
 from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
-    EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor
-from pyface.tasks.traits_task_pane import TraitsTaskPane
-from pyface.tasks.traits_dock_pane import TraitsDockPane
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+    EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor, \
+    ListStrEditor
+
 from pychron.core.ui.custom_label_editor import CustomLabel
+# from pychron.core.ui.laser_status_editor import LaserStatusEditor
+from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
-from pychron.core.ui.led_editor import LEDEditor
-from enable.component_editor import ComponentEditor
 
 
 class BaseLaserPane(TraitsTaskPane):
@@ -36,7 +37,8 @@ class BaseLaserPane(TraitsTaskPane):
     def traits_view(self):
         editor = self.model.stage_manager.canvas_editor_factory()
         canvas_grp = VGroup(
-            HGroup(UItem('stage_map_name', editor=EnumEditor(name='stage_map_names')),
+            HGroup(UItem('stage_map_name',
+                         editor=EnumEditor(name='stage_map_names')),
                    Item('stage_map',
                         show_label=False),
                    Item('back_button',
@@ -62,90 +64,127 @@ class StageControlPane(TraitsDockPane):
     def trait_context(self):
         return {'canvas': self.model.stage_manager.canvas,
                 'stage_manager': self.model.stage_manager,
-                'tray_calibration': self.model.stage_manager.tray_calibration_manager}
+                'tray_calibration': self.model.stage_manager.tray_calibration_manager,
+                'object': self.model}
 
-    def traits_view(self):
-        pgrp = Group(UItem('stage_manager.calibrated_position_entry',
-                           tooltip='Enter a position e.g 1 for a hole, or 3,4 for X,Y'),
-                     label='Calibrated Position',
-                     show_border=True)
-        hgrp = HGroup(UItem('stage_manager.stop_button'),
-                      UItem('stage_manager.home'),
-                      UItem('stage_manager.home_option',
-                            editor=EnumEditor(name='stage_manager.home_options')))
+    def _get_tabs(self):
+        canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
+                            Item('canvas.show_grids', label='Show Grids'),
+                            VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
+                                          UItem('canvas.crosshairs_color')),
+                                   Item('canvas.show_hole', label='Display Hole Label'),
+                                   HGroup(
+                                       Item('canvas.show_desired_position',
+                                            label='Show Desired'),
+                                       UItem('canvas.desired_position_color')),
+                                   Item('canvas.crosshairs_kind', label='Kind'),
+                                   Item('canvas.crosshairs_radius', label='Radius'),
+                                   HGroup(Item('canvas.crosshairs_offsetx', label='Offset (mm)'),
+                                          UItem('canvas.crosshairs_offsety')),
+                                   Item('canvas.crosshairs_offset_color', label='Offset Color'),
+                                   label='Crosshairs',
+                                   show_border=True),
+                            label='Canvas')
 
-        cngrp = VGroup(Item('canvas.show_bounds_rect'),
-                       Item('canvas.show_grids'),
-                       HGroup(Item('canvas.show_laser_position'),
-                              UItem('canvas.crosshairs_color')),
-                       Item('canvas.crosshairs_kind'),
-                       Item('canvas.crosshairs_radius'),
-                       HGroup(
-                           Item('canvas.crosshairs_offsetx', label='Offset'),
-                           UItem('canvas.crosshairs_offsety')),
-                       Item('canvas.crosshairs_offset_color'),
-                       HGroup(Item('canvas.show_desired_position'),
-                              UItem('canvas.desired_position_color')),
-                       label='Canvas')
-
-        mode = self.model.mode
-        cagrp = VGroup(
-            visible_when='use_video',
-            label='Camera')
+        tabs = Group(UItem('stage_manager.stage_controller', style='custom',
+                           label='Axes'),
+                     canvas_grp,
+                     layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
+            camera_grp = VGroup(visible_when='use_video', label='Camera')
             mvgrp = VGroup(
                 UItem('stage_manager.autocenter_manager', style='custom'),
-                UItem('stage_manager.autofocus_manager', style='custom'),
+                UItem('stage_manager.zoom_calibration_manager',
+                      style='custom'),
                 label='Machine Vision', show_border=True)
 
-            recgrp = VGroup(
-                HGroup(icon_button_editor('stage_manager.snapshot_button', 'camera',
-                                          tooltip='Take a snapshot'),
-                       icon_button_editor('stage_manager.record',
-                                          'media-record',
-                                          tooltip='Record video'),
-                       CustomLabel('stage_manager.record_label', color='red')),
-                VGroup(Item('stage_manager.auto_save_snapshot'),
-                       Item('stage_manager.render_with_markup')),
-                show_border=True,
-                label='Recording')
+            recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
+                                                      'camera',
+                                                      tooltip='Take a snapshot'),
+                                   icon_button_editor('stage_manager.record',
+                                                      'media-record',
+                                                      tooltip='Record video'),
+                                   CustomLabel('stage_manager.record_label',
+                                               color='red')),
+                            VGroup(Item('stage_manager.auto_save_snapshot'),
+                                   Item('stage_manager.render_with_markup')),
+                            show_border=True,
+                            label='Recording')
 
-            cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients', label='Zoom Coefficients'))
-            cagrp.content.extend((cfggrp, recgrp, mvgrp))
+            cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
+                                 label='Zoom Coefficients'))
+            camera_grp.content.extend((cfggrp, recgrp, mvgrp))
+            tabs.content.append(camera_grp)
 
-        cgrp = Group(
-            UItem('stage_manager.stage_controller', style='custom',
-                  label='Axes'),
-            cngrp,
-            cagrp,
-            layout='tabbed')
-
+        mode = self.model.mode
         if mode != 'client':
             pp_grp = UItem('stage_manager.points_programmer',
                            label='Points',
                            style='custom')
-            cgrp.content.append(pp_grp)
+            tabs.content.append(pp_grp)
 
-            tc_grp = VGroup(UItem('tray_calibration.style',
-                                  enabled_when='not tray_calibration.isCalibrating()'),
-                            UItem('tray_calibration.calibrate',
-                                  editor=ButtonEditor(label_value='tray_calibration.calibration_step')),
-                            HGroup(Item('tray_calibration.x', format_str='%0.3f', style='readonly'),
-                                   Item('tray_calibration.y', format_str='%0.3f', style='readonly')),
-                            Item('tray_calibration.rotation', format_str='%0.3f', style='readonly'),
-                            Item('tray_calibration.scale', format_str='%0.4f', style='readonly'),
-                            Item('tray_calibration.error', format_str='%0.2f', style='readonly'),
-                            UItem('tray_calibration.calibrator', style='custom', editor=InstanceEditor()),
-                            CustomLabel('tray_calibration.calibration_help',
-                                        color='green',
-                                        height=75, width=300),
+            cal_help_grp = VGroup(CustomLabel('tray_calibration.calibration_help',
+                                              color='green'),
+                                  label='Help', show_border=True)
+            cal_results_grp = VGroup(HGroup(Item('tray_calibration.x',
+                                                 format_str='%0.3f',
+                                                 style='readonly'),
+                                            Item('tray_calibration.y',
+                                                 format_str='%0.3f',
+                                                 style='readonly')),
+                                     Item('tray_calibration.rotation',
+                                          format_str='%0.3f', style='readonly'),
+                                     Item('tray_calibration.scale', format_str='%0.4f',
+                                          style='readonly'),
+                                     Item('tray_calibration.error', format_str='%0.2f',
+                                          style='readonly'),
+                                     label='Results', show_border=True)
+            holes_grp = VGroup(HGroup(UItem('tray_calibration.add_holes_button',
+                                            tooltip='Add Holes'),
+                                      UItem('tray_calibration.reset_holes_button',
+                                            tooltip='Reset Holes')),
+                               UItem('tray_calibration.holes_list',
+                                     editor=ListStrEditor()))
+            cal_grp = HGroup(UItem('tray_calibration.style',
+                                   enabled_when='not tray_calibration.isCalibrating()'),
+                             UItem('tray_calibration.calibrate',
+                                   enabled_when='tray_calibration.calibration_enabled',
+                                   editor=ButtonEditor(label_value='tray_calibration.calibration_step'),
+                                   width=-125),
+                             UItem('tray_calibration.cancel_button',
+                                   enabled_when='tray_calibration.isCalibrating()'),
+                             UItem('tray_calibration.set_center_button'))
+            tc_grp = VGroup(cal_grp,
+                            holes_grp,
+                            HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 
-            cgrp.content.append(tc_grp)
+            tabs.content.append(tc_grp)
+        return tabs
 
-        v = View(VGroup(hgrp, pgrp, cgrp))
-
+    def traits_view(self):
+        pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
+                            tooltip='Enter a position e.g 1 for a hole, '
+                                    'or 3,4 for X,Y'),
+                      icon_button_editor('stage_manager.autocenter_button', 'find',
+                                         tooltip='Do an autocenter at the current location',
+                                         enabled_when='stage_manager.autocenter_manager.use_autocenter'),
+                      Item('stage_manager.keep_images_open',
+                           enabled_when='stage_manager.autocenter_manager.use_autocenter',
+                           label='Keep Images Open',
+                           tooltip='If checked  do not automatically close '
+                                   'autocentering images when move finished'),
+                      label='Calibrated Position',
+                      show_border=True)
+        hgrp = HGroup(UItem('stage_manager.stop_button'),
+                      UItem('stage_manager.home'),
+                      UItem('stage_manager.home_option',
+                            editor=EnumEditor(
+                                name='stage_manager.home_options')))
+        tabs = self._get_tabs()
+        v = View(VGroup(hgrp, pgrp, tabs))
+        # v = View(VGroup(hgrp, pgrp))
         return v
 
 
@@ -157,23 +196,31 @@ class ControlPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        v = View(
-            VGroup(
-                HGroup(
-                    UItem('enabled_led',
-                          editor=LEDEditor(),
-                          style='custom',
-                          height=-35),
-                    UItem('enable', editor=ButtonEditor(label_value='enable_label'))),
-                HGroup(
-                    Item('requested_power',
-                         style='readonly',
-                         format_str='%0.2f',
-                         width=100),
-                    Spring(springy=False, width=50),
-                    UItem('units', style='readonly'),
-                    spring),
-                show_border=True))
+        led_grp = HGroup(UItem('enabled_led',
+                               editor=LEDEditor(),
+                               style='custom',
+                               height=-35),
+                         UItem('enable', editor=ButtonEditor(label_value='enable_label')))
+
+        status_grp = HGroup(spring, CustomLabel('status_text',
+                                                weight='bold',
+                                                use_color_background=False,
+                                                # bgcolor='transparent',
+                                                color='orange', size=40),
+                            spring)
+        request_grp = HGroup(Item('requested_power',
+                                  style='readonly',
+                                  format_str='%0.2f',
+                                  width=100),
+                             Spring(springy=False, width=50),
+                             UItem('units', style='readonly'),
+                             spring)
+
+        v = View(VGroup(led_grp,
+                        spring,
+                        status_grp,
+                        spring,
+                        request_grp, show_border=True))
         return v
 
 
@@ -218,12 +265,17 @@ class ClientMixin(object):
     def traits_view(self):
         pos_grp = VGroup(UItem('move_enabled_button'),
                          VGroup(HGroup(Item('position'),
-                                       UItem('object.stage_manager.stage_map_name',
-                                             editor=EnumEditor(name='object.stage_manager.stage_map_names')),
+                                       UItem(
+                                           'object.stage_manager.stage_map_name',
+                                           editor=EnumEditor(
+                                               name='object.stage_manager.stage_map_names')),
                                        UItem('stage_stop_button')),
-                                Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-                                Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-                                Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('x',
+                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('y',
+                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('z',
+                                     editor=RangeEditor(low=-25.0, high=25.0)),
                                 enabled_when='_move_enabled'),
                          label='Positioning')
 
@@ -239,7 +291,8 @@ class ClientMixin(object):
             pos_grp, layout='tabbed')
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
-                      UItem('enable', editor=ButtonEditor(label_value='enable_label')),
+                      UItem('enable',
+                            editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', enabled_when='enabled'),
                       Item('output_power', label='Power'),
                       UItem('units'),

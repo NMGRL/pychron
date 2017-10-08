@@ -19,8 +19,15 @@
 # ============= standard library imports ========================
 import math
 from functools import partial
-from decimal import Decimal
+
+
 # ============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
+
+
+def uformat_percent_error(u, *args, **kw):
+    return format_percent_error(nominal_value(u), std_dev(u), *args, **kw)
+
 
 def format_percent_error(v, e, n=2, include_percent_sign=False):
     p = calc_percent_error(v, e)
@@ -36,7 +43,7 @@ def format_percent_error(v, e, n=2, include_percent_sign=False):
 def calc_percent_error(v, e, scale=100):
     try:
         return abs(e / v * scale)
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         return 'NaN'
 
 

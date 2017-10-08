@@ -20,7 +20,6 @@ from pyface.constant import OK
 
 from pychron.core.ui import set_qt
 
-
 set_qt()
 
 

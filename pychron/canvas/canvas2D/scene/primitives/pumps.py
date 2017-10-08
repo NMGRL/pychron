@@ -25,8 +25,8 @@ from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 class Turbo(RoundedRectangle, Animation):
     animate = False
 
-    def _render_(self, gc):
-        super(Turbo, self)._render_(gc)
+    def _render(self, gc):
+        super(Turbo, self)._render(gc)
         if self.animate:
             self._draw_impeller(gc)
 

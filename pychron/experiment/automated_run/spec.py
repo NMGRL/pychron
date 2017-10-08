@@ -15,20 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr, Long, HasTraits
-# ============= standard library imports ========================
 import hashlib
-from datetime import datetime
 import uuid
-# ============= local library imports  ==========================
+from datetime import datetime
+
+from traits.api import Str, Int, Bool, Float, Property, \
+    Enum, on_trait_change, CStr, Long, HasTraits, Instance
+
 from pychron.core.helpers.filetools import remove_extension
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.experiment.automated_run.result import AutomatedRunResult, AirResult, UnknownResult, BlankResult
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, make_runid, is_special, \
     convert_extract_device
 from pychron.experiment.utilities.position_regex import XY_REGEX
-from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
-
+from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -38,14 +38,17 @@ class AutomatedRunSpec(HasTraits):
         this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
+    run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
+    result = Instance(AutomatedRunResult, ())
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
-                 'invalid', 'test')
+                 'invalid', 'test', 'aborted')
 
     skip = Bool(False)
     end_after = Bool(False)
     collection_version = Str
+    delay_after = Float
     # ===========================================================================
     # queue globals
     # ===========================================================================
@@ -54,16 +57,15 @@ class AutomatedRunSpec(HasTraits):
     username = Str
     tray = Str
     queue_conditionals_name = Str
+    laboratory = Str
     # ===========================================================================
     # run id
     # ===========================================================================
     labnumber = Str
     uuid = Str
-    aliquot = Property
-    _aliquot = Int
-    # assigned_aliquot = Int
-
     user_defined_aliquot = Int
+    aliquot = Property(depends_on='_aliquot, user_defined_aliquot')
+    _aliquot = Int
 
     step = Property(depends_on='_step')
     _step = Int(-1)
@@ -95,13 +97,22 @@ class AutomatedRunSpec(HasTraits):
     ramp_duration = Float
     ramp_rate = Float
     disable_between_positions = Bool(False)
-    overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
     conditionals = Str
     syn_extraction = Str
-
     collection_time_zero_offset = Float
+    repository_identifier = Str
+
+    frequency_group = 0
+    conflicts_checked = False
+    identifier_error = Bool(False)
+
+    executable = Property(depends_on='identifier_error, _executable')
+    _executable = Bool(True)
+
+    lab_temperature = 0
+    lab_humidity = 0
 
     # ===========================================================================
     # info
@@ -118,36 +129,59 @@ class AutomatedRunSpec(HasTraits):
     irradiation_level = Str
     irradiation_position = Int
     material = Str
-    data_reduction_tag = ''
+    data_reduction_tag = Str
 
-    analysis_type = Property(depends_on='labnumber')
-    run_klass = 'pychron.experiment.automated_run.automated_run.AutomatedRun'
+    branch = 'master'
 
-    identifier_error = Bool(False)
-    _executable = Bool(True)
-    executable = Property(depends_on='identifier_error, _executable')
+    uage = None
+    v39 = None
 
-    frequency_group = 0
-
-    runid = Property
     _estimated_duration = 0
     _changed = False
 
-    rundate = Property
     _step_heat = False
-    conflicts_checked = False
+    _runid = None
 
-    experiment_identifier = Str
-    identifier = Property
+    @property
+    def acquisition_software(self):
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
+        from pychron import __version__
+        return 'Pychron{}(Exp{},DVC{})'.format(__version__, eversion, dversion)
+
+    @property
+    def data_reduction_software(self):
+        from pychron import __version__
+        from pychron.dvc import __version__ as dversion
+        return 'Pychron{}(DVC{})'.format(__version__, dversion)
+
+    def new_result(self, arun):
+        klass = AutomatedRunResult
+        if self.analysis_type == 'air':
+            klass = AirResult
+        elif self.analysis_type == 'unknown':
+            klass = UnknownResult
+        elif 'blank' in self.analysis_type:
+            klass = BlankResult
+
+        result = klass()
+        result.runid = self.runid
+        result.isotope_group = arun.isotope_group
+        result.tripped_conditional = arun.tripped_conditional
+
+        self.result = result
 
     def is_detector_ic(self):
-        return self.analysis_type == 'detector_ic'
+        return self.analysis_type == DETECTOR_IC
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()
 
     def is_special(self):
         return is_special(self.labnumber)
+
+    def is_truncated(self):
+        return self.state == 'truncated'
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -219,7 +253,7 @@ class AutomatedRunSpec(HasTraits):
         if XY_REGEX[0].match(pos):
             ps = XY_REGEX[1](pos)
         elif ',' in pos:
-            # interpert as list of holenumbers
+            # interpret as list of hole numbers
             ps = list(pos.split(','))
         else:
             ps = [pos]
@@ -228,7 +262,6 @@ class AutomatedRunSpec(HasTraits):
 
     def make_script_context(self):
         hdn = convert_extract_device(self.extract_device)
-        # hdn = self.extract_device.replace(' ','')
 
         an = self.analysis_type.split('_')[0]
         ctx = dict(tray=self.tray,
@@ -285,6 +318,19 @@ class AutomatedRunSpec(HasTraits):
 
         return run
 
+    def get_delay_after(self, du, db, da):
+        d = self.delay_after
+        if not d:
+            d = du
+            if self.analysis_type == 'air':
+                d = da
+            elif self.analysis_type.startswith('blank'):
+                d = db
+
+            # d = db if self.analysis_type.startswith('blank') else du
+
+        return d
+
     def load(self, script_info, params):
         for k, v in script_info.iteritems():
             k = k if k == 'script_options' else '{}_script'.format(k)
@@ -296,11 +342,6 @@ class AutomatedRunSpec(HasTraits):
                 setattr(self, k, v)
 
         self._changed = False
-
-    # def _remove_mass_spectrometer_name(self, name):
-    #     if self.mass_spectrometer:
-    #         name = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
-    #     return name
 
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
@@ -331,28 +372,82 @@ class AutomatedRunSpec(HasTraits):
 
         return [get_attr(ai) for ai in attrs]
 
+    def reset(self):
+        self.clear_step()
+        self.conflicts_checked = False
+
+    def clear_step(self):
+        self._step = -1
+
+    def tocopy(self, verbose=False):
+        traits = ['mass_spectrometer',
+                  'extract_device',
+                  'username',
+                  'tray',
+                  'queue_conditionals_name',
+                  'labnumber',
+                  'user_defined_aliquot',
+                  'measurement_script',
+                  'post_measurement_script',
+                  'post_equilibration_script',
+                  'extraction_script',
+                  'script_options', 'use_cdd_warming',
+                  'extract_value',
+                  'extract_units',
+                  'position',
+                  'xyz_position',
+                  'duration',
+                  'cleanup',
+                  'pattern',
+                  'beam_diameter',
+                  'ramp_duration',
+                  'ramp_rate',
+                  'disable_between_positions',
+                  '_overlap',
+                  '_min_ms_pumptime',
+                  'conditionals',
+                  'syn_extraction',
+                  'collection_time_zero_offset',
+                  'weight',
+                  'comment',
+                  'project',
+                  'sample',
+                  'irradiation',
+                  'irradiation_level',
+                  'irradiation_position',
+                  'material',
+                  'data_reduction_tag',
+                  'delay_after']
+
+        if self.is_step_heat():
+            traits.append('aliquot')
+
+        if not self.is_special():
+            traits.append('repository_identifier')
+
+        if verbose:
+            for t in traits:
+                print '{} ==> {}'.format(t, getattr(self, t))
+
+        return self.clone_traits(traits)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
     @on_trait_change('''measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, script_options,
-extract_+, position, duration, cleanup''')
+post_equilibration_script, extraction_script, script_options, position, duration, cleanup''')
     def _change_handler(self, name, new):
         if new == 'None':
-            #            self.trait_set(trait_change_notify=False, **{name: ''})
             self.trait_set(**{name: ''})
         else:
             self._changed = True
 
+    def _state_changed(self, old, new):
+        logger.debug('state changed from {} to {}'.format(old, new))
+
     # ===============================================================================
     # property get/set
     # ===============================================================================
-    #    def _get_state(self):
-    #        return self._state
-    #
-    #    def _set_state(self, s):
-    #        if self._state != 'truncate':
-    #            self._state = s
     def _set_aliquot(self, v):
         self._aliquot = v
 
@@ -363,16 +458,6 @@ extract_+, position, duration, cleanup''')
             if self.user_defined_aliquot:
                 return self.user_defined_aliquot
         return self._aliquot
-
-    def _get_analysis_type(self):
-        return get_analysis_type(self.labnumber)
-
-    def reset(self):
-        self.clear_step()
-        self.conflicts_checked = False
-
-    def clear_step(self):
-        self._step = -1
 
     def _set_step(self, v):
         if isinstance(v, str):
@@ -388,19 +473,22 @@ extract_+, position, duration, cleanup''')
         else:
             return ALPHAS[self._step]
 
-    def _get_runid(self):
-        return make_runid(self.labnumber, self.aliquot, self.step)
-
-    def _get_rundate(self):
-        return datetime.now()
-
     def _set_executable(self, v):
         self._executable = v
 
     def _get_executable(self):
         return self._executable and not self.identifier_error
 
-    def _set_overlap(self, v):
+    @property
+    def analysis_type(self):
+        return get_analysis_type(self.labnumber)
+
+    @property
+    def overlap(self):
+        return self._overlap, self._min_ms_pumptime
+
+    @overlap.setter
+    def overlap(self, v):
         if isinstance(v, (list, tuple)):
             args = v
         else:
@@ -408,20 +496,35 @@ extract_+, position, duration, cleanup''')
                 args = map(int, v.split(','))
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
+                return
 
         if len(args) == 1:
             self._overlap = args[0]
         elif len(args) == 2:
             self._overlap, self._min_ms_pumptime = args
 
-    def _get_overlap(self):
-        return self._overlap, self._min_ms_pumptime
+    @property
+    def runid(self):
+        if self._runid:
+            return self._runid
+        else:
+            return make_runid(self.labnumber, self.aliquot, self.step)
+
+    @runid.setter
+    def runid(self, v):
+        self._runid = v
+
+    @property
+    def rundate(self):
+        return datetime.now()
 
     # mirror labnumber for now. deprecate labnumber and replace with identifier
-    def _get_identifier(self):
+    @property
+    def identifier(self):
         return self.labnumber
 
-    def _set_identifier(self, v):
+    @identifier.setter
+    def identifier(self, v):
         self.labnumber = v
 
     @property
@@ -456,20 +559,40 @@ extract_+, position, duration, cleanup''')
         return self.cleanup
 
     @cleanup_duration.setter
-    def set_cleanup(self, v):
+    def cleanup_duration(self, v):
         self.cleanup = v
 
     @extract_duration.setter
-    def set_duration(self, v):
+    def extract_duration(self, v):
         self.duration = v
+
+    def make_truncated_script_hash(self):
+        h = self._base_script_hash()
+        h.update('truncated')
+        h.update('True')
+        return h.hexdigest()
+
+    @property
+    def has_conditionals(self):
+        return bool(self.conditionals)
+
+    @property
+    def script_hash_truncated(self):
+        h = self._base_script_hash()
+        h.update('truncated')
+        h.update(str(self.is_truncated()))
+        return h.hexdigest()
 
     @property
     def script_hash(self):
+        h = self._base_script_hash()
+        return h.hexdigest()
+
+    def _base_script_hash(self):
+        # ctx should only contain values that affect the length of the analysis
         ctx = dict(nposition=len(self.get_position_list()),
                    disable_between_positions=self.disable_between_positions,
                    duration=self.duration,
-                   extract_value=self.extract_value,
-                   extract_units=self.extract_units,
                    cleanup=self.cleanup,
                    ramp_rate=self.ramp_rate,
                    pattern=self.pattern,
@@ -482,6 +605,6 @@ extract_+, position, duration, cleanup''')
         for k, v in sorted(ctx.items()):
             md5.update(str(k))
             md5.update(str(v))
-        return md5.hexdigest()
+        return md5
 
 # ============= EOF =============================================

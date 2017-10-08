@@ -22,9 +22,8 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime, func
 from sqlalchemy.orm import relationship
 
-# ============= local library imports  ==========================
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from util import Base
 
 

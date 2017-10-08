@@ -19,38 +19,8 @@ import time
 
 # ========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.core.helpers.strtools import to_bool
-
-
-def get_valve_name(obj):
-    if isinstance(obj, (str, int)):
-        addr = obj
-    else:
-        addr = obj.name.split('-')[1]
-    return addr
-
-
-def trim(func):
-    def wrapper(*args, **kw):
-        r = func(*args, **kw)
-        if r:
-            r = r.strip()
-            # r = r[4:-4]
-        return r
-
-    return wrapper
-
-
-def trim_bool(func):
-    def wrapper(*args, **kw):
-        r = func(*args, **kw)
-        if r:
-            r = r.strip()
-            r = to_bool(r)
-            # r = to_bool(r[4:-4])
-        return r
-
-    return wrapper
+from pychron.hardware.actuators import get_valve_name
+from pychron.core.communication_helper import trim, trim_bool
 
 
 class PychronGPActuator(GPActuator):
@@ -82,6 +52,14 @@ class PychronGPActuator(GPActuator):
     @trim
     def get_lock_word(self, verbose=False):
         cmd = 'GetValveLockStates'
+        return self.ask(cmd, verbose=verbose)
+
+    @trim_bool
+    def get_indicator_state(self, obj, verbose=True):
+        """
+            Query the hardware for the channel state
+        """
+        cmd = 'GetIndicatorState {}'.format(get_valve_name(obj))
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
@@ -129,6 +107,6 @@ class PychronGPActuator(GPActuator):
 
     def _check_actuate(self, obj, action):
         state = action == 'Open'
-        return self.get_channel_state(obj) == state
+        return self.get_indicator_state(obj) == state
 
 # ============= EOF =====================================

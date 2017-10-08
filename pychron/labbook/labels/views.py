@@ -30,7 +30,8 @@ class NewLabelView(HasTraits):
     @property
     def color_str(self):
         f = lambda x: '{:X}'.format(x).zfill(2)
-        args = map(f, self.color.toTuple())
+        color = self.color
+        args = map(f, (color.red(), color.green(), color.blue(), color.alpha()))
         return ''.join(args)
 
     def traits_view(self):

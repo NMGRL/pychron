@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 import os
 
+from enable.component_editor import ComponentEditor
 from traits.api import Instance, Any, Button, DelegatesTo
 from traitsui.api import View, Item, HGroup
-from enable.component_editor import ComponentEditor
 
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 from pychron.paths import paths
@@ -63,9 +63,6 @@ class UVGasHandlerManager(SwitchManager):
 #        v = self.get_valve_by_name(name)
 #        self.controller.close_valve(v.address)
 #        return True
-
-    def set_selected_explanation_item(self, item):
-        pass
 
     def _auto_gas_exchange(self):
         self.info('Starting auto gas exchange')

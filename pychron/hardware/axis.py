@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-
-
 # ============= enthought library imports =======================
 from traits.api import  Any, Str, Int, Float, \
     Bool, Property, on_trait_change, CInt
 from traitsui.api import View, Item
-
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -28,8 +25,8 @@ from pychron.config_loadable import ConfigLoadable
 
 
 class Axis(ConfigLoadable):
-    '''
-    '''
+    """
+    """
     id = Int
 #    name = Str
     position = Float
@@ -59,6 +56,20 @@ class Axis(ConfigLoadable):
     nominal_deceleration = Float
 
     sign = CInt(1)
+
+    def upload_parameters_to_device(self):
+        pass
+
+    def dump(self):
+        pass
+
+    def save(self):
+        pass
+
+    def ask(self, cmd):
+        return self.parent.ask(cmd)
+
+    # private
     def _get_velocity(self):
         return self._velocity
 
@@ -68,66 +79,9 @@ class Axis(ConfigLoadable):
     def _get_deceleration(self):
         return self._deceleration
 
-    def upload_parameters_to_device(self):
-        pass
-
-    @on_trait_change('_velocity, _acceleration, _deceleration')
-    def update_machine_values(self, obj, name, old, new):
-        setattr(self, 'machine{}'.format(name), new)
-
-    def _calibration_changed(self):
-        self.parent.update_axes()
-
-    def simple_view(self):
-        v = View(Item('calculate_parameters'),
-                 Item('velocity', format_str='%0.3f', enabled_when='not calculate_parameters'),
-                    Item('acceleration', format_str='%0.3f', enabled_when='not calculate_parameters'),
-                    Item('deceleration', format_str='%0.3f', enabled_when='not calculate_parameters'),
-                    Item('drive_ratio')
-                    )
-        return v
-
-    def full_view(self):
-        return self.simple_view()
-
-    def dump(self):
-        '''
-        '''
-        pass
-#        self.loaded = False
-#
-#        p = os.path.join(self.pdir, '.%s' % self.name)
-#        with open(p, 'w') as f:
-#            pickle.dump(self, f)
-#    def load_parameters_from_config(self, path):
-#        self.config_path = path
-#        self._load_parameters_from_config(path)
-#
-#    def load_parameters(self, pdir):
-#        '''
-#        '''
-# #        self.pdir = pdir
-# #        p = os.path.join(pdir, '.%s' % self.name)
-# #
-# #        if os.path.isfile(p):
-# #            return p
-# #        else:
-#        self.load(pdir)
-
-    def save(self):
-        pass
-
-    def ask(self, cmd):
-        return self.parent.ask(cmd)
-
     def _get_parameters(self, path):
-        '''
-  
-        '''
-#        cp = ConfigParser.ConfigParser()
-#        cp.read())
+
         params = []
-#        if path is None:
         if not os.path.isfile(path):
             path = os.path.join(path, '{}axis.cfg'.format(self.name))
 
@@ -135,17 +89,35 @@ class Axis(ConfigLoadable):
         if cp:
             params = [item for s in cp.sections() for item in cp.items(s)]
 
-#        for ai in a:
-#            print ai
-#
-#        for s in cp.sections():
-#            for i in cp.items(s):
-#                params.append(i)
         return params
+
     def _validate_float(self, v):
         try:
             v = float(v)
             return v
         except ValueError:
             pass
+
+    # handlers
+    @on_trait_change('_velocity, _acceleration, _deceleration')
+    def update_machine_values(self, obj, name, old, new):
+        setattr(self, 'machine{}'.format(name), new)
+
+    def _calibration_changed(self):
+        self.parent.update_axes()
+
+    # views
+    def simple_view(self):
+        v = View(Item('calculate_parameters'),
+                 Item('velocity', format_str='%0.3f',
+                      enabled_when='not calculate_parameters'),
+                 Item('acceleration', format_str='%0.3f',
+                      enabled_when='not calculate_parameters'),
+                 Item('deceleration', format_str='%0.3f',
+                      enabled_when='not calculate_parameters'),
+                 Item('drive_ratio'))
+        return v
+
+    def full_view(self):
+        return self.simple_view()
 # ============= EOF ====================================

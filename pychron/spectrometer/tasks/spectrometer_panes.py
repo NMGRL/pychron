@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
     Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
-from pyface.tasks.traits_dock_pane import TraitsDockPane
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
+
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.pane_helpers import spacer
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class ColorColumn(TableColumn):
@@ -68,7 +68,7 @@ class IntensitiesPane(TraitsDockPane):
         cols = [ColorColumn(cell_color_name='color', label='Color'),
                 ObjectColumn(name='name', width=175),
                 ObjectColumn(name='intensity', width=100),
-                ObjectColumn(name='std', label=u'\u00b11\u03c3', width=100)]
+                ObjectColumn(name='std', label=PLUSMINUS_ONE_SIGMA, width=100)]
         g = UItem('detectors', editor=TableEditor(columns=cols,
                                                   sortable=False,
                                                   editable=False))
@@ -126,13 +126,40 @@ class RecordControlsPane(TraitsDockPane):
         return v
 
 
-class ScannerPane(TraitsDockPane):
-    id = 'pychron.spectroemter.scanner'
-    name = 'Scanner'
+class MassScannerPane(TraitsDockPane):
+    id = 'pychron.spectrometer.scanner'
+    name = 'Mass Scanner'
 
     def trait_context(self):
-        ctx = super(ScannerPane, self).trait_context()
-        ctx['scanner'] = self.model.scanner
+        ctx = super(MassScannerPane, self).trait_context()
+        ctx['scanner'] = self.model.mass_scanner
+        return ctx
+
+    def traits_view(self):
+        grp = VGroup(UItem('scanner.new_scanner',
+                           tooltip='Open a new magnet scan',
+                           enabled_when='scanner.new_scanner_enabled'),
+                     HGroup(Item('scanner.step', format_str='%0.5f')),
+                     HGroup(Item('scanner.start_mass', format_str='%0.3f'),
+                            Item('scanner.stop_mass', format_str='%0.3f')),
+                     HGroup(icon_button_editor('scanner.start_scanner', 'start',
+                                               tooltip='Start the magnet scan',
+                                               enabled_when='scanner.start_scanner_enabled'),
+                            icon_button_editor('scanner.stop_scanner', 'stop',
+                                               tooltip='Stop the magnet scan',
+                                               enabled_when='scanner.stop_scanner_enabled'),
+                            icon_button_editor('scanner.clear_graph_button', 'clear')))
+        v = View(grp)
+        return v
+
+
+class DACScannerPane(TraitsDockPane):
+    id = 'pychron.spectrometer.scanner'
+    name = 'DAC Scanner'
+
+    def trait_context(self):
+        ctx = super(DACScannerPane, self).trait_context()
+        ctx['scanner'] = self.model.dac_scanner
         return ctx
 
     def traits_view(self):
@@ -172,15 +199,17 @@ class ControlsPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        magnet_grp = VGroup(
-            HGroup(
-                UItem('detector',
-                      editor=EnumEditor(name='detectors')),
-                UItem('isotope',
-                      editor=EnumEditor(name='isotopes'))),
-            UItem('magnet', style='custom'),
 
-            # UItem('scanner', style='custom'),
+        magnet_pos_grp = HGroup(
+                UItem('_detector',
+                      editor=EnumEditor(name='detector_names')),
+                UItem('isotope',
+                      editor=EnumEditor(name='isotopes')),
+                icon_button_editor('set_magnet_position_button', 'arrow_left',
+                                   tooltip='Apply Detector/Isotope magnet position'))
+
+        magnet_grp = VGroup(magnet_pos_grp,
+            UItem('magnet', style='custom', editor=InstanceEditor()),
             label='Magnet')
         detector_grp = VGroup(
             HGroup(
@@ -193,7 +222,7 @@ class ControlsPane(TraitsDockPane):
             label='Detectors')
 
         rise_grp = UItem('rise_rate', style='custom')
-        source_grp = UItem('source', style='custom')
+        source_grp = UItem('source', style='custom', editor=InstanceEditor())
 
         # cols = [ObjectColumn(name='text', label='Text',
         # width=0.40, ),
@@ -256,7 +285,13 @@ class ControlsPane(TraitsDockPane):
 
         v = View(
             VGroup(
-                HGroup(spacer(10),
+                HGroup(Item('spectrometer_configuration',
+                            label='Configuration',
+                            editor=EnumEditor(name='spectrometer_configurations')),
+                       icon_button_editor('set_spectrometer_configuration',
+                                          'brick-go',
+                                          tooltip='set selected spectrometer configuration'),
+                       spacer(10),
                        Item('integration_time',
                             label='Integration Time(s)')),
                 control_grp))

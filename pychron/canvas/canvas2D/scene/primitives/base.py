@@ -16,8 +16,9 @@
 
 # ============= enthought library imports =======================
 from kiva.fonttools import str_to_font
-from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List, cached_property
-from traitsui.api import View, Item, HGroup, VGroup
+from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -86,6 +87,11 @@ class Primitive(HasTraits):
     def label(self):
         return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
 
+    def request_layout(self):
+        self._cached_wh = None
+        self._cached_xy = None
+        self._layout_needed = True
+
     def render(self, gc):
 
         with gc:
@@ -96,7 +102,7 @@ class Primitive(HasTraits):
                 gc.set_font(self.gfont)
                 gc.set_line_width(self.line_width)
 
-                self._render_(gc)
+                self._render(gc)
 
     def set_stroke_color(self, gc):
         if self.state:
@@ -218,7 +224,7 @@ class Primitive(HasTraits):
         return x1 <= self.x <= x2 and y1 <= self.y <= y2
 
     # private
-    def _render_(self, gc):
+    def _render(self, gc):
         pass
 
     def _render_name(self, gc, x, y, w, h):
@@ -259,11 +265,14 @@ class Primitive(HasTraits):
         if self.canvas:
             self.canvas.request_redraw()
 
+    def _get_klass_name(self):
+        return self.__class__.__name__
+
 
 class QPrimitive(Primitive):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-            c = c.toTuple()
+            c = c.red(), c.green(), c.blue(), c.alpha()
 
         c = map(lambda x: x / 255., c)
         return c

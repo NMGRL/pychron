@@ -15,16 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import shelve
 import os
+import shelve
 
 from traits.api import HasTraits, Str, List, Any, Button, on_trait_change
 from traitsui.api import View, UItem, TabularEditor, Label, \
     HGroup
 from traitsui.tabular_adapter import TabularAdapter
 
-from pychron.paths import paths
 from pychron.loggable import Loggable
+from pychron.paths import paths
 
 
 # ============= standard library imports ========================

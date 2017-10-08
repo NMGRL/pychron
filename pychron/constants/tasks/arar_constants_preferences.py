@@ -15,17 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Float, Enum, Str, Bool, on_trait_change, Property, Button, List, Dict
 from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGroup, EnumEditor, ButtonEditor
-from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import PLUSMINUS, NULL_STR
+from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
 
 LAMBDA_K_ATTRS = ('lambda_e', 'lambda_e_error', 'lambda_b', 'lambda_b_error')
 ATM_ATTRS = ('Ar40_Ar36_atm', 'Ar40_Ar36_atm_error', 'Ar40_Ar36_atm_citation',
@@ -122,8 +123,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_Ar37_citation = Str
     lambda_Ar39_citation = Str
 
-    decay_constant_entries = Dict({'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
-                                   'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)})
+    decay_constant_entries = Dict(K_DECAY_CONSTANTS)
     add_decay_constant = Button
     delete_decay_constant = Button
     decay_constant_name = Str(NULL_STR)
@@ -289,10 +289,10 @@ class ArArConstantsPreferencesPane(PreferencesPane):
         items = [HGroup(Label(l), spring, UItem(v), UItem(e)) for l, v, e in vs]
         decay = VGroup(
             presets,
-            HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K')),
+            HGroup(Item('total_k_decay', style='readonly', label='Total Ar40K/yr')),
             HGroup(spring, Label('Value'),
                    Spring(width=75, springy=False),
-                   Label(u'{}1s'.format(PLUSMINUS)),
+                   Label(PLUSMINUS_ONE_SIGMA),
                    Spring(width=75, springy=False)),
             *items,
             show_border=True,
@@ -315,7 +315,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             HGroup(Spring(springy=False, width=125),
                    Label('Value'),
                    Spring(springy=False, width=55),
-                   Label(u'{}1s'.format(PLUSMINUS)),
+                   Label(PLUSMINUS_ONE_SIGMA),
                    Spring(springy=False, width=55),
                    Label('Citation')),
             HGroup(Item('Ar40_Ar36_atm', label='(40Ar/36Ar)atm'),

@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from PySide.QtGui import QMessageBox
-
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QMessageBox
+from pyface.qt.QtGui import QSizePolicy, QCheckBox
 from pyface.api import OK, YES
-from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
+from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 
 # ============= standard library imports ========================
 import time
@@ -89,12 +90,12 @@ class myMessageDialog(myMessageMixin, MessageDialog):
     pass
 
 
-class _ConfirmationDialog(ConfirmationDialog):
+class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
 
     default_button = 'yes'
 
     def _create_control(self, parent):
-        dlg = super(_ConfirmationDialog, self)._create_control(parent)
+        dlg = super(myConfirmationDialog, self)._create_control(parent)
 
         if self.size != (-1, -1):
             dlg.resize(*self.size)
@@ -112,8 +113,26 @@ class _ConfirmationDialog(ConfirmationDialog):
             self._closed_evt.set()
 
 
-class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
-    pass
+class RememberConfirmationDialog(myConfirmationDialog):
+    def _create_control(self, parent):
+        dlg = super(RememberConfirmationDialog, self)._create_control(parent)
 
+        dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        if self.size != (-1, -1):
+            dlg.resize(*self.size)
+            dlg.event = self._handle_evt
+
+        # dlg.buttonClicked.connect(self._handle_button)
+
+        cb = QCheckBox('Remember this choice')
+        lay = dlg.layout()
+        lay.addWidget(cb)
+        self.cb = cb
+        return dlg
+
+    @property
+    def remember(self):
+        return self.cb.checkState() == Qt.Checked
 
 # ============= EOF =============================================

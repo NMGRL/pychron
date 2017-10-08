@@ -20,12 +20,13 @@ import os
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
 
 # ============= standard library imports ========================
+from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 import pprint
 # ============= local library imports  ==========================
 import yaml
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
-    STD_REGEX, INTERPOLATE_REGEX
+    STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
 from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
@@ -34,7 +35,7 @@ from pychron.paths import paths
 
 def dictgetter(d, attrs, default=None):
     if not isinstance(attrs, tuple):
-        attrs = (attrs, )
+        attrs = (attrs,)
 
     for ai in attrs:
         try:
@@ -45,7 +46,7 @@ def dictgetter(d, attrs, default=None):
         return default
 
 
-def conditionals_from_file(p, name=None, level=SYSTEM):
+def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     with open(p, 'r') as rfile:
         yd = yaml.load(rfile)
         cs = (('TruncationConditional', 'truncation', 'truncations'),
@@ -67,7 +68,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
 
             # print 'yyyy', yl
             # var = getattr(self, '{}_conditionals'.format(var))
-            conds = [conditional_from_dict(ti, klass, level=level, location=p) for ti in yl]
+            conds = [conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl]
             # print 'ffff', conds
             conds = [c for c in conds if c is not None]
             if conds:
@@ -84,7 +85,7 @@ def conditionals_from_file(p, name=None, level=SYSTEM):
         return conddict
 
 
-def conditional_from_dict(cd, klass, level=None, location=None):
+def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     if isinstance(klass, str):
         klass = globals()[klass]
 
@@ -103,23 +104,31 @@ def conditional_from_dict(cd, klass, level=None, location=None):
     if not teststr:
         return
 
-    start = dictgetter(cd, ('start', 'start_count'), default=50)
-    freq = cd.get('frequency', 1)
-    win = cd.get('window', 0)
-    mapper = cd.get('mapper', '')
-    action = cd.get('action', '')
-    ntrips = cd.get('ntrips', 1)
-    analysis_types = cd.get('analysis_types')
-    if analysis_types:
-        analysis_types = [a.lower() for a in analysis_types]
-    attr = extract_attr(teststr)
-    cx = klass(teststr, start_count=start, frequency=freq,
-               attr=attr,
-               window=win, mapper=mapper, action=action, ntrips=ntrips, analysis_types=analysis_types)
+    # start = dictgetter(cd, ('start', 'start_count'), default=50)
+    # freq = cd.get('frequency', 1)
+    # win = cd.get('window', 0)
+    # mapper = cd.get('mapper', '')
+    #
+    # ntrips = cd.get('ntrips', 1)
+    #
+    # analysis_types = cd.get('analysis_types')
+    # if analysis_types:
+    #     analysis_types = [a.lower() for a in analysis_types]
+    # attr = extract_attr(teststr)
+    # cx = klass(teststr, start_count=start, frequency=freq,
+    #            attr=attr,
+    #            window=win, mapper=mapper, action=action,
+    #            ntrips=ntrips, analysis_types=analysis_types,
+    #            **kw)
+    cx = klass(teststr)
+    cx.from_dict(teststr, cd, kw)
+
     if level:
         cx.level = level
     if location:
-        location = os.path.relpath(location, paths.root_dir)
+        if os.path.isfile(location):
+            location = os.path.relpath(location, paths.root_dir)
+
         cx.location = location
 
     return cx
@@ -132,6 +141,29 @@ class BaseConditional(Loggable):
     level = Enum(None, SYSTEM, QUEUE, RUN)
     tripped = Bool
     location = Str
+
+    def from_dict(self, teststr, cd, kw):
+        start = dictgetter(cd, ('start', 'start_count'), default=50)
+        freq = cd.get('frequency', 1)
+        win = cd.get('window', 0)
+        mapper = cd.get('mapper', '')
+
+        ntrips = cd.get('ntrips', 1)
+
+        analysis_types = cd.get('analysis_types')
+        if analysis_types:
+            analysis_types = [a.lower() for a in analysis_types]
+        attr = extract_attr(teststr)
+
+        self.trait_set(start_count=start, frequency=freq,
+                       attr=attr,
+                       window=win, mapper=mapper,
+                       ntrips=ntrips, analysis_types=analysis_types,
+                       **kw)
+        self._from_dict_hook(cd)
+
+    def _from_dict_hook(self, cd):
+        pass
 
     def to_string(self):
         raise NotImplementedError
@@ -179,6 +211,11 @@ class AutomatedRunConditional(BaseConditional):
     value = Float
     ntrips = Int(1)
     trips = 0
+
+    _teststr = None
+    _ctx = None
+    value_context = None
+
     # def __init__(self, attr, teststr,
     # start_count=0,
     # frequency=1,
@@ -200,6 +237,26 @@ class AutomatedRunConditional(BaseConditional):
         s = '{} {}'.format(self.teststr, self.message)
         return s
 
+    def to_dict(self):
+        d = self._attr_dict()
+        d['hash_id'] = self._hash_id(d)
+        return d
+
+    def _hash_id(self, d=None):
+        if d is None:
+            d = self._attr_dict()
+        return hash(frozenset(d.items()))
+
+    def _attr_dict(self):
+        return {'teststr': self.teststr, 'start_count': self.start_count,
+                'frequency': self.frequency, 'ntrips': self.ntrips,
+                'level': self.level,
+                'analysis_types': self.analysis_types, 'location': self.location}
+
+    def result_dict(self):
+        hash_id = self._hash_id()
+        return {'teststr': self._teststr, 'context': self.value_context, 'hash_id': hash_id}
+
     def _should_check(self, run, data, cnt):
         if self.analysis_types:
             if run.analysis_type.lower() not in self.analysis_types:
@@ -220,48 +277,55 @@ class AutomatedRunConditional(BaseConditional):
                 # print ocnt, self.frequency, b, c
                 return cnt_flag
 
-    def _check(self, run, data):
+    def _check(self, run, data, verbose=False):
         """
         make a teststr and context from the run and data
         evaluate the teststr with the context
 
         """
         teststr, ctx = self._make_context(run, data)
+        self._teststr, self._ctx = teststr, ctx
 
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
         self.debug('testing {}'.format(teststr))
+        if verbose:
+            self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
-        if eval(teststr, ctx):
-            self.trips += 1
-            self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
-                                                                 self.ntrips))
-            if self.trips >= self.ntrips:
-                self.tripped = True
-                self.message = 'condition {} is True'.format(teststr)
+        if teststr and ctx:
+            if eval(teststr, ctx):
+                self.trips += 1
+                self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
+                                                                     self.ntrips))
+                if self.trips >= self.ntrips:
+                    self.tripped = True
+                    self.message = 'condition {} is True'.format(teststr)
+                    self.trips = 0
+                    return True
+            else:
                 self.trips = 0
-                return True
-        else:
-            self.trips = 0
 
     def _make_context(self, obj, data):
         teststr = self.teststr
-
         ctx = {}
         tt = []
         for ti, oper in tokenize(teststr):
             ts, attr, func = get_teststr_attr_func(ti)
+
+            attr = attr.replace('(', '_').replace(')', '_')
+            ts = ts.replace('(', '_').replace(')', '_')
+
             v = func(obj, data, self.window)
+            if v is not None:
+                vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
+                vv = self._map_value(vv)
+                ctx[attr] = vv
 
-            vv = std_dev(v) if STD_REGEX.match(teststr) else nominal_value(v)
-            vv = self._map_value(vv)
-            ctx[attr] = vv
-
-            ts = self._interpolate_teststr(ts, obj, data)
-            tt.append(ts)
-            if oper:
-                tt.append(oper)
+                ts = self._interpolate_teststr(ts, obj, data)
+                tt.append(ts)
+                if oper:
+                    tt.append(oper)
 
         return ' '.join(tt), ctx
 
@@ -322,6 +386,11 @@ class ActionConditional(AutomatedRunConditional):
     action = Either(Str, Callable)
     resume = Bool  # resume==True the script continues execution else break out of measure_iteration
 
+    def _from_dict_hook(self, cd):
+        for tag in ('action', 'resume'):
+            if tag in cd:
+                setattr(self, tag, cd[tag])
+
     def perform(self, script):
         """
         perform the specified action.
@@ -340,6 +409,115 @@ class ActionConditional(AutomatedRunConditional):
         elif hasattr(action, '__call__'):
             action()
 
+
+MODIFICATION_ACTIONS = ('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot', 'Set Extract')
+
+
+class ExtractionStr(BaseStr):
+    def validate(self, obj, name, value):
+        if value == '':
+            return value
+
+        for r in (EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX):
+            if r.match(value):
+                return value
+        else:
+            self.error(obj, name, value)
+
+
+def get_extraction_steps(s):
+    use_percent = bool(EXTRACTION_STR_PERCENT_REGEX.match(s))
+
+    def gen():
+        for si in s.split(','):
+            si = si.strip()
+            if si.endswith('%'):
+                si = si[:-1]
+            yield float(si)
+        raise StopIteration
+
+    return gen, use_percent
+
+
+class QueueModificationConditional(AutomatedRunConditional):
+    use_truncation = Bool
+    use_termination = Bool
+    nskip = Int
+    action = Enum(MODIFICATION_ACTIONS)
+    extraction_str = ExtractionStr
+
+    def do_modifications(self, queue, current_run):
+        runs = queue.cleaned_automated_runs
+        func = getattr(self, self.action.lower().replace(' ', '_'))
+        func(runs, current_run)
+        queue.refresh_table_needed = True
+
+    def _from_dict_hook(self, cd):
+        for tag in ('action', 'nskip', 'use_truncation', 'use_termination'):
+            if tag in cd:
+                setattr(self, tag, cd[tag])
+
+    def _skip_n_runs(self, runs, current_run, n=None):
+        if n is None:
+            n = self.nskip
+
+        for i in xrange(n):
+            r = runs[i]
+            r.skip = True
+
+    def _skip_next_run(self, runs, current_run):
+        self._skip_n_runs(runs, current_run, 1)
+
+    def _skip_aliquot(self, runs, current_run):
+
+        identifier = current_run.spec.identifier
+        aliquot = current_run.spec.aliquot
+        for r in runs:
+            if r.is_special():
+                continue
+
+            if r.identifier == identifier and r.aliquot == aliquot:
+                r.skip = True
+
+    def _skip_to_last_in_aliquot(self, runs, current_run):
+        identifier = current_run.spec.identifier
+        for i, r in enumerate(runs):
+            if r.is_special():
+                continue
+
+            try:
+                nrun = runs[i + 1]
+                if nrun.identifier != identifier:
+                    break
+                else:
+                    r.skip = True
+
+            except IndexError:
+                pass
+
+    def _set_extract(self, runs, current_run):
+
+        es = self.extraction_str
+
+        identifier = current_run.spec.identifier
+        aliquot = current_run.spec.aliquot
+
+        steps_gen, use_percent = get_extraction_steps(es)
+        for r in runs:
+            if r.is_special():
+                continue
+
+            if r.identifier != identifier or r.aliquot != aliquot:
+                break
+
+            try:
+                nstep = steps_gen.next()
+                if use_percent:
+                    r.extract_value *= (1 + nstep / 100.)
+                else:
+                    r.extract_value += nstep
+            except StopIteration:
+                break
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

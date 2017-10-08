@@ -14,19 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt, cached_property
+import datetime
+import os
+
 # ============= standard library imports ========================
 import yaml
-import os
-import datetime
+# ============= enthought library imports =======================
+from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
+
+from pychron.core.helpers.ctx_managers import no_update
 # ============= local library imports  ==========================
 from pychron.experiment.queue.run_block import RunBlock
-from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.stats import ExperimentStats
+from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.paths import paths
-from pychron.core.helpers.ctx_managers import no_update
+from pychron.pychron_constants import NULL_STR, LINE_STR
 
 
 def extract_meta(line_gen):
@@ -41,18 +43,20 @@ def extract_meta(line_gen):
 
 
 __METASTR__ = '''
-username: {}
-use_email: {}
-email: {}
-use_group_email: {}
-date: {}
-queue_conditionals_name: {}
-mass_spectrometer: {}
-delay_before_analyses: {}
-delay_between_analyses: {}
-extract_device: {}
-tray: {}
-load: {}
+username: {username:}
+use_email: {use_email:}
+email: {email:}
+use_group_email: {use_group_email:}
+date: {date:}
+queue_conditionals_name: {queue_conditionals:}
+mass_spectrometer: {mass_spectrometer:}
+delay_before_analyses: {delay_before_analyses:}
+delay_between_analyses: {delay_between_analyses:}
+delay_after_blank: {delay_after_blank:}
+delay_after_air: {delay_after_air:}
+extract_device: {extract_device:}
+tray: {tray:}
+load: {load:}
 '''
 
 
@@ -70,12 +74,14 @@ class BaseExperimentQueue(RunBlock):
     tray = Str
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
+    delay_after_blank = CInt(15)
+    delay_after_air = CInt(10)
 
     queue_conditionals_name = Str
 
     stats = Instance(ExperimentStats, ())
 
-    update_needed = Event
+    # update_needed = Event
     refresh_table_needed = Event
     refresh_info_needed = Event
     changed = Event
@@ -86,6 +92,7 @@ class BaseExperimentQueue(RunBlock):
     initialized = True
 
     load_name = Str
+    repository_identifier = Str
 
     _no_update = False
     _frequency_group_counter = 0
@@ -95,11 +102,15 @@ class BaseExperimentQueue(RunBlock):
     # ===============================================================================
     def load(self, txt):
         self.initialized = False
-        self.stats.delay_between_analyses = self.delay_between_analyses
-        self.stats.delay_before_analyses = self.delay_before_analyses
 
         line_gen = self._get_line_generator(txt)
         self._extract_meta(line_gen)
+
+        self.stats.delay_between_analyses = self.delay_between_analyses
+        self.stats.delay_before_analyses = self.delay_before_analyses
+        self.stats.delay_after_blank = self.delay_after_blank
+        self.stats.delay_after_air = self.delay_after_air
+
         aruns = self._load_runs(line_gen)
         if aruns is not None:
             # set frequency_added_counter
@@ -182,6 +193,12 @@ class BaseExperimentQueue(RunBlock):
 
             return runs
 
+    def remove(self, run):
+        try:
+            self.automated_runs.remove(run)
+        except ValueError:
+            self.debug('failed to remove {}. not in automated_runs list'.format(run))
+
     def _add_frequency_runs(self, runspecs, freq,
                             freq_before, freq_after,
                             is_run_block, is_repeat_block):
@@ -225,9 +242,13 @@ class BaseExperimentQueue(RunBlock):
 
     def _add_runs(self, runspecs):
         aruns = self.automated_runs
-        if self.selected:
+
+        if self.selected and self.selected[-1] in aruns:
             idx = aruns.index(self.selected[-1])
             for ri in reversed(runspecs):
+                if not ri.repository_identifier:
+                    ri.repository_identifier = self.repository_identifier
+
                 aruns.insert(idx + 1, ri)
         else:
             aruns.extend(runspecs)
@@ -264,13 +285,15 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param('mass_spectrometer', meta, key_default('Spectrometer'))
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
+        self._set_meta_param('delay_after_blank', meta, default_int)
+        self._set_meta_param('delay_after_air', meta, default_int)
         self._set_meta_param('username', meta, default)
         self._set_meta_param('use_email', meta, bool_default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('use_group_email', meta, bool_default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
-        self._set_meta_param('experiment_identifier', meta, default)
+        self._set_meta_param('repository_identifier', meta, default)
         self._load_meta_hook(meta)
 
     def _load_meta_hook(self, meta):
@@ -327,7 +350,8 @@ class BaseExperimentQueue(RunBlock):
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
                'autocenter', 'frequency_group',
-               'experiment_identifier']
+               'repository_identifier',
+               'delay_after']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))
@@ -344,18 +368,20 @@ class BaseExperimentQueue(RunBlock):
             ms = ''
 
         s = __METASTR__.format(
-            self.username,
-            self.use_email,
-            self.email,
-            self.use_group_email,
-            datetime.datetime.today(),
-            self.queue_conditionals_name,
-            ms,
-            self.delay_before_analyses,
-            self.delay_between_analyses,
-            self.extract_device,
-            self.tray or '',
-            self.load_name or '')
+            username=self.username,
+            use_email=self.use_email,
+            email=self.email,
+            use_group_email=self.use_group_email,
+            date=datetime.datetime.today(),
+            queue_conditionals=self.queue_conditionals_name,
+            mass_spectrometer=ms,
+            delay_before_analyses=self.delay_before_analyses,
+            delay_between_analyses=self.delay_between_analyses,
+            delay_after_blank=self.delay_after_blank,
+            delay_after_air=self.delay_after_air,
+            extract_device=self.extract_device,
+            tray=self.tray or '',
+            load=self.load_name or '')
 
         if wfile:
             wfile.write(s)

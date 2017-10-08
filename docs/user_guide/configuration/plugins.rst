@@ -1,28 +1,56 @@
 Plugins
----------------
+-------
 
 Plugins are enabled/disabled in the ``setupfiles/initialization.xml`` file.
 
 List of Plugins
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 * **General**
 
-  * **Database** - Access to MySQL, SQLite, PostgreSQL, etc. All database dialects supported by SQLAlchemy.
-  * **Entry** - Enter information into a database. Projects, samples, labnumbers, etc.
-  * **Processing** - Process Data. Make figures and tables.
-  * **ArArConstants** - Constants used in Ar-Ar geochronology.
-  * **SystemMonitor** - "Strip-chart" recording of laboratory conditions and processes.
+  * **Experiment** - Execute sets of automated runs.
+  * **MassSpec** - Mass Spec plugin.
+  * **PyScript** - Edit PyScripts; pychron's internal scripting language.
+  * **ArArConstants** - List of Ar/Ar geochronology constants.
+  * **Database** - SQL database interface.
+  * **Loading** - Laser tray loading plugin.
+  * **Pipeline** - Pychron's pipeline based processing workflow
+  * **Entry** - Enter/Edit irradiation data.
+  * **Workspace** - Git-enabled workspace repository.
+  * **DVC** - Pychron's custom Data Version Control system.
+  * **GitLab** - Private git repository hosting.
+  * **GitHub** - Public git repository hosting at GitHub.com.
+  * **MediaServer** - Image server/client.
+  * **LabBook** - Git-enabled labbook repository.
+  * **Video** - Video server/client.
+  * **DashboardServer** - Publish various laboratory values.
+  * **DashboardClient** - Listen to the Dashboard server.
+  * **LabspyClient** - Labspy client. push updates to the labspy database.
+  * **Update** - Update plugin.
+  * **Image** - Use to take snapshots with a connected camera and save to file or database.
+  * **IGSN** - International Geo Sample Number.
+  * **Geochron** - Upload analyses to Geochron.org
 
 * **Hardware**
 
-  * **Experiment** - Create and execute Pychron Experiments.
-  * **PyScript** - View/Edit pyscripts used for automated data collection.
-  * **ExtractionLine** - View/Control a UHV extraction line.
-  * **DashboardServer** - View/Publish a configurable set of parameters. Parameters are published to network and read by any connected client.
-  * **Spectrometer** - View/Control a spectrometer. Currently only Thermo spectrometers with RemoteControlServer.cs are supported.
+  * **ExtractionLine** - Control extraction line components.
+  * **ClientExtractionLine** - Remotely control extraction line components.
+  * **ArgusSpectrometer** - Thermo ArgusVI plugin.
+  * **HelixSpectrometer** - Thermo Helix plugin.
+  * **NGXSpectrometer** - Isotopx NGX plugin.
+  * **NMGRLFurnace** - NMGRL's resistance furnace plugin.
+  * **ChromiumCO2** - Photon Machines Fusions CO2 control via "Chromium"
+  * **FusionsCO2** - Photon Machines Fusions CO2.
+  * **FusionsDiode** - Photon Machines Fusions Diode.
+  * **FusionsUV** - NMGRL's custom Fusions UV.
+  * **ExternalPipette** - Interface with the APIS pipette system.
+  * **CanvasDesigner** - Visual editor for the Extraction Line Schematic.
+
+
+* **Social**
+  * **Email** - Allows pychron to send emails
 
 Example Data Processing Initialization File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: xml
 
     <root>
@@ -41,7 +69,7 @@ Example Data Processing Initialization File
 
 
 Example Experiment Initialization File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: xml
 
     <root>
@@ -88,7 +116,7 @@ Example Experiment Initialization File
     </root>
 
 Example Laser Initialization File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: xml
 
     <root>

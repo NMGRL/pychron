@@ -13,6 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from sqlalchemy import Column, Integer, ForeignKey, String
 
 
+def foreignkey(name):
+    return Column(Integer, ForeignKey('{}.id'.format(name)))
 
+
+def stringcolumn(size=40, *args, **kw):
+    return Column(String(size), *args, **kw)
+
+
+def primary_key(klass=None):
+    if klass is None:
+        klass = Integer
+
+    return Column(klass, primary_key=True)

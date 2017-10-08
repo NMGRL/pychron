@@ -15,17 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pychron.loggable import Loggable
-from pychron.experiment.utilities.identifier import get_analysis_type
-from pychron.pychron_constants import LINE_STR
+from traits.api import Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.preference_binding import bind_preference
+from pychron.experiment.utilities.identifier import get_analysis_type
+from pychron.loggable import Loggable
+from pychron.pychron_constants import LINE_STR, SCRIPT_NAMES, NULL_STR
+
 
 class HumanErrorChecker(Loggable):
     _extraction_line_required = False
     _mass_spec_required = True
+    extraction_script_enabled = Bool(True)
+    queue_enabled = Bool(True)
+    runs_enabled = Bool(True)
+    non_fatal_enabled = Bool(True)
+
+    def __init__(self, *args, **kw):
+        super(HumanErrorChecker, self).__init__(*args, **kw)
+
+        self._bind_preferences()
 
     def check_queue(self, qi):
+        if not self.queue_enabled:
+            self.info('check queue disabled')
+            return
+
         self.info('check queue {}'.format(qi.name))
         if self._extraction_line_required:
             if not qi.extract_device or qi.extract_device in ('Extract Device',):
@@ -41,8 +58,26 @@ class HumanErrorChecker(Loggable):
                 msg = '"Spectrometer" is not set. Not saving experiment!'
                 return msg
 
+    def check_runs_non_fatal(self, runs):
+        if not self.non_fatal_enabled:
+            self.info('check runs non fatal disabled')
+            return
+
+        for i, r in enumerate(runs):
+            ret = self._check_run_non_fatal(i, r)
+            if ret:
+                return ret
+
+    _script_context = None
+    _warned = None
+
     def check_runs(self, runs, test_all=False, inform=True,
                    test_scripts=False):
+
+        if not self.runs_enabled:
+            self.info('check runs disabled')
+            return
+
         ret = dict()
 
         self._script_context = {}
@@ -71,6 +106,36 @@ class HumanErrorChecker(Loggable):
     def check_run(self, run, inform=True, test=False):
         return self._check_run(run, inform, test)
 
+    def _check_run_non_fatal(self, idx, run):
+        es = run.extraction_script
+        if es:
+            es = es.lower()
+
+        # check for all scripts
+        for s in SCRIPT_NAMES:
+            ss = getattr(run, s)
+            if not ss or ss == NULL_STR:
+                return 'Missing "{}" for run={} {} pos={}'.format(s.upper(), idx + 1, run.runid, run.position)
+
+        ed = run.extract_device
+        if self.extraction_script_enabled:
+            if run.analysis_type == 'unknown' and ed not in ('Extract Device', LINE_STR, 'No Extract Device') and es:
+                ds = ed.split(' ')[1].lower()
+                if ds not in es:
+                    return 'Extraction script "{}" does not match the default "{}". An easy solution is to make sure ' \
+                           '"{}" is in the name of the extraction script'.format(es, ds, ds)
+            elif run.analysis_type == 'cocktail' and es and 'cocktail' not in es:
+                return 'Cocktail analysis is not using a "cocktail" extraction script'
+            elif run.analysis_type == 'air' and es and 'air' not in es:
+                return 'Air analysis is not using an "air" extraction script'
+
+    # private
+    def _bind_preferences(self):
+        bind_preference(self, 'extraction_script_enabled', 'pychron.experiment.extraction_script_enabled')
+        bind_preference(self, 'runs_enabled', 'pychron.experiment.runs_enabled')
+        bind_preference(self, 'queue_enabled', 'pychron.experiment.queue_enabled')
+        bind_preference(self, 'non_fatal_enabled', 'pychron.experiment.non_fatal_enabled')
+
     def _check_run(self, run, inform, test):
         if test:
             run.test_scripts(script_context=self._script_context,
@@ -83,6 +148,7 @@ class HumanErrorChecker(Loggable):
 
         ant = get_analysis_type(run.labnumber)
         if ant == 'unknown':
+
             for attr in ('duration', 'cleanup'):
                 err = self._check_attr(run, attr, inform)
                 if err is not None:
@@ -95,8 +161,8 @@ class HumanErrorChecker(Loggable):
             if run.overlap[0]:
                 if not run.post_measurement_script:
                     return 'post measurement script required for overlap'
-        #if ant in ('unknown', 'background') or ant.startswith('blank'):
-        #self._mass_spec_required = True
+        # if ant in ('unknown', 'background') or ant.startswith('blank'):
+        # self._mass_spec_required = True
 
         if run.extract_value or run.cleanup or run.duration:
             self._extraction_line_required = True

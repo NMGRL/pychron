@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Bool, Str
+from traits.api import HasTraits, Instance, Bool, Str, Any
 from traitsui.api import View, Item, VGroup, Controller, Readonly
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -51,8 +51,8 @@ class TransferConfigView(Controller):
 
 
 class JTransferer(Loggable):
-    pychrondb = Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
-    massspecdb = Instance('pychron.database.adapters.massspec_database_adapter.MassSpecDatabaseAdapter')
+    pychrondb = Any  # Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+    massspecdb = Instance('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
 
     src = Instance('pychron.database.adapters.database_adapter.DatabaseAdapter')
 
@@ -82,12 +82,11 @@ class JTransferer(Loggable):
         self._transfer(self._backward_transfer_func, *args)
 
     def _transfer(self, func, config, irrad, level, positions):
-        with self.massspecdb.session_ctx(), self.pychrondb.session_ctx():
-            for pp in positions:
-                self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
-                                                                                        pp.labnumber,
-                                                                                        pp.j))
-                func(config, irrad, level, pp)
+        for pp in positions:
+            self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
+                                                                                    pp.identifier,
+                                                                                    pp.j))
+            func(config, irrad, level, pp)
 
     def _forward_transfer_func(self, config, irrad, level, position):
         """
@@ -97,10 +96,10 @@ class JTransferer(Loggable):
         """
 
         posstr = '{}{} {}'.format(irrad, level, position.hole)
-        if position.labnumber:
+        if position.identifier:
             # pdb = self.pychrondb
             # get the massspec irradiation_position
-            ms_ip = self.massspecdb.get_irradiation_position(position.labnumber)
+            ms_ip = self.massspecdb.get_irradiation_position(position.identifier)
             if ms_ip:
                 # get j for this position
                 j, j_err = ms_ip.J, ms_ip.JEr

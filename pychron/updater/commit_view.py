@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Button, Str, Int, Property, List
-from traitsui.api import View, Item, VGroup, UItem, HGroup, VSplit, InstanceEditor, Group, Tabbed
+from traits.api import Str, Int, Property, List
+from traitsui.api import View, VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors import TabularEditor

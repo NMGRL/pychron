@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, List, Instance
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Int, Any, List, Instance
+from traitsui.api import View, Item, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.database.offline_bridge import OfflineBridge
@@ -53,8 +53,7 @@ class SQLiteAnalysisExporter(Exporter):
             bridge.init(self.destination.destination, overwrite=True)
 
             progress = self.iso_manager.open_progress(len(self.analyses))
-            with db.session_ctx():
-                bridge.add_analyses(db, self.analyses, progress)
+            bridge.add_analyses(db, self.analyses, progress)
 
             progress.close()
 

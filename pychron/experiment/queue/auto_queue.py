@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
-from traitsui.api import View, UItem, Item, HGroup, VGroup
+from traits.api import Str, Any
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -29,15 +27,13 @@ class AutoQueue(Loggable):
 
     def generate(self, ):
         def gen():
-            db = self.db
             load_name = self.load_name
-            with db.session_ctx():
-                dbload = self.db.get_loadtable(load_name)
-                for poss in dbload.loaded_positions:
-                    # print poss
-                    ln_id = poss.lab_identifier
-                    dbln = self.db.get_labnumber(ln_id, key='id')
-                    yield dbln.identifier, str(poss.position)
+            dbload = self.db.get_loadtable(load_name)
+            for poss in dbload.loaded_positions:
+                # print poss
+                ln_id = poss.lab_identifier
+                dbln = self.db.get_labnumber(ln_id, key='id')
+                yield dbln.identifier, str(poss.position)
 
         return gen
 

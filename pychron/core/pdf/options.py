@@ -15,104 +15,146 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
 
-from traits.api import HasTraits, Str, Bool, Color, Enum, \
-    Button, Float, TraitError, Property, Int
-from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
+from reportlab.lib.pagesizes import A4, letter, landscape
+from reportlab.lib.units import inch, cm
+from traits.api import Str, Bool, Enum, Button, Float, Int, Color
+from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
 
-
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-import yaml
+from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
+from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.globals import globalv
-from pychron.paths import paths
+from pychron.persistence_loggable import dumpable
+
+PAGE_MAP = {'A4': A4, 'letter': letter}
+UNITS_MAP = {'inch': inch, 'cm': cm}
+COLUMN_MAP = {'1': 1, '2': 0.5, '3': 0.33, '2/3': 0.66}
+
+mgrp = VGroup(HGroup(Spring(springy=False, width=100),
+                     Item('top_margin', label='Top'),
+                     spring, ),
+              HGroup(Item('left_margin', label='Left'),
+                     Item('right_margin', label='Right')),
+              HGroup(Spring(springy=False, width=100), Item('bottom_margin', label='Bottom'),
+                     spring),
+              label='Margins', show_border=True)
+cgrp = VGroup()
+
+sgrp = VGroup(Item('fit_to_page'),
+              HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
+                     Item('columns', enabled_when='use_column_width')),
+              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page'),
+                     Item('fixed_height', label='H', enabled_when='not fit_to_page')),
+
+              label='Size', show_border=True)
+
+PDFLayoutGroup = VGroup(Item('orientation'),
+                     mgrp,
+                     sgrp,
+                     cgrp,
+                        label='Layout')
+
+PDFLayoutView = View(PDFLayoutGroup,
+                     buttons=['OK', 'Cancel'],
+                     title='PDF Save Options',
+                     resizable=True)
 
 
-class BasePDFOptions(HasTraits):
-    orientation = Enum('landscape', 'portrait')
-    left_margin = Float(1.5)
-    right_margin = Float(1)
-    top_margin = Float(1)
-    bottom_margin = Float(1)
-    show_page_numbers = Bool(False)
-    use_alternating_background = Bool
-    alternating_background = Color
+class BasePDFOptions(BasePersistenceOptions):
+    orientation = dumpable(Enum('landscape', 'portrait'))
+    left_margin = dumpable(Float(1.5))
+    right_margin = dumpable(Float(1))
+    top_margin = dumpable(Float(1))
+    bottom_margin = dumpable(Float(1))
+    show_page_numbers = dumpable(Bool(False))
 
-    persistence_path = Property
     _persistence_name = 'base_pdf_options'
 
-    def __init__(self, *args, **kw):
-        super(BasePDFOptions, self).__init__(*args, **kw)
-        self.load_yaml()
+    page_number_format = None
+    fixed_width = dumpable(Float)
+    fixed_height = dumpable(Float)
 
-    def _get_persistence_path(self):
-        return os.path.join(paths.hidden_dir, '{}.{}'.format(self._persistence_name, globalv.username))
+    page_type = dumpable(Enum('letter', 'A4'))
+    units = dumpable(Enum('inch', 'cm'))
+    use_column_width = dumpable(Bool(True))
+    columns = dumpable(Enum('1', '2', '3', '2/3'))
+    fit_to_page = dumpable(Bool)
 
-    def dump_yaml(self):
-        p = self.persistence_path
-        with open(p, 'w') as wfile:
-            yaml.dump(self.get_dump_dict(), wfile)
+    @property
+    def bounds(self):
+        units = UNITS_MAP[self.units]
+        page = PAGE_MAP[self.page_type]
+        if self.fit_to_page:
+            if self.orientation == 'landscape':
+                b = [page[1], page[0]]
+            else:
+                b = [page[0], page[1]]
 
-    def _get_dump_attrs(self):
-        return ('orientation', 'left_margin', 'right_margin',
-                'top_margin', 'bottom_margin', 'show_page_numbers',
-                'use_alternating_background')
+            b[0] -= (self.left_margin + self.right_margin) * units
+            b[1] -= (self.top_margin + self.bottom_margin) * units
 
-    def get_dump_dict(self):
-        dd = {k: getattr(self, k) for k in self._get_dump_attrs()}
-        # d = dict(orientation=self.orientation,
-        # left_margin=self.left_margin,
-        # right_margin=self.right_margin,
-        # top_margin=self.top_margin,
-        # bottom_margin=self.bottom_margin)
-        dd['alternating_background'] = self.get_alternating_background()
+        elif self.use_column_width:
+            if self.orientation == 'landscape':
+                page = landscape(page)
+                width_margins = self.bottom_margin + self.top_margin
+            else:
+                width_margins = self.left_margin + self.right_margin
 
-        return dd
+            fw = page[0]
+            w = fw - width_margins * units
+            # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
+            nw = w * COLUMN_MAP[self.columns]
+            b = [nw, nw]
+        else:
+            b = [self.fixed_width * units, self.fixed_height * units]
 
-    def set_alternating_background(self, t):
-        self.alternating_background = tuple(map(lambda x: int(x * 255), t))
+        return b
 
-    def get_alternating_background(self):
-        t = self.alternating_background.toTuple()[:3]
-        return map(lambda x: x / 255., t)
+    @property
+    def page_size(self):
+        orientation = 'landscape_' if self.orientation == 'landscape' else ''
+        return '{}{}'.format(orientation, self.page_type)
 
-    def get_load_dict(self):
-        d = {}
-        p = self.persistence_path
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    d = yaml.load(rfile)
-                except yaml.YAMLError:
-                    pass
-        return d
+    @property
+    def dest_box(self):
+        units = UNITS_MAP[self.units]
+        if self.orientation == 'landscape':
+            w, h = self.bounds
+            lbrt = (self.bottom_margin, self.right_margin,
+                    w / units + self.bottom_margin,
+                    h / units + self.right_margin)
+        else:
+            w, h = self.bounds
+            lbrt = (self.left_margin, self.bottom_margin,
+                    w / units + self.left_margin,
+                    h / units + self.bottom_margin)
+            # lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
+        # print map(lambda x: x*units, lbrt)
+        # print 'lbrt', lbrt
+        return lbrt
 
-    def load_yaml(self):
-        d = self.get_load_dict()
-        for k, v in d.iteritems():
-            try:
-                setattr(self, k, v)
-            except TraitError:
-                pass
-
-        ab = d.get('use_alternating_background', False)
-        if ab:
-            self.set_alternating_background(d.get('alternating_background',
-                                                  (0.7, 0.7, 0.7)))
-        self._load_yaml_hook(d)
-
-    def _load_yaml_hook(self, d):
-        pass
+    def _get_layout_group(self):
+        # margin_grp = VGroup(Item('left_margin', label='Left (in.)'),
+        #                    Item('right_margin', label='Right (in.)'),
+        #                    Item('top_margin', label='Top (in.)'),
+        #                    Item('bottom_margin', label='Bottom (in.)'),
+        #                     show_border=True, label='Margins')
+        #
+        # layout_grp = Group(Item('orientation'),
+        #                    margin_grp,
+        #                    Item('show_page_numbers', label='Page Numbers'),
+        #                    show_border=True,
+        #                    label='layout')
+        return PDFLayoutGroup
 
 
 class PDFTableOptions(BasePDFOptions):
     title = Str
     auto_title = Bool
 
+    use_alternating_background = Bool
+    alternating_background = Color
 
-    # show_page_numbers = Bool
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)
     options_button = Button
@@ -149,8 +191,7 @@ class PDFTableOptions(BasePDFOptions):
 
     def get_dump_dict(self):
         d = super(PDFTableOptions, self).get_dump_dict()
-        d.update(dict(title=str(self.title),
-                      ))
+        d.update(dict(title=str(self.title)))
 
         return d
 
@@ -181,12 +222,7 @@ class PDFTableOptions(BasePDFOptions):
                           Item('alternating_background'),
                           label='Table')
 
-        layout_grp = Group(Item('orientation'),
-                           Item('left_margin'),
-                           Item('right_margin'),
-                           Item('top_margin'),
-                           Item('bottom_margin'),
-                           label='layout')
+        layout_grp = self._get_layout_grp()
 
         data_grp = Group(Item('link_sigmas', label='Link'),
                          Item('age_nsigma', label='Age NSigma'),
@@ -204,4 +240,5 @@ class PDFTableOptions(BasePDFOptions):
             title='PDF Options',
             buttons=['OK', 'Cancel', 'Revert'])
         return v
-        # ============= EOF =============================================
+
+# ============= EOF =============================================

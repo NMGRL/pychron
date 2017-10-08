@@ -16,32 +16,62 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import PreferenceBinding
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from apptools.preferences.api import PreferenceBinding as TPreferenceBinding
 
+def color_set_preference(preferences, obj, attr, ppath):
+    v = preferences.get(ppath)
+    if v is not None:
+        # v = extract_color(v)
+        try:
+            setattr(obj, attr, v)
+        except TypeError:
+            pass
 
-def extract_color(value):
-    value = ','.join(map(str, toTuple(value)))
-    return value
+
+def set_preference(preferences, obj, attr, ppath, cast=None):
+    if cast is None:
+        cast = str
+    try:
+        v = preferences.get(ppath)
+        if v is not None:
+            setattr(obj, attr, cast(v))
+    except TypeError:
+        pass
 
 
-def toTuple(value, scalar=255):
-    value = value.split('(')[1][:-1]
-    return map(lambda x: int(float(x) * scalar), value.split(','))
+# def extract_color(value):
+#     value = ','.join(map(str, toTuple(value)))
+#     return value
+# def toTuple(value, scalar=255):
+#     """
+#         PySide.QtGui.QColor.fromRgbF(0.894118, 0.894118, 0.894118, 1.000000)
+#     """
+#     import os
+#     if os.environ.get('QT_API') == 'pyqt':
+#         pass
+#
+#     else:
+#         value = value.split('(')[1][:-1]
+#         return map(lambda x: int(float(x) * scalar), value.split(','))
 
 
 class ColorPreferenceBinding(PreferenceBinding):
-    def _get_value(self, name, value):
-        if 'color' in name:
-            value = extract_color(value)
-            # value = value.split('(')[1]
-            # value = value[:-1]
-            # value = map(float, value.split(','))
-            # value = ','.join(map(lambda x: str(int(x * 255)), value))
-        else:
-            value = super(ColorPreferenceBinding, self)._get_value(name, value)
-        return value
+    pass
+
+    # def _get_value(self, name, value):
+    #     if 'color' in name:
+    #         value = extract_color(value)
+    #         # value = value.split('(')[1]
+    #         # value = value[:-1]
+    #         # value = map(float, value.split(','))
+    #         # value = ','.join(map(lambda x: str(int(x * 255)), value))
+    #     else:
+    #         value = super(ColorPreferenceBinding, self)._get_value(name, value)
+    #     return value
 
 
 def color_bind_preference(*args, **kw):

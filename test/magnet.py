@@ -18,11 +18,11 @@
 import unittest
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.spectrometer.thermo.spectrometer import Spectrometer
+from pychron.spectrometer.thermo.spectrometer.argus import ArgusSpectrometer
 
 class MagnetTest(unittest.TestCase):
     def setUp(self):
-        spec = Spectrometer()
+        spec = ArgusSpectrometer()
         spec.load()
         self.spec = spec
 

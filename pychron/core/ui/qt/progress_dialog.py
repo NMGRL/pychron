@@ -17,15 +17,14 @@
 # ============= enthought library imports =======================
 # from pyface.api import ProgressDialog
 
-from traits.api import Property, Bool, Int
-
-# ============= standard library imports ========================
 import sys
 import time
-from PySide import QtGui
-from PySide.QtCore import Qt
-from PySide.QtGui import QLabel, QDialogButtonBox
+
+from pyface.qt import QtGui
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QLabel, QDialogButtonBox
 from pyface.ui.qt4.progress_dialog import ProgressDialog
+from traits.api import Property, Bool, Int
 
 
 # ============= local library imports  ==========================
@@ -86,12 +85,8 @@ class myProgressDialog(ProgressDialog):
             self.close()
 
     def close(self):
-
-        try:
+        if self.progress_bar:
             super(myProgressDialog, self).close()
-        except AttributeError:
-            # window already closed
-            pass
 
     def cancel(self):
         self._user_cancelled = True
@@ -104,6 +99,8 @@ class myProgressDialog(ProgressDialog):
     def _create_control(self, parent):
         control = super(myProgressDialog, self)._create_control(parent)
         control.resize(self.width, self.height)
+        if self.position:
+            control.move(*self.position)
         control.setWindowFlags(Qt.WindowStaysOnTopHint)
         return control
 

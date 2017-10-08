@@ -17,8 +17,9 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from SocketServer import ThreadingUnixStreamServer
 import socket
+from SocketServer import ThreadingUnixStreamServer
+
 # from threading import Thread
 # import select
 # ============= local library imports  ==========================

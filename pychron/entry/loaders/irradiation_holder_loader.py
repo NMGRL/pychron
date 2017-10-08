@@ -19,7 +19,7 @@ from pyface.file_dialog import FileDialog
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.database.defaults import load_irradiation_map
+from pychron.database.core.defaults import load_irradiation_map
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -32,13 +32,12 @@ class IrradiationHolderLoader(Loggable):
             overwrite_geometry = True
             name = os.path.splitext(os.path.basename(path))[0]
             msg='Added'
-            with db.session_ctx():
-                dbh = db.get_irradiation_holder(name)
-                if dbh:
-                    msg='Updated'
-                load_irradiation_map(db, path, name, overwrite_geometry)
+            dbh = db.get_irradiation_holder(name)
+            if dbh:
+                msg = 'Updated'
+            load_irradiation_map(db, path, name, overwrite_geometry)
 
-                self.information_dialog('{} Irradiation Holder "{}"'.format(msg, name))
+            self.information_dialog('{} Irradiation Holder "{}"'.format(msg, name))
 
     def _get_holder_path(self):
         dlg=FileDialog(default_directory=paths.irradiation_tray_maps_dir,
