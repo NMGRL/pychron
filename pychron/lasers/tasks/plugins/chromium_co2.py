@@ -29,8 +29,7 @@ class ChromiumCO2Plugin(BaseLaserPlugin):
 
     def test_communication(self):
         man = self._get_manager()
-        c = man.test_connection()
-        return 'Passed' if c else 'Failed'
+        return man.test_connection()
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import ChromiumCO2Task
