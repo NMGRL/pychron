@@ -21,8 +21,9 @@ import os
 from git import Repo
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool
+from traits.api import List, Str, Any, HasTraits, Bool, Instance
 
+from pychron.core.progress import progress_loader
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
@@ -47,7 +48,7 @@ class ExperimentRepoTask(BaseTask):
     name = 'Experiment Repositories'
 
     selected_repository_name = Str
-    selected_local_repository_name = RepoItem
+    selected_local_repository_name = Instance(RepoItem)
 
     repository_names = List
     organization = Str
@@ -90,14 +91,17 @@ class ExperimentRepoTask(BaseTask):
         self.local_names = [RepoItem(name=i) for i in sorted(self.list_repos())]
 
     def find_changes(self, remote='origin', branch='master'):
-        for item in self.local_names:
+        self.debug('find changes')
+
+        def func(item, prog, i, n):
             name = item.name
-        # for name in self.list_repos():
+            prog.change_message('Examining: {}({}/{})'.format(name, i, n))
+            # for name in self.list_repos():
             r = Repo(os.path.join(paths.repository_dataset_dir, name))
             line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
             item.dirty = bool(line)
-            # if line:
-            #     changed.append(name)
+
+        progress_loader(self.local_names, func)
 
         # print changed
         # r = GitRepoManager()
@@ -179,7 +183,6 @@ class ExperimentRepoTask(BaseTask):
             self._branch_changed(self.branch)
 
     def _selected_local_repository_name_changed(self, new):
-        print 'asdfsad', new
         if new:
             root = os.path.join(paths.repository_dataset_dir, new.name)
             # print root, new, os.path.isdir(root)

@@ -79,7 +79,7 @@ class SelectionPane(TraitsDockPane):
         local_grp = VGroup(UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
                                                       selected='selected_local_repository_name',
-                                                      # editable=False
+                                                      editable=False
                                                       )),
                            show_border=True, label='Local')
 
