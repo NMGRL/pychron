@@ -26,9 +26,9 @@ from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS
 
 
 class SpectrumAuxPlot(AuxPlot):
-    names = List([NULL_STR,
+    names = List([NULL_STR, 'Extract Value',
                   'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Age Spectrum'])
-    _plot_names = List(['',
+    _plot_names = List(['', 'extract_value',
                         'radiogenic_yield',
                         'kca', 'kcl', 'moles_k39', 'age_spectrum'])
 

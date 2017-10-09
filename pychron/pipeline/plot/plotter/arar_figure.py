@@ -464,38 +464,42 @@ class BaseArArFigure(SelectionFigure):
 
     def _plot_raw_40_36(self, po, plot, pid, **kw):
         k = 'uAr40/Ar36'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
     def _plot_ic_40_36(self, po, plot, pid, **kw):
         k = 'Ar40/Ar36'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
     def _plot_icf_40_36(self, po, plot, pid, **kw):
         k = 'icf_40_36'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         k = 'rad40_percent'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('%<sup>40</sup>Ar*', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('%<sup>40</sup>Ar*', k, po, pid)
 
     def _plot_kcl(self, po, plot, pid, **kw):
         k = 'kcl'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('K/Cl', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Cl', k, po, pid)
 
     def _plot_kca(self, po, plot, pid, **kw):
         k = 'kca'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('K/Ca', k, ys, po, plot, pid, es, **kw)
+        # ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Ca', k, po, pid)
 
     def _plot_moles_k39(self, po, plot, pid, **kw):
         k = 'k39'
-        ys, es = self._get_aux_plot_data(k)
-        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, ys, po, plot, pid, es, **kw)
+
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+
+    def _plot_extract_value(self, po, plot, pid):
+        k = 'extract_value'
+        return self._plot_aux('Extract Value', k, po, pid)
 
     def _get_aux_plot_data(self, k):
         vs = self._unpack_attr(k)

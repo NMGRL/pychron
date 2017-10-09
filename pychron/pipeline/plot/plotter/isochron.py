@@ -114,7 +114,8 @@ class InverseIsochron(Isochron):
     # ===============================================================================
     # plotters
     # ===============================================================================
-    def _plot_aux(self, title, vk, ys, po, plot, pid, es=None):
+    def _plot_aux(self, title, vk, po, pid):
+        ys, es = self._get_aux_plot_data(vk)
         scatter = self._add_aux_plot(ys, title, vk, pid)
 
     def _add_plot(self, xs, ys, es, plotid, value_scale='linear'):
