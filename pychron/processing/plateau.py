@@ -141,8 +141,14 @@ class Plateau(HasTraits):
             for j in range(start + c, end + 1, 1):
                 if i == j:
                     continue
-                if not overlap_func(i, j, overlap_sigma):
-                    return
+
+                try:
+                    if not overlap_func(i, j, overlap_sigma):
+                        return
+                except BaseException, e:
+                    import traceback
+                    log.debug('Overlap exception: {}'.format(e, traceback.format_exc()))
+                    continue
         else:
             return True
 

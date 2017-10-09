@@ -107,8 +107,9 @@ class DVCIsotopeRecordView:
         #     self.extract_device = ''
         #     self.comment = ''
         #
-        self.review_status = 0
 
+        self.review_status = 0
+        self.position = 0
     #
     #     self.extract_value = 0
     #     self.cleanup = 0
@@ -132,6 +133,8 @@ class DVCIsotopeRecordView:
             rid = '{}-{}'.format(rid, self.repository_identifier)
         self.record_id = rid
         self.tag = self.dbrecord.tag
+
+        self.position =self.dbrecord.position
 
     def set_tag(self, tag):
         self.tag = tag

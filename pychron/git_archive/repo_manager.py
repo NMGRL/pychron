@@ -625,7 +625,9 @@ class GitRepoManager(Loggable):
                     else:
                         mv = MergeView(model=mm)
                         mv.edit_traits()
-
+                else:
+                    if not quiet:
+                        self.information_dialog('There were no conflicts identified')
             else:
                 self.debug('merging {} commits'.format(behind))
                 self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/!ahead')

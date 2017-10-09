@@ -525,7 +525,7 @@ nodes:
   - klass: ListenUnknownNode
   - klass: FilterNode
     filters:
-     - age<0
+     - age>0
   - klass: GroupingNode
     key: Identifier
   - klass: IdeogramNode
