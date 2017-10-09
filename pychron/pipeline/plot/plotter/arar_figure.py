@@ -494,8 +494,15 @@ class BaseArArFigure(SelectionFigure):
 
     def _plot_moles_k39(self, po, plot, pid, **kw):
         k = 'k39'
-
         return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+
+    def _plot_moles_ar40(self, po, plot, pid, **kw):
+        k = 'Ar40'
+        return self._plot_aux('<sup>40</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
+
+    def _plot_moles_ar36(self, po, plot, pid, **kw):
+        k = 'Ar36'
+        return self._plot_aux('<sup>36</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
 
     def _plot_extract_value(self, po, plot, pid):
         k = 'extract_value'
