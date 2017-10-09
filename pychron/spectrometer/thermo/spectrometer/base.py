@@ -25,7 +25,6 @@ from traits.api import Int, Property, List, \
 
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
-from pychron.globals import globalv
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
     QTEGRA_DEFAULT_INTEGRATION_TIME
 from pychron.spectrometer import get_spectrometer_config_path, \
@@ -53,7 +52,6 @@ def calculate_radius(m_e, hv, mfield):
 
 
 class ThermoSpectrometer(BaseSpectrometer):
-
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
 
     magnet_dac = DelegatesTo('magnet', prefix='dac')
@@ -221,24 +219,30 @@ class ThermoSpectrometer(BaseSpectrometer):
         return x
 
     def get_configuration_value(self, key):
-
-        for d in self._get_cached_config():
-            try:
-                return d[key]
-            except KeyError:
+        values = self._get_cached_config()
+        if values is not None:
+            for d in values:
                 try:
-                    return d[key.lower()]
+                    return d[key]
                 except KeyError:
-                    pass
+                    try:
+                        return d[key.lower()]
+                    except KeyError:
+                        pass
+            else:
+                return 0
         else:
             return 0
 
     def set_debug_configuration_values(self):
         if self.simulation:
-            d, _, _ = self._get_cached_config()
-            keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
-            ds = [0] + [d[k.lower()] for k in keys]
-            self._debug_values = ds
+
+            ret = self._get_cached_config()
+            if ret is not None:
+                d = ret[0]
+                keys = ('ElectronEnergy', 'YSymmetry', 'ZSymmetry', 'ZFocus', 'IonRepeller', 'ExtractionLens')
+                ds = [0] + [d[k.lower()] for k in keys]
+                self._debug_values = ds
 
     # ===============================================================================
     # load
@@ -315,7 +319,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     # signals
     # ===============================================================================
-    def read_intensities(self,tagged=True):
+    def read_intensities(self, tagged=True):
         keys = []
         signals = []
 
@@ -472,7 +476,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         if self._config is None:
             p = get_spectrometer_config_path()
             if not os.path.isfile(p):
-                self.warning('Spectrometer configuration file {} not found'.format(p))
+                self.warning_dialog('Spectrometer configuration file {} not found'.format(p))
                 return
 
             self.debug('caching configuration from {}'.format(p))
@@ -529,40 +533,42 @@ class ThermoSpectrometer(BaseSpectrometer):
                            hv='HV')
 
         if self.microcontroller:
-            specparams, defl, trap, magnet = self._get_cached_config()
-            for k, v in defl.items():
-                cmd = 'SetDeflection'
-                v = '{},{}'.format(k, v)
-                self.set_parameter(cmd, v)
-
-            for k, v in specparams.items():
-                try:
-                    cmd = 'Set{}'.format(command_map[k])
+            ret = self._get_cached_config()
+            if ret is not None:
+                specparams, defl, trap, magnet = ret
+                for k, v in defl.items():
+                    cmd = 'SetDeflection'
+                    v = '{},{}'.format(k, v)
                     self.set_parameter(cmd, v)
-                except KeyError:
-                    self.debug(
-                        '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
-                            k))
 
-            # set the trap current
-            v = trap.get('current')
-            self.debug('send trap current {}'.format(v))
-            if v is not None:
-                step = trap.get('ramp_step', 1)
-                period = trap.get('ramp_period', 1)
-                tol = trap.get('ramp_tolerance', 10)
-                if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                    self.set_parameter('SetParameter',
-                                       'Trap Current Set,{}'.format(v))
-            # set the mftable
-            mftable_name = magnet.get('mftable')
-            if mftable_name:
-                self.debug('updating mftable name {}'.format(mftable_name))
-                self.magnet.mftable.path = mftable_name
-                self.magnet.mftable.load_mftable(load_items=True)
+                for k, v in specparams.items():
+                    try:
+                        cmd = 'Set{}'.format(command_map[k])
+                        self.set_parameter(cmd, v)
+                    except KeyError:
+                        self.debug(
+                            '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
+                                k))
 
-            self.debug('======== Configuration Finished ========')
-            self.source.sync_parameters()
+                # set the trap current
+                v = trap.get('current')
+                self.debug('send trap current {}'.format(v))
+                if v is not None:
+                    step = trap.get('ramp_step', 1)
+                    period = trap.get('ramp_period', 1)
+                    tol = trap.get('ramp_tolerance', 10)
+                    if not self._ramp_trap_current(v, step, period, use_ramp, tol):
+                        self.set_parameter('SetParameter',
+                                           'Trap Current Set,{}'.format(v))
+                # set the mftable
+                mftable_name = magnet.get('mftable')
+                if mftable_name:
+                    self.debug('updating mftable name {}'.format(mftable_name))
+                    self.magnet.mftable.path = mftable_name
+                    self.magnet.mftable.load_mftable(load_items=True)
+
+                self.debug('======== Configuration Finished ========')
+                self.source.sync_parameters()
 
     def _ramp_trap_current(self, v, step, period, use_ramp=False, tol=10):
         if use_ramp:
@@ -607,8 +613,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask('SetSubCupConfiguration {}'.format(v))
-
-
 
 # if __name__ == '__main__':
 # s = Spectrometer()

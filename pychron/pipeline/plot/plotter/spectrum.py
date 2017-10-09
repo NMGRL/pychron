@@ -81,7 +81,7 @@ class Spectrum(BaseArArFigure):
 
         # filter ys,es if 39Ar < 1% of total
         try:
-            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
+            vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
             vs, es = array(vs), array(es)
             nes = es * self.options.step_nsigma
             yl = vs - nes
@@ -109,7 +109,7 @@ class Spectrum(BaseArArFigure):
     # plotters
     # ===============================================================================
 
-    def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
+    def _plot_aux(self, title, vk, po, pid):
         graph = self.graph
         if '<sup>' in title or '<sub>' in title:
             self._set_ml_title(title, pid, 'y')
@@ -385,7 +385,7 @@ class Spectrum(BaseArArFigure):
                 if aa is None:
                     ai, ei = 0, 0
                 else:
-                    ai, ei = aa.nominal_value, aa.std_dev
+                    ai, ei = nominal_value(aa), std_dev(aa)
 
             xs.append(prev)
 
