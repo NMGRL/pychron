@@ -116,11 +116,7 @@ class DVCIsotopeRecordView:
     #     self.duration = 0
 
     def __getattr__(self, item):
-        try:
-            return getattr(self.dbrecord, item)
-        except BaseException, e:
-            import traceback
-            print 'IsotopeRecord error: {}. {}'.format(e, traceback.format_exc())
+        return getattr(self.dbrecord, item)
 
     def init(self):
         if self.increment >= 0:

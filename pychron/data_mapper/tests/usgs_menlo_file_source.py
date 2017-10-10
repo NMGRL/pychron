@@ -18,13 +18,8 @@
 import os
 import unittest
 
-from pychron.core.test_helpers import get_data_dir
 from pychron.data_mapper.sources.usgs_menlo_source import USGSMenloSource
-
-
-def fget_data_dir():
-    op = 'pychron/data_mapper/tests/data'
-    return get_data_dir(op)
+from pychron.data_mapper.tests import fget_data_dir
 
 
 class USGSMenloFileSourceUnittest(unittest.TestCase):
