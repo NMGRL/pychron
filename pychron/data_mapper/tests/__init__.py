@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.core.test_helpers import get_data_dir
 
+def fget_data_dir():
+    op = 'pychron/data_mapper/tests/data'
+    return get_data_dir(op)
 
 # ============= EOF =============================================

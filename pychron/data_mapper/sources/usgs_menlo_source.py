@@ -27,87 +27,67 @@ class USGSMenloSource(FileSource):
     _delimiter = '\t'
 
     def get_analysis_import_spec(self, p, delimiter=None):
-        # pspec = PersistenceSpec()
-        #
-        # rspec = AutomatedRunSpec()
-        # pspec.run_spec = rspec
-
         pspec = self.new_persistence_spec()
         rspec = pspec.run_spec
-        # spec = ImportSpec
 
-        # analysis = Analysis()
-        # spec.analysis = analysis
-
-        # position = Position()
-        # analysis.position = position
-
-        if delimiter is None:
-            delim = self._delimiter
-
-        def gen():
-            with open(p, 'r') as rfile:
-                for line in rfile:
-                    yield line.strip().split(delim)
-
-        f = gen()
-        row = f.next()
+        f = self.file_gen(p, delimiter)
+        row = next(f)
         # analysis.runid = row[0]
         rspec.runid = row[0]
 
         # irrad = Irradiation()
         rspec.irradiation = row[1]
 
-        row = f.next()
+        row = next(f)
         rspec.irradiation_level = row[1]
 
-        row = f.next()
+        row = next(f)
         rspec.sample = row[1]
 
-        row = f.next()
+        row = next(f)
         rspec.material = row[1]
 
-        row = f.next()
+        row = next(f)
         rspec.project = row[1]
 
-        row = f.next()
+        row = next(f)
         j = float(row[1])
 
-        row = f.next()
+        row = next(f)
         j_err = float(row[1])
 
         pspec.j, pspec.j_err = j, j_err
-        row = f.next()
+        row = next(f)
         d = row[1]
-        row = f.next()
+        row = next(f)
         t = row[1]
 
         rspec.analysis_timestamp = datetime.strptime('{} {}'.format(d, t), '%m/%d/%Y %H:%M:%S')
-        row = f.next()
+        row = next(f)
         abundance_sens = float(row[0])
-        row = f.next()
+        row = next(f)
         abundance_sens_err = float(row[0])
 
-        row = f.next()
+        row = next(f)
         air = float(row[0])
         disc = 295.5 / air
 
         pspec.discrimination = disc
 
-        row = f.next()  # MD errpr
-        row = f.next()  # peakhop cycles
+        row = next(f)  # MD errpr
+        row = next(f)  # peakhop cycles
 
-        n40 = int(f.next()[0])
-        n39 = int(f.next()[0])
-        n38 = int(f.next()[0])
-        n37 = int(f.next()[0])
-        n36 = int(f.next()[0])
-        n35 = int(f.next()[0])
-        n355 = int(f.next()[0])
+        n40 = int(next(f)[0])
+        n39 = int(next(f)[0])
+        n38 = int(next(f)[0])
+        n37 = int(next(f)[0])
+        n36 = int(next(f)[0])
+        n35 = int(next(f)[0])
+        n355 = int(next(f)[0])
 
-        f.next()
+        next(f)
 
-        row = f.next()
+        row = next(f)
         b40 = map(float, row)
         b39 = map(float, row)
         b38 = map(float, row)
@@ -129,7 +109,7 @@ class USGSMenloSource(FileSource):
         isotopes['Ar35.5'] = self._get_isotope(f, 'Ar35.5', n355, b355)
 
         try:
-            f.next()
+            next(f)
             self.warning('Extra data in file')
         except StopIteration:
             pass
@@ -142,7 +122,7 @@ class USGSMenloSource(FileSource):
         # iso.baseline = Baseline(name, 'Detector1')
         # iso.baseline.value = bs
         iso.name = name
-        rs = (f.next() for i in xrange(ncnts))
+        rs = (next(f) for i in xrange(ncnts))
         xs, ys = zip(*((float(r[0]), float(r[1])) for r in rs))
         iso.xs = xs
         iso.ys = ys

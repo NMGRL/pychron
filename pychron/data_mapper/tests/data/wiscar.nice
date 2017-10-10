@@ -1,0 +1,29 @@
+"Total Number of Answers ", 7
+"Ar40"
+"Ar39"
+"Ar37"
+"Ar36"
+"Ar38"
+"Ar36b"
+"Ar39b"
+"Spare "
+"Spare "
+"Spare "
+"Spare "
+    Dim Ar40, Ar39, Ar37, Ar36, Ar38, Ar36b, Ar39b
+
+    Ar40 = Mass(1,0) - Zero(1,0)
+    Ar39 = Mass(1,1) - Zero(1,1)
+    Ar37 = Mass(1,3) - Zero(1,3)
+    Ar36 = Mass(1,4) - Zero(1,4)
+    Ar38 = Mass(2,1) - Zero(1,1)
+    Ar36b = Mass(2,3) - Zero(1,3)
+    Ar39b = Mass(2,0) - Zero(1,0)
+
+    Result(0) = Ar40
+    Result(1) = Ar39
+    Result(2) = Ar37
+    Result(3) = Ar36
+    Result(4) = Ar38
+    Result(5) = Ar39b
+    Result(6) = Ar39b
