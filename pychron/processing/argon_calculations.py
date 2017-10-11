@@ -21,7 +21,7 @@ import math
 from copy import deepcopy
 
 from numpy import asarray, average, array
-from uncertainties import ufloat, umath, nominal_value
+from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
@@ -60,7 +60,8 @@ def extract_isochron_xy(analyses):
     return xx, yy
 
 
-def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
+def calculate_isochron(analyses, error_calc_kind, reg='Reed'):
+    print reg
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -74,25 +75,24 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     except ZeroDivisionError:
         return
 
-    xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
-    ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
+    xs, xerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+    ys, yerrs = zip(*[(nominal_value(yi), std_dev(yi)) for yi in yy])
 
-    xds, xdes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a40])
-    yns, ynes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a36])
-    xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
+    a40s, a40es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
+    a36s, a36es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
+    a39s, a39es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
 
-    regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds, xdes, yns, ynes, xns, xnes)
+    # regx = isochron_regressor(ys, yerrs, xs, xerrs,
+    #                           a40s, a40es, a36s, a36es, a39s, a39es, reg)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
-                             xds, xdes, xns, xnes, yns, ynes,
+                             a40s, a40es, a39s, a39es, a36s, a36es,
                              reg)
 
-    regx.error_calc_type = error_calc_kind
+    # regx.error_calc_type = error_calc_kind
     reg.error_calc_type = error_calc_kind
 
-    xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
-    # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
+    xint = reg.get_x_intercept()
     try:
         r = xint ** -1
     except ZeroDivisionError:
@@ -101,6 +101,7 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     age = ufloat(0, 0)
     if r > 0:
         age = age_equation((ref.j.nominal_value, 0), r, arar_constants=ref.arar_constants)
+
     return age, reg, (xs, ys, xerrs, yerrs)
 
 
