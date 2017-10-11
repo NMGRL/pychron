@@ -66,6 +66,7 @@ class BaseU3LV:
         @return:
         """
         pin = self._get_pin(ch)
+        print 'sdafasfdasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', ch, pin, state
         if pin is not None:
             self._device.setDOState(pin, int(not state))
 
