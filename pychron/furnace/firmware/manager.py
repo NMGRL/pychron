@@ -363,7 +363,7 @@ class FirmwareManager(HeadlessLoggable):
 
                     self._is_energized = True
                     self.rotary_dumper.energize(nsteps, rpm)
-                    while self.rotary_dumper.dump_in_progress():
+                    while self.rotary_dumper.is_energized():
                         time.sleep(0.5)
                     self._is_energized = False
 
