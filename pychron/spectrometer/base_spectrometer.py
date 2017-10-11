@@ -311,7 +311,7 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.simulation:
             return
 
-        if self._no_intensity_change_cnt > 50:
+        if self._no_intensity_change_cnt > 25:
             # self.warning_dialog('Something appears to be wrong.\n\n'
             #                     'The detector intensities have not changed in 5 iterations. '
             #                     'Check Qtegra and RemoteControlServer.\n\n'
@@ -326,8 +326,8 @@ class BaseSpectrometer(SpectrometerDevice):
             try:
                 test = (signals == self._prev_signals).all()
             except (AttributeError, TypeError):
-                print 'signals', signals
-                print 'prev_signals', self._prev_signals
+                # print 'signals', signals
+                # print 'prev_signals', self._prev_signals
                 test = True
 
             if test:
