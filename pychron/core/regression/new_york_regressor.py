@@ -19,6 +19,9 @@ from numpy import linspace, Inf, identity
 from scipy.optimize import fsolve
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from uncertainties import std_dev
+from uncertainties import ufloat
+
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
 from pychron.core.stats.core import validate_mswd
@@ -129,6 +132,12 @@ class YorkRegressor(OLSRegressor):
     def get_slope_error(self):
         return self.get_slope_variance() ** 0.5
 
+    def get_x_intercept(self):
+        xint = self._get_x_intercept()
+
+        xerr = self.predict(xint)
+        return ufloat(xint, std_dev(xerr))
+
     def _get_slope(self):
         return self._slope
 
@@ -142,7 +151,7 @@ class YorkRegressor(OLSRegressor):
     def _get_x_intercept_error(self):
         """
             this method for calculating the x intercept error is incorrect.
-            the current solution is to sway xs and ys and calculate the y intercept error
+            the current solution is to swap xs and ys and calculate the y intercept error
         """
         #v = self.x_intercept
         #e = self.get_intercept_error() * v ** 0.5

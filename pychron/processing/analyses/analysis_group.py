@@ -303,7 +303,7 @@ class AnalysisGroup(HasTraits):
         if args:
             age = args[0]
             reg = args[1]
-            v, e = age.nominal_value, age.std_dev
+            v, e = nominal_value(age), std_dev(age)
             e = self._modify_error(v, e, self.isochron_age_error_kind,
                                    mswd=reg.mswd)
 
