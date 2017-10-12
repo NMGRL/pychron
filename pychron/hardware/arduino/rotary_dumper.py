@@ -15,27 +15,35 @@
 # ===============================================================================
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
 
+MAGNET = 0
+MOVE = 1
+RPM = 2
+STATUS = 3
+RELEASE = 4
+OK = 5
+ERROR = 6
+
 
 class RotaryDumper(HeadlessCoreDevice):
     _nsteps = 0
 
     def energize(self, nsteps, rpm=None):
         if rpm:
-            self.ask('r{}'.format(rpm))
+            self.ask('{},{};'.format(RPM, rpm))
 
-        self.ask('m1')
-        self.ask('g{}'.format(nsteps))
+        self.ask('{},1;'.format(MAGNET))
+        self.ask('{},{};'.format(MOVE, nsteps))
         self._nsteps = nsteps
 
     def denergize(self, nsteps=None):
         if nsteps is None:
             nsteps = -self._nsteps
 
-        if nsteps>0:
+        if nsteps > 0:
             nsteps = -nsteps
 
-        self.ask('m0')
-        self.ask('g{}'.format(nsteps))
+        self.ask('{},0;'.format(MAGNET))
+        self.ask('{},{};'.format(MOVE, nsteps))
 
     def is_energized(self):
         """
@@ -46,7 +54,7 @@ class RotaryDumper(HeadlessCoreDevice):
    */
         @return:
         """
-        state = self.ask('s')
+        state = self.ask('{};'.format(STATUS))
         return int(state) >= 6
 
     def _get_dump_state(self):
