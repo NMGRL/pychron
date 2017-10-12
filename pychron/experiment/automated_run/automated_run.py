@@ -1074,10 +1074,11 @@ class AutomatedRun(Loggable):
             # self.spec.laboratory = self.laboratory
             # self.spec.instrument_name= self.instrument_name
             # add a result to the run spec.
-            self.spec.new_result(self)
 
             # save to database
             self._persister_save_action('post_measurement_save')
+
+            self.spec.new_result(self)
 
             if self.plot_panel:
                 self.plot_panel.analysis_view.refresh_needed = True
