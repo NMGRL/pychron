@@ -25,12 +25,15 @@ from pychron.processing.isotope_group import IsotopeGroup
 
 class AutomatedRunResult(HasTraits):
     runid = Str
-    analysis_timestamp = Str
+    analysis_timestamp = None
     isotope_group = Instance(IsotopeGroup)
     summary = Property
     tripped_conditional = Instance(AutomatedRunConditional)
 
     def _get_summary(self):
+        at = self.analysis_timestamp
+        if at is not None:
+            at = at.strftime('%H:%M:%S %m-%d-%Y')
 
         summary = self._make_header('Summary')
         return '''RUNID= {} 
@@ -39,7 +42,7 @@ RUN TIME= {}
 {}
 {}
 {}'''.format(self.runid,
-             self.analysis_timestamp,
+             at,
              self._intensities(),
              self._tripped_conditional(),
              summary,
