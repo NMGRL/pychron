@@ -553,7 +553,10 @@ class DVC(Loggable):
         def func(xi, prog, i, n):
             if prog:
                 prog.change_message('Syncing repository= {}'.format(xi))
-            self.sync_repo(xi, use_progress=False)
+            try:
+                self.sync_repo(xi, use_progress=False)
+            except BaseException:
+                pass
 
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
@@ -766,8 +769,14 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
-                 analyses=[dict(uuid=ai.uuid, tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses])
+                 analyses=[dict(uuid=ai.uuid,
+                                runid=ai.runid,
+                                tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
+                           ia.all_analyses],
+                 )
+
+        if self.macrochron_enabled:
+            d['macrochron'] = self._make_macrochron(ia)
 
         self._add_interpreted_age(ia, d)
 
@@ -946,6 +955,13 @@ class DVC(Loggable):
             dvc_dump(obj, path)
 
     # private
+    def _make_macrochron(self, ia):
+        m = {'material': ia.material,
+             'lithology': ia.lithology,
+             'reference': ia.reference,
+             'rlocation': ia.rlocation}
+        return m
+
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
         p = analysis_path(ia.identifier, rid, modifier='ia', mode='w')
@@ -1003,7 +1019,7 @@ class DVC(Loggable):
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 try:
                     self.sync_repo(expid)
-                except CredentialException:
+                except (CredentialException, BaseException):
                     self.warning_dialog('Invalid credentials for GitHub/GitLab')
                     return
 
