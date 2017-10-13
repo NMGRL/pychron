@@ -96,4 +96,9 @@ class PersistenceSpec(HasTraits):
     lab_temperatures = List
     lab_humiditys = List
     lab_pneumatics = List
+
+    lithographic_unit = Str
+    lat_long = Str
+    rock_type = Str
+    reference = Str
 # ============= EOF =============================================

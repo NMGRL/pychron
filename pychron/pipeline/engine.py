@@ -735,7 +735,6 @@ class PipelineEngine(Loggable):
             return t.replace(' ', '_').lower()
 
         def add_template(nn, pp):
-            print 'trying {}, {}'.format(pp, os.path.isfile(pp))
             if os.path.isfile(pp):
                 with open(pp, 'r') as rfile:
                     yd = yaml.load(rfile)

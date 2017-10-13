@@ -76,8 +76,12 @@ def get_spec_sha(p):
     return SPEC_SHAS[p]
 
 
-def analysis_path(runid, repository, modifier=None, extension='.json', mode='r'):
-    root = os.path.join(paths.repository_dataset_dir, repository)
+def analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None):
+
+    if root is None:
+        root = paths.repository_dataset_dir
+
+    root = os.path.join(root, repository)
 
     l = 3
     if runid.count('-') > 1:

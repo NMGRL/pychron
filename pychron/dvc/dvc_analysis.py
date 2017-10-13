@@ -203,12 +203,18 @@ class DVCAnalysis(Analysis):
         isotopes = self.isotopes
 
         jd = dvc_load(path)
-        signals = jd['signals']
-        baselines = jd['baselines']
-        sniffs = jd['sniffs']
+
+        signals = jd.get('signals', [])
+        baselines = jd.get('baselines', [])
+        sniffs = jd.get('sniffs', [])
+
         for sd in signals:
-            isok = sd['isotope']
-            det = sd['detector']
+            isok = sd.get('isotope')
+            det = sd.get('detector')
+
+            if isok is None or det is None:
+                continue
+
             # print isok, keys
             key = isok
             if use_name_pairs:
@@ -226,32 +232,32 @@ class DVCAnalysis(Analysis):
             if not iso:
                 continue
 
-            iso.unpack_data(format_blob(sd['blob']), n_only)
+            iso.unpack_data(format_blob(sd.get('blob', '')), n_only)
 
             # det = sd['detector']
-            bd = next((b for b in baselines if b['detector'] == det), None)
+            bd = next((b for b in baselines if b.get('detector') == det), None)
             if bd:
-                iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
+                iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
 
         # loop thru keys to make sure none were missed this can happen when only loading baseline
         if keys:
             for k in keys:
-                bd = next((b for b in baselines if b['detector'] == k), None)
+                bd = next((b for b in baselines if b.get('detector') == k), None)
                 if bd:
                     for iso in isotopes.itervalues():
                         if iso.detector == k:
-                            iso.baseline.unpack_data(format_blob(bd['blob']), n_only)
+                            iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
 
         for sn in sniffs:
-            isok = sn['isotope']
-            det = sn['detector']
+            isok = sn.get('isotope')
+            det = sn.get('detector')
             if use_name_pairs:
                 isok = '{}{}'.format(isok, det)
 
             if keys and isok not in keys:
                 continue
 
-            data = format_blob(sn['blob'])
+            data = format_blob(sn.get('blob', ''))
             for iso in isotopes.itervalues():
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
@@ -307,11 +313,7 @@ class DVCAnalysis(Analysis):
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
                      include_baseline_error=i.include_baseline_error,
-                     filter_outliers_dict=fd
-                     # filter_outliers=fd.get('filter_outliers', False),
-                     # iterations=fd.get('iterations', 0),
-                     # std_devs=fd.get('std_devs', 0)
-                     )
+                     filter_outliers_dict=fd)
 
         # save intercepts
         if isoks:

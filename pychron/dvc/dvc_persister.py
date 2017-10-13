@@ -58,6 +58,8 @@ class DVCPersister(BasePersister):
     default_principal_investigator = Str
     _positions = None
 
+    macrochron_enabled = Bool(True)
+
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
         self.per_spec = pr
 
@@ -476,6 +478,9 @@ class DVCPersister(BasePersister):
         # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
         #                                  self.per_spec.experiment_queue_blob)
 
+        if self.macrochron_enabled:
+            self._save_macrochron(obj)
+
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
 
@@ -503,6 +508,9 @@ class DVCPersister(BasePersister):
                 'format': '{}ff'.format(endianness),
                 'signals': signals, 'baselines': baselines, 'sniffs': sniffs}
         dvc_dump(data, p)
+
+    def _save_macrochron(self, obj):
+        pass
 
     def _save_monitor(self):
         if self.per_spec.monitor:

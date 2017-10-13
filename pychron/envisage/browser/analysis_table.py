@@ -216,7 +216,10 @@ class AnalysisTable(ColumnSorterMixin):
 
         if new.removed:
             for ai in new.removed:
-                self.oanalyses.remove(ai)
+                try:
+                    self.oanalyses.remove(ai)
+                except ValueError:
+                    pass
 
     def _analysis_filter_changed(self, new):
         if new:

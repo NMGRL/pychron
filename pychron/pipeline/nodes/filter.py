@@ -33,7 +33,9 @@ class PipelineFilter(HasTraits):
     attribute = Str
     comparator = Enum('=', '<', '>', '<=', '>=', '!=', 'between', 'not between')
     criterion = Str
-    attributes = ('age', 'age error', 'kca', 'kca error', 'aliquot', 'step', 'run date')
+    attributes = ('age', 'age error', 'kca', 'kca error',
+                  'aliquot', 'step', 'run date',
+                  'extract_value', 'duration', 'cleanup')
 
     chain_operator = Enum('and', 'or')
     show_chain = Bool
@@ -188,6 +190,7 @@ class FilterNode(BaseNode):
                                      'set temporary tag to "omit"'),
                         VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
                  kind='livemodal',
+                 title='Edit Filter',
                  buttons=['OK', 'Cancel'])
         return v
 

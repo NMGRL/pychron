@@ -231,8 +231,10 @@ class SamplePrep(DVCAble, PersistenceMixin):
                                         obj.comment)
 
     def _load_session_samples(self):
+        print 'asdfasf', self.worker, self.session
         if self.worker and self.session:
             ss = self.dvc.get_sample_prep_samples(self.worker, self.session)
+            print ss
             self.session_samples = [self._sample_record_factory(i) for i in ss]
             self.osession_samples = self.session_samples
 

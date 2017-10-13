@@ -1788,7 +1788,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(SamplePrepSessionTbl)
             q = q.filter(SamplePrepSessionTbl.name == session)
             q = q.filter(SamplePrepSessionTbl.worker_name == worker)
-            return self._query_all(q)
+            return self._query_all(q, verbose_query=True)
 
     def get_sample_prep_step_by_id(self, id):
         return self._retrieve_item(SamplePrepStepTbl, id, 'id')
