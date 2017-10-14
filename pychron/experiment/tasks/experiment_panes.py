@@ -134,7 +134,11 @@ class ExperimentFactoryPane(TraitsDockPane):
                            queue_factory_item('delay_after_air', label='Delay After Air (s)'),
                            show_border=True,
                            label='Delays')
+
+        note_grp = VGroup(UItem('note', style='custom'),
+                          show_border=True, label='Note')
         queue_grp = VGroup(user_grp, email_grp, ms_ed_grp, delay_grp,
+                           note_grp,
                            label='Queue')
 
         button_bar = HGroup(save_button,

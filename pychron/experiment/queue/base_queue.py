@@ -42,7 +42,7 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-__METASTR__ = '''
+METASTR = '''
 username: {username:}
 use_email: {use_email:}
 email: {email:}
@@ -57,6 +57,7 @@ delay_after_air: {delay_after_air:}
 extract_device: {extract_device:}
 tray: {tray:}
 load: {load:}
+note: {note:}
 '''
 
 
@@ -71,7 +72,9 @@ class BaseExperimentQueue(RunBlock):
     use_group_email = Bool
     use_email = Bool
 
+    note = Str
     tray = Str
+
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
     delay_after_blank = CInt(15)
@@ -280,6 +283,7 @@ class BaseExperimentQueue(RunBlock):
         bool_default = lambda x: bool(x) if x else False
         default = key_default('')
 
+        self._set_meta_param('note', meta, default)
         self._set_meta_param('tray', meta, default)
         self._set_meta_param('extract_device', meta, key_default('Extract Device'))
         self._set_meta_param('mass_spectrometer', meta, key_default('Spectrometer'))
@@ -367,7 +371,7 @@ class BaseExperimentQueue(RunBlock):
         if ms in ('Spectrometer', LINE_STR):
             ms = ''
 
-        s = __METASTR__.format(
+        s = METASTR.format(
             username=self.username,
             use_email=self.use_email,
             email=self.email,
@@ -381,7 +385,8 @@ class BaseExperimentQueue(RunBlock):
             delay_after_air=self.delay_after_air,
             extract_device=self.extract_device,
             tray=self.tray or '',
-            load=self.load_name or '')
+            load=self.load_name or '',
+            note=self.note)
 
         if wfile:
             wfile.write(s)

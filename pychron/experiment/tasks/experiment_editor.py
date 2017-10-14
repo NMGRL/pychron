@@ -143,7 +143,6 @@ class ExperimentEditor(BaseTraitsEditor):
             self.queue = queue
 
     def queue_factory(self, **kw):
-        print 'application', self.application
         return ExperimentQueue(application=self.application, **kw)
 
     def save(self, path, queues=None):
