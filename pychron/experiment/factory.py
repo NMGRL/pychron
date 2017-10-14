@@ -17,20 +17,20 @@
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
-    on_trait_change, DelegatesTo, List, Str
+    DelegatesTo, List, Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.experiment.auto_gen_config import AutoGenConfig
-from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
-from pychron.experiment.queue.factory import ExperimentQueueFactory
+from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
+from pychron.experiment.queue.factory import ExperimentQueueFactory
 from pychron.experiment.undoer import ExperimentUndoer
-from pychron.pychron_constants import LINE_STR
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.pychron_constants import LINE_STR
 
 
 class ExperimentFactory(DVCAble): #, ConsumerMixin):
@@ -92,7 +92,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                   'delay_after_blank',
                   'delay_between_analyses',
                   'delay_after_air',
-                  'queue_conditionals_name', 'username'):
+                  'queue_conditionals_name', 'note'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
