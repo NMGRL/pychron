@@ -195,6 +195,10 @@ class LumenDetector(object):
 
         return targetxy, src
 
+    def lum(self, src):
+        lum, mask = self._lum(src)
+        return lum, mask
+
     def get_value(self, src, scaled=True):
         """
 

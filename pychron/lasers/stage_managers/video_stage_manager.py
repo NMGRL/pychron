@@ -95,6 +95,9 @@ class VideoStageManager(StageManager):
 
     pxpermm = Float(23)
 
+    _measure_grain_t = None
+    _measure_grain_evt = None
+
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
@@ -130,6 +133,26 @@ class VideoStageManager(StageManager):
                         '{}.video_output_mode'.format(pref_id))
         bind_preference(self.video, 'ffmpeg_path',
                         '{}.ffmpeg_path'.format(pref_id))
+
+    def stop_measure_grain_mask(self):
+        if self._measure_grain_evt:
+            self._measure_grain_evt.stop()
+
+    def measure_grain_mask(self):
+        self._measure_grain_evt = evt = Event()
+
+        def _measure_grain_mask():
+            ld = self.lumen_detector
+
+            masks = []
+            while not evt.is_set():
+                l, m = ld.lum()
+                masks.append(m)
+                evt.sleep(0.5)
+            self.grain_masks = masks
+
+        self._measure_grain_t = Thread(target=_measure_grain_mask)
+        self._measure_grain_t.start()
 
     def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
         """

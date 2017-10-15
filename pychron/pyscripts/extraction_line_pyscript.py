@@ -591,7 +591,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units=''):
+    def extract(self, power='', units='', measure_grain_mask=False):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -611,7 +611,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action([('extract', (power,), {'units': units})])
+        self._extraction_action([('extract', (power,), {'units': units, 'measure_grain_mask': measure_grain_mask})])
 
     @verbose_skip
     @command_register
