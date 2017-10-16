@@ -147,6 +147,9 @@ class SerialCommunicator(Communicator):
         if self.write_terminator == 'CRLF':
             self.write_terminator = '\r\n'
 
+        if self.read_terminator == 'CRLF':
+            self.read_terminator = '\r\n'
+
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
 
