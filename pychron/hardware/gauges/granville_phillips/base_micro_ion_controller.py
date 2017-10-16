@@ -36,10 +36,12 @@ class BaseMicroIonController(HasTraits):
     gauges = List
     display_name = Str
     gauge_klass = BaseGauge
+    mode = 'rs485'
 
     def load_additional_args(self, config, *args, **kw):
         self.address = self.config_get(config, 'General', 'address', optional=False)
         self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
 
         ns = self.config_get(config, 'Gauges', 'names')
         if ns:
@@ -180,7 +182,7 @@ class BaseMicroIonController(HasTraits):
     def _update_pressure(self, name):
         gauge = self.get_gauge(name)
         if gauge:
-            p = self._read_pressure(name)
+            p = self._read_pressure(name, verbose=True)
             gauge.pressure = float(p)
 
     def _read_pressure(self, name, verbose=False):
@@ -196,7 +198,10 @@ class BaseMicroIonController(HasTraits):
         # prepend key with our address
         # example of new string formating
         # see http://docs.python.org/library/string.html#formatspec
-        key = '#{}{}'.format(self.address, key)
+
+        if self.mode == 'rs485':
+            key = '#{}{}'.format(self.address, key)
+
         if value is not None:
             args = (key, value)
         else:
