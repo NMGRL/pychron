@@ -99,7 +99,7 @@ class BaseMicroIonController(HasTraits):
         gauge = self.get_gauge(name)
         if gauge is not None:
             if force:
-                self._update_gauge()
+                self._update_pressue()
 
             return gauge.pressure
 
