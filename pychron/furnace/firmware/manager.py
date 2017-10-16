@@ -506,7 +506,7 @@ class FirmwareManager(HeadlessLoggable):
     def get_gauge_pressure(self, data):
         controller, channel = self._get_gauge_controller(data)
         if controller:
-            return controller.get_pressue(channel)
+            return controller.get_pressure(channel, force=True)
 
     # private
     def _get_gauge_controller(self, data):
