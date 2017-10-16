@@ -97,11 +97,11 @@ class BaseMicroIonController(HasTraits):
             except (TypeError, ValueError):
                 pass
 
-    def get_pressure(self, name, force=False):
+    def get_pressure(self, name, force=False, verbose=False):
         gauge = self.get_gauge(name)
         if gauge is not None:
             if force:
-                self._update_pressure(name)
+                self._update_pressure(name, verbose)
 
             return gauge.pressure
 
@@ -179,10 +179,10 @@ class BaseMicroIonController(HasTraits):
 
         return self._read_pressure(name, verbose)
 
-    def _update_pressure(self, name):
+    def _update_pressure(self, name, verbose):
         gauge = self.get_gauge(name)
         if gauge:
-            p = self._read_pressure(name, verbose=True)
+            p = self._read_pressure(name, verbose)
             gauge.pressure = float(p)
 
     def _read_pressure(self, name, verbose=False):

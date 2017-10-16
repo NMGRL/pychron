@@ -144,6 +144,9 @@ class SerialCommunicator(Communicator):
         self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
                            optional=True, default='\r')
 
+        if self.write_terminator == 'CRLF':
+            self.write_terminator = '\r\n'
+
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
 
