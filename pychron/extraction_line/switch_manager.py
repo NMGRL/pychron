@@ -524,21 +524,21 @@ class SwitchManager(Manager):
 
     def load_hardware_states(self):
         self.debug('load hardware states')
-        # update = False
+        update = False
         states = []
         for k, v in self.switches.iteritems():
             if v.query_state:
-                # ostate = v.state
+                ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
-                states.append((k, s))
+                states.append((k, s, False))
                 # self.refresh_state = (k, s, False)
-                # if ostate != s:
-                # update = update or ostate != s
+                if ostate != s:
+                    update = update or ostate != s
 
         if states:
             self.refresh_state = states
-            # if update:
-            # self.refresh_canvas_needed = True
+            if update:
+                self.refresh_canvas_needed = True
 
     def load_indicator_states(self):
         self.debug('load indicator states')

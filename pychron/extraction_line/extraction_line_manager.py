@@ -489,7 +489,7 @@ class ExtractionLineManager(Manager, Consoleable):
         sm = self.switch_manager
         while 1:
             sm.load_hardware_states()
-            self.refresh_canvas()
+            # self.refresh_canvas()
             time.sleep(p)
 
     #     self._trigger_update()
@@ -732,13 +732,12 @@ class ExtractionLineManager(Manager, Consoleable):
             c.canvas2D.trait_set(**{name: new})
 
     def _handle_state(self, new):
-        self.debug('handle state {}'.format(new))
+        # self.debug('handle state {}'.format(new))
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:
-            n = len(new)
-            for i, ni in enumerate(new):
-                self.update_switch_state(refresh=i == n - 1, *ni)
+            for ni in new:
+                self.update_switch_state(*ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))

@@ -30,6 +30,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
 from pychron.canvas.scene_viewer import SceneCanvas
+from pychron.core.codetools.inspection import caller
 from pychron.globals import globalv
 
 W = 2
@@ -81,6 +82,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.tool = tool
         self.tools.append(tool)
         self.overlays.append(overlay)
+
+    @caller
+    def invalidate_and_redraw(self):
+        super(ExtractionLineCanvas2D, self).invalidate_and_redraw()
 
     def toggle_item_identify(self, name):
         v = self._get_switch_by_name(name)
