@@ -308,7 +308,7 @@ class UnknownsAdapter(TabularAdapter):
                ('Comment', 'comment'),
                ('Tag', 'tag'),
                ('GroupID', 'group_id'),
-               ('GID', 'graph_id')]
+               ('GraphID', 'graph_id')]
 
     record_id_width = Int(80)
     sample_width = Int(80)
@@ -328,6 +328,7 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Recall', action='recall_unknowns'),
+                           Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
                            Action(name='Group Selected', action='unknowns_group_by_selected'),
                            Action(name='Clear Group', action='unknowns_clear_grouping'),
                            Action(name='Clear All Group', action='unknowns_clear_all_grouping'))
@@ -372,6 +373,11 @@ class ReferencesAdapter(TabularAdapter):
 
 
 class AnalysesPaneHandler(Handler):
+
+    def unknowns_graph_group_by_selected(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_graph_group_by_selected()
+
     def unknowns_group_by_selected(self, info, obj):
         obj = info.ui.context['object']
         obj.unknowns_group_by_selected()

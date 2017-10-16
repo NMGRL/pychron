@@ -241,6 +241,12 @@ class PipelineEngine(Loggable):
 
         self._set_grouping(items, 0)
 
+    def unknowns_graph_group_by_selected(self):
+        items = self.selected.unknowns
+        max_gid = max([si.graph_id for si in items]) + 1
+
+        self._set_grouping(self.selected_unknowns, max_gid, attr='graph_id')
+
     def unknowns_group_by_selected(self):
         items = self.selected.unknowns
         max_gid = max([si.group_id for si in items]) + 1
@@ -661,9 +667,10 @@ class PipelineEngine(Loggable):
                     break
 
     # private
-    def _set_grouping(self, items, gid):
+    def _set_grouping(self, items, gid, attr='group_id'):
         for si in items:
-            si.group_id = gid
+            setattr(si, attr, gid)
+            # si.group_id = gid
 
         if hasattr(self.selected, 'editor') and self.selected.editor:
             self.selected.editor.refresh_needed = True
