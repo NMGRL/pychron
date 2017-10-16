@@ -30,6 +30,7 @@ from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
 from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
+from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
 from pychron.hardware.watlow.headless_ezzone import HeadlessWatlowEZZone
@@ -44,8 +45,10 @@ DEVICES = {'controller': HeadlessEurotherm,
            'feeder': HeadlessMDrive,
            'temp_hum': DHT11,
            'camera': RPiCamera,
-           'backout1': HeadlessWatlowEZZone,
-           'backout2': HeadlessWatlowEZZone,
+           'gauge1': HeadlessMicroIonController,
+           'gauge2': HeadlessMicroIonController,
+           'bakeout1': HeadlessWatlowEZZone,
+           'bakeout2': HeadlessWatlowEZZone,
            'rotary_dumper': RotaryDumper}
 
 
@@ -501,17 +504,25 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def get_gauge_pressure(self, data):
-        controller = self._get_gauge_controller(data)
+        controller, channel = self._get_gauge_controller(data)
         if controller:
-            c = self._get_gauge_channel(data)
-            return controller.get_pressue(c)
+            return controller.get_pressue(channel)
 
     # private
-    def _get_gauge_channel(self, data):
-        gauge_id = data['gauge_id']
-
     def _get_gauge_controller(self, data):
-        pass
+        controller, channel = None, None
+
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name, channel = data
+
+        try:
+            controller = getattr(self, name)
+        except AttributeError:
+            pass
+
+        return controller, channel
 
     def _get_bakeout_controller(self, data):
         channel = data['channel']
