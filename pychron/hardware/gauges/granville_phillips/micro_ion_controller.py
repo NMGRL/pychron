@@ -23,6 +23,7 @@ import time
 # =============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
+from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import BaseMicroIonController, BaseGauge
 
 
 class Gauge(BaseGauge):

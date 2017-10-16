@@ -141,6 +141,9 @@ class SerialCommunicator(Communicator):
         self.set_attribute(config, 'read_terminator_position', 'Communications', 'terminator_position',
                            optional=True, default=None, cast='int')
 
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           optional=True, default='\r')
+
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
 
