@@ -35,6 +35,14 @@ class RotaryDumper(HeadlessCoreDevice):
         self.ask('{},{};'.format(MOVE, nsteps))
         self._nsteps = nsteps
 
+    def is_moving(self):
+        ret = False
+        s = self.ask('{};'.format(STATUS))
+        if s:
+            s = s.split(',')[0]
+            ret = int(s) == 8
+        return ret
+
     def denergize(self, nsteps=None):
         if nsteps is None:
             nsteps = -self._nsteps
