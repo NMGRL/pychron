@@ -60,8 +60,8 @@ class VideoStageManager(StageManager):
     autofocus_manager = Instance(
         'pychron.mv.focus.autofocus_manager.AutoFocusManager')
 
-    zoom_calibration_manager = Instance(
-        'pychron.mv.zoom.zoom_calibration.ZoomCalibrationManager')
+    # zoom_calibration_manager = Instance(
+    #     'pychron.mv.zoom.zoom_calibration.ZoomCalibrationManager')
 
     snapshot_button = Button('Snapshot')
     auto_save_snapshot = Bool(True)
@@ -707,10 +707,10 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-    def _zoom_calibration_manager_default(self):
-        if self.parent.mode != 'client':
-            from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
-            return ZoomCalibrationManager(laser_manager=self.parent)
+    # def _zoom_calibration_manager_default(self):
+    #     if self.parent.mode != 'client':
+    #         from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
+    #         return ZoomCalibrationManager(laser_manager=self.parent)
 
 # ===============================================================================
 # calcualte camera params

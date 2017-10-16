@@ -24,7 +24,8 @@ from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     ListStrEditor
 
 from pychron.core.ui.custom_label_editor import CustomLabel
-# from pychron.core.ui.laser_status_editor import LaserStatusEditor
+from pychron.core.ui.image_editor import ImageEditor
+from pychron.core.ui.laser_status_editor import LaserStatusEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
@@ -93,11 +94,12 @@ class StageControlPane(TraitsDockPane):
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             camera_grp = VGroup(visible_when='use_video', label='Camera')
-            mvgrp = VGroup(
-                UItem('stage_manager.autocenter_manager', style='custom'),
-                UItem('stage_manager.zoom_calibration_manager',
-                      style='custom'),
-                label='Machine Vision', show_border=True)
+            mvgrp = HGroup(VGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled')),
+                           Item('crop_size', label='Crop (mm)'),
+                           Item('target_radius', label='Target Radius',
+                                editor=RangeEditor(low=0., high=5.)),
+                           UItem('stage_manager.autocenter_manager.display_image', editor=ImageEditor()),
+                           label='Machine Vision', show_border=True)
 
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',

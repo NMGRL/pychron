@@ -25,21 +25,12 @@ from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 
 
-class StandAloneImage(Viewable):
+class FrameImage(Viewable):
     source_frame = Array
     refresh = Event
     alpha = Range(0.0, 1.0)
     overlays = None
     alpha_enabled = Bool(False)
-
-    def traits_view(self):
-        img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))
-        if self.alpha_enabled:
-            vv = VGroup(Item('alpha'), img)
-        else:
-            vv = img
-        v = self.view_factory(VGroup(vv))
-        return v
 
     def load(self, frame, swap_rb=False):
         self.source_frame = array(frame)
@@ -67,5 +58,16 @@ class StandAloneImage(Viewable):
         if self.overlays:
             im0, im1 = self.overlays
             self._overlay(im0, im1, self.alpha)
+
+
+class StandAloneImage(FrameImage):
+    def traits_view(self):
+        img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))
+        if self.alpha_enabled:
+            vv = VGroup(Item('alpha'), img)
+        else:
+            vv = img
+        v = self.view_factory(VGroup(vv))
+        return v
 
 # ============= EOF =============================================
