@@ -30,7 +30,7 @@ from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
 from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
-from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
+from pychron.hardware.gauges.granville_phillips.headless_micro_ion_controller import HeadlessMicroIonController
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
 from pychron.hardware.watlow.headless_ezzone import HeadlessWatlowEZZone
