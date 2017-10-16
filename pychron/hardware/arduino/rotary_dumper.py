@@ -28,6 +28,15 @@ ERROR = 6
 class RotaryDumper(HeadlessCoreDevice):
     _nsteps = 0
 
+    def initialize(self, *args, **kw):
+        self.energize(325)
+        for i in range(100):
+            if not self.is_moving():
+                print 'not moving'
+                break
+            time.sleep(1)
+        self.denergize()
+
     def energize(self, nsteps, rpm=None):
         if rpm:
             self.ask('{},{};'.format(RPM, rpm))
