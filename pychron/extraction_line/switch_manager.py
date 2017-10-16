@@ -233,9 +233,8 @@ class SwitchManager(Manager):
                 continue
 
             keys.append(k)
-            #             state = '{}{}'.format(k, int(self._get_state_by(v)))
-            state = '{}{}'.format(k, int(v.state))
-            states.append(state)
+
+            states.append(int(v.state))
             if time.time() - st > timeout:
                 self.debug('get states timeout. timeout={}'.format(timeout))
                 break
@@ -341,6 +340,8 @@ class SwitchManager(Manager):
 
         if v is not None:
             return v.software_lock
+        else:
+            self.critical('failed to located valve name="{}", description="{}"'.formnat(name, description))
 
     def open_switch(self, *args, **kw):
         return self.open_by_name(*args, **kw)
@@ -506,15 +507,13 @@ class SwitchManager(Manager):
                             d[key] = bool(int(state))
                         except IndexError:
                             return d
-                            # if key.upper() in ALPHAS:
-                            # if state in ('0', '1'):
             except ValueError:
                 pass
 
         return d
 
     def load_valve_states(self):
-        self.load_hardware_states()
+        self.load_indicator_states(force=True)
 
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
@@ -531,22 +530,13 @@ class SwitchManager(Manager):
                 # ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
                 states.append((k, s))
-                # self.refresh_state = (k, s, False)
-                # if ostate != s:
-                # update = update or ostate != s
 
         if states:
             self.refresh_state = states
-            # if update:
-            # self.refresh_canvas_needed = True
 
     def load_indicator_states(self):
         self.debug('load indicator states')
-        for k, v in self.switches.iteritems():
-            s = v.get_hardware_indicator_state()
-            self.refresh_state = (k, s, False)
-
-        self.refresh_canvas_needed = True
+        self.load_hardware_states()
 
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')

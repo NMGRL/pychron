@@ -60,9 +60,8 @@ class PersistenceSpec(HasTraits):
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict
-    trap = Float
+trap = Float
     emission = Float
-
     active_detectors = List
 
     previous_blank_runid = Str

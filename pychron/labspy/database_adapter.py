@@ -22,6 +22,7 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= local library imports  ==========================
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
+
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
     Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
@@ -178,5 +179,16 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
                                    'device': p.device.name})
 
         return values
+
+    def get_measurements(self, device, name, low=None, high=None):
+        q = self.session.query(Measurement)
+        q = q.join(ProcessInfo, Device)
+        q = q.filter(Device.name == device)
+        q = q.filter(ProcessInfo.name == name)
+
+        if low:
+            q = q.filter(Measurement.pub_date >= low)
+
+        return self._query_all(q)
 
 # ============= EOF =============================================
