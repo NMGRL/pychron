@@ -81,8 +81,8 @@ class SelectionFigure(HasTraits):
         else:
             obj.prev_selection = None
 
-        for p in self.graph.plots:
-            p.default_index.metadata['selections'] = sel
+        # for p in self.graph.plots:
+        #     p.default_index.metadata['selections'] = sel
 
         return sel
 
@@ -298,80 +298,24 @@ class BaseArArFigure(SelectionFigure):
         pp.x_grid.visible = options.use_xgrid
         pp.y_grid.visible = options.use_ygrid
 
-    # def _get_omitted(self, ans, omit=None, include_value_filtered=True):
-    #     # return [i for i, ai in enumerate(ans)
-    #     #         if ai.is_omitted(omit, include_value_filtered)]
-    #     return [i for i, ai in enumerate(ans)
-    #             if ai.is_omitted()]
     def _get_omitted_by_tag(self, ans, tags=None):
         return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag(tags)]
 
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)
-        # for i, a in enumerate(ans):
-        #     if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
-        #         a.temp_status = 1 if i in sel else 0
         self.refresh_unknowns_table = True
-
-    # def _filter_metadata_changes(self, obj, func, ans):
-    #     sel = obj.metadata.get('selections', [])
-    #     if sel:
-    #         obj.was_selected = True
-    #
-    #         prev = None
-    #         if hasattr(obj, 'prev_selection'):
-    #             prev = obj.prev_selection
-    #
-    #         if prev != sel:
-    #             self._set_selected(ans, sel)
-    #             func(sel)
-    #
-    #         obj.prev_selection = sel
-    #
-    #     elif hasattr(obj, 'was_selected'):
-    #         if obj.was_selected:
-    #             self._set_selected(ans, sel)
-    #             func(sel)
-    #         obj.was_selected = False
-    #         obj.prev_selection = None
-    #     else:
-    #         obj.prev_selection = None
-    #
-    #     return sel
-
-    # def _get_mswd(self, ages, errors):
-    # mswd = calculate_mswd(ages, errors)
-    # n = len(ages)
-    # valid_mswd = validate_mswd(mswd, n)
-    #     return mswd, valid_mswd, n
 
     def _cmp_analyses(self, x):
         return x.timestamp
 
     def _unpack_attr(self, attr, nonsorted=False):
-
-        # if '/' in attr:
-        #     def gen():
-        #         for ai in self.sorted_analyses:
-        #             r = ai.get_ratio(attr)
-        #             yield r or ufloat(0,0)
-        #             # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
-        #             # if n is not None and d is not None:
-        #             #     yield nv/dv
-        # else:
         def gen():
-            # f = lambda x: x
-            # if attr in ARGON_KEYS:
-            #     f = lambda x: x.get_intensity()
             ans = self.sorted_analyses
             if nonsorted:
                 ans = self.analyses
             for ai in ans:
                 v = ai.get_value(attr)
                 yield v or ufloat(0, 0)
-                # if v is not None:
-                #     yield v
-                # yield f(ai.get_value(attr))
 
         return gen()
 
@@ -466,39 +410,39 @@ class BaseArArFigure(SelectionFigure):
         k = 'uAr40/Ar36'
         return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
-    def _plot_ic_40_36(self, po, pid):
+    def _plot_ic_40_36(self, po, pobj, pid):
         k = 'Ar40/Ar36'
         return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
-    def _plot_icf_40_36(self, po, pid):
+    def _plot_icf_40_36(self, po, pobj, pid):
         k = 'icf_40_36'
         return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
 
-    def _plot_radiogenic_yield(self, po, pid):
+    def _plot_radiogenic_yield(self, po, pobj, pid):
         k = 'rad40_percent'
         return self._plot_aux('%<sup>40</sup>Ar*', k, po, pid)
 
-    def _plot_kcl(self, po, pid):
+    def _plot_kcl(self, po, pobj, pid):
         k = 'kcl'
         return self._plot_aux('K/Cl', k, po, pid)
 
-    def _plot_kca(self, po, pid):
+    def _plot_kca(self, po, pobj, pid):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
 
-    def _plot_moles_k39(self, po, pid):
+    def _plot_moles_k39(self, po, pobj, pid):
         k = 'k39'
         return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
 
-    def _plot_moles_ar40(self, po, pid):
+    def _plot_moles_ar40(self, po, pobj, pid):
         k = 'Ar40'
         return self._plot_aux('<sup>40</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
 
-    def _plot_moles_ar36(self, po, pid):
+    def _plot_moles_ar36(self, po, pobj, pid):
         k = 'Ar36'
         return self._plot_aux('<sup>36</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
 
-    def _plot_extract_value(self, po, pid):
+    def _plot_extract_value(self, po, pobj, pid):
         k = 'extract_value'
         return self._plot_aux('Extract Value', k, po, pid)
 
@@ -535,16 +479,6 @@ class BaseArArFigure(SelectionFigure):
     def _add_axis_tool(self, plot, axis):
         t = AxisTool(component=axis)
         plot.tools.append(t)
-
-    # def _add_limit_tool(self, plot, orientation):
-    #     t = LimitsTool(component=plot,
-    #                    orientation=orientation)
-    #
-    #     o = LimitOverlay(component=plot, tool=t)
-    #
-    #     plot.tools.insert(0, t)
-    #     plot.overlays.append(o)
-    #     t.on_trait_change(self._handle_limits, 'limits_updated')
 
     def _handle_limits(self):
         pass
@@ -638,16 +572,16 @@ class BaseArArFigure(SelectionFigure):
 
                 for i in inspector:
                     broadcaster.tools.append(i)
-            # # pinspector_overlay = PointInspectorOverlay(component=scatter,
-            # #                                            tool=point_inspector)
-            # # print 'fff', inspector
-            #
-            # event_queue = {}
-            # for i in inspector:
-            #     i.event_queue = event_queue
-            #     i.on_trait_change(self._handle_inspection, 'inspector_item')
-            #     # scatter.overlays.append(pinspector_overlay)
-            #     broadcaster.tools.append(i)
+                    # # pinspector_overlay = PointInspectorOverlay(component=scatter,
+                    # #                                            tool=point_inspector)
+                    # # print 'fff', inspector
+                    #
+                    # event_queue = {}
+                    # for i in inspector:
+                    #     i.event_queue = event_queue
+                    #     i.on_trait_change(self._handle_inspection, 'inspector_item')
+                    #     # scatter.overlays.append(pinspector_overlay)
+                    #     broadcaster.tools.append(i)
 
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata
@@ -767,43 +701,6 @@ class BaseArArFigure(SelectionFigure):
                 axp.set_overlay_position(obj.id, new)
 
                 break
-
-    # @on_trait_change('graph:plots:index_mapper:updated')
-    # def _handle_index_range(self, obj, name, old, new):
-    #
-    #     if not isinstance(new, bool):
-    #         if new.low == -inf or new.high == inf:
-    #             return
-    #
-    #         if self.suppress_xlimits_update:
-    #             return
-    #
-    #         for p in self.graph.plots:
-    #             if p.index_mapper == obj:
-    #                 op = self.options.aux_plots[-1]
-    #                 op.xlimits = (new.low, new.high)
-    #                 # print 'setting xlimits', op.xlimits, op, op.name
-    #                 break
-
-    # @on_trait_change('graph:plots:value_mapper:updated')
-    # def _handle_value_range(self, obj, name, old, new):
-    #     if not isinstance(new, bool):
-    #         if self.suppress_ylimits_update:
-    #             return
-    #
-    #         for p in self.graph.plots:
-    #             if p.value_mapper == obj:
-    #                 plot = p
-    #                 title = plot.y_axis.title
-    #
-    #                 if title in PLOT_MAPPING:
-    #                     title = PLOT_MAPPING[title]
-    #
-    #                 for op in self.options.aux_plots:
-    #                     if title.startswith(op.name):
-    #                         op.ylimits = (new.low, new.high)
-    #                         break
-    #                 break
 
     # ===============================================================================
     # property get/set

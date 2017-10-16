@@ -786,6 +786,11 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+
+    @on_trait_change('active_editor:figure_model:panels:figures:refresh_unknowns_table')
+    def _handle_refresh(self, obj, name, old, new):
+        self.refresh_table_needed = True
+
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()
         self.pipeline = p
