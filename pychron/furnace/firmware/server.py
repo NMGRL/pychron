@@ -61,6 +61,7 @@ class FurnaceFirmwareProtocol(ServiceProtocol):
                          ('InDownPosition', manager.is_funnel_down),
                          ('EnergizeMagnets', manager.energize_magnets),
                          ('IsEnergized', manager.is_energized),
+                         ('RotaryDumperMoving', manager.rotary_dumper_moving),
                          ('DenergizeMagnets', manager.denergize_magnets),
                          ('MoveAbsolute', manager.move_absolute),
                          ('MoveRelative', manager.move_relative),

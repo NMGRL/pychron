@@ -325,10 +325,14 @@ class FirmwareManager(HeadlessLoggable):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down, block=False)
 
+
+    @debug
+    def rotary_dumper_moving(self, data):
+        if self.rotary_dumper:
+            return self.rotary_dumper.is_moving()
+
     @debug
     def energize_magnets(self, data):
-        print '---------------------------- aasdfasdf', self._magnet_channels
-        func = None
         if self._magnet_channels:
             if self.switch_controller:
                 period = 3
@@ -352,28 +356,26 @@ class FirmwareManager(HeadlessLoggable):
                     self.switch_controller.set_channel_state(prev, False)
                     self._is_energized = False
 
+                t = Thread(target=func)
+                t.start()
+                return True
         else:
             if self.rotary_dumper:
-                def func():
-                    nsteps = None
-                    rpm = None
-                    if data:
-                        if isinstance(data, dict):
-                            nsteps = data.get('nsteps', 3)
-                            rpm = data.get('rpm')
-                        else:
-                            nsteps = data
+                nsteps = None
+                rpm = None
+                if data:
+                    if isinstance(data, dict):
+                        nsteps = data.get('nsteps', 3)
+                        rpm = data.get('rpm')
+                    else:
+                        nsteps = data
 
-                    self._is_energized = True
-                    self.rotary_dumper.energize(nsteps, rpm)
-                    while self.rotary_dumper.is_energized():
-                        time.sleep(0.5)
-                    self._is_energized = False
+                self._is_energized = True
+                self.rotary_dumper.energize(nsteps, rpm)
+                # while self.rotary_dumper.is_energized():
+                #     time.sleep(0.5)
+                # self._is_energized = False
 
-        if func:
-            t = Thread(target=func)
-            t.start()
-            return True
     @debug
     def is_energized(self, data):
         return self._is_energized
