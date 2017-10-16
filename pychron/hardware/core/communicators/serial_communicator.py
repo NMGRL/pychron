@@ -454,11 +454,11 @@ class SerialCommunicator(Communicator):
             r += self.handle.read(inw)
             #            print 'inw', inw, r, terminator
             if terminator is None:
-                terminator = ('\n', '\r', '\r\x00')
+                terminator = ('\n', '\r', '\r\x00', '\r\n')
             if not isinstance(terminator, (list, tuple)):
                 terminator = (terminator,)
 
-            if r and r.strip():
+            if r:
                 for ti in terminator:
                     if pos:
                         t = r[pos] == ti

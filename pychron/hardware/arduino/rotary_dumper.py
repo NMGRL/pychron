@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
+import time
 
 MAGNET = 0
 MOVE = 1
@@ -42,6 +43,15 @@ class RotaryDumper(HeadlessCoreDevice):
             s = s.split(',')[0]
             ret = int(s) > 1
         return ret
+
+    def ask(self, *args, **kw):
+        for i in range(3):
+            print 'retry'
+            resp = super(RotaryDumper, self).ask(*args, **kw)
+            if resp:
+                return resp
+
+            time.sleep(0.5)
 
     def denergize(self, nsteps=None):
         if nsteps is None:
