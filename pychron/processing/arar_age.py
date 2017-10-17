@@ -203,7 +203,7 @@ class ArArAge(IsotopeGroup):
                 r = self.isotopes[iso].baseline.uvalue
         elif attr == 'uF':
             r = self.uF
-        elif attr.startswith('u') and attr != 'uage':
+        elif attr.startswith('u') and '/' in attr:
 
             # elif '/' in attr:
             #     non_ic_corr = attr.startswith('u')
