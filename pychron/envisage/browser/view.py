@@ -131,7 +131,8 @@ class StandaloneBrowserView(BaseBrowserView):
 
         v = View(VGroup(hgrp, main_grp),
                  buttons=['OK', 'Cancel'],
-                 title='Browser',
+                 title='Standalone Browser',
+                 width=-900,
                  resizable=True)
 
         return v
@@ -164,6 +165,7 @@ class BrowserView(BaseBrowserView):
         v = View(VGroup(tool_grp, main_grp, bgrp),
                  handler=BrowserViewHandler(),
                  title='Browser',
+                 width=1200,
                  resizable=True)
 
         return v

@@ -153,6 +153,7 @@ class LevelEditor(Loggable):
 
         self.z = level.z or 0
         pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
+        self.selected_production_name = ''
         self.selected_production_name = pname
 
         original_tray = None
@@ -371,7 +372,7 @@ class LevelEditor(Loggable):
     def _selected_production_name_changed(self, new):
         if new:
             self.selected_production = self.productions[new]
-
+        
     def _selected_tray_changed(self):
         holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
         if holes:
