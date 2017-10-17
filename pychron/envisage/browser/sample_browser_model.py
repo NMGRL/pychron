@@ -240,7 +240,11 @@ class SampleBrowserModel(BrowserModel):
 
             lp = self.low_post if self.use_low_post else None
             hp = self.high_post if self.use_high_post else None
-            ls = [l.name for l in self.selected_loads] if self.load_enabled else None
+
+            ls = None
+            if self.load_enabled and self.selected_loads:
+                ls = [l.name for l in self.selected_loads]
+
             ans = self._retrieve_sample_analyses(new,
                                                  loads=ls,
                                                  low_post=lp, high_post=hp, **kw)

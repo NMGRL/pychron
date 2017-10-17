@@ -40,21 +40,27 @@ class ICFactor(ReferencesSeries):
                 ui.set_temporary_ic_factor(d, v, e)
 
     def _get_current_data(self, po):
-        n, d = po.name.split('/')
-        nys = array([ri.get_ic_factor(n) for ri in self.sorted_analyses])
-        dys = array([ri.get_ic_factor(d) for ri in self.sorted_analyses])
-        return dys / nys
+        if '/' in po.name:
+            n, d = po.name.split('/')
+            nys = array([ri.get_ic_factor(n) for ri in self.sorted_analyses])
+            dys = array([ri.get_ic_factor(d) for ri in self.sorted_analyses])
+            return dys / nys
+        else:
+            return array([ri.get_value(po.name) for ri in self.sorted_analyses])
 
     def _get_reference_data(self, po):
-        n, d = po.name.split('/')
+        if '/' in po:
+            n, d = po.name.split('/')
 
-        nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
-        dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+            nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
+            dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
 
-        nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
-        dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
-
-        rys = (nys / dys) / po.standard_ratio
+            nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
+            dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
+            rys = nys/ dys
+        else:
+            rys = array([ri.get_value(po.name) for ri in self.sorted_references])
+        rys = rys / po.standard_ratio
         return rys
 
 # ============= EOF =============================================
