@@ -233,7 +233,7 @@ class BaseBrowserSampleView(PaneModelView):
                    show_border=True),
             # HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
             HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp),
-            HGroup(pi_grp, project_grp, irrad_grp, load_grp))
+            HGroup(VGroup(pi_grp, project_grp), VGroup(irrad_grp, load_grp)))
         # analysis_type_group,
         # date_grp)
 

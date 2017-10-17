@@ -273,7 +273,7 @@ class BrowserModel(BaseBrowserModel):
         ps = []
         ms = []
         ls = []
-        if self.load_enabled:
+        if self.load_enabled and self.selected_loads:
             ls = [s.name for s in self.selected_loads]
 
         if self.mass_spectrometers_enabled:

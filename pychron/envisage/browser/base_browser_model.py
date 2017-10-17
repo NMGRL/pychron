@@ -460,6 +460,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            include_invalid=False,
                            mass_spectrometers=None,
                            repositories=None,
+                           loads=None,
                            make_records=True,
                            analysis_types=None):
         db = self.db
@@ -478,7 +479,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers,
-                                                repositories=repositories,)
+                                                repositories=repositories,
+                                                loads=loads)
             self.debug('retrieved analyses n={}'.format(tc))
         else:
             self.debug('retrieved analyses by date range')
@@ -487,15 +489,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 mass_spectrometers=mass_spectrometers,
                                                 repositories=repositories,
                                                 limit=limit,
-                                                analysis_types=analysis_types)
+                                                analysis_types=analysis_types,
+                                                loads=loads)
 
         if make_records:
             return self._make_records(ans)
         else:
             return ans
 
-    def _retrieve_sample_analyses(self, samples,
-                                  **kw):
+    def _retrieve_sample_analyses(self, samples, **kw):
         return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
