@@ -20,6 +20,7 @@ from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
@@ -43,7 +44,7 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
     intercept_error_text = Property
     percent_error_text = Property
 
-    def get_tooltip( self, obj, trait, row, column ):
+    def get_tooltip(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
 
         return item.tooltip
@@ -72,7 +73,7 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
         return r
 
 
-class IsoEvolutionResultsEditor(BaseTraitsEditor):
+class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     results = List
     adapter = Instance(IsoEvolutionResultsAdapter, ())
     dclicked = Event
@@ -102,8 +103,9 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor):
         filter_grp = HGroup(Item('display_only_bad'))
         v = View(VGroup(filter_grp,
                         UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                       editable=False,
-                                                       dclicked='dclicked'))))
+                                                              editable=False,
+                                                              column_clicked='column_clicked',
+                                                              dclicked='dclicked'))))
         return v
 
 # ============= EOF =============================================
