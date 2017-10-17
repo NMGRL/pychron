@@ -33,7 +33,7 @@ from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
-    PrincipalInvestigatorRecordView
+    PrincipalInvestigatorRecordView, LoadRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -108,13 +108,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
-    selected_load = Str
+    selected_loads = Any
     loads = List
 
     include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(True)
+    load_enabled = Bool(True)
 
     analysis_groups = List
 
@@ -183,6 +184,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     pattributes = ('project_enabled',
                    'repository_enabled',
                    'principal_investigator_enabled',
+                   'load_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -271,7 +273,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def load_loads(self):
         db = self.db
-        self.loads = db.get_measured_load_names()
+        self.loads = [LoadRecordView(n) for n in db.get_measured_load_names() if n]
 
     def load_repositories(self):
         db = self.db
@@ -652,6 +654,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     #         self._load_repository_date_range(names)
     #         self._load_associated_labnumbers()
     #         self._selected_repositories_changed_hook(names)
+    def _selected_loads_changed(self, new):
+        if new and self.load_enabled:
+            self._load_associated_labnumbers()
 
     def _selected_projects_changed(self, old, new):
 

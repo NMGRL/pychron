@@ -66,6 +66,7 @@ class ExtractionPyScript(ValvePyScript):
     videos = List
 
     _extraction_positions = List
+    _grain_masks = List
 
     def set_run_identifier(self, v):
         self.setup_context(run_identifier=v)
@@ -86,6 +87,10 @@ class ExtractionPyScript(ValvePyScript):
             self._extraction_positions = []
 
         return ret
+
+    def get_grain_masks(self):
+        m = self._grain_masks
+        return m
 
     def get_response_blob(self):
         """
@@ -617,6 +622,14 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def end_extract(self):
         self._extraction_action([('end_extract', (), {})])
+
+    @verbose_skip
+    @command_register
+    def acquire_grain_mask_blob(self):
+        result = self._extraction_action([('acquire_grain_mask', (), {})])
+        if result:
+            result = result[0]
+            self._grain_masks.append(result)
 
     @verbose_skip
     @command_register

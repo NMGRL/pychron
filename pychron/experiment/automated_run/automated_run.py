@@ -1204,7 +1204,9 @@ class AutomatedRun(Loggable):
                                     baseline_fods=bsfods,
                                     intensity_scalar=self.intensity_scalar,
                                     laboratory=self.laboratory,
-                                    instrument_name=self.instrument_name)
+                                    instrument_name=self.instrument_name,
+                                    load_name=queue.load_name,
+                                    load_holder=queue.tray)
 
     # ===============================================================================
     # doers
@@ -1274,9 +1276,11 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
+            grain_mask = script.get_grain_masks()
 
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
+                                        grain_mask_blob = grain_mask,
                                         power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,

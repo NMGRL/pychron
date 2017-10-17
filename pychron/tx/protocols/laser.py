@@ -77,6 +77,10 @@ class LaserProtocol(ServiceProtocol):
                     ('GetMotorMoving', '_get_motor_moving'),
                     ('SetSampleHolder', '_set_sample_holder'),
                     ('GetSampleHolder', '_get_sample_holder'),
+                    ('StartMeasureGrainMask', '_start_measure_grain_mask'),
+                    ('StopMeasureGrainMask', '_stop_measure_grain_mask'),
+                    ('GetGrainMasksBlob', '_get_grain_masks_blob'),
+                    ('AcquireGrainMaskBlob', '_get_grain_mask'),
                     ('SetLaserPower', '_set_laser_power'),
                     ('SetLaserOutput', '_set_laser_output'),
                     ('GetAchievedOutput', '_get_achieved_output'),
@@ -141,6 +145,17 @@ class LaserProtocol(ServiceProtocol):
                                             lpath, len(upath), upath, imageblob)
             return s
 
+    def _get_grain_masks_blob(self, data):
+        return self._manager.get_grain_masks_blob()
+
+    def _get_grain_mask(self, data):
+        return self._manager.get_grain_mask()
+
+    def _stop_measure_grain_mask(self, data):
+        self._manager.stop_measure_grain_mask()
+
+    def _start_measure_grain_mask(self, data):
+        self._manager.start_measure_grain_mask()
     # ===============================================================================
     # Laser
     # ===============================================================================

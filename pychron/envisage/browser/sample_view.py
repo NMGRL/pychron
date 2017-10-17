@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, VGroup, EnumEditor, \
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, PrincipalInvestigatorAdapter, LoadAdapter
 from pychron.envisage.browser.pane_model_view import PaneModelView
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -195,7 +195,16 @@ class BaseBrowserSampleView(PaneModelView):
         return pi_grp
 
     def _get_load_group(self):
-        load_grp = Group(UItem('selected_load'))
+        load_grp = Group(UItem('loads',
+                               editor=FilterTabularEditor(editable=False,
+                                                          use_fuzzy=True,
+                                                          enabled_cb='load_enabled',
+                                                          refresh='refresh_needed',
+                                                          selected='selected_loads',
+                                                          adapter=LoadAdapter(),
+                                                          multi_select=True)),
+                         show_border=True,
+                         label='Load')
         return load_grp
 
     def _get_sample_group(self):

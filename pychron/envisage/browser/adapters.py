@@ -49,6 +49,10 @@ class PrincipalInvestigatorAdapter(BrowserAdapter):
     columns = [('Name', 'name')]
 
 
+class LoadAdapter(BrowserAdapter):
+    columns = [('Name', 'name')]
+
+
 class SampleAdapter(BrowserAdapter):
     columns = [('Sample', 'name'),
                ('Material', 'material'),
@@ -231,7 +235,7 @@ class InterpretedAgeAdapter(TabularAdapter):
         return floatfmt(self.item.age_err, 3)
 
     def get_menu(self, obj, trait, row, column):
-        actions = [Action(name='Delete', action='delete'),]
+        actions = [Action(name='Delete', action='delete'), ]
 
         return MenuManager(*actions)
 

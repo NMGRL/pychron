@@ -72,6 +72,7 @@ class PersistenceSpec(HasTraits):
     rundate = Date
     runtime = Time
     load_name = Str
+    load_holder = Str
 
     cdd_ic_factor = Any
 
@@ -91,6 +92,8 @@ class PersistenceSpec(HasTraits):
 
     conditionals = List
     tripped_conditional = None
+
+    grain_mask_blob = Str
 
     power_achieved = Float
     lab_temperatures = List

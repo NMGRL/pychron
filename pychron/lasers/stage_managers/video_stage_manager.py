@@ -21,7 +21,7 @@ import time
 from threading import Thread, Timer
 
 from apptools.preferences.preference_binding import bind_preference
-from numpy import copy
+from numpy import copy, array
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
@@ -60,8 +60,8 @@ class VideoStageManager(StageManager):
     autofocus_manager = Instance(
         'pychron.mv.focus.autofocus_manager.AutoFocusManager')
 
-    zoom_calibration_manager = Instance(
-        'pychron.mv.zoom.zoom_calibration.ZoomCalibrationManager')
+    # zoom_calibration_manager = Instance(
+    #     'pychron.mv.zoom.zoom_calibration.ZoomCalibrationManager')
 
     snapshot_button = Button('Snapshot')
     auto_save_snapshot = Bool(True)
@@ -94,6 +94,9 @@ class VideoStageManager(StageManager):
     stop_timer = Event
 
     pxpermm = Float(23)
+
+    _measure_grain_t = None
+    _measure_grain_evt = None
 
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
@@ -130,6 +133,34 @@ class VideoStageManager(StageManager):
                         '{}.video_output_mode'.format(pref_id))
         bind_preference(self.video, 'ffmpeg_path',
                         '{}.ffmpeg_path'.format(pref_id))
+
+    def get_grain_mask(self):
+        ld = self.lumen_detector
+        l, m = ld.lum()
+        return m.tostring()
+
+    def get_grain_masks_blob(self):
+        return array(self.grain_masks).tostring()
+
+    def stop_measure_grain_mask(self):
+        if self._measure_grain_evt:
+            self._measure_grain_evt.stop()
+
+    def measure_grain_mask(self):
+        self._measure_grain_evt = evt = Event()
+
+        def _measure_grain_mask():
+            ld = self.lumen_detector
+
+            masks = []
+            while not evt.is_set():
+                l, m = ld.lum()
+                masks.append(m)
+                evt.sleep(0.5)
+            self.grain_masks = masks
+
+        self._measure_grain_t = Thread(target=_measure_grain_mask)
+        self._measure_grain_t.start()
 
     def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
         """
@@ -684,10 +715,10 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-    def _zoom_calibration_manager_default(self):
-        if self.parent.mode != 'client':
-            from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
-            return ZoomCalibrationManager(laser_manager=self.parent)
+    # def _zoom_calibration_manager_default(self):
+    #     if self.parent.mode != 'client':
+    #         from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
+    #         return ZoomCalibrationManager(laser_manager=self.parent)
 
 # ===============================================================================
 # calcualte camera params

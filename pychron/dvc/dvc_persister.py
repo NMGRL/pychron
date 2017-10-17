@@ -326,10 +326,12 @@ class DVCPersister(BasePersister):
         if self._positions:
             db = self.dvc.db
             load_name = self.per_spec.load_name
+            load_holder = self.per_spec.load_holder
 
+            db.add_load(load_name, load_holder)
             for position in self._positions:
-                pos = db.add_measured_position(load=load_name, **position)
-                an.measured_position = pos
+                db.add_measured_position(load=load_name, **position)
+                # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 

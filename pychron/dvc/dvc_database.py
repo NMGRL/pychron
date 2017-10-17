@@ -428,8 +428,9 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_load(self, name, holder):
         with self.session_ctx():
-            a = LoadTbl(name=name, holderName=holder)
-            return self._add_item(a)
+            if not self.get_loadtable(name):
+                a = LoadTbl(name=name, holderName=holder)
+                return self._add_item(a)
 
     def add_user(self, name, **kw):
         with self.session_ctx():
@@ -1094,6 +1095,7 @@ class DVCDatabase(DatabaseAdapter):
                        analysis_types=None,
                        high_post=None,
                        low_post=None,
+                       loads=None,
                        filter_non_run=False):
 
         self.debug('------- Get Labnumbers -------')
@@ -1106,6 +1108,7 @@ class DVCDatabase(DatabaseAdapter):
         self.debug('------- analysis_types: {}'.format(analysis_types))
         self.debug('------- high_post: {}'.format(high_post))
         self.debug('------- low_post: {}'.format(low_post))
+        self.debug('------- loads: {}'.format(loads))
         self.debug('------------------------------')
 
         with self.session_ctx() as sess:
@@ -1139,6 +1142,12 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl)
 
+            if loads:
+                if not at:
+                    at = True
+                    q = q.join(AnalysisTbl)
+                q = q.join(MeasuredPositionTbl)
+
             if irradiation:
                 if not at:
                     q = q.join(AnalysisTbl)
@@ -1155,8 +1164,7 @@ class DVCDatabase(DatabaseAdapter):
             if projects:
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
-                q = q.filter(
-                    AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             if low_post:
                 q = q.filter(AnalysisTbl.timestamp >= low_post)
             if high_post:
@@ -1173,7 +1181,8 @@ class DVCDatabase(DatabaseAdapter):
             if irradiation:
                 q = q.filter(IrradiationTbl.name == irradiation)
                 q = q.filter(LevelTbl.name == level)
-
+            if loads:
+                q = q.filter(MeasuredPositionTbl.loadName.in_(loads))
             if filter_non_run:
                 q = q.group_by(IrradiationPositionTbl.id)
                 q = q.having(count(AnalysisTbl.id) > 0)
