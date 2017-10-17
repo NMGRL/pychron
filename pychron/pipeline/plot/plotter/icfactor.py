@@ -49,7 +49,7 @@ class ICFactor(ReferencesSeries):
             return array([ri.get_value(po.name) for ri in self.sorted_analyses])
 
     def _get_reference_data(self, po):
-        if '/' in po:
+        if '/' in po.name:
             n, d = po.name.split('/')
 
             nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
