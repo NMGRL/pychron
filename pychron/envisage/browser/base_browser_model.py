@@ -497,8 +497,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         else:
             return ans
 
-    def _retrieve_sample_analyses(self, samples, **kw):
-        return self._retrieve_analyses(samples=samples, **kw)
+    #def _retrieve_sample_analyses(self, samples, **kw):
+    #    return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
         if not ps:

@@ -49,14 +49,6 @@ class SampleBrowserModel(BrowserModel):
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
 
-        # self._preference_binder('pychron.browsing',
-        # ('recent_hours','graphical_filtering_max_days',
-        # 'reference_hours_padding'),
-        # obj=self.search_criteria)
-
-    # def drop_factory(self, item):
-    #     print 'dropadfs', item
-    #     return item
     def reattach(self):
         self.debug('reattach')
 
@@ -94,20 +86,6 @@ class SampleBrowserModel(BrowserModel):
         else:
             return self.analysis_table.get_analysis_records()
 
-    # at = self.analysis_table
-    #     records = self.get_analysis_records()
-    #     if records:
-    #         for ri in records:
-    #             get_review_status(ri)
-    #         at.refresh_needed = True
-
-    # def get_analysis_records(self):
-    #     records = self.analysis_table.selected
-    #     if not records:
-    #         records = self.analysis_table.analyses
-    #
-    #     return records
-
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
         ret = None
         if selection is None:
@@ -121,16 +99,13 @@ class SampleBrowserModel(BrowserModel):
         if selection:
             iv = not self.analysis_table.omit_invalid
             uuids = [x.uuid for x in unks] if unks else None
-            ret = [ai for ai in self.retrieve_sample_analyses(selection,
-                                                              exclude_uuids=uuids,
-                                                              include_invalid=iv,
-                                                              low_post=low_post,
-                                                              high_post=high_post,
-                                                              make_records=make_records)]
+            ret = [ai for ai in self._retrieve_analyses(samples=selection,
+                                                        exclude_uuids=uuids,
+                                                        include_invalid=iv,
+                                                        low_post=low_post,
+                                                        high_post=high_post,
+                                                        make_records=make_records)]
         return ret
-
-    def retrieve_sample_analyses(self, *args, **kw):
-        return self._retrieve_sample_analyses(*args, **kw)
 
     def load_chrono_view(self):
         self.debug('load time view')
@@ -245,9 +220,7 @@ class SampleBrowserModel(BrowserModel):
             if self.load_enabled and self.selected_loads:
                 ls = [l.name for l in self.selected_loads]
 
-            ans = self._retrieve_sample_analyses(new,
-                                                 loads=ls,
-                                                 low_post=lp, high_post=hp, **kw)
+            ans = self._retrieve_analyses(samples=new, loads=ls, low_post=lp, high_post=hp, **kw)
 
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
