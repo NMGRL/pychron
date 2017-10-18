@@ -139,7 +139,7 @@ class AnalysisTbl(Base, BaseMixin):
     group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
 
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
-    measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
+    measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
 
     _record_view = None
@@ -152,8 +152,8 @@ class AnalysisTbl(Base, BaseMixin):
 
     @property
     def position(self):
-        if self.measured_position:
-            return self.measured_position.position
+        if self.measured_positions:
+            return ','.join([p.position for p in self.measured_position.position])
         else:
             return ''
 
@@ -341,9 +341,9 @@ class IrradiationPositionTbl(Base, BaseMixin):
     @property
     def analyzed(self):
         return bool(self.analysis_count)
-    # @property
-    # def irradiation_position(self):
-    #     return self
+        # @property
+        # def irradiation_position(self):
+        #     return self
 
 
 # class TagTbl(Base, BaseMixin):
@@ -361,6 +361,7 @@ class MassSpectrometerTbl(Base, BaseMixin):
     kind = stringcolumn(45)
     # active = Column(Bool)
     active = True
+
 
 class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
@@ -530,6 +531,5 @@ class MediaTbl(Base, BaseMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
-
 
 # ============= EOF =============================================

@@ -329,8 +329,13 @@ class DVCPersister(BasePersister):
             load_holder = self.per_spec.load_holder
 
             db.add_load(load_name, load_holder)
+            db.flush()
+            db.commit()
+
             for position in self._positions:
-                db.add_measured_position(load=load_name, **position)
+                dbpos = db.add_measured_position(load=load_name, **position)
+                an.measured_positions.append(dbpos)
+
                 # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
