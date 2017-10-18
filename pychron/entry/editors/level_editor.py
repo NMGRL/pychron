@@ -39,6 +39,12 @@ from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
 
 
+def prep_prname(prname):
+    if prname.startswith('Global'):
+        prname = '_'.join(prname.split(' ')[1:])
+    return prname
+
+
 class NewProduction(HasTraits):
     name = Str
     reactor = Str
@@ -75,9 +81,7 @@ class EditView(ModelView):
                                                     tooltip='Edit Production Ratio')),
 
                           VGroup(HGroup(UItem('selected_production_name',
-                                              editor=EnumEditor(name='production_names')),
-                                        # Item('new_production_name', label='Name')
-                                        ),
+                                              editor=EnumEditor(name='production_names'))),
                                  UItem('selected_production', style='custom')),
                           label='Production Ratios')
 
@@ -136,25 +140,34 @@ class LevelEditor(Loggable):
     meta_repo = Instance(MetaRepo)
 
     def edit(self):
-        self._load_local_productions()
+        self._load_productions()
         self._edit_level()
 
     def add(self):
         self._load_productions()
         return self._add_level()
 
-    def _edit_level(self):
+    # private
+    def _select_production(self):
+        self.selected_production_name = ''
+        pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
+        self.debug('select production={} for {},{}'.format(pname, self.irradiation, self.name))
+        self.selected_production_name = pname
 
-        self.meta_repo.smart_pull()
+    def _refresh_production(self):
+        self.meta_repo.clear_cache = True
+        self._load_productions()
+        self._select_production()
+
+    def _edit_level(self):
 
         orignal_name = self.name
         db = self.db
         level = db.get_irradiation_level(self.irradiation, self.name)
 
         self.z = level.z or 0
-        pname, prod = self.meta_repo.get_production(self.irradiation, self.name)
-        self.selected_production_name = ''
-        self.selected_production_name = pname
+
+        self._select_production()
 
         original_tray = None
         if level.holder:
@@ -192,8 +205,8 @@ class LevelEditor(Loggable):
 
                 if self.selected_production:
                     self._save_production()
-
                     prname = self.selected_production.name
+
                     pr = db.get_production(prname)
                     if not pr:
                         pr = db.add_production(prname)
@@ -208,14 +221,20 @@ class LevelEditor(Loggable):
             else:
                 break
 
-        self.meta_repo.smart_pull()
-        self.meta_repo.commit('Edited level {}'.format(self.name))
-        self.meta_repo.push()
-        db.commit()
+        changes = self.meta_repo.get_local_changes()
+        self.debug('changes {}'.format(changes))
+        if changes:
+            self.meta_repo.smart_pull()
+            self.meta_repo.commit('Edited level {}'.format(self.name))
+            self.meta_repo.push()
+            db.commit()
+
+        self._refresh_production()
 
         return self.name
 
     def _save_tray(self, level, original_tray):
+        self.debug('saving tray {}. original={}, current={}'.format(level.name, original_tray, self.selected_tray))
         db = self.db
         # tr = db.get_irradiation_holder(self.selected_tray)
         # n = len(tuple(iter_geom(tr.geometry)))
@@ -297,7 +316,8 @@ class LevelEditor(Loggable):
             else:
                 return 'break'
 
-    def _load_local_productions(self):
+    def _load_productions(self):
+        self.meta_repo.smart_pull()
         root = os.path.join(paths.meta_root, self.irradiation, 'productions')
         ps = {}
         keys = []
@@ -321,14 +341,17 @@ class LevelEditor(Loggable):
         self.productions = ps
         self.production_names = keys
 
-    def _load_productions(self):
-        reactors = self.meta_repo.get_default_productions()
-        self.productions = {k: IrradiationProduction(k, v)
-                            for k, v in reactors.iteritems()}
-        self.production_names = self.productions.keys()
+    # def _load_productions(self):
+    #     reactors = self.meta_repo.get_default_productions()
+    #     self.productions = {k: IrradiationProduction(k, v)
+    #                         for k, v in reactors.iteritems()}
+    #     self.production_names = self.productions.keys()
 
     def _save_level(self):
-        prname = self.new_production_name.replace(' ', '_')
+        # prname = self.new_production_name.replace(' ', '_')
+        prname = self.selected_production_name
+        prname = prep_prname(prname)
+
         db = self.db
         # add to database
         db.add_irradiation_level(self.name, self.irradiation,
@@ -345,15 +368,22 @@ class LevelEditor(Loggable):
 
         self.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
 
+        self._refresh_production()
+
     def _save_production(self, name=None):
         prod = self.selected_production
-        if prod.dirty or name:
+        self.debug('Saving production={}, dirty={}, keywordname={}'.format(prod.name, prod.dirty, name))
+        if prod.dirty or name or prod.name.startswith('Global'):
             if name:
                 prname = name
             else:
                 prname = prod.name
 
-            prname = prname.replace(' ', '_')
+            prname = prep_prname(prname)
+            prod.name = prname
+
+            self.debug('saving production {}'.format(prname))
+
             self.meta_repo.add_production_to_irradiation(self.irradiation, prname,
                                                          self.selected_production.get_params(),
                                                          new=name is not None)
@@ -372,7 +402,7 @@ class LevelEditor(Loggable):
     def _selected_production_name_changed(self, new):
         if new:
             self.selected_production = self.productions[new]
-        
+
     def _selected_tray_changed(self):
         holes = self.meta_repo.get_irradiation_holder_holes(self.selected_tray)
         if holes:

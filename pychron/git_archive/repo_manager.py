@@ -105,6 +105,10 @@ class GitRepoManager(Loggable):
     path_dirty = Event
     remote = Str
 
+    def set_name(self, p):
+        self.logger = None
+        self.name = '{}<GitRepo>'.format(os.path.basename(p))
+
     def open_repo(self, name, root=None):
         """
             name: name of repo
@@ -117,8 +121,7 @@ class GitRepoManager(Loggable):
 
         self.path = p
 
-        self.logger = None
-        self.name = '{}<GitRepo>'.format(os.path.basename(p))
+        self.set_name(p)
 
         if os.path.isdir(p):
             self.init_repo(p)
@@ -140,10 +143,12 @@ class GitRepoManager(Loggable):
             g = os.path.join(path, '.git')
             if os.path.isdir(g):
                 self._repo = Repo(path)
+                self.set_name(path)
                 return True
             else:
                 self.debug('{} is not a valid repo. Initializing now'.format(path))
                 self._repo = Repo.init(path)
+                self.set_name(path)
 
     def add_paths(self, apaths):
         self.debug('add paths {}'.format(apaths))
@@ -348,7 +353,16 @@ class GitRepoManager(Loggable):
         diff_str = repo.git.diff('HEAD', '--full-index')
         diff_str = StringIO(diff_str)
         diff_str.seek(0)
-        diff = Diff._index_from_patch_format(repo, diff_str)
+
+        class ProcessWrapper:
+            stderr = None
+
+            def wait(self, *args, **kw):
+                pass
+        proc = ProcessWrapper()
+        proc.stdout = diff_str
+
+        diff = Diff._index_from_patch_format(repo, proc)
         root = self.path
         return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
 
@@ -645,6 +659,8 @@ class GitRepoManager(Loggable):
             # return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
+        self.debug('ahead behind')
+
         ahead = 0
         behind = 0
         repo = self._repo
