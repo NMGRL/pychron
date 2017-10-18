@@ -453,7 +453,8 @@ class DVCPersister(BasePersister):
                                 'lab_humiditys': per_spec.lab_humiditys,
                                 'lab_pneumatics': per_spec.lab_pneumatics}
 
-        obj['laboratory'] = per_spec.run_spec.laboratory
+        obj['laboratory'] = per_spec.laboratory
+        obj['instrument_name'] = per_spec.instrument_name
         obj['analyst_name'] = per_spec.run_spec.username
         obj['whiff_result'] = per_spec.whiff_result
         obj['detectors'] = dets

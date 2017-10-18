@@ -25,7 +25,7 @@ from pprint import pformat
 from threading import Thread, Event as TEvent
 
 import yaml
-from numpy import Inf, polyfit, linspace, polyval
+from numpy import Inf, polyfit, linspace, polyval, array
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 from uncertainties import ufloat, nominal_value, std_dev
@@ -1278,9 +1278,10 @@ class AutomatedRun(Loggable):
             videos = script.videos
             grain_mask = script.get_grain_masks()
 
+            grain_mask_blob = array(grain_mask).tostring()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
-                                        grain_mask_blob = grain_mask,
+                                        grain_mask_blob=grain_mask_blob,
                                         power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,

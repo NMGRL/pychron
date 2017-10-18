@@ -144,6 +144,8 @@ class HopsAction(ListAction):
                     detector = positioning['detector']
                     pos = positioning['isotope']
 
+                use_af_demag = positioning.get('use_af_demag', False)
+
                 zd = zip(dets, defls)
 
                 # set deflections
@@ -156,7 +158,7 @@ class HopsAction(ListAction):
                     spec.protect_detector(pd, True)
 
                 msg_queue.put('Position {} {}'.format(pos, detector))
-                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False)
+                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False, use_af_demag=use_af_demag)
 
                 for pd in pdets:
                     spec.protect_detector(pd, False)

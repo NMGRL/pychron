@@ -482,7 +482,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                                     application=self.application)
 
         eq.on_trait_change(self._update_queue, '''mass_spectrometer,
-extract_device, delay_+, tray, username, load_name,
+extract_device, delay_+, tray, username, load_name, note,
 email, use_email, use_group_email,
 queue_conditionals_name, repository_identifier''')
         # eq.activate()

@@ -32,6 +32,7 @@ def parse_hop(args):
         is_baselines = [ci['is_baseline'] for ci in cc]
         active_detectors = [ci['detector'] for ci in cc if ci['active']]
         pos = args['positioning']
+
     else:
         if len(args) == 3:
             hopstr, counts, settle = args

@@ -89,12 +89,12 @@ class IonOpticsManager(Manager):
         kw['update_isotopes'] = False
         return self._get_position(*args, **kw)
 
-    def position(self, pos, detector, *args, **kw):
+    def position(self, pos, detector, use_af_demag=False, *args, **kw):
         dac = self._get_position(pos, detector, *args, **kw)
         mag = self.spectrometer.magnet
 
         self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
-        return mag.set_dac(dac)
+        return mag.set_dac(dac, use_af_demag=use_af_demag)
 
     def do_coincidence_scan(self, new_thread=True):
 
