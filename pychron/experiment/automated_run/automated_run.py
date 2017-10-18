@@ -2315,22 +2315,12 @@ anaylsis_type={}
             self.plot_panel.total_counts += ncounts
 
             from pychron.core.ui.gui import invoke_in_main_thread
-            self._setup_isotope_graph(starttime_offset, color, grpname)
+            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
             if grpname == 'sniff':
-                self._setup_sniff_graph(starttime_offset, color)
+                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
             elif grpname == 'baseline':
-                self._setup_baseline_graph(starttime_offset, color)
+                invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
-            # if self.spec.analysis_type in ('unknown', 'cocktail'):
-            #     invoke_in_main_thread(self._setup_figure_graph)
-
-            # from pychron.core.ui.gui import invoke_in_main_thread
-            # invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
-            # if grpname == 'sniff':
-            #     invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
-            # elif grpname == 'baseline':
-            #     invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
-            #
             # if self.spec.analysis_type in ('unknown', 'cocktail'):
             #     invoke_in_main_thread(self._setup_figure_graph)
 
