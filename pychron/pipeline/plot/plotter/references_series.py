@@ -258,9 +258,10 @@ class ReferencesSeries(BaseSeries):
             self.xmi, self.xma = (mi - ma) / 3600., 0
             self.xpad = '0.1'
 
+            print self.graph.plots[0].plots
             legend = ReferenceLegend(plots=self.graph.plots[0].plots,
-                                     labels=[('data0', 'Reference'), ('plot0', 'Saved'),
-                                             ('Unknowns-predicted0', 'Interpolated')])
+                                     labels=[('plot1', 'Reference'), ('plot0', 'Unk. Current'),
+                                             ('Unknowns-predicted0', 'Unk. Predicted')])
             self.graph.plots[-1].overlays.append(legend)
 
     # private
@@ -399,8 +400,8 @@ class ReferencesSeries(BaseSeries):
                                     add_tools=False,
                                     add_inspector=False,
                                     type='scatter',
-                                    marker_size=3,
-                                    color='blue',
+                                    marker=po.marker,
+                                    marker_size=po.marker_size,
                                     plotid=pid,
                                     bind_id=-1)
             series = len(p.plots) - 1
@@ -421,7 +422,7 @@ class ReferencesSeries(BaseSeries):
         reg = None
         kw = dict(add_tools=True, add_inspector=True,
                   add_point_inspector=False,
-                  color='red',
+                  # color='red',
                   plotid=pid,
                   selection_marker=po.marker,
                   marker=po.marker,
