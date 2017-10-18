@@ -236,8 +236,9 @@ class ArArAge(IsotopeGroup):
             r = self.computed[attr]
         elif attr in self.isotopes:
             r = self.isotopes[attr].get_intensity()
-        elif hasattr(self, attr):
-            r = getattr(self, attr)
+        # else:
+        # elif hasattr(self, attr):
+        #     r = getattr(self, attr)
         # else:
         #     iso = self._get_iso_by_detector(attr)
         #     # iso=next((i for i in self.isotopes if i.detector==attr), None)
