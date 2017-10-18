@@ -156,12 +156,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     available_mass_spectrometers = List
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
-    low_post = Property(Date, depends_on='_low_post, use_low_post, use_named_date_range, named_date_range')
-    high_post = Property(Date, depends_on='_high_post, use_high_post, use_named_date_range, named_date_range')
+    low_post = Property(Date, depends_on='date_enabled, _low_post, use_low_post, use_named_date_range, '
+                                         'named_date_range')
+    high_post = Property(Date, depends_on='date_enabled, _high_post, use_high_post, use_named_date_range, '
+                                          'named_date_range')
 
     use_low_post = Bool
     use_high_post = Bool
     use_named_date_range = Bool
+    date_enabled = Bool
     _low_post = Date
     _high_post = Date
     _recent_low_post = None
@@ -184,7 +187,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     pattributes = ('project_enabled',
                    'repository_enabled',
                    'principal_investigator_enabled',
-                   'load_enabled',
+                   'load_enabled','date_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -243,7 +246,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                    use_named_date_range=self.use_named_date_range,
                    named_date_range=self.named_date_range,
                    low_post=self.low_post,
-                   high_post=self.high_post)
+                   high_post=self.high_post,
+                   date_enabled=self.date_enabled)
 
         try:
             with open(self.selection_persistence_path, 'wb') as wfile:
@@ -704,14 +708,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if new:
             self.use_low_post, self.use_high_post = False, False
 
-    def _date_configure_button_fired(self):
-        ds = DateSelector(model=self)
-        info = ds.edit_traits()
-        if info.result:
-            self._filter_by_hook()
+    # def _date_configure_button_fired(self):
+    #     ds = DateSelector(model=self)
+    #     info = ds.edit_traits()
+    #     if info.result:
+    #         self._filter_by_hook()
 
     def _filter_by_hook(self):
-        self.high_post = datetime.now()
+        # self.high_post = datetime.now()
         # names = [ni.name for ni in self.selected_projects]
         self._load_associated_labnumbers()
 
@@ -735,38 +739,39 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     @cached_property
     def _get_high_post(self):
         hp = None
-
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range in ('this month', 'today', 'this week'):
-                hp = tdy
-            elif self.named_date_range == 'yesterday':
-                hp = tdy - timedelta(days=1)
-        elif self.use_high_post:
-            hp = self._high_post
-            if not hp:
-                hp = tdy
+        if self.date_enabled:
+            tdy = datetime.today()
+            if self.use_named_date_range:
+                if self.named_date_range in ('this month', 'today', 'this week'):
+                    hp = tdy
+                elif self.named_date_range == 'yesterday':
+                    hp = tdy - timedelta(days=1)
+            elif self.use_high_post:
+                hp = self._high_post
+                if not hp:
+                    hp = tdy
         self.debug('GET HPOST={}'.format(hp))
         return hp
 
     @cached_property
     def _get_low_post(self):
         lp = None
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range == 'this month':
-                lp = tdy - timedelta(days=tdy.day,
-                                     seconds=tdy.second,
-                                     hours=tdy.hour,
-                                     minutes=tdy.minute)
-            elif self.named_date_range == 'this week':
-                days = datetime.today().weekday()
-                lp = tdy - timedelta(days=days)
+        if self.date_enabled:
+            tdy = datetime.today()
+            if self.use_named_date_range:
+                if self.named_date_range == 'this month':
+                    lp = tdy - timedelta(days=tdy.day,
+                                         seconds=tdy.second,
+                                         hours=tdy.hour,
+                                         minutes=tdy.minute)
+                elif self.named_date_range == 'this week':
+                    days = datetime.today().weekday()
+                    lp = tdy - timedelta(days=days)
 
-        elif self.use_low_post:
-            lp = self._low_post
-            if not lp:
-                lp = tdy
+            elif self.use_low_post:
+                lp = self._low_post
+                if not lp:
+                    lp = tdy
 
         self.debug('GET LPOST={}'.format(lp))
         return lp

@@ -307,8 +307,10 @@ class BrowserModel(BaseBrowserModel):
                             #     self._recent_mass_spectrometers.append(mi)
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
-        hp = self.high_post if self.use_high_post or self.use_named_date_range else None
-        lp = self.low_post if self.use_low_post or self.use_named_date_range else None
+
+        hp = self.high_post # if self.use_high_post or self.use_named_date_range else None
+        lp = self.low_post # if self.use_low_post or self.use_named_date_range else None
+
         lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
                                      projects=ps,
                                      # repositories=es,

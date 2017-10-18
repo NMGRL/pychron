@@ -40,7 +40,9 @@ class BaseBrowserSampleView(PaneModelView):
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
                  title='Configure Date Filter')
-        self.edit_traits(view=v)
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _configure_analysis_type_filter_button_fired(self):
         v = View(self._get_analysis_type_group(), resizable=True,
@@ -48,7 +50,9 @@ class BaseBrowserSampleView(PaneModelView):
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
                  title='Configure Analysis Type Filter')
-        self.edit_traits(view=v)
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _configure_mass_spectrometer_filter_button_fired(self):
         v = View(self._get_mass_spectrometer_group(), resizable=True,
@@ -56,7 +60,9 @@ class BaseBrowserSampleView(PaneModelView):
                  kind='livemodal',
                  buttons=['OK', 'Cancel'],
                  title='Configure Mass Spectrometer Filter')
-        self.edit_traits(view=v)
+        info = self.edit_traits(view=v)
+        if info.result:
+            self.model.refresh_samples()
 
     def _get_irrad_group(self):
         irrad_grp = VGroup(
@@ -116,7 +122,10 @@ class BaseBrowserSampleView(PaneModelView):
         return grp
 
     def _get_simple_date_group(self):
-        grp = HGroup(icon_button_editor('controller.configure_date_filter_button', 'cog',
+        grp = HGroup(UItem('date_enabled',
+                           tooltip='Enable Date Filtering'),
+                     icon_button_editor('controller.configure_date_filter_button', 'cog',
+                                        enabled_when='date_enabled',
                                         tooltip='Configure date filtering'), show_border=True,
                      label='Date')
         return grp
@@ -147,12 +156,12 @@ class BaseBrowserSampleView(PaneModelView):
 
     def _get_date_group(self):
         date_grp = HGroup(UItem('use_low_post'),
-                          UItem('low_post', enabled_when='use_low_post'),
+                          UItem('low_post', style='custom', enabled_when='use_low_post'),
                           UItem('use_high_post'),
-                          UItem('high_post', enabled_when='use_high_post'),
+                          UItem('high_post', style='custom', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          icon_button_editor('date_configure_button', 'calendar'),
+                          # icon_button_editor('date_configure_button', 'calendar'),
                           label='Date',
                           visible_when='date_visible',
                           show_border=True)

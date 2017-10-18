@@ -213,8 +213,8 @@ class SampleBrowserModel(BrowserModel):
                       include_invalid=not at.omit_invalid,
                       exclude_uuids=uuids)
 
-            lp = self.low_post if self.use_low_post else None
-            hp = self.high_post if self.use_high_post else None
+            lp = self.low_post # if self.use_low_post else None
+            hp = self.high_post # if self.use_high_post else None
 
             ls = None
             if self.load_enabled and self.selected_loads:
