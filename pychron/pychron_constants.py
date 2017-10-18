@@ -75,6 +75,7 @@ BASELINE = 'baseline'
 WHIFF = 'whiff'
 
 EXTRACT_DEVICE = 'Extract Device'
+NO_EXTRACT_DEVICE = 'No Extract Device'
 
 import string
 

@@ -36,7 +36,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
-from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
 
 
 def compress_times(times, delta):
@@ -273,7 +273,7 @@ class DVCDatabase(DatabaseAdapter):
                                                      exclude=ex,
                                                      exclude_uuids=exclude,
                                                      exclude_invalid=exclude_invalid,
-                                                     verbose=False)
+                                                     verbose=True)
                 refs.update(rs)
                 ex = [r.id for r in refs]
 
@@ -984,7 +984,7 @@ class DVCDatabase(DatabaseAdapter):
                                    exclude=None,
                                    exclude_uuids=None,
                                    exclude_invalid=True,
-                                   verbose=False):
+                                   verbose=True):
 
         self.debug('------get analyses by date range parameters------')
         self.debug('low={}'.format(lpost))
@@ -1018,14 +1018,16 @@ class DVCDatabase(DatabaseAdapter):
             if mass_spectrometers:
                 q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
 
-            if extract_devices:
-                es = [ei for ei in extract_devices if ei != EXTRACT_DEVICE]
-                if es:
-                    q = in_func(q, AnalysisTbl.extract_device, es)
-            # if extract_device and not extract_device == EXTRACT_DEVICE:
-            #     q = q.filter(AnalysisTbl.extract_device == extract_device)
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
+
+            if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
+                a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
+                if not a:
+                    es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
+                    if es:
+                        q = in_func(q, AnalysisTbl.extract_device, es)
+
             if project:
                 q = q.filter(ProjectTbl.name == project)
             if lpost:
