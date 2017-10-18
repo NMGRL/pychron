@@ -265,7 +265,7 @@ class GitRepoManager(Loggable):
         try:
             self._repo = Repo.clone_from(url, path)
         except GitCommandError, e:
-            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e,url, path))
+            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path))
 
     def unpack_blob(self, hexsha, p):
         """
@@ -350,20 +350,35 @@ class GitRepoManager(Loggable):
 
     def get_local_changes(self):
         repo = self._repo
-        diff_str = repo.git.diff('HEAD', '--full-index')
-        diff_str = StringIO(diff_str)
-        diff_str.seek(0)
-
-        class ProcessWrapper:
-            stderr = None
-
-            def wait(self, *args, **kw):
-                pass
-        proc = ProcessWrapper()
-        proc.stdout = diff_str
-
-        diff = Diff._index_from_patch_format(repo, proc)
+        # diff_str = repo.git.diff('HEAD', '--full-index')
+        # diff_str = StringIO(diff_str)
+        # diff_str.seek(0)
+        #
+        # class ProcessWrapper:
+        #     stderr = None
+        #     stdout = None
+        #
+        #     def __init__(self, f):
+        #         self._f = f
+        #
+        #     def wait(self, *args, **kw):
+        #         pass
+        #
+        #     def read(self):
+        #         return self._f.read()
+        #
+        # proc = ProcessWrapper(diff_str)
+        #
+        # diff = Diff._index_from_patch_format(repo, proc)
         root = self.path
+        #
+        #
+        #
+        # for diff_added in hcommit.diff('HEAD~1').iter_change_type('A'):
+        #     print(diff_added)
+
+        # diff = hcommit.diff()
+        diff = repo.index.diff(repo.head.commit)
         return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
 
         # patches = map(str.strip, diff_str.split('diff --git'))
@@ -427,6 +442,7 @@ class GitRepoManager(Loggable):
             root = self.path
 
         index = self.index
+
         def func(ps, extension):
             if extension:
                 if not isinstance(extension, tuple):
