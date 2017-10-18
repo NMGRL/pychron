@@ -260,7 +260,9 @@ class ReferencesSeries(BaseSeries):
 
             print self.graph.plots[0].plots
             legend = ReferenceLegend(plots=self.graph.plots[0].plots,
-                                     labels=[('plot1', 'Reference'), ('plot0', 'Unk. Current'),
+                                     labels=[('plot1', 'Reference'),
+                                             ('data0', 'Reference'),
+                                             ('plot0', 'Unk. Current'),
                                              ('Unknowns-predicted0', 'Unk. Predicted')])
             self.graph.plots[-1].overlays.append(legend)
 
