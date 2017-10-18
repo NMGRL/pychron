@@ -515,7 +515,7 @@ class AutomatedRun(Loggable):
                 plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
                 # print 'get plot {}, {}{}. plot={}'.format(iso, iso, di, plot)
                 if plot is None:
-                    plots = self.plot_panel.new_plot()
+                    plots = self.plot_panel.new_plot(isotope_only=True)
                     plot = plots['isotope']
                     pid = g.plots.index(plot)
 
@@ -2313,15 +2313,26 @@ anaylsis_type={}
             self.plot_panel.integration_time = period
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
-            from pychron.core.ui.gui import invoke_in_main_thread
-            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
-            if grpname == 'sniff':
-                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
-            elif grpname == 'baseline':
-                invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
-            if self.spec.analysis_type in ('unknown', 'cocktail'):
-                invoke_in_main_thread(self._setup_figure_graph)
+            from pychron.core.ui.gui import invoke_in_main_thread
+            self._setup_isotope_graph(starttime_offset, color, grpname)
+            if grpname == 'sniff':
+                self._setup_sniff_graph(starttime_offset, color)
+            elif grpname == 'baseline':
+                self._setup_baseline_graph(starttime_offset, color)
+
+            # if self.spec.analysis_type in ('unknown', 'cocktail'):
+            #     invoke_in_main_thread(self._setup_figure_graph)
+
+            # from pychron.core.ui.gui import invoke_in_main_thread
+            # invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            # if grpname == 'sniff':
+            #     invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
+            # elif grpname == 'baseline':
+            #     invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
+            #
+            # if self.spec.analysis_type in ('unknown', 'cocktail'):
+            #     invoke_in_main_thread(self._setup_figure_graph)
 
         time.sleep(0.5)
         with self.persister.writer_ctx():
