@@ -203,7 +203,7 @@ class ArArAge(IsotopeGroup):
                 r = self.isotopes[iso].baseline.uvalue
         elif attr == 'uF':
             r = self.uF
-        elif attr.startswith('u') and '/' in attr:
+        elif attr.startswith('u') and ('/' in attr or '_' in attr):
 
             # elif '/' in attr:
             #     non_ic_corr = attr.startswith('u')
@@ -236,14 +236,10 @@ class ArArAge(IsotopeGroup):
             r = self.computed[attr]
         elif attr in self.isotopes:
             r = self.isotopes[attr].get_intensity()
-        # else:
-        # elif hasattr(self, attr):
-        #     r = getattr(self, attr)
-        # else:
-        #     iso = self._get_iso_by_detector(attr)
-        #     # iso=next((i for i in self.isotopes if i.detector==attr), None)
-        #     if iso:
-        #         r = ufloat(iso.ys[-1], tag=attr)
+        else:
+            if hasattr(self, attr):
+                r = getattr(self, attr)
+
         return r
 
     def get_interference_corrected_value(self, iso):
