@@ -34,6 +34,8 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     threshold = Int
     mass_spectrometers = List
     available_mass_spectrometers = List
+    extract_devices = List
+    available_extract_devices = List
     pattributes = ('analysis_types', 'threshold')
 
     @property
@@ -54,13 +56,22 @@ class FindReferencesConfigView(Controller):
             self.model.dump()
 
     def traits_view(self):
-        v = View(VGroup(UItem('analysis_types',
-                              style='custom',
-                              editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
-                                                             'Blank Cocktail',
-                                                             'Air', 'Cocktail'])),
-                        UItem('mass_spectrometers', style='custom',
-                              editor=CheckListEditor(name='available_mass_spectrometers')),
+        v = View(VGroup(VGroup(UItem('analysis_types',
+                                     style='custom',
+                                     editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
+                                                                    'Blank Cocktail',
+                                                                    'Air', 'Cocktail'])),
+                               show_border=True,
+                               label='Analysis Types'),
+                        VGroup(UItem('mass_spectrometers', style='custom',
+                                     editor=CheckListEditor(name='available_mass_spectrometers')),
+                               show_border=True,
+                               label='Mass Spectrometers'),
+                        VGroup(UItem('extract_devices', style='custom',
+                                     editor=CheckListEditor(name='available_extract_devices')),
+                               show_border=True,
+                               label='Extract Devices'),
+
                         Item('threshold', label='Threshold (hrs)')),
                  title='Configure Find References',
                  buttons=['OK', 'Cancel'],

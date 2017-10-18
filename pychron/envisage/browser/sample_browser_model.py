@@ -253,9 +253,11 @@ class SampleBrowserModel(BrowserModel):
     def _find_references_hook(self):
         ans = self.analysis_table.analyses
         ms = list({a.mass_spectrometer for a in ans})
+        es = list({a.extract_device for a in ans})
 
         m = FindReferencesConfigModel(mass_spectrometers=ms[:],
-                                      available_mass_spectrometers=ms)
+                                      available_mass_spectrometers=ms,
+                                      extract_devices=es[:], available_extract_devices=es)
         v = FindReferencesConfigView(model=m)
         info = v.edit_traits()
         if info.result:
@@ -266,7 +268,8 @@ class SampleBrowserModel(BrowserModel):
 
             atypes = m.formatted_analysis_types
             refs = self.db.find_references(ans, atypes,
-                                           mass_spectrometer=m.mass_spectrometers,
+                                           extract_devices=m.extract_devices,
+                                           mass_spectrometers=m.mass_spectrometers,
                                            hours=m.threshold, make_records=False)
             if refs:
                 self.analysis_table.add_analyses(refs)

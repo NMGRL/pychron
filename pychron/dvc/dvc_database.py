@@ -24,6 +24,7 @@ from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
+from pychron.core.helpers.datetime_tools import bin_timestamps, bin_datetimes
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
@@ -36,6 +37,23 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE
+
+
+def compress_times(times, delta):
+    times = sorted(times)
+
+    low = times[0] - delta
+    high = times[0] + delta
+
+    for ti in times[1:]:
+        if ti - delta < high:
+            continue
+
+        yield low, high
+        low = high
+        high = ti + delta
+
+    yield low, high
 
 
 def principal_investigator_filter(q, principal_investigator):
@@ -233,25 +251,24 @@ class DVCDatabase(DatabaseAdapter):
             sess.commit()
 
     def find_references(self, times, atypes, hours=10, exclude=None,
-                        extract_device=None,
-                        mass_spectrometer=None,
+                        extract_devices=None,
+                        mass_spectrometers=None,
                         exclude_invalid=True):
 
-        with self.session_ctx() as sess:
+        with self.session_ctx():
             # delta = 60 * 60 * hours  # seconds
             delta = timedelta(hours=hours)
             refs = OrderedSet()
             ex = None
-            for ti in times:
-                if not isinstance(ti, datetime):
-                    ti = ti.rundate
 
-                low = ti - delta
-                high = ti + delta
-                # rs = self.get_analyses_data_range(low, high, atypes, exclude=ex, exclude_uuids=exclude)
+            times = [ti if isinstance(ti, datetime) else ti.rundate for ti in times]
+            ctimes = list(bin_datetimes(times, delta))
+            self.debug('find references ntimes={} compresstimes={}'.format(len(times), len(ctimes)))
+
+            for low, high in ctimes:
                 rs = self.get_analyses_by_date_range(low, high,
-                                                     extract_device=extract_device,
-                                                     mass_spectrometers=mass_spectrometer,
+                                                     extract_devices=extract_devices,
+                                                     mass_spectrometers=mass_spectrometers,
                                                      analysis_types=atypes,
                                                      exclude=ex,
                                                      exclude_uuids=exclude,
@@ -259,9 +276,7 @@ class DVCDatabase(DatabaseAdapter):
                                                      verbose=False)
                 refs.update(rs)
                 ex = [r.id for r in refs]
-                # print rs
-                # print ti, low, high, rs, refs
-            # print 'refs', refs
+
             return [rii for ri in refs for rii in ri.record_views]
 
     def get_blanks(self, ms=None, limit=100):
@@ -961,7 +976,7 @@ class DVCDatabase(DatabaseAdapter):
                                    limit=None,
                                    analysis_types=None,
                                    mass_spectrometers=None,
-                                   extract_device=None,
+                                   extract_devices=None,
                                    project=None,
                                    repositories=None,
                                    loads=None,
@@ -970,6 +985,19 @@ class DVCDatabase(DatabaseAdapter):
                                    exclude_uuids=None,
                                    exclude_invalid=True,
                                    verbose=False):
+
+        self.debug('------get analyses by date range parameters------')
+        self.debug('low={}'.format(lpost))
+        self.debug('high={}'.format(hpost))
+        self.debug('labnumber={}'.format(labnumber))
+        self.debug('analysis_types={}'.format(analysis_types))
+        self.debug('mass spectrometers={}'.format(mass_spectrometers))
+        self.debug('extract device={}'.format(extract_devices))
+        self.debug('project={}'.format(project))
+        self.debug('exclude={}'.format(exclude))
+        self.debug('exclude_uuids={}'.format(exclude_uuids))
+        self.debug('-------------------------------------------------')
+
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             if exclude_invalid:
@@ -989,8 +1017,13 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(IrradiationPositionTbl.identifier == labnumber)
             if mass_spectrometers:
                 q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
-            if extract_device and not extract_device == EXTRACT_DEVICE:
-                q = q.filter(AnalysisTbl.extract_device == extract_device)
+
+            if extract_devices:
+                es = [ei for ei in extract_devices if ei != EXTRACT_DEVICE]
+                if es:
+                    q = in_func(q, AnalysisTbl.extract_device, es)
+            # if extract_device and not extract_device == EXTRACT_DEVICE:
+            #     q = q.filter(AnalysisTbl.extract_device == extract_device)
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
             if project:
@@ -1842,5 +1875,27 @@ class DVCDatabase(DatabaseAdapter):
                 return [ni[0] for ni in names]
             else:
                 return [ni.name for ni in names or []]
+
+
+            # if __name__ == '__main__':
+
+    import random
+
+    # now = datetime.now()
+    # times = [now, now + timedelta(hours=11), now + timedelta(hours=12),
+    #          now + timedelta(hours=50),
+    #          now+timedelta(hours=55)]
+    #
+    # # times = [datetime.now() - timedelta(random.random() * 20) for i in range(10)]
+    # d = timedelta(hours=10)
+    #
+    # for t in times:
+    #     print t.strftime('%Y-%m-%d %H:%M')
+    # print
+    # for low, high in compress_times(times, d):
+    #     print low.strftime('%Y-%m-%d %H:%M'), \
+    #         high.strftime('%Y-%m-%d %H:%M')
+
+    # for low,
 
 # ============= EOF =============================================
