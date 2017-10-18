@@ -265,6 +265,9 @@ class PlotPanel(Loggable):
 
     # private
     def _new_plot(self, **kw):
+        self.isotope_graph.clear()
+        self.sniff_graph.clear()
+        self.baseline_graph.clear()
         plots = {}
         for k, g in (('sniff', self.sniff_graph),
                      ('isotope', self.isotope_graph),
