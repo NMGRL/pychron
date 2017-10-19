@@ -800,11 +800,11 @@ class PipelineEngine(Loggable):
 
         if old:
             if hasattr(old, 'figure_model'):
-                old.on_trait_change('figure_model:panels:figures:refresh_unknowns_table', refresh, remove=True)
+                old.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table', remove=True)
 
         if new:
             if hasattr(new, 'figure_model'):
-                new.on_trait_change('figure_model:panels:figures:refresh_unknowns_table', refresh)
+                new.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table')
 
     # @on_trait_change('active_editor:figure_model:panels:figures:refresh_unknowns_table')
     # def _handle_refresh(self, obj, name, old, new):
