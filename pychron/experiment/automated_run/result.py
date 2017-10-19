@@ -79,9 +79,14 @@ RUN TIME= {}
         return self._make_lines(lines)
 
     def _air_ratio(self):
+        a4038 = self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True)
+        a4036 = self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)
+        e4038 = uformat_percent_error(a4038, include_percent_sign=True)
+        e4036 = uformat_percent_error(a4036, include_percent_sign=True)
+
         lines = [self._make_header('Ratios'),
-                 'Ar40/Ar36= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)),
-                 'Ar40/Ar38= {:0.5f}'.format(self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True))]
+                 'Ar40/Ar36= {:0.5f} {}'.format(a4036, e4036),
+                 'Ar40/Ar38= {:0.5f} {}'.format(a4038, e4038)]
 
         return self._make_lines(lines)
 
