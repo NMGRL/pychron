@@ -153,7 +153,7 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def position(self):
         if self.measured_positions:
-            return ','.join([p.position for p in self.measured_position.position])
+            return ','.join(['{}'.format(p.position) for p in self.measured_positions if p.position])
         else:
             return ''
 
