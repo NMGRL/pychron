@@ -210,8 +210,8 @@ class PlotPanel(Loggable):
 
             self.figure.replot()
 
-    def new_plot(self, **kw):
-        return self._new_plot(**kw)
+    def new_isotope_plot(self, **kw):
+        return self._new_plot(isotope_only=True, **kw)
 
     def set_analysis_view(self, experiment_type, **kw):
         if experiment_type == AR_AR:
@@ -301,6 +301,9 @@ class PlotPanel(Loggable):
 
     def _get_ncounts(self):
         return self._ncounts
+
+    def set_ncounts(self, v):
+        self._ncounts = v
 
     def _set_ncounts(self, v):
 

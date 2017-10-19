@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import time
 from Queue import Queue
 from threading import Event, Thread, Timer
 
-from traits.api import Any, List, CInt, Int, Bool, Enum, Str
+# ============= enthought library imports =======================
+from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
@@ -32,7 +32,7 @@ class DataCollector(Consoleable):
     """
 
     measurement_script = Any
-    automated_run = Any
+    automated_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
     measurement_result = Str
 
     detectors = List
