@@ -793,10 +793,22 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+    @on_trait_change('active_editor')
+    def _handle_active_editor(self, obj, name, old, new):
+        def refresh():
+            self.refresh_table_needed = True
 
-    @on_trait_change('active_editor:figure_model:panels:figures:refresh_unknowns_table')
-    def _handle_refresh(self, obj, name, old, new):
-        self.refresh_table_needed = True
+        if old:
+            if hasattr(old, 'figure_model'):
+                old.on_trait_change('figure_model:panels:figures:refresh_unknowns_table', refresh, remove=True)
+
+        if new:
+            if hasattr(new, 'figure_model'):
+                new.on_trait_change('figure_model:panels:figures:refresh_unknowns_table', refresh)
+
+    # @on_trait_change('active_editor:figure_model:panels:figures:refresh_unknowns_table')
+    # def _handle_refresh(self, obj, name, old, new):
+    #     self.refresh_table_needed = True
 
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()
