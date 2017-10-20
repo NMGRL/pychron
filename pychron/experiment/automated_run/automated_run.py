@@ -30,6 +30,7 @@ from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.helpers.color_generators import colornames, colorname_generator
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.strtools import to_bool
@@ -491,10 +492,15 @@ class AutomatedRun(Loggable):
             for _, _, di, _ in dets:
                 self._add_active_detector(di)
                 name = iso
+                diso = '{}{}'.format(iso, di)
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
                     ii.detector = di
                     a.isotopes.pop(iso)
+                elif diso in a.isotopes:
+                    ii = a.isotopes[diso]
+                    ii.detector = di
+                    a.isotopes.pop(diso)
                 else:
                     ii = a.isotope_factory(name=iso, detector=di)
                     if correct_for_blank:
@@ -505,16 +511,12 @@ class AutomatedRun(Loggable):
                         _, b = pbs[iso]
                         ii.set_baseline(nominal_value(b), std_dev(b))
 
-                plot = g.get_plot_by_ytitle(iso) or g.get_plot_by_ytitle('{}{}'.format(iso, di))
+                plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
                 if plot is None:
-                    plots = self.plot_panel.new_isotope_plot(isotope_only=True)
+                    plots = self.plot_panel.new_isotope_plot()
                     plot = plots['isotope']
                     pid = g.plots.index(plot)
 
-                    # this is a hack
-                    # add a placeholder scatter plot. normally this would have been the sniff plot
-                    # but g.clear removed all plots
-                    # g.new_series(type='scatter', plotid=pid)
                     g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 if add_detector:
@@ -2051,7 +2053,7 @@ anaylsis_type={}
                         if i < n:
                             name = det.isotope
                             if name in names:
-                                name = '{}({})'.format(name, det.name)
+                                name = '{}{}'.format(name, det.name)
 
                             plots[i].y_axis.title = name
                             self.debug('setting label {} {} {}'.format(i, det.name, name))
@@ -2078,12 +2080,34 @@ anaylsis_type={}
 
         if update_detectors:
             self._update_detectors()
+
         if remove_non_active:
             # remove non active isotopes
-            for iso in self.isotope_group.isotopes.keys():
-                det = next((di for di in self._active_detectors if di.isotope == iso), None)
+
+            # print 'active isotopes', [di.isotope for di in self._active_detectors]
+            for k, v in self.isotope_group.isotopes.items():
+
+                det = next((di for di in self._active_detectors if di.isotope == v.name and v.detector == di.name),
+                           None)
+                # print k, repr(v), det
                 if det is None:
-                    self.isotope_group.isotopes.pop(iso)
+                    # print 'remove ', k
+                    self.isotope_group.isotopes.pop(k)
+
+            #
+            # # for di in self._active_detectors:
+            # #     print di.name, di.isotope
+            #
+            # for k in self.isotope_group.isotopes.keys():
+            #     iso = self.isotope_group.isotopes[k]
+            # # for iso in self.isotope_group.isotopes.keys():
+            # #     print 'remove non active {}'.format(iso)
+            #
+            #     det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
+            #     if det is None:
+            #         self.isotope_group.isotopes.pop(k)
+
+            print 'cleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
 
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
@@ -2283,8 +2307,8 @@ anaylsis_type={}
             elif grpname == 'baseline':
                 invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
-            # if self.spec.analysis_type in ('unknown', 'cocktail'):
-            #     invoke_in_main_thread(self._setup_figure_graph)
+                # if self.spec.analysis_type in ('unknown', 'cocktail'):
+                #     invoke_in_main_thread(self._setup_figure_graph)
 
         time.sleep(0.5)
         with self.persister.writer_ctx():
@@ -2356,6 +2380,9 @@ anaylsis_type={}
         series = 0
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = graph.get_plotid_by_ytitle(k)
+            if idx is None:
+                idx = graph.get_plotid_by_ytitle(iso.name)
+
             if idx is not None:
                 try:
                     graph.series[idx][series]
@@ -2400,7 +2427,11 @@ anaylsis_type={}
 
         # regressing = False
         for k, iso in self.isotope_group.isotopes.iteritems():
+            # idx = graph.get_plotid_by_ytitle(k)
             idx = graph.get_plotid_by_ytitle(k)
+            if idx is None:
+                idx = graph.get_plotid_by_ytitle(iso.name)
+
             if idx is not None:
                 try:
                     graph.series[idx][series]

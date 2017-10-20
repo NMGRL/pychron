@@ -277,7 +277,6 @@ class Graph(ContextMenuMixin):
             return None or Plot with y_axis.title equal to iso
             if startswith is True title only has to start with iso
         """
-
         txt = str(txt)
         if startswith:
             is_equal = lambda x: x.startswith(txt)

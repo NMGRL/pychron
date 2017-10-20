@@ -389,9 +389,12 @@ class MassSpecDatabaseImporter(Loggable):
             else:
                 dbdet = db.add_detector(det, Label=det)
 
-            ic = spec.isotopes[iso].ic_factor
-            dbdet.ICFactor = float(nominal_value(ic))
-            dbdet.ICFactorEr = float(std_dev(ic))
+            try:
+                ic = spec.isotopes[iso].ic_factor
+                dbdet.ICFactor = float(nominal_value(ic))
+                dbdet.ICFactorEr = float(std_dev(ic))
+            except KeyError:
+                pass
 
         db.flush()
         n = spec.get_ncounts(iso)

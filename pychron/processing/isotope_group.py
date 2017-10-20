@@ -166,8 +166,9 @@ class IsotopeGroup(HasTraits):
             return ufloat(0, 0, tag=iso)
 
     def get_intensity(self, iso):
-        if iso in self.isotopes:
-            return self.isotopes[iso].get_intensity()
+        viso = next((i for i in self.isotope.itervalues() if i.isotope == iso), None)
+        if viso is not None:
+            return viso.get_intensity()
         else:
             return ufloat(0, 0, tag=iso)
 
@@ -254,6 +255,7 @@ class IsotopeGroup(HasTraits):
         return Isotope(**kw)
 
     def set_isotope_detector(self, det, iso=None):
+        print 'setting isotope detector {} {} {}'.format(det, iso, self.isotopes.keys())
         name = None
         if iso:
             name = iso
@@ -263,6 +265,10 @@ class IsotopeGroup(HasTraits):
 
         if name in self.isotopes:
             iso = self.isotopes[name]
+            if iso.detector != det:
+                iso = Isotope(name, det)
+                name = '{}{}'.format(name, det)
+                self.isotopes[name] = iso
         else:
             iso = Isotope(name, det)
             self.isotopes[name] = iso

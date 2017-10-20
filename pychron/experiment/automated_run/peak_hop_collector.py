@@ -164,10 +164,10 @@ class PeakHopCollector(DataCollector):
                     g = self.plot_panel.isotope_graph
                     for d in active_dets:
                         det = arun.get_detector(d)
-                        plot = g.get_plot_by_ytitle(det.isotope)
 
+                        plot = g.get_plot_by_ytitle('{}{}'.format(det.isotope, det.name))
                         if not plot:
-                            plot = g.get_plot_by_ytitle('{}{}'.format(det.name, det.isotope))
+                            plot = g.get_plot_by_ytitle(det.isotope)
 
                         if plot:
                             scatter = plot.plots['data{}'.format(self.series_idx)][0]

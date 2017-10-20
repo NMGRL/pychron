@@ -313,78 +313,140 @@ class DataCollector(Consoleable):
             det = self._get_detector(dn)
             if det:
                 self._set_plot_data(cnt, det.isotope, det.name, x, signal)
+            else:
+                print 'no detector obj for {}'.format(dn), [d.name for d in self.detectors]
 
     def _get_fit(self, cnt, det, iso):
-
+    #
         isotopes = self.isotope_group.isotopes
+        # print 'isotopes', ['{}{}'.format(i.name, i.detector) for i in isotopes.itervalues()]
+        name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det and v.name == iso), (None, None))
+    #     print 'gff', cnt, det, iso, ix.name, name
         if self.is_baseline:
-            ix = isotopes[iso]
-            fit = ix.baseline.get_fit(cnt)
-            name = iso
-        else:
-            try:
-                name = iso
-                iso = isotopes[iso]
-            except KeyError:
-                name = '{}{}'.format(iso, det)
-                iso = isotopes[name]
-
-            fit = iso.get_fit(cnt)
-
+    #         # ix = isotopes[iso]
+    #         # fit = ix.baseline.get_fit(cnt)
+            ix = ix.baseline
+            name = det
+    #         # name = iso
+    #         # else:
+    #         # try:
+    #         #     name = iso
+    #         #     iso = isotopes[iso]
+    #         # except KeyError:
+    #         #     name = '{}{}'.format(iso, det)
+    #         #     iso = isotopes[name]
+    #
+        fit = ix.get_fit(cnt)
+    #
         return fit, name
 
     def _set_plot_data(self, cnt, iso, det, x, signal):
         """
             if is_baseline than use detector to get isotope
         """
-        graph = self.plot_panel.isotope_graph
-        if iso is None:
-            pids = []
-            for isotope in self.isotope_group.isotopes.itervalues():
-                # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
-                if isotope.detector == det:
-                    pid = graph.get_plotid_by_ytitle(isotope.name)
-                    if pid is not None:
-                        try:
-                            fit, name = self._get_fit(cnt, det, isotope.name)
-                        except BaseException, e:
-                            self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
-                                                                                                 det, e))
-                            continue
-                        pids.append((pid, fit))
-        else:
-            try:
-                # get fit and name
-                fit, name = self._get_fit(cnt, det, iso)
-            except AttributeError, e:
-                self.debug('set_plot_data, get_fit {}'.format(e))
 
-            pids = [(graph.get_plotid_by_ytitle(name), fit)]
-
-        # if self.is_baseline:
-        # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
-
-        def update_graph(g, p, f, sidx, fidx):
-            g.add_datum((x, signal),
-                        series=sidx,
-                        plotid=p,
-                        update_y_limits=True,
-                        ypadding='0.1')
-            if f:
-                g.set_fit(f, plotid=p, series=fidx)
-
-        for pid, fit in pids:
-            if self.collection_kind == SNIFF:
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
-
-                sgraph = self.plot_panel.sniff_graph
-                update_graph(sgraph, pid, None, 0, 0)
-            elif self.collection_kind == BASELINE:
-                bgraph = self.plot_panel.baseline_graph
-                update_graph(bgraph, pid, fit, 0, 0)
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+        def update_graph(g, sidx, fidx):
+            if iso is None:
+                pids = []
+                for isotope in self.isotope_group.isotopes.itervalues():
+                    # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
+                    if isotope.detector == det:
+                        pid = g.get_plotid_by_ytitle(isotope.detector)
+                        # print 'pid', det, pid
+                        if pid is not None:
+                            try:
+                                fit, _ = self._get_fit(cnt, det, isotope.name)
+                            except BaseException, e:
+                                self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
+                                                                                                     det, e))
+                                continue
+                            pids.append((pid, fit))
             else:
-                update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+                try:
+                    # get fit and name
+                    fit, name = self._get_fit(cnt, det, iso)
+                except AttributeError, e:
+                    self.debug('set_plot_data, get_fit {}'.format(e))
+
+                pid = g.get_plotid_by_ytitle(name)
+                if pid is None:
+                    pid = g.get_plotid_by_ytitle(iso)
+
+                pids = [(pid, fit)]
+
+            for p, f in pids:
+                if p is not None:
+                    # if self.collection_kind == SNIFF:
+                    #     print cnt, p, iso, det
+                    g.add_datum((x, signal),
+                                series=sidx,
+                                plotid=p,
+                                update_y_limits=True,
+                                ypadding='0.1')
+                    if f:
+                        g.set_fit(f, plotid=p, series=fidx)
+
+        igraph = self.plot_panel.isotope_graph
+        if self.collection_kind == SNIFF:
+            sgraph = self.plot_panel.sniff_graph
+            update_graph(sgraph, 0, 0)
+            update_graph(igraph, self.series_idx, self.fit_series_idx)
+        elif self.collection_kind == BASELINE:
+            bgraph = self.plot_panel.baseline_graph
+            update_graph(bgraph, 0, 0)
+            update_graph(igraph, self.series_idx, self.fit_series_idx)
+        else:
+            update_graph(igraph, self.series_idx, self.fit_series_idx)
+            #
+            # graph = self.plot_panel.isotope_graph
+            # if iso is None:
+            #     pids = []
+            #     for isotope in self.isotope_group.isotopes.itervalues():
+            #         print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
+            #         if isotope.detector == det:
+            #             pid = graph.get_plotid_by_ytitle(isotope.detector)
+            #             print 'pid', det, pid
+            #             if pid is not None:
+            #                 try:
+            #                     fit, name = self._get_fit(cnt, det, isotope.name)
+            #                 except BaseException, e:
+            #                     self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
+            #                                                                                          det, e))
+            #                     continue
+            #                 pids.append((pid, fit))
+            # else:
+            #     try:
+            #         # get fit and name
+            #         fit, name = self._get_fit(cnt, det, iso)
+            #     except AttributeError, e:
+            #         self.debug('set_plot_data, get_fit {}'.format(e))
+            #
+            #     pids = [(graph.get_plotid_by_ytitle(name), fit)]
+            #
+            # # if self.is_baseline:
+            # # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
+            #
+            # def update_graph(g, p, f, sidx, fidx):
+            #     g.add_datum((x, signal),
+            #                 series=sidx,
+            #                 plotid=p,
+            #                 update_y_limits=True,
+            #                 ypadding='0.1')
+            #     if f:
+            #         g.set_fit(f, plotid=p, series=fidx)
+            #
+            # for pid, fit in pids:
+            #     if self.collection_kind == SNIFF:
+            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+            #
+            #         sgraph = self.plot_panel.sniff_graph
+            #         update_graph(sgraph, pid, None, 0, 0)
+            #     elif self.collection_kind == BASELINE:
+            #         bgraph = self.plot_panel.baseline_graph
+            #         update_graph(bgraph, pid, fit, 0, 0)
+            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
+            #     else:
+            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:

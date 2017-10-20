@@ -77,7 +77,7 @@ class BaseSpectrometerManager(Manager):
             # load the molecular weights dictionary
             p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
             if os.path.isfile(p):
-                self.info('loading "molecular_weights.csv" file')
+                self.info('loading "molecular_weights.csv" file. {}'.format(p))
                 with open(p, 'U') as f:
                     reader = csv.reader(f, delimiter='\t')
                     args = [[l[0], float(l[1])] for l in reader]

@@ -18,7 +18,9 @@
 from traits.api import HasTraits, Str, Property, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.helpers.formatting import uformat_percent_error
+from uncertainties import nominal_value, std_dev
+
+from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
 
@@ -81,12 +83,14 @@ RUN TIME= {}
     def _air_ratio(self):
         a4038 = self.isotope_group.get_ratio('Ar40/Ar38', non_ic_corr=True)
         a4036 = self.isotope_group.get_ratio('Ar40/Ar36', non_ic_corr=True)
-        e4038 = uformat_percent_error(a4038, include_percent_sign=True)
-        e4036 = uformat_percent_error(a4036, include_percent_sign=True)
+        # e4038 = uformat_percent_error(a4038, include_percent_sign=True)
+        # e4036 = uformat_percent_error(a4036, include_percent_sign=True)
 
         lines = [self._make_header('Ratios'),
-                 'Ar40/Ar36= {:0.5f} {}'.format(a4036, e4036),
-                 'Ar40/Ar38= {:0.5f} {}'.format(a4038, e4038)]
+                 'Ar40/Ar36= {} {}'.format(floatfmt(nominal_value(a4036)), errorfmt(nominal_value(a4036),
+                                                                                    std_dev(a4036))),
+                 'Ar40/Ar38= {} {}'.format(floatfmt(nominal_value(a4038)), errorfmt(nominal_value(a4038),
+                                                                                    std_dev(a4036)))]
 
         return self._make_lines(lines)
 
