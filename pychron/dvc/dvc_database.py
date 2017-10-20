@@ -35,7 +35,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
 
 
@@ -451,6 +451,29 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             a = UserTbl(name=name, **kw)
             return self._add_item(a)
+
+    def add_analysis_group(self, name, project, ans):
+        project = self.get_project(project)
+        grp = AnalysisGroupTbl(name=name)
+        grp.project = project
+        self._add_item(grp)
+
+        for a in ans:
+            a = self.get_analysis_uuid(a.uuid)
+            s = AnalysisGroupSetTbl()
+            s.group = grp
+            s.analysis = a
+            self._add_item(s)
+
+    # def add_analysis_group_set(self, group, analysis, **kw):
+    #     obj = AnalysisGroupSetTbl(analysisID=analysis.id, **kw)
+    #     self._add_item(obj)
+    #
+    #     if isinstance(group, (int, long)):
+    #         obj.groupID = group
+    #     else:
+    #         group.analyses.append(obj)
+    #     return obj
 
     def add_analysis(self, **kw):
         with self.session_ctx():
@@ -1024,6 +1047,9 @@ class DVCDatabase(DatabaseAdapter):
             if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
                 a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
                 if not a:
+                    if not isinstance(extract_devices, (tuple, list)):
+                        extract_devices=(extract_devices, )
+
                     es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
                     if es:
                         q = in_func(q, AnalysisTbl.extract_device, es)
