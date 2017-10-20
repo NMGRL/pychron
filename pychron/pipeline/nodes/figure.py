@@ -84,7 +84,7 @@ class FigureNode(BaseNode):
             if self.auto_set_items:
                 editor.set_items(state.unknowns)
                 # self.editors.append(editor)
-                    # oname = editor.name
+                # oname = editor.name
 
             key = lambda x: x.name
             for name, es in groupby(sorted(state.editors, key=key), key=key):
@@ -113,7 +113,7 @@ class FigureNode(BaseNode):
                     #         new_name = '{} {:02n}'.format(oname, cnt)
                     #         cnt += 1
 
-        # self.name = new_name
+                    # self.name = new_name
                     # if self.editor:
                     #     self.editor.name = new_name
 
@@ -231,32 +231,41 @@ class SeriesNode(FigureNode):
                 names.extend(iso_keys)
                 names.extend(['{}bs'.format(ki) for ki in iso_keys])
                 names.extend(['{}ic'.format(ki) for ki in iso_keys])
-                if AR39 in iso_keys:
-                    if AR40 in iso_keys:
-                        names.extend([AR4039, UAR4039])
-                    if AR38 in iso_keys:
-                        names.extend([AR3839, UAR3839])
-                    if AR37 in iso_keys:
-                        names.extend([AR3739, UAR3739])
-                    if AR36 in iso_keys:
-                        names.extend([AR3639, UAR3639])
 
-                if AR38 in iso_keys:
-                    if AR40 in iso_keys:
-                        names.extend([AR4038, UAR4038])
-                    if AR37 in iso_keys:
-                        names.extend([AR3738, UAR3738])
-                    if AR36 in iso_keys:
-                        names.extend([AR3638, UAR3638])
+                for iso in iso_keys:
+                    for jiso in iso_keys:
+                        if iso == jiso:
+                            continue
 
-                if AR37 in iso_keys:
-                    if AR40 in iso_keys:
-                        names.extend([AR4037, UAR4037])
-                    if AR36 in iso_keys:
-                        names.extend([AR3637, UAR3637])
+                        if '{}/{}'.format(jiso, iso) not in names:
+                            names.append('{}/{}'.format(iso, jiso))
 
-                if AR36 in iso_keys:
-                    names.extend([AR4036, UAR4036])
+                # if AR39 in iso_keys:
+                #     if AR40 in iso_keys:
+                #         names.extend([AR4039, UAR4039])
+                #     if AR38 in iso_keys:
+                #         names.extend([AR3839, UAR3839])
+                #     if AR37 in iso_keys:
+                #         names.extend([AR3739, UAR3739])
+                #     if AR36 in iso_keys:
+                #         names.extend([AR3639, UAR3639])
+                #
+                # if AR38 in iso_keys:
+                #     if AR40 in iso_keys:
+                #         names.extend([AR4038, UAR4038])
+                #     if AR37 in iso_keys:
+                #         names.extend([AR3738, UAR3738])
+                #     if AR36 in iso_keys:
+                #         names.extend([AR3638, UAR3638])
+                #
+                # if AR37 in iso_keys:
+                #     if AR40 in iso_keys:
+                #         names.extend([AR4037, UAR4037])
+                #     if AR36 in iso_keys:
+                #         names.extend([AR3637, UAR3637])
+                #
+                # if AR36 in iso_keys:
+                #     names.extend([AR4036, UAR4036])
 
                 if unk.analysis_type in (UNKNOWN, COCKTAIL):
                     names.append(AGE)
@@ -285,4 +294,5 @@ class RadialNode(FigureNode):
     name = 'Radial Plot'
     editor_klass = 'pychron.pipeline.plot.editors.radial_editor,RadialEditor'
     plotter_options_manager_klass = RadialOptionsManager
+
 # ============= EOF =============================================

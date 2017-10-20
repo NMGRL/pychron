@@ -136,6 +136,7 @@ class FitICFactorNode(FitReferencesNode):
 GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
 GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
 
+
 class IsoEvoResult(HasTraits):
     # record_id = Str
     isotope = Str
@@ -172,7 +173,7 @@ class IsoEvoResult(HasTraits):
                 v = 'Not Tested'
             return '{:<25}: {}'.format(m, v)
 
-        return '\n'.join([f(g, n) for g,n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
+        return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
     @property
     def record_id(self):

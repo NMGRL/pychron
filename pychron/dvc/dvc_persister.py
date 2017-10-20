@@ -210,8 +210,8 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    # commit the reset of the files
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+                    pms = (None, '.data', 'tags', 'peakcenter', 'extraction', 'monitor')
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in pms]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -547,12 +547,12 @@ class DVCPersister(BasePersister):
         self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
 
-        obj = {}
         if pc:
-            obj['reference_detector'] = pc.reference_detector.name
-            obj['reference_isotope'] = pc.reference_isotope
             fmt = '>ff'
-            obj['fmt'] = fmt
+            obj = {'reference_detector': pc.reference_detector.name,
+                   'reference_isotope': pc.reference_isotope,
+                   'fmt': fmt}
+
             results = pc.get_results()
             if results:
                 for result in results:
@@ -565,23 +565,7 @@ class DVCPersister(BasePersister):
                                             'points': base64.b64encode(''.join([struct.pack(fmt, *di)
                                                                                 for di in result.points]))}
 
-                    # if pc.result:
-                    #     xs, ys, _mx, _my = pc.result
-                    #     obj.update({'low_dac': xs[0],
-                    #                 'center_dac': xs[1],
-                    #                 'high_dac': xs[2],
-                    #                 'low_signal': ys[0],
-                    #                 'center_signal': ys[1],
-                    #                 'high_signal': ys[2]})
-                    #
-                    # data = pc.get_data()
-                    # if data:
-                    #     fmt = '>ff'
-                    #     obj['fmt'] = fmt
-                    #     for det, pts in data:
-                    #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
-
-        dvc_dump(obj, p)
+            dvc_dump(obj, p)
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
