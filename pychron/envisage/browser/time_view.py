@@ -239,7 +239,7 @@ class TimeViewModel(HasTraits):
         ans = db.get_analyses_by_date_range(mi, ma,
                                             mass_spectrometers=mass_spectrometer,
                                             analysis_types=analysis_type,
-                                            extract_device=extract_device,
+                                            extract_devices=extract_device,
                                             limit=self.limit, order='desc')
         self.oanalyses = self._make_records(ans)
         self.analyses = self.oanalyses[:]
