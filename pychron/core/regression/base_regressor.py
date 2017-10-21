@@ -180,7 +180,7 @@ class BaseRegressor(HasTraits):
             residuals = self.calculate_residuals()
 
         s = 0
-        if residuals:
+        if residuals is None:
             ss_res = (residuals ** 2).sum()
 
             n = residuals.shape[0]

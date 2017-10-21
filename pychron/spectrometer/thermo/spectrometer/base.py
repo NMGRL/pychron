@@ -528,6 +528,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                            ysymmetry='YSymmetry',
                            zsymmetry='ZSymmetry',
                            zfocus='ZFocus',
+                           extractionfocus='ExtractionFocus',
+                           extractionsymmetry='ExtractionSymmetry',
                            extractionlens='ExtractionLens',
                            ioncountervoltage='IonCounterVoltage',
                            hv='HV')

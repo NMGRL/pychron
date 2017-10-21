@@ -471,6 +471,16 @@ class SetExtractionLens(ValueCommand):
     example = 'set_extraction_lens(10.1)'
 
 
+class SetExtractionsymmetry(ValueCommand):
+    description = 'Set extraction-symmetry'
+    example = 'set_extraction_symmetry(10.1)'
+
+
+class SetExtractionfocus(ValueCommand):
+    description = 'Set extraction-focus'
+    example = 'set_extraction_focus(10.1)'
+
+
 class DefineDetectors(Command):
     pass
 

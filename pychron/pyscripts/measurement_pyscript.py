@@ -675,6 +675,28 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def set_extraction_focus(self, v):
+        """
+        Set ExtractionFocus to v
+
+        :param v: extractionfocus value
+        :type v: int, float
+        """
+        self._set_spectrometer_parameter('SetExtractionFocus', v)
+
+    @verbose_skip
+    @command_register
+    def set_extraction_symmetry(self, v):
+        """
+        Set Extraction Symmetry to v
+
+        :param v: extraction symmetry value
+        :type v: int, float
+        """
+        self._set_spectrometer_parameter('SetExtractionSymmetry', v)
+
+    @verbose_skip
+    @command_register
     def set_extraction_lens(self, v):
         """
         Set Extraction Lens to v
