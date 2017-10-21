@@ -258,7 +258,9 @@ class Series(BaseSeries):
     def update_graph_metadata(self, obj, name, old, new):
         sorted_ans = self.sorted_analyses
         if obj:
-            self._filter_metadata_changes(obj, sorted_ans)
+            sel = self._filter_metadata_changes(obj, sorted_ans)
+            for p in self.graph.plots:
+                p.default_index.metadata['selections'] = sel
 
     # private
     def _add_info(self, plot):

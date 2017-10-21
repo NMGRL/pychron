@@ -2379,9 +2379,8 @@ anaylsis_type={}
         # series = self.collector.series_idx
         series = 0
         for k, iso in self.isotope_group.isotopes.iteritems():
-            idx = graph.get_plotid_by_ytitle(k)
-            if idx is None:
-                idx = graph.get_plotid_by_ytitle(iso.name)
+
+            idx = self._get_plot_id_by_ytitle(graph, iso, k)
 
             if idx is not None:
                 try:
@@ -2396,6 +2395,12 @@ anaylsis_type={}
                                      use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
+
+    def _get_plot_id_by_ytitle(self, graph, iso, k):
+        idx = graph.get_plotid_by_ytitle(k)
+        if idx is None:
+            idx = graph.get_plotid_by_ytitle(iso.name)
+        return idx
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
@@ -2421,23 +2426,13 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         series = self.collector.series_idx
-
-        if grpname == 'baseline':
-            print 'collector series_idx {}'.format(series)
-
-        # regressing = False
         for k, iso in self.isotope_group.isotopes.iteritems():
-            # idx = graph.get_plotid_by_ytitle(k)
-            idx = graph.get_plotid_by_ytitle(k)
-            if idx is None:
-                idx = graph.get_plotid_by_ytitle(iso.name)
-
+            idx = self._get_plot_id_by_ytitle(graph, iso, k)
             if idx is not None:
                 try:
                     graph.series[idx][series]
                 except IndexError, e:
                     fit = None if grpname == 'sniff' else iso.get_fit(0)
-                    # regressing = fit or regressing
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',

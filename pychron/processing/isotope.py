@@ -498,9 +498,9 @@ class BaseIsotope(IsotopicMeasurement):
 
         b = self.baseline.uvalue
         if not include_baseline_error:
-            b = b.nominal_value
+            b = nominal_value(b)
             nv = self.uvalue - b
-            return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
+            return ufloat(nominal_value(nv), std_dev(nv), tag=self.name)
         else:
             return self.uvalue - b
 

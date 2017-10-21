@@ -194,6 +194,10 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.sample.project.name
 
     @property
+    def principal_investigator(self):
+        return self.irradiation_position.sample.project.principal_investigator.name
+
+    @property
     def sample(self):
         return self.irradiation_position.sample.name
 
@@ -511,7 +515,7 @@ class IRTbl(Base, BaseMixin):
 class AnalysisGroupTbl(Base, BaseMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String(140))
-    create_date = Column(TIMESTAMP)
+    create_date = Column(TIMESTAMP, default=func.now())
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     user = Column(String(140), ForeignKey('UserTbl.name'))
 

@@ -95,7 +95,7 @@ class BaseRegressor(HasTraits):
 
     @property
     def sem(self):
-        return self.std/self.n**0.5
+        return self.std / self.n ** 0.5
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -179,21 +179,25 @@ class BaseRegressor(HasTraits):
         if residuals is None:
             residuals = self.calculate_residuals()
 
-        ss_res = (residuals ** 2).sum()
+        s = 0
+        if residuals:
+            ss_res = (residuals ** 2).sum()
 
-        n = residuals.shape[0]
-        q = len(self.coefficients)
-        s = (ss_res / (n - q)) ** 0.5
-        # print 'cccc', s
+            n = residuals.shape[0]
+            q = len(self.coefficients)
+            s = (ss_res / (n - q)) ** 0.5
+            # print 'cccc', s
         return s
 
     def calculate_residuals(self):
         if self._result:
             return self._result.resid
         else:
-            return self.clean_ys - self.predict(self.clean_xs)
+            xs, ys = self.clean_xs, self.clean_ys
+            if self._check_integrity(xs, ys):
+                return ys - self.predict(xs)
 
-    def calculate_error_envelope(self, rx, rmodel=None, error_calc=None ):
+    def calculate_error_envelope(self, rx, rmodel=None, error_calc=None):
         if rmodel is None:
             rmodel = self.predict(rx)
 
@@ -313,7 +317,7 @@ class BaseRegressor(HasTraits):
 
             # print rx, cors[0]
 
-            return cors/2.
+            return cors / 2.
 
     def _delete_filtered_hook(self, outliers):
         pass

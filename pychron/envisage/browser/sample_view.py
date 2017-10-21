@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
-    HGroup, CheckListEditor, spring, Group, HSplit
+    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
@@ -27,7 +28,12 @@ from pychron.envisage.browser.pane_model_view import PaneModelView
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-# from pychron.envisage.browser.tableview import TableView
+class AnalysisGroupsAdapter(TabularAdapter):
+    columns = [('Set', 'name'),
+               ('Date', 'create_date')]
+
+    font = 'Arial 10'
+
 
 class BaseBrowserSampleView(PaneModelView):
     configure_date_filter_button = Button
@@ -254,6 +260,13 @@ class BaseBrowserSampleView(PaneModelView):
                               icon_button_editor('clear_sample_table',
                                                  'clear',
                                                  tooltip='Clear Sample Table'))
+
+        analysis_grp_table = UItem('analysis_groups',
+                                   # height=100,
+                                   editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
+                                                          multi_select=True,
+                                                          selected='selected_analysis_groups'))
+
         sample_table = VGroup(sample_tools,
                               UItem('samples',
                                     editor=myTabularEditor(
@@ -267,7 +280,7 @@ class BaseBrowserSampleView(PaneModelView):
                                         # refresh='update_sample_table',
                                         stretch_last_section=False)),
                               show_border=True, label='Samples')
-        grp = VGroup(top_level_filter_grp, sample_table)
+        grp = VGroup(top_level_filter_grp, Tabbed(sample_table, analysis_grp_table))
         return grp
 
 
@@ -341,10 +354,8 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
-
     def delete(self, info, obj):
         print 'asfdasfdasdfasdf', info, obj
-
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()

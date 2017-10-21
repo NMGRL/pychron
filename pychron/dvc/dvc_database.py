@@ -452,18 +452,19 @@ class DVCDatabase(DatabaseAdapter):
             a = UserTbl(name=name, **kw)
             return self._add_item(a)
 
-    def add_analysis_group(self, name, project, ans):
-        project = self.get_project(project)
-        grp = AnalysisGroupTbl(name=name)
-        grp.project = project
-        self._add_item(grp)
+    def add_analysis_group(self, name, project, pi,  ans):
+        with self.session_ctx():
+            project = self.get_project(project, pi)
+            grp = AnalysisGroupTbl(name=name)
+            grp.project = project
+            self._add_item(grp)
 
-        for a in ans:
-            a = self.get_analysis_uuid(a.uuid)
-            s = AnalysisGroupSetTbl()
-            s.group = grp
-            s.analysis = a
-            self._add_item(s)
+            for a in ans:
+                a = self.get_analysis_uuid(a.uuid)
+                s = AnalysisGroupSetTbl()
+                s.group = grp
+                s.analysis = a
+                self._add_item(s)
 
     # def add_analysis_group_set(self, group, analysis, **kw):
     #     obj = AnalysisGroupSetTbl(analysisID=analysis.id, **kw)
@@ -1237,8 +1238,14 @@ class DVCDatabase(DatabaseAdapter):
 
             return self._query_all(q, verbose_query=True)
 
-    def get_analysis_groups(self, **kw):
-        return []
+    def get_analysis_groups(self, project_ids, **kw):
+        ret = []
+        if project_ids:
+            with self.session_ctx() as sess:
+                q = sess.query(AnalysisGroupTbl)
+                q = q.filter(AnalysisGroupTbl.projectID.in_(project_ids))
+                ret = self._query_all(q)
+        return ret
 
     # single getters
     def get_user(self, name):

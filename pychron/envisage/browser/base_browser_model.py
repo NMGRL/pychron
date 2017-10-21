@@ -302,14 +302,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
             self.principal_investigator_names = [p.name for p in ps]
 
-    def get_analysis_groups(self, names):
-        if not isinstance(names[0], (str, unicode)):
-            names = [ni.name for ni in names]
-
+    def get_analysis_groups(self, projects):
         db = self.db
-
-        gs = db.get_analysis_groups(projects=names)
+        gs = db.get_analysis_groups([p.unique_id for p in projects])
         return gs
+
         # grps = [AnalysisGroupRecordView(gi) for gi in gs]
         # return grps
 
@@ -359,12 +356,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.use_low_post, self.use_high_post = enable, enable
         # self.use_low_post, self.use_high_post = ol, oh
 
-    def _load_associated_groups(self, names):
+    def _load_associated_groups(self, projects):
         """
             names: list of project names
         """
-        self.debug('load associated analysis groups for {}'.format(names))
-        grps = self.get_analysis_groups(names)
+        self.debug('load associated analysis groups for {}'.format(['{} ({})'.format(p.name, p.principal_investigator)
+                                                                    for p in projects]))
+        grps = self.get_analysis_groups(projects)
         self.analysis_groups = grps
 
     @caller
@@ -682,7 +680,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._load_project_date_range(names)
 
             self._load_associated_labnumbers()
-            self._load_associated_groups(names)
+            self._load_associated_groups(new)
 
             self._selected_projects_change_hook(names)
             self.dump_browser_selection()

@@ -202,31 +202,18 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            # self.no_intensity_count = 0
         except (AttributeError, TypeError, ValueError), e:
             self.debug('failed getting data {}'.format(e))
             return
-        # except NoIntensityChange:
-        #     self.warning('No Intensity change. Something is wrong. cnt={}, threshold={}'.format(self.no_intensity_count,
-        #                                                                                         self.no_intensity_threshold))
-        #     if self.no_intensity_count > self.no_intensity_threshold:
-        #         return
-        #
-        #     self.no_intensity_count += 1
-        #     return True
 
         if not data:
             return
 
-        # data is tuple (keys[], signals[])
         k, s = data
         if k is not None and s is not None:
             x = self._get_time()
             self._save_data(x, k, s)
             self._plot_data(i, x, k, s)
-        # if k and s are both None that means failed to get intensity from spectrometer, but n failures is less than
-        # `pychron.experiment.failed_intensity_count_threshold`
-        # skip this iteration and try again next time
 
         return True
 
@@ -247,8 +234,6 @@ class DataCollector(Consoleable):
             return data
 
     def _save_data(self, x, keys, signals):
-        # self.data_writer(self.detectors, x, keys, signals)
-
         self._queue.put((x, keys, signals))
 
         # update arar_age
@@ -302,13 +287,6 @@ class DataCollector(Consoleable):
             self._set_plot_data(i, None, v.detector, x, signal)
 
     def _plot_data_(self, cnt, x, keys, signals):
-        # for i, dn in enumerate(keys):
-        #     dn = self._get_detector(dn)
-        #     if dn:
-        #         iso = dn.isotope
-        #         signal = signals[keys.index(dn.name)]
-        #         self._set_plot_data(cnt, iso, dn.name, x, signal)
-
         for dn, signal in zip(keys, signals):
             det = self._get_detector(dn)
             if det:
@@ -397,56 +375,6 @@ class DataCollector(Consoleable):
             update_graph(igraph, self.series_idx, self.fit_series_idx)
         else:
             update_graph(igraph, self.series_idx, self.fit_series_idx)
-            #
-            # graph = self.plot_panel.isotope_graph
-            # if iso is None:
-            #     pids = []
-            #     for isotope in self.isotope_group.isotopes.itervalues():
-            #         print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
-            #         if isotope.detector == det:
-            #             pid = graph.get_plotid_by_ytitle(isotope.detector)
-            #             print 'pid', det, pid
-            #             if pid is not None:
-            #                 try:
-            #                     fit, name = self._get_fit(cnt, det, isotope.name)
-            #                 except BaseException, e:
-            #                     self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
-            #                                                                                          det, e))
-            #                     continue
-            #                 pids.append((pid, fit))
-            # else:
-            #     try:
-            #         # get fit and name
-            #         fit, name = self._get_fit(cnt, det, iso)
-            #     except AttributeError, e:
-            #         self.debug('set_plot_data, get_fit {}'.format(e))
-            #
-            #     pids = [(graph.get_plotid_by_ytitle(name), fit)]
-            #
-            # # if self.is_baseline:
-            # # print '{:<10s}{:<10s}{} series={} fit_series={}'.format(iso, det, pids, self.series_idx, self.fit_series_idx)
-            #
-            # def update_graph(g, p, f, sidx, fidx):
-            #     g.add_datum((x, signal),
-            #                 series=sidx,
-            #                 plotid=p,
-            #                 update_y_limits=True,
-            #                 ypadding='0.1')
-            #     if f:
-            #         g.set_fit(f, plotid=p, series=fidx)
-            #
-            # for pid, fit in pids:
-            #     if self.collection_kind == SNIFF:
-            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
-            #
-            #         sgraph = self.plot_panel.sniff_graph
-            #         update_graph(sgraph, pid, None, 0, 0)
-            #     elif self.collection_kind == BASELINE:
-            #         bgraph = self.plot_panel.baseline_graph
-            #         update_graph(bgraph, pid, fit, 0, 0)
-            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
-            #     else:
-            #         update_graph(graph, pid, fit, self.series_idx, self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:
@@ -599,38 +527,4 @@ class DataCollector(Consoleable):
     def cancelation_conditionals(self):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
-
-            # ============= EOF =============================================
-            # def _iter(self, con, evt, i, prev=0):
-            #
-            #     result = self._check_iteration(evt, i)
-            #
-            #     if not result:
-            #         try:
-            #             if i <= 1:
-            #                 self.automated_run.plot_panel.counts = 1
-            #             else:
-            #                 self.automated_run.plot_panel.counts += 1
-            #         except AttributeError:
-            #             pass
-            #
-            #         if not self._iter_hook(con, i):
-            #             evt.set()
-            #             return
-            #
-            #         ot = time.time()
-            #         p = self.period_ms * 0.001
-            #         t = Timer(max(0, p - prev), self._iter, args=(con, evt, i + 1,
-            #                                                       time.time() - ot))
-            #
-            #         t.name = 'iter_{}'.format(i + 1)
-            #         t.start()
-            #
-            #     else:
-            #         if result == 'cancel':
-            #             self.canceled = True
-            #         elif result == 'terminate':
-            #             self.terminated = True
-            #
-            #         # self.debug('no more iter')
-            #         evt.set()
+# ============= EOF =============================================
