@@ -180,13 +180,12 @@ class BaseRegressor(HasTraits):
             residuals = self.calculate_residuals()
 
         s = 0
-        if residuals is None:
+        if residuals is not None:
             ss_res = (residuals ** 2).sum()
 
             n = residuals.shape[0]
             q = len(self.coefficients)
             s = (ss_res / (n - q)) ** 0.5
-            # print 'cccc', s
         return s
 
     def calculate_residuals(self):
