@@ -17,11 +17,11 @@
 # ============= enthought library imports =======================
 import os
 from itertools import groupby
-
 import yaml
+
 from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
-    Color, Button
+    Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -32,6 +32,7 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
+from pychron.options.layout import FigureLayout
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
 
@@ -57,6 +58,10 @@ class SubOptions(Controller):
 
 
 class TitleSubOptions(SubOptions):
+    def traits_view(self):
+        v = self._make_view(self._get_title_group())
+        return v
+
     def _get_title_group(self):
         title_grp = HGroup(Item('auto_generate_title',
                                 tooltip='Auto generate a title based on the analysis list'),
@@ -84,6 +89,12 @@ class GroupSubOptions(SubOptions):
 
 
 class AppearanceSubOptions(SubOptions):
+    def _get_layout_group(self):
+        rc_grp = VGroup(HGroup(Item('object.layout.rows'), Item('object.layout.columns'),
+                               Item('object.layout.fixed')),
+                        label='Layout', show_border=True)
+        return rc_grp
+
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
                    self._create_axis_group('x', 'tick'),
@@ -137,6 +148,7 @@ class AppearanceSubOptions(SubOptions):
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
+                   self._get_layout_group(),
                    self._get_padding_group(),
                    self._get_grid_group())
 
@@ -460,6 +472,8 @@ class AuxPlotFigureOptions(FigureOptions):
     aux_plots = List
     aux_plot_klass = AuxPlot
     selected = List
+
+    layout = Instance(FigureLayout, ())
 
     def add_aux_plot(self, name, i=0, **kw):
         plt = self.aux_plot_klass(name=name, **kw)

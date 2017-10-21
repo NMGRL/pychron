@@ -560,15 +560,15 @@ class DVC(Loggable):
 
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
+
         # for ei in exps:
+        branches = {ei: get_repository_branch(os.path.join(paths.repository_dataset_dir, ei)) for ei in exps}
 
         make_record = self._make_record
 
         def func(*args):
-            # t = time.time()
             try:
-                r = make_record(calculate_f_only=calculate_f_only, *args)
-                # print 'make time {}'.format(time.time()-t)
+                r = make_record(branches=branches, calculate_f_only=calculate_f_only, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -821,12 +821,12 @@ class DVC(Loggable):
             db.add_project(name, pi, **kw)
         return added
 
-    def add_sample(self, name, project, pi, material, grainsize=None, note=None):
+    def add_sample(self, name, project, pi, material, grainsize=None, note=None, **kw):
         added = False
         db = self.db
         if not db.get_sample(name, project, pi, material, grainsize):
             added = True
-            db.add_sample(name, project, pi, material, grainsize, note=note)
+            db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
         return added
 
     def add_principal_investigator(self, name):
@@ -981,7 +981,7 @@ class DVC(Loggable):
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, branches=None, calculate_f_only=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1012,7 +1012,6 @@ class DVC(Loggable):
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
-
                 a = DVCAnalysis(rid, expid)
                 a.group_id = record.group_id
             except AnalysisNotAnvailableError:
@@ -1030,7 +1029,9 @@ class DVC(Loggable):
                     return
 
             # get repository branch
-            a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
+            a.branch = branches.get(expid, '')
+            # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
+            # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):

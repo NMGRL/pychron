@@ -285,6 +285,7 @@ class Paths(object):
     yield_template = None
     csv_analyses_export_template = None
     radial_template = None
+    regression_series_template = None
 
     furnace_sample_states = None
 

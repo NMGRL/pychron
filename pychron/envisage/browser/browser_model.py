@@ -81,6 +81,7 @@ class BrowserModel(BaseBrowserModel):
     _top_level_filter = None
 
     def activated(self, force=False):
+        self.reattach()
         self.activate_browser(force)
 
     def activate_browser(self, force=False):

@@ -24,7 +24,7 @@ from pychron.pychron_constants import FIT_ERROR_TYPES
 
 
 class IsochronOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance'])
+    subview_names = List(['Main', 'Appearance', 'Layout'])
 
     def get_subview(self, name):
         name = name.lower()

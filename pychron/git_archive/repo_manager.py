@@ -106,7 +106,6 @@ class GitRepoManager(Loggable):
     remote = Str
 
     def set_name(self, p):
-        self.logger = None
         self.name = '{}<GitRepo>'.format(os.path.basename(p))
 
     def open_repo(self, name, root=None):
@@ -576,20 +575,18 @@ class GitRepoManager(Loggable):
                 self.debug(e)
                 if not handled:
                     raise e
+            self.debug('fetch complete')
             # if use_progress:
             #     for i in range(100):
             #         prog.change_message('Merging {}'.format(i))
             #         time.sleep(1)
 
-            try:
-                repo.git.merge('FETCH_HEAD')
-            except GitCommandError, e:
-                self.debug(e)
-                if not handled:
-                    raise e
+            self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
 
             if use_progress:
                 prog.close()
+
+        self.debug('pull complete')
 
     def has_remote(self, remote='origin'):
         return bool(self._get_remote(remote))

@@ -300,6 +300,8 @@ class SampleTbl(Base, NameMixin):
     positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
     igsn = stringcolumn(140)
+    lat = Column(Float)
+    lon = Column(Float)
 
 
 class ProductionTbl(Base, NameMixin):

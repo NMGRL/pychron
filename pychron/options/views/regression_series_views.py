@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,26 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.options.options import MainOptions, SubOptions, AppearanceSubOptions, TitleSubOptions, GroupSubOptions
 
 
-class LayoutItem(HasTraits):
-    row = Int
-    column = Int
-    kind = Str
-    identifier = Str
+class RegressionSeriesMainOptions(MainOptions):
+    pass
 
 
-class FigureLayout(HasTraits):
-    rows = Int(1)
-    columns = Int(2)
-    fixed = Str('cols')
+class RegressionSeriesSubOptions(SubOptions):
+    pass
 
-    def add_item(self, kind):
-        self.items.append(LayoutItem(kind=kind))
+
+class RegressionSeriesAppearance(AppearanceSubOptions):
+    pass
+
+
+class CalculationSubOptions(SubOptions):
+    pass
+
+
+class DisplaySubOptions(TitleSubOptions):
+    pass
+
+
+
+
+VIEWS = {}
+VIEWS['main'] = RegressionSeriesMainOptions
+# VIEWS['regression_series'] = RegressionSeriesSubOptions
+VIEWS['appearance'] = RegressionSeriesAppearance
+# VIEWS['calculations'] = CalculationSubOptions
+VIEWS['display'] = DisplaySubOptions
+VIEWS['groups'] = GroupSubOptions
 
 # ============= EOF =============================================

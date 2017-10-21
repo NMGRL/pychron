@@ -14,19 +14,27 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import os
 import re
-
 import yaml
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
-    Button, String, Instance, List
-
+    Button, String, Instance, List, Float, BaseFloat
+from traitsui.api import View, UItem, Item, VGroup
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
 PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
-MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
+# MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
+PROJECT_REGEX = re.compile(r'^[a-zA-Z]+[\-\d_\w]*$')
+
+
+class RString(String):
+    def validate(self, obj, name, value):
+        if not self.regex.match(value):
+            return self.error(obj, name, value)
+        else:
+            return value
 
 
 class PIStr(String):
@@ -37,16 +45,27 @@ class PIStr(String):
             return value
 
 
-class MaterialStr(String):
+# class MaterialStr(RString):
+#     regex = MATERIAL_REGEX
+
+class LatFloat(BaseFloat):
     def validate(self, obj, name, value):
-        if not MATERIAL_REGEX.match(value):
+        if value > 90 or value < -90:
+            return self.error(obj, name, value)
+        else:
+            return value
+
+
+class LonFloat(BaseFloat):
+    def validate(self, obj, name, value):
+        if value > 180 or value < -180:
             return self.error(obj, name, value)
         else:
             return value
 
 
 class ProjectStr(String):
-    pass
+    regex = PROJECT_REGEX
 
 
 class Spec(HasTraits):
@@ -109,16 +128,28 @@ class SampleSpec(Spec):
     project = Instance(ProjectSpec)
     material = Instance(MaterialSpec)
     note = Str
+    lat = Float
+    lon = Float
+    igsn = Str
 
     def todump(self):
-        return {'name': str(self.name), 'project': self.project.todump(), 'material': self.material.todump(),
+        return {'name': str(self.name), 'project': self.project.todump(),
+                'lat': self.lat, 'lon': self.lon,
+                'igsn': self.isgn,
+                'material': self.material.todump(),
                 'note': self.note}
 
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
         obj.note = d.get('note', '')
-        obj.name = d['name']
+
+        for attr in ('name', 'lat', 'lon', 'igsn'):
+            try:
+                setattr(obj, attr, d[attr])
+            except KeyError:
+                pass
+
         project = d['project']
         pname = project['name']
         piname = project['principal_investigator']['name']
@@ -146,7 +177,7 @@ class SampleEntry(DVCAble):
     projects = Property(depends_on='refresh_projects')
     refresh_projects = Event
 
-    material = MaterialStr(enter_set=True, auto_set=False)
+    material = Str
     materials = Property(depends_on='refresh_materials')
     refresh_materials = Event
     grainsize = Str
@@ -155,7 +186,11 @@ class SampleEntry(DVCAble):
 
     sample = Str
     note = Str
+    lat = LatFloat
+    lon = LonFloat
+    igsn = Str
 
+    configure_sample_button = Button
     add_principal_investigator_button = Button
     add_project_button = Button
     add_sample_button = Button
@@ -281,9 +316,8 @@ class SampleEntry(DVCAble):
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
 
                 if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name, s.material.name,
-                                  s.material.grainsize
-                or
-                        None,
+                                  s.material.grainsize or None,
+                                  lat=s.lat, lon=s.lon,
                                   note=s.note):
                     s.added = True
                     dvc.commit()
@@ -335,6 +369,16 @@ class SampleEntry(DVCAble):
                 return m
 
     # handlers
+    def _configure_sample_button_fired(self):
+        v = View(VGroup(VGroup(UItem('sample'),
+                               label='Name', show_border=True),
+                        VGroup(Item('lat', label='Latitude'),
+                               Item('lon', label='Longitude'),
+                               label='Location', show_border=True)),
+                 kind='livemodal', title='Set Sample Attributes',
+                 buttons=['OK', 'Cancel'])
+        self.edit_traits(view=v)
+
     def _add_sample_button_fired(self):
         if self.sample:
 
@@ -349,6 +393,9 @@ class SampleEntry(DVCAble):
                 return
 
             self._samples.append(SampleSpec(name=self.sample,
+                                            lat=self.lat,
+                                            lon=self.lon,
+                                            igsn=self.igsn,
                                             project=project_spec,
                                             material=material_spec))
             self._backup()

@@ -19,7 +19,7 @@ from itertools import groupby
 
 from traits.api import HasTraits, List, Property, Any, Instance
 
-from pychron.pipeline.plot.layout import FigureLayout
+# from pychron.pipeline.plot.layout import FigureLayout
 
 
 class FigureModel(HasTraits):
@@ -31,7 +31,7 @@ class FigureModel(HasTraits):
     _panel_klass = Instance('pychron.pipeline.plotters.figure_panel.FigurePanel')
     titles = List
 
-    layout = Instance(FigureLayout, ())
+    # layout = Instance(FigureLayout, ())
     analysis_groups = List
 
     def refresh(self, force=False):
