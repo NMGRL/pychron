@@ -75,6 +75,7 @@ class RegressionSeries(BaseArArFigure):
             self.graph.new_series(xs, ys,
                                   fit='{}_{}'.format(iso.fit, iso.error_type),
                                   filter_outliers_dict=iso.filter_outliers_dict,
-                                  type='scatter', plotid=i, color=next(cg))
+                                  type='scatter', plotid=i, color=next(cg),
+                                  add_point_inspector=False)
 
 # ============= EOF =============================================

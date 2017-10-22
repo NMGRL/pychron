@@ -122,7 +122,9 @@ class BaseMeasurement(object):
 
     def get_curvature(self, x):
         ys = self._get_curvature_ys()
-        if x < 1:
+
+        # if x is between 0-1 treat as a percentage of the total number of points
+        if 0 < x < 1:
             x = self.xs.shape[0] * x
 
         return curvature_at(ys, x)

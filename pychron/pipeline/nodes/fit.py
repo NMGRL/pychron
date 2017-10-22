@@ -231,9 +231,9 @@ class FitIsotopeEvolutionNode(FitNode):
         #     ai.graph_id = 0
 
         self._set_saveable(state)
-
         if fs:
             e = IsoEvolutionResultsEditor(fs)
+            e.plotter_options = po
             state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):

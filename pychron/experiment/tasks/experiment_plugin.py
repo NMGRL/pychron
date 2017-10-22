@@ -99,7 +99,6 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _help_tips_default(self):
         return ['You can set the Analysis State colors in Preferences>Experiment',
                 'You can set the color for Sniff, Signal, and Baseline datapoints in Preferences>Experiment',
-                'The current version of Pychron contains over 147K lines of code',
                 'If the last analysis fails to save you can recover it using Tools/Recover Last Analysis']
 
     def _task_extensions_default(self):

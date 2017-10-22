@@ -87,6 +87,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
                 'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
                 'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
+                'The current version of Pychron contains over 147K lines of code',
                 'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
                 'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
                 '<b>Help/Edit UI</b>.']

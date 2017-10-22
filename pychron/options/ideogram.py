@@ -33,7 +33,7 @@ class IdeogramAuxPlot(AuxPlot):
 
 
 class IdeogramOptions(AgeOptions):
-    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups', 'Layout'],
+    subview_names = List(['Main', 'Ideogram', 'Appearance', 'Calculations', 'Display', 'Groups'],
                          transient=True)
     aux_plot_klass = IdeogramAuxPlot
 

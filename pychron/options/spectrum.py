@@ -34,7 +34,7 @@ class SpectrumAuxPlot(AuxPlot):
 
 
 class SpectrumOptions(AgeOptions):
-    subview_names = List(['Main', 'Spectrum', 'Appearance', 'Plateau', 'Display', 'Groups', 'Layout'],
+    subview_names = List(['Main', 'Spectrum', 'Appearance', 'Plateau', 'Display', 'Groups'],
                          transient=True)
     aux_plot_klass = SpectrumAuxPlot
     edit_plateau_criteria = Button

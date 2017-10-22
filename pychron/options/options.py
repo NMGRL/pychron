@@ -90,7 +90,8 @@ class GroupSubOptions(SubOptions):
 
 class AppearanceSubOptions(SubOptions):
     def _get_layout_group(self):
-        rc_grp = VGroup(HGroup(Item('object.layout.rows'), Item('object.layout.columns'),
+        rc_grp = VGroup(HGroup(Item('object.layout.rows', enabled_when='object.layout.fixed!="square"'),
+                               Item('object.layout.columns', enabled_when='object.layout.fixed!="square"'),
                                Item('object.layout.fixed')),
                         label='Layout', show_border=True)
         return rc_grp

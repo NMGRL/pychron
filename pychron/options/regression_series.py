@@ -30,7 +30,7 @@ class RegressionSeriesAuxPlot(AuxPlot):
 
 
 class RegressionSeriesOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance', 'Display', 'Groups', 'Layout'],
+    subview_names = List(['Main', 'Appearance', 'Display', 'Groups'],
                          transient=True)
     aux_plot_klass = RegressionSeriesAuxPlot
 
