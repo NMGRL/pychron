@@ -300,6 +300,7 @@ class PyScript(Loggable):
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
                 print 'invalid pyscript', self.text
+                print 'error', r
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -668,6 +669,7 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
+                    print self.manager
                     self.manager.info(message, log=False)
 
         except AttributeError, e:
@@ -797,10 +799,10 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self):
         from pychron.wait.wait_control import WaitControl
+        wd = self._wait_control
         if self.manager:
-            wd = self.manager.get_wait_control()
-        else:
-            wd = self._wait_control
+            if hasattr(self.manager, 'get_wait_control'):
+                wd = self.manager.get_wait_control()
 
         if wd is None:
             wd = WaitControl()

@@ -199,7 +199,12 @@ class IonOpticsManager(Manager):
 
         pcc = None
 
-        if detector is None or isotope is None:
+        if config_name:
+            self.peak_center_config.load()
+            self.peak_center_config.active_name = config_name
+            pcc = self.peak_center_config.active_item
+
+        elif detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
             self.peak_center_config.load()
@@ -212,10 +217,6 @@ class IonOpticsManager(Manager):
                 return
             else:
                 pcc = self.peak_center_config.active_item
-        elif config_name:
-            self.peak_center_config.load()
-            self.peak_center_config.active_name = config_name
-            pcc = self.peak_center_config.active_item
 
         if pcc:
             if not detector:
@@ -301,6 +302,7 @@ class IonOpticsManager(Manager):
                 graph.window_height = 250
                 open_view(graph)
 
+        print 'pppp', self.peak_center
         return self.peak_center
 
     def backup_mftable(self):

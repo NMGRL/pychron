@@ -411,7 +411,7 @@ class BaseSpectrometer(SpectrometerDevice):
         return self.source_klass(spectrometer=self, microcontroller=self.microcontroller)
 
     def _microcontroller_default(self):
-        mc = self.microcontroller_klass(name='microcontroller')
+        mc = self.microcontroller_klass(name='spectrometer_microcontroller')
         mc.bootstrap()
         return mc
 

@@ -15,14 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+import os
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 
 from pychron.core.helpers.filetools import list_directory2
 from pychron.core.helpers.strtools import to_bool
-from pychron.envisage.tasks.list_actions import HopsAction
+from pychron.envisage.tasks.list_actions import HopsAction, SpectrometerScriptAction
 from pychron.envisage.view_util import open_view
 from pychron.paths import paths
 from pychron.spectrometer.readout_view import ReadoutView
@@ -54,12 +54,7 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
             v = new_readout_view(rv)
             open_view(rv, view=v)
 
-    # ===============================================================================
-    # defaults
-    # ===============================================================================
-
-    def _task_extensions_default(self):
-
+    def _hops_ext(self):
         def hop_action(name):
             def func():
                 return HopsAction(name=name, hop_name=name)
@@ -72,13 +67,66 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
             actions.append(SchemaAddition(id='procedure.{}'.format(f),
                                           factory=hop_action(f),
                                           path='MenuBar/procedures.menu/hops.group'))
-        ext = []
-        if actions:
-            actions.insert(0, SchemaAddition(id='hops.group',
-                                             factory=lambda: SGroup(name='Hops', id='hops.group'),
-                                             path='MenuBar/procedures.menu'))
 
-            ext.append(TaskExtension(actions=actions))
+        if actions:
+            m = SchemaAddition(id='procedures.menu',
+                               before='window.menu',
+                               after='tools.menu',
+                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
+                               path='MenuBar')
+            g = SchemaAddition(id='hops.group',
+                               factory=lambda: SGroup(name='Hops', id='hops.group'),
+                               path='MenuBar/procedures.menu')
+            actions.insert(0, g)
+            actions.insert(0, m)
+
+            ext = TaskExtension(actions=actions)
+            return ext
+
+    def _scripts_ext(self):
+        def script_action(name):
+            def func():
+                p = os.path.join(paths.spectrometer_scripts_dir, '{}.py'.format(name))
+                return SpectrometerScriptAction(name=name, script_path=p)
+
+            return func
+
+        actions = []
+
+        for f in list_directory2(paths.spectrometer_scripts_dir, extension='.py', remove_extension=True):
+            actions.append(SchemaAddition(id='spectrometer_script.{}'.format(f),
+                                          factory=script_action(f),
+                                          path='MenuBar/procedures.menu/spectrometer_script.group'))
+        if actions:
+            m = SchemaAddition(id='procedures.menu',
+                               before='window.menu',
+                               after='tools.menu',
+                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
+                               path='MenuBar')
+            g = SchemaAddition(id='spectrometer_script.group',
+                               factory=lambda: SGroup(name='Spectrometer',
+                                                      id='spectrometer_script.group'),
+                               path='MenuBar/procedures.menu')
+
+            actions.insert(0, g)
+            actions.insert(0, m)
+
+            ext = TaskExtension(actions=actions)
+            return ext
+    # ===============================================================================
+    # defaults
+    # ===============================================================================
+
+    def _task_extensions_default(self):
+
+        ext = []
+        hopext = self._hops_ext()
+        if hopext:
+            ext.append(hopext)
+
+        scriptext = self._scripts_ext()
+        if scriptext:
+            ext.append(scriptext)
 
         ta1 = TaskExtension(actions=[SchemaAddition(id='spectrometer.menu',
                                                     factory=lambda: SMenu(id='spectrometer.menu',

@@ -170,6 +170,32 @@ class HopsAction(ListAction):
         self._alive = False
 
 
+class SpectrometerScriptAction(ListAction):
+    script_path = Str
+
+    def perform(self, event):
+        app = event.task.application
+        tid = 'pychron.spectrometer'
+        manager = app.task_is_open(tid)
+        task = app.get_task('pychron.pyscript.task', activate=False)
+        # context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+
+        context = {}
+        root = os.path.dirname(self.script_path)
+        name = os.path.basename(self.script_path)
+
+        info = lambda x: '======= {} ======='.format(x)
+        # manager = app.get_service('pychron.spectrometer.scan_manager.ScanManager')
+        manager.info(info('Started Spectrometer script "{}"'.format(name)))
+
+        task.execute_script(name, root,
+                            delay_start=1,
+                            manager=manager,
+                            kind='Spectrometer',
+                            on_completion=lambda: manager.info(info('Finished Spectrometer Script "{}"'.format(name))),
+                            context=context)
+
+
 class ProcedureAction(ListAction):
     script_path = Str
 
@@ -181,8 +207,8 @@ class ProcedureAction(ListAction):
     #         ex = ex.experimentor.executor
     #         ex.on_trait_change(self._update_alive, 'alive')
 
-    def _update_alive(self, new):
-        self.enabled = not new
+    # def _update_alive(self, new):
+    #     self.enabled = not new
 
     def perform(self, event):
         app = event.task.application

@@ -107,6 +107,11 @@ class ScanManager(StreamGraphManager):
         self.mass_scanner.dump()
         self.dac_scanner.dump()
 
+    def position_magnet(self, iso, det):
+        self.isotope = iso
+        self._set_detector(det)
+        self._set_position()
+
     def stop(self):
         self.prepare_destroy()
 

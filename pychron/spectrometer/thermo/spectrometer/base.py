@@ -517,8 +517,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         return self._config
 
     def _get_simulation_data(self):
-        signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD', 'L2(CDD)', 'AX(CDD)']
         return keys, signals
 
     def _send_configuration(self, use_ramp=True):
