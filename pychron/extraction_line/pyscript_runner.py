@@ -73,6 +73,8 @@ class PyScriptRunner(Loggable):
         return Lock()
 
     def get_resource(self, name):
+        self.connect()
+        
         with self._resource_lock:
             if name not in self.resources:
                 self.resources[name] = self._get_resource(name)

@@ -234,7 +234,7 @@ class IsotopeGroup(HasTraits):
             return ret
 
         else:
-            for i in (iso, '{}{}'.format(iso, det)):
+            for i in ('{}{}'.format(iso, det), iso):
                 if i in isotopes:
                     _append(isotopes[i])
                     return True
@@ -325,15 +325,21 @@ class IsotopeGroup(HasTraits):
 
         return niso
 
-    def set_baseline(self, iso, det, v):
-        if iso not in self.isotopes:
-            niso = Isotope(iso, det)
+    def set_baseline(self, iso, detector, v):
+        for iso in ('{}{}'.format(iso, detector), iso):
+            if iso in self.isotopes:
+                break
+        else:
+            niso = Isotope(iso, detector)
             self.isotopes[iso] = niso
 
         self.isotopes[iso].baseline.set_uvalue(v)
 
     def set_blank(self, iso, detector, v):
-        if iso not in self.isotopes:
+        for iso in ('{}{}'.format(iso, detector), iso):
+            if iso in self.isotopes:
+                break
+        else:
             niso = Isotope(iso, detector)
             self.isotopes[iso] = niso
 

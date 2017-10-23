@@ -186,6 +186,7 @@ class BaseRegressor(HasTraits):
             n = residuals.shape[0]
             q = len(self.coefficients)
             s = (ss_res / (n - q)) ** 0.5
+
         return s
 
     def calculate_residuals(self):

@@ -809,9 +809,12 @@ class PyScript(Loggable):
 
         self._wait_control = wd
         if self.manager:
-            if wd not in self.manager.wait_group.controls:
-                self.manager.wait_group.controls.append(wd)
-            self.manager.wait_group.active_control = wd
+            try:
+                if wd not in self.manager.wait_group.controls:
+                    self.manager.wait_group.controls.append(wd)
+                self.manager.wait_group.active_control = wd
+            except AttributeError:
+                pass
 
         return wd
 
@@ -840,7 +843,10 @@ class PyScript(Loggable):
             # wd.join()
 
             if self.manager:
-                self.manager.wait_group.pop(wd)
+                try:
+                    self.manager.wait_group.pop(wd)
+                except AttributeError:
+                    pass
 
             if wd.is_canceled():
                 self.cancel()

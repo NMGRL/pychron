@@ -470,10 +470,10 @@ class AutomatedRun(Loggable):
         g.clear()
         self.measurement_script.reset_series()
 
-        _, pb = self.get_previous_blanks()
-        pbs = self.get_previous_baselines()
-        correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
-                             not self.spec.analysis_type.startswith('background'))
+        # _, pb = self.get_previous_blanks()
+        # pbs = self.get_previous_baselines()
+        # correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
+        #                      not self.spec.analysis_type.startswith('background'))
 
         key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
@@ -503,13 +503,13 @@ class AutomatedRun(Loggable):
                     a.isotopes.pop(diso)
                 else:
                     ii = a.isotope_factory(name=iso, detector=di)
-                    if correct_for_blank:
-                        if iso in pb:
-                            _, b = pb[iso]
-                            ii.set_blank(nominal_value(b), std_dev(b))
-                    if iso in pbs:
-                        _, b = pbs[iso]
-                        ii.set_baseline(nominal_value(b), std_dev(b))
+                    # if correct_for_blank:
+                    #     if iso in pb:
+                    #         _, b = pb[iso]
+                    #         ii.set_blank(nominal_value(b), std_dev(b))
+                    # if iso in pbs:
+                    #     _, b = pbs[iso]
+                    #     ii.set_baseline(nominal_value(b), std_dev(b))
 
                 plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
                 if plot is None:
@@ -525,6 +525,7 @@ class AutomatedRun(Loggable):
                 a.isotopes[name] = ii
                 plot.y_axis.title = name
 
+        self._load_previous()
         self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
@@ -1826,8 +1827,13 @@ anaylsis_type={}
             self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
                                            correct_for_blank=cb)
 
-        if (not self.spec.analysis_type.startswith('blank')
-            and not self.spec.analysis_type.startswith('background')):
+        self._load_previous()
+
+        self.debug('load analysis view')
+        p.analysis_view.load(self)
+
+    def _load_previous(self):
+        if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
             pid, blanks = self.get_previous_blanks()
             self.debug('setting previous blanks')
             for iso, v in blanks.iteritems():
@@ -1838,9 +1844,6 @@ anaylsis_type={}
         baselines = self.get_previous_baselines()
         for iso, v in baselines.iteritems():
             self.isotope_group.set_baseline(iso, v[0], v[1])
-
-        self.debug('load analysis view')
-        p.analysis_view.load(self)
 
     def _add_conditionals(self):
         klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,

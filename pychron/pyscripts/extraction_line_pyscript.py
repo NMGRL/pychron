@@ -670,7 +670,6 @@ class ExtractionPyScript(ValvePyScript):
             return
 
         self.console_info('acquire {}'.format(name))
-        self.runner.connect()
 
         r = self.runner.get_resource(name)
 
