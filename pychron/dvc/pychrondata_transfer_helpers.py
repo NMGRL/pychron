@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
+
 import os
 from datetime import timedelta
 from itertools import groupby
@@ -29,6 +29,7 @@ from pychron.dvc import dvc_dump, dvc_load, analysis_path
 from pychron.dvc.dvc_persister import spectrometer_sha
 from pychron.github import Organization
 from pychron.pychron_constants import QTEGRA_SOURCE_KEYS
+from pychron import json
 
 """
 http://stackoverflow.com/questions/6944165/mysql-update-with-where-select-subquery-error

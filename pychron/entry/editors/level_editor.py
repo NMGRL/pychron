@@ -14,10 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import json
 import os
 
+# ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
@@ -37,6 +36,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
+from pychron import json
 
 
 def prep_prname(prname):

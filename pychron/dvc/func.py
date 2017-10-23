@@ -14,16 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
 # ============= standard library imports ========================
 import glob
-import json
 import os
 from datetime import datetime
-
 from git import Repo
 
+from pychron import json
 from pychron.dvc import analysis_path
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths

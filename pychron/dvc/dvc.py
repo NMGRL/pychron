@@ -13,19 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# ============= enthought library imports =======================
-import json
+
 import os
 import shutil
 import time
 from datetime import datetime
 from itertools import groupby
 from math import isnan
-
-from apptools.preferences.preference_binding import bind_preference
 from git import Repo
-from traits.api import Instance, Str, Set, List, provides
 from uncertainties import nominal_value, std_dev, ufloat
+
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, Str, Set, List, provides
 
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
@@ -44,6 +44,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
+from pychron import json
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 

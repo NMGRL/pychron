@@ -25,7 +25,6 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 from pychron.options.options_manager import RegressionSeriesOptionsManager, OptionsController
-from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.views.views import view
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.models.regression_series_model import RegressionSeriesModel

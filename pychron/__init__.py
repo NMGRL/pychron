@@ -15,3 +15,10 @@
 # ===============================================================================
 from .version import __version__
 
+try:
+    import ujson as json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        import json

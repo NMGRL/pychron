@@ -14,15 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 # ============= standard library imports ========================
 import base64
-import json
 from datetime import datetime
-
 import requests
 
 # ============= local library imports  ==========================
+from pychron import json
+
 GITHUB_API_URL = 'https://api.github.com'
 
 

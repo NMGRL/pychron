@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
 import re
 import traceback
 
@@ -25,6 +24,7 @@ from twisted.internet.protocol import Protocol
 
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
+from pychron import json
 
 
 def default_err(failure):

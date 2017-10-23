@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-import json
 import os
+from pychron import json
 from pprint import pformat
 
 from pychron.core.helpers.filetools import subdirize, add_extension

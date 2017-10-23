@@ -14,15 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import json
 import os
 import shutil
 import time
 from datetime import datetime
-
-from traits.api import Bool
 from uncertainties import ufloat, std_dev
+# ============= enthought library imports =======================
+from traits.api import Bool
 
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
@@ -32,6 +30,7 @@ from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
+from pychron import json
 
 
 class MetaObject(object):

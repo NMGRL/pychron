@@ -16,21 +16,21 @@
 
 # ============= standard library imports ========================
 import cPickle as pickle
-# ============= enthought library imports =======================
-import json
 import os
 import time
 from threading import Thread
 
+# ============= enthought library imports =======================
 from traits.api import Str, String, on_trait_change, Float, \
     Property, Instance, Event, Enum, Int, Either, Range, cached_property
 
-from pychron.core.helpers.strtools import to_bool
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.paths import paths
+from pychron import json
 
 
 class PychronLaserManager(EthernetLaserManager):
