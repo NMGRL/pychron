@@ -153,10 +153,10 @@ class YorkRegressor(OLSRegressor):
             this method for calculating the x intercept error is incorrect.
             the current solution is to swap xs and ys and calculate the y intercept error
         """
-        #v = self.x_intercept
-        #e = self.get_intercept_error() * v ** 0.5
+        # v = self.x_intercept
+        # e = self.get_intercept_error() * v ** 0.5
 
-        e=0
+        e = 0
         return e
 
     def _get_mswd(self):
@@ -284,7 +284,7 @@ class NewYorkRegressor(YorkRegressor):
         xm = self.xs.mean()
         dadx = -b * W / sW - xm * dVdx / dVdb
         dady = W / sW - xm * dVdy / dVdb
-        #eq 18
+        # eq 18
         var_a = sum(dadx ** 2 * sx ** 2 + dady ** 2 * sy ** 2 + 2 * sxy * dadx * dady)
         self._intercept_variance = var_a
         return var_b
@@ -299,6 +299,7 @@ class ReedYorkRegressor(YorkRegressor):
         reed 1989
     """
     _degree = 1
+
     #     def _set_degree(self, d):
     #         '''
     #             York regressor only for linear fit
@@ -371,7 +372,6 @@ class ReedYorkRegressor(YorkRegressor):
 
         return var
 
-
     def predict(self, x, *args, **kw):
         """
             a=Y-bX
@@ -391,11 +391,11 @@ if __name__ == '__main__':
     xs = [0.89, 1.0, 0.92, 0.87, 0.9, 0.86, 1.08, 0.86, 1.25,
           1.01, 0.86, 0.85, 0.88, 0.84, 0.79, 0.88, 0.70, 0.81,
           0.88, 0.92, 0.92, 1.01, 0.88, 0.92, 0.96, 0.85, 1.04
-    ]
+          ]
     ys = [0.67, 0.64, 0.76, 0.61, 0.74, 0.61, 0.77, 0.61, 0.99,
           0.77, 0.73, 0.64, 0.62, 0.63, 0.57, 0.66, 0.53, 0.46,
           0.79, 0.77, 0.7, 0.88, 0.62, 0.80, 0.74, 0.64, 0.93
-    ]
+          ]
     exs = ones(27) * 0.01
     eys = ones(27) * 0.01
 

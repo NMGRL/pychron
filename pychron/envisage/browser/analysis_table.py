@@ -18,7 +18,7 @@ import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-
+import json
 # ============= enthought library imports =======================
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
@@ -29,7 +29,6 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-from pychron import json
 
 
 def sort_items(ans):

@@ -60,8 +60,7 @@ def extract_isochron_xy(analyses):
     return xx, yy
 
 
-def calculate_isochron(analyses, error_calc_kind, reg='Reed'):
-    print reg
+def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -76,32 +75,37 @@ def calculate_isochron(analyses, error_calc_kind, reg='Reed'):
         return
 
     xs, xerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
-    ys, yerrs = zip(*[(nominal_value(yi), std_dev(yi)) for yi in yy])
+    ys, yerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in yy])
 
-    a40s, a40es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
-    a36s, a36es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
-    a39s, a39es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
+    xds, xdes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
+    yns, ynes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
+    xns, xnes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
 
-    # regx = isochron_regressor(ys, yerrs, xs, xerrs,
-    #                           a40s, a40es, a36s, a36es, a39s, a39es, reg)
+    regx = isochron_regressor(ys, yerrs, xs, xerrs,
+                              xds, xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
-                             a40s, a40es, a39s, a39es, a36s, a36es,
+                             xds, xdes, xns, xnes, yns, ynes,
                              reg)
 
-    # regx.error_calc_type = error_calc_kind
+    regx.error_calc_type = error_calc_kind
     reg.error_calc_type = error_calc_kind
 
-    xint = reg.get_x_intercept()
-    try:
-        r = xint ** -1
-    except ZeroDivisionError:
-        r = 0
+    # xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
+    # # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
+    # try:
+    #     r = xint ** -1
+    # except ZeroDivisionError:
+    #     r = 0
+
+    xint = reg.x_intercept
+    xint_err = regx.get_intercept_error()/(1/xint)**2
+
+    r = ufloat(xint, xint_err)
 
     age = ufloat(0, 0)
     if r > 0:
-        age = age_equation((ref.j.nominal_value, 0), r, arar_constants=ref.arar_constants)
-
+        age = age_equation((nominal_value(ref.j), 0), r, arar_constants=ref.arar_constants)
     return age, reg, (xs, ys, xerrs, yerrs)
 
 
@@ -140,7 +144,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     k39 = asarray(k39)
 
     fixed_steps = options.get('fixed_steps', False)
-    if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
+    if fixed_steps:
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
@@ -165,7 +169,6 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     errors=errors,
                     signals=k39,
                     excludes=excludes,
-                    overlap_nsigma=options.get('step_sigma', 2),
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 
@@ -364,9 +367,9 @@ def calculate_F(isotopes,
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
     atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                              decay_time,
-                                              pr,
-                                              arar_constants)
+                                        decay_time,
+                                        pr,
+                                        arar_constants)
 
     # calculate radiogenic
     # dont include error in 40/36

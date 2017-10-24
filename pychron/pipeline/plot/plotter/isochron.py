@@ -22,6 +22,7 @@ from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from numpy import linspace
 from traits.api import Array, Float, Str
+from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
 from pychron.core.stats import validate_mswd
@@ -229,8 +230,8 @@ class InverseIsochron(Isochron):
             a = ai.isotopes['Ar39'].get_interference_corrected_value()
             b = ai.isotopes['Ar40'].get_interference_corrected_value()
             r = a / b
-            v = r.nominal_value
-            e = r.std_dev
+            v = nominal_value(r)
+            e = std_dev(r)
 
             try:
                 pe = '({:0.2f}%)'.format(e / v * 100)
@@ -310,7 +311,6 @@ class InverseIsochron(Isochron):
         try:
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
-
             err = inv_intercept * p
             mse = err * mswd ** 0.5
             v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
