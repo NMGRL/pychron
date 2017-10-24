@@ -290,6 +290,7 @@ class AutomatedRun(Loggable):
         else:
             fits = dict([f.split(':') for f in fits])
 
+        g = self.plot_panel.isotope_graph
         for k, iso in isotopes.iteritems():
             try:
                 fi = fits[k]
@@ -299,6 +300,9 @@ class AutomatedRun(Loggable):
                              'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
+
+            idx = self._get_plot_id_by_ytitle(g, iso, k)
+            g.set_regressor(iso.regressor, idx)
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.isotope_group.isotopes
@@ -1825,15 +1829,14 @@ anaylsis_type={}
             and not self.spec.analysis_type.startswith('background')):
             cb = True
 
-        g = p.isotope_graph
+        # g = p.isotope_graph
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
-            iso = self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
-                                                 correct_for_blank=cb)
+            self.isotope_group.set_isotope(d.isotope, d.name, (0, 0), correct_for_blank=cb)
 
-            for idx in self._get_plot_id_by_ytitle(g, d.isotope, '{}{}'.format(d.isotope, d.name)):
-                plot = g.plots[idx]
-                plot.set_regressor(iso.regressor)
+            # for idx in self._get_plot_id_by_ytitle(g, d.isotope, '{}{}'.format(d.isotope, d.name)):
+            #     plot = g.plots[idx]
+            #     plot.set_regressor(iso.regressor)
 
         self._load_previous()
 
@@ -2094,7 +2097,7 @@ anaylsis_type={}
 
         if remove_non_active:
             # remove non active isotopes
-
+            # print 'pairs', [(k, v.name, v.detector) for k, v in self.isotope_group.isotopes.items()]
             # print 'active isotopes', [di.isotope for di in self._active_detectors]
             for k, v in self.isotope_group.isotopes.items():
 
@@ -2102,10 +2105,19 @@ anaylsis_type={}
                            None)
                 # print k, repr(v), det
                 if det is None:
-                    # print 'remove ', k
+                    print 'remove ', k
                     self.isotope_group.isotopes.pop(k)
 
-            #
+            # print 'precleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
+
+            def key(v):
+                return v[1].name
+
+            for name, items in groupby(sorted(self.isotope_group.isotopes.items(), key=key), key=key):
+                for k, v in items:
+                    if name != k:
+                        self.isotope_group.isotopes.pop(k)
+
             # # for di in self._active_detectors:
             # #     print di.name, di.isotope
             #
@@ -2118,7 +2130,7 @@ anaylsis_type={}
             #     if det is None:
             #         self.isotope_group.isotopes.pop(k)
 
-            print 'cleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
+            # print 'cleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
 
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
@@ -2437,7 +2449,7 @@ anaylsis_type={}
             min_ = -starttime_offset
 
         graph.set_x_limits(min_=min_, max_=max_)
-
+        regressing = grpname != 'sniff'
         series = self.collector.series_idx
         for k, iso in self.isotope_group.isotopes.iteritems():
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
@@ -2455,8 +2467,9 @@ anaylsis_type={}
                                      use_error_envelope=False,
                                      add_inspector=False,
                                      add_tools=False)
+                if regressing:
+                    graph.set_regressor(iso.regressor, idx)
 
-        regressing = grpname != 'sniff'
         scnt, fcnt = (2, 1) if regressing else (1, 0)
         self.debug(
             '"{}" increment series count="{}" fit count="{}" regressing="{}"'.format(grpname, scnt, fcnt, regressing))

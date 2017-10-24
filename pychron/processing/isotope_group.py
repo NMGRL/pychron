@@ -263,12 +263,17 @@ class IsotopeGroup(HasTraits):
         if not isinstance(det, str):
             name, det = det.isotope, det.name
 
+        print 'name ={} detector={}'.format(name, det)
         if name in self.isotopes:
             iso = self.isotopes[name]
             if iso.detector != det:
+                iso.detector = det
+                # self.isotopes[name] = iso
+
                 iso = Isotope(name, det)
                 name = '{}{}'.format(name, det)
                 self.isotopes[name] = iso
+
         else:
             iso = Isotope(name, det)
             self.isotopes[name] = iso

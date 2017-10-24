@@ -571,8 +571,8 @@ class Isotope(BaseIsotope):
         # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
-
-        print 'get intensity regressor={}, {}'.format(id(self._regressor), self._regressor)
+        # if self._regressor:
+        #     print 'get intensity {}{} regressor={}, {}'.format(self.name, self.detector, id(self._regressor), self._regressor)
         return v
 
     def get_disc_corrected_value(self):

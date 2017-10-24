@@ -358,8 +358,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
-            if self._outside_regressor:
-                print 'line has {} regressor={}, {}'.format(id(self), id(r), r)
+            # if self._outside_regressor:
+            #     print 'line has {} regressor={}, {}'.format(id(self), id(r), r)
 
         if fit in [1, 2, 3, 4]:
             r = self._poly_regress(scatter, r, fit)
