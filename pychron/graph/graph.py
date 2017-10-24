@@ -577,7 +577,7 @@ class Graph(ContextMenuMixin):
         try:
             plots = self.plots[plotid].plots[series]
         except KeyError:
-            print self.plots[plotid].plots.keys()
+            print 'set series label plotid={} {}'.format(plotid, self.plots[plotid].plots.keys())
             raise
 
         self.plots[plotid].plots[label] = plots

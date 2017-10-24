@@ -512,13 +512,16 @@ class AutomatedRun(Loggable):
                     #     ii.set_baseline(nominal_value(b), std_dev(b))
 
                 plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
+
                 if plot is None:
                     plots = self.plot_panel.new_isotope_plot()
                     plot = plots['isotope']
                     pid = g.plots.index(plot)
-
                     g.new_series(type='scatter', fit='linear', plotid=pid)
+                else:
+                    pid = g.plots.index(plot)
 
+                g.set_regressor(ii.regressor, pid)
                 if add_detector:
                     name = '{}{}'.format(name, di)
 
@@ -1822,10 +1825,15 @@ anaylsis_type={}
             and not self.spec.analysis_type.startswith('background')):
             cb = True
 
+        g = p.isotope_graph
         for d in self._active_detectors:
             self.debug('setting isotope det={}, iso={}'.format(d.name, d.isotope))
-            self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
-                                           correct_for_blank=cb)
+            iso = self.isotope_group.set_isotope(d.isotope, d.name, (0, 0),
+                                                 correct_for_blank=cb)
+
+            for idx in self._get_plot_id_by_ytitle(g, d.isotope, '{}{}'.format(d.isotope, d.name)):
+                plot = g.plots[idx]
+                plot.set_regressor(iso.regressor)
 
         self._load_previous()
 
@@ -2383,7 +2391,7 @@ anaylsis_type={}
         series = 0
         for k, iso in self.isotope_group.isotopes.iteritems():
 
-            idx = self._get_plot_id_by_ytitle(graph, iso, k)
+            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
 
             if idx is not None:
                 try:
@@ -2402,7 +2410,9 @@ anaylsis_type={}
     def _get_plot_id_by_ytitle(self, graph, iso, k):
         idx = graph.get_plotid_by_ytitle(k)
         if idx is None:
-            idx = graph.get_plotid_by_ytitle(iso.name)
+            if not isinstance(iso, str):
+                iso = iso.name
+            idx = graph.get_plotid_by_ytitle(iso)
         return idx
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
@@ -2430,7 +2440,7 @@ anaylsis_type={}
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.isotopes.iteritems():
-            idx = self._get_plot_id_by_ytitle(graph, iso, k)
+            idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
             if idx is not None:
                 try:
                     graph.series[idx][series]

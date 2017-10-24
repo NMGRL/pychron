@@ -436,6 +436,7 @@ class DVCAnalysis(Analysis):
                 self._load_value_error(i, v)
 
                 i.set_fit(v['fit'], notify=False)
+                i.error_type = v.get('error_type', 'SEM')
                 fod = v.get('filter_outliers_dict')
                 if fod:
                     i.filter_outliers_dict = fod

@@ -566,13 +566,13 @@ class Isotope(BaseIsotope):
         """
             return the discrimination and ic_factor corrected value
         """
-        # st=time.time()
         v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
 
         # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
-        # print self.name, time.time()-st
+
+        print 'get intensity regressor={}, {}'.format(id(self._regressor), self._regressor)
         return v
 
     def get_disc_corrected_value(self):

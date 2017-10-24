@@ -50,7 +50,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     indices = List
     filters = List
     selected_component = Any
-    # regressors = List
     regression_results = Event
     suppress_regression = False
 
@@ -236,8 +235,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             #     line = plot.plots[lkey][0]
             #     line.regressor.error_calc_type = fi
 
-                # if redraw:
-                #     self.redraw()
+            # if redraw:
+            #     self.redraw()
 
     def set_fit(self, fi, plotid=0, series=0, redraw=True):
 
@@ -271,6 +270,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             return scatter.fit
         except IndexError:
             pass
+
+    _outside_regressor = False
+
+    def set_regressor(self, reg, plotid=0):
+        self._outside_regressor = True
+        plot = self.plots[plotid]
+        for pp in plot.plots.values():
+            pp.regressor = reg
 
     def clear(self):
         # self.regressors = []
@@ -351,6 +358,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
+            if self._outside_regressor:
+                print 'line has {} regressor={}, {}'.format(id(self), id(r), r)
 
         if fit in [1, 2, 3, 4]:
             r = self._poly_regress(scatter, r, fit)
