@@ -104,8 +104,8 @@ class InverseIsochron(Isochron):
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
 
-        # for si in self.sorted_analyses:
-        # print si.record_id, si.group_id
+            # for si in self.sorted_analyses:
+            # print si.record_id, si.group_id
 
             # omit = self._get_omitted(self.sorted_analyses)
             # # print 'iso omit', omit
@@ -303,15 +303,20 @@ class InverseIsochron(Isochron):
                                                  value=v))
 
     def _add_info(self, plot, reg, label=None, text_color='black'):
-        intercept = reg.predict(0)
+        # intercept = reg.predict(0)
+        # err = reg.get_intercept_error()
+        intercept = reg.intercept
         err = reg.get_intercept_error()
+
         mswd = reg.mswd
         n = reg.n
 
         try:
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
-            err = inv_intercept * p
+            print err, p, inv_intercept, intercept
+            err = perr = inv_intercept * p
+            print perr
             mse = err * mswd ** 0.5
             v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
@@ -323,8 +328,8 @@ class InverseIsochron(Isochron):
 
         age = self.analysis_group.isochron_age
 
-        v = age.nominal_value
-        e = age.std_dev
+        v = nominal_value(age)
+        e = std_dev(age)
         p = format_percent_error(v, e)
 
         mse_age = e * mswd ** 0.5

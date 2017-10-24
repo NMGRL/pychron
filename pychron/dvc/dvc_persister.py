@@ -585,8 +585,8 @@ class DVCPersister(BasePersister):
                 obj = self.per_spec.run_spec
             try:
                 return getattr(obj, ki)
-            except AttributeError:
-                pass
+            except AttributeError, e:
+                self.warning('Attribute error: attr={}, error={}'.format(ki, e))
 
         d = {k: get(k) for k in keys}
         return d

@@ -93,15 +93,15 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
 
     # xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
     # # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
-    # try:
-    #     r = xint ** -1
-    # except ZeroDivisionError:
-    #     r = 0
 
     xint = reg.x_intercept
-    xint_err = regx.get_intercept_error()/(1/xint)**2
 
-    r = ufloat(xint, xint_err)
+    xint_err = regx.get_intercept_error()/(1/xint)**2
+    try:
+        r = xint ** -1
+        r = ufloat(r, xint_err)
+    except ZeroDivisionError:
+        r = 0
 
     age = ufloat(0, 0)
     if r > 0:

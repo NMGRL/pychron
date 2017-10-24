@@ -306,8 +306,8 @@ class ReedYorkRegressor(YorkRegressor):
     #         '''
     #         self._degree = 2
     def _get_weights(self):
-        wx = self.xserr ** -2
-        wy = self.yserr ** -2
+        wx = self.clean_xserr ** -2
+        wy = self.clean_yserr ** -2
 
         return wx, wy
 

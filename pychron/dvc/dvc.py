@@ -204,34 +204,59 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
-    def repository_db_sync(self, reponame):
+    def repository_db_sync(self, reponame, dry_run=False):
+        self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
         ps = []
-        ans = self.db.repository_analyses(reponame)
-        for ai in ans:
-            p = analysis_path(ai.record_id, reponame)
-            obj = dvc_load(p)
+        db = self.db
+        with db.session_ctx():
+            ans = db.get_repository_analyses(reponame)
 
-            sample = None
-            project = None
-            material = None
-            changed = False
-            for attr, v in (('sample', sample),
-                            ('project', project),
-                            ('material', material)):
-                if obj.get(attr) != v:
-                    obj[attr] = v
-                    changed = True
+            def key(ai):
+                return ai.identifier
 
-            if changed:
-                ps.append(p)
-                dvc_dump(obj, p)
+            for ln, ans in groupby(sorted(ans, key=key), key=key):
+                ip = db.get_identifier(ln)
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
+                for ai in ans:
+                    p = analysis_path(ai.record_id, reponame)
 
-        if ps:
+                    try:
+                        obj = dvc_load(p)
+                    except ValueError:
+                        print 'skipping {}'.format(p)
+
+                    sample = ip.sample.name
+                    project = ip.sample.project.name
+                    material = ip.sample.material.name
+                    changed = False
+                    for attr, v in (('sample', sample),
+                                    ('project', project),
+                                    ('material', material),
+                                    ('irradiation', irrad),
+                                    ('irradiation_level', level),
+                                    ('irradiation_position', pos)):
+                        ov = obj.get(attr)
+                        if ov != v:
+                            print '{:<20s} repo={} db={}'.format(attr, ov, v)
+                            obj[attr] = v
+                            changed = True
+
+                    if changed:
+                        print '{}'.format(p)
+                        ps.append(p)
+                        if not dry_run:
+                            dvc_dump(obj, p)
+
+        if ps and not dry_run:
             repo.pull()
             repo.add_paths(ps)
-            repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+            repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
+        self.info('finished db-repo sync for {}'.format(reponame))
 
     def repository_transfer(self, ans, dest):
         def key(x):
@@ -1035,6 +1060,7 @@ class DVC(Loggable):
             # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
+            print 'asfdafa', a.irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 # self.debug('Irradiation {}'.format(a.irradiation))
                 chronology = meta_repo.get_chronology(a.irradiation)

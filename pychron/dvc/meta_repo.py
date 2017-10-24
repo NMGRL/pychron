@@ -701,7 +701,7 @@ class MetaRepo(GitRepoManager):
         p = self._gain_path(name)
         return Gains(p)
 
-    @cached('clear_cache')
+    #@cached('clear_cache')
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
@@ -712,7 +712,7 @@ class MetaRepo(GitRepoManager):
         # print 'new production id={}, name={}, irrad={}, level={}'.format(id(ip), pname, irrad, level)
         return pname, ip
 
-    @cached('clear_cache')
+    #@cached('clear_cache')
     def get_chronology(self, name, **kw):
         return irradiation_chronology(name)
 
