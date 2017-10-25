@@ -282,7 +282,7 @@ class DataCollector(Consoleable):
         return d
 
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
-        for k, v in self.isotope_group.isotopes.iteritems():
+        for k, v in self.isotope_group.iteritems():
             signal = signals[keys.index(v.detector)]
             self._set_plot_data(i, None, v.detector, x, signal)
 
@@ -295,27 +295,17 @@ class DataCollector(Consoleable):
                 print 'no detector obj for {}'.format(dn), [d.name for d in self.detectors]
 
     def _get_fit(self, cnt, det, iso):
-    #
         isotopes = self.isotope_group.isotopes
+
         # print 'isotopes', ['{}{}'.format(i.name, i.detector) for i in isotopes.itervalues()]
         name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det and v.name == iso), (None, None))
-    #     print 'gff', cnt, det, iso, ix.name, name
+        # print 'pairs', [(k, v.detector, v.name) for k, v in isotopes.iteritems()]
+        # print 'get_fit', det, iso, name
+        # print 'gff', cnt, det, iso, ix.name, name
         if self.is_baseline:
-    #         # ix = isotopes[iso]
-    #         # fit = ix.baseline.get_fit(cnt)
             ix = ix.baseline
             name = det
-    #         # name = iso
-    #         # else:
-    #         # try:
-    #         #     name = iso
-    #         #     iso = isotopes[iso]
-    #         # except KeyError:
-    #         #     name = '{}{}'.format(iso, det)
-    #         #     iso = isotopes[name]
-    #
         fit = ix.get_fit(cnt)
-    #
         return fit, name
 
     def _set_plot_data(self, cnt, iso, det, x, signal):
@@ -326,7 +316,7 @@ class DataCollector(Consoleable):
         def update_graph(g, sidx, fidx):
             if iso is None:
                 pids = []
-                for isotope in self.isotope_group.isotopes.itervalues():
+                for isotope in self.isotope_group.itervalues():
                     # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
                     if isotope.detector == det:
                         pid = g.get_plotid_by_ytitle(isotope.detector)
@@ -527,4 +517,5 @@ class DataCollector(Consoleable):
     def cancelation_conditionals(self):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
+
 # ============= EOF =============================================

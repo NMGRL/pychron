@@ -380,7 +380,7 @@ class DVCPersister(BasePersister):
         if self.use_isotope_classifier:
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
-        for iso in per_spec.isotope_group.isotopes.values():
+        for iso in per_spec.isotope_group.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))

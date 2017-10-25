@@ -295,14 +295,19 @@ class AutomatedRun(Loggable):
             try:
                 fi = fits[k]
             except KeyError:
-                fi = 'linear'
-                self.warning('No fit for "{}". defaulting to {}. '
-                             'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
+                try:
+                    fi = fits[iso.name]
+                except KeyError:
+                    fi = 'linear'
+                    self.warning('No fit for "{}". defaulting to {}. '
+                                 'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
+
             iso.set_fit_blocks(fi)
             self.debug('set "{}" to "{}"'.format(k, fi))
 
             idx = self._get_plot_id_by_ytitle(g, iso, k)
-            g.set_regressor(iso.regressor, idx)
+            if idx is not None:
+                g.set_regressor(iso.regressor, idx)
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.isotope_group.isotopes
@@ -451,7 +456,7 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-                       self.isotope_group.isotopes.values()])
+                       self.isotope_group.values()])
             self.set_previous_baselines(bs)
             self.plot_panel.is_baseline = False
 
@@ -492,20 +497,25 @@ class AutomatedRun(Loggable):
             if dets[0][3]:
                 continue
 
-            add_detector = len(dets) > 1
+            # add_detector = len(dets) > 1
             for _, _, di, _ in dets:
                 self._add_active_detector(di)
                 name = iso
                 diso = '{}{}'.format(iso, di)
+
+                print iso, diso
+                print a.pairs()
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
                     ii.detector = di
                     a.isotopes.pop(iso)
                 elif diso in a.isotopes:
+                    name = diso
                     ii = a.isotopes[diso]
                     ii.detector = di
                     a.isotopes.pop(diso)
                 else:
+                    print 'new isotope', iso, di
                     ii = a.isotope_factory(name=iso, detector=di)
                     # if correct_for_blank:
                     #     if iso in pb:
@@ -515,24 +525,22 @@ class AutomatedRun(Loggable):
                     #     _, b = pbs[iso]
                     #     ii.set_baseline(nominal_value(b), std_dev(b))
 
-                plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
-
-                if plot is None:
+                # plot = g.get_plot_by_ytitle('{}{}'.format(iso, di)) or g.get_plot_by_ytitle(iso)
+                pid = self._get_plot_id_by_ytitle(g, ii, di)
+                if pid is None:
                     plots = self.plot_panel.new_isotope_plot()
                     plot = plots['isotope']
                     pid = g.plots.index(plot)
                     g.new_series(type='scatter', fit='linear', plotid=pid)
-                else:
-                    pid = g.plots.index(plot)
 
                 g.set_regressor(ii.regressor, pid)
-                if add_detector:
-                    name = '{}{}'.format(name, di)
-
+                # if add_detector:
+                #     name = '{}{}'.format(name, di)
                 a.isotopes[name] = ii
                 plot.y_axis.title = name
 
         self._load_previous()
+
         self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
@@ -1434,7 +1442,7 @@ anaylsis_type={}
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
             d = dict()
-            for k, iso in self.isotope_group.isotopes.iteritems():
+            for k, iso in self.isotope_group.iteritems():
                 d[k] = (iso.detector, iso.get_baseline_corrected_value())
             return d
 
@@ -1575,7 +1583,7 @@ anaylsis_type={}
                 fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
             return fod
 
-        for i in self.isotope_group.isotopes.itervalues():
+        for i in self.isotope_group.itervalues():
             fod = _get_filter_outlier_dict(i, 'signal')
             self.debug('setting fod for {}= {}'.format(i.name, fod))
             i.set_filtering(fod)
@@ -2063,21 +2071,32 @@ anaylsis_type={}
                     n = len(plots)
 
                     names = []
+                    multiples = []
                     for i, det in enumerate(self._active_detectors):
                         if i < n:
                             name = det.isotope
                             if name in names:
+                                multiples.append(name)
                                 name = '{}{}'.format(name, det.name)
 
                             plots[i].y_axis.title = name
                             self.debug('setting label {} {} {}'.format(i, det.name, name))
                             names.append(name)
 
+                    for i, det in enumerate(self._active_detectors):
+                        if i < n:
+                            name = det.isotope
+                            if name in multiples:
+                                self.debug('second setting label {} {} {}'.format(i, det.name, name))
+                                plots[i].y_axis.title = '{}{}'.format(name, det.name)
                     g.refresh()
 
     def _update_detectors(self):
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det)
+        # print 'aaaa',self.isotope_group.keys()
+        for det in self._active_detectors:
+            self.isotope_group.set_isotope_detector(det, add=True)
 
     def _set_magnet_position(self, pos, detector,
                              use_dac=False, update_detectors=True,
@@ -2096,43 +2115,33 @@ anaylsis_type={}
             self._update_detectors()
 
         if remove_non_active:
-            # remove non active isotopes
-            # print 'pairs', [(k, v.name, v.detector) for k, v in self.isotope_group.isotopes.items()]
-            # print 'active isotopes', [di.isotope for di in self._active_detectors]
-            for k, v in self.isotope_group.isotopes.items():
-
-                det = next((di for di in self._active_detectors if di.isotope == v.name and v.detector == di.name),
-                           None)
-                # print k, repr(v), det
+            for k in self.isotope_group.keys():
+                iso = self.isotope_group.isotopes[k]
+                det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
                 if det is None:
-                    print 'remove ', k
-                    self.isotope_group.isotopes.pop(k)
-
-            # print 'precleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
+                    self.isotope_group.pop(k)
 
             def key(v):
                 return v[1].name
 
-            for name, items in groupby(sorted(self.isotope_group.isotopes.items(), key=key), key=key):
-                for k, v in items:
-                    if name != k:
-                        self.isotope_group.isotopes.pop(k)
+            def key2(v):
+                return v[1].detector
 
-            # # for di in self._active_detectors:
-            # #     print di.name, di.isotope
-            #
-            # for k in self.isotope_group.isotopes.keys():
-            #     iso = self.isotope_group.isotopes[k]
-            # # for iso in self.isotope_group.isotopes.keys():
-            # #     print 'remove non active {}'.format(iso)
-            #
-            #     det = next((di for di in self._active_detectors if di.isotope == iso.name), None)
-            #     if det is None:
-            #         self.isotope_group.isotopes.pop(k)
+            for name, items in groupby(sorted(self.isotope_group.items(), key=key), key=key):
+                items = list(items)
+                if len(items) > 1:
+                    for det, items in groupby(sorted(items, key=key2), key=key2):
 
-            # print 'cleaned isotoped group {}'.format(self.isotope_group.isotopes.keys())
+                        items = list(items)
+                        if len(items) > 1:
+                            for k, v in items:
+                                if v.name == k:
+                                    self.isotope_group.isotopes.pop(k)
+
+            self.debug('cleaned isotoped group {}'.format(self.isotope_group.keys()))
 
         if self.plot_panel:
+            self.debug('load analysis view')
             self.plot_panel.analysis_view.load(self)
             self.plot_panel.analysis_view.refresh_needed = True
 
@@ -2368,7 +2377,7 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_)
         series = 0
-        for k, iso in self.isotope_group.isotopes.iteritems():
+        for k, iso in self.isotope_group.iteritems():
             idx = graph.get_plotid_by_ytitle(iso.detector)
             if idx is not None:
                 try:
@@ -2401,7 +2410,7 @@ anaylsis_type={}
 
         # series = self.collector.series_idx
         series = 0
-        for k, iso in self.isotope_group.isotopes.iteritems():
+        for k, iso in self.isotope_group.iteritems():
 
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
 
@@ -2451,7 +2460,7 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
-        for k, iso in self.isotope_group.isotopes.iteritems():
+        for k, iso in self.isotope_group.iteritems():
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
             if idx is not None:
                 try:

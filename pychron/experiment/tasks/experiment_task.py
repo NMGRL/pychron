@@ -508,10 +508,6 @@ class ExperimentEditorTask(EditorTask):
             self.manager.executor.active_editor = self.active_editor
             self._show_pane(self.experiment_factory_pane)
 
-    @on_trait_change('manager:executor:auto_save_event')
-    def _auto_save(self):
-        self.save()
-
     @on_trait_change('loading_manager:group_positions')
     def _update_group_positions(self, new):
         # if not new:

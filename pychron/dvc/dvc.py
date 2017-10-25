@@ -1060,7 +1060,6 @@ class DVC(Loggable):
             # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
-            print 'asfdafa', a.irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 # self.debug('Irradiation {}'.format(a.irradiation))
                 chronology = meta_repo.get_chronology(a.irradiation)
