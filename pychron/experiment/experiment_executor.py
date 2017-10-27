@@ -412,6 +412,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                'starttime': exp.start_timestamp,
                'mass_spectrometer': exp.mass_spectrometer,
                'username': exp.username,
+               'use_email': exp.use_email,
+               'use_group_email': exp.use_group_email,
+               'user_email': exp.email,
+               'group_emails': self._get_group_emails(exp.email),
                'nruns_finished': self.stats.nruns_finished}
         return ctx
 
@@ -521,7 +525,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02d} {}'.format(i, exp.name))
-
         self.debug('reset stats: {}'.format(self.stats))
         if self.stats:
             self.stats.reset()
@@ -684,15 +687,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._err_message and self.end_at_run_completion:
             self._err_message = 'User terminated'
 
-        if exp.use_email:
-            self.info('Notifying user={} email={}'.format(exp.username, exp.email))
-            self.user_notifier.notify(exp, last_runid, self._err_message)
-
-        if exp.use_group_email:
-            names, addrs = self._get_group_emails(exp.email)
-            if names:
-                self.info('Notifying user group names={}'.format(','.join(names)))
-                self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
+        # if exp.use_email:
+        #     self.info('Notifying user={} email={}'.format(exp.username, exp.email))
+        #     self.user_notifier.notify(exp, last_runid, self._err_message)
+        #
+        # if exp.use_group_email:
+        #     names, addrs = self._get_group_emails(exp.email)
+        #     if names:
+        #         self.info('Notifying user group names={}'.format(','.join(names)))
+        #         self.user_notifier.notify_group(exp, last_runid, self._err_message, addrs)
 
         self._do_event(events.END_QUEUE)
         # self._end_event()
