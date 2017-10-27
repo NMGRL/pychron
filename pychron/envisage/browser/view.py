@@ -72,7 +72,9 @@ class BaseBrowserView(HasTraits):
     def _get_browser_tool_group(self):
         hgrp = HGroup(icon_button_editor('filter_by_button',
                                          'find',
-                                         tooltip='Filter analyses using defined criteria'),
+                                         tooltip='Search for analyses using defined criteria'),
+                      icon_button_editor('advanced_filter_button', '', tooltip='Advanced Search. e.g. search '
+                                                                               'by intensity'),
                       # icon_button_editor('load_view_button',
                       #                    'table',
                       #                    tooltip='Select analyses by load'),

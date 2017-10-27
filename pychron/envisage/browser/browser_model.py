@@ -41,6 +41,7 @@ from traits.api import Str, Bool, Property, on_trait_change, Button, List
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
+from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
 from pychron.envisage.browser.record_views import ProjectRecordView
 
@@ -65,6 +66,7 @@ class BrowserModel(BaseBrowserModel):
     principal_investigator_visible = Property(depends_on='filter_focus')
 
     filter_by_button = Button
+    advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
 
@@ -309,8 +311,8 @@ class BrowserModel(BaseBrowserModel):
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
 
-        hp = self.high_post # if self.use_high_post or self.use_named_date_range else None
-        lp = self.low_post # if self.use_low_post or self.use_named_date_range else None
+        hp = self.high_post  # if self.use_high_post or self.use_named_date_range else None
+        lp = self.low_post  # if self.use_low_post or self.use_named_date_range else None
 
         lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
                                      projects=ps,

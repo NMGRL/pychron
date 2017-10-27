@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Button, Instance
 
+from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
 from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
@@ -158,6 +159,31 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.add_analysis_set()
 
     # handlers
+    _afilter = None
+
+    def _advanced_filter_button_fired(self):
+        self.debug('advanced filter')
+        if self._afilter is None:
+            attrs = self.dvc.get_search_attributes()
+            if attrs:
+                attrs = list(zip(*attrs)[0])
+
+            m = AdvancedFilterView(attributes=attrs)
+            # m.demo()
+            self._afilter = m
+
+        m = self._afilter
+        info = m.edit_traits(kind='livemodal')
+        if info.result:
+            lns = self.dvc.get_analyses_advanced(m.filters, return_labnumbers=True)
+            sams = self._load_sample_record_views(lns)
+            self.samples = sams
+            self.osamples = sams
+
+            ans = self.dvc.get_analyses_advanced(m.filters)
+            ans = self._make_records(ans)
+            self.analysis_table.set_analyses(ans)
+
     def _add_analysis_group_button_fired(self):
         ans = self.analysis_table.get_selected_analyses()
         if ans:

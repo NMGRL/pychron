@@ -314,6 +314,10 @@ class DVCPersister(BasePersister):
         db = self.dvc.db
         an = db.add_analysis(**d)
 
+        # save results
+        for iso in self.per_spec.isotope_group.isotopes.values():
+            db.add_analysis_result(an, iso)
+
         # save media
         if self.per_spec.snapshots:
             for p in self.per_spec.snapshots:
@@ -387,11 +391,8 @@ class DVCPersister(BasePersister):
             for ss, blob in ((signals, sblob), (sniffs, snblob)):
                 d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
                 ss.append(d)
-                # signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
-                # sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
-            isod = {'detector': iso.detector,
-                    'name': iso.name}
+            isod = {'detector': iso.detector, 'name': iso.name}
 
             if clf is not None:
                 klass, prob = clf.predict_isotope(iso)

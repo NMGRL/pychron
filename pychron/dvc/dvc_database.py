@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from datetime import timedelta, datetime
 
-from sqlalchemy import not_, func, distinct, or_
+from sqlalchemy import not_, func, distinct, or_, select, and_, join
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
@@ -35,8 +35,40 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
-    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl
+    SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
+    AnalysisIntensitiesTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
+
+
+def make_filter(qq, table, col='value'):
+    comp = qq.comparator
+    v = qq.criterion
+    if comp == '<':
+        ffunc = lambda col: col.__lt__(v)
+    elif comp == '>':
+        ffunc = lambda col: col.__gt__(v)
+    elif comp == '>=':
+        ffunc = lambda col: col.__ge__(v)
+    elif comp == '<=':
+        ffunc = lambda col: col.__le__(v)
+    elif comp == '==':
+        ffunc = lambda col: col.__eq__(v)
+    elif comp == '!=':
+        ffunc = lambda col: col.__ne__(v)
+
+    # col1 = 'isotope'
+    # if qq.attribute in detectors:
+    #     col1 = 'detector'
+    #
+    # col = 'value'
+    nclause = ffunc(getattr(table, col))
+    # nclause = and_(nclause, getattr(table, col1) == qq.attribute)
+
+    chain = ''
+    if qq.show_chain:
+        chain = qq.chain_operator
+
+    return nclause, chain
 
 
 def compress_times(times, delta):
@@ -452,7 +484,7 @@ class DVCDatabase(DatabaseAdapter):
             a = UserTbl(name=name, **kw)
             return self._add_item(a)
 
-    def add_analysis_group(self, name, project, pi,  ans):
+    def add_analysis_group(self, name, project, pi, ans):
         with self.session_ctx():
             project = self.get_project(project, pi)
             grp = AnalysisGroupTbl(name=name)
@@ -466,6 +498,90 @@ class DVCDatabase(DatabaseAdapter):
                 s.analysis = a
                 self._add_item(s)
 
+    def add_analysis_result(self, analysis, iso):
+        with self.session_ctx():
+            result = AnalysisIntensitiesTbl()
+            result.isotope = iso.name
+            result.detector = iso.detector
+            result.blank_value = iso.blank.value
+            result.blank_error = iso.blank.error
+
+            for attrs, i, tag in ((('value', 'error', 'n', 'fit', 'fit_error_type:error_type'),
+                                   iso, ''),
+                                  ('value', 'error', 'n', 'fit', 'fit_error_type:error_type',
+                                   iso.baseline, 'baseline_')):
+
+                for a in attrs:
+                    if ':' in a:
+                        a, b = a.split(':')
+                    else:
+                        a, b = a
+
+                    setattr(result, '{}{}'.format(tag, a), getattr(i, b))
+
+            result.analysis = analysis
+            self._add_item(result)
+
+    def get_search_attributes(self):
+        with self.session_ctx() as sess:
+            s1 = sess.query(distinct(AnalysisIntensitiesTbl.isotope))
+            s2 = sess.query(distinct(AnalysisIntensitiesTbl.detector))
+            q = s1.union(s2)
+            return self._query_all(q)
+
+            # q = sess.query(AnalysisIntensitiesTbl)
+
+    def get_analyses_advanced(self, queries, isotopes=None, detectors=None, return_labnumbers=False):
+        if isotopes is None:
+            with self.session_ctx() as sess:
+                s1 = sess.query(distinct(AnalysisIntensitiesTbl.isotope))
+                rs = self._query_all(s1)
+                isotopes = list(zip(*rs)[0])
+
+        if detectors is None:
+            with self.session_ctx() as sess:
+                s1 = sess.query(distinct(AnalysisIntensitiesTbl.detector))
+                rs = self._query_all(s1)
+                detectors = list(zip(*rs)[0])
+
+        def make_query(qq):
+            col1 = 'isotope'
+            if qq.attribute in detectors:
+                col1 = 'detector'
+            #
+            # col = 'value'
+            # nclause = ffunc(getattr(table, col))
+            nclause, chain = make_filter(qq, AnalysisIntensitiesTbl)
+            nclause = and_(nclause, getattr(AnalysisIntensitiesTbl, col1) == qq.attribute)
+            return nclause, chain
+
+        with self.session_ctx() as sess:
+            if return_labnumbers:
+                q = sess.query(IrradiationPositionTbl)
+                q = q.join(AnalysisTbl, AnalysisIntensitiesTbl)
+            else:
+                q = sess.query(AnalysisTbl)
+                q = q.join(AnalysisIntensitiesTbl)
+
+            qi = queries[0]
+            qa, _ = make_query(qi)
+            j = join(AnalysisTbl, AnalysisIntensitiesTbl, AnalysisTbl.id == AnalysisIntensitiesTbl.analysisID)
+            ff = qa
+
+            bs = select([AnalysisTbl.id]).select_from(j)
+            # s = bs.where(q).alias('moo')
+            for i, qi in enumerate(queries[1:]):
+                qa, chain = make_query(qi)
+                if chain == 'and':
+                    chain_func = and_
+                else:
+                    chain_func = or_
+
+                ss = bs.where(qa)#.alias('{}'.format(i))
+                ff = chain_func(ff, AnalysisTbl.id.in_(ss))
+
+            q = q.filter(ff)
+            return self._query_all(q, verbose_query=True)
     # def add_analysis_group_set(self, group, analysis, **kw):
     #     obj = AnalysisGroupSetTbl(analysisID=analysis.id, **kw)
     #     self._add_item(obj)
@@ -1049,7 +1165,7 @@ class DVCDatabase(DatabaseAdapter):
                 a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
                 if not a:
                     if not isinstance(extract_devices, (tuple, list)):
-                        extract_devices=(extract_devices, )
+                        extract_devices = (extract_devices,)
 
                     es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
                     if es:
@@ -1912,7 +2028,7 @@ class DVCDatabase(DatabaseAdapter):
                 return [ni.name for ni in names or []]
 
 
-            # if __name__ == '__main__':
+                # if __name__ == '__main__':
 
     import random
 

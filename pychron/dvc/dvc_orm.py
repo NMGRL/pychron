@@ -141,6 +141,7 @@ class AnalysisTbl(Base, BaseMixin):
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
     measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
+    results = relationship('AnalysisIntensitiesTbl', backref='analysis')
 
     _record_view = None
     group_id = 0
@@ -264,6 +265,31 @@ class AnalysisTbl(Base, BaseMixin):
         iv.use_repository_suffix = use_suffix
         iv.init()
         return iv
+
+
+class AnalysisIntensitiesTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+    value = Column(Float)
+    error = Column(Float)
+    n = Column(Integer)
+    fit = stringcolumn(32)
+    fit_error_type = stringcolumn(32)
+    baseline_value = Column(Float)
+    baseline_error = Column(Float)
+    baseline_n = Column(Integer)
+    baseline_fit = stringcolumn(32)
+    baseline_fit_error_type = stringcolumn(32)
+    blank_value = Column(Float)
+    blank_error = Column(Float)
+
+    kca_value = Column(Float)
+    kca_error = Column(Float)
+    kcl_value = Column(Float)
+    kcl_error = Column(Float)
+
+    isotope = stringcolumn(32)
+    detector = stringcolumn(32)
 
 
 class ProjectTbl(Base, NameMixin):
