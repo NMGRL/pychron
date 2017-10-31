@@ -315,9 +315,13 @@ class BasePeakCenter(MagnetSweep):
         graph.redraw()
 
     def _interpolate(self, x, y):
-        f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
-        x = linspace(x.min(), x.max(), 500)
-        y = f(x)
+        try:
+            f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
+            x = linspace(x.min(), x.max(), 500)
+            y = f(x)
+        except ValueError, e:
+            self.warning('interpolation failed: error={}. x.shape={}, y.shape={}'.format(e, x.shape, y.shape))
+
         return x, y
 
     def _calculate_peak_center(self, x, y):
