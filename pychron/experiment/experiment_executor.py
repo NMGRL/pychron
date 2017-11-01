@@ -47,7 +47,7 @@ from pychron.experiment.datahub import Datahub
 from pychron.experiment.experiment_scheduler import ExperimentScheduler
 from pychron.experiment.experiment_status import ExperimentStatus
 # from pychron.experiment.health.series import SystemHealthSeries
-from pychron.experiment.notifier.user_notifier import UserNotifier
+# from pychron.experiment.notifier.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, SYSTEM, QUEUE, RUN, \
     CONDITIONAL_GROUP_TAGS
@@ -81,7 +81,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     """
     experiment_queues = List
     experiment_queue = Any
-    user_notifier = Instance(UserNotifier, ())
+    # user_notifier = Instance(UserNotifier, ())
     connectables = List
     active_editor = Any
     console_bgcolor = 'black'
@@ -267,11 +267,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs, mod='color')
 
         # user_notifier
-        attrs = ('include_log',)
-        self._preference_binder(prefid, attrs, obj=self.user_notifier)
-
-        emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
-        self.user_notifier.emailer = emailer
+        # attrs = ('include_log',)
+        # self._preference_binder(prefid, attrs, obj=self.user_notifier)
+        #
+        # emailer = self.application.get_service('pychron.social.email.emailer.Emailer')
+        # self.user_notifier.emailer = emailer
 
         # memory
         attrs = ('use_memory_check', 'memory_threshold')
@@ -287,14 +287,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def add_event(self, *events):
         self.events.extend(events)
 
-    def execute(self):
-
-        if self.user_notifier.emailer is None:
-            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+    def _check_email_plugin(self):
+        if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+            if not self.application.get_plugin('pychron.social.email.plugin'):
                 if not self.confirmation_dialog('Email Plugin not initialized. '
                                                 'Required for sending email notifications. '
                                                 'Are you sure you want to continue?'):
                     return
+
+        return True
+
+    def execute(self):
+        if not self._check_email_plugin():
+            return
+
         prog = open_progress(100, position=(100, 100))
 
         pre_execute_result = False
@@ -394,6 +400,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ctx = self._make_event_context()
         ctx.update(**kw)
         for evt in self.events:
+            self.debug('Event {},{} '.format(evt.level, level))
             if evt.level == level:
                 try:
                     evt.do(ctx)
@@ -409,14 +416,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ctx = {'etf_iso': self.stats.etf_iso,
                'err_message': self._err_message,
                'experiment_name': exp.name,
+               'experiment': exp,
                'starttime': exp.start_timestamp,
-               'mass_spectrometer': exp.mass_spectrometer,
                'username': exp.username,
                'use_email': exp.use_email,
                'use_group_email': exp.use_group_email,
                'user_email': exp.email,
                'group_emails': self._get_group_emails(exp.email),
-               'nruns_finished': self.stats.nruns_finished}
+               }
         return ctx
 
     def _reset(self):
@@ -1799,12 +1806,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.warning_dialog('No analysis in the queue')
             return
 
-        if self.user_notifier.emailer is None:
-            if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
-                if not self.confirmation_dialog('Email Plugin not initialized. '
-                                                'Required for sending email notifications. '
-                                                'Are you sure you want to continue?'):
-                    return
+        if not self._check_email_plugin():
+            return
 
         if self.datahub.massspec_enabled:
             if not self.datahub.store_connect('massspec'):
