@@ -455,7 +455,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         if t == 'uF':
             a, e = self.F, self.F_err
         elif t == 'uage':
-            a, e = self.uage.nominal_value, self.uage.std_dev
+            a, e = nominal_value(self.uage), std_dev(self.uage)
         else:
             v = self.get_value(t)
             if isinstance(v, Isotope):
