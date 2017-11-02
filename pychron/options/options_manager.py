@@ -71,11 +71,11 @@ class OptionsManager(Loggable):
         self._new_name = v
 
     def _validate_new_name(self, v):
-        if v not in self.names:
-            return v
+        if all((a not in v) for a in ('\\', ' ', '/')):
+            if v not in self.names:
+                return v
 
     def set_detectors(self, dets):
-        print 'setdetcot', dets
         self._cached_detectors = dets
         if self.selected_options:
             self.selected_options.set_detectors(dets)
