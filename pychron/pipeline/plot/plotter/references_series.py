@@ -474,7 +474,8 @@ class ReferencesSeries(BaseSeries):
         reg.user_excluded = sel
         key = 'Unknowns-predicted0'
         for plotobj in self.graph.plots:
-            if plotobj.isotope == isotope:
-                self._set_values(plotobj, reg, key)
+            if hasattr(plotobj, 'isotope'):
+                if plotobj.isotope == isotope:
+                    self._set_values(plotobj, reg, key)
 
 # ============= EOF =============================================
