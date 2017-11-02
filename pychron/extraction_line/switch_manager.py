@@ -513,7 +513,7 @@ class SwitchManager(Manager):
         return d
 
     def load_valve_states(self):
-        self.load_indicator_states(force=True)
+        self.load_indicator_states()
 
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
