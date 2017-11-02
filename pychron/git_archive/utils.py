@@ -18,6 +18,7 @@
 import os
 from datetime import datetime
 
+import re
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
@@ -103,13 +104,17 @@ def get_commits(repo, branch, path, tag, *args):
     #         print l.strip()
     #     return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
-
-def get_diff(repo, a, b, path, change_type='M'):
+def get_repo(repo):
     if isinstance(repo, (str, unicode)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
 
+    return repo
+
+def get_diff(repo, a, b, path, change_type='M'):
+
+    repo = get_repo(repo)
     # a = repo.commit(a)
     diff = repo.git.diff(a, b, '--full-index', '--', path)
     if diff:
@@ -117,6 +122,31 @@ def get_diff(repo, a, b, path, change_type='M'):
         # ablob = Blob(repo, hex_to_bin(a_blob_id), mode=self.a_mode, path=a_path)
         # bblob = ''
         # return ablob, bblob
+
+
+aregex = re.compile(r'\[ahead (?P<count>\d+)')
+bregex = re.compile(r'behind (?P<count>\d+)')
+
+
+def ahead_behind(repo, fetch=True, remote='origin'):
+    repo = get_repo(repo)
+
+    ahead = 0
+    behind = 0
+    if fetch:
+        repo.git.fetch(remote)
+
+    status = repo.git.status('-sb')
+
+    ma = aregex.search(status)
+    mb = bregex.search(status)
+    if ma:
+        ahead = int(ma.group('count'))
+    if mb:
+        behind = int(mb.group('count'))
+
+    return ahead, behind
+
 
 
 def fu(repo, text):

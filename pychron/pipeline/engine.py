@@ -23,6 +23,8 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
+from pychron.dvc.tasks.repo_task import RepoItem
+from pychron.git_archive.utils import ahead_behind
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -169,6 +171,7 @@ class PipelineEngine(Loggable):
     update_needed = Event
     refresh_table_needed = Event
 
+    repositories = List
     # show_group_colors = Bool
 
     selected_pipeline_template = Str
@@ -381,7 +384,6 @@ class PipelineEngine(Loggable):
     def add_review(self, node=None, run=False):
         newnode = ReviewNode()
         self._add_node(node, newnode, run)
-
 
     def chain_ideogram(self, node):
         self._set_template('ideogram', clear=False)
@@ -656,6 +658,20 @@ class PipelineEngine(Loggable):
         self.update_needed = True
         self.refresh_table_needed = True
 
+        reponames = list({a.repository_identifier for items in (state.unknowns, state.references) for a in items})
+        if self.repositories:
+            enames = [r.name for r in self.repositories]
+            reponames = [n for n in reponames if n not in enames]
+
+        if reponames:
+            repos = [RepoItem(name=n) for n in reponames]
+            if self.repositories:
+                self.repositories.extend(repos)
+            else:
+                self.repositories = repos
+
+        self._update_repository_status()
+
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
             if hasattr(node, 'editor'):
@@ -667,6 +683,15 @@ class PipelineEngine(Loggable):
                     break
 
     # private
+    def _update_repository_status(self):
+        for r in self.repositories:
+            name = r.name
+            p = os.path.join(paths.repository_dataset_dir, name)
+            a, b = ahead_behind(p, fetch=False)
+            r.ahead = a
+            r.behind = b
+            r.status = '{},{}'.format(a,b)
+
     def _set_grouping(self, items, gid, attr='group_id'):
         for si in items:
             setattr(si, attr, gid)
@@ -894,6 +919,7 @@ class PipelineEngine(Loggable):
 
     def _handle_len_unknowns(self, new):
         self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+
         def func(editor):
             vs = self.selected.unknowns
             editor.set_items(vs)

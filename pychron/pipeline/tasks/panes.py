@@ -19,8 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit
-from traitsui.handler import Handler
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
@@ -424,6 +423,23 @@ class AnalysesPane(TraitsDockPane):
                                                      selected='selected_references',
                                                      operations=['delete']))),
                  handler=AnalysesPaneHandler())
+        return v
+
+
+class RepositoryTabularAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Status', 'status')]
+
+
+class RepositoryPane(TraitsDockPane):
+    name = 'Repositories'
+    id = 'pychron.pipeline.repository'
+
+    def traits_view(self):
+        v = View(UItem('object.repositories', editor=myTabularEditor(adapter=RepositoryTabularAdapter(),
+                                                                     editable=False,
+                                                                     multi_select=True,
+                                                                     selected='selected_repositories')))
         return v
 
 

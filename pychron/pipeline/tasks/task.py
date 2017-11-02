@@ -45,7 +45,7 @@ from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction,
     InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel, set_interpreted_age
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
 
@@ -137,6 +137,7 @@ class PipelineTask(BaseBrowserTask):
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
                  AnalysesPane(model=self.engine),
+                 RepositoryPane(model=self.engine)
                  # InspectorPane(model=self.engine)
                  ]
         return panes
@@ -517,7 +518,7 @@ class PipelineTask(BaseBrowserTask):
                                                  width=200),
                                         PaneItem('pychron.pipeline.analyses',
                                                  width=200)),
-                                        # PaneItem('pychron.pipeline.inspector'),
+                                        PaneItem('pychron.pipeline.repository'),
                                         orientation='vertical'))
 
     def _extra_actions_default(self):

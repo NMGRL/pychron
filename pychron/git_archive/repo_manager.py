@@ -35,7 +35,7 @@ from pychron.envisage.view_util import open_view
 from pychron.git_archive.commit import Commit
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
-from pychron.git_archive.utils import get_head_commit
+from pychron.git_archive.utils import get_head_commit, ahead_behind
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 
@@ -63,9 +63,6 @@ def isoformat_date(d):
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
 
-
-aregex = re.compile(r'\[ahead (?P<count>\d+)')
-bregex = re.compile(r'behind (?P<count>\d+)')
 
 
 class GitProgress(RemoteProgress):
@@ -674,21 +671,8 @@ class GitRepoManager(Loggable):
     def ahead_behind(self, remote='origin'):
         self.debug('ahead behind')
 
-        ahead = 0
-        behind = 0
         repo = self._repo
-
-        # repo.git.rev_list('origin..')
-        self.fetch(remote)
-        # status = repo.git.status('-sb')
-        status = self._git_command(lambda: repo.git.status('-sb'), 'GitRepoManager.ahead_behind')
-
-        ma = aregex.search(status)
-        mb = bregex.search(status)
-        if ma:
-            ahead = int(ma.group('count'))
-        if mb:
-            behind = int(mb.group('count'))
+        ahead, behind = ahead_behind(repo, remote)
 
         return ahead, behind
 
