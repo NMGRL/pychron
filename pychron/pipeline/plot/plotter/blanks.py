@@ -22,9 +22,15 @@ from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class Blanks(ReferencesSeries):
+    def _get_isotope(self, po, analysis):
+        iso = next((iso for iso in analysis.isotopes.itervalues() if iso.name == po.name), None)
+        return iso
+
     def _get_interpolated_value(self, po, analysis):
-        iso = analysis.isotopes[po.name]
-        return iso.temporary_blank.value, iso.temporary_blank.error
+        iso = self._get_isotope(po, analysis)
+        if iso:
+            v, e = iso.temporary_blank.value, iso.temporary_blank.error
+        return v, e
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
@@ -32,8 +38,8 @@ class Blanks(ReferencesSeries):
                 ui.set_temporary_blank(iso, v, e, fit)
 
     def _get_reference_data(self, po):
-        name = po.name
-        ys = [ai.isotopes[name].get_baseline_corrected_value() for ai in self.sorted_references]
+        ys = [self._get_isotope(po, ai).get_baseline_corrected_value() for ai in self.sorted_references]
+
         return ys
 
     def _get_current_data(self, po):
