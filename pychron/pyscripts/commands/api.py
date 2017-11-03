@@ -13,7 +13,7 @@ from .measurement import AddTermination, AddAction, AddTruncation, ClearConditio
     ActivateDetectors, Multicollect, Regress, Sniff, PeakHop, Coincidence, SetDeflection, SetNcounts, SetDeflections, \
     SetSourceOptics, SetSourceParameters, SetCddOperatingVoltage, SetYsymmetry, SetZsymmetry, SetZfocus, \
     SetExtractionLens, DefineDetectors, DefineHops, GetDeflection, IsLastRun, LoadHops, SetBaselineFits, SetFits, \
-    SetIntegrationTime, SetAcceleratingVoltage
+    SetIntegrationTime, SetAcceleratingVoltage, SetExtractionFocus, SetExtractionSymmetry
 
 __all__ = (Wait, Info, Sleep, Gosub, BeginInterval, CompleteInterval, Interval, Exit, Delay,
 

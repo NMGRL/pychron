@@ -283,10 +283,10 @@ class AnalysisIntensitiesTbl(Base, BaseMixin):
     blank_value = Column(Float)
     blank_error = Column(Float)
 
-    kca_value = Column(Float)
-    kca_error = Column(Float)
-    kcl_value = Column(Float)
-    kcl_error = Column(Float)
+    # kca_value = Column(Float)
+    # kca_error = Column(Float)
+    # kcl_value = Column(Float)
+    # kcl_error = Column(Float)
 
     isotope = stringcolumn(32)
     detector = stringcolumn(32)

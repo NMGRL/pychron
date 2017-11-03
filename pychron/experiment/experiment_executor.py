@@ -400,7 +400,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ctx = self._make_event_context()
         ctx.update(**kw)
         for evt in self.events:
-            self.debug('Event {},{} '.format(evt.level, level))
+            # self.debug('Event {},{} '.format(evt.level, level))
             if evt.level == level:
                 try:
                     evt.do(ctx)

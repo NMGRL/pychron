@@ -2098,6 +2098,8 @@ anaylsis_type={}
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det, add=True)
 
+        self._load_previous()
+
     def _set_magnet_position(self, pos, detector,
                              use_dac=False, update_detectors=True,
                              update_labels=True, update_isotopes=True,

@@ -503,23 +503,27 @@ class DVCDatabase(DatabaseAdapter):
             result = AnalysisIntensitiesTbl()
             result.isotope = iso.name
             result.detector = iso.detector
-            result.blank_value = iso.blank.value
-            result.blank_error = iso.blank.error
+            result.blank_value = float(iso.blank.value)
+            result.blank_error = float(iso.blank.error)
 
-            for attrs, i, tag in ((('value', 'error', 'n', 'fit', 'fit_error_type:error_type'),
-                                   iso, ''),
-                                  ('value', 'error', 'n', 'fit', 'fit_error_type:error_type',
-                                   iso.baseline, 'baseline_')):
+            attrs = ('value', 'error', 'n', 'fit', 'fit_error_type:error_type')
+            for i, tag in ((iso, ''), (iso.baseline, 'baseline_')):
 
                 for a in attrs:
                     if ':' in a:
                         a, b = a.split(':')
                     else:
-                        a, b = a
+                        a, b = a, a
 
-                    setattr(result, '{}{}'.format(tag, a), getattr(i, b))
+                    v = getattr(i, b)
+                    if b in ('value', 'error'):
+                        v = float(v)
+                    elif b == 'n':
+                        v = int(v)
+                    setattr(result, '{}{}'.format(tag, a), v)
 
             result.analysis = analysis
+
             self._add_item(result)
 
     def get_search_attributes(self):
@@ -577,11 +581,12 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     chain_func = or_
 
-                ss = bs.where(qa)#.alias('{}'.format(i))
+                ss = bs.where(qa)  # .alias('{}'.format(i))
                 ff = chain_func(ff, AnalysisTbl.id.in_(ss))
 
             q = q.filter(ff)
             return self._query_all(q, verbose_query=True)
+
     # def add_analysis_group_set(self, group, analysis, **kw):
     #     obj = AnalysisGroupSetTbl(analysisID=analysis.id, **kw)
     #     self._add_item(obj)
