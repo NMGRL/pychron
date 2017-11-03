@@ -2377,7 +2377,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_)
+        graph.set_x_limits(min_=min_, max_=max_*1.1)
         series = 0
         for k, iso in self.isotope_group.iteritems():
             idx = graph.get_plotid_by_ytitle(iso.detector)
