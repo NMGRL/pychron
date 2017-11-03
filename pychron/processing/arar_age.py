@@ -201,13 +201,9 @@ class ArArAge(IsotopeGroup):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.uvalue
-        elif attr == 'uF':
-            r = self.uF
+        elif attr in ('uage_wo_j_err', 'uage_w_j_err', 'uF'):
+            r = getattr(self, attr)
         elif attr.startswith('u') and ('/' in attr or '_' in attr):
-
-            # elif '/' in attr:
-            #     non_ic_corr = attr.startswith('u')
-            #     if non_ic_corr:
             attr = attr[1:]
             r = self.get_ratio(attr, non_ic_corr=True)
         elif attr == 'icf_40_36':
