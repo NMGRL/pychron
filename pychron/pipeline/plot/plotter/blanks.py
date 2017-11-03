@@ -18,15 +18,14 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.pipeline.plot. import ReferencesSeries
+from uncertainties import ufloat
+
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class Blanks(ReferencesSeries):
-    def _get_isotope(self, po, analysis):
-        iso = next((iso for iso in analysis.isotopes.itervalues() if iso.name == po.name), None)
-        return iso
-
     def _get_interpolated_value(self, po, analysis):
+        v, e = 0, 0
         iso = self._get_isotope(po, analysis)
         if iso:
             v, e = iso.temporary_blank.value, iso.temporary_blank.error
@@ -38,12 +37,13 @@ class Blanks(ReferencesSeries):
                 ui.set_temporary_blank(iso, v, e, fit)
 
     def _get_reference_data(self, po):
-        ys = [self._get_isotope(po, ai).get_baseline_corrected_value() for ai in self.sorted_references]
+        ys = [self._get_isotope(po, ai) for ai in self.sorted_references]
+        ys = [yi.get_baseline_corrected_value() if yi else ufloat(0, 0) for yi in ys]
 
         return ys
 
     def _get_current_data(self, po):
-        name = po.name
-        return [ai.isotopes[name].blank.uvalue for ai in self.sorted_analyses]
+        isos = [self._get_isotope(po, ai) for ai in self.sorted_analyses]
+        return [iso.blank.uvalue if iso else ufloat(0, 0) for iso in isos]
 
 # ============= EOF =============================================
