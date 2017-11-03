@@ -138,15 +138,20 @@ class Updater(Loggable):
                             import subprocess
                             root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
-                            bin = os.path.join(os.path.expanduser('~'), os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
-                                               'envs',
-                                               os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
+                            binroot = os.path.join(os.path.expanduser('~'),
+                                                   os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
+                                                   'envs',
+                                                   os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
+                            if not os.path.isdir(binroot):
+                                binroot = os.path.join(os.path.sep, os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
+                                                       'envs',
+                                                       os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
 
-                            conda = os.path.join(bin, 'conda')
+                            conda = os.path.join(binroot, 'conda')
                             cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
                             subprocess.call([conda, 'update', '-y', '-n', 'pychron', '--file={}'.format(cp)])
 
-                            pip = os.path.join(bin, 'pip')
+                            pip = os.path.join(binroot, 'pip')
                             pp = os.path.join(root, 'app_utils', 'requirements', 'pip_requirements.txt')
                             subprocess.call([pip, 'install', '-r', pp])
 
