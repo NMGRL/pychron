@@ -218,7 +218,7 @@ class InverseIsochron(Isochron):
             self.ymis.append(ymi)
             self.ymas.append(yma)
 
-        print 'isochron regressor error type {}'.format(reg.error_calc_type)
+        # print 'isochron regressor error type {}'.format(reg.error_calc_type)
 
         lci, uci = reg.calculate_error_envelope(l.index.get_data())
         ee = ErrorEnvelopeOverlay(component=l,
@@ -314,9 +314,9 @@ class InverseIsochron(Isochron):
         try:
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
-            print err, p, inv_intercept, intercept
+            # print err, p, inv_intercept, intercept
             err = perr = inv_intercept * p
-            print perr
+            # print perr
             mse = err * mswd ** 0.5
             v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
@@ -326,6 +326,7 @@ class InverseIsochron(Isochron):
 
         u = self._ref_age_units
 
+        self.analysis_group.dirty = True
         age = self.analysis_group.isochron_age
 
         v = nominal_value(age)

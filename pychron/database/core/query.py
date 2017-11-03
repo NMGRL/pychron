@@ -21,7 +21,7 @@ from traitsui.api import View, Item, EnumEditor
 
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
-from sqlalchemy import cast, Date
+from sqlalchemy import cast, Date, func
 # ============= local library imports  ==========================
 now = datetime.now()
 one_year = timedelta(days=365)
@@ -29,9 +29,14 @@ one_year = timedelta(days=365)
 
 def in_func(q, col, values):
     if values:
+        col = func.lower(col)
         if not hasattr(values, '__iter__'):
+            if isinstance(values, (str, unicode)):
+                values = values.lower()
+
             q = q.filter(col == values)
         else:
+            values = [v.lower() if isinstance(v, (str, unicode)) else v for v in values]
             q = q.filter(col.in_(values))
     return q
 

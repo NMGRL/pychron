@@ -140,7 +140,7 @@ class DVCAnalysis(Analysis):
 
         for attr in META_ATTRS:
             v = jd.get(attr)
-            print 'attr={},{}'.format(attr, v)
+            # print 'attr={},{}'.format(attr, v)
             if v is not None:
                 setattr(self, attr, v)
 

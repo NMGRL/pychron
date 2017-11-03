@@ -35,7 +35,7 @@ class DashboardSeries(BaseArArFigure):
         graph = self.graph
         for po in plots:
             if po.use:
-                p = graph.new_plot(padding=self.padding,
+                p = graph.new_plot(padding=self.options.paddings(),
                                    ytitle=po.name,
                                    xtitle='Time')
 

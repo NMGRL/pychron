@@ -30,7 +30,6 @@ from pychron.pychron_constants import PLUSMINUS, SIGMA
 
 N = 500
 
-
 PEAK_CENTER = 'Peak Center'
 ANALYSIS_TYPE = 'Analysis Type'
 RADIOGENIC_YIELD = 'RadiogenicYield'
@@ -137,10 +136,15 @@ class Series(BaseSeries):
             elif po.use_percent_dev:
                 ytitle = '{} Dev %'.format(ytitle)
 
+            kw = {'padding': self.options.paddings(),
+                  'ytitle': ytitle}
+
             if self.options.use_time_axis:
-                p = graph.new_plot(ytitle=ytitle, xtitle='Time (hrs)')
+                kw['xtitle'] = 'Time (hrs)'
             else:
-                p = graph.new_plot(ytitle=ytitle, xtitle='N')
+                kw['xtitle'] = 'N'
+
+            p = graph.new_plot(**kw)
 
             if i == 0:
                 self._add_info(p)
@@ -202,8 +206,8 @@ class Series(BaseSeries):
                     m = ys.mean()
                     ys = ys - m
                     if po.use_percent_dev:
-                        ys = ys/m * 100
-                        yerr = yerr/m * 100
+                        ys = ys / m * 100
+                        yerr = yerr / m * 100
 
                 kw = dict(y=ys, yerror=yerr, type='scatter',
                           fit='{}_{}'.format(po.fit, po.error_type),
@@ -287,6 +291,5 @@ class Series(BaseSeries):
             attr = ATTR_MAPPING[attr]
 
         return super(Series, self)._unpack_attr(attr)
-
 
 # ============= EOF =============================================

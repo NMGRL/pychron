@@ -121,23 +121,16 @@ class StackedGraph(Graph):
         comps = pc.components
         if not bottom:
             comps = reversed(comps)
+        if n > 1:
+            for i, pi in enumerate(comps):
+                if i < n - 1:
+                    pi.padding_top = 0
 
-        pt = 20 if self._has_title else 10
-        # print 'ffff', self.padding_bottom
-        for i, pi in enumerate(comps):
-            if n == 1:
-                pi.padding_top = pt
-                pi.index_axis.visible = True
-
-            else:
-                pi.padding_top = 0
                 if i == 0:
                     pi.index_axis.visible = True
                 else:
                     pi.index_axis.visible = False
                     pi.padding_bottom = 0
-                    if i == n - 1:
-                        pi.padding_top = pt
 
     def new_series(self, *args, **kw):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
