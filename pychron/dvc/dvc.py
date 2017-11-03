@@ -795,11 +795,11 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
+                 arar_constants=ia.arar_constants.as_dict(),
                  analyses=[dict(uuid=ai.uuid,
-                                runid=ai.runid,
+                                record_id=ai.record_id,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses],
-                 )
+                           ia.all_analyses])
 
         if self.macrochron_enabled:
             d['macrochron'] = self._make_macrochron(ia)

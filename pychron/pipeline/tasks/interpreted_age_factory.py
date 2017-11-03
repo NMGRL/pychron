@@ -36,38 +36,42 @@ class UObjectColumn(ObjectColumn):
 
 class InterpretedAgeFactoryView(Controller):
     repository_identifiers = List
-    macrochron_enabled = Bool(False)
+    # macrochron_enabled = Bool(False)
+    #
+    # lith_class = Str
+    # lith_classes = List
+    #
+    # lith_group = Str
+    # lith_groups = List
+    #
+    # lith_type = Str
+    # lith_types = List
+    #
+    # lith = Str
+    # liths = List
 
-    lith_class = Str
-    lith_classes = List
+    # macrochron = Instance('pychron.macrochron.macrostrat_api.MacroStrat')
 
-    lith_group = Str
-    lith_groups = List
-
-    lith_type = Str
-    lith_types = List
-
-    lith = Str
-    liths = List
-
-    macrochron = Instance('pychron.macrochron.macrostrat_api.MacroStrat')
-
-    @on_trait_change('lith_class,lith_type,lith_group')
-    def _handle_lith_change(self):
-        self.macrochron.get_lithologies(lith_class=self.lith_class,
-                                        lith_type=self.lith_type,
-                                        lith_group=self.lith_group)
+    # @on_trait_change('lith_class,lith_type,lith_group')
+    # def _handle_lith_change(self):
+    #     self.macrochron.get_lithologies(lith_class=self.lith_class,
+    #                                     lith_type=self.lith_type,
+    #                                     lith_group=self.lith_group)
 
     def _edit_view(self):
         lithology_grp = VGroup(UItem('lith_class', editor=EnumEditor(name='lith_classes')),
-                               UItem('lith_group', editor=EnumEditor(name='lith_group')),
+                               UItem('lith_group', editor=EnumEditor(name='lith_groups')),
                                UItem('lith_type', editor=EnumEditor(name='lith_types')),
-                               UItem('lith', editor=EnumEditor(name='liths')))
+                               UItem('lith', editor=EnumEditor(name='liths')),
+                               show_border=True, label='Lithology')
 
         macrostrat_grp = VGroup(Item('reference'),
                                 Item('lat_long'),
                                 lithology_grp,
-                                defined_when='macrostrat_enabled')
+                                show_border=True,
+                                label='MacroChron',
+                                defined_when='macrochron_enabled')
+
         v = View(Item('preferred_kca_kind'),
                  Item('preferred_kca_value'),
                  UItem('preferred_kca_error'),

@@ -488,6 +488,7 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
 
+        we *= self.options.nsigma
         text = ''
         if self.options.display_mean:
             n = self.xs.shape[0]
@@ -799,7 +800,7 @@ class Ideogram(BaseArArFigure):
             # wm = np_max(maxs, axis=1)[0]
         else:
             wage = self.analysis_group.weighted_age
-            wm, we = wage.nominal_value, wage.std_dev
+            wm, we = nominal_value(wage), std_dev(wage)
 
         return wm, we, mswd, valid_mswd
 
