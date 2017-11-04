@@ -370,13 +370,15 @@ class FigureOptions(BaseOptions):
                         'Sanidine': 'San'}
 
         for gid, ais in groupby(analyses, key=lambda x: x.group_id):
-            ref = ais.next()
+            ref = next(ais)
             d = {}
             for ai in attrs:
                 if ai == 'alphacounter':
                     v = ALPHAS[n]
                 elif ai == 'numericcounter':
                     v = n
+                elif ai == '<space>':
+                    v = ' '
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':
