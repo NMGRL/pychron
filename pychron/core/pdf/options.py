@@ -49,9 +49,9 @@ sgrp = VGroup(Item('fit_to_page'),
               label='Size', show_border=True)
 
 PDFLayoutGroup = VGroup(Item('orientation'),
-                     mgrp,
-                     sgrp,
-                     cgrp,
+                        mgrp,
+                        sgrp,
+                        cgrp,
                         label='Layout')
 
 PDFLayoutView = View(PDFLayoutGroup,
@@ -99,7 +99,6 @@ class BasePDFOptions(BasePersistenceOptions):
                 width_margins = self.bottom_margin + self.top_margin
             else:
                 width_margins = self.left_margin + self.right_margin
-
             fw = page[0]
             w = fw - width_margins * units
             # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
@@ -118,33 +117,12 @@ class BasePDFOptions(BasePersistenceOptions):
     @property
     def dest_box(self):
         units = UNITS_MAP[self.units]
-        if self.orientation == 'landscape':
-            w, h = self.bounds
-            lbrt = (self.bottom_margin, self.right_margin,
-                    w / units + self.bottom_margin,
-                    h / units + self.right_margin)
-        else:
-            w, h = self.bounds
-            lbrt = (self.left_margin, self.bottom_margin,
-                    w / units + self.left_margin,
-                    h / units + self.bottom_margin)
-            # lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
-        # print map(lambda x: x*units, lbrt)
-        # print 'lbrt', lbrt
-        return lbrt
+        w, h = self.bounds
+        w /= units
+        h /= units
+        return self.left_margin, self.bottom_margin, w, h
 
     def _get_layout_group(self):
-        # margin_grp = VGroup(Item('left_margin', label='Left (in.)'),
-        #                    Item('right_margin', label='Right (in.)'),
-        #                    Item('top_margin', label='Top (in.)'),
-        #                    Item('bottom_margin', label='Bottom (in.)'),
-        #                     show_border=True, label='Margins')
-        #
-        # layout_grp = Group(Item('orientation'),
-        #                    margin_grp,
-        #                    Item('show_page_numbers', label='Page Numbers'),
-        #                    show_border=True,
-        #                    label='layout')
         return PDFLayoutGroup
 
 

@@ -59,6 +59,7 @@ class DVCPersister(BasePersister):
     _positions = None
 
     macrochron_enabled = Bool(True)
+    save_log_enabled = Bool(False)
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
         self.per_spec = pr
@@ -270,7 +271,7 @@ class DVCPersister(BasePersister):
         return ret
 
     def save_run_log_file(self, path):
-        if self.save_enabled:
+        if self.save_enabled and self.save_log_enabled:
             self.debug('saving run log file')
 
             npath = self._make_path('logs', '.log')
