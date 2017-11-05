@@ -46,7 +46,7 @@ from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
 
 
 def node_adder(name):
@@ -430,6 +430,31 @@ class RepositoryTabularAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Status', 'status')]
 
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Refresh Status', action='refresh_repository_status'),
+                           Action(name='Get Changes', action='pull'),
+                           Action(name='Share Changes', action='push'))
+
+    def get_bg_color( self, obj, trait, row, column = 0):
+        if self.item.behind:
+            c = LIGHT_RED
+        elif self.item.ahead:
+            c = LIGHT_YELLOW
+        else:
+            c = 'white'
+        return c
+
+
+class RepositoryPaneHandler(Handler):
+    def refresh_repository_status(self, info, obj):
+         obj.refresh_repository_status()
+
+    def pull(self, info, obj):
+        obj.pull()
+
+    def push(self, info, obj):
+        obj.push()
+
 
 class RepositoryPane(TraitsDockPane):
     name = 'Repositories'
@@ -439,7 +464,8 @@ class RepositoryPane(TraitsDockPane):
         v = View(UItem('object.repositories', editor=myTabularEditor(adapter=RepositoryTabularAdapter(),
                                                                      editable=False,
                                                                      multi_select=True,
-                                                                     selected='selected_repositories')))
+                                                                     selected='object.selected_repositories')),
+                 handler=RepositoryPaneHandler())
         return v
 
 

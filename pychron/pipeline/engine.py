@@ -172,6 +172,7 @@ class PipelineEngine(Loggable):
     refresh_table_needed = Event
 
     repositories = List
+    selected_repositories = List
     # show_group_colors = Bool
 
     selected_pipeline_template = Str
@@ -682,15 +683,38 @@ class PipelineEngine(Loggable):
                     # self.refresh_table_needed = True
                     break
 
+    def refresh_repository_status(self):
+        self.debug('PipelineEngine.refresh_repository_status')
+        for r in self._active_repositories():
+            r.update()
+
+    def pull(self):
+        self.debug('PipelineEngine.pull')
+        dvc = self.dvc
+        for r in self._active_repositories():
+            dvc.pull_repository(r.name)
+
+    def push(self):
+        self.debug('PipelineEngine.push')
+        dvc = self.dvc
+        for r in self._active_repositories():
+            r.update()
+            if r.behind:
+                self.warning_dialog('{} is Behind and needs to be updated before it can be pushed'.format(r.name))
+            else:
+                dvc.push_repository(r.name)
+
     # private
+    def _active_repositories(self):
+        if self.selected_repositories:
+            repos = self.selected_repositories
+        else:
+            repos = self.repositories
+        return repos
+
     def _update_repository_status(self):
         for r in self.repositories:
-            name = r.name
-            p = os.path.join(paths.repository_dataset_dir, name)
-            a, b = ahead_behind(p, fetch=False)
-            r.ahead = a
-            r.behind = b
-            r.status = '{},{}'.format(a,b)
+            r.update()
 
     def _set_grouping(self, items, gid, attr='group_id'):
         for si in items:
@@ -818,6 +842,7 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
+
     @on_trait_change('active_editor')
     def _handle_active_editor(self, obj, name, old, new):
         def refresh():

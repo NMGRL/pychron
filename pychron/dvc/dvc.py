@@ -698,7 +698,23 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def pull_repository(self, repo):
+        if isinstance(repo, (str, unicode)):
+            r = GitRepoManager()
+            r.open_repo(repo, root=paths.repository_dataset_dir)
+            repo = r
+
+        self.debug('pull repository {}'.format(repo))
+        for gi in self.application.get_services(IGitHost):
+            self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
+            repo.smart_pull(remote=gi.default_remote_name)
+
     def push_repository(self, repo):
+        if isinstance(repo, (str, unicode)):
+            r = GitRepoManager()
+            r.open_repo(repo, root=paths.repository_dataset_dir)
+            repo = r
+
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))

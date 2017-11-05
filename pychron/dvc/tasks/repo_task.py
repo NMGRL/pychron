@@ -32,7 +32,7 @@ from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.git_archive.utils import get_commits
+from pychron.git_archive.utils import get_commits, ahead_behind
 from pychron.github import Organization
 from pychron.paths import paths
 
@@ -43,6 +43,14 @@ class RepoItem(HasTraits):
     ahead = Int
     behind = Int
     status = Str
+
+    def update(self, fetch=True):
+        name = self.name
+        p = os.path.join(paths.repository_dataset_dir, name)
+        a, b = ahead_behind(p, fetch=fetch)
+        self.ahead = a
+        self.behind = b
+        self.status = '{},{}'.format(a, b)
 
 
 class ExperimentRepoTask(BaseTask):
