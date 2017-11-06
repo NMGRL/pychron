@@ -35,7 +35,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.engine import Pipeline, PipelineGroup
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import DataNode
+from pychron.pipeline.nodes.data import DataNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
@@ -43,6 +43,7 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
+from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode
@@ -64,7 +65,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping', 'set_interpreted_age'):
+                  'graph_grouping', 'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -166,7 +167,11 @@ class PipelinePane(TraitsDockPane):
                                *actions)
 
         def add_menu_factory():
-            return MenuManager(Action(name='Add Grouping',
+            return MenuManager(Action(name='Add Unknowns',
+                                      action='add_data'),
+                               Action(name='Add Interpreted Ages',
+                                      action='add_interpreted_ages'),
+                               Action(name='Add Grouping',
                                       action='add_grouping'),
                                Action(name='Add Graph Grouping',
                                       action='add_graph_grouping'),
@@ -265,7 +270,7 @@ class PipelinePane(TraitsDockPane):
                                   auto_open=True,
                                   # menu=default_menu()
                                   ),
-                 DataTreeNode(node_for=[DataNode], menu=data_menu_factory()),
+                 DataTreeNode(node_for=[DataNode, InterpretedAgeNode], menu=data_menu_factory()),
                  FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
@@ -428,7 +433,8 @@ class AnalysesPane(TraitsDockPane):
 
 class RepositoryTabularAdapter(TabularAdapter):
     columns = [('Name', 'name'),
-               ('Status', 'status')]
+               ('Ahead', 'ahead'),
+               ('Behind', 'behind')]
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Refresh Status', action='refresh_repository_status'),

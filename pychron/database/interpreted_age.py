@@ -20,6 +20,7 @@ class InterpretedAge(IdeogramPlotable):
     identifier = Str
     material = Str
     irradiation = Str
+    project = Str
 
     age = Float
     age_err = Float

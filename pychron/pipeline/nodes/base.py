@@ -41,6 +41,7 @@ class BaseNode(HasTraits):
     unknowns = List
     references = List
     required = List
+    index = -1
 
     def clear_data(self):
         self.unknowns = []

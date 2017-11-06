@@ -121,7 +121,8 @@ class DataNode(DVCNode):
     check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
-        if pre_run and getattr(self, self.analysis_kind):
+        print self, pre_run, getattr(self, self.analysis_kind), self.index
+        if pre_run and getattr(self, self.analysis_kind) and self.index == 0:
             return True
 
         if not pre_run:
@@ -225,7 +226,7 @@ class UnknownNode(DataNode):
         items = getattr(state, self.analysis_kind)
         items.extend(self.unknowns)
 
-        state.projects = {ai.project for ai in state.unknowns}
+        state.projects = {ai.project for ai in state.unknowns if hasattr(ai, 'project')}
 
 
 class ReferenceNode(DataNode):

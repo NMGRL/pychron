@@ -31,7 +31,7 @@ from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode
+from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
@@ -272,6 +272,9 @@ class PipelineEngine(Loggable):
         #     self.run_needed = True
 
     def configure(self, node):
+        if not isinstance(node, BaseNode):
+            return
+
         if node.configure():
             if isinstance(node, IdeogramNode):
                 e = node.editor
@@ -374,13 +377,15 @@ class PipelineEngine(Loggable):
 
         self.debug('add data node')
         newnode = UnknownNode(dvc=self.dvc, browser_model=self.browser_model)
-        node = self._get_last_node(node)
-        self.pipeline.add_after(node, newnode)
+        self._add_node(node, newnode, run)
 
     def add_references(self, node=None, run=False):
         newnode = ReferenceNode(name='references', dvc=self.dvc, browser_model=self.browser_model)
-        node = self._get_last_node(node)
-        self.pipeline.add_after(node, newnode)
+        self._add_node(node, newnode, run)
+
+    def add_interpreted_ages(self, node, run=False):
+        newnode = InterpretedAgeNode(dvc=self.dvc, browser_model=self.interpreted_age_browser_model)
+        self._add_node(node, newnode, run)
 
     def add_review(self, node=None, run=False):
         newnode = ReviewNode()
@@ -599,8 +604,9 @@ class PipelineEngine(Loggable):
         state.veto = None
         state.canceled = False
 
-        for node in self.pipeline.iternodes(start_node):
+        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
             node.visited = False
+            node.index = idx
 
         for idx, node in enumerate(self.pipeline.iternodes(start_node)):
 
@@ -826,10 +832,9 @@ class PipelineEngine(Loggable):
                 self.run_needed = newnode
 
     def _add_node(self, node, new, run=True):
-        if new.configure():
-            node = self._get_last_node(node)
-
-            self.pipeline.add_after(node, new)
+        # if new.configure():
+        node = self._get_last_node(node)
+        self.pipeline.add_after(node, new)
             # if run:
             #     self.run_needed = new
 

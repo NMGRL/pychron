@@ -154,6 +154,7 @@ class IdeogramPlotable(HasTraits):
     labnumber = ''
     aliquot = 0
     step = ''
+    timestamp = 0
 
     def __init__(self, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)

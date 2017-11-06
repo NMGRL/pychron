@@ -99,8 +99,8 @@ class DVCInterpretedAge(InterpretedAge):
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name',
-                  'uuid'):
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name', 'project'
+                                                                                          'uuid'):
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
@@ -108,7 +108,10 @@ class DVCInterpretedAge(InterpretedAge):
         self._record_id = '{} {}'.format(self.identifier, self.name)
 
     def get_value(self, attr):
-        return getattr(self, attr)
+        try:
+            return getattr(self, attr)
+        except AttributeError:
+            return ufloat(0, 0)
 
     @property
     def status(self):
@@ -803,7 +806,8 @@ class DVC(Loggable):
 
         if isnan(mswd):
             mswd = 0
-        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'project', 'identifier', 'nanalyses',
+                                                  'irradiation',
                                                   'name', 'uuid', 'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
                                                   'include_j_error_in_individual_analyses')}
