@@ -234,7 +234,7 @@ class PipelineTask(BaseBrowserTask):
             if tag is None:
                 a = self._get_tagname(items)
                 if a:
-                    tag, items, use_filter = a
+                    tag, items, use_filter, note = a
 
             # set tags for items
             if tag and items:
@@ -252,7 +252,7 @@ class PipelineTask(BaseBrowserTask):
                         if not isinstance(it, InterpretedAge):
                             db.set_analysis_tag(it.uuid, tag)
 
-                        it.set_tag(tag)
+                        it.set_tag({'name': tag, 'note': note})
                         if dvc.update_tag(it):
                             cs.append(it)
                             # it.refresh_view()
@@ -271,7 +271,7 @@ class PipelineTask(BaseBrowserTask):
                     for e in self.editor_area.editors:
                         if isinstance(e, FigureEditor):
                             e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
-                #
+
                 if self.active_editor:
                     self.active_editor.refresh_needed = True
 
@@ -279,9 +279,6 @@ class PipelineTask(BaseBrowserTask):
                 self.browser_model.analysis_table.remove_invalid()
                 self.browser_model.analysis_table.refresh_needed = True
                 self.engine.refresh_table_needed = True
-                # else:
-                #     # edit tags
-                #     self._get_tagname([])
 
     def set_invalid(self):
         items = self._get_selection()
@@ -618,14 +615,14 @@ class PipelineTask(BaseBrowserTask):
         from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
         from pychron.pipeline.tagging.views import AnalysisTagView
 
-        tv = AnalysisTagView(model=AnalysisTagModel())
+        model = AnalysisTagModel()
+        tv = AnalysisTagView(model=model)
 
         tv.model.items = items
 
         info = tv.edit_traits()
         if info.result:
-            tag = tv.model.tag
-            return tag, tv.model.items, tv.model.use_filter
+            return model.tag, model.items, model.use_filter, model.note
 
     # def _get_dr_tagname(self, items):
     #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel

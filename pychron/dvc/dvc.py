@@ -63,25 +63,28 @@ class DVCException(BaseException):
 class Tag(object):
     name = None
     path = None
+    note = ''
 
     @classmethod
-    def from_analysis(cls, an):
+    def from_analysis(cls, an, **kw):
         tag = cls()
         tag.name = an.tag
+        tag.note = an.tag_note
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
-        print an.record_id, an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
+
+        for k, v in kw.iteritems():
+            setattr(tag, k, v)
 
         return tag
 
     def dump(self):
-        obj = {'name': self.name}
+        obj = {'name': self.name,
+               'note': self.note}
         if not self.path:
             self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
 
-        # with open(self.path, 'w') as wfile:
-        #     json.dump(obj, wfile, indent=4)
         dvc_dump(obj, self.path)
 
 
@@ -92,6 +95,7 @@ class DVCInterpretedAge(InterpretedAge):
 
     def load_tag(self, obj):
         self.tag = obj.get('name', '')
+        self.tag_note = obj.get('note', '')
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
@@ -468,8 +472,8 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_repositories
 
-    def update_tag(self, an):
-        tag = Tag.from_analysis(an)
+    def update_tag(self, an, **kw):
+        tag = Tag.from_analysis(an, **kw)
         tag.dump()
 
         expid = an.repository_identifier

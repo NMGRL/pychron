@@ -408,7 +408,7 @@ class DVCAnalysis(Analysis):
         self.peak_center_reference_detector = refdet
 
     def _load_tags(self, jd):
-        self.set_tag(jd.get('name'))
+        self.set_tag(jd)
 
     def _load_blanks(self, jd):
         for key, v in jd.iteritems():

@@ -143,6 +143,7 @@ class IdeogramPlotable(HasTraits):
     name = ''
 
     tag = 'ok'
+    tag_note = ''
     uage = None
     temp_status = 'ok'
     otemp_status = None
@@ -179,7 +180,11 @@ class IdeogramPlotable(HasTraits):
         self.temp_status = tag
 
     def set_tag(self, tag):
-        self.tag = tag
+        if isinstance(tag, dict):
+            self.tag_note = tag.get('note', '')
+            self.tag = tag.get('name', '')
+        else:
+            self.tag = tag
 
     def value_string(self, t):
         a, e = self._value_string(t)
