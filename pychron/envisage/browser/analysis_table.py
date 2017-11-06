@@ -77,7 +77,10 @@ class AnalysisTable(ColumnSorterMixin):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
-                jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                try:
+                    jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                except ValueError:
+                    pass
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
