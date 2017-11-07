@@ -37,7 +37,7 @@ class LaserFactory(Factory):
     def buildProtocol(self, addr):
         if self._name is None:
             raise NotImplementedError
-        return LaserProtocol(self._app, self._name, addr, self.logger)
+        return LaserProtocol(self._app, self._name, addr, None)
 
 
 class FusionsCO2Factory(LaserFactory):

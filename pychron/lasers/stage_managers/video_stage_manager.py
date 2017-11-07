@@ -265,7 +265,9 @@ class VideoStageManager(StageManager):
                     else:
                         self.information_dialog('Snapshot uploaded to "{}"'.format(upath))
             else:
-                self.information_dialog('Snapshot saved to "{}"'.format(path))
+                upath = None
+                if inform:
+                    self.information_dialog('Snapshot saved to "{}"'.format(path))
 
             if return_blob:
                 with open(path, 'rb') as rfile:
