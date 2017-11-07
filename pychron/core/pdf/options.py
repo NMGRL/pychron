@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from reportlab.lib.pagesizes import A4, letter, landscape
+from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
 from traits.api import Str, Bool, Enum, Button, Float, Int, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
@@ -26,7 +26,7 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.persistence_loggable import dumpable
 
-PAGE_MAP = {'A4': A4, 'letter': letter}
+PAGE_MAP = {'A4': A4, 'letter': letter, 'A2': A2, 'A0': A0}
 UNITS_MAP = {'inch': inch, 'cm': cm}
 COLUMN_MAP = {'1': 1, '2': 0.5, '3': 0.33, '2/3': 0.66}
 
@@ -40,11 +40,14 @@ mgrp = VGroup(HGroup(Spring(springy=False, width=100),
               label='Margins', show_border=True)
 cgrp = VGroup()
 
-sgrp = VGroup(Item('fit_to_page'),
+sgrp = VGroup(Item('page_type'),
+              Item('fit_to_page'),
               HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
                      Item('columns', enabled_when='use_column_width')),
-              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page'),
-                     Item('fixed_height', label='H', enabled_when='not fit_to_page')),
+              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page or '
+                                                                 'page_type=="custom"'),
+                     Item('fixed_height', label='H', enabled_when='not fit_to_page or page_type=="custom"'),
+                     Item('units', enabled_when='not fit_to_page or page_type=="custom"')),
 
               label='Size', show_border=True)
 
@@ -74,7 +77,7 @@ class BasePDFOptions(BasePersistenceOptions):
     fixed_width = dumpable(Float)
     fixed_height = dumpable(Float)
 
-    page_type = dumpable(Enum('letter', 'A4'))
+    page_type = dumpable(Enum('letter', 'A4', 'A2', 'A0', 'custom'))
     units = dumpable(Enum('inch', 'cm'))
     use_column_width = dumpable(Bool(True))
     columns = dumpable(Enum('1', '2', '3', '2/3'))
@@ -83,7 +86,11 @@ class BasePDFOptions(BasePersistenceOptions):
     @property
     def bounds(self):
         units = UNITS_MAP[self.units]
-        page = PAGE_MAP[self.page_type]
+        if self.page_type == 'custom':
+            page = [self.fixed_width * units, self.fixed_height * units]
+        else:
+            page = PAGE_MAP[self.page_type]
+
         if self.fit_to_page:
             if self.orientation == 'landscape':
                 b = [page[1], page[0]]
@@ -111,8 +118,13 @@ class BasePDFOptions(BasePersistenceOptions):
 
     @property
     def page_size(self):
-        orientation = 'landscape_' if self.orientation == 'landscape' else ''
-        return '{}{}'.format(orientation, self.page_type)
+        if self.page_type == 'custom':
+            units = UNITS_MAP[self.units]
+            ps = self.fixed_width * units, self.fixed_height * units
+        else:
+            orientation = 'landscape_' if self.orientation == 'landscape' else ''
+            ps = '{}{}'.format(orientation, self.page_type)
+        return ps
 
     @property
     def dest_box(self):
