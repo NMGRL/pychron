@@ -59,10 +59,10 @@ class YorkRegressor(OLSRegressor):
         if not len(self.yserr):
             return
 
-        self._calculate_correlation_coefficients()
+        self.calculate_correlation_coefficients()
         self._calculate()
 
-    def _calculate_correlation_coefficients(self):
+    def calculate_correlation_coefficients(self):
 
         if len(self.xds):
             xds = self._clean_array(self.xds)
@@ -92,8 +92,8 @@ class YorkRegressor(OLSRegressor):
     def _get_weights(self):
         ex = self.clean_xserr
         ey = self.clean_yserr
-        Wx = 1 / ex ** 2
-        Wy = 1 / ey ** 2
+        Wx = ex ** -2
+        Wy = ey ** -2
         return Wx, Wy
 
     def _calculate_UV(self, W):
@@ -166,7 +166,7 @@ class YorkRegressor(OLSRegressor):
         b = self.slope
         x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
         v = calculate_mswd2(x, y, sx, sy, a, b,
-                            corrcoeffs=self._calculate_correlation_coefficients())
+                            corrcoeffs=self.calculate_correlation_coefficients())
         self.valid_mswd = validate_mswd(v, len(x), k=2)
         return v
 
@@ -206,7 +206,7 @@ class NewYorkRegressor(YorkRegressor):
             sig_x = self.clean_xserr
             sig_y = self.clean_yserr
 
-            r = self._calculate_correlation_coefficients()
+            r = self.calculate_correlation_coefficients()
 
             var_x = sig_x ** 2
             var_y = sig_y ** 2
@@ -226,7 +226,7 @@ class NewYorkRegressor(YorkRegressor):
 
         var_x = sig_x ** 2
         var_y = sig_y ** 2
-        r = self._calculate_correlation_coefficients()
+        r = self.calculate_correlation_coefficients()
         # print var_x.shape, var_y.shape, r.shape, b
         return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
@@ -248,7 +248,7 @@ class NewYorkRegressor(YorkRegressor):
         var_x = sx ** 2
         var_y = sy ** 2
 
-        r = self._calculate_correlation_coefficients()
+        r = self.calculate_correlation_coefficients()
         sxy = r * sx * sy
 
         aa = 2 * b * (U * V * var_x - U ** 2 * sxy)

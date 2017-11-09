@@ -60,6 +60,10 @@ def extract_isochron_xy(analyses):
     return xx, yy
 
 
+def unpack_value_error(xx):
+    return zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+
+
 def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
@@ -74,12 +78,12 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     except ZeroDivisionError:
         return
 
-    xs, xerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
-    ys, yerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in yy])
+    xs, xerrs = unpack_value_error(xx)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+    ys, yerrs = unpack_value_error(yy)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in yy])
 
-    xds, xdes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
-    yns, ynes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
-    xns, xnes = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
+    xds, xdes = unpack_value_error(a40)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
+    yns, ynes = unpack_value_error(a36)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
+    xns, xnes = unpack_value_error(a39)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
                               xds, xdes, yns, ynes, xns, xnes)
@@ -96,9 +100,9 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
 
     xint = reg.x_intercept
 
-    xint_err = regx.get_intercept_error()/(1/xint)**2
     try:
         r = xint ** -1
+        xint_err = regx.get_intercept_error() / r ** 2
         r = ufloat(r, xint_err)
     except ZeroDivisionError:
         r = 0
@@ -367,9 +371,9 @@ def calculate_F(isotopes,
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
     atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                        decay_time,
-                                        pr,
-                                        arar_constants)
+                                              decay_time,
+                                              pr,
+                                              arar_constants)
 
     # calculate radiogenic
     # dont include error in 40/36
