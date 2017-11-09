@@ -98,6 +98,10 @@ class VideoStageManager(StageManager):
     _measure_grain_t = None
     _measure_grain_evt = None
 
+    def motor_event_hook(self, name, value, *args, **kw):
+        if name == 'zoom':
+            self._update_zoom(value)
+
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
@@ -337,8 +341,8 @@ class VideoStageManager(StageManager):
 
     def finish_move_to_hole(self, user_entry):
         self.debug('finish move to hole')
-        if user_entry and not self.keep_images_open:
-            self.close_open_images()
+        # if user_entry and not self.keep_images_open:
+        #     self.close_open_images()
 
     # private
     def _stage_map_changed_hook(self):
@@ -543,9 +547,14 @@ class VideoStageManager(StageManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _update_zoom(self, v):
+        if self.canvas.camera:
+            self._update_xy_limits()
+
     @on_trait_change('parent:motor_event')
-    def _update_zoom(self, new):
-        s = self.stage_controller
+    def _update_motor(self, new):
+        print 'motor event', new, self.canvas, self.canvas.camera
+        # s = self.stage_controller
         if self.canvas.camera:
             if not isinstance(new, (int, float)):
                 args, _ = new
@@ -555,8 +564,9 @@ class VideoStageManager(StageManager):
                 v = new
 
             if name == 'zoom':
-                pxpermm = self.canvas.camera.set_limits_by_zoom(v, s.x, s.y)
-                self.pxpermm = pxpermm
+                self._update_xy_limits()
+                # pxpermm = self.canvas.camera.set_limits_by_zoom(v, s.x, s.y)
+                # self.pxpermm = pxpermm
             elif name == 'beam':
                 self.lumen_detector.beam_radius = v / 2.0
 
@@ -598,7 +608,6 @@ class VideoStageManager(StageManager):
         return self.canvas.camera.zoom_coefficients
 
     def _set_camera_zoom_coefficients(self, v):
-        print v
         self.canvas.camera.zoom_coefficients = ','.join(map(str, v))
         self._update_xy_limits()
 
@@ -618,7 +627,10 @@ class VideoStageManager(StageManager):
         x = self.stage_controller.get_current_position('x')
         y = self.stage_controller.get_current_position('y')
         pxpermm = self.canvas.camera.set_limits_by_zoom(z, x, y)
+        self.canvas.request_redraw()
         self.pxpermm = pxpermm
+
+        self.debug('updated xy limits zoom={}, pxpermm={}'.format(z, pxpermm))
 
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
@@ -709,10 +721,10 @@ class VideoStageManager(StageManager):
                                     canvas=self.canvas,
                                     application=self.application)
 
-    # def _zoom_calibration_manager_default(self):
-    #     if self.parent.mode != 'client':
-    #         from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
-    #         return ZoomCalibrationManager(laser_manager=self.parent)
+            # def _zoom_calibration_manager_default(self):
+            #     if self.parent.mode != 'client':
+            #         from pychron.mv.zoom.zoom_calibration import ZoomCalibrationManager
+            #         return ZoomCalibrationManager(laser_manager=self.parent)
 
 # ===============================================================================
 # calcualte camera params

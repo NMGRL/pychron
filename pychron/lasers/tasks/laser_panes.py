@@ -21,7 +21,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
 from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
     EnumEditor, Item, spring, Spring, ButtonEditor, VGroup, RangeEditor, \
-    ListStrEditor
+    ListStrEditor, Handler
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.image_editor import ImageEditor
@@ -72,7 +72,8 @@ class StageControlPane(TraitsDockPane):
         canvas_grp = VGroup(Item('canvas.show_bounds_rect', label='Show Bounds Rectangle'),
                             Item('canvas.show_grids', label='Show Grids'),
                             VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
-                                          UItem('canvas.crosshairs_color')),
+                                          UItem('canvas.crosshairs_color'),
+                                          Item('canvas.crosshairs_line_width', label='Line Wt.')),
                                    Item('canvas.show_hole', label='Display Hole Label'),
                                    HGroup(
                                        Item('canvas.show_desired_position',
@@ -94,12 +95,18 @@ class StageControlPane(TraitsDockPane):
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             camera_grp = VGroup(visible_when='use_video', label='Camera')
-            mvgrp = HGroup(VGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled')),
-                           Item('crop_size', label='Crop (mm)'),
-                           Item('target_radius', label='Target Radius',
-                                editor=RangeEditor(low=0., high=5.)),
-                           UItem('stage_manager.autocenter_manager.display_image', editor=ImageEditor()),
-                           label='Machine Vision', show_border=True)
+            mvgrp = VGroup(
+                # HGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled'),
+                # Item('stage_manager.autocenter_manager.crop_size', label='Crop (mm)'),
+                # Item('stage_manager.autocenter_manager.target_radius', label='Target Radius',
+                #      editor=RangeEditor(low=0., high=5.))),
+                HGroup(Item('stage_manager.autocenter_manager.display_image.alpha')),
+                VGroup(UItem('stage_manager.autocenter_manager.display_image',
+                             width=240, height=240,
+
+                             editor=ImageEditor(
+                                 refresh='stage_manager.autocenter_manager.display_image.refresh_needed'))),
+                label='Machine Vision', show_border=True)
 
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',
@@ -109,14 +116,15 @@ class StageControlPane(TraitsDockPane):
                                                       tooltip='Record video'),
                                    CustomLabel('stage_manager.record_label',
                                                color='red')),
-                            VGroup(Item('stage_manager.auto_save_snapshot'),
-                                   Item('stage_manager.render_with_markup')),
+                            HGroup(Item('stage_manager.auto_save_snapshot', label='Auto Save'),
+                                   Item('stage_manager.render_with_markup', label='Add Markup')),
                             show_border=True,
                             label='Recording')
 
             cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
-                                 label='Zoom Coefficients'))
-            camera_grp.content.extend((cfggrp, recgrp, mvgrp))
+                                 label='Coeff.'),
+                            show_border=True, label='Zoom')
+            camera_grp.content.extend((HGroup(cfggrp, recgrp), mvgrp))
             tabs.content.append(camera_grp)
 
         mode = self.model.mode
@@ -172,11 +180,11 @@ class StageControlPane(TraitsDockPane):
                       icon_button_editor('stage_manager.autocenter_button', 'find',
                                          tooltip='Do an autocenter at the current location',
                                          enabled_when='stage_manager.autocenter_manager.use_autocenter'),
-                      Item('stage_manager.keep_images_open',
-                           enabled_when='stage_manager.autocenter_manager.use_autocenter',
-                           label='Keep Images Open',
-                           tooltip='If checked  do not automatically close '
-                                   'autocentering images when move finished'),
+                      # Item('stage_manager.keep_images_open',
+                      #      enabled_when='stage_manager.autocenter_manager.use_autocenter',
+                      #      label='Keep Images Open',
+                      #      tooltip='If checked  do not automatically close '
+                      #              'autocentering images when move finished'),
                       label='Calibrated Position',
                       show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),
@@ -233,12 +241,74 @@ class SupplementalPane(TraitsDockPane):
 # ===============================================================================
 # generic
 # ===============================================================================
+
+class PulseHandler(Handler):
+    def close(self, info, ok):
+        info.object.dump_pulse()
+        return ok
+
+
 class PulsePane(TraitsDockPane):
     id = 'pychron.lasers.pulse'
     name = 'Pulse'
 
+    def trait_context(self):
+        ctx = super(PulsePane, self).trait_context()
+        ctx['object'] = self.model.pulse
+        return ctx
+
     def traits_view(self):
-        v = View(Group(UItem('pulse', style='custom'), show_border=True))
+        agrp = VGroup(HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
+                       Item('units', style='readonly', show_label=False),
+                       spring,
+                       Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
+                       Item('pulse_button',
+                            editor=ButtonEditor(label_value='pulse_label'),
+                            show_label=False,
+                            enabled_when='enabled')))
+        mgrp = VGroup(HGroup(Spring(width=-5, springy=False),
+                       Item('object.wait_control.high', label='Set Max. Seconds'),
+                       spring, UItem('object.wait_control.continue_button')),
+                HGroup(Spring(width=-5, springy=False),
+                       Item('object.wait_control.current_time', show_label=False,
+                            editor=RangeEditor(mode='slider',
+                                               low=1,
+                                               # low_name='low_name',
+                                               high_name='object.wait_control.duration')),
+                       CustomLabel('object.wait_control.current_time',
+                                   size=14,
+                                   weight='bold')))
+        # v = View(
+        #     VGroup(
+        #     VGroup(
+        #         ,
+        #     VGroup(
+        #         CustomLabel('object.wait_control.message',
+        #                     size=14,
+        #                     weight='bold',
+        #                     color_name='object.wait_control.message_color'),
+        #
+        #         HGroup(Spring(width=-5, springy=False),
+        #                Item('object.wait_control.high', label='Set Max. Seconds'),
+        #                spring, UItem('object.wait_control.continue_button')),
+        #         HGroup(Spring(width=-5, springy=False),
+        #                Item('object.wait_control.current_time', show_label=False,
+        #                     editor=RangeEditor(mode='slider',
+        #                                        low=1,
+        #                                        # low_name='low_name',
+        #                                        high_name='object.wait_control.duration')),
+        #                CustomLabel('object.wait_control.current_time',
+        #                            size=14,
+        #                            weight='bold')))),
+        #     # Item('wait_control', show_label=False, style='custom'),
+        #     id='pulse',
+        #     handler=PulseHandler())
+        #
+        #
+        #
+        # v = View(Group(UItem('pulse', style='custom'), show_border=True))
+
+        v = View(VGroup(agrp, mgrp, show_border=True), id='pulse', handler=PulseHandler())
         return v
 
 
@@ -248,7 +318,7 @@ class OpticsPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(Group(UItem('laser_controller',
-                             editor=InstanceEditor(view='control_view'),
+                             editor=InstanceEditor(),
                              style='custom'),
                        show_border=True))
         return v

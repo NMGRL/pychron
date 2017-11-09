@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Button, Bool, Any, Instance
+from traits.api import Float, Button, Bool, Any, Instance, Event
 from traitsui.api import View, Item, HGroup, RangeEditor
 
 from pychron.image.standalone_image import FrameImage
@@ -61,7 +61,7 @@ class AutoCenterManager(MachineVisionManager):
         #     view_image(im, auto_close=auto_close_image)
 
         im = self.display_image
-
+        im.source_frame = frame
         if self.use_hough_circle:
             dx, dy = loc.find_circle(im, frame, dim=dim * self.pxpermm)
         else:

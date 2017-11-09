@@ -48,7 +48,7 @@ class FusionsLaserPreferences(LaserPreferences):
 
     crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
     crosshairs_color = Color('maroon')
-    crosshairs_radius = Range(0.0, 4.0, 1.0)
+    crosshairs_radius = Range(0.0, 10.0, 1.0)
 
     desired_position_color = Color('green')
     calibration_style = Enum('Tray', 'Free')
@@ -59,6 +59,7 @@ class FusionsLaserPreferences(LaserPreferences):
     crosshairs_offsetx = Float(0)
     crosshairs_offsety = Float(0)
     crosshairs_offset_color = Color('blue')
+    crosshairs_line_width = Float(1.0)
     show_hole = Bool
 
     show_patterning = Bool(True)
@@ -157,6 +158,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                            Item('crosshairs_radius',
                                 visible_when='crosshairs_kind=="UserRadius"'),
                            Item('crosshairs_color', enabled_when='show_laser_position'),
+                           Item('crosshairs_line_width', enabled_when='show_laser_position'),
                            HGroup(
                                Item('crosshairs_offsetx', label='Offset'),
                                UItem('crosshairs_offsety')),

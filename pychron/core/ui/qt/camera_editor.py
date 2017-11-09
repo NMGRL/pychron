@@ -30,6 +30,7 @@ class _CameraEditor(Editor):
 
     def init(self, parent):
         self.control = self._create_control(parent)
+        self._setup_loop()
 
     def update_editor(self):
         self._setup_loop()
@@ -39,12 +40,13 @@ class _CameraEditor(Editor):
             self.timer.stop()
 
     def _setup_loop(self):
-        if self.value is not None:
-            self.timer = QTimer(self.control)
-            self.timer.timeout.connect(self._update)
-            if self.factory.fps:
-                self.timer.setInterval(1000 / self.factory.fps)
-            self.timer.start()
+        # if self.value is not None:
+        self.timer = QTimer(self.control)
+        self.timer.timeout.connect(self._update)
+        print 'fps', self.factory.fps
+        if self.factory.fps:
+            self.timer.setInterval(1000 / self.factory.fps)
+        self.timer.start()
 
     def _update(self):
         if self.value:

@@ -121,9 +121,10 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
     crosshairs_offset_color = Color('blue')
 
-    crosshairs_radius = Range(0.0, 4.0, 1.0)
+    crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
+    crosshairs_line_width = Float(1.0)
     show_hole = Bool(True)
 
     show_bounds_rect = Bool(True)
@@ -445,11 +446,11 @@ class LaserTrayCanvas(StageCanvas):
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
 
-    def _add_crosshairs(self):
-        ch = CrosshairsOverlay(component=self,
-                               constrain='')
-        self.crosshairs_overlay = ch
-        self.overlays.append(ch)
+    # def _add_crosshairs(self):
+    #     ch = CrosshairsOverlay(component=self,
+    #                            constrain='')
+    #     self.crosshairs_overlay = ch
+    #     self.overlays.append(ch)
 
     # ===============================================================================
     # handlers

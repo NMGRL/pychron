@@ -27,13 +27,14 @@ from pychron.core.ui.image_editor import ImageEditor
 
 class FrameImage(Viewable):
     source_frame = Array
-    refresh = Event
+    refresh_needed = Event
     alpha = Range(0.0, 1.0)
     overlays = None
-    alpha_enabled = Bool(False)
+    alpha_enabled = Bool(True)
 
     def load(self, frame, swap_rb=False):
         self.source_frame = array(frame)
+        self.refresh_needed = True
 
     def set_frame(self, frame):
         if not isinstance(frame, ndarray):
@@ -41,24 +42,28 @@ class FrameImage(Viewable):
 
         self.overlays = None
         self.source_frame = frame
+        self.refresh_needed = True
 
     def overlay(self, frame, alpha):
         im0 = Image.fromarray(self.source_frame)
         im1 = Image.fromarray(frame)
 
         self.overlays = (im0, im1)
+
+        o = self.alpha
         self.alpha = alpha
-        self.refresh = True
+        if alpha == o:
+            self._alpha_changed()
 
     def _overlay(self, im0, im1, alpha):
         arr = Image.blend(im1, im0, alpha)
         self.source_frame = asarray(arr)
+        self.refresh_needed = True
 
     def _alpha_changed(self):
         if self.overlays:
             im0, im1 = self.overlays
             self._overlay(im0, im1, self.alpha)
-
 
 class StandAloneImage(FrameImage):
     def traits_view(self):

@@ -145,6 +145,7 @@ class FusionsCO2Task(FusionsTask):
         if self.manager.mode == 'client':
             return []
         else:
+            from pychron.lasers.tasks.panes.co2 import FusionsCO2SupplementalPane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2StagePane
             from pychron.lasers.tasks.panes.co2 import FusionsCO2ControlPane
             from pychron.lasers.tasks.laser_panes import PulsePane
@@ -155,6 +156,7 @@ class FusionsCO2Task(FusionsTask):
                     FusionsCO2ControlPane(model=self.manager),
                     PulsePane(model=self.manager),
                     OpticsPane(model=self.manager),
+                    FusionsCO2SupplementalPane(model=self.manager),
                     AuxilaryGraphPane(model=self.manager)]
 
 

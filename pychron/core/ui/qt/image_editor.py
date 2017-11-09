@@ -68,6 +68,7 @@ class _ImageEditor(Editor):
     refresh = Event
 
     def init(self, parent):
+
         image = self.factory.image
         if image is None:
             image = self.value
@@ -75,6 +76,11 @@ class _ImageEditor(Editor):
         image_ctrl = myQLabel()
 
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
         self.image_ctrl.setScaledContents(True)
@@ -113,6 +119,11 @@ class _ImageEditor(Editor):
 
     def set_pixmap(self, image, w):
         if image is not None:
+            from pychron.image.standalone_image import FrameImage
+
+            if isinstance(image, FrameImage):
+                image = image.source_frame
+
             im = convert_bitmap(image, w)
             if im:
                 self.image_ctrl.setPixmap(im)
