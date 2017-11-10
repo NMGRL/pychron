@@ -628,13 +628,14 @@ class DVCDatabase(DatabaseAdapter):
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, pi, material, grainsize=None, note=''):
+    def add_sample(self, name, project, pi, material, grainsize=None, note='',
+                   igsn='',lat=0, lon=0):
         with self.session_ctx():
             ret = self.get_sample(name, project, pi, material, grainsize)
             if ret is None:
                 self.debug('Adding sample {},{},{},{}'.format(name, project, pi, material))
                 p = self.get_project(project, pi)
-                a = SampleTbl(name=name, note=note)
+                a = SampleTbl(name=name, note=note, lat=lat, lon=lon, igsn=igsn)
                 if p is not None:
                     a.project = p
                     m = self.get_material(material, grainsize)
