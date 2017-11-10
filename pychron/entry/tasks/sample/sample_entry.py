@@ -135,7 +135,7 @@ class SampleSpec(Spec):
     def todump(self):
         return {'name': str(self.name), 'project': self.project.todump(),
                 'lat': self.lat, 'lon': self.lon,
-                'igsn': self.isgn,
+                'igsn': self.igsn,
                 'material': self.material.todump(),
                 'note': self.note}
 
