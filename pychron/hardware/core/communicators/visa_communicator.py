@@ -18,7 +18,7 @@
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 from pychron.hardware.core.communicators.visa import resource_manager
-
+from pyvisa.constants import StatusCode
 
 class VisaCommunicator(Communicator):
     """
@@ -58,7 +58,9 @@ class VisaCommunicator(Communicator):
         self.handle.trigger()
 
     def ask(self, cmd, *args, **kw):
-        return self.handle.write(cmd)
+        resp = self.handle.query(cmd)
+        self.debug('cmd==>{}'.format(resp))
+        return resp
 
     def tell(self, cmd, *args, **kw):
         self.handle.write(cmd)
