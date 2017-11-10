@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import visa
+import pyvisa
 
-resource_manager = visa.ResourceManager()
+resource_manager = pyvisa.ResourceManager()
 
 # ============= EOF =============================================
