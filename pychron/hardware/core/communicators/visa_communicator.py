@@ -38,7 +38,7 @@ class VisaCommunicator(Communicator):
         return '{}::INSTR'.format(base)
 
     def open(self, *args, **kw):
-        self.debug('openning visa usb communicator')
+        self.debug('opening visa usb communicator')
 
         address = self._make_address()
         self.handle = resource_manager.get_instrument(address)
@@ -57,10 +57,10 @@ class VisaCommunicator(Communicator):
     def trigger(self):
         self.handle.trigger()
 
-    def ask(self, cmd):
-        return self.handle.ask(cmd)
+    def ask(self, cmd, *args, **kw):
+        return self.handle.write(cmd)
 
-    def tell(self, cmd):
+    def tell(self, cmd, *args, **kw):
         self.handle.write(cmd)
 
 # ============= EOF =============================================
