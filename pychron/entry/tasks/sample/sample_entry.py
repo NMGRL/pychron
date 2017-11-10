@@ -396,6 +396,7 @@ class SampleEntry(DVCAble):
                                             lat=self.lat,
                                             lon=self.lon,
                                             igsn=self.igsn,
+                                            note=self.note,
                                             project=project_spec,
                                             material=material_spec))
             self._backup()
