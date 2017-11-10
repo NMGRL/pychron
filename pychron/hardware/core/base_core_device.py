@@ -301,7 +301,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
-        self.last_response = r if r else ''
+        self.last_response = str(r) if r else ''
 
     def _load_hook(self, config):
         pass
