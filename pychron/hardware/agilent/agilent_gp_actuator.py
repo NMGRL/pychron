@@ -105,6 +105,7 @@ class AgilentGPActuator(GPActuator):
         if not self.simulation:
             s = self.ask(cmd)
             if s is not None:
+                s = s.strip()
                 if s != '+0,"No error"':
                     error = s
 
