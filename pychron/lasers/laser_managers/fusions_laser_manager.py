@@ -199,10 +199,9 @@ class FusionsLaserManager(LaserManager):
             for motor in self.laser_controller.motors:
                 # motor = self.laser_controller.get_motor(name)
                 # if motor is not None:
-                def handle(new):
-                    print 'asfasfsadfsadf', motor.name, new
+                def handle(obj, name, old, new):
                     # self.motor_event = (motor.name, new)
-                    self.stage_manager.motor_event_hook(motor.name, new)
+                    self.stage_manager.motor_event_hook(obj.name, new)
 
                 motor.on_trait_change(handle, '_data_position')
 

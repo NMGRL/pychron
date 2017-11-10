@@ -75,15 +75,15 @@ class FusionsLaserPreferences(LaserPreferences):
     use_calibrated_power = Bool(True)
     show_bounds_rect = Bool(True)
 
-    def _get_value(self, name, value):
-        if 'color' in name:
-            value = value.split('(')[1]
-            value = value[:-1]
-            value = map(float, value.split(','))
-            value = ','.join(map(lambda x: str(int(x * 255)), value))
-        else:
-            value = super(LaserPreferences, self)._get_value(name, value)
-        return value
+    # def _get_value(self, name, value):
+    #     if 'color' in name:
+    #         value = value.split('(')[1]
+    #         value = value[:-1]
+    #         value = map(float, value.split(','))
+    #         value = ','.join(map(lambda x: str(int(x * 255)), value))
+    #     else:
+    #         value = super(LaserPreferences, self)._get_value(name, value)
+    #     return value
 
 
 class FusionsDiodePreferences(FusionsLaserPreferences):

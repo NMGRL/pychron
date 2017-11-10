@@ -56,7 +56,6 @@ class ZeroDisplacementException(BaseException):
     pass
 
 
-
 class MotionController(CoreDevice):
     """
     """
@@ -240,7 +239,7 @@ class MotionController(CoreDevice):
         if disp <= 4:
             self.parent.canvas.clear_desired_position()
 
-    def _moving(self):
+    def _moving(self, *args, **kw):
         pass
 
     def _z_inprogress_update(self):
@@ -341,19 +340,23 @@ class MotionController(CoreDevice):
 
         timer = self.timer
         if timer is not None:
+            self.debug('using existing timer')
             def timerActive():
                 return self.timer.isActive()
 
             func = timerActive
             period = 0.05
         else:
+            self.debug('check moving={}'.format(axis))
             def moving():
-                return self._moving(axis=axis)
+                return self._moving(axis=axis, verbose=True)
 
             func = moving
             period = 0.1
 
         i = 0
+        cnt = 0
+        threshold = 5
         # fn = func.func_name
         # n = 10
         while 1:
@@ -365,7 +368,11 @@ class MotionController(CoreDevice):
             if i > 100:
                 i = 0
             if not a:
-                break
+                if cnt > threshold:
+                    break
+                cnt += 1
+            else:
+                cnt = 0
             i += 1
 
         self.debug('block finished')
@@ -421,10 +428,10 @@ class MotionController(CoreDevice):
             if not mi <= v <= ma:
                 self.debug('value not between {}, {}'.format(mi, ma))
                 v = None
-            #
-            # if v is not None:
-            #     if abs(v - cur) <= 0.001:
-            #         v = None
+                #
+                # if v is not None:
+                #     if abs(v - cur) <= 0.001:
+                #         v = None
         except ValueError:
             v = None
 

@@ -38,7 +38,7 @@ class FiberLight(AbstractDevice):
     state = Bool
     auto_onoff = Bool(False)
     name = 'fiber_light'
-    timeout = Int(300)
+    timeout = Int(3000)
     _timer = None
 
     def load_additional_args(self, config):
@@ -88,7 +88,11 @@ class FiberLight(AbstractDevice):
                 if self.timer:
                     self.timer.cancel()
 
-                self.timer = Timer(self.timeout, self.power_off)
+                def autooff():
+                    self.debug('auto power off timeout={}'.format(self.timeout))
+                    self.power_off()
+
+                self.timer = Timer(self.timeout, autooff)
                 self.timer.start()
 
     def power_off(self, *args):
