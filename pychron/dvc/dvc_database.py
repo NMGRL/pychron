@@ -629,7 +629,7 @@ class DVCDatabase(DatabaseAdapter):
             return a
 
     def add_sample(self, name, project, pi, material, grainsize=None, note='',
-                   igsn='',lat=0, lon=0):
+                   igsn='', lat=0, lon=0):
         with self.session_ctx():
             ret = self.get_sample(name, project, pi, material, grainsize)
             if ret is None:
@@ -640,7 +640,7 @@ class DVCDatabase(DatabaseAdapter):
                     a.project = p
                     m = self.get_material(material, grainsize)
                     if m is not None:
-                        a.material = m
+                        a.materialID = m.id
                         ret = self._add_item(a)
                     else:
                         self.debug('No material={}, grainsize={}'.format(material, grainsize))
