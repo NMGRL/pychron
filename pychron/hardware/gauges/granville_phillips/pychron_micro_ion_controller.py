@@ -23,10 +23,10 @@ from pychron.hardware.gauges.granville_phillips.micro_ion_controller import Micr
 class PychronMicroIonController(MicroIonController):
 
     def get_pressure(self, name, **kw):
-        return self.ask('Get Pressure {} {}'.format(self.name, name), **kw)
+        return self.ask('GetPressure {} {}'.format(self.name, name), **kw)
 
     def get_ion_pressure(self, **kw):
-        return self.ask('Get Pressure {} IG'.format(self.name))
+        return self.ask('GetPressure {} IG'.format(self.name))
 
     def get_convectron_a_pressure(self, **kw):
         return self.ask('GetPressure {} CG1'.format(self.name))

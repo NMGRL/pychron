@@ -331,6 +331,7 @@ class BaseMDrive(BaseLinearDrive):
 
             cmd = 'MR' if relative else 'MA'
             self.tell('{} {}'.format(cmd, pos))
+            self._block()
 
         if block:
             func()

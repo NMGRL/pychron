@@ -27,10 +27,13 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
+from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
+from pychron.hardware.gauges.granville_phillips.headless_micro_ion_controller import HeadlessMicroIonController
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
+from pychron.hardware.watlow.headless_ezzone import HeadlessWatlowEZZone
 from pychron.headless_loggable import HeadlessLoggable
 from pychron.image.rpi_camera import RPiCamera
 from pychron.messaging.broadcaster import Broadcaster
@@ -41,14 +44,19 @@ DEVICES = {'controller': HeadlessEurotherm,
            'funnel': HeadlessMDrive,
            'feeder': HeadlessMDrive,
            'temp_hum': DHT11,
-           'camera': RPiCamera}
+           'camera': RPiCamera,
+           'first_stage_gauge': HeadlessMicroIonController,
+           'backside_furnace_gauge': HeadlessMicroIonController,
+           'bakeout1': HeadlessWatlowEZZone,
+           'bakeout2': HeadlessWatlowEZZone,
+           'rotary_dumper': RotaryDumper}
 
 
 def debug(func):
     def wrapper(obj, data):
-        obj.debug('------ {}, data={}'.format(func.__name__, data))
+ #       obj.debug('------ {}, data={}'.format(func.__name__, data))
         r = func(obj, data)
-        obj.debug('------ result={}'.format(r))
+#        obj.debug('------ result={}'.format(r))
         return r
 
     return wrapper
@@ -61,6 +69,7 @@ class FirmwareManager(HeadlessLoggable):
     feeder = None
     temp_hum = None
     camera = None
+    rotary_dumper =None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
@@ -85,6 +94,7 @@ class FirmwareManager(HeadlessLoggable):
         self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
         self._load_funnel(yd['funnel'])
         self._load_magnets(yd['magnets'])
+        self._load_rotary_dumper()
 
         if self._use_broadcast_service:
             self._broadcaster = Broadcaster()
@@ -146,15 +156,28 @@ class FirmwareManager(HeadlessLoggable):
     #             imstr = im.dumps()
     #             return '{:08X}{}'.format(len(imstr), imstr)
 
-    def get_heart_beat(self):
+    def get_heartbeat(self, data):
         return '{},{}'.format(time.time(), self._start_time)
 
-    def get_furnace_summary(self):
-        return 'Not yet implemented'
+    def get_furnace_summary(self, data):
+        h2o_channel = None
+        if isinstance(data, dict):
+            h2o_channel = data.get('h2o_channel')
+
+        s={}
+        if h2o_channel is not None:
+            s['h2o_state'] = self.switch_controller.get_channel_state(h2o_channel)
+
+        s['setpoint'] = self.get_setpoint(None)
+        s['response'] = self.get_temperature(None)
+        s['output'] = self.get_percent_output(None)
+        return json.dumps(s)
+
+    def get_percent_output(self, data):
+        if self.controller:
+            return self.controller.get_output()
 
     def get_full_summary(self):
-        # encoding = '<f'
-        # s = {'encoding': encoding}
         s = {'version': __version__}
         for attr in ('furnace_env_humidity', 'furnace_env_temperature',
                      'furnace_setpoint', 'furnace_process_value',
@@ -162,14 +185,16 @@ class FirmwareManager(HeadlessLoggable):
             addr = PARAMETER_REGISTRY.get(attr)
             if addr:
                 v = getattr(self, attr)
-                # try:
-                #     # convert float to binary hex
-                #     v = hex(struct.pack(encoding, v))
-                # except ValueError:
-                #     pass
                 s[addr] = v
 
-        return dumps(s)
+        ss = []
+        for k in self._switch_mapping:
+            _, o, c = self.get_indicator_component_states(k)
+            rs = self.get_channel_state(k)
+            ss.append('{},s{},o{},c{}'.format(k, rs, o, c))
+
+        s[PARAMETER_REGISTRY.get('switch_status')] = ';'.join(ss)
+        return json.dumps(s)
 
     @debug
     def get_lab_humidity(self, data):
@@ -245,6 +270,15 @@ class FirmwareManager(HeadlessLoggable):
             return ','.join(args)
 
     @debug
+    def get_di_state(self, data):
+        if self.switch_controller:
+            if isinstance(data, dict):
+                di = data['name']
+            else:
+                di = data
+            return self.switch_controller.get_channel_state(di)
+
+    @debug
     def get_version(self, data):
         return __version__
 
@@ -291,46 +325,78 @@ class FirmwareManager(HeadlessLoggable):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down, block=False)
 
+
+    @debug
+    def rotary_dumper_moving(self, data):
+        if self.rotary_dumper:
+            return self.rotary_dumper.is_moving()
+
     @debug
     def energize_magnets(self, data):
-        if self.switch_controller:
-            period = 3
-            if data:
-                if isinstance(data, dict):
+        if self._magnet_channels:
+            if self.switch_controller:
+                period = 3
+                if data:
+                    if isinstance(data, dict):
 
-                    period = data.get('period', 3)
-                else:
-                    period = data
+                        period = data.get('period', 3)
+                    else:
+                        period = data
 
-            def func():
+                def func():
+                    self._is_energized = True
+                    prev = None
+                    for m in self._magnet_channels:
+                        self.switch_controller.set_channel_state(m, True)
+                        if prev:
+                            self.switch_controller.set_channel_state(prev, False)
+
+                        prev = m
+                        time.sleep(period)
+                    self.switch_controller.set_channel_state(prev, False)
+                    self._is_energized = False
+
+                t = Thread(target=func)
+                t.start()
+                return True
+        else:
+            if self.rotary_dumper:
+                nsteps = None
+                rpm = None
+                if data:
+                    if isinstance(data, dict):
+                        nsteps = data.get('nsteps', 3)
+                        rpm = data.get('rpm')
+                    else:
+                        nsteps = data
+
                 self._is_energized = True
-                prev = None
-                for m in self._magnet_channels:
-                    self.switch_controller.set_channel_state(m, True)
-                    if prev:
-                        self.switch_controller.set_channel_state(prev, False)
-
-                    prev = m
-                    time.sleep(period)
-                self.switch_controller.set_channel_state(prev, False)
-                self._is_energized = False
-
-            t = Thread(target=func)
-            t.start()
-            return True
+                self.rotary_dumper.energize(nsteps, rpm)
+                # while self.rotary_dumper.is_energized():
+                #     time.sleep(0.5)
+                # self._is_energized = False
 
     @debug
-    def is_energized(self):
+    def is_energized(self, data):
         return self._is_energized
 
     @debug
     def denergize_magnets(self, data):
         self._is_energized = False
-        if self.switch_controller:
-            for m in self._magnet_channels:
-                self.switch_controller.set_channel_state(m, False)
-            return True
-
+        if self._magnet_channels:
+            if self.switch_controller:
+                for m in self._magnet_channels:
+                    self.switch_controller.set_channel_state(m, False)
+                return True
+        else:
+            if self.rotary_dumper:
+                nsteps = None
+                if data:
+                    if isinstance(data, dict):
+                        nsteps = data.get('nsteps')
+                    else:
+                        nsteps = data
+                self.rotary_dumper.denergize(nsteps)
     @debug
     def move_absolute(self, data):
         drive = self._get_drive(data)
@@ -351,6 +417,18 @@ class FirmwareManager(HeadlessLoggable):
         drive = self._get_drive(data)
         if drive:
             return drive.stop_drive()
+
+    @debug
+    def set_home(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.set_home()
+
+    @debug
+    def stalled(self, data):
+        drive = self._get_drive(data)
+        if drive:
+            return drive.stalled()
 
     @debug
     def slew(self, data):
@@ -379,6 +457,9 @@ class FirmwareManager(HeadlessLoggable):
 
     @debug
     def set_pid(self, data):
+        if isinstance(data, dict):
+            data = data['pid']
+
         controller = self.controller
         if controller:
             return controller.set_pid_str(data)
@@ -390,7 +471,7 @@ class FirmwareManager(HeadlessLoggable):
             value = data['setpoint']
             ret = controller.set_closed_loop_setpoint(value)
 
-            # set_closed_loop_setpoint returns true of request and actual setpoints are greater than 0.01 different,
+            # set_closed_loop_setpoint returns true if request and actual setpoints are greater than 0.01 different,
             # True == Failed to set setpoint
             # None == Succeeded to setpoint
             return 'OK' if not ret else 'Fail'
@@ -401,24 +482,49 @@ class FirmwareManager(HeadlessLoggable):
         if controller:
             return controller.read_closed_loop_setpoint()
 
+    @debug
     def get_bakeout_temp_and_power(self, data):
         controller = self._get_bakeout_controller(data)
         if controller:
             return controller.get_temp_and_power()
 
     @debug
-    def get_gauge_pressure(self, data):
-        controller = self._get_gauge_controller(data)
+    def set_bakeout_control_mode(self, data):
+        controller = self._get_bakeout_controller(data)
         if controller:
-            c = self._get_gauge_channel(data)
-            return controller.get_pressue(c)
+            if isinstance(data, dict):
+                mode = data['mode']
+            else:
+                mode = data
+            return controller.set_control_mode(mode)
+
+    @debug
+    def get_bakeout_temperature(self, data):
+        controller = self._get_bakeout_controller(data)
+        if controller:
+            return controller.get_temperature()
+
+    @debug
+    def get_gauge_pressure(self, data):
+        controller, channel = self._get_gauge_controller(data)
+        if controller:
+            return controller.get_pressure(channel, force=True)
 
     # private
-    def _get_gauge_channel(self, data):
-        gauge_id = data['gauge_id']
-
     def _get_gauge_controller(self, data):
-        pass
+        controller, channel = None, None
+
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name, channel = data
+
+        try:
+            controller = getattr(self, name)
+        except AttributeError:
+            pass
+
+        return controller, channel
 
     def _get_bakeout_controller(self, data):
         channel = data['channel']
@@ -437,37 +543,81 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
-
-            oresult = None
-            cresult = None
-            if action == 'open' and open_ch is None:
-                result = self.get_channel_state(alt_ch)
+            #print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
+            if open_ch=='inverted':
+                oresult = self.switch_controller.get_channel_state(alt_ch)
+                oresult = not oresult
             else:
-                oresult = False if action != 'open' else True
-                if open_ch:
-                    oresult = self.switch_controller.get_channel_state(open_ch)
+                invert = False
+                if open_ch.startswith('i'):
+                    open_ch = open_ch[1:]
+                    invert = True
+                oresult = self.switch_controller.get_channel_state(open_ch)
+                #print 'gggggg {} {} {}'.format(invert, open_ch, oresult)
+                if invert:
+                    oresult = not oresult
 
-                cresult = True if action != 'open' else False
-                if close_ch:
-                    cresult = self.switch_controller.get_channel_state(close_ch)
+            if close_ch is None:
+                #cresult = self.get_channel_state(alt_ch)
+                #if inverted:
+                #    cresult = not cresult
+                cresult = None
+            else:
+                invert = False
+                if close_ch.startswith('i'):
+                    close_ch = close_ch[1:]
+                    invert = True
 
-                if action == 'open':
-                    result = oresult and not cresult
-                else:
-                    result = not oresult and cresult
+                cresult = self.switch_controller.get_channel_state(close_ch)
+                if invert:
+                    cresult = not cresult
 
-            # if ch is None:
+            result = oresult
+            if oresult == cresult:
+                result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
+            else:
+                #if inverted:
+                #    result = not result
+
+                result = 'open' if result else 'closed'
+            #print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
+            return result, oresult, cresult
+
+            # oresult = None
+            # cresult = None
+            # if action == 'open' and open_ch is None:
             #     result = self.get_channel_state(alt_ch)
             # else:
-            #     result = self.switch_controller.get_channel_state(ch)
-
-            self.debug('indicator state {}, invert={} Open Indicator={}, Close Indicator={}'.format(result, inverted,
-                                                                                                    oresult,
-                                                                                                    cresult))
-            if inverted:
-                result = not result
-
-            return result, oresult, cresult
+            #     oresult = False if action != 'open' else True
+            #     if open_ch:
+            #         oresult = self.switch_controller.get_channel_state(open_ch)
+            #
+            #     cresult = True if action != 'open' else False
+            #     if close_ch:
+            #         cresult = self.switch_controller.get_channel_state(close_ch)
+            #
+            #     if action == 'open':
+            #         result = oresult and not cresult
+            #     else:
+            #         result = not oresult and cresult
+            #
+            # # if ch is None:
+            # #     result = self.get_channel_state(alt_ch)
+            # # else:
+            # #     result = self.switch_controller.get_channel_state(ch)
+            #
+            # self.debug('indicator state {}, invert={} Open Indicator={}, Close Indicator={}'.format(result, inverted,
+            #                                                                                         oresult,
+            #                                                                                         cresult))
+            # if inverted:
+            #     result = not result
+            #
+            # if action == 'open' and result:
+            #     result = 'open'
+            # else:
+            #     result = 'closed'
+            #
+            # return result, oresult, cresult
 
     def _get_drive(self, data):
         drive = data.get('drive')
@@ -482,14 +632,14 @@ class FirmwareManager(HeadlessLoggable):
             name = data['name']
         else:
             name = data
-
+        name = str(name)
         ch = self._switch_mapping.get(name, '')
         inverted = False
         if ',' in str(ch):
             ch, inverted = ch.split(',')
             inverted = to_bool(inverted)
 
-        self.debug('get switch channel {} {}'.format(name, ch))
+        #self.debug('get switch channel {} {}'.format(name, ch))
         return ch, inverted
 
     def _get_switch_indicator(self, data):
@@ -501,7 +651,9 @@ class FirmwareManager(HeadlessLoggable):
 
         close_ch = None
         open_ch = self._switch_indicator_mapping.get(name)
-        self.debug('get switch indicator channel {} {}'.format(name, open_ch))
+        #self.debug('get switch indicator channel {} {}'.format(name, open_ch))
+        if open_ch == 'inverted':
+            return open_ch, None, None 
 
         if ',' in str(open_ch):
             def prep(ch):
@@ -537,6 +689,9 @@ class FirmwareManager(HeadlessLoggable):
         if bs:
             self._use_broadcast_service = bs.get('enabled')
             self._broadcast_port = bs.get('port', 9000)
+
+    def _load_rotary_dumper(self):
+        pass
 
     def _load_magnets(self, m):
         self._magnet_channels = m
