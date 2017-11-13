@@ -163,6 +163,8 @@ class BaseArArFigure(SelectionFigure):
 
             if self.xtitle:
                 kw['xtitle'] = self.xtitle
+
+            kw['padding'] = self.options.paddings()
             p = graph.new_plot(**kw)
             # set a tag for easy identification
             p.y_axis.tag = po.name
@@ -205,7 +207,7 @@ class BaseArArFigure(SelectionFigure):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), 'updated')
         pp.value_range.tight_bounds = False
 
-        options = self.options
+        # options = self.options
         self._set_options_format(pp)
 
         # pp.x_grid.visible = options.use_xgrid
@@ -216,12 +218,12 @@ class BaseArArFigure(SelectionFigure):
         # self._set_formatting(pp)
 
         # pp.bgcolor = options.plot_bgcolor
-        for attr in ('left', 'right', 'top'):
-            setattr(pp, 'padding_{}'.format(attr),
-                    getattr(options, 'padding_{}'.format(attr)))
-
-        if not i:
-            pp.padding_bottom = options.padding_bottom
+        # for attr in ('left', 'right', 'top'):
+        #     setattr(pp, 'padding_{}'.format(attr),
+        #             getattr(options, 'padding_{}'.format(attr)))
+        #
+        # if not i:
+        #     pp.padding_bottom = options.padding_bottom
 
         if po:
             if not po.ytick_visible:

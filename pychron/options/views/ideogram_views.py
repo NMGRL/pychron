@@ -174,6 +174,7 @@ class IdeogramAppearance(AppearanceSubOptions):
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
+                   self._get_layout_group(),
                    self._get_padding_group(),
                    self._get_grid_group())
         return self._make_view(VGroup(g, fgrp))
@@ -225,7 +226,6 @@ VIEWS['appearance'] = IdeogramAppearance
 VIEWS['calculations'] = CalculationSubOptions
 VIEWS['display'] = DisplaySubOptions
 VIEWS['groups'] = GroupSubOptions
-
 
 # ===============================================================
 # ===============================================================

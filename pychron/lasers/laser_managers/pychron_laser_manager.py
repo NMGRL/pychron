@@ -14,20 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
+# ============= standard library imports ========================
+import cPickle as pickle
+import os
+import time
+from threading import Thread
+
 # ============= enthought library imports =======================
 from traits.api import Str, String, on_trait_change, Float, \
     Property, Instance, Event, Enum, Int, Either, Range, cached_property
-# ============= standard library imports ========================
-import cPickle as pickle
-import time
-import os
-from threading import Thread
+
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import to_bool
 from pychron.envisage.view_util import open_view
 from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
-from pychron.core.helpers.strtools import to_bool
 from pychron.paths import paths
+from pychron import json
 
 
 class PychronLaserManager(EthernetLaserManager):
@@ -133,6 +136,9 @@ class PychronLaserManager(EthernetLaserManager):
     def set_light(self, value):
         self._ask('SetLight {}'.format(value))
 
+    def acquire_grain_mask(self):
+        return self._ask('AcquireGrainMaskBlob')
+
     def get_response_blob(self):
         return self._ask('GetResponseBlob')
 
@@ -213,9 +219,15 @@ class PychronLaserManager(EthernetLaserManager):
         if self._patterning:
             self.stop_pattern()
 
-    def extract(self, value, units=''):
+    def extract(self, value, units='', process=None):
         self.info('set laser output')
-        return self._ask('SetLaserOutput {},{}'.format(value, units)) == 'OK'
+
+        cmd = {'command': 'SetLaserOutput',
+               'value': value,
+               'units': units}
+        return self._ask(json.dumps(cmd)) == 'OK'
+
+        # return self._ask('SetLaserOutput {},{},{}'.format(value, units)) == 'OK'
 
     def enable_laser(self, *args, **kw):
         self.info('enabling laser')

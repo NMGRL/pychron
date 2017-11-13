@@ -316,6 +316,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     all_columns = [('Iso.', 'name'),
                    ('Det.', 'detector'),
                    ('Fit', 'fit_abbreviation'),
+                   ('Error', 'error_type'),
                    ('Int.', 'value'),
                    (SIGMA_1, 'error'),
                    ('%', 'value_percent_error'),
@@ -335,6 +336,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     columns = [('Iso.', 'name'),
                ('Det.', 'detector'),
                ('Fit', 'fit_abbreviation'),
+               ('Error', 'error_type'),
                ('Int.', 'value'),
                (SIGMA_1, 'error'),
                ('%', 'value_percent_error'),
@@ -368,6 +370,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
 
     name_width = Int(40)
     fit_abbreviation_width = Int(40)
+    error_type_width = Int(40)
     include_baseline_error_width = Int(40)
     baseline_fit_abbreviation_width = Int(40)
     detector_width = Int(40)

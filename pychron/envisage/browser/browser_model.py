@@ -41,6 +41,7 @@ from traits.api import Str, Bool, Property, on_trait_change, Button, List
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.iterfuncs import partition
+from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel, extract_mass_spectrometer_name
 from pychron.envisage.browser.record_views import ProjectRecordView
 
@@ -65,6 +66,7 @@ class BrowserModel(BaseBrowserModel):
     principal_investigator_visible = Property(depends_on='filter_focus')
 
     filter_by_button = Button
+    advanced_filter_button = Button
     toggle_focus = Button
     load_view_button = Button
 
@@ -81,6 +83,7 @@ class BrowserModel(BaseBrowserModel):
     _top_level_filter = None
 
     def activated(self, force=False):
+        self.reattach()
         self.activate_browser(force)
 
     def activate_browser(self, force=False):
@@ -272,6 +275,10 @@ class BrowserModel(BaseBrowserModel):
         es = []
         ps = []
         ms = []
+        ls = []
+        if self.load_enabled and self.selected_loads:
+            ls = [s.name for s in self.selected_loads]
+
         if self.mass_spectrometers_enabled:
             if self.mass_spectrometer_includes:
                 ms = self.mass_spectrometer_includes
@@ -300,22 +307,25 @@ class BrowserModel(BaseBrowserModel):
                         mi = extract_mass_spectrometer_name(ri)
                         if mi not in ms:
                             ms.append(mi)
-                    #     self._recent_mass_spectrometers.append(mi)
+                            #     self._recent_mass_spectrometers.append(mi)
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
-        hp = self.high_post if self.use_high_post or self.use_named_date_range else None
-        lp = self.low_post if self.use_low_post or self.use_named_date_range else None
-        ls = self.db.get_labnumbers(principal_investigators=principal_investigators,
-                                    projects=ps,
-                                    # repositories=es,
-                                    mass_spectrometers=ms,
-                                    irradiation=self.irradiation if self.irradiation_enabled else None,
-                                    level=self.level if self.irradiation_enabled else None,
-                                    analysis_types=at,
-                                    high_post=hp,
-                                    low_post=lp,
-                                    filter_non_run=self.filter_non_run_samples)
-        return ls
+
+        hp = self.high_post  # if self.use_high_post or self.use_named_date_range else None
+        lp = self.low_post  # if self.use_low_post or self.use_named_date_range else None
+
+        lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
+                                     projects=ps,
+                                     # repositories=es,
+                                     mass_spectrometers=ms,
+                                     irradiation=self.irradiation if self.irradiation_enabled else None,
+                                     level=self.level if self.irradiation_enabled else None,
+                                     analysis_types=at,
+                                     high_post=hp,
+                                     low_post=lp,
+                                     loads=ls,
+                                     filter_non_run=self.filter_non_run_samples)
+        return lns
 
     def _identifier_change_hook(self, db, new, lns):
         if len(new) > 2:

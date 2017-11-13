@@ -27,14 +27,15 @@ from traits.api import HasTraits, Any
 class FigureContainer(HasTraits):
     component = Any
     model = Any
+
     # nrows = Int(1)
     # ncols = Int(2)
 
     # @caller
     def refresh(self, clear=False):
         comp = self.component
-        for i in range(self.rows):
-            for j in range(self.cols):
+        for i in xrange(self.rows):
+            for j in xrange(self.cols):
                 try:
                     p = self.model.next_panel()
                 except StopIteration:
@@ -47,7 +48,7 @@ class FigureContainer(HasTraits):
                         ap.clear_xlimits()
 
     def _model_changed(self):
-        layout = self.model.layout
+        layout = self.model.plot_options.layout
         self.model.refresh_panels()
         n = self.model.npanels
 
@@ -58,18 +59,7 @@ class FigureContainer(HasTraits):
         self.refresh(clear=True)
 
     def _component_factory(self, ngraphs, layout):
-
-        r = layout.rows
-        c = layout.columns
-
-        while ngraphs > r * c:
-            if layout.fixed == 'cols':
-                r += 1
-            else:
-                c += 1
-
-        if ngraphs == 1:
-            r = c = 1
+        r, c = layout.calculate(ngraphs)
 
         op = GridPlotContainer(shape=(r, c),
                                bgcolor='white',

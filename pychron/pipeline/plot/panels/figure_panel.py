@@ -53,11 +53,11 @@ class FigurePanel(HasTraits):
     def make_figures(self):
         self.figures = self._make_figures()
 
-    def _make_figures(self):
+    def _make_figures(self, **kw):
         key = lambda x: x.group_id
         ans = sorted(self.analyses, key=key)
         gs = [self._figure_klass(analyses=list(ais),
-                                 group_id=gid)
+                                 group_id=gid, **kw)
               for gid, ais in groupby(ans, key=key)]
         return gs
 
@@ -143,8 +143,6 @@ class FigurePanel(HasTraits):
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
-                print 'seting ylimits', i
-
                 if p.ymin or p.ymax:
                     print 'has ymin max set', p.ymin, p.ymax
                     ymi, yma = p.ymin, p.ymax

@@ -37,6 +37,30 @@ class IsotopeGroup(HasTraits):
     conditional_modifier = None
     name = Str
 
+    def keys(self):
+        return self.isotopes.keys()
+
+    def __getitem__(self, item):
+        return self.isotopes[item]
+
+    def iteritems(self):
+        return self.isotopes.iteritems()
+
+    def itervalues(self):
+        return self.isotopes.itervalues()
+
+    def values(self):
+        return self.isotopes.values()
+
+    def sorted_values(self):
+        return [self.isotopes[k] for k in self.isotope_keys]
+
+    def items(self):
+        return self.isotopes.items()
+
+    def pop(self, key):
+        return self.isotopes.pop(key)
+
     def debug(self, msg, *args, **kw):
         self._log(logger.debug, msg)
 
@@ -166,8 +190,9 @@ class IsotopeGroup(HasTraits):
             return ufloat(0, 0, tag=iso)
 
     def get_intensity(self, iso):
-        if iso in self.isotopes:
-            return self.isotopes[iso].get_intensity()
+        viso = next((i for i in self.isotope.itervalues() if i.isotope == iso), None)
+        if viso is not None:
+            return viso.get_intensity()
         else:
             return ufloat(0, 0, tag=iso)
 
@@ -233,7 +258,7 @@ class IsotopeGroup(HasTraits):
             return ret
 
         else:
-            for i in (iso, '{}{}'.format(iso, det)):
+            for i in ('{}{}'.format(iso, det), iso):
                 if i in isotopes:
                     _append(isotopes[i])
                     return True
@@ -253,16 +278,37 @@ class IsotopeGroup(HasTraits):
     def isotope_factory(self, **kw):
         return Isotope(**kw)
 
-    def set_isotope_detector(self, det, iso=None):
-        name = None
-        if iso:
-            name = iso
+    def pairs(self):
+        return [(k, v.name, v.detector) for k, v in self.isotopes.items()]
 
-        if not isinstance(det, str):
-            name, det = det.isotope, det.name
+    def set_isotope_detector(self, det, add=False):
+        det, name = det.name, det.isotope
+        # print 'setting isotope detector {} {}'.format(name, det)
+        # print self.pairs()
+        # name = None
+        # if iso:
+        #     name = iso
 
+        # if not isinstance(det, str):
+        #     name, det = det.isotope, det.name
+        #
+        # name = '{}{}'.format(det.isotope, det.name)
+
+        # print 'name ={} detector={}'.format(name, det)
         if name in self.isotopes:
-            iso = self.isotopes[name]
+            iso = self.isotopes.pop(name)
+            if add:
+                nn = '{}{}'.format(iso.name, iso.detector)
+                self.isotopes[nn] = iso
+                #
+                # # iso = self.isotopes[name]
+                # # if iso.detector != det:
+                # #     iso.detector = det
+                # #     # self.isotopes[name] = iso
+                # #
+                iso = Isotope(name, det)
+                name = '{}{}'.format(name, det)
+                self.isotopes[name] = iso
         else:
             iso = Isotope(name, det)
             self.isotopes[name] = iso
@@ -319,20 +365,31 @@ class IsotopeGroup(HasTraits):
 
         return niso
 
-    def set_baseline(self, iso, det, v):
-        if iso not in self.isotopes:
-            niso = Isotope(iso, det)
-            self.isotopes[iso] = niso
-
-        self.isotopes[iso].baseline.set_uvalue(v)
+    def set_baseline(self, iso, detector, v):
+        for iso in ('{}{}'.format(iso, detector), iso):
+            if iso in self.isotopes:
+                self.debug('setting {} baseline {}'.format(iso, v))
+                self.isotopes[iso].baseline.set_uvalue(v)
+                break
+                # else:
+                #     niso = Isotope(iso, detector)
+                #     self.isotopes[iso] = niso
+                #
+                # self.debug('setting {} baseline {}'.format(iso, v))
+                # self.isotopes[iso].baseline.set_uvalue(v)
 
     def set_blank(self, iso, detector, v):
-        if iso not in self.isotopes:
-            niso = Isotope(iso, detector)
-            self.isotopes[iso] = niso
+        for iso in ('{}{}'.format(iso, detector), iso):
+            if iso in self.isotopes:
+                self.debug('setting {} blank {}'.format(iso, v))
+                self.isotopes[iso].blank.set_uvalue(v)
+                break
+                # else:
+                #     niso = Isotope(iso, detector)
+                #     self.isotopes[iso] = niso
 
-        self.debug('setting {} blank {}'.format(iso, v))
-        self.isotopes[iso].blank.set_uvalue(v)
+                # self.debug('setting {} blank {}'.format(iso, v))
+                # self.isotopes[iso].blank.set_uvalue(v)
 
     # private
     def _get_iso_by_detector(self, det):

@@ -59,10 +59,10 @@ class YorkRegressor(OLSRegressor):
         if not len(self.yserr):
             return
 
-        self._calculate_correlation_coefficients()
+        self.calculate_correlation_coefficients()
         self._calculate()
 
-    def _calculate_correlation_coefficients(self):
+    def calculate_correlation_coefficients(self):
 
         if len(self.xds):
             xds = self._clean_array(self.xds)
@@ -92,8 +92,8 @@ class YorkRegressor(OLSRegressor):
     def _get_weights(self):
         ex = self.clean_xserr
         ey = self.clean_yserr
-        Wx = 1 / ex ** 2
-        Wy = 1 / ey ** 2
+        Wx = ex ** -2
+        Wy = ey ** -2
         return Wx, Wy
 
     def _calculate_UV(self, W):
@@ -153,10 +153,10 @@ class YorkRegressor(OLSRegressor):
             this method for calculating the x intercept error is incorrect.
             the current solution is to swap xs and ys and calculate the y intercept error
         """
-        #v = self.x_intercept
-        #e = self.get_intercept_error() * v ** 0.5
+        # v = self.x_intercept
+        # e = self.get_intercept_error() * v ** 0.5
 
-        e=0
+        e = 0
         return e
 
     def _get_mswd(self):
@@ -166,7 +166,7 @@ class YorkRegressor(OLSRegressor):
         b = self.slope
         x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
         v = calculate_mswd2(x, y, sx, sy, a, b,
-                            corrcoeffs=self._calculate_correlation_coefficients())
+                            corrcoeffs=self.calculate_correlation_coefficients())
         self.valid_mswd = validate_mswd(v, len(x), k=2)
         return v
 
@@ -206,7 +206,7 @@ class NewYorkRegressor(YorkRegressor):
             sig_x = self.clean_xserr
             sig_y = self.clean_yserr
 
-            r = self._calculate_correlation_coefficients()
+            r = self.calculate_correlation_coefficients()
 
             var_x = sig_x ** 2
             var_y = sig_y ** 2
@@ -226,7 +226,7 @@ class NewYorkRegressor(YorkRegressor):
 
         var_x = sig_x ** 2
         var_y = sig_y ** 2
-        r = self._calculate_correlation_coefficients()
+        r = self.calculate_correlation_coefficients()
         # print var_x.shape, var_y.shape, r.shape, b
         return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
@@ -248,7 +248,7 @@ class NewYorkRegressor(YorkRegressor):
         var_x = sx ** 2
         var_y = sy ** 2
 
-        r = self._calculate_correlation_coefficients()
+        r = self.calculate_correlation_coefficients()
         sxy = r * sx * sy
 
         aa = 2 * b * (U * V * var_x - U ** 2 * sxy)
@@ -284,7 +284,7 @@ class NewYorkRegressor(YorkRegressor):
         xm = self.xs.mean()
         dadx = -b * W / sW - xm * dVdx / dVdb
         dady = W / sW - xm * dVdy / dVdb
-        #eq 18
+        # eq 18
         var_a = sum(dadx ** 2 * sx ** 2 + dady ** 2 * sy ** 2 + 2 * sxy * dadx * dady)
         self._intercept_variance = var_a
         return var_b
@@ -299,14 +299,15 @@ class ReedYorkRegressor(YorkRegressor):
         reed 1989
     """
     _degree = 1
+
     #     def _set_degree(self, d):
     #         '''
     #             York regressor only for linear fit
     #         '''
     #         self._degree = 2
     def _get_weights(self):
-        wx = self.xserr ** -2
-        wy = self.yserr ** -2
+        wx = self.clean_xserr ** -2
+        wy = self.clean_yserr ** -2
 
         return wx, wy
 
@@ -371,7 +372,6 @@ class ReedYorkRegressor(YorkRegressor):
 
         return var
 
-
     def predict(self, x, *args, **kw):
         """
             a=Y-bX
@@ -391,11 +391,11 @@ if __name__ == '__main__':
     xs = [0.89, 1.0, 0.92, 0.87, 0.9, 0.86, 1.08, 0.86, 1.25,
           1.01, 0.86, 0.85, 0.88, 0.84, 0.79, 0.88, 0.70, 0.81,
           0.88, 0.92, 0.92, 1.01, 0.88, 0.92, 0.96, 0.85, 1.04
-    ]
+          ]
     ys = [0.67, 0.64, 0.76, 0.61, 0.74, 0.61, 0.77, 0.61, 0.99,
           0.77, 0.73, 0.64, 0.62, 0.63, 0.57, 0.66, 0.53, 0.46,
           0.79, 0.77, 0.7, 0.88, 0.62, 0.80, 0.74, 0.64, 0.93
-    ]
+          ]
     exs = ones(27) * 0.01
     eys = ones(27) * 0.01
 

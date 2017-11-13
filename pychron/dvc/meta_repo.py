@@ -14,15 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import json
 import os
 import shutil
 import time
 from datetime import datetime
-
-from traits.api import Bool
 from uncertainties import ufloat, std_dev
+# ============= enthought library imports =======================
+from traits.api import Bool
 
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
@@ -32,6 +30,7 @@ from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
+from pychron import json
 
 
 class MetaObject(object):
@@ -364,22 +363,23 @@ class MetaRepo(GitRepoManager):
 
         src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
         if os.path.isfile(src):
-            self.update_productions(irrad,  name, prname)
-        elif prname.startswith('Global'):
-            prname = prname[7:]
-            pathname = add_extension(prname, '.json')
-            src = os.path.join(paths.meta_root, 'productions', pathname)
-            if os.path.isfile(src):
-                dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
-                if not os.path.isfile(dest):
-                    shutil.copyfile(src, dest)
-                self.update_productions(irrad, name, prname)
-            else:
-                self.warning_dialog('Invalid production name'.format(prname))
+            self.update_productions(irrad, name, prname)
+        # elif prname.startswith('Global'):
+        #     prname = prname[7:]
+        #     pathname = add_extension(prname, '.json')
+        #     src = os.path.join(paths.meta_root, 'productions', pathname)
+        #     if os.path.isfile(src):
+        #         dest = os.path.join(paths.meta_root, irrad, 'productions', pathname)
+        #         if not os.path.isfile(dest):
+        #             shutil.copyfile(src, dest)
+        #         self.update_productions(irrad, name, prname)
+        #     else:
+        #         self.warning_dialog('Invalid production name'.format(prname))
         else:
             self.warning_dialog('Invalid production name'.format(prname))
 
     def add_production_to_irradiation(self, irrad, name, params, add=True, commit=False, new=False):
+        self.debug('adding production {} to irradiation={}'.format(name, irrad))
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(name, '.json'))
         prod = Production(p, new=new)
 
@@ -425,11 +425,16 @@ class MetaRepo(GitRepoManager):
 
     def update_productions(self, irrad, level, production, add=True):
         p = os.path.join(paths.meta_root, irrad, 'productions.json')
+
         obj = dvc_load(p)
-        obj[level] = production
-        dvc_dump(obj, p)
-        if add:
-            self.add(p, commit=False)
+        if obj[level] != production:
+            self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level,
+                                                                                  production))
+            obj[level] = production
+            dvc_dump(obj, p)
+
+            if add:
+                self.add(p, commit=False)
 
     def set_identifier(self, irradiation, level, pos, identifier):
         p = self.get_level_path(irradiation, level)
@@ -528,11 +533,15 @@ class MetaRepo(GitRepoManager):
         obj = dvc_load(p)
 
         try:
+            add = obj['z'] != z
             obj['z'] = z
         except TypeError:
             obj = {'z': z, 'positions': obj}
+            add = True
 
         dvc_dump(obj, p)
+        if add:
+            self.add(p, commit=False)
 
     def remove_irradiation_position(self, irradiation, level, hole):
         p = self.get_level_path(irradiation, level)
@@ -692,7 +701,7 @@ class MetaRepo(GitRepoManager):
         p = self._gain_path(name)
         return Gains(p)
 
-    @cached('clear_cache')
+    #@cached('clear_cache')
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
@@ -700,10 +709,10 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)
-        print 'new production id={}, irrad={}, level={}'.format(id(ip), irrad, level)
+        # print 'new production id={}, name={}, irrad={}, level={}'.format(id(ip), pname, irrad, level)
         return pname, ip
 
-    @cached('clear_cache')
+    #@cached('clear_cache')
     def get_chronology(self, name, **kw):
         return irradiation_chronology(name)
 

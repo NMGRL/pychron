@@ -71,6 +71,7 @@ trap = Float
     rundate = Date
     runtime = Time
     load_name = Str
+    load_holder = Str
 
     cdd_ic_factor = Any
 

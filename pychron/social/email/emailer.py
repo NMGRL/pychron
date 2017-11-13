@@ -88,10 +88,10 @@ class Emailer(Loggable):
 
     def send(self, addrs, sub, msg, paths=None):
         self.debug('Send email. addrs: {}'.format(addrs, sub))
-        self.debug('========= Message ========')
-        for m in msg.split('\n'):
-            self.debug(m)
-        self.debug('==========================')
+        # self.debug('========= Message ========')
+        # for m in msg.split('\n'):
+        #     self.debug(m)
+        # self.debug('==========================')
 
         for i in xrange(10):
             server = self.connect()

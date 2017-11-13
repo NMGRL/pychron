@@ -159,7 +159,19 @@ class BaseSpectrometer(SpectrometerDevice):
         #         print 'found'
         #         break
         # print molweights, mass
-        return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.15), 'Iso{:0.4f}'.format(mass))
+
+        found = None
+        mi = 1
+        for k, v in molweights.iteritems():
+            d = abs(v - mass)
+            if d < 0.15 and d < mi:
+                found = k
+
+        if found is None:
+            found = 'Iso{:0.4f}'.format(mass)
+
+        return found
+        # return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.15), 'Iso{:0.4f}'.format(mass))
 
     def map_mass(self, isotope):
         """
@@ -399,7 +411,7 @@ class BaseSpectrometer(SpectrometerDevice):
         return self.source_klass(spectrometer=self, microcontroller=self.microcontroller)
 
     def _microcontroller_default(self):
-        mc = self.microcontroller_klass(name='microcontroller')
+        mc = self.microcontroller_klass(name='spectrometer_microcontroller')
         mc.bootstrap()
         return mc
 

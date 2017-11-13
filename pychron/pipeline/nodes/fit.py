@@ -136,6 +136,7 @@ class FitICFactorNode(FitReferencesNode):
 GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
 GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
 
+
 class IsoEvoResult(HasTraits):
     # record_id = Str
     isotope = Str
@@ -148,6 +149,15 @@ class IsoEvoResult(HasTraits):
     slope_goodness = None
     outlier_goodness = None
     curvature_goodness = None
+
+    int_err_threshold = None
+    slope_threshold = None
+    outlier_threshold = None
+    curvature_threshold = None
+    int_err = None
+    slope = None
+    outlier = None
+    curvature = None
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
 
@@ -167,12 +177,12 @@ class IsoEvoResult(HasTraits):
         def f(t, m):
             v = getattr(self, '{}_goodness'.format(t))
             if v is not None:
-                v = 'OK' if v else "Bad"
+                v = 'OK' if v else "Bad {}>{}".format('{}'.format(t), '{}_threshold'.format(t))
             else:
                 v = 'Not Tested'
             return '{:<25}: {}'.format(m, v)
 
-        return '\n'.join([f(g, n) for g,n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
+        return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
     @property
     def record_id(self):
@@ -230,9 +240,9 @@ class FitIsotopeEvolutionNode(FitNode):
         #     ai.graph_id = 0
 
         self._set_saveable(state)
-
         if fs:
             e = IsoEvolutionResultsEditor(fs)
+            e.plotter_options = po
             state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
@@ -262,25 +272,48 @@ class FitIsotopeEvolutionNode(FitNode):
                 if goodness_threshold:
                     int_err_goodness = bool(pe < goodness_threshold)
 
+                slope = None
                 slope_goodness = None
+                slope_threshold = None
                 if po.slope_goodness:
-                    slope_goodness = bool(iso.get_slope() < 0 or i < po.slope_goodness)
+                    slope_threshold = po.slope_goodness
+                    slope = iso.get_slope()
+                    slope_goodness = bool(slope < 0 or i < slope_threshold)
 
+                outliers = None
+                outliers_threshold = None
                 outlier_goodness = None
                 if po.outlier_goodness:
-                    outlier_goodness = bool(iso.noutliers() < po.outlier_goodness)
+                    outlier = iso.noutliers()
+                    outliers_threshold = po.outlier_goodness
+                    outlier_goodness = bool(outlier < po.outlier_goodness)
 
                 curvature_goodness = None
+                curvature = None
+                curvature_threshold = None
                 if po.curvature_goodness:
-                    curvature_goodness = iso.curvature_at(po.curvature_goodness_at) < po.curvature_goodness
+                    curvature = iso.curvature_at(po.curvature_goodness_at)
+                    curvature_threshold = po.curvature_goodness
+                    curvature_goodness = curvature < curvature_threshold
 
                 yield IsoEvoResult(analysis=xi,
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
+                                   int_err=i,
+                                   int_err_threshold=goodness_threshold,
                                    int_err_goodness=int_err_goodness,
+
+                                   slope=slope,
+                                   slope_threshold=slope_threshold,
                                    slope_goodness=slope_goodness,
+
+                                   outliers=outliers,
+                                   outliers_threshold=outliers_threshold,
                                    outlier_goodness=outlier_goodness,
+
+                                   curvature=curvature,
+                                   curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
                                    regression_str=iso.regressor.tostring(),
                                    fit=f.fit,

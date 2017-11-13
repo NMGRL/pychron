@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import Str, List, HasTraits
+from traits.api import Str, List, HasTraits, Dict, Any
 from traitsui.api import View, Item, EnumEditor
 
 
@@ -24,16 +24,15 @@ from traitsui.api import View, Item, EnumEditor
 
 class AddAnalysisGroupView(HasTraits):
     name = Str
-    project = Str
-    projects = List
+    project = Any
+    projects = Dict
 
     def traits_view(self):
-        v = View(
-            Item('name'),
-            Item('project', editor=EnumEditor(name='projects')),
-            resizable=True,
-            buttons=['OK', 'Cancel'],
-            title='Add Analysis Group')
+        v = View(Item('name'),
+                 Item('project', editor=EnumEditor(name='projects')),
+                 resizable=True,
+                 buttons=['OK', 'Cancel'],
+                 title='Add Analysis Group')
         return v
 
 # ============= EOF =============================================

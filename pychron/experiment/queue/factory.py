@@ -64,6 +64,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     delay_after_air = Int(15)
     tray = Str
     trays = Property
+    note = Str
 
     load_name = Str
     load_names = Property
@@ -147,7 +148,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
     @cached_property
     def _get_trays(self):
-        return [NULL_STR]
+        return [NULL_STR, '221-hole', '221-small-hole', '145-hole', '61-hole', '37-hole', '10-hole', '9-hole']
 
     @cached_property
     def _get_usernames(self):

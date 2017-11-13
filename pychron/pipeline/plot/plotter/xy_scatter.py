@@ -28,10 +28,9 @@ class XYScatter(BaseArArFigure):
     def build(self, plots):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
+        padding = self.options.paddings()
         for i, po in enumerate(plots):
-            p = graph.new_plot(
-                ytitle=po.ytitle,
-                xtitle=po.xtitle)
+            p = graph.new_plot(ytitle=po.ytitle, xtitle=po.xtitle, padding=padding)
 
             p.value_range.tight_bounds = False
             self._setup_plot(i, p, po)

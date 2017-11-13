@@ -18,11 +18,12 @@
 from traits.api import Bool, Property, Float, CInt, List, Str, Any
 from traitsui.api import View, Item, HGroup, spring
 # ============= standard library imports ========================
-from threading import Timer as OneShotTimer
+from threading import Timer as OneShotTimer, Thread, Event
 from time import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
+
 
 def convert_to_bool(v):
     try:
@@ -31,21 +32,21 @@ def convert_to_bool(v):
     except:
         return v.lower().strip() in ['t', 'true', 'on']
 
+
 class Flag(Loggable):
     _set = Bool(False)
     display_state = Property(Bool, depends_on='_set')
     owner = Str
+    _thread = None
+    _evt = None
 
     def set_owner(self, owner):
         self.owner = owner
 
     def traits_view(self):
-        v = View(
-                 HGroup(Item('name', show_label=False, style='readonly'),
+        v = View(HGroup(Item('name', show_label=False, style='readonly'),
                         spring,
-                        Item('display_state', show_label=False)
-                        )
-               )
+                        Item('display_state', show_label=False)))
         return v
 
     def _get_display_state(self):
@@ -68,6 +69,11 @@ class Flag(Loggable):
         else:
             value = bool(value)
         self.info('setting flag state to {} ({})'.format(value, ovalue))
+
+        if value:
+            t = OneShotTimer(60, self.auto_clear)
+            t.start()
+
         self._set = value
         return True
 
@@ -77,6 +83,12 @@ class Flag(Loggable):
 
     def isSet(self):
         return self._set
+
+    def auto_clear(self):
+        if self._set:
+            self.info('auto canceling flag')
+            self.clear()
+
 
 class TimedFlag(Flag):
     duration = Float(1)
@@ -96,14 +108,14 @@ class TimedFlag(Flag):
 
     def traits_view(self):
         v = View(
-                 HGroup(Item('name', style='readonly'),
-                        spring,
-                        Item('display_time',
-                             format_str='%03i', style='readonly'),
-                        Item('display_state'),
-                        show_labels=False
-                        )
-               )
+            HGroup(Item('name', style='readonly'),
+                   spring,
+                   Item('display_time',
+                        format_str='%03i', style='readonly'),
+                   Item('display_state'),
+                   show_labels=False
+                   )
+        )
         return v
 
     def set(self, value):
@@ -144,6 +156,7 @@ class TimedFlag(Flag):
     def _update_time(self):
         self._time_remaining = round(self.get())
 
+
 class ValveFlag(Flag):
     '''
         a ValveFlag holds a list of valves keys (A, B, ...)
@@ -158,6 +171,7 @@ class ValveFlag(Flag):
     owner = Str
     valves_str = Property(depends_on='valves')
     manager = Any
+
     def set(self):
         super(ValveFlag, self).set()
 
@@ -167,13 +181,14 @@ class ValveFlag(Flag):
 
     def traits_view(self):
         v = View(
-                 HGroup(Item('name', show_label=False, style='readonly'),
-                        Item('valves_str', style='readonly',
-                             label='Valves')
-                        )
-               )
+            HGroup(Item('name', show_label=False, style='readonly'),
+                   Item('valves_str', style='readonly',
+                        label='Valves')
+                   )
+        )
         return v
 
     def _get_valves_str(self):
         return ','.join(self.valves)
+
 # ============= EOF =============================================

@@ -21,7 +21,7 @@ from traits.api import Str, List, Button, Instance, Tuple, Property
 from traitsui.api import Controller, View, Item
 
 from pychron.core.helpers.filetools import list_directory2
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN
+from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN
 from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
     ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
 from pychron.globals import globalv
@@ -34,6 +34,7 @@ from pychron.options.iso_evo import IsotopeEvolutionOptions
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions
 from pychron.options.radial import RadialOptions
+from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
@@ -70,11 +71,11 @@ class OptionsManager(Loggable):
         self._new_name = v
 
     def _validate_new_name(self, v):
-        if v not in self.names:
-            return v
+        if all((a not in v) for a in ('\\', ' ', '/')):
+            if v not in self.names:
+                return v
 
     def set_detectors(self, dets):
-        print 'setdetcot', dets
         self._cached_detectors = dets
         if self.selected_options:
             self.selected_options.set_detectors(dets)
@@ -322,6 +323,13 @@ class InverseIsochronOptionsManager(FigureOptionsManager):
     _defaults = (('screen', INVERSE_ISOCHRON_SCREEN),
                  ('presentation', INVERSE_ISOCHRON_PRESENTATION))
     _default_options_txt = INVERSE_ISOCHRON_SCREEN
+
+
+class RegressionSeriesOptionsManager(FigureOptionsManager):
+    id = 'regression_series'
+    options_klass = RegressionSeriesOptions
+    _defaults = (('screen', REGRESSION_SERIES_SCREEN),)
+    _default_options_txt = REGRESSION_SERIES_SCREEN
 
 
 class RadialOptionsManager(FigureOptionsManager):

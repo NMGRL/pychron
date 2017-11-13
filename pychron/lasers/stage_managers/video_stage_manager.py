@@ -21,7 +21,7 @@ import time
 from threading import Thread, Timer
 
 from apptools.preferences.preference_binding import bind_preference
-from numpy import copy
+from numpy import copy, array
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
@@ -133,6 +133,14 @@ class VideoStageManager(StageManager):
                         '{}.video_output_mode'.format(pref_id))
         bind_preference(self.video, 'ffmpeg_path',
                         '{}.ffmpeg_path'.format(pref_id))
+
+    def get_grain_mask(self):
+        ld = self.lumen_detector
+        l, m = ld.lum()
+        return m.tostring()
+
+    def get_grain_masks_blob(self):
+        return array(self.grain_masks).tostring()
 
     def stop_measure_grain_mask(self):
         if self._measure_grain_evt:

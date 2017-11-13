@@ -139,8 +139,9 @@ class AnalysisTbl(Base, BaseMixin):
     group_sets = relationship('AnalysisGroupSetTbl', backref='analysis')
 
     change = relationship('AnalysisChangeTbl', uselist=False, backref='analysis')
-    measured_position = relationship('MeasuredPositionTbl', uselist=False, backref='analysis')
+    measured_positions = relationship('MeasuredPositionTbl', backref='analysis')
     media = relationship('MediaTbl', backref='analysis')
+    results = relationship('AnalysisIntensitiesTbl', backref='analysis')
 
     _record_view = None
     group_id = 0
@@ -152,8 +153,8 @@ class AnalysisTbl(Base, BaseMixin):
 
     @property
     def position(self):
-        if self.measured_position:
-            return self.measured_position.position
+        if self.measured_positions:
+            return ','.join(['{}'.format(p.position) for p in self.measured_positions if p.position])
         else:
             return ''
 
@@ -192,6 +193,10 @@ class AnalysisTbl(Base, BaseMixin):
     @property
     def project(self):
         return self.irradiation_position.sample.project.name
+
+    @property
+    def principal_investigator(self):
+        return self.irradiation_position.sample.project.principal_investigator.name
 
     @property
     def sample(self):
@@ -262,6 +267,31 @@ class AnalysisTbl(Base, BaseMixin):
         return iv
 
 
+class AnalysisIntensitiesTbl(Base, BaseMixin):
+    id = Column(Integer, primary_key=True)
+    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+    value = Column(Float)
+    error = Column(Float)
+    n = Column(Integer)
+    fit = stringcolumn(32)
+    fit_error_type = stringcolumn(32)
+    baseline_value = Column(Float)
+    baseline_error = Column(Float)
+    baseline_n = Column(Integer)
+    baseline_fit = stringcolumn(32)
+    baseline_fit_error_type = stringcolumn(32)
+    blank_value = Column(Float)
+    blank_error = Column(Float)
+
+    # kca_value = Column(Float)
+    # kca_error = Column(Float)
+    # kcl_value = Column(Float)
+    # kcl_error = Column(Float)
+
+    isotope = stringcolumn(32)
+    detector = stringcolumn(32)
+
+
 class ProjectTbl(Base, NameMixin):
     id = primary_key()
     principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
@@ -296,6 +326,8 @@ class SampleTbl(Base, NameMixin):
     positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
     igsn = stringcolumn(140)
+    lat = Column(Float)
+    lon = Column(Float)
 
 
 class ProductionTbl(Base, NameMixin):
@@ -341,9 +373,9 @@ class IrradiationPositionTbl(Base, BaseMixin):
     @property
     def analyzed(self):
         return bool(self.analysis_count)
-    # @property
-    # def irradiation_position(self):
-    #     return self
+        # @property
+        # def irradiation_position(self):
+        #     return self
 
 
 # class TagTbl(Base, BaseMixin):
@@ -361,6 +393,7 @@ class MassSpectrometerTbl(Base, BaseMixin):
     kind = stringcolumn(45)
     # active = Column(Bool)
     active = True
+
 
 class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
@@ -510,7 +543,7 @@ class IRTbl(Base, BaseMixin):
 class AnalysisGroupTbl(Base, BaseMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String(140))
-    create_date = Column(TIMESTAMP)
+    create_date = Column(TIMESTAMP, default=func.now())
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     user = Column(String(140), ForeignKey('UserTbl.name'))
 
@@ -530,6 +563,5 @@ class MediaTbl(Base, BaseMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
-
 
 # ============= EOF =============================================

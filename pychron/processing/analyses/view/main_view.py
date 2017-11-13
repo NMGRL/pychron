@@ -71,9 +71,6 @@ class MainView(HasTraits):
             self.refresh_needed = True
 
     def _load(self, an):
-        # self.isotopes = an.isotopes
-        print an.isotope_keys
-
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
         self.load_computed(an)
         self.load_extraction(an)
@@ -163,9 +160,9 @@ class MainView(HasTraits):
             ExtractionValue(name='Lab Temp.',
                             value=an.lab_temperature,
                             units='F'),
-           ExtractionValue(name='Lab Hum.',
-                           units='%',
-                           value=an.lab_humidity)]
+            ExtractionValue(name='Lab Hum.',
+                            units='%',
+                            value=an.lab_humidity)]
 
         if 'UV' in an.extract_device:
             extra = [ExtractionValue(name='Mask Pos.',
@@ -210,15 +207,26 @@ class MainView(HasTraits):
     def _make_ratios(self, ratios):
         cv = []
         for name, nd, ref in ratios:
-            dr = DetectorRatio(name=name,
-                               value='',
-                               error='',
-                               noncorrected_value=0,
-                               noncorrected_error=0,
-                               ic_factor='',
-                               ref_ratio=ref,
-                               detectors=nd)
-            cv.append(dr)
+            n, d = nd.split('/')
+            ns = [i for i in self.isotopes if i.name == n]
+            ds = [i for i in self.isotopes if i.name == d]
+
+            add_det_names = len(ns) > 1 or len(ds) > 1
+            for ni in ns:
+                for di in ds:
+                    if add_det_names:
+                        nd = '{}_{}/{}_{}'.format(ni.name, ni.detector, di.name, di.detector)
+                        name = '{}({})/{}({})'.format(ni.name, ni.detector, di.name, di.detector)
+
+                    dr = DetectorRatio(name=name,
+                                       value='',
+                                       error='',
+                                       noncorrected_value=0,
+                                       noncorrected_error=0,
+                                       ic_factor='',
+                                       ref_ratio=ref,
+                                       detectors=nd)
+                    cv.append(dr)
 
         return cv
 
@@ -262,7 +270,16 @@ class MainView(HasTraits):
 
     def _update_ratios(self):
         def get_iso(kk):
-            return next((v for v in self.isotopes if v.name == kk), None)
+            if '_' in kk:
+                iso, det = kk.split('_')
+
+                def test(i):
+                    return i.name == iso and i.detector == det
+            else:
+                def test(i):
+                    return i.name == kk
+
+            return next((v for v in self.isotopes if test(v)), None)
 
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):

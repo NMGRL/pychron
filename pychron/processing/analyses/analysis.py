@@ -143,6 +143,7 @@ class IdeogramPlotable(HasTraits):
     name = ''
 
     tag = 'ok'
+    tag_note = ''
     uage = None
     temp_status = 'ok'
     otemp_status = None
@@ -153,6 +154,7 @@ class IdeogramPlotable(HasTraits):
     labnumber = ''
     aliquot = 0
     step = ''
+    timestamp = 0
 
     def __init__(self, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
@@ -179,7 +181,11 @@ class IdeogramPlotable(HasTraits):
         self.temp_status = tag
 
     def set_tag(self, tag):
-        self.tag = tag
+        if isinstance(tag, dict):
+            self.tag_note = tag.get('note', '')
+            self.tag = tag.get('name', '')
+        else:
+            self.tag = tag
 
     def value_string(self, t):
         a, e = self._value_string(t)
@@ -455,7 +461,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         if t == 'uF':
             a, e = self.F, self.F_err
         elif t == 'uage':
-            a, e = self.uage.nominal_value, self.uage.std_dev
+            a, e = nominal_value(self.uage), std_dev(self.uage)
         else:
             v = self.get_value(t)
             if isinstance(v, Isotope):

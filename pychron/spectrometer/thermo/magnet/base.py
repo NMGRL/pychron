@@ -76,10 +76,15 @@ class ThermoMagnet(BaseMagnet):
                 unblank = True
 
         if self.use_af_demagnetization and use_af_demag:
-            if dv > self.af_demag_threshold:
-                self.debug('Move {}>{}. Do AF Demag'.format(dv, self.af_demag_threshold))
+            if dv > self.af_demag_threshold or use_af_demag == 'force':
+                self.debug('Do AF Demag. UseAFDemag={}, delta_volts={}, threshold={}'.format(use_af_demag,
+                                                                                             dv,
+                                                                                             self.af_demag_threshold))
+                self.ask('BlankBeam True', verbose)
                 self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
-
+        else:
+            self.debug('AF Demag not enabled. self.use_af_demag={}, use_af_demag={}'.format(self.use_af_demagnetization,
+                                                                                            use_af_demag))
         self.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
 
         change = dv > 1e-7
@@ -122,6 +127,5 @@ class ThermoMagnet(BaseMagnet):
     @get_float(default=0)
     def read_dac(self):
         return self.ask('GetMagnetDAC')
-
 
 # ============= EOF =============================================

@@ -59,6 +59,7 @@ class DVCPersister(BasePersister):
     _positions = None
 
     macrochron_enabled = Bool(True)
+    save_log_enabled = Bool(False)
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
         self.per_spec = pr
@@ -210,8 +211,8 @@ class DVCPersister(BasePersister):
                 try:
                     ar.smart_pull(accept_their=True)
 
-                    # commit the reset of the files
-                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in PATH_MODIFIERS]
+                    pms = (None, '.data', 'tags', 'peakcenter', 'extraction', 'monitor')
+                    paths = [spec_path, ] + [self._make_path(modifier=m) for m in pms]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -270,7 +271,7 @@ class DVCPersister(BasePersister):
         return ret
 
     def save_run_log_file(self, path):
-        if self.save_enabled:
+        if self.save_enabled and self.save_log_enabled:
             self.debug('saving run log file')
 
             npath = self._make_path('logs', '.log')
@@ -314,6 +315,10 @@ class DVCPersister(BasePersister):
         db = self.dvc.db
         an = db.add_analysis(**d)
 
+        # save results
+        for iso in self.per_spec.isotope_group.isotopes.values():
+            db.add_analysis_result(an, iso)
+
         # save media
         if self.per_spec.snapshots:
             for p in self.per_spec.snapshots:
@@ -326,10 +331,17 @@ class DVCPersister(BasePersister):
         if self._positions:
             db = self.dvc.db
             load_name = self.per_spec.load_name
+            load_holder = self.per_spec.load_holder
+
+            db.add_load(load_name, load_holder)
+            db.flush()
+            db.commit()
 
             for position in self._positions:
-                pos = db.add_measured_position(load=load_name, **position)
-                an.measured_position = pos
+                dbpos = db.add_measured_position(load=load_name, **position)
+                an.measured_positions.append(dbpos)
+
+                # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
         # *** _retroactive_experiment_identifiers is currently disabled ***
 
@@ -373,18 +385,15 @@ class DVCPersister(BasePersister):
         if self.use_isotope_classifier:
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
-        for iso in per_spec.isotope_group.isotopes.values():
+        for iso in per_spec.isotope_group.values():
 
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
             for ss, blob in ((signals, sblob), (sniffs, snblob)):
                 d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
                 ss.append(d)
-                # signals.append({'isotope': iso.name, 'detector': iso.detector, 'blob': sblob})
-                # sniffs.append({'isotope': iso.name, 'detector': iso.detector, 'blob': snblob})
 
-            isod = {'detector': iso.detector,
-                    'name': iso.name}
+            isod = {'detector': iso.detector, 'name': iso.name}
 
             if clf is not None:
                 klass, prob = clf.predict_isotope(iso)
@@ -418,16 +427,19 @@ class DVCPersister(BasePersister):
                                            'fit': 'default',
                                            'references': []}
                 cbaselines[iso.detector] = {'fit': iso.baseline.fit,
+                                            'error_type': iso.baseline.error_type,
                                             'filter_outliers_dict': iso.baseline.filter_outliers_dict,
                                             'value': float(iso.baseline.value),
                                             'error': float(iso.baseline.error)}
 
             intercepts[key] = {'fit': iso.fit,
+                               'error_type': iso.error_type,
                                'filter_outliers_dict': iso.filter_outliers_dict,
                                'value': float(iso.value),
                                'error': float(iso.error)}
 
             blanks[key] = {'fit': 'previous',
+                           'error_type': '',
                            'references': [{'record_id': per_spec.previous_blank_runid,
                                            'exclude': False}],
                            'value': float(iso.blank.value),
@@ -451,7 +463,8 @@ class DVCPersister(BasePersister):
                                 'lab_humiditys': per_spec.lab_humiditys,
                                 'lab_pneumatics': per_spec.lab_pneumatics}
 
-        obj['laboratory'] = per_spec.run_spec.laboratory
+        obj['laboratory'] = per_spec.laboratory
+        obj['instrument_name'] = per_spec.instrument_name
         obj['analyst_name'] = per_spec.run_spec.username
         obj['whiff_result'] = per_spec.whiff_result
         obj['detectors'] = dets
@@ -539,12 +552,12 @@ class DVCPersister(BasePersister):
         self.info('DVC saving peakcenter')
         p = self._make_path(modifier='peakcenter')
 
-        obj = {}
         if pc:
-            obj['reference_detector'] = pc.reference_detector.name
-            obj['reference_isotope'] = pc.reference_isotope
             fmt = '>ff'
-            obj['fmt'] = fmt
+            obj = {'reference_detector': pc.reference_detector.name,
+                   'reference_isotope': pc.reference_isotope,
+                   'fmt': fmt}
+
             results = pc.get_results()
             if results:
                 for result in results:
@@ -557,23 +570,7 @@ class DVCPersister(BasePersister):
                                             'points': base64.b64encode(''.join([struct.pack(fmt, *di)
                                                                                 for di in result.points]))}
 
-                    # if pc.result:
-                    #     xs, ys, _mx, _my = pc.result
-                    #     obj.update({'low_dac': xs[0],
-                    #                 'center_dac': xs[1],
-                    #                 'high_dac': xs[2],
-                    #                 'low_signal': ys[0],
-                    #                 'center_signal': ys[1],
-                    #                 'high_signal': ys[2]})
-                    #
-                    # data = pc.get_data()
-                    # if data:
-                    #     fmt = '>ff'
-                    #     obj['fmt'] = fmt
-                    #     for det, pts in data:
-                    #         obj[det] = base64.b64encode(''.join([struct.pack(fmt, *di) for di in pts]))
-
-        dvc_dump(obj, p)
+            dvc_dump(obj, p)
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
@@ -590,8 +587,8 @@ class DVCPersister(BasePersister):
                 obj = self.per_spec.run_spec
             try:
                 return getattr(obj, ki)
-            except AttributeError:
-                pass
+            except AttributeError, e:
+                self.warning('Attribute error: attr={}, error={}'.format(ki, e))
 
         d = {k: get(k) for k in keys}
         return d

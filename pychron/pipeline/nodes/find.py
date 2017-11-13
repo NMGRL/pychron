@@ -160,11 +160,11 @@ class FindReferencesNode(FindNode):
     analysis_types = List
 
     extract_device = Str
-    # enable_extract_device = Bool
+    enable_extract_device = Bool
     extract_devices = List
 
     mass_spectrometer = Str
-    # enable_mass_spectrometer = Bool
+    enable_mass_spectrometer = Bool
     mass_spectrometers = List
     # analysis_type_name = None
     name = 'Find References'
@@ -207,7 +207,6 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-        print 'unkns', state.unknowns
         key = lambda x: x.group_id
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
             if self._run_group(state, gid, list(ans)):
@@ -233,8 +232,8 @@ class FindReferencesNode(FindNode):
 
         atype = self.analysis_type.lower().replace(' ', '_')
         refs = self.dvc.find_references(times, atype, hours=self.threshold,
-                                        extract_device=self.extract_device,
-                                        mass_spectrometer=self.mass_spectrometer,
+                                        extract_devices=self.extract_device,
+                                        mass_spectrometers=self.mass_spectrometer,
                                         make_records=False)
         if refs:
             unknowns.extend(refs)

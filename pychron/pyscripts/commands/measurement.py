@@ -28,6 +28,7 @@ from pychron.pychron_constants import NULL_STR
 
 DETS = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
+
 # ===============================================================================
 # super commands
 # ===============================================================================
@@ -62,6 +63,7 @@ class ConditionalCommand(Command):
                                                                      self.value,
                                                                      self.start_count,
                                                                      self.frequency)
+
 
 # ===============================================================================
 # condition commands
@@ -113,6 +115,7 @@ class ClearTerminations(Command):
     description = 'Clear terminations'
     example = ''' '''
 
+
 # ===============================================================================
 #
 # ===============================================================================
@@ -134,7 +137,7 @@ class Equilibrate(ValveCommand):
                    Item('inlet', editor=EnumEditor(name='valve_name_dict')),
                    Item('outlet', editor=EnumEditor(name='valve_name_dict')),
                    'do_post_equilibration'
-        )
+                   )
 
         return v
 
@@ -206,7 +209,7 @@ Example 2. peak hops activated isotopes on the CDD. In this case <mass> is relat
         return VGroup(Item('ncounts'),
                       Item('position'),
                       Item('detector', editor=EnumEditor(values=DETS))
-        )
+                      )
 
     def _to_string(self):
         pos = self.position
@@ -216,7 +219,7 @@ Example 2. peak hops activated isotopes on the CDD. In this case <mass> is relat
         words = [('ncounts', self.ncounts, True),
                  ('position', pos, True),
                  ('detector', self.detector)
-        ]
+                 ]
 
         return self._keywords(words)
 
@@ -303,11 +306,11 @@ class ActivateDetectors(Command):
                            style='custom',
                            editor=CheckListEditor(values=DETS,
                                                   cols=1
-                           )),
+                                                  )),
                       Item('toggle',
                            show_label=False,
                            editor=ButtonEditor(label_value='toggle_label'))
-        )
+                      )
 
     def _to_string(self):
         return ', '.join([self._quote(di) for di in self.detectors])
@@ -331,7 +334,7 @@ class Multicollect(Command):
     def _to_string(self):
         words = [('ncounts', self.ncounts, True),
                  ('integration_time', self.integration_time, True)
-        ]
+                 ]
         return self._keywords(words)
 
 
@@ -411,7 +414,7 @@ class SetDeflection(ValueCommand):
     def _get_view(self):
         v = VGroup(Item('detector', editor=EnumEditor(values=DETS)),
                    'value'
-        )
+                   )
         return v
 
     def _to_string(self):
@@ -471,6 +474,16 @@ class SetExtractionLens(ValueCommand):
     example = 'set_extraction_lens(10.1)'
 
 
+class SetExtractionsymmetry(ValueCommand):
+    description = 'Set extraction-symmetry'
+    example = 'set_extraction_symmetry(10.1)'
+
+
+class SetExtractionfocus(ValueCommand):
+    description = 'Set extraction-focus'
+    example = 'set_extraction_focus(10.1)'
+
+
 class DefineDetectors(Command):
     pass
 
@@ -502,8 +515,17 @@ class SetFits(Command):
 class SetIntegrationTime(Command):
     pass
 
+
 class SetAcceleratingVoltage(Command):
     description = 'Set the source accelerating voltage in volts'
     example = 'set_accelerating_voltage(4500)'
+
+
+class SetExtractionFocus(Command):
+    pass
+
+
+class SetExtractionSymmetry(Command):
+    pass
 
 # ============= EOF =============================================

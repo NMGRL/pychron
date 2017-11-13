@@ -144,6 +144,8 @@ class HopsAction(ListAction):
                     detector = positioning['detector']
                     pos = positioning['isotope']
 
+                use_af_demag = positioning.get('use_af_demag', False)
+
                 zd = zip(dets, defls)
 
                 # set deflections
@@ -156,7 +158,7 @@ class HopsAction(ListAction):
                     spec.protect_detector(pd, True)
 
                 msg_queue.put('Position {} {}'.format(pos, detector))
-                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False)
+                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False, use_af_demag=use_af_demag)
 
                 for pd in pdets:
                     spec.protect_detector(pd, False)
@@ -166,6 +168,32 @@ class HopsAction(ListAction):
                     time.sleep(1)
 
         self._alive = False
+
+
+class SpectrometerScriptAction(ListAction):
+    script_path = Str
+
+    def perform(self, event):
+        app = event.task.application
+        tid = 'pychron.spectrometer'
+        manager = app.task_is_open(tid)
+        task = app.get_task('pychron.pyscript.task', activate=False)
+        # context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+
+        context = {}
+        root = os.path.dirname(self.script_path)
+        name = os.path.basename(self.script_path)
+
+        info = lambda x: '======= {} ======='.format(x)
+        # manager = app.get_service('pychron.spectrometer.scan_manager.ScanManager')
+        manager.info(info('Started Spectrometer script "{}"'.format(name)))
+
+        task.execute_script(name, root,
+                            delay_start=1,
+                            manager=manager,
+                            kind='Spectrometer',
+                            on_completion=lambda: manager.info(info('Finished Spectrometer Script "{}"'.format(name))),
+                            context=context)
 
 
 class ProcedureAction(ListAction):
@@ -179,8 +207,8 @@ class ProcedureAction(ListAction):
     #         ex = ex.experimentor.executor
     #         ex.on_trait_change(self._update_alive, 'alive')
 
-    def _update_alive(self, new):
-        self.enabled = not new
+    # def _update_alive(self, new):
+    #     self.enabled = not new
 
     def perform(self, event):
         app = event.task.application

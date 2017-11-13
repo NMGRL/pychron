@@ -122,7 +122,9 @@ class BaseMeasurement(object):
 
     def get_curvature(self, x):
         ys = self._get_curvature_ys()
-        if x < 1:
+
+        # if x is between 0-1 treat as a percentage of the total number of points
+        if 0 < x < 1:
             x = self.xs.shape[0] * x
 
         return curvature_at(ys, x)
@@ -498,9 +500,9 @@ class BaseIsotope(IsotopicMeasurement):
 
         b = self.baseline.uvalue
         if not include_baseline_error:
-            b = b.nominal_value
+            b = nominal_value(b)
             nv = self.uvalue - b
-            return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
+            return ufloat(nominal_value(nv), std_dev(nv), tag=self.name)
         else:
             return self.uvalue - b
 
@@ -564,13 +566,13 @@ class Isotope(BaseIsotope):
         """
             return the discrimination and ic_factor corrected value
         """
-        # st=time.time()
         v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
 
         # this is a temporary hack for handling Minna bluff data
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
-        # print self.name, time.time()-st
+        # if self._regressor:
+        #     print 'get intensity {}{} regressor={}'.format(self.name, self.detector, id(self._regressor))
         return v
 
     def get_disc_corrected_value(self):

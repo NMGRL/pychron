@@ -13,19 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# ============= enthought library imports =======================
-import json
+
 import os
 import shutil
 import time
 from datetime import datetime
 from itertools import groupby
 from math import isnan
-
-from apptools.preferences.preference_binding import bind_preference
 from git import Repo
-from traits.api import Instance, Str, Set, List, provides
 from uncertainties import nominal_value, std_dev, ufloat
+
+# ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, Str, Set, List, provides
 
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
@@ -44,6 +44,7 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
+from pychron import json
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -62,25 +63,28 @@ class DVCException(BaseException):
 class Tag(object):
     name = None
     path = None
+    note = ''
 
     @classmethod
-    def from_analysis(cls, an):
+    def from_analysis(cls, an, **kw):
         tag = cls()
         tag.name = an.tag
+        tag.note = an.tag_note
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
-        print an.record_id, an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
+
+        for k, v in kw.iteritems():
+            setattr(tag, k, v)
 
         return tag
 
     def dump(self):
-        obj = {'name': self.name}
+        obj = {'name': self.name,
+               'note': self.note}
         if not self.path:
             self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
 
-        # with open(self.path, 'w') as wfile:
-        #     json.dump(obj, wfile, indent=4)
         dvc_dump(obj, self.path)
 
 
@@ -91,11 +95,12 @@ class DVCInterpretedAge(InterpretedAge):
 
     def load_tag(self, obj):
         self.tag = obj.get('name', '')
+        self.tag_note = obj.get('note', '')
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name',
-                  'uuid'):
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name', 'project'
+                                                                                          'uuid'):
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
@@ -103,7 +108,10 @@ class DVCInterpretedAge(InterpretedAge):
         self._record_id = '{} {}'.format(self.identifier, self.name)
 
     def get_value(self, attr):
-        return getattr(self, attr)
+        try:
+            return getattr(self, attr)
+        except AttributeError:
+            return ufloat(0, 0)
 
     @property
     def status(self):
@@ -203,34 +211,59 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
-    def repository_db_sync(self, reponame):
+    def repository_db_sync(self, reponame, dry_run=False):
+        self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)
         ps = []
-        ans = self.db.repository_analyses(reponame)
-        for ai in ans:
-            p = analysis_path(ai.record_id, reponame)
-            obj = dvc_load(p)
+        db = self.db
+        with db.session_ctx():
+            ans = db.get_repository_analyses(reponame)
 
-            sample = None
-            project = None
-            material = None
-            changed = False
-            for attr, v in (('sample', sample),
-                            ('project', project),
-                            ('material', material)):
-                if obj.get(attr) != v:
-                    obj[attr] = v
-                    changed = True
+            def key(ai):
+                return ai.identifier
 
-            if changed:
-                ps.append(p)
-                dvc_dump(obj, p)
+            for ln, ans in groupby(sorted(ans, key=key), key=key):
+                ip = db.get_identifier(ln)
+                dblevel = ip.level
+                irrad = dblevel.irradiation.name
+                level = dblevel.name
+                pos = ip.position
+                for ai in ans:
+                    p = analysis_path(ai.record_id, reponame)
 
-        if ps:
+                    try:
+                        obj = dvc_load(p)
+                    except ValueError:
+                        print 'skipping {}'.format(p)
+
+                    sample = ip.sample.name
+                    project = ip.sample.project.name
+                    material = ip.sample.material.name
+                    changed = False
+                    for attr, v in (('sample', sample),
+                                    ('project', project),
+                                    ('material', material),
+                                    ('irradiation', irrad),
+                                    ('irradiation_level', level),
+                                    ('irradiation_position', pos)):
+                        ov = obj.get(attr)
+                        if ov != v:
+                            print '{:<20s} repo={} db={}'.format(attr, ov, v)
+                            obj[attr] = v
+                            changed = True
+
+                    if changed:
+                        print '{}'.format(p)
+                        ps.append(p)
+                        if not dry_run:
+                            dvc_dump(obj, p)
+
+        if ps and not dry_run:
             repo.pull()
             repo.add_paths(ps)
-            repo.commit('Synced repository with database {}'.format(self.db.datasource_url))
+            repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
+        self.info('finished db-repo sync for {}'.format(reponame))
 
     def repository_transfer(self, ans, dest):
         def key(x):
@@ -442,8 +475,8 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_repositories
 
-    def update_tag(self, an):
-        tag = Tag.from_analysis(an)
+    def update_tag(self, an, **kw):
+        tag = Tag.from_analysis(an, **kw)
         tag.dump()
 
         expid = an.repository_identifier
@@ -560,15 +593,15 @@ class DVC(Loggable):
 
         exps = {r.repository_identifier for r in records}
         progress_iterator(exps, func, threshold=1)
+
         # for ei in exps:
+        branches = {ei: get_repository_branch(os.path.join(paths.repository_dataset_dir, ei)) for ei in exps}
 
         make_record = self._make_record
 
         def func(*args):
-            # t = time.time()
             try:
-                r = make_record(calculate_f_only=calculate_f_only, *args)
-                # print 'make time {}'.format(time.time()-t)
+                r = make_record(branches=branches, calculate_f_only=calculate_f_only, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -672,7 +705,23 @@ class DVC(Loggable):
                                    head.message)
         self.information_dialog(msg)
 
+    def pull_repository(self, repo):
+        if isinstance(repo, (str, unicode)):
+            r = GitRepoManager()
+            r.open_repo(repo, root=paths.repository_dataset_dir)
+            repo = r
+
+        self.debug('pull repository {}'.format(repo))
+        for gi in self.application.get_services(IGitHost):
+            self.debug('pull to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
+            repo.smart_pull(remote=gi.default_remote_name)
+
     def push_repository(self, repo):
+        if isinstance(repo, (str, unicode)):
+            r = GitRepoManager()
+            r.open_repo(repo, root=paths.repository_dataset_dir)
+            repo = r
+
         self.debug('push repository {}'.format(repo))
         for gi in self.application.get_services(IGitHost):
             self.debug('pushing to remote={}, url={}'.format(gi.default_remote_name, gi.remote_url))
@@ -757,7 +806,8 @@ class DVC(Loggable):
 
         if isnan(mswd):
             mswd = 0
-        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+        d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'project', 'identifier', 'nanalyses',
+                                                  'irradiation',
                                                   'name', 'uuid', 'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
                                                   'include_j_error_in_individual_analyses')}
@@ -769,11 +819,11 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
+                 arar_constants=ia.arar_constants.as_dict(),
                  analyses=[dict(uuid=ai.uuid,
-                                runid=ai.runid,
+                                record_id=ai.record_id,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses],
-                 )
+                           ia.all_analyses])
 
         if self.macrochron_enabled:
             d['macrochron'] = self._make_macrochron(ia)
@@ -821,12 +871,12 @@ class DVC(Loggable):
             db.add_project(name, pi, **kw)
         return added
 
-    def add_sample(self, name, project, pi, material, grainsize=None, note=None):
+    def add_sample(self, name, project, pi, material, grainsize=None, note=None, **kw):
         added = False
         db = self.db
         if not db.get_sample(name, project, pi, material, grainsize):
             added = True
-            db.add_sample(name, project, pi, material, grainsize, note=note)
+            db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
         return added
 
     def add_principal_investigator(self, name):
@@ -981,7 +1031,7 @@ class DVC(Loggable):
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, branches=None, calculate_f_only=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1012,7 +1062,6 @@ class DVC(Loggable):
                 rid = record.record_id
                 if record.use_repository_suffix:
                     rid = '-'.join(rid.split('-')[:-1])
-
                 a = DVCAnalysis(rid, expid)
                 a.group_id = record.group_id
             except AnalysisNotAnvailableError:
@@ -1030,7 +1079,9 @@ class DVC(Loggable):
                     return
 
             # get repository branch
-            a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
+            a.branch = branches.get(expid, '')
+            # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
+            # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):

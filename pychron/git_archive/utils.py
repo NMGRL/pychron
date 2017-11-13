@@ -18,6 +18,7 @@
 import os
 from datetime import datetime
 
+import re
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
@@ -88,35 +89,45 @@ def get_commits(repo, branch, path, tag, *args):
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 
-    # print ' '.join(cmd)
-    # print repo.git.execute(' '.join(cmd))
-    # return []
-    # proc = repo.git.execute(cmd, as_process=True)
-    # try:
-    #     proc.wait()
-    # except GitCommandError, e:
-    #     print 'eee', e
-    #     return []
-    # print 'ret', proc.returncode
-    # if not proc.returncode:
-    #     for l in proc.stdout:
-    #         print l.strip()
-    #     return [from_gitlog(l.strip(), path, tag) for l in proc.stdout]
 
-
-def get_diff(repo, a, b, path, change_type='M'):
+def get_repo(repo):
     if isinstance(repo, (str, unicode)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
 
-    # a = repo.commit(a)
+    return repo
+
+
+def get_diff(repo, a, b, path, change_type='M'):
+    repo = get_repo(repo)
     diff = repo.git.diff(a, b, '--full-index', '--', path)
     if diff:
         return fu(repo, diff)
-        # ablob = Blob(repo, hex_to_bin(a_blob_id), mode=self.a_mode, path=a_path)
-        # bblob = ''
-        # return ablob, bblob
+
+
+aregex = re.compile(r'\[ahead (?P<count>\d+)')
+bregex = re.compile(r'behind (?P<count>\d+)')
+
+
+def ahead_behind(repo, fetch=True, remote='origin'):
+    repo = get_repo(repo)
+
+    ahead = 0
+    behind = 0
+    if fetch:
+        repo.git.fetch(remote)
+
+    status = repo.git.status('-sb')
+
+    ma = aregex.search(status)
+    mb = bregex.search(status)
+    if ma:
+        ahead = int(ma.group('count'))
+    if mb:
+        behind = int(mb.group('count'))
+
+    return ahead, behind
 
 
 def fu(repo, text):
@@ -159,55 +170,6 @@ def fu(repo, text):
         ablob = Blob(repo, hex_to_bin(a_blob_id), mode=a_mode, path=a_path)
         bblob = Blob(repo, hex_to_bin(b_blob_id), mode=b_mode, path=a_path)
         return ablob, bblob
-
-        # index.append(Diff(repo,
-        #                   a_path and a_path.decode(defenc),
-        #                   b_path and b_path.decode(defenc),
-        #                   a_blob_id and a_blob_id.decode(defenc),
-        #                   b_blob_id and b_blob_id.decode(defenc),
-        #                   a_mode and a_mode.decode(defenc),
-        #                   b_mode and b_mode.decode(defenc),
-        #                   new_file, deleted_file,
-        #                   rename_from and rename_from.decode(defenc),
-        #                   rename_to and rename_to.decode(defenc),
-        #                   None))
-        #
-        # previous_header = header
-
-        # print 'diff', len(diff), diff
-
-        # if change_type:
-        #     # st = time.time()
-        #     repo.git.diff(a,b,'--', '--names-only', path)
-        #     # print 'gen time1 {}'.format(time.time()-st)
-        #
-        #     # direct git command is 10x faster than a.diff(b)
-        #     st = time.time()
-        #     gen = a.diff(b).iter_change_type(change_type)
-        #     print 'gen time2 {}'.format(time.time()-st)
-        # else:
-        #     gen = a.diff(b)
-
-        # rpath = os.path.relpath(path, repo.working_dir)
-
-        # for d in gen:
-        #     print d.a_blob.path, rpath
-        #     if d.a_blob and d.a_blob.path == rpath:
-        #         return d
-        # print 'sadf', d.a_blob.path
-
-        # if d.
-        # print d
-        # print d.a_blob, d.b_blob
-
-        # print '------------aa'
-        # print d.a_blob.data_stream.read()
-        # print '-----------bb'
-        # if d.b_blob:
-        # print d.b_blob.data_stream.read()
-
-        # print repo.diff(a,b)
-        # return []
 
 
 if __name__ == '__main__':

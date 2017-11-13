@@ -96,7 +96,7 @@ class ExperimentQueue(BaseExperimentQueue):
         else:
             bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
 
-        self.debug('Autosaving to {}'.format(bk))
+        self.debug('hAutosaving to {}'.format(bk))
         with open(bk, 'w') as wfile:
             self.dump(wfile)
 
@@ -185,17 +185,11 @@ class ExperimentQueue(BaseExperimentQueue):
         ev = SelectAttrView(available_attributes=hs)
         ev.on_trait_change(self._handle_select_attributes, 'attributes')
         ev.edit_traits()
-        # if info.result:
-            # if ev.attributes:
-            #
-            #     s = self.selected[0]
-            #     def test(v):
-            #         return all([getattr(v, k) == getattr(s, k) for k in ev.attributes])
-            #
-            #     self._select_same(test)
+
     def _handle_select_attributes(self, attributes):
         if attributes:
             s = self.selected[0]
+
             def test(v):
                 return all([getattr(v, k) == getattr(s, k) for k in attributes])
 

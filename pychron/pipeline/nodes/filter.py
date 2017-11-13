@@ -18,7 +18,7 @@
 import datetime
 import re
 
-from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool
+from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, on_trait_change
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
 from traitsui.editors import ListEditor
 from uncertainties import std_dev, nominal_value
@@ -39,7 +39,7 @@ class PipelineFilter(HasTraits):
 
     chain_operator = Enum('and', 'or')
     show_chain = Bool
-
+    remove_button = Button
     _eval_func = None
 
     def __init__(self, txt=None, *args, **kw):
@@ -138,7 +138,8 @@ class PipelineFilter(HasTraits):
         return val
 
     def traits_view(self):
-        v = View(HGroup(UItem('chain_operator', visible_when='show_chain'),
+        v = View(HGroup(icon_button_editor('remove_button', 'remove'),
+                        UItem('chain_operator', visible_when='show_chain'),
                         UItem('attribute',
                               editor=EnumEditor(name='attributes')),
                         UItem('comparator'),
@@ -191,6 +192,7 @@ class FilterNode(BaseNode):
                         VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
                  kind='livemodal',
                  title='Edit Filter',
+                 resizable=True,
                  buttons=['OK', 'Cancel'])
         return v
 
@@ -242,4 +244,8 @@ class FilterNode(BaseNode):
         vs = [fi.to_string() for fi in self.filters] * 3
         d['filters'] = vs
 
+
+if __name__ == '__main__':
+    a=FilterNode()
+    a.configure_traits()
 # ============= EOF =============================================

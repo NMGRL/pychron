@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2017 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +14,5 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-
-
-class LayoutItem(HasTraits):
-    row = Int
-    column = Int
-    kind = Str
-    identifier = Str
-
-
-class FigureLayout(HasTraits):
-    rows = Int(1)
-    columns = Int(2)
-    fixed = Str('cols')
-
-    def add_item(self, kind):
-        self.items.append(LayoutItem(kind=kind))
 
 # ============= EOF =============================================

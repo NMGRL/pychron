@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from reportlab.lib.pagesizes import A4, letter, landscape
+from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
 from traits.api import Str, Bool, Enum, Button, Float, Int, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
@@ -26,7 +26,7 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.persistence_loggable import dumpable
 
-PAGE_MAP = {'A4': A4, 'letter': letter}
+PAGE_MAP = {'A4': A4, 'letter': letter, 'A2': A2, 'A0': A0}
 UNITS_MAP = {'inch': inch, 'cm': cm}
 COLUMN_MAP = {'1': 1, '2': 0.5, '3': 0.33, '2/3': 0.66}
 
@@ -40,18 +40,21 @@ mgrp = VGroup(HGroup(Spring(springy=False, width=100),
               label='Margins', show_border=True)
 cgrp = VGroup()
 
-sgrp = VGroup(Item('fit_to_page'),
+sgrp = VGroup(Item('page_type'),
+              Item('fit_to_page'),
               HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
                      Item('columns', enabled_when='use_column_width')),
-              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page'),
-                     Item('fixed_height', label='H', enabled_when='not fit_to_page')),
+              HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page or '
+                                                                 'page_type=="custom"'),
+                     Item('fixed_height', label='H', enabled_when='not fit_to_page or page_type=="custom"'),
+                     Item('units', enabled_when='not fit_to_page or page_type=="custom"')),
 
               label='Size', show_border=True)
 
 PDFLayoutGroup = VGroup(Item('orientation'),
-                     mgrp,
-                     sgrp,
-                     cgrp,
+                        mgrp,
+                        sgrp,
+                        cgrp,
                         label='Layout')
 
 PDFLayoutView = View(PDFLayoutGroup,
@@ -74,7 +77,7 @@ class BasePDFOptions(BasePersistenceOptions):
     fixed_width = dumpable(Float)
     fixed_height = dumpable(Float)
 
-    page_type = dumpable(Enum('letter', 'A4'))
+    page_type = dumpable(Enum('letter', 'A4', 'A2', 'A0', 'custom'))
     units = dumpable(Enum('inch', 'cm'))
     use_column_width = dumpable(Bool(True))
     columns = dumpable(Enum('1', '2', '3', '2/3'))
@@ -83,7 +86,11 @@ class BasePDFOptions(BasePersistenceOptions):
     @property
     def bounds(self):
         units = UNITS_MAP[self.units]
-        page = PAGE_MAP[self.page_type]
+        if self.page_type == 'custom':
+            page = [self.fixed_width * units, self.fixed_height * units]
+        else:
+            page = PAGE_MAP[self.page_type]
+
         if self.fit_to_page:
             if self.orientation == 'landscape':
                 b = [page[1], page[0]]
@@ -99,7 +106,6 @@ class BasePDFOptions(BasePersistenceOptions):
                 width_margins = self.bottom_margin + self.top_margin
             else:
                 width_margins = self.left_margin + self.right_margin
-
             fw = page[0]
             w = fw - width_margins * units
             # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
@@ -112,39 +118,23 @@ class BasePDFOptions(BasePersistenceOptions):
 
     @property
     def page_size(self):
-        orientation = 'landscape_' if self.orientation == 'landscape' else ''
-        return '{}{}'.format(orientation, self.page_type)
+        if self.page_type == 'custom':
+            units = UNITS_MAP[self.units]
+            ps = self.fixed_width * units, self.fixed_height * units
+        else:
+            orientation = 'landscape_' if self.orientation == 'landscape' else ''
+            ps = '{}{}'.format(orientation, self.page_type)
+        return ps
 
     @property
     def dest_box(self):
         units = UNITS_MAP[self.units]
-        if self.orientation == 'landscape':
-            w, h = self.bounds
-            lbrt = (self.bottom_margin, self.right_margin,
-                    w / units + self.bottom_margin,
-                    h / units + self.right_margin)
-        else:
-            w, h = self.bounds
-            lbrt = (self.left_margin, self.bottom_margin,
-                    w / units + self.left_margin,
-                    h / units + self.bottom_margin)
-            # lbrt = self.left_margin, self.bottom_margin, -self.right_margin, -self.top_margin
-        # print map(lambda x: x*units, lbrt)
-        # print 'lbrt', lbrt
-        return lbrt
+        w, h = self.bounds
+        w /= units
+        h /= units
+        return self.left_margin, self.bottom_margin, w, h
 
     def _get_layout_group(self):
-        # margin_grp = VGroup(Item('left_margin', label='Left (in.)'),
-        #                    Item('right_margin', label='Right (in.)'),
-        #                    Item('top_margin', label='Top (in.)'),
-        #                    Item('bottom_margin', label='Bottom (in.)'),
-        #                     show_border=True, label='Margins')
-        #
-        # layout_grp = Group(Item('orientation'),
-        #                    margin_grp,
-        #                    Item('show_page_numbers', label='Page Numbers'),
-        #                    show_border=True,
-        #                    label='layout')
         return PDFLayoutGroup
 
 

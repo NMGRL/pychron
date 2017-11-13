@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import _Event, Lock
+from threading import _Event, Lock, Timer
 
 from traits.api import Any, Dict, List, provides
 
@@ -36,6 +36,8 @@ class PyScriptRunner(Loggable):
     _resource_lock = Any
     scripts = List
 
+    _reacquire_enabled = False
+
     def acquire(self, name):
         if self.connect():
             r = self.get_resource(name)
@@ -43,10 +45,19 @@ class PyScriptRunner(Loggable):
                 if r.isSet():
                     return
                 else:
-                    r.set()
+                    self._reacquire_enabled = True
+
+                    def reacquire():
+                        r.set()
+                        if self._reacquire_enabled:
+                            t = Timer(30, reacquire)
+                            t.start()
+
+                    reacquire()
                     return True
 
     def release(self, name):
+        self._reacquire_enabled = False
         if self.connect():
             r = self.get_resource(name)
             if r:
@@ -62,6 +73,8 @@ class PyScriptRunner(Loggable):
         return Lock()
 
     def get_resource(self, name):
+        self.connect()
+        
         with self._resource_lock:
             if name not in self.resources:
                 self.resources[name] = self._get_resource(name)

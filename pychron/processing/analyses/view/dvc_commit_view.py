@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import json
 import os
 
 from git import Repo
@@ -34,6 +33,7 @@ from pychron.git_archive.repo_manager import isoformat_date
 from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
+from pychron import json
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',

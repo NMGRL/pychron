@@ -35,7 +35,7 @@ from pychron.envisage.view_util import open_view
 from pychron.git_archive.commit import Commit
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
-from pychron.git_archive.utils import get_head_commit
+from pychron.git_archive.utils import get_head_commit, ahead_behind
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 
@@ -63,9 +63,6 @@ def isoformat_date(d):
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
 
-
-aregex = re.compile(r'\[ahead (?P<count>\d+)')
-bregex = re.compile(r'behind (?P<count>\d+)')
 
 
 class GitProgress(RemoteProgress):
@@ -105,6 +102,9 @@ class GitRepoManager(Loggable):
     path_dirty = Event
     remote = Str
 
+    def set_name(self, p):
+        self.name = '{}<GitRepo>'.format(os.path.basename(p))
+
     def open_repo(self, name, root=None):
         """
             name: name of repo
@@ -117,8 +117,7 @@ class GitRepoManager(Loggable):
 
         self.path = p
 
-        self.logger = None
-        self.name = '{}<GitRepo>'.format(os.path.basename(p))
+        self.set_name(p)
 
         if os.path.isdir(p):
             self.init_repo(p)
@@ -140,10 +139,12 @@ class GitRepoManager(Loggable):
             g = os.path.join(path, '.git')
             if os.path.isdir(g):
                 self._repo = Repo(path)
+                self.set_name(path)
                 return True
             else:
                 self.debug('{} is not a valid repo. Initializing now'.format(path))
                 self._repo = Repo.init(path)
+                self.set_name(path)
 
     def add_paths(self, apaths):
         self.debug('add paths {}'.format(apaths))
@@ -260,7 +261,7 @@ class GitRepoManager(Loggable):
         try:
             self._repo = Repo.clone_from(url, path)
         except GitCommandError, e:
-            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e,url, path))
+            self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path))
 
     def unpack_blob(self, hexsha, p):
         """
@@ -345,11 +346,35 @@ class GitRepoManager(Loggable):
 
     def get_local_changes(self):
         repo = self._repo
-        diff_str = repo.git.diff('HEAD', '--full-index')
-        diff_str = StringIO(diff_str)
-        diff_str.seek(0)
-        diff = Diff._index_from_patch_format(repo, diff_str)
+        # diff_str = repo.git.diff('HEAD', '--full-index')
+        # diff_str = StringIO(diff_str)
+        # diff_str.seek(0)
+        #
+        # class ProcessWrapper:
+        #     stderr = None
+        #     stdout = None
+        #
+        #     def __init__(self, f):
+        #         self._f = f
+        #
+        #     def wait(self, *args, **kw):
+        #         pass
+        #
+        #     def read(self):
+        #         return self._f.read()
+        #
+        # proc = ProcessWrapper(diff_str)
+        #
+        # diff = Diff._index_from_patch_format(repo, proc)
         root = self.path
+        #
+        #
+        #
+        # for diff_added in hcommit.diff('HEAD~1').iter_change_type('A'):
+        #     print(diff_added)
+
+        # diff = hcommit.diff()
+        diff = repo.index.diff(repo.head.commit)
         return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
 
         # patches = map(str.strip, diff_str.split('diff --git'))
@@ -413,6 +438,7 @@ class GitRepoManager(Loggable):
             root = self.path
 
         index = self.index
+
         def func(ps, extension):
             if extension:
                 if not isinstance(extension, tuple):
@@ -546,20 +572,18 @@ class GitRepoManager(Loggable):
                 self.debug(e)
                 if not handled:
                     raise e
+            self.debug('fetch complete')
             # if use_progress:
             #     for i in range(100):
             #         prog.change_message('Merging {}'.format(i))
             #         time.sleep(1)
 
-            try:
-                repo.git.merge('FETCH_HEAD')
-            except GitCommandError, e:
-                self.debug(e)
-                if not handled:
-                    raise e
+            self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
 
             if use_progress:
                 prog.close()
+
+        self.debug('pull complete')
 
     def has_remote(self, remote='origin'):
         return bool(self._get_remote(remote))
@@ -645,21 +669,10 @@ class GitRepoManager(Loggable):
             # return self._repo.git.fetch(remote)
 
     def ahead_behind(self, remote='origin'):
-        ahead = 0
-        behind = 0
+        self.debug('ahead behind')
+
         repo = self._repo
-
-        # repo.git.rev_list('origin..')
-        self.fetch(remote)
-        # status = repo.git.status('-sb')
-        status = self._git_command(lambda: repo.git.status('-sb'), 'GitRepoManager.ahead_behind')
-
-        ma = aregex.search(status)
-        mb = bregex.search(status)
-        if ma:
-            ahead = int(ma.group('count'))
-        if mb:
-            behind = int(mb.group('count'))
+        ahead, behind = ahead_behind(repo, remote)
 
         return ahead, behind
 

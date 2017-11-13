@@ -19,8 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit
-from traitsui.handler import Handler
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
@@ -36,7 +35,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.engine import Pipeline, PipelineGroup
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import DataNode
+from pychron.pipeline.nodes.data import DataNode, InterpretedAgeNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
@@ -44,10 +43,11 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.grouping import GroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
+from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
 
 
 def node_adder(name):
@@ -65,7 +65,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping', 'set_interpreted_age'):
+                  'graph_grouping', 'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -167,7 +167,11 @@ class PipelinePane(TraitsDockPane):
                                *actions)
 
         def add_menu_factory():
-            return MenuManager(Action(name='Add Grouping',
+            return MenuManager(Action(name='Add Unknowns',
+                                      action='add_data'),
+                               Action(name='Add Interpreted Ages',
+                                      action='add_interpreted_ages'),
+                               Action(name='Add Grouping',
                                       action='add_grouping'),
                                Action(name='Add Graph Grouping',
                                       action='add_graph_grouping'),
@@ -266,7 +270,7 @@ class PipelinePane(TraitsDockPane):
                                   auto_open=True,
                                   # menu=default_menu()
                                   ),
-                 DataTreeNode(node_for=[DataNode], menu=data_menu_factory()),
+                 DataTreeNode(node_for=[DataNode, InterpretedAgeNode], menu=data_menu_factory()),
                  FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
@@ -427,6 +431,50 @@ class AnalysesPane(TraitsDockPane):
         return v
 
 
+class RepositoryTabularAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Ahead', 'ahead'),
+               ('Behind', 'behind')]
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Refresh Status', action='refresh_repository_status'),
+                           Action(name='Get Changes', action='pull'),
+                           Action(name='Share Changes', action='push'))
+
+    def get_bg_color( self, obj, trait, row, column = 0):
+        if self.item.behind:
+            c = LIGHT_RED
+        elif self.item.ahead:
+            c = LIGHT_YELLOW
+        else:
+            c = 'white'
+        return c
+
+
+class RepositoryPaneHandler(Handler):
+    def refresh_repository_status(self, info, obj):
+         obj.refresh_repository_status()
+
+    def pull(self, info, obj):
+        obj.pull()
+
+    def push(self, info, obj):
+        obj.push()
+
+
+class RepositoryPane(TraitsDockPane):
+    name = 'Repositories'
+    id = 'pychron.pipeline.repository'
+
+    def traits_view(self):
+        v = View(UItem('object.repositories', editor=myTabularEditor(adapter=RepositoryTabularAdapter(),
+                                                                     editable=False,
+                                                                     multi_select=True,
+                                                                     selected='object.selected_repositories')),
+                 handler=RepositoryPaneHandler())
+        return v
+
+
 class InspectorPane(TraitsDockPane):
     name = 'Inspector'
     id = 'pychron.pipeline.inspector'
@@ -464,33 +512,33 @@ class SearcherPane(TraitsDockPane):
         return v
 
 
-class AnalysisGroupsAdapter(TabularAdapter):
-    columns = [('Set', 'name'),
-               ('Date', 'create_date')]
+# class AnalysisGroupsAdapter(TabularAdapter):
+#     columns = [('Set', 'name'),
+#                ('Date', 'create_date')]
+#
+#     font = 'Arial 10'
 
-    font = 'Arial 10'
-
-
-class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
-    name = 'Analysis Groups'
-    id = 'pychron.browser.analysis_groups.pane'
-
-    def traits_view(self):
-        tgrp = UItem('object.analysis_table.analyses',
-                     height=400,
-                     editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
-                                            operations=['move', 'delete'],
-                                            column_clicked='object.analysis_table.column_clicked',
-                                            refresh='object.analysis_table.refresh_needed',
-                                            selected='object.analysis_table.selected',
-                                            dclicked='object.analysis_table.dclicked'))
-
-        pgrp = HGroup(self._get_pi_group(), self._get_project_group())
-        agrp = UItem('object.analysis_groups',
-                     height=100, editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
-                                                        multi_select=True,
-                                                        selected='object.selected_analysis_groups'))
-        v = View(VSplit(pgrp, agrp, tgrp))
-        return v
+#
+# class AnalysisGroupsPane(TraitsDockPane, BaseBrowserSampleView):
+#     name = 'Analysis Groups'
+#     id = 'pychron.browser.analysis_groups.pane'
+#
+#     def traits_view(self):
+#         tgrp = UItem('object.analysis_table.analyses',
+#                      height=400,
+#                      editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+#                                             operations=['move', 'delete'],
+#                                             column_clicked='object.analysis_table.column_clicked',
+#                                             refresh='object.analysis_table.refresh_needed',
+#                                             selected='object.analysis_table.selected',
+#                                             dclicked='object.analysis_table.dclicked'))
+#
+#         pgrp = HGroup(self._get_pi_group(), self._get_project_group())
+#         agrp = UItem('object.analysis_groups',
+#                      height=100, editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
+#                                                         multi_select=True,
+#                                                         selected='object.selected_analysis_groups'))
+#         v = View(VSplit(pgrp, agrp, tgrp))
+#         return v
 
 # ============= EOF =============================================

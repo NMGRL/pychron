@@ -145,7 +145,7 @@ class ExcelPersister(BasePersister):
         wb.save(path)
 
     def _save_isotopes(self, sh):
-        for i, (k, iso) in enumerate(self.per_spec.isotope_group.isotopes.items()):
+        for i, (k, iso) in enumerate(self.per_spec.isotope_group.items()):
 
             sh.write(0, i, '{} time'.format(k))
             sh.write(0, i + 1, '{} intensity'.format(k))
@@ -663,7 +663,7 @@ class AutomatedRunPersister(BasePersister):
         dbhist = db.add_fit_history(analysis,
                                     user=self.per_spec.run_spec.username)
 
-        for iso in self.per_spec.isotope_group.isotopes.itervalues():
+        for iso in self.per_spec.isotope_group.itervalues():
             detname = iso.detector
             dbdet = db.get_detector(detname)
             if dbdet is None:

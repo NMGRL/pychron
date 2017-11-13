@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import threading
 
 import traits.trait_notifiers
 from pyface.message_dialog import warning
@@ -23,8 +22,8 @@ from traits.api import HasTraits, Str, List
 from traitsui.api import View, UItem, Item, HGroup, VGroup, CheckListEditor, Controller, TextEditor
 from traitsui.menu import Action
 # ============= standard library imports ========================
+import threading
 import base64
-import json
 import requests
 import logging
 import traceback
@@ -32,6 +31,7 @@ import sys
 import os
 import pickle
 # ============= local library imports  ==========================
+from pychron import json
 from pychron.github import GITHUB_API_URL
 from pychron.globals import globalv
 from pychron.paths import paths

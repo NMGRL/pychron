@@ -14,17 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
 import base64
-import json
-
 import requests
+
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Interface, Password, provides
 
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.globals import globalv
 from pychron.loggable import Loggable
+from pychron import json
 
 
 class IGitHost(Interface):

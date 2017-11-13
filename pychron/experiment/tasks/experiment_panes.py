@@ -20,7 +20,7 @@ from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
-from traitsui.editors import TableEditor
+from traitsui.editors import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -107,6 +107,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                          width=150,
                                          label='Load',
                                          editor=ComboboxEditor(name=queue_factory_name('load_names'))),
+                      queue_factory_item('tray', editor=EnumEditor(name=queue_factory_name('trays'))),
                       icon_button_editor('generate_queue_button', 'brick-go',
                                          tooltip='Generate a experiment queue from the selected load',
                                          enabled_when='load_name'),
@@ -135,7 +136,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                            show_border=True,
                            label='Delays')
 
-        note_grp = VGroup(UItem('note', style='custom'),
+        note_grp = VGroup(queue_factory_item('note', style='custom',
+                                             height=150, show_label=False),
                           show_border=True, label='Note')
         queue_grp = VGroup(user_grp, email_grp, ms_ed_grp, delay_grp,
                            note_grp,

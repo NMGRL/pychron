@@ -21,7 +21,7 @@ class NGXMagnet(IsotopxMagnet):
     def read_dac(self):
         return self.read_mass()
 
-    def set_dac(self, v):
+    def set_dac(self, v, *args, **kw):
         self.set_mass(v)
 
     @get_float()

@@ -133,6 +133,7 @@ class Paths(object):
     conditionals_dir = None
     hops_dir = None
     fits_dir = None
+    spectrometer_scripts_dir = None
     # ==============================================================================
     # setup
     # ==============================================================================
@@ -285,6 +286,7 @@ class Paths(object):
     yield_template = None
     csv_analyses_export_template = None
     radial_template = None
+    regression_series_template = None
 
     furnace_sample_states = None
 
@@ -322,6 +324,7 @@ class Paths(object):
         self.conditionals_dir = join(scripts_dir, 'conditionals')
         self.hops_dir = join(self.measurement_dir, 'hops')
         self.fits_dir = join(self.measurement_dir, 'fits')
+        self.spectrometer_scripts_dir = join(scripts_dir, 'spectrometer')
 
         self.experiment_dir = join(root, 'experiments')
         self.experiment_rem_dir = join(self.experiment_dir, 'rem')

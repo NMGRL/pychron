@@ -190,4 +190,5 @@ VIEWS['appearance'] = SpectrumAppearance
 VIEWS['plateau'] = CalculationSubOptions
 VIEWS['display'] = DisplaySubOptions
 VIEWS['groups'] = GroupSubOptions
+
 # ============= EOF =============================================

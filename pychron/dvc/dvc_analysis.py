@@ -140,6 +140,7 @@ class DVCAnalysis(Analysis):
 
         for attr in META_ATTRS:
             v = jd.get(attr)
+            # print 'attr={},{}'.format(attr, v)
             if v is not None:
                 setattr(self, attr, v)
 
@@ -407,7 +408,7 @@ class DVCAnalysis(Analysis):
         self.peak_center_reference_detector = refdet
 
     def _load_tags(self, jd):
-        self.set_tag(jd.get('name'))
+        self.set_tag(jd)
 
     def _load_blanks(self, jd):
         for key, v in jd.iteritems():
@@ -436,6 +437,7 @@ class DVCAnalysis(Analysis):
                 self._load_value_error(i, v)
 
                 i.set_fit(v['fit'], notify=False)
+                i.error_type = v.get('error_type', 'SEM')
                 fod = v.get('filter_outliers_dict')
                 if fod:
                     i.filter_outliers_dict = fod

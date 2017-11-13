@@ -3,6 +3,7 @@ from traits.traits import Property
 from traitsui.group import HGroup
 from traitsui.item import Item
 from traitsui.view import View
+from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.analysis import IdeogramPlotable
@@ -19,6 +20,7 @@ class InterpretedAge(IdeogramPlotable):
     identifier = Str
     material = Str
     irradiation = Str
+    project = Str
 
     age = Float
     age_err = Float
@@ -47,7 +49,7 @@ class InterpretedAge(IdeogramPlotable):
         if t == 'uF':
             a, e = self.F, self.F_err
         elif t == 'uage':
-            a, e = self.uage.nominal_value, self.uage.std_dev
+            a, e = nominal_value(self.uage), std_dev(self.uage)
         return a, e
 
     def _get_display_age(self):

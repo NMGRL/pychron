@@ -137,8 +137,8 @@ class SampleEditorPane(TraitsDockPane):
                        show_border=True)
 
         prgrp = HGroup(UItem('project',
-                             editor=EnumEditor(name='projects')),
-                             # editor=ComboboxEditor(name='projects', use_filter=False)),
+                             # editor=EnumEditor(name='projects')),
+                             editor=ComboboxEditor(name='projects', use_filter=False)),
                        UItem('generate_project_button', tooltip='Generate a default name for this project'),
                        UItem('set_optionals_button', tooltip='Set optional values for current project'),
                        icon_button_editor('add_project_button', 'add',
@@ -160,6 +160,8 @@ class SampleEditorPane(TraitsDockPane):
                       show_border=True)
 
         sgrp = VGroup(HGroup(UItem('sample'),
+                             icon_button_editor('configure_sample_button', 'cog', tooltip='Set additional sample '
+                                                                                          'attributes'),
                              icon_button_editor('add_sample_button', 'add',
                                                 enabled_when='sample',
                                                 tooltip='Add a sample')),

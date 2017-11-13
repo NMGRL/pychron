@@ -210,8 +210,8 @@ class PlotPanel(Loggable):
 
             self.figure.replot()
 
-    def new_plot(self, **kw):
-        return self._new_plot(**kw)
+    def new_isotope_plot(self, **kw):
+        return self._new_plot(isotope_only=True, **kw)
 
     def set_analysis_view(self, experiment_type, **kw):
         if experiment_type == AR_AR:
@@ -264,19 +264,23 @@ class PlotPanel(Loggable):
         self.selected_graph = g
 
     # private
-    def _new_plot(self, **kw):
+    def _new_plot(self, isotope_only=False, **kw):
+        # self.isotope_graph.clear()
+        # self.sniff_graph.clear()
+        # self.baseline_graph.clear()
         plots = {}
-        for k, g in (('sniff', self.sniff_graph),
-                     ('isotope', self.isotope_graph),
-                     ('baseline', self.baseline_graph)):
-            plot = g.new_plot(xtitle='time (s)', padding_left=70,
-                              padding_right=10,
-                              **kw)
+        for k, g, e in (('sniff', self.sniff_graph, not isotope_only),
+                        ('isotope', self.isotope_graph, True),
+                        ('baseline', self.baseline_graph, not isotope_only)):
+            if e:
+                plot = g.new_plot(xtitle='time (s)', padding_left=70,
+                                  padding_right=10,
+                                  **kw)
 
-            plot.y_axis.title_spacing = 50
-            g.add_axis_tool(plot, plot.x_axis)
-            g.add_axis_tool(plot, plot.y_axis)
-            plots[k] = plot
+                plot.y_axis.title_spacing = 50
+                g.add_axis_tool(plot, plot.x_axis)
+                g.add_axis_tool(plot, plot.y_axis)
+                plots[k] = plot
 
         return plots
 
@@ -286,6 +290,10 @@ class PlotPanel(Loggable):
         g = self.isotope_graph
         self.selected_graph = g
 
+        self.isotope_graph.clear()
+        self.sniff_graph.clear()
+        self.baseline_graph.clear()
+        self.debug('creating plots for detectors {}'.format(self.detectors))
         for det in self.detectors:
             self._new_plot(ytitle=det.name)
 
@@ -293,6 +301,9 @@ class PlotPanel(Loggable):
 
     def _get_ncounts(self):
         return self._ncounts
+
+    def set_ncounts(self, v):
+        self._ncounts = v
 
     def _set_ncounts(self, v):
 

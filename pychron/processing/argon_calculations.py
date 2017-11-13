@@ -60,8 +60,11 @@ def extract_isochron_xy(analyses):
     return xx, yy
 
 
-def calculate_isochron(analyses, error_calc_kind, reg='Reed'):
-    print reg
+def unpack_value_error(xx):
+    return zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+
+
+def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -75,33 +78,38 @@ def calculate_isochron(analyses, error_calc_kind, reg='Reed'):
     except ZeroDivisionError:
         return
 
-    xs, xerrs = zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
-    ys, yerrs = zip(*[(nominal_value(yi), std_dev(yi)) for yi in yy])
+    xs, xerrs = unpack_value_error(xx)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+    ys, yerrs = unpack_value_error(yy)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in yy])
 
-    a40s, a40es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
-    a36s, a36es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
-    a39s, a39es = zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
+    xds, xdes = unpack_value_error(a40)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
+    yns, ynes = unpack_value_error(a36)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
+    xns, xnes = unpack_value_error(a39)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
 
-    # regx = isochron_regressor(ys, yerrs, xs, xerrs,
-    #                           a40s, a40es, a36s, a36es, a39s, a39es, reg)
+    regx = isochron_regressor(ys, yerrs, xs, xerrs,
+                              xds, xdes, yns, ynes, xns, xnes)
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
-                             a40s, a40es, a39s, a39es, a36s, a36es,
+                             xds, xdes, xns, xnes, yns, ynes,
                              reg)
 
-    # regx.error_calc_type = error_calc_kind
+    regx.error_calc_type = error_calc_kind
     reg.error_calc_type = error_calc_kind
 
-    xint = reg.get_x_intercept()
+    # xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
+    # # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
+
+    xint = reg.x_intercept
+
     try:
         r = xint ** -1
+        xint_err = regx.get_intercept_error() / r ** 2
+        r = ufloat(r, xint_err)
     except ZeroDivisionError:
         r = 0
 
     age = ufloat(0, 0)
     if r > 0:
-        age = age_equation((ref.j.nominal_value, 0), r, arar_constants=ref.arar_constants)
-
+        age = age_equation((nominal_value(ref.j), 0), r, arar_constants=ref.arar_constants)
     return age, reg, (xs, ys, xerrs, yerrs)
 
 
@@ -140,7 +148,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
     k39 = asarray(k39)
 
     fixed_steps = options.get('fixed_steps', False)
-    if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
+    if fixed_steps:
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
@@ -165,7 +173,6 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     errors=errors,
                     signals=k39,
                     excludes=excludes,
-                    overlap_nsigma=options.get('step_sigma', 2),
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 

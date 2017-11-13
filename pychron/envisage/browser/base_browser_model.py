@@ -33,7 +33,7 @@ from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
 from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
-    PrincipalInvestigatorRecordView
+    PrincipalInvestigatorRecordView, LoadRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -108,13 +108,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     samples = List
     osamples = List
 
-    selected_load = Str
+    selected_loads = Any
     loads = List
 
     include_recent = True
     project_enabled = Bool(True)
     repository_enabled = Bool(True)
     principal_investigator_enabled = Bool(True)
+    load_enabled = Bool(True)
 
     analysis_groups = List
 
@@ -155,12 +156,15 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     available_mass_spectrometers = List
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
-    low_post = Property(Date, depends_on='_low_post, use_low_post, use_named_date_range, named_date_range')
-    high_post = Property(Date, depends_on='_high_post, use_high_post, use_named_date_range, named_date_range')
+    low_post = Property(Date, depends_on='date_enabled, _low_post, use_low_post, use_named_date_range, '
+                                         'named_date_range')
+    high_post = Property(Date, depends_on='date_enabled, _high_post, use_high_post, use_named_date_range, '
+                                          'named_date_range')
 
     use_low_post = Bool
     use_high_post = Bool
     use_named_date_range = Bool
+    date_enabled = Bool
     _low_post = Date
     _high_post = Date
     _recent_low_post = None
@@ -183,6 +187,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     pattributes = ('project_enabled',
                    'repository_enabled',
                    'principal_investigator_enabled',
+                   'load_enabled','date_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -241,7 +246,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                    use_named_date_range=self.use_named_date_range,
                    named_date_range=self.named_date_range,
                    low_post=self.low_post,
-                   high_post=self.high_post)
+                   high_post=self.high_post,
+                   date_enabled=self.date_enabled)
 
         try:
             with open(self.selection_persistence_path, 'wb') as wfile:
@@ -271,7 +277,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def load_loads(self):
         db = self.db
-        self.loads = db.get_measured_load_names()
+        self.loads = [LoadRecordView(n) for n in db.get_measured_load_names() if n]
 
     def load_repositories(self):
         db = self.db
@@ -296,14 +302,11 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
             self.principal_investigator_names = [p.name for p in ps]
 
-    def get_analysis_groups(self, names):
-        if not isinstance(names[0], (str, unicode)):
-            names = [ni.name for ni in names]
-
+    def get_analysis_groups(self, projects):
         db = self.db
-
-        gs = db.get_analysis_groups(projects=names)
+        gs = db.get_analysis_groups([p.unique_id for p in projects])
         return gs
+
         # grps = [AnalysisGroupRecordView(gi) for gi in gs]
         # return grps
 
@@ -353,12 +356,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.use_low_post, self.use_high_post = enable, enable
         # self.use_low_post, self.use_high_post = ol, oh
 
-    def _load_associated_groups(self, names):
+    def _load_associated_groups(self, projects):
         """
             names: list of project names
         """
-        self.debug('load associated analysis groups for {}'.format(names))
-        grps = self.get_analysis_groups(names)
+        self.debug('load associated analysis groups for {}'.format(['{} ({})'.format(p.name, p.principal_investigator)
+                                                                    for p in projects]))
+        grps = self.get_analysis_groups(projects)
         self.analysis_groups = grps
 
     @caller
@@ -458,6 +462,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                            include_invalid=False,
                            mass_spectrometers=None,
                            repositories=None,
+                           loads=None,
                            make_records=True,
                            analysis_types=None):
         db = self.db
@@ -476,7 +481,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers,
-                                                repositories=repositories,)
+                                                repositories=repositories,
+                                                loads=loads)
             self.debug('retrieved analyses n={}'.format(tc))
         else:
             self.debug('retrieved analyses by date range')
@@ -485,16 +491,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                                                 mass_spectrometers=mass_spectrometers,
                                                 repositories=repositories,
                                                 limit=limit,
-                                                analysis_types=analysis_types)
+                                                analysis_types=analysis_types,
+                                                loads=loads)
 
         if make_records:
             return self._make_records(ans)
         else:
             return ans
 
-    def _retrieve_sample_analyses(self, samples,
-                                  **kw):
-        return self._retrieve_analyses(samples=samples, **kw)
+    #def _retrieve_sample_analyses(self, samples, **kw):
+    #    return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
         if not ps:
@@ -652,6 +658,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     #         self._load_repository_date_range(names)
     #         self._load_associated_labnumbers()
     #         self._selected_repositories_changed_hook(names)
+    def _selected_loads_changed(self, new):
+        if new and self.load_enabled:
+            self._load_associated_labnumbers()
 
     def _selected_projects_changed(self, old, new):
 
@@ -671,7 +680,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._load_project_date_range(names)
 
             self._load_associated_labnumbers()
-            self._load_associated_groups(names)
+            self._load_associated_groups(new)
 
             self._selected_projects_change_hook(names)
             self.dump_browser_selection()
@@ -697,14 +706,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if new:
             self.use_low_post, self.use_high_post = False, False
 
-    def _date_configure_button_fired(self):
-        ds = DateSelector(model=self)
-        info = ds.edit_traits()
-        if info.result:
-            self._filter_by_hook()
+    # def _date_configure_button_fired(self):
+    #     ds = DateSelector(model=self)
+    #     info = ds.edit_traits()
+    #     if info.result:
+    #         self._filter_by_hook()
 
     def _filter_by_hook(self):
-        self.high_post = datetime.now()
+        # self.high_post = datetime.now()
         # names = [ni.name for ni in self.selected_projects]
         self._load_associated_labnumbers()
 
@@ -728,38 +737,39 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     @cached_property
     def _get_high_post(self):
         hp = None
-
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range in ('this month', 'today', 'this week'):
-                hp = tdy
-            elif self.named_date_range == 'yesterday':
-                hp = tdy - timedelta(days=1)
-        elif self.use_high_post:
-            hp = self._high_post
-            if not hp:
-                hp = tdy
+        if self.date_enabled:
+            tdy = datetime.today()
+            if self.use_named_date_range:
+                if self.named_date_range in ('this month', 'today', 'this week'):
+                    hp = tdy
+                elif self.named_date_range == 'yesterday':
+                    hp = tdy - timedelta(days=1)
+            elif self.use_high_post:
+                hp = self._high_post
+                if not hp:
+                    hp = tdy
         self.debug('GET HPOST={}'.format(hp))
         return hp
 
     @cached_property
     def _get_low_post(self):
         lp = None
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range == 'this month':
-                lp = tdy - timedelta(days=tdy.day,
-                                     seconds=tdy.second,
-                                     hours=tdy.hour,
-                                     minutes=tdy.minute)
-            elif self.named_date_range == 'this week':
-                days = datetime.today().weekday()
-                lp = tdy - timedelta(days=days)
+        if self.date_enabled:
+            tdy = datetime.today()
+            if self.use_named_date_range:
+                if self.named_date_range == 'this month':
+                    lp = tdy - timedelta(days=tdy.day,
+                                         seconds=tdy.second,
+                                         hours=tdy.hour,
+                                         minutes=tdy.minute)
+                elif self.named_date_range == 'this week':
+                    days = datetime.today().weekday()
+                    lp = tdy - timedelta(days=days)
 
-        elif self.use_low_post:
-            lp = self._low_post
-            if not lp:
-                lp = tdy
+            elif self.use_low_post:
+                lp = self._low_post
+                if not lp:
+                    lp = tdy
 
         self.debug('GET LPOST={}'.format(lp))
         return lp

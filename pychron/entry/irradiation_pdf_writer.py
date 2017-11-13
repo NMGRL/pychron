@@ -168,8 +168,12 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
         def make_row(level):
             row = Row()
+
+            projects = 'asfafsafsfsfsfs'
+
             row.add_item(value=level.name)
             row.add_item(value=level.holder)
+            row.add_item(value=projects)
             return row
 
         rows = [make_row(li) for li in sorted(irrad.levels, key=lambda x: x.name)]

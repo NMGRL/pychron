@@ -14,13 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-
+import json
+# ============= enthought library imports =======================
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -78,7 +77,10 @@ class AnalysisTable(ColumnSorterMixin):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
-                jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                try:
+                    jd = json.load(rfile, object_pairs_hook=OrderedDict)
+                except ValueError:
+                    pass
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 

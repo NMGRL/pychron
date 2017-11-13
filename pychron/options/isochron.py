@@ -50,7 +50,8 @@ class InverseIsochronOptions(IsochronOptions):
     invert_nominal_intercept = Bool(True)
     inset_marker_size = Float(1.0)
     inset_marker_color = Color('black')
-
+    regressor_kind = Enum('Reed', 'NewYork')
+    
     def _set_nominal_intercept_value(self, v):
         self._nominal_intercept_value = v
 

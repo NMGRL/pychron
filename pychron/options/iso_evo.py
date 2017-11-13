@@ -31,7 +31,7 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
 
 class IsotopeEvolutionOptions(FitOptions):
     aux_plot_klass = IsoFilterFitAuxPlot
-    subview_names = List(['Main', 'IsoEvo', 'Appearance'])
+    subview_names = List(['Main', 'IsoEvo'])
     goodness_threshold = Float  # in percent
     slope_goodness = Float
     outlier_goodness = Int

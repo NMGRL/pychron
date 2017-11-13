@@ -277,7 +277,6 @@ class Graph(ContextMenuMixin):
             return None or Plot with y_axis.title equal to iso
             if startswith is True title only has to start with iso
         """
-
         txt = str(txt)
         if startswith:
             is_equal = lambda x: x.startswith(txt)
@@ -578,7 +577,7 @@ class Graph(ContextMenuMixin):
         try:
             plots = self.plots[plotid].plots[series]
         except KeyError:
-            print self.plots[plotid].plots.keys()
+            print 'set series label plotid={} {}'.format(plotid, self.plots[plotid].plots.keys())
             raise
 
         self.plots[plotid].plots[label] = plots

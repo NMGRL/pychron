@@ -41,7 +41,7 @@ class ClientExtractionLineManager(ExtractionLineManager):
     def stop_status_monitor(self, oid=None, block=False):
         if oid is None:
             oid = id(self)
-        self.info('stopping status monitor')
+        self.info('stopping status monitor. block={}'.format(block))
         self.status_monitor.stop(oid, block=block)
 
     def refresh_states(self):

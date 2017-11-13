@@ -300,6 +300,7 @@ class PyScript(Loggable):
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
                 print 'invalid pyscript', self.text
+                print 'error', r
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -668,6 +669,7 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
+                    print self.manager
                     self.manager.info(message, log=False)
 
         except AttributeError, e:
@@ -797,19 +799,22 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self):
         from pychron.wait.wait_control import WaitControl
+        wd = self._wait_control
         if self.manager:
-            wd = self.manager.get_wait_control()
-        else:
-            wd = self._wait_control
+            if hasattr(self.manager, 'get_wait_control'):
+                wd = self.manager.get_wait_control()
 
         if wd is None:
             wd = WaitControl()
 
         self._wait_control = wd
         if self.manager:
-            if wd not in self.manager.wait_group.controls:
-                self.manager.wait_group.controls.append(wd)
-            self.manager.wait_group.active_control = wd
+            try:
+                if wd not in self.manager.wait_group.controls:
+                    self.manager.wait_group.controls.append(wd)
+                self.manager.wait_group.active_control = wd
+            except AttributeError:
+                pass
 
         return wd
 
@@ -838,7 +843,10 @@ class PyScript(Loggable):
             # wd.join()
 
             if self.manager:
-                self.manager.wait_group.pop(wd)
+                try:
+                    self.manager.wait_group.pop(wd)
+                except AttributeError:
+                    pass
 
             if wd.is_canceled():
                 self.cancel()

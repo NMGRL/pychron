@@ -77,8 +77,6 @@ class IrradiationProduction(HasTraits):
     @on_trait_change('''k+:[value,error],ca+:[value,error],cl+:[value,error],
 Ca_K:[value,error],Cl_K:[value,error],note''')
     def _set_dirty(self, obj, name, old, new):
-        # print name, new
-
         if name in self.__edited__:
             old_value = self.__edited__[name]
             if old_value != new:
@@ -138,6 +136,7 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
         v, e = d.get('Cl_K', (0, 0))
         self.Cl_K.value = v  # dbrecord.Cl_K if dbrecord.Cl_K else 0
         self.Cl_K.error = e  # dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
+        self.dirty = False
 
     def create(self, dbrecord):
         for attr in ('K4039', 'K3839', 'K3739',
@@ -154,7 +153,7 @@ Ca_K:[value,error],Cl_K:[value,error],note''')
 
         self.Cl_K.value = dbrecord.Cl_K if dbrecord.Cl_K else 0
         self.Cl_K.error = dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
-
+        self.dirty = False
         # if dbrecord.last_modified:
         # self.last_modified=dbrecord.last_modified.strftime('%m-%d-%Y %H:%M:%S')
         # self.note = dbrecord.note or ''

@@ -106,10 +106,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if editor:
             editor.jump_to_gosub()
 
-        # root = os.path.dirname(self.active_editor.path)
-        # name = self.active_editor.get_active_gosub()
-        # if name:
-        #     self._open_pyscript(name, root)
+            # root = os.path.dirname(self.active_editor.path)
+            # name = self.active_editor.get_active_gosub()
+            # if name:
+            #     self._open_pyscript(name, root)
 
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
@@ -133,11 +133,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def kind_select_view(self):
         v = View(UItem('kind', editor=EnumEditor(name='kinds')),
                  title='Select Pyscript kind',
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  kind='livemodal')
         return v
 
-    #task protocol
+    # task protocol
     def activated(self):
         super(PyScriptTask, self).activated()
 
@@ -146,7 +146,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def bind_preferences(self):
         self._preference_binder('pychron.pyscript', ('auto_detab', 'use_git_repo'))
         if self.use_git_repo:
-            self._preference_binder('pychron.pyscript',('remote',), obj=self.repo_manager)
+            self._preference_binder('pychron.pyscript', ('remote',), obj=self.repo_manager)
 
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
@@ -174,11 +174,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             if self._on_save_as:
                 self._on_save_as()
 
-    #private
+    # private
     def _prompt_for_save(self):
         ret = super(PyScriptTask, self)._prompt_for_save()
         if self.use_git_repo:
-            #check for uncommitted changes
+            # check for uncommitted changes
             if self.repo_manager.has_staged():
                 return self.repo_manager.commit_dialog()
         if ret:
@@ -217,6 +217,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             from pychron.pyscripts.laser_pyscript import LaserPyScript
 
             klass = LaserPyScript
+        elif kind == 'Spectrometer':
+            from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+            klass = SpectrometerPyScript
 
         script = klass(application=self.application,
                        manager=manager,
@@ -328,7 +331,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             return self.selected.example
         return ''
 
-    #handlers
+    # handlers
     def _handle_path_change(self, new):
         self.debug('path changed {}'.format(new))
         for ei in self.editor_area.editors:
@@ -444,7 +447,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         return runner
 
-    #defaults
+    # defaults
     def _repo_manager_default(self):
         from pychron.git_archive.repo_manager import GitRepoManager
 
