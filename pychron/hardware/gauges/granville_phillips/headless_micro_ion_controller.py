@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 Jake Ross
+# Copyright 2017 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+# =============enthought library imports=======================
+# =============standard library imports ========================
 
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
-__version__ = '1.0'
+# =============local library imports  ==========================
+from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
+from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import BaseMicroIonController
 
-PARAMETER_REGISTRY = {'furnace_env_humidity': '001',
-                      'furnace_env_temperature': '002',
-                      'furnace_setpoint': '003',
-                      'furnace_process_value': '004',
 
-                      'feeder_position': '021',
+class HeadlessMicroIonController(BaseMicroIonController, HeadlessCoreDevice):
+    pass
 
-                      'funnel_position': '031',
 
-                      'switch_status': '041',
-                      }
-
-# ============= EOF =============================================
+# ============= EOF ====================================

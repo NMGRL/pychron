@@ -150,7 +150,7 @@ class VideoStageManager(StageManager):
         if self._measure_grain_evt:
             self._measure_grain_evt.stop()
 
-    def measure_grain_mask(self):
+    def start_measure_grain_mask(self):
         self._measure_grain_evt = evt = Event()
 
         def _measure_grain_mask():

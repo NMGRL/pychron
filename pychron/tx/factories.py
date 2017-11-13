@@ -51,6 +51,11 @@ class FusionsDiodeFactory(LaserFactory):
 class FusionsUVFactory(LaserFactory):
     _name = 'FusionsUV'
 
+from pychron.paths import paths
+path = os.path.join(paths.log_dir, 'pps.log.json')
+
+logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
+
 
 from pychron.paths import paths
 

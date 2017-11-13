@@ -146,7 +146,7 @@ class LaserProtocol(ServiceProtocol):
             return s
 
     def _get_grain_masks_blob(self, data):
-        return self._manager.get_grain_masks_blob()
+        return self._manager.get_grain_masks_blob
 
     def _get_grain_mask(self, data):
         return self._manager.get_grain_mask()
