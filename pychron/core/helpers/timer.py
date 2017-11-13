@@ -19,7 +19,10 @@
 import time
 from threading import Event
 
-from pyface.qt.QtCore import QThread
+try:
+    from pyface.qt.QtCore import QThread
+except ImportError:
+    from threading import Thread as QThread
 
 
 # ============= local library imports  ==========================

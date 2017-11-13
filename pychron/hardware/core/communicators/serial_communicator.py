@@ -141,6 +141,15 @@ class SerialCommunicator(Communicator):
         self.set_attribute(config, 'read_terminator_position', 'Communications', 'terminator_position',
                            optional=True, default=None, cast='int')
 
+        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
+                           optional=True, default='\r')
+
+        if self.write_terminator == 'CRLF':
+            self.write_terminator = '\r\n'
+
+        if self.read_terminator == 'CRLF':
+            self.read_terminator = '\r\n'
+
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
 
@@ -445,7 +454,7 @@ class SerialCommunicator(Communicator):
             r += self.handle.read(inw)
             #            print 'inw', inw, r, terminator
             if terminator is None:
-                terminator = ('\n', '\r', '\r\x00')
+                terminator = ('\r\x00', '\r\n', '\r', '\n')
             if not isinstance(terminator, (list, tuple)):
                 terminator = (terminator,)
 
