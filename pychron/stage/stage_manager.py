@@ -62,6 +62,8 @@ class BaseStageManager(Manager):
     temp_hole = None
     root = Str
     # use_modified = Bool(True)  # set true to use modified affine calculation
+    def motor_event_hook(self, name, value, *args, **kw):
+        pass
 
     def goto_position(self, pos):
         raise NotImplementedError

@@ -103,8 +103,18 @@ class FusionsLaserManager(LaserManager):
 
     _degas_thread = None
 
+
+    # def initialize(self, *args, **kw):
+    #     super(FusionsLaserManager, self).initialize(*args, **kw)
+    #     self.do_motor_initialization()
+
+    def finish_loading(self):
+        super(FusionsLaserManager, self).finish_loading()
+        self.do_motor_initialization()
+
     @on_trait_change('laser_controller:refresh_canvas')
     def refresh_canvas(self):
+        print 'frefasdfeasdfasd'
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 
@@ -191,17 +201,26 @@ class FusionsLaserManager(LaserManager):
         if chiller is not None:
             return chiller.get_faults(**kw)
 
-    def do_motor_initialization(self, name):
-        if self.laser_controller:
-            motor = self.laser_controller.get_motor(name)
-            if motor is not None:
-                n = 4
-                from pychron.core.ui.progress_dialog import myProgressDialog
+    def do_motor_initialization(self):
+        self.debug('do motor initialization')
 
-                pd = myProgressDialog(max=n, size=(550, 15))
-                pd.open()
-                motor.initialize(progress=pd)
-                pd.close()
+        if self.laser_controller:
+            for motor in self.laser_controller.motors:
+                # motor = self.laser_controller.get_motor(name)
+                # if motor is not None:
+                def handle(obj, name, old, new):
+                    # self.motor_event = (motor.name, new)
+                    self.stage_manager.motor_event_hook(obj.name, new)
+
+                motor.on_trait_change(handle, '_data_position')
+
+                    # n = 4
+                    # from pychron.core.ui.progress_dialog import myProgressDialog
+                    #
+                    # pd = myProgressDialog(max=n, size=(550, 15))
+                    # pd.open()
+                    # motor.initialize(progress=pd)
+                    # pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
         """
@@ -228,7 +247,7 @@ class FusionsLaserManager(LaserManager):
             return True
 
     def set_motor(self, *args, **kw):
-        self.motor_event = (args, kw)
+        self.stage_manager.motor_event_hook(args, **kw)
         return self.laser_controller.set_motor(*args, **kw)
 
     def get_motor(self, name):

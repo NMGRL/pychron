@@ -68,7 +68,7 @@ class Camera(ConfigLoadable):
         self.set_attribute(config, 'fps', 'General', 'fps', cast='int', default=12)
 
         self.set_attribute(config, 'zoom_coefficients', 'Zoom', 'coefficients',
-                           default='1,0,23')
+                           default='0,0,23')
         self.set_attribute(config, 'zoom_fitfunc', 'Zoom', 'fitfunc',
                            default='polynomial')
 
