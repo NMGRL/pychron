@@ -54,7 +54,11 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     if ffmpeg is None or not os.path.isfile(ffmpeg):
         ffmpeg = '/usr/local/bin/ffmpeg'
 
-    subprocess.call([ffmpeg, '-r', frame_rate, '-i', path, output])
+    # print 'calling {}, frame_rate={} '.format(ffmpeg, frame_rate)
+    call_args = [ffmpeg, '-r', frame_rate, '-i', path, output]
+    print ' '.join(call_args)
+
+    subprocess.call(call_args)
 
 
 def pil_save(src, p, ext='.jpg'):

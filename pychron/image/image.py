@@ -154,7 +154,7 @@ class Image(HasTraits):
                 elif hflip:
                     cv_flip(frame, 1)
 
-        return frame
+        return asarray(frame)
 
     def crop(self, src, ox, oy, cw, ch):
         h, w = src.shape[:2]

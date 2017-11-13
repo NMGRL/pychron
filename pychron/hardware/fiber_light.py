@@ -36,7 +36,7 @@ class FiberLight(AbstractDevice):
     power = Event
     power_label = Property(depends_on='state')
     state = Bool
-    auto_onoff = Bool(False)
+    # auto_onoff = Bool(False)
     name = 'fiber_light'
     timeout = Int(3000)
     _timer = None
@@ -136,7 +136,7 @@ class FiberLight(AbstractDevice):
                             Item('intensity', format_str='%0.2f',
                                  show_label=False,
                                  enabled_when='state')),
-                     Item('auto_onoff'),
+                     # Item('auto_onoff'),
                      Item('timeout'))
 
     def traits_view(self):

@@ -132,7 +132,7 @@ class FusionsLaserManager(LaserManager):
         return self.stage_manager.get_grain_mask()
 
     def get_grain_masks_blob(self):
-        return self.stage_manager.get_grain_masks_blob
+        return self.stage_manager.get_grain_masks_blob()
 
     def extract(self, power, units=None):
         if self.enable_laser():
@@ -166,14 +166,18 @@ class FusionsLaserManager(LaserManager):
         self.debug('preferences bound')
 
     def set_light(self, value):
+        try:
+            value = float(value)
+        except ValueError:
+            return
         self.set_light_state(value > 0)
         self.set_light_intensity(value)
 
     def set_light_state(self, state):
         if state:
-            self.fiber_light.power_off()
-        else:
             self.fiber_light.power_on()
+        else:
+            self.fiber_light.power_off()
 
     def set_light_intensity(self, v):
         self.fiber_light.intensity = min(max(0, v), 100)
@@ -247,7 +251,7 @@ class FusionsLaserManager(LaserManager):
             return True
 
     def set_motor(self, *args, **kw):
-        self.stage_manager.motor_event_hook(args, **kw)
+        self.stage_manager.motor_event_hook(*args, **kw)
         return self.laser_controller.set_motor(*args, **kw)
 
     def get_motor(self, name):

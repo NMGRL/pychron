@@ -18,7 +18,7 @@
 import os
 import shutil
 import time
-from threading import Thread, Timer
+from threading import Thread, Timer, Event as TEvent
 
 from apptools.preferences.preference_binding import bind_preference
 from numpy import copy, array
@@ -148,19 +148,19 @@ class VideoStageManager(StageManager):
 
     def stop_measure_grain_mask(self):
         if self._measure_grain_evt:
-            self._measure_grain_evt.stop()
+            self._measure_grain_evt.set()
 
     def start_measure_grain_mask(self):
-        self._measure_grain_evt = evt = Event()
+        self._measure_grain_evt = evt = TEvent()
 
         def _measure_grain_mask():
             ld = self.lumen_detector
 
             masks = []
             while not evt.is_set():
-                l, m = ld.lum()
-                masks.append(m)
-                evt.sleep(0.5)
+                l, m = ld.lum(copy(self.video.get_cached_frame()))
+                masks.append(l)
+                evt.wait(1)
             self.grain_masks = masks
 
         self._measure_grain_t = Thread(target=_measure_grain_mask)
@@ -313,7 +313,7 @@ class VideoStageManager(StageManager):
     def clean_video_archive(self):
         if self.use_video_archiver:
             self.info('Cleaning video directory')
-            self.video_archiver.clean()
+            self.video_archiver.clean(('manifest.yaml',))
 
     def is_auto_correcting(self):
         return self._auto_correcting
