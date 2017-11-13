@@ -122,7 +122,7 @@ class FusionsLaserManager(LaserManager):
         return self.stage_manager.get_grain_mask()
 
     def get_grain_masks_blob(self):
-        return self.stage_manager.get_grain_masks_blob()
+        return self.stage_manager.get_grain_masks_blob
 
     def extract(self, power, units=None):
         if self.enable_laser():

@@ -1052,6 +1052,8 @@ class AutomatedRun(Loggable):
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
             env = self._get_environmentals()
+            if env:
+                set_environmentals(self.spec, env)
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
@@ -1272,9 +1274,9 @@ class AutomatedRun(Loggable):
 
             self._persister_save_action('post_extraction_save')
 
-            env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+            # env = self._get_environmentals()
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')
