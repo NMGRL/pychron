@@ -14,9 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 
-#========== standard library imports ==========
+# ========== standard library imports ==========
 
-#========== local library imports =============
+# ========== local library imports =============
 from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
@@ -26,10 +26,15 @@ class AgilentGPActuator(GPActuator):
 
     """
     id_query = '*TST?'
+    invert = False
 
     def id_response(self, response):
         if response.strip() == '0':
             return True
+
+    def load_additional_args(self, config, **kw):
+        self.set_attribute(config, 'invert', 'General', 'invert')
+        return True
 
     def initialize(self, *args, **kw):
         """
@@ -51,7 +56,7 @@ class AgilentGPActuator(GPActuator):
         """
 
         # returns one if channel close  0 for open
-        cmd = 'ROUT:OPEN? (@{})'.format(self._get_address(obj))
+        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
         s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
@@ -65,11 +70,12 @@ class AgilentGPActuator(GPActuator):
         """
 
         address = self._get_address(obj)
+        cmd = self._get_cmd('CLOSE')
         if not excl:
-            cmd = 'ROUT:CLOSE (@{})'.format(address)
+            cmd = 'ROUT:{} (@{})'.format(cmd, address)
         else:
             # ensure all channels open before closing
-            cmd = 'ROUT:CLOS:EXCL (@{})'.format(address)
+            cmd = 'ROUT:{}:EXCL (@{})'.format(cmd, address)
         self.tell(cmd)
         if self.simulation:
             return True
@@ -80,11 +86,17 @@ class AgilentGPActuator(GPActuator):
             open the channel
         """
 
-        cmd = 'ROUT:OPEN (@{})'.format(self._get_address(obj))
+        cmd = 'ROUT:{} (@{})'.format(self._get_cmd('OPEN'), self._get_address(obj))
         self.tell(cmd)
         if self.simulation:
             return True
         return self.get_channel_state(obj) == True
+
+    # private
+    def _get_cmd(self, cmd):
+        if self.invert:
+            cmd = 'CLOSE' if cmd == 'OPEN' else 'OPEN'
+        return cmd
 
     def _get_errors(self):
         # maximum of 10 errors so no reason to use a while loop
@@ -117,6 +129,5 @@ class AgilentGPActuator(GPActuator):
         else:
             addr = obj.address
         return addr
-
 
 # ============= EOF =====================================
