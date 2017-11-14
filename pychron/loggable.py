@@ -70,6 +70,7 @@ class Loggable(HasTraits):
     # logger_display = None
     def __init__(self, *args, **kw):
         super(Loggable, self).__init__(*args, **kw)
+
         t = str(type(self))
         if self.shared_logger and t in __gloggers__:
             self.logger = __gloggers__[t]

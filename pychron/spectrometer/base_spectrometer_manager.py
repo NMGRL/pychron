@@ -28,6 +28,7 @@ class BaseSpectrometerManager(Manager):
     spectrometer_klass = None
     simulation = DelegatesTo('spectrometer')
     name = Property(depends_on='spectrometer')
+
     def __init__(self, application, *args, **kw):
         self.application = application
         super(BaseSpectrometerManager, self).__init__(*args, **kw)
@@ -139,4 +140,5 @@ class BaseSpectrometerManager(Manager):
 
     def read_emission(self):
         return self.spectrometer.source.read_emission()
+
 # ============= EOF =============================================
