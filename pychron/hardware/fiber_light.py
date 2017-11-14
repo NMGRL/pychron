@@ -17,7 +17,9 @@
 
 
 # ============= enthought library imports =======================
-from traits.api import Range, Event, Bool, on_trait_change, Property, Float
+from threading import Timer
+
+from traits.api import Range, Event, Bool, on_trait_change, Property, Float, Int
 from traitsui.api import View, Item, ButtonEditor, HGroup, Group
 
 # ============= standard library imports ========================
@@ -34,8 +36,10 @@ class FiberLight(AbstractDevice):
     power = Event
     power_label = Property(depends_on='state')
     state = Bool
-    auto_onoff = Bool(False)
+    # auto_onoff = Bool(False)
     name = 'fiber_light'
+    timeout = Int(3000)
+    _timer = None
 
     def load_additional_args(self, config):
         """
@@ -80,6 +84,16 @@ class FiberLight(AbstractDevice):
         self.state = True
         if self._cdevice is not None:
             self._cdevice.power_on()
+            if self.timeout:
+                if self.timer:
+                    self.timer.cancel()
+
+                def autooff():
+                    self.debug('auto power off timeout={}'.format(self.timeout))
+                    self.power_off()
+
+                self.timer = Timer(self.timeout, autooff)
+                self.timer.start()
 
     def power_off(self, *args):
         """
@@ -122,7 +136,8 @@ class FiberLight(AbstractDevice):
                             Item('intensity', format_str='%0.2f',
                                  show_label=False,
                                  enabled_when='state')),
-                     Item('auto_onoff'))
+                     # Item('auto_onoff'),
+                     Item('timeout'))
 
     def traits_view(self):
         return View(self.get_control_group())

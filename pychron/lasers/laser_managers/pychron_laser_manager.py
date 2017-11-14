@@ -74,18 +74,18 @@ class PychronLaserManager(EthernetLaserManager):
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
         self.stage_manager.bind_preferences(pref_id)
 
-    # def open(self):
-    #     host = self.host
-    #     port = self.port
-    #
-    #     self.communicator = ec = EthernetCommunicator(host=host,
-    #                                                   port=port)
-    #     r = ec.open()
-    #     if r:
-    #         self.connected = True
-    #         self.opened()
-    #
-    #     return r
+        # def open(self):
+        #     host = self.host
+        #     port = self.port
+        #
+        #     self.communicator = ec = EthernetCommunicator(host=host,
+        #                                                   port=port)
+        #     r = ec.open()
+        #     if r:
+        #         self.connected = True
+        #         self.opened()
+        #
+        #     return r
 
 
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
@@ -136,8 +136,17 @@ class PychronLaserManager(EthernetLaserManager):
     def set_light(self, value):
         self._ask('SetLight {}'.format(value))
 
-    def acquire_grain_mask(self):
-        return self._ask('AcquireGrainMaskBlob')
+    def acquire_grain_polygon(self):
+        return self._ask('AcquireGrainPolygonBlob')
+
+    def start_measure_grain_polygon(self):
+        self._ask('StartMeasureGrainPolygon')
+
+    def stop_measure_grain_polygon(self):
+        self._ask('StopMeasureGrainPolygon')
+
+    def get_grain_polygons_blob(self):
+        return self._ask('GetGrainPolygonsBlob')
 
     def get_response_blob(self):
         return self._ask('GetResponseBlob')

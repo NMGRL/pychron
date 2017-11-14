@@ -117,7 +117,8 @@ class DVCPersister(BasePersister):
                'requested_output': oblob,
                'setpoint_stream': sblob,
                'snapshots': per_spec.snapshots,
-               'videos': per_spec.videos}
+               'videos': per_spec.videos,
+               'grain_polygon_blob': per_spec.grain_polygon_blob}
 
         pid = per_spec.pid
         if pid:

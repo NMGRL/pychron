@@ -313,7 +313,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
     def _wait_for_home(self, progress=None):
         # wait until homing signal set
-
+        time.sleep(1)
         hbit = 5 if self.home_limit == 1 else 6
         psteps = None
         while 1:

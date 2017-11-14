@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Float, Button, Bool, Any
+from traits.api import Float, Button, Bool, Any, Instance, Event
 from traitsui.api import View, Item, HGroup, RangeEditor
 
+from pychron.image.standalone_image import FrameImage
 from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 
 
@@ -33,6 +34,8 @@ class AutoCenterManager(MachineVisionManager):
     configure_button = Button('configure')
     use_autocenter = Bool
     use_hough_circle = Bool(False)
+
+    display_image = Instance(FrameImage, ())
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
                              open_image=True,
@@ -51,10 +54,14 @@ class AutoCenterManager(MachineVisionManager):
             cropdim = dim*2.5
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
-        im = self.new_image(frame, alpha_enabled=alpha_enabled)
-        if open_image:
-            view_image(im, auto_close=auto_close_image)
 
+        # im = self.new_image(frame, alpha_enabled=alpha_enabled)
+        # im = self.new_image(frame, alpha_enabled=alpha_enabled)
+        # if open_image:
+        #     view_image(im, auto_close=auto_close_image)
+
+        im = self.display_image
+        im.source_frame = frame
         if self.use_hough_circle:
             dx, dy = loc.find_circle(im, frame, dim=dim * self.pxpermm)
         else:
@@ -114,18 +121,18 @@ class AutoCenterManager(MachineVisionManager):
             canvas.add_markup_circle(cx, cy, r, identifier='target')
 
     # views
-    def configure_view(self):
-        v = View(Item('crop_size'),
-                 Item('target_radius', editor=RangeEditor(low=0., high=5.)),
-                 buttons=['OK', 'Cancel'])
-        return v
-
-    def traits_view(self):
-        v = View(HGroup(Item('use_autocenter', label='Enabled'),
-                        # Item('configure_button', show_label=False),
-                        show_border=True,
-                        label='Autocenter'))
-        return v
+    # def configure_view(self):
+    #     v = View(Item('crop_size'),
+    #              Item('target_radius', editor=RangeEditor(low=0., high=5.)),
+    #              buttons=['OK', 'Cancel'])
+    #     return v
+    #
+    # def traits_view(self):
+    #     v = View(HGroup(Item('use_autocenter', label='Enabled'),
+    #                     # Item('configure_button', show_label=False),
+    #                     show_border=True,
+    #                     label='Autocenter'))
+    #     return v
 
 
 class CO2AutocenterManager(AutoCenterManager):

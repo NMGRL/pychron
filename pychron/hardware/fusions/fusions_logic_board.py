@@ -98,7 +98,7 @@ class FusionsLogicBoard(CoreDevice):
         for m in self.motors:
             if m.use_initialize:
                 m.initialize(*args, **kw)
-            m.on_trait_change(lambda: self.trait_set(refresh_canvas=True), 'data_position')
+            # m.on_trait_change(lambda: self.trait_set(refresh_canvas=True), 'data_position')
             m.set_homing_required(False)
 
         return True

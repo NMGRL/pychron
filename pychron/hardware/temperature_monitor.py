@@ -205,6 +205,17 @@ class DPi32TemperatureMonitor(ISeriesDevice):
             self.debug('Input Type={}'.format(self._input_type))
             return True
 
+                # self.debug('read input type2 {}'.format(re.strip()[:3]))
+                # re = re.strip()
+                # if re[:3] == 'R07':
+                #     re = make_bitarray(int(re[3:], 16))
+                #     input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
+                #     if input_class == 'TC':
+                #         self._input_type = TC_MAP[int(re[2:6], 2)]
+                #     self.debug('Input Class={}'.format(input_class))
+                #     self.debug('Input Type={}'.format(self._input_type))
+                #     return True
+
     def reset(self):
         """
         """

@@ -1052,6 +1052,8 @@ class AutomatedRun(Loggable):
                      self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
 
             env = self._get_environmentals()
+            if env:
+                set_environmentals(self.spec, env)
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
@@ -1257,12 +1259,12 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
-            grain_mask = script.get_grain_masks()
+            grain_polygon = script.get_grain_polygons()
 
-            grain_mask_blob = array(grain_mask).tostring()
+            grain_polygon_blob = array(grain_polygon).tostring()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
-                                        grain_mask_blob=grain_mask_blob,
+                                        grain_polygon_blob=grain_polygon_blob,
                                         power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,
@@ -1272,9 +1274,9 @@ class AutomatedRun(Loggable):
 
             self._persister_save_action('post_extraction_save')
 
-            env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+            # env = self._get_environmentals()
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             # self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.heading('Extraction Finished')

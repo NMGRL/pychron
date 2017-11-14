@@ -53,6 +53,29 @@ class RecordingCTX(object):
         self._script.stop_video_recording()
 
 
+class LightingCTX(object):
+    def __init__(self, script, value):
+        self._script = script
+        self._value = value
+
+    def __enter__(self, *args, **kw):
+        self._script.set_light(self._value)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._script.set_light(0)
+
+
+class GrainPolygonCTX(object):
+    def __init__(self, script):
+        self._script = script
+
+    def __enter__(self, *args, **kw):
+        self._script.start_grain_polygon()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._script.stop_grain_polygon()
+
+
 class ExtractionPyScript(ValvePyScript):
     """
     The ExtractionPyScript is used to program the extraction and gettering of
@@ -66,7 +89,7 @@ class ExtractionPyScript(ValvePyScript):
     videos = List
 
     _extraction_positions = List
-    _grain_masks = List
+    _grain_polygons = List
 
     def set_run_identifier(self, v):
         self.setup_context(run_identifier=v)
@@ -88,8 +111,12 @@ class ExtractionPyScript(ValvePyScript):
 
         return ret
 
-    def get_grain_masks(self):
-        m = self._grain_masks
+    def get_grain_polygons(self):
+        m = self._grain_polygons
+        if not m:
+            m = self._extraction_action([('get_grain_polygons_blob', (), {})])
+            if m:
+                m = m[0]
         return m
 
     def get_response_blob(self):
@@ -408,6 +435,14 @@ class ExtractionPyScript(ValvePyScript):
             self.snapshots.append(ps[0])
 
     @command_register
+    def grain_polygon(self):
+        return GrainPolygonCTX(self)
+
+    @command_register
+    def lighting(self, value=75):
+        return LightingCTX(self, value)
+
+    @command_register
     def video_recording(self, name='video'):
         return RecordingCTX(self, name)
 
@@ -596,7 +631,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units=''):
+    def extract(self, power='', units='', measure_grain_polygon=False):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -616,7 +651,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action([('extract', (power,), {'units': units})])
+        self._extraction_action([('extract', (power,), {'units': units, 'measure_grain_polygon': measure_grain_polygon})])
 
     @verbose_skip
     @command_register
@@ -625,11 +660,21 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def acquire_grain_mask_blob(self):
-        result = self._extraction_action([('acquire_grain_mask', (), {})])
+    def acquire_grain_polygon_blob(self):
+        result = self._extraction_action([('acquire_grain_polygon', (), {})])
         if result:
             result = result[0]
-            self._grain_masks.append(result)
+            self._grain_polygons.append(result)
+
+    @verbose_skip
+    @command_register
+    def start_grain_polygon(self):
+        self._extraction_action([('start_measure_grain_polygon', (), {})])
+
+    @verbose_skip
+    @command_register
+    def stop_grain_polygon(self):
+        self._extraction_action([('stop_measure_grain_polygon', (), {})])
 
     @verbose_skip
     @command_register

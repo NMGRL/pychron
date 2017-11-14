@@ -51,6 +51,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             gc.set_stroke_color(color)
 
         mx, my = pt
+        gc.set_line_width(self.component.crosshairs_line_width)
         gc.move_to(mx - length, my)
         gc.line_to(mx + length, my)
         gc.move_to(mx, my - length)
@@ -79,6 +80,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         # my += 1
         if radius:
             # radius = component.get_wh(radius, 0)[0]
+            gc.set_line_width(self.component.crosshairs_line_width)
             gc.arc(mx, my, radius, 0, 360)
 
             if not self.circle_only or not circle_only:

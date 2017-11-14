@@ -137,8 +137,6 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
-            if self.fiber_light.auto_onoff and self.fiber_light.state:
-                self.fiber_light.power_off()
 
             if clear_setpoint:
                 # disable the temperature_controller unit a value is set
@@ -150,12 +148,6 @@ class FusionsDiodeManager(FusionsLaserManager):
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
-        if self.fiber_light.auto_onoff and not self.fiber_light.state:
-            if self._recording_power_state:
-                t = Timer(7, self.fiber_light.power_on)
-                t.start()
-            else:
-                self.fiber_light.power_on()
 
         self.response_recorder.stop()
         self.temperature_controller.disable()

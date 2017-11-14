@@ -100,6 +100,12 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
+    def measure_grain_polygon(self):
+        pass
+
+    def stop_measure_grain_polygon(self):
+        pass
+
     def shutdown(self):
         self._save_stage_map()
 
@@ -148,6 +154,7 @@ class StageManager(BaseStageManager):
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
         #
         bind_preference(self.canvas, 'crosshairs_kind', '{}.crosshairs_kind'.format(pref_id))
+        bind_preference(self.canvas, 'crosshairs_line_width', '{}.crosshairs_line_width'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_color',
                         '{}.crosshairs_color'.format(pref_id),
                         factory=ColorPreferenceBinding)

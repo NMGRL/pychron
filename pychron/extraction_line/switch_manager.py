@@ -236,7 +236,7 @@ class SwitchManager(Manager):
 
             states.append(int(v.state))
             if time.time() - st > timeout:
-                self.debug('get states timeout')
+                self.debug('get states timeout. timeout={}'.format(timeout))
                 break
         else:
             # if loop completes before timeout dont save keys
@@ -527,6 +527,7 @@ class SwitchManager(Manager):
         states = []
         for k, v in self.switches.iteritems():
             if v.query_state:
+                # ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
                 states.append((k, s))
 

@@ -81,9 +81,6 @@ class SelectionFigure(HasTraits):
         else:
             obj.prev_selection = None
 
-        # for p in self.graph.plots:
-        #     p.default_index.metadata['selections'] = sel
-
         return sel
 
 

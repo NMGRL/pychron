@@ -127,7 +127,6 @@ class PolygonLocator:
     #     return invert(wsrc)
 
     def find_targets(self, src):
-        src = copy(src)
         for contour in find_contours(src, 0):
             coords = approximate_polygon(contour, tolerance=0)
             x, y = coords.T
@@ -183,17 +182,21 @@ class LumenDetector(object):
     custom_mask_radius = 0
     hole_radius = 0
 
-    def find_target(self, src):
+    def find_targets(self, src):
         p = PolygonLocator()
-        targetxy, src = p.find_target(src)
+        targets, src = p.find_targets(src)
 
-        return targetxy, src
+        return targets, src
 
     def find_best_target(self, src):
         p = PolygonLocator()
         targetxy, src = p.find_best_target(src)
 
         return targetxy, src
+
+    def lum(self, src):
+        lum, mask = self._lum(src)
+        return lum, mask
 
     def get_value(self, src, scaled=True):
         """

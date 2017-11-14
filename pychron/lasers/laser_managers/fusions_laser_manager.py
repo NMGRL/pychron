@@ -103,8 +103,18 @@ class FusionsLaserManager(LaserManager):
 
     _degas_thread = None
 
+
+    # def initialize(self, *args, **kw):
+    #     super(FusionsLaserManager, self).initialize(*args, **kw)
+    #     self.do_motor_initialization()
+
+    def finish_loading(self):
+        super(FusionsLaserManager, self).finish_loading()
+        self.do_motor_initialization()
+
     @on_trait_change('laser_controller:refresh_canvas')
     def refresh_canvas(self):
+        print 'frefasdfeasdfasd'
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 
@@ -112,17 +122,17 @@ class FusionsLaserManager(LaserManager):
             #   IExtractionDevice interface
             # ===============================================================================
 
-    def stop_measure_grain_mask(self):
-        self.stage_manager.stop_measure_grain_mask()
+    def stop_measure_grain_polygon(self):
+        self.stage_manager.stop_measure_grain_polygon()
 
-    def start_measure_grain_mask(self):
-        self.stage_manager.start_measure_grain_mask()
+    def start_measure_grain_polygon(self):
+        self.stage_manager.start_measure_grain_polygon()
 
-    def get_grain_mask(self):
-        return self.stage_manager.get_grain_mask()
+    def get_grain_polygon(self):
+        return self.stage_manager.get_grain_polygon()
 
-    def get_grain_masks_blob(self):
-        return self.stage_manager.get_grain_masks_blob()
+    def get_grain_polygons_blob(self):
+        return self.stage_manager.get_grain_polygons_blob()
 
     def extract(self, power, units=None):
         if self.enable_laser():
@@ -156,14 +166,18 @@ class FusionsLaserManager(LaserManager):
         self.debug('preferences bound')
 
     def set_light(self, value):
+        try:
+            value = float(value)
+        except ValueError:
+            return
         self.set_light_state(value > 0)
         self.set_light_intensity(value)
 
     def set_light_state(self, state):
         if state:
-            self.fiber_light.power_off()
-        else:
             self.fiber_light.power_on()
+        else:
+            self.fiber_light.power_off()
 
     def set_light_intensity(self, v):
         self.fiber_light.intensity = min(max(0, v), 100)
@@ -191,17 +205,26 @@ class FusionsLaserManager(LaserManager):
         if chiller is not None:
             return chiller.get_faults(**kw)
 
-    def do_motor_initialization(self, name):
-        if self.laser_controller:
-            motor = self.laser_controller.get_motor(name)
-            if motor is not None:
-                n = 4
-                from pychron.core.ui.progress_dialog import myProgressDialog
+    def do_motor_initialization(self):
+        self.debug('do motor initialization')
 
-                pd = myProgressDialog(max=n, size=(550, 15))
-                pd.open()
-                motor.initialize(progress=pd)
-                pd.close()
+        if self.laser_controller:
+            for motor in self.laser_controller.motors:
+                # motor = self.laser_controller.get_motor(name)
+                # if motor is not None:
+                def handle(obj, name, old, new):
+                    # self.motor_event = (motor.name, new)
+                    self.stage_manager.motor_event_hook(obj.name, new)
+
+                motor.on_trait_change(handle, '_data_position')
+
+                    # n = 4
+                    # from pychron.core.ui.progress_dialog import myProgressDialog
+                    #
+                    # pd = myProgressDialog(max=n, size=(550, 15))
+                    # pd.open()
+                    # motor.initialize(progress=pd)
+                    # pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
         """
@@ -228,7 +251,7 @@ class FusionsLaserManager(LaserManager):
             return True
 
     def set_motor(self, *args, **kw):
-        self.motor_event = (args, kw)
+        self.stage_manager.motor_event_hook(*args, **kw)
         return self.laser_controller.set_motor(*args, **kw)
 
     def get_motor(self, name):
