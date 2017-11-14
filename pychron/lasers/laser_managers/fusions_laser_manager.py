@@ -122,17 +122,17 @@ class FusionsLaserManager(LaserManager):
             #   IExtractionDevice interface
             # ===============================================================================
 
-    def stop_measure_grain_mask(self):
-        self.stage_manager.stop_measure_grain_mask()
+    def stop_measure_grain_polygon(self):
+        self.stage_manager.stop_measure_grain_polygon()
 
-    def start_measure_grain_mask(self):
-        self.stage_manager.start_measure_grain_mask()
+    def start_measure_grain_polygon(self):
+        self.stage_manager.start_measure_grain_polygon()
 
-    def get_grain_mask(self):
-        return self.stage_manager.get_grain_mask()
+    def get_grain_polygon(self):
+        return self.stage_manager.get_grain_polygon()
 
-    def get_grain_masks_blob(self):
-        return self.stage_manager.get_grain_masks_blob()
+    def get_grain_polygons_blob(self):
+        return self.stage_manager.get_grain_polygons_blob()
 
     def extract(self, power, units=None):
         if self.enable_laser():

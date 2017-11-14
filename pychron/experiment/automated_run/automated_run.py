@@ -1259,12 +1259,12 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
-            grain_mask = script.get_grain_masks()
+            grain_polygon = script.get_grain_polygons()
 
-            grain_mask_blob = array(grain_mask).tostring()
+            grain_polygon_blob = array(grain_polygon).tostring()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
-                                        grain_mask_blob=grain_mask_blob,
+                                        grain_polygon_blob=grain_polygon_blob,
                                         power_achieved=ach,
                                         response_blob=rblob,
                                         output_blob=oblob,

@@ -60,7 +60,7 @@ class PersistenceSpec(HasTraits):
     spec_dict = Dict
     defl_dict = Dict
     gains = Dict
-trap = Float
+    trap = Float
     emission = Float
     active_detectors = List
 
@@ -92,7 +92,7 @@ trap = Float
     conditionals = List
     tripped_conditional = None
 
-    grain_mask_blob = Str
+    grain_polygon_blob = Str
 
     power_achieved = Float
     lab_temperatures = List

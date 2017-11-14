@@ -65,15 +65,15 @@ class LightingCTX(object):
         self._script.set_light(0)
 
 
-class GrainMaskCTX(object):
+class GrainPolygonCTX(object):
     def __init__(self, script):
         self._script = script
 
     def __enter__(self, *args, **kw):
-        self._script.start_grain_mask()
+        self._script.start_grain_polygon()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._script.stop_grain_mask()
+        self._script.stop_grain_polygon()
 
 
 class ExtractionPyScript(ValvePyScript):
@@ -89,7 +89,7 @@ class ExtractionPyScript(ValvePyScript):
     videos = List
 
     _extraction_positions = List
-    _grain_masks = List
+    _grain_polygons = List
 
     def set_run_identifier(self, v):
         self.setup_context(run_identifier=v)
@@ -111,10 +111,10 @@ class ExtractionPyScript(ValvePyScript):
 
         return ret
 
-    def get_grain_masks(self):
-        m = self._grain_masks
+    def get_grain_polygons(self):
+        m = self._grain_polygons
         if not m:
-            m = self._extraction_action([('get_grain_masks_blob', (), {})])
+            m = self._extraction_action([('get_grain_polygons_blob', (), {})])
             if m:
                 m = m[0]
         return m
@@ -435,8 +435,8 @@ class ExtractionPyScript(ValvePyScript):
             self.snapshots.append(ps[0])
 
     @command_register
-    def grain_mask(self):
-        return GrainMaskCTX(self)
+    def grain_polygon(self):
+        return GrainPolygonCTX(self)
 
     @command_register
     def lighting(self, value=75):
@@ -631,7 +631,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units='', measure_grain_mask=False):
+    def extract(self, power='', units='', measure_grain_polygon=False):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -651,7 +651,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action([('extract', (power,), {'units': units, 'measure_grain_mask': measure_grain_mask})])
+        self._extraction_action([('extract', (power,), {'units': units, 'measure_grain_polygon': measure_grain_polygon})])
 
     @verbose_skip
     @command_register
@@ -660,21 +660,21 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def acquire_grain_mask_blob(self):
-        result = self._extraction_action([('acquire_grain_mask', (), {})])
+    def acquire_grain_polygon_blob(self):
+        result = self._extraction_action([('acquire_grain_polygon', (), {})])
         if result:
             result = result[0]
-            self._grain_masks.append(result)
+            self._grain_polygons.append(result)
 
     @verbose_skip
     @command_register
-    def start_grain_mask(self):
-        self._extraction_action([('start_measure_grain_mask', (), {})])
+    def start_grain_polygon(self):
+        self._extraction_action([('start_measure_grain_polygon', (), {})])
 
     @verbose_skip
     @command_register
-    def stop_grain_mask(self):
-        self._extraction_action([('stop_measure_grain_mask', (), {})])
+    def stop_grain_polygon(self):
+        self._extraction_action([('stop_measure_grain_polygon', (), {})])
 
     @verbose_skip
     @command_register

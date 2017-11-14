@@ -138,32 +138,34 @@ class VideoStageManager(StageManager):
         bind_preference(self.video, 'ffmpeg_path',
                         '{}.ffmpeg_path'.format(pref_id))
 
-    def get_grain_mask(self):
+    def get_grain_polygon(self):
         ld = self.lumen_detector
         l, m = ld.lum()
         return m.tostring()
 
-    def get_grain_masks_blob(self):
-        return array(self.grain_masks).tostring()
+    def get_grain_polygons_blob(self):
+        return array(self.grain_polygons).tostring()
 
-    def stop_measure_grain_mask(self):
+    def stop_measure_grain_polygon(self):
         if self._measure_grain_evt:
             self._measure_grain_evt.set()
 
-    def start_measure_grain_mask(self):
+    def start_measure_grain_polygon(self):
         self._measure_grain_evt = evt = TEvent()
 
-        def _measure_grain_mask():
+        def _measure_grain_polygon():
             ld = self.lumen_detector
 
             masks = []
             while not evt.is_set():
-                l, m = ld.lum(copy(self.video.get_cached_frame()))
-                masks.append(l)
-                evt.wait(1)
-            self.grain_masks = masks
+                src = copy(self.video.get_cached_frame())
+                targets = [t.coords for t in ld.find_target(src)]
+                masks.append(targets)
 
-        self._measure_grain_t = Thread(target=_measure_grain_mask)
+                evt.wait(1)
+            self.grain_polygons = masks
+
+        self._measure_grain_t = Thread(target=_measure_grain_polygon)
         self._measure_grain_t.start()
 
     def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):

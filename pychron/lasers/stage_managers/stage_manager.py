@@ -100,10 +100,10 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
-    def measure_grain_mask(self):
+    def measure_grain_polygon(self):
         pass
 
-    def stop_measure_grain_mask(self):
+    def stop_measure_grain_polygon(self):
         pass
 
     def shutdown(self):
