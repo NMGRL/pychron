@@ -35,8 +35,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     microcontroller_klass = NGXController
 
     rcs_id = 'NOM'
-    username = Str('')
-    password = Str('')
+    # username = Str('')
+    # password = Str('')
 
     _test_connect_command = 'GETMASS'
 
@@ -45,18 +45,18 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         s = self.application.get_service(service)
         return s
 
-    def finish_loading(self):
-
-        resp = self.read()
-
-        bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
-        bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
-
-        if resp:
-            self.info('NGX-{}'.format(resp))
-            self.ask('Login {},{}'.format(self.username, self.password))
-
-        super(NGXSpectrometer, self).finish_loading()
+    # def finish_loading(self):
+    #
+    #     resp = self.read()
+    #
+    #     bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
+    #     bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+    #
+    #     if resp:
+    #         self.info('NGX-{}'.format(resp))
+    #         self.ask('Login {},{}'.format(self.username, self.password))
+    #
+    #     super(NGXSpectrometer, self).finish_loading()
 
     # def start(self):
     #     self.ask('StartAcq 500,{}'.format(self.rcs_id))

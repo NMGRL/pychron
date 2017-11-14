@@ -20,13 +20,30 @@
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
-
+from traits.api import Str
 # ============= local library imports  ==========================
+from apptools.preferences.preference_binding import bind_preference
+
 from pychron.hardware.core.core_device import CoreDevice
 
 
 class NGXController(CoreDevice):
-    pass
+    username = Str('')
+    password = Str('')
+
+    def initialize(self, *args, **kw):
+        ret = super(NGXController, self).initialize(*args, **kw)
+        if ret:
+            resp = self.read()
+
+            bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
+            bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+
+            if resp:
+                self.info('NGX-{}'.format(resp))
+                self.ask('Login {},{}'.format(self.username, self.password))
+
+            return True
 
 
 # ============= EOF =============================================
