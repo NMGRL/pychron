@@ -57,7 +57,8 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
         #     else:
         factory = self.get_factory(PACKAGES[cklass], cklass)
         # self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
-        self._cdevice = factory(name=cklass, configuration_dir_name=self.configuration_dir_name)
+        self._cdevice = factory(name=cklass, application=self.application,
+        configuration_dir_name=self.configuration_dir_name)
         return True
 
     @property

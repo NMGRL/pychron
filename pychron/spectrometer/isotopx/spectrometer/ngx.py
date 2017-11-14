@@ -43,9 +43,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
+        print 'micro', id(s)
         return s
 
-    # def finish_loading(self):
+    def finish_loading(self):
+        self.microcontroller.bootstrap()
     #
     #     resp = self.read()
     #

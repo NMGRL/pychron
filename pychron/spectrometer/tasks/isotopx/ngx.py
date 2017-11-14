@@ -34,7 +34,8 @@ class NGXSpectrometerPlugin(IsotopxSpectrometerPlugin):
         return [SpectrometerPreferencesPane, NGXSpectrometerPreferencesPane]
 
     def _controller_factory(self):
-        ngx = NGXController()
+        ngx = NGXController(name='spectrometer_microcontroller')
+        # ngx.bootstrap()
         return ngx
 
     def _service_offers_default(self):

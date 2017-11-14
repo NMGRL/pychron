@@ -28,6 +28,7 @@ class NGXGPActuator(GPActuator):
     def initialize(self, *args, **kw):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
+        print 'get serivce ', s.communicator, id(s)
         self.communicator = s.communicator
         return True
 
