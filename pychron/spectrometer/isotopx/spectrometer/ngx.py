@@ -40,7 +40,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     _test_connect_command = 'GETMASS'
 
+    def _microcontroller_default(self):
+        service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
+        s = self.application.get_service(service)
+        return s
+
     def finish_loading(self):
+
         resp = self.read()
 
         bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
@@ -52,10 +58,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         super(NGXSpectrometer, self).finish_loading()
 
-    def start(self):
-        self.ask('StartAcq 500,{}'.format(self.rcs_id))
+    # def start(self):
+    #     self.ask('StartAcq 500,{}'.format(self.rcs_id))
 
     def read_intensities(self, timeout=4):
+        self.tell('StartAcq 1,{}'.format(self.rcs_id))
         keys = self.detector_names
         signals = []
 
