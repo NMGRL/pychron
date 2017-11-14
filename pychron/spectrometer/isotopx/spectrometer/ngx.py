@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import time
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Enum, Str
 
@@ -26,7 +27,6 @@ from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
-
     integration_time = Enum(ISOTOPX_INTEGRATION_TIMES)
 
     magnet_klass = NGXMagnet
@@ -35,34 +35,59 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     microcontroller_klass = NGXController
 
     rcs_id = 'NOM'
-    username = Str('')
-    password = Str('')
+    # username = Str('')
+    # password = Str('')
 
     _test_connect_command = 'GETMASS'
 
-    def finish_loading(self):
-        resp = self.read()
+    def _microcontroller_default(self):
+        service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
+        s = self.application.get_service(service)
+        return s
 
-        bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
-        bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+    # def finish_loading(self):
+    #     self.microcontroller.bootstrap()
+    #
+    #     resp = self.read()
+    #
+    #     bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
+    #     bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+    #
+    #     if resp:
+    #         self.info('NGX-{}'.format(resp))
+    #         self.ask('Login {},{}'.format(self.username, self.password))
+    #
+    #     super(NGXSpectrometer, self).finish_loading()
 
-        if resp:
-            self.info('NGX-{}'.format(resp))
-            self.ask('Login {},{}'.format(self.username, self.password))
+    # def start(self):
+    #     self.ask('StartAcq 500,{}'.format(self.rcs_id))
 
-        super(NGXSpectrometer, self).finish_loading()
-
-    def start(self):
-        self.ask('StartAcq 500,{}'.format(self.rcs_id))
-
-    def read_intensities(self):
-        keys = []
+    def read_intensities(self, timeout=4):
+        self.tell('StartAcq 1,{}'.format(self.rcs_id))
+        keys = self.detector_names
         signals = []
 
-        datastr = self.read()
-        if datastr:
-            if datastr.startswith('#EVENT:ACQ,{}'.format(self.rcs_id)):
-                signals = [float(i) for i in datastr[:-1].split(',')[5:]]
+        tag = 'EVENT:ACQ,{}'.format(self.rcs_id)
+        ds = ''
+        st = time.time()
+
+        while 1:
+            if time.time() - st > timeout:
+                break
+
+            ds += self.read(1024)
+
+            if tag in ds:
+                args = ds.split('#')
+                datastr = None
+                for a in args:
+                    if a.startswith(tag):
+                        datastr = a
+                        break
+
+                if datastr:
+                    signals = [float(i) for i in datastr.split(',')[5:]]
+                    break
 
         return keys, signals
 
@@ -79,7 +104,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # it = normalize_integration_time(it)
         if self.integration_time != it or force:
             self.debug('setting integration time = {}'.format(it))
-            self.ask('SetAcqPeriod {}'.format(it*1000))
+            self.ask('SetAcqPeriod {}'.format(it * 1000))
             self.trait_setq(integration_time=it)
 
         return it

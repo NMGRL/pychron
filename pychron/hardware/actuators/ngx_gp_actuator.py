@@ -25,6 +25,11 @@ class NGXGPActuator(GPActuator):
     """
 
     """
+    def initialize(self, *args, **kw):
+        service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
+        s = self.application.get_service(service)
+        self.communicator = s.communicator
+        return True
 
     def get_state_checksum(self, keys):
         return 0

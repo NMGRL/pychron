@@ -30,17 +30,6 @@ class BaseSource(SpectrometerDevice):
         # self.read_trap_current()
         # self.read_hv()
 
-    def traits_view(self):
-        v = View(Item('nominal_hv', format_str='%0.4f'),
-                 Item('current_hv', format_str='%0.4f', style='readonly'),
-                 Item('trap_current'),
-                 Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
-                                                       high_name='y_symmetry_high',
-                                                       mode='slider')),
-                 Item('z_symmetry', editor=RangeEditor(low_name='z_symmetry_low',
-                                                       high_name='z_symmetry_high',
-                                                       mode='slider')),
-                 Item('extraction_lens'))
-        return v
+
 
 # ============= EOF =============================================
