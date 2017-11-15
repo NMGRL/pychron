@@ -114,7 +114,7 @@ class ExtractionPyScript(ValvePyScript):
     def get_grain_polygons(self):
         m = self._grain_polygons
         if not m:
-            m = self._extraction_action([('get_grain_polygons_blob', (), {})])
+            m = self._extraction_action([('get_grain_polygon_blob', (), {})])
             if m:
                 m = m[0]
         return m
@@ -631,7 +631,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units='', measure_grain_polygon=False):
+    def extract(self, power='', units=''):
         if power == '':
             power = self.extract_value
         if units == '':
@@ -651,7 +651,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action([('extract', (power,), {'units': units, 'measure_grain_polygon': measure_grain_polygon})])
+        self._extraction_action([('extract', (power,), {'units': units,})])
 
     @verbose_skip
     @command_register

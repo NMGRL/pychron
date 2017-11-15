@@ -92,7 +92,7 @@ class PersistenceSpec(HasTraits):
     conditionals = List
     tripped_conditional = None
 
-    grain_polygon_blob = Str
+    grain_polygon_blob = List
 
     power_achieved = Float
     lab_temperatures = List
