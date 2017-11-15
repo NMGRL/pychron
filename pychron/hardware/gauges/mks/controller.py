@@ -23,7 +23,7 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 class Gauge(BaseGauge):
     def traits_view(self):
         v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-30, ),
+                             width=-50, ),
                         Item('pressure',
                              format_str='%0.2e',
                              show_label=False,
@@ -41,16 +41,37 @@ class Gauge(BaseGauge):
 
 class MKSController(BaseGaugeController, CoreDevice):
     gauge_klass = Gauge
+    scan_func = 'update_pressures'
 
-    def _read_pressure(self, name, verbose=False):
-        g = self.get_gauge(name)
-        cmd = self._build_command('PR{}'.format(g.channel))
-        r = self.ask(cmd)
+    def get_pressures(self, verbose=False):
+        r = self._read_pressure(verbose=verbose)
+        return r
 
-        try:
-            return float(r)
-        except ValueError:
-            pass
+    def _read_pressure(self, name=None, verbose=False):
+        if name is not None:
+            gauge = name
+            if isinstance(gauge, (str, unicode)):
+                gauge = self.get_gauge(name)
+            channel = gauge.channel
+        else:
+            channel = 'Z'
+
+        cmd = self._build_query('PR{}'.format(channel))
+        verbose=True
+        r = self.ask(cmd, verbose=verbose)
+        if ' ' in r:
+            try:
+                return map(float, r.split(' '))
+            except ValueError:
+                pass
+        else:
+            try:
+                return float(r)
+            except ValueError:
+                pass
+
+    def _build_query(self, cmd):
+        return self._build_command('{}?'.format(cmd))
 
     def _build_command(self, cmd):
         return '@{}{};FF'.format(self.address, cmd)

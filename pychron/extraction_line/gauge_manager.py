@@ -78,7 +78,6 @@ class GaugeManager(Manager):
         sp = sp or None
         for k in self.devices:
             if k.is_scanable:
-
                 k.start_scan(sp)
                 # stagger starts to reduce collisions
                 time.sleep(0.25)
