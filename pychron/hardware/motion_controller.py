@@ -134,11 +134,11 @@ class MotionController(CoreDevice):
 
     @caller
     def set_z(self, v, **kw):
-
-        self.single_axis_move('z', v, **kw)
-        #        setattr(self, '_{}_position'.format('z'), v)
-        self._z_position = v
-        self.axes['z'].position = v
+        if v != self._z_position:
+            self.single_axis_move('z', v, **kw)
+            #        setattr(self, '_{}_position'.format('z'), v)
+            self._z_position = v
+            self.axes['z'].position = v
 
     def moving(self, *args, **kw):
         return self._moving(*args, **kw)
@@ -341,6 +341,7 @@ class MotionController(CoreDevice):
         timer = self.timer
         if timer is not None:
             self.debug('using existing timer')
+
             def timerActive():
                 return self.timer.isActive()
 
@@ -348,6 +349,7 @@ class MotionController(CoreDevice):
             period = 0.05
         else:
             self.debug('check moving={}'.format(axis))
+
             def moving():
                 return self._moving(axis=axis, verbose=True)
 
