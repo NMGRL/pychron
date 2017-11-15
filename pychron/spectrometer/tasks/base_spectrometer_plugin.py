@@ -149,6 +149,3 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         return sm
 
 # ============= EOF =============================================
-
-
-

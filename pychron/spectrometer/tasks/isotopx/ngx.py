@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.tasks.isotopx.base import IsotopxSpectrometerPlugin
 from pychron.spectrometer.tasks.spectrometer_preferences import NGXSpectrometerPreferencesPane, \
@@ -31,3 +32,13 @@ class NGXSpectrometerPlugin(IsotopxSpectrometerPlugin):
 
     def _preferences_panes_default(self):
         return [SpectrometerPreferencesPane, NGXSpectrometerPreferencesPane]
+
+    def _controller_factory(self):
+        ngx = NGXController(name='spectrometer_microcontroller')
+        ngx.bootstrap()
+        return ngx
+
+    def _service_offers_default(self):
+        so = self.service_offer_factory(factory=self._controller_factory,
+                                        protocol=NGXController)
+        return [so]

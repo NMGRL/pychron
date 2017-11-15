@@ -70,6 +70,7 @@ class Actuator(AbstractDevice):
                 factory = self.get_factory(PACKAGES[klass], klass)
                 self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
                 self._cdevice = factory(name=name,
+                                        application=self.application,
                                         configuration_dir_name=self.configuration_dir_name)
                 return True
 

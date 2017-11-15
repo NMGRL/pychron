@@ -244,6 +244,8 @@ class Initializer(Loggable):
                 continue
 
             self.info('loading {}'.format(dev.name))
+
+            dev.application = self.application
             if dev.load():
                 # register the device
                 if self.application is not None:
