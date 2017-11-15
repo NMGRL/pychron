@@ -43,9 +43,20 @@ class MKSController(BaseGaugeController, CoreDevice):
     gauge_klass = Gauge
     scan_func = 'update_pressures'
 
+    def initialize(self, *args, **kw):
+        for g in self.gauges:
+            if int(g.channel) in (1,3,5):
+                self._power_onoff(g.channel, True, verbose=True)
+        return True
+
     def get_pressures(self, verbose=False):
         r = self._read_pressure(verbose=verbose)
         return r
+
+    def _power_onoff(self, ch, state, verbose=False):
+        cmd = 'CP{}!{}'.format(ch, 'ON' if state else 'OFF')
+        cmd = self._build_command(cmd)
+        self.ask(cmd, verbose=verbose)
 
     def _read_pressure(self, name=None, verbose=False):
         if name is not None:
