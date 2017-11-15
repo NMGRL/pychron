@@ -114,7 +114,7 @@ class ExtractionPyScript(ValvePyScript):
     def get_grain_polygons(self):
         m = self._grain_polygons
         if not m:
-            m = self._extraction_action([('get_grain_polygons_blob', (), {})])
+            m = self._extraction_action([('get_grain_polygon_blob', (), {})])
             if m:
                 m = m[0]
         return m

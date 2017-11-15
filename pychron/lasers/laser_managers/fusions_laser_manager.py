@@ -123,16 +123,16 @@ class FusionsLaserManager(LaserManager):
             # ===============================================================================
 
     def stop_measure_grain_polygon(self):
-        self.stage_manager.stop_measure_grain_polygon()
+        return self.stage_manager.stop_measure_grain_polygon()
 
     def start_measure_grain_polygon(self):
-        self.stage_manager.start_measure_grain_polygon()
+        return self.stage_manager.start_measure_grain_polygon()
 
     def get_grain_polygon(self):
         return self.stage_manager.get_grain_polygon()
 
-    def get_grain_polygons_blob(self):
-        return self.stage_manager.get_grain_polygons_blob()
+    def get_grain_polygon_blob(self):
+        return self.stage_manager.get_grain_polygon_blob()
 
     def extract(self, power, units=None):
         if self.enable_laser():
@@ -282,8 +282,7 @@ class FusionsLaserManager(LaserManager):
 
         dm = Degasser(
             laser_manager=self,
-            video=self.stage_manager.video,
-        )
+            video=self.stage_manager.video)
         return dm
 
     def do_machine_vision_degas(self, lumens, duration, new_thread=False):

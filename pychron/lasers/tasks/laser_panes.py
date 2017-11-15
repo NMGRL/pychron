@@ -45,6 +45,7 @@ class BaseLaserPane(TraitsTaskPane):
                    Item('back_button',
                         enabled_when='linear_move_history',
                         show_label=False),
+                   Item('test_button'),
                    spring),
             UItem('canvas', style='custom', editor=editor))
 

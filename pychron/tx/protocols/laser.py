@@ -79,7 +79,7 @@ class LaserProtocol(ServiceProtocol):
                     ('GetSampleHolder', '_get_sample_holder'),
                     ('StartMeasureGrainPolygon', '_start_measure_grain_polygon'),
                     ('StopMeasureGrainPolygon', '_stop_measure_grain_polygon'),
-                    ('GetGrainPolygonsBlob', '_get_grain_polygons_blob'),
+                    ('GetGrainPolygonBlob', '_get_grain_polygon_blob'),
                     ('AcquireGrainPolygonBlob', '_get_grain_polygon'),
                     ('SetLaserPower', '_set_laser_power'),
                     ('SetLaserOutput', '_set_laser_output'),
@@ -115,10 +115,10 @@ class LaserProtocol(ServiceProtocol):
     # Video
     # ===============================================================================
     def _start_video_recording(self, data):
-        self._manager.start_video_recording(data)
+        return self._manager.start_video_recording(data)
 
     def _stop_video_recording(self, data):
-        self._manager.stop_video_recording()
+        return self._manager.stop_video_recording()
 
     def _snapshot(self, data):
         """
@@ -145,17 +145,17 @@ class LaserProtocol(ServiceProtocol):
                                             lpath, len(upath), upath, imageblob)
             return s
 
-    def _get_grain_polygons_blob(self, data):
-        return self._manager.get_grain_polygons_blob()
+    def _get_grain_polygon_blob(self, data):
+        return self._manager.get_grain_polygon_blob()
 
     def _get_grain_polygon(self, data):
         return self._manager.get_grain_polygon()
 
     def _stop_measure_grain_polygon(self, data):
-        self._manager.stop_measure_grain_polygon()
+        return self._manager.stop_measure_grain_polygon()
 
     def _start_measure_grain_polygon(self, data):
-        self._manager.start_measure_grain_polygon()
+        return self._manager.start_measure_grain_polygon()
     # ===============================================================================
     # Laser
     # ===============================================================================

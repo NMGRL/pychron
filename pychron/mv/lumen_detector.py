@@ -19,7 +19,12 @@
 from numpy import invert, zeros_like, asarray, max, copy
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
+from skimage.filters import canny, threshold_adaptive
 from skimage.measure import find_contours, approximate_polygon, regionprops, label
+from skimage.morphology import watershed
+
+from pychron.image.cv_wrapper import grayspace
+from pychron.mv.locator import Locator
 
 
 def area(a):
@@ -125,30 +130,52 @@ class PolygonLocator:
     #     wsrc = watershed(elmap, markers, mask=src)
     #
     #     return invert(wsrc)
+    block_size = 20
 
-    def find_targets(self, src):
-        for contour in find_contours(src, 0):
-            coords = approximate_polygon(contour, tolerance=0)
-            x, y = coords.T
-
-            # rr, cc = polygon_perimeter(y, x)
-            rr, cc = polygon(y, x)
-
-            src[cc, rr] = 100
-
-        lsrc = label(src)
-        r, c = src.shape
-        ts = []
-        for rp in regionprops(lsrc):
-            cy, cx = rp.centroid
-            cy += 1
-            cx += 1
-            tx, ty = cx - c / 2., cy - r / 2.
-            src[cy, cx] = 175
-            t = int(tx), int(ty)
-            if t not in ts:
-                ts.append((rp, t))
-        return ts, src
+    # def _preprocess(self, src):
+    #     markers = threshold_adaptive(src, self.block_size)
+    #
+    #     # n = markers[:].astype('uint8')
+    #     n = markers.astype('uint8')
+    #     n[markers] = 255
+    #     n[invert(markers)] = 1
+    #     markers = n
+    #
+    #     # elmap = sobel(image, mask=image)
+    #     elmap = canny(src, sigma=1)
+    #     wsrc = watershed(elmap, markers, mask=src)
+    #     return invert(wsrc)
+    #
+    # def find_targets(self, src):
+    #     frm = grayspace(src) * 255
+    #     src = frm.astype('uint8')
+    #
+    #     src = self._preprocess(src)
+    #
+    #     # for i, contour in enumerate(find_contours(src, 0)):
+    #     #     coords = approximate_polygon(contour, tolerance=0)
+    #     #     x, y = coords.T
+    #     #     # print i, x,y
+    #     #     # rr, cc = polygon_perimeter(y, x)
+    #     #     rr, cc = polygon(y, x)
+    #     #
+    #     #     src[cc, rr] = 100
+    #
+    #     print 'found contours'
+    #     lsrc = label(src)
+    #     r, c = src.shape
+    #     ts = []
+    #     for i, rp in enumerate(regionprops(lsrc)):
+    #         cy, cx = rp.centroid
+    #         print 'region prop', i, cx, cy
+    #         # cy += 1
+    #         # cx += 1
+    #         tx, ty = cx - c / 2., cy - r / 2.
+    #         src[cy, cx] = 175
+    #         t = int(tx), int(ty)
+    #         if t not in ts:
+    #             ts.append((rp, t))
+    #     return ts, src
 
     def find_best_target(self, osrc):
         targetxy = None
@@ -173,7 +200,7 @@ class PolygonLocator:
         return score
 
 
-class LumenDetector(object):
+class LumenDetector(Locator):
     threshold = 25
     pxpermm = 23
 
@@ -182,11 +209,23 @@ class LumenDetector(object):
     custom_mask_radius = 0
     hole_radius = 0
 
-    def find_targets(self, src):
-        p = PolygonLocator()
-        targets, src = p.find_targets(src)
+    # def __init__(self):
+    #     self._locator = PolygonLocator()
+    #
+    # def find_targets(self, src):
+    #
+    #     targets, src = self._locator.find_targets(src)
+    #
+    #     return targets, src
 
-        return targets, src
+    def find_targets(self, image, src, dim):
+        targets = self._find_targets(image, src, dim, step=2,
+                                     filter_targets=False,
+                                     preprocess=True,
+                                     inverted=True)
+
+        self._draw_targets(image.source_frame, targets, dim)
+        return targets
 
     def find_best_target(self, src):
         p = PolygonLocator()
@@ -246,9 +285,9 @@ class LumenDetector(object):
         src[invert(mask)] = 0
         return mask
 
-    def _preprocess(self, src):
-        threshold = self.threshold
-        src[src < threshold] = 0
+    # def _preprocess(self, src):
+    #     threshold = self.threshold
+    #     src[src < threshold] = 0
 
     @property
     def mask_radius(self):

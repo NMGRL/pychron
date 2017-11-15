@@ -23,7 +23,7 @@ from traits.api import Float
 # ============= standard library imports ========================
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort
+    nonzero, max, arange, argsort, invert
 # from skimage.morphology.watershed import is_local_maximum
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle
@@ -198,7 +198,7 @@ class Locator(Loggable):
                       preprocess=False,
                       filter_targets=True,
                       depth=0,
-                      set_image=True):
+                      set_image=True, inverted=False):
         """
             use a segmentor to segment the image
         """
@@ -208,11 +208,17 @@ class Locator(Loggable):
         else:
             src = grayspace(frame)
 
-        seg = RegionSegmenter(use_adaptive_threshold=False)
+        if src is None:
+            print 'Locator: src is None'
+            return
+
+        if inverted:
+            src = invert(src)
 
         if start is None:
             start = int(array(src).mean()) - 3 * w
 
+        seg = RegionSegmenter(use_adaptive_threshold=False)
         fa = self._get_filter_target_area(dim)
 
         for i in xrange(n):
@@ -226,9 +232,11 @@ class Locator(Loggable):
 
             # draw contours
             targets = self._find_polygon_targets(nsrc, frame=nf)
+            if set_image and image is not None:
+                image.set_frame(nf)
+
             if targets:
-                if set_image:
-                    image.set_frame(nf)
+
                 # filter targets
                 if filter_targets:
                     targets = self._filter_targets(image, frame, dim, targets,
@@ -368,7 +376,6 @@ class Locator(Loggable):
             2. remove noise from frame. increase denoise value for more noise filtering
             3. stretch contrast
         """
-
         frm = grayspace(frame) * 255
         frm = frm.astype('uint8')
 
