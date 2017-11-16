@@ -27,7 +27,7 @@ def format_blob(blob):
 
 def encode_blob(blob):
     # print len(blob), len(base64.b64encode(blob))
-    return base64.b16encode(blob)
+    return base64.b64encode(blob)
 
 
 def pack(fmt, data):

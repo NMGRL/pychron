@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from numpy import invert, zeros_like, asarray, max, copy
+from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
 from skimage.filters import canny, threshold_adaptive
@@ -218,47 +218,53 @@ class LumenDetector(Locator):
     #
     #     return targets, src
 
-    def find_targets(self, image, src, dim):
+    def find_targets(self, image, src, dim, mask=False):
         targets = self._find_targets(image, src, dim, step=2,
                                      filter_targets=False,
                                      preprocess=True,
-                                     inverted=True)
+                                     inverted=True,
+                                     convexity_filter=0.75,
+                                     mask=mask)
+        if targets:
+            targets = self._filter(targets, self._target_near_center, src)
+            if targets:
+                self._draw_targets(image.source_frame, targets, dim)
+                return targets
 
-        self._draw_targets(image.source_frame, targets, dim)
-        return targets
+    # def find_best_target(self, src):
+    #     p = PolygonLocator()
+    #     targetxy, src = p.find_best_target(src)
+    #
+    #     return targetxy, src
+    #
+    # def lum(self, src):
+    #     lum, mask = self._lum(src)
+    #     return lum, mask
+    #
+    # def get_value(self, src, scaled=True):
+    #     """
+    #
+    #     if scaled is True
+    #     return sum of all pixels in masked area / (masked area *255)
+    #
+    #     @param src:
+    #     @param scaled:
+    #     @return:
+    #     """
+    #
+    #     lum, mask = self._lum(src)
+    #
+    #     v = lum.sum()
+    #
+    #     if scaled:
+    #         v /= (mask.sum() * 255.)
+    #     # print lum.sum(), v
+    #     return src, v
+    #
+    def get_scores(self, lum):
+        # src = grayspace(src)
 
-    def find_best_target(self, src):
-        p = PolygonLocator()
-        targetxy, src = p.find_best_target(src)
-
-        return targetxy, src
-
-    def lum(self, src):
-        lum, mask = self._lum(src)
-        return lum, mask
-
-    def get_value(self, src, scaled=True):
-        """
-
-        if scaled is True
-        return sum of all pixels in masked area / (masked area *255)
-
-        @param src:
-        @param scaled:
-        @return:
-        """
-
-        lum, mask = self._lum(src)
-
-        v = lum.sum()
-
-        if scaled:
-            v /= (mask.sum() * 255.)
-        # print lum.sum(), v
-        return src, v
-
-    def get_scores(self, src):
-        lum, mask = self._lum(src)
+        mask = self._lum(lum)
         v = lum.sum()
         try:
             score_density = v / area(lum)
@@ -266,28 +272,23 @@ class LumenDetector(Locator):
             score_density = 0
 
         score_saturation = v / (mask.sum() * 255.)
-
         return score_density, score_saturation, lum
 
     def _lum(self, src):
+        # threshold = self.threshold
+        # src[src < threshold] = 0
         mask = self._mask(src)
-        self._preprocess(src)
 
-        return src[mask], mask
-
-    def _mask(self, src):
-        radius = self.mask_radius
-
-        h, w = src.shape[:2]
-        c = circle(h / 2., w / 2., radius)
-        mask = zeros_like(src, dtype=bool)
-        mask[c] = True
-        src[invert(mask)] = 0
         return mask
 
-    # def _preprocess(self, src):
-    #     threshold = self.threshold
-    #     src[src < threshold] = 0
+    def _mask(self, src, radius=None):
+        if radius is None:
+            radius = self.mask_radius
+
+        return super(LumenDetector, self)._mask(src, radius)
+        # mask[c] = True
+        # src[invert(mask)] = 0
+        # return mask
 
     @property
     def mask_radius(self):
@@ -298,6 +299,6 @@ class LumenDetector(Locator):
         else:
             d = self.custom_mask_radius
 
-        return d * self.pxpermm
+        return d
 
 # ============= EOF =============================================

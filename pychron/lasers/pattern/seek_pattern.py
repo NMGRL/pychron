@@ -126,7 +126,6 @@ class Triangle:
 
     def point_xy(self, idx=None):
         if idx is None:
-
             pts = sorted([p.totuple() for p in self._points], reverse=True)
             x, y, rx, ry = triangulator(pts, self._height)
 
@@ -134,6 +133,7 @@ class Triangle:
             self._points.remove(pt)
 
         else:
+
             pt = self._points[idx]
             x, y = pt.x, pt.y
 
@@ -222,6 +222,7 @@ class SeekPattern(Pattern):
                             # construct a new triangle centered at weighted centroid of current points
                             # weighted by score
                             p1, p2, p3 = tri.weighted_centroid()
+                            print 'using weighted centroid'
                             yield p1
                             yield p2
                             yield p3
@@ -230,6 +231,7 @@ class SeekPattern(Pattern):
 
                 x, y = tri.point_xy()
                 if tri.point_cnt((x, y)) > 5:
+                    print 'using centered'
                     self._data = []
                     tri.clear_point_cnts()
                     tri.set_scalar(0.5)
@@ -243,7 +245,8 @@ class SeekPattern(Pattern):
                     continue
 
                 if not self._validate(x, y):
-                    tri = Triangle(self.base)
+                    print 'using invalid'
+                    self._tri = tri = Triangle(self.base)
                     yield tri.point_xy(0)
                     yield tri.point_xy(1)
                     yield tri.point_xy(2)

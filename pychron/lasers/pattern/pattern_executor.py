@@ -497,9 +497,11 @@ class PatternExecutor(Patternable):
         sat_threshold = pattern.saturation_threshold
         total_duration = pattern.total_duration
         duration = pattern.duration
+        # pattern.perimeter_radius *= sm.pxpermm
+
+        avg_sat_score = -1
 
         for i, (x, y) in enumerate(pattern.point_generator()):
-
             ax, ay = cx + x, cy + y
             if not self._alive:
                 break
@@ -507,9 +509,9 @@ class PatternExecutor(Patternable):
             if time.time() - st > total_duration:
                 break
 
-            use_update_point = True
+            use_update_point = False
             if avg_sat_score < sat_threshold:
-                use_update_point = True
+                use_update_point = False
                 try:
                     linear_move(ax, ay, block=False, velocity=pattern.velocity,
                                 update=False,
@@ -551,16 +553,17 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                weights = [1 / ((xi - ax) ** 2 + (yi - ay) ** 2) for xi, yi in positions]
+                weights = [1 / (max(0.001, (xi - ax) ** 2) + max(0.001, (yi - ay) ** 2)) for xi, yi in positions]
 
                 avg_score = average(density_scores, weights=weights)
                 avg_sat_score = average(saturation_scores, weights=weights)
 
                 if prev_xy:
-                    weights = [1 / ((xi - prev_xy[0]) ** 2 + (yi - prev_xy[1]) ** 2) for xi, yi in positions]
+                    weights = [1 / (max(0.001, (xi - prev_xy[0]) ** 2) + max(0.001, (yi - prev_xy[1]) ** 2)) for xi, yi in positions]
                     avg_score_prev = average(density_scores, weights=weights)
                     if prev_xy2:
-                        weights = [1 / ((xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2) for xi, yi in positions]
+                        weights = [1 / (max(0.001, (xi - prev_xy2[0]) ** 2) + max(0.001, (yi - prev_xy2[1]) ** 2)) for xi, yi in positions]
+                        # weights = [1 / ((xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2) for xi, yi in positions]
                         avg_score_prev2 = average(density_scores, weights=weights)
 
                 score = avg_score
@@ -568,14 +571,14 @@ class PatternExecutor(Patternable):
                 if m > 0:
                     score *= (1 + m)
 
-                if use_update_point:
-                    pattern.update_point(score, x, y)
-                else:
-                    pattern.set_point(score, x, y)
-                    if prev_xy:
-                        pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
-                        if prev_xy2:
-                            pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
+                # if use_update_point:
+                #     pattern.update_point(score, x, y)
+                # else:
+                pattern.set_point(score, x, y)
+                if prev_xy:
+                    pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
+                    if prev_xy2:
+                        pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
 
                 lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
                 self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
@@ -599,7 +602,7 @@ class PatternExecutor(Patternable):
             update_axes()
             if prev_xy:
                 prev_xy2 = prev_xy
-            prev_xy = (ax, ay)
+            prev_xy = (x, y)
 
             # invoke_in_main_thread(g.redraw, force=False)
             # invoke_in_main_thread(update_graph, ts, zs, z, x, y)

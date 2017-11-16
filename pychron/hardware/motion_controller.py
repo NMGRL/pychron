@@ -230,7 +230,11 @@ class MotionController(CoreDevice):
             return
 
         c = getattr(self, '_{}_position'.format(name))
+
         disp = abs(c - v)
+        if c == v or disp < 0.001:
+            return
+
         self.debug('set axis {} to {}. current pos={}'.format(name, v, c))
         self.single_axis_move(name, v, update=disp > 4, **kw)
 

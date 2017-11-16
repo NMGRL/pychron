@@ -62,9 +62,10 @@ class PatternMakerView(Saveable, Patternable):
 
     def load_pattern(self, path=None):
         if path is None:
-            return
+            path = self.open_file_dialog(default_directory=paths.pattern_dir)
+            if path is None:
+                return
 
-        # path = self.open_file_dialog(default_directory=paths.pattern_dir)
         if not os.path.isfile(path):
             path = os.path.join(paths.pattern_dir, path)
 
@@ -115,7 +116,6 @@ class PatternMakerView(Saveable, Patternable):
         return '{}-{}'.format(self.pattern.generate_name(), self.tray_name).lower()
 
     def _selected_pattern_name_changed(self, new):
-        print new
         if not new:
             return
 

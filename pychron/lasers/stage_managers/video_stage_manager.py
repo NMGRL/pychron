@@ -165,15 +165,11 @@ class VideoStageManager(StageManager):
     def get_grain_polygon_blob(self):
         # self.debug('Get grain polygons n={}'.format(len(self.grain_polygons)))
 
-        # ps = ','.join([encode_blob(pack('bb', p)) for p in self.grain_polygons])
-        # print len(ps)
         try:
-            p = next(self.grain_polygons)
-            return encode_blob(pack('bb', p))
-        except StopIteration:
-            pass
-
-        # return array(self.grain_polygons).tobytes()
+            t, md, p = next(self.grain_polygons)
+            return encode_blob('{}{}'.format(pack('ff', ((t, md),)), pack('HH', p)))
+        except (StopIteration, TypeError), e:
+            self.debug('No more grain polygons. {}'.format(e))
 
     def stop_measure_grain_polygon(self):
         self.debug('Stop measure polygons {}'.format(self._measure_grain_evt))
@@ -194,15 +190,17 @@ class VideoStageManager(StageManager):
             display_image = self.autocenter_manager.display_image
             offx, offy = self.canvas.get_screen_offset()
             cropdim = dim * 2.5
+            mask_dim = dim * 1.05
+            mask_dim_mm = mask_dim * self.pxpermm
             while not evt.is_set():
                 src = copy(self.video.get_cached_frame())
-                src = ld.crop(src, cropdim, cropdim, offx, offy)
-                targets = ld.find_targets(display_image, src, dim)
-                # display_image.set_frame(src)
+                src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+                targets = ld.find_targets(display_image, src, dim, mask=mask_dim)
                 if targets:
-                    targets = [t.poly_points.tolist() for t in targets]
+                    t = time.time()
+                    targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]
                     masks.extend(targets)
-                evt.wait(1)
+                evt.wait(0.25)
 
             self.grain_polygons = (m for m in masks)
             self.debug('exiting measure grain')
@@ -368,9 +366,7 @@ class VideoStageManager(StageManager):
 
     def get_scores(self, **kw):
         ld = self.lumen_detector
-
         src = self.video.get_cached_frame()
-
         csrc = copy(src)
         return ld.get_scores(csrc, **kw)
 
