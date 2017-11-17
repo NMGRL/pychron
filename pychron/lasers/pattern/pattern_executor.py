@@ -23,7 +23,7 @@ from threading import Thread, current_thread, Event
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
-from numpy import polyfit, linspace, hstack, array, average, zeros_like
+from numpy import polyfit, linspace, hstack, array, average, zeros_like, zeros, uint8
 from traits.api import Any, Bool, List
 
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -224,7 +224,10 @@ class PatternExecutor(Patternable):
         if kind == 'SeekPattern':
             from pychron.graph.graph import Graph
 
-            g = Graph(window_x=1000, window_y=100, window_height=900)
+            g = Graph(window_x=100, window_y=100,
+                      # window_height=900,
+                      window_width=1000,
+                      container_dict={'kind': 'h'})
             self._info = open_view(g)
             self._seek_graph = g
 
@@ -391,7 +394,7 @@ class PatternExecutor(Patternable):
     def _setup_seek_graph(self, pattern):
         g = self._seek_graph
 
-        g.new_plot(padding_top=20)
+        g.new_plot(padding_right=10)
         s, p = g.new_series()
         p.aspect_ratio = 1.0
         cp = CurrentPointOverlay(component=s)
@@ -408,29 +411,30 @@ class PatternExecutor(Patternable):
         g.set_x_title('X (mm)', plotid=0)
         g.set_y_title('Y (mm)', plotid=0)
 
-        g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
-        g.new_series(type='line')
-        g.new_series()
-        g.set_y_title('Density', plotid=1)
-        g.set_x_title('Time (s)', plotid=1)
+        # g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
+        # g.new_series(type='line')
+        # g.new_series()
+        # g.set_y_title('Density', plotid=1)
+        # g.set_x_title('Time (s)', plotid=1)
 
-        g.new_plot(padding_bottom=20, padding_right=20, padding_left=60)
+        g.new_plot(padding_right=10)
         g.new_series()
-        g.set_y_title('Score', plotid=2)
-        g.set_x_title('Time (s)', plotid=2)
+        g.set_y_title('Score', plotid=1)
+        g.set_x_title('Time (s)', plotid=1)
 
         # name = 'imagedata{:03d}'.format(i)
         # plotdata.set_data(name, ones(wh))
 
-        imgplot = g.new_plot(padding=10)
+        imgplot = g.new_plot(padding_left=10, padding_right=10)
+        imgplot.aspect_ratio = 1.0
+
         imgplot.x_axis.visible = False
         imgplot.y_axis.visible = False
         imgplot.x_grid.visible = False
         imgplot.y_grid.visible = False
 
-        frm = self.laser_manager.stage_manager.video.get_cached_frame()
-        imgplot.data.set_data('imagedata', zeros_like(frm))
-        imgplot.img_plot('imagedata', colormap=hot)
+        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
 
         g.set_x_limits(-r, r)
         g.set_y_limits(-r, r)
@@ -439,8 +443,8 @@ class PatternExecutor(Patternable):
         g.set_y_limits(min_=-0.1, max_=1.1, plotid=1)
         g.set_x_limits(max_=total_duration * 1.1, plotid=1)
 
-        g.set_x_limits(max_=total_duration * 1.1, plotid=2)
-        g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
+        # g.set_x_limits(max_=total_duration * 1.1, plotid=2)
+        # g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
         return imgplot, cp
 
     def _execute_seek(self, controller, pattern):
@@ -500,7 +504,6 @@ class PatternExecutor(Patternable):
         # pattern.perimeter_radius *= sm.pxpermm
 
         avg_sat_score = -1
-
         for i, (x, y) in enumerate(pattern.point_generator()):
             ax, ay = cx + x, cy + y
             if not self._alive:
@@ -509,9 +512,9 @@ class PatternExecutor(Patternable):
             if time.time() - st > total_duration:
                 break
 
-            use_update_point = False
+            # use_update_point = False
             if avg_sat_score < sat_threshold:
-                use_update_point = False
+                # use_update_point = False
                 try:
                     linear_move(ax, ay, block=False, velocity=pattern.velocity,
                                 update=False,
@@ -520,6 +523,7 @@ class PatternExecutor(Patternable):
                     break
             else:
                 self.debug('Saturation target reached. not moving')
+                update_plot=False
 
             density_scores = []
             ts = []
@@ -541,7 +545,8 @@ class PatternExecutor(Patternable):
                 time.sleep(0.1)
 
             while moving(force_query=True):
-                measure_scores(update=True)
+                pass
+                # measure_scores(update=True)
 
             mt = time.time()
             while time.time() - mt < duration:
@@ -553,18 +558,10 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                weights = [1 / (max(0.001, (xi - ax) ** 2) + max(0.001, (yi - ay) ** 2)) for xi, yi in positions]
+                weights = [1 / (max(0.0001, (xi - ax) ** 2 + (yi - ay) ** 2)) for xi, yi in positions]
 
                 avg_score = average(density_scores, weights=weights)
                 avg_sat_score = average(saturation_scores, weights=weights)
-
-                if prev_xy:
-                    weights = [1 / (max(0.001, (xi - prev_xy[0]) ** 2) + max(0.001, (yi - prev_xy[1]) ** 2)) for xi, yi in positions]
-                    avg_score_prev = average(density_scores, weights=weights)
-                    if prev_xy2:
-                        weights = [1 / (max(0.001, (xi - prev_xy2[0]) ** 2) + max(0.001, (yi - prev_xy2[1]) ** 2)) for xi, yi in positions]
-                        # weights = [1 / ((xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2) for xi, yi in positions]
-                        avg_score_prev2 = average(density_scores, weights=weights)
 
                 score = avg_score
                 m, b = polyfit(ts, density_scores, 1)
@@ -575,35 +572,41 @@ class PatternExecutor(Patternable):
                 #     pattern.update_point(score, x, y)
                 # else:
                 pattern.set_point(score, x, y)
-                if prev_xy:
-                    pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
-                    if prev_xy2:
-                        pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
+                # ff.write('{},{},{}, --- {}\n'.format(x, y, score, pattern.current_points()))
+                # if prev_xy:
+                #     weights = [1 / (max(0.0001, (xi - prev_xy[0]) ** 2 + (yi - prev_xy[1]) ** 2)) for xi, yi in
+                #                positions]
+                #     avg_score_prev = average(density_scores, weights=weights)
+                #     pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
+                #     if prev_xy2:
+                #         weights = [1 / (max(0.0001, (xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2)) for xi, yi in
+                #                    positions]
+                #         avg_score_prev2 = average(density_scores, weights=weights)
+                #         pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
 
-                lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
+                # lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
                 self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
                 self.debug('Density. AVG:{:0.2f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
                 self.debug('Modified Density Score: {}'.format(score))
                 self.debug('Saturation. AVG:{:0.2f}'.format(avg_sat_score))
+                if update_plot:
+                    cp.add_point((x, y))
+                    g.add_datum((x, y), plotid=0)
 
-                cp.add_point((x, y))
-
-                g.add_datum((x, y), plotid=0)
                 t = time.time() - st
                 g.add_datum((t, avg_score), plotid=1)
 
-                g.add_bulk_data(ts, density_scores, plotid=1, series=1)
+                # g.add_bulk_data(ts, density_scores, plotid=1, series=1)
 
                 g.add_datum((t, score),
                             ypadding='0.1',
                             ymin_anchor=-0.1,
-                            update_y_limits=True, plotid=2)
+                            update_y_limits=True, plotid=1)
 
             update_axes()
-            if prev_xy:
-                prev_xy2 = prev_xy
-            prev_xy = (x, y)
-
+            # if prev_xy:
+            #     prev_xy2 = prev_xy
+            # prev_xy = (x, y)
             # invoke_in_main_thread(g.redraw, force=False)
             # invoke_in_main_thread(update_graph, ts, zs, z, x, y)
 

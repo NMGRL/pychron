@@ -15,7 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from chaco.default_colormaps import hot
-from traits.api import List, Float, Int, Enum
+from traits.api import List, Float, Int, Enum, CFloat
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 import math
@@ -64,12 +64,19 @@ def triangulator(pts, side):
     :return:
     """
     pt1, pt2, pt3 = pts
-    x1, y1 = pt1[1], pt1[2]
-    x2, y2 = pt2[1], pt2[2]
+    s1, x1, y1 = pt1
+    s2, x2, y2 = pt2
     ox, oy = pt3[1], pt3[2]
 
-    mx = (x1 + x2) / 2.
-    my = (y1 + y2) / 2.
+    # s1 = max(0.0001, s1)
+    # s2 = max(0.0001, s2)
+    #
+    s11 = s1 / (s1 + s2)
+    s22 = s2 / (s1 + s2)
+    # s11, s22 = 0.5, 0.5
+
+    mx = (x1 * s11 + x2 * s22)  # / 2.
+    my = (y1 * s11 + y2 * s22)  # / 2.
 
     v1 = mx - ox
     v2 = my - oy
@@ -163,8 +170,8 @@ class Triangle:
         y2 = y1
         y3 = cy + (2 / 3.) * h
 
-        self._points = [Point(x1, y1), Point(x2, y2), Point(x3, y3)]
-        return (x1, y1), (x2, y2), (x3, y3)
+        self._points = [Point(x2, y2), Point(x1, y1), Point(x3, y3)]
+        return (x2, y2), (x1, y1), (x3, y3)
 
     def set_scalar(self, s):
         self.scalar = s
@@ -188,7 +195,7 @@ class Triangle:
 
 
 class SeekPattern(Pattern):
-    total_duration = 30
+    total_duration = CFloat
     duration = Float(0.1)
     base = Float(0.5)
     perimeter_radius = Float(2.5)
@@ -230,18 +237,17 @@ class SeekPattern(Pattern):
                             continue
 
                 x, y = tri.point_xy()
-                if tri.point_cnt((x, y)) > 5:
+                if tri.point_cnt((x, y)) > 1:
                     print 'using centered'
                     self._data = []
                     tri.clear_point_cnts()
-                    tri.set_scalar(0.5)
+                    tri.set_scalar(0.75)
                     # construct a new triangle centered at weighted centroid of current points
                     # weighted by score
                     p1, p2, p3 = tri.centered(x, y)
                     yield p1
                     yield p2
                     yield p3
-
                     continue
 
                 if not self._validate(x, y):
@@ -258,6 +264,9 @@ class SeekPattern(Pattern):
 
     def _validate(self, x, y):
         return (x ** 2 + y ** 2) ** 0.5 <= self.perimeter_radius
+
+    def current_points(self):
+        return self._tri.xys()
 
     def update_point(self, score, x, y, idx=-1):
         """

@@ -56,9 +56,12 @@ class FrameImage(Viewable):
             self._alpha_changed()
 
     def _overlay(self, im0, im1, alpha):
-        arr = Image.blend(im1, im0, alpha)
-        self.source_frame = asarray(arr)
-        self.refresh_needed = True
+        try:
+            arr = Image.blend(im1, im0, alpha)
+            self.source_frame = asarray(arr)
+            self.refresh_needed = True
+        except ValueError:
+            pass
 
     def _alpha_changed(self):
         if self.overlays:

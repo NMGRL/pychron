@@ -194,6 +194,7 @@ class VideoStageManager(StageManager):
             mask_dim_mm = mask_dim * self.pxpermm
             while not evt.is_set():
                 src = copy(self.video.get_cached_frame())
+                # src = self.video.get_cached_frame()
                 src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
                 targets = ld.find_targets(display_image, src, dim, mask=mask_dim)
                 if targets:
@@ -366,9 +367,15 @@ class VideoStageManager(StageManager):
 
     def get_scores(self, **kw):
         ld = self.lumen_detector
-        src = self.video.get_cached_frame()
-        csrc = copy(src)
-        return ld.get_scores(csrc, **kw)
+        src = copy(self.video.get_cached_frame())
+        dim = self.stage_map.g_dimension
+        ld.pxpermm = self.pxpermm
+
+        offx, offy = self.canvas.get_screen_offset()
+        cropdim = dim * 2.25
+        src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+
+        return ld.get_scores(src, **kw)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -511,20 +518,20 @@ class VideoStageManager(StageManager):
 
         return rpos, src
 
-    def find_target(self):
-        if self.video:
-            ox, oy = self.canvas.get_screen_offset()
-            src = self.video.get_cached_frame()
-
-            ch = cw = self.pxpermm * self.stage_map.g_dimension * 2.5
-            src = self.video.crop(src, ox, oy, cw, ch)
-            return self.lumen_detector.find_target(src)
-
-    def find_best_target(self):
-        if self.video:
-            src = self.video.get_cached_frame()
-            src = self.autocenter_manager.crop(src)
-            return self.lumen_detector.find_best_target(src)
+    # def find_target(self):
+    #     if self.video:
+    #         ox, oy = self.canvas.get_screen_offset()
+    #         src = self.video.get_cached_frame()
+    #
+    #         ch = cw = self.pxpermm * self.stage_map.g_dimension * 2.5
+    #         src = self.video.crop(src, ox, oy, cw, ch)
+    #         return self.lumen_detector.find_target(src)
+    #
+    # def find_best_target(self):
+    #     if self.video:
+    #         src = self.video.get_cached_frame()
+    #         src = self.autocenter_manager.crop(src)
+    #         return self.lumen_detector.find_best_target(src)
 
     def _autocenter(self, holenum=None, ntries=3, save=False,
                     use_interpolation=False, inform=False,

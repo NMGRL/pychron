@@ -138,9 +138,9 @@ class BaseLaserManager(Manager):
     #             self.open_view(pm)
 
     def execute_pattern(self, name=None, block=False, lase=False):
-        if not self.stage_manager.temp_hole:
-            self.information_dialog('Need to specify a hole')
-            return
+        # if not self.stage_manager.temp_hole:
+        #     self.information_dialog('Need to specify a hole')
+        #     return
 
         pm = self.pattern_executor
         self.debug('execute pattern {}, block={}, lase={}'.format(name, block, lase))
