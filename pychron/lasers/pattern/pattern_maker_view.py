@@ -180,6 +180,7 @@ class PatternMakerView(Saveable, Patternable):
         name = '{}Pattern'.format(kind)
         for pkg in ('pychron.lasers.pattern.patterns',
                     'pychron.lasers.pattern.seek_pattern',
+                    'pychron.lasers.pattern.dragonfly_pattern',
                     'pychron.lasers.pattern.degas_pattern'):
             try:
                 factory = __import__(pkg, fromlist=[name])

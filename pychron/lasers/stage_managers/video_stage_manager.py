@@ -411,7 +411,6 @@ class VideoStageManager(StageManager):
         cropdim = dim * 2.25
 
         src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
-        src = rgb2gray(src)
         return src
 
     def _stage_map_changed_hook(self):

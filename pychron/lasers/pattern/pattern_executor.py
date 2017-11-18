@@ -29,7 +29,7 @@ from traits.api import Any, Bool, List
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
-from pychron.lasers.pattern.dragonfly_pattern import dragonfly, dragonfly_peak
+from pychron.lasers.pattern.dragonfly_pattern import dragonfly
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
 
@@ -221,7 +221,8 @@ class PatternExecutor(Patternable):
         pattern = self.pattern
 
         kind = pattern.kind
-        if kind == 'SeekPattern':
+        print kind
+        if kind in ('SeekPattern', 'DragonFlyPeakPattern'):
             from pychron.graph.graph import Graph
 
             g = Graph(window_x=100, window_y=100,
@@ -501,15 +502,58 @@ class PatternExecutor(Patternable):
         if pattern.kind == 'DragonFly':
             imgplot, cp = self._setup_seek_graph(pattern)
             dragonfly(st, pattern, lm, controller, imgplot, cp)
-        elif pattern.kind == 'DragonFlyPeak':
-            imgplot, imgplot2 = self._setup_dragonfly_peak_graph()
-            dragonfly_peak(st, pattern, lm, controller, imgplot, imgplot2)
+        elif pattern.kind == 'DragonFlyPeakPattern':
+            self._dragonfly_peak(st, pattern, lm, controller)
         else:
             imgplot, cp = self._setup_seek_graph(pattern)
             self._hill_climber(st, controller, pattern, imgplot, cp)
 
         sm.canvas.show_desired_position = osdp
         invoke_in_main_thread(self._info.dispose)
+
+    def _dragonfly_peak(self, st, pattern, lm, controller):
+        imgplot, imgplot2 = self._setup_dragonfly_peak_graph()
+        cx, cy = pattern.cx, pattern.cy
+
+        sm = lm.stage_manager
+
+        # update_axes = sm.update_axes
+        # moving = sm.moving
+
+        linear_move = controller.linear_move
+        find_lum_peak = sm.find_lum_peak
+        set_data = imgplot.data.set_data
+        set_data2 = imgplot2.data.set_data
+        pr = pattern.perimeter_radius * sm.pxpermm
+
+        def validate(xx, yy):
+            return (xx ** 2 + yy ** 2) ** 0.5 <= pr
+
+        duration = pattern.duration
+        px, py = cx, cy
+        while time.time() - st < pattern.total_duration:
+            if not self._alive:
+                break
+
+            (tx, ty), peaks, src = find_lum_peak()
+            set_data('imagedata', src)
+            set_data2('imagedata', peaks)
+
+            px = px + tx/sm.pxpermm
+            py = py - ty/sm.pxpermm
+
+            if validate(px-cx, py-cy):
+                try:
+
+                    linear_move(px, py, block=True, velocity=pattern.velocity,
+                                use_calibration=False
+                                # update=False,
+                                # immediate=False
+                                )
+                except PositionError:
+                    break
+
+            time.sleep(duration)
 
     def _hill_climber(self, st, controller, pattern, imgplot, cp):
         g = self._seek_graph
@@ -532,6 +576,8 @@ class PatternExecutor(Patternable):
 
         avg_sat_score = -1
         for i, (x, y) in enumerate(pattern.point_generator()):
+            update_plot = True
+
             ax, ay = cx + x, cy + y
             if not self._alive:
                 break
@@ -543,14 +589,15 @@ class PatternExecutor(Patternable):
             if avg_sat_score < sat_threshold:
                 # use_update_point = False
                 try:
-                    linear_move(ax, ay, block=False, velocity=pattern.velocity,
+                    linear_move(ax, ay, block=True, velocity=pattern.velocity,
+                                use_calibration=False,
                                 update=False,
                                 immediate=True)
                 except PositionError:
                     break
             else:
                 self.debug('Saturation target reached. not moving')
-                update_plot=False
+                update_plot = False
 
             density_scores = []
             ts = []
@@ -571,8 +618,8 @@ class PatternExecutor(Patternable):
                 ts.append(time.time() - st)
                 time.sleep(0.1)
 
-            while moving(force_query=True):
-                pass
+                # while moving(force_query=True):
+                #     pass
                 # measure_scores(update=True)
 
             mt = time.time()

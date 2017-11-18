@@ -25,39 +25,6 @@ from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
 
 
-def dragonfly_peak(st, pattern, laser_manager, controller, imgplot, imgplot2):
-    cx, cy = pattern.cx, pattern.cy
-
-    lm = laser_manager
-    sm = lm.stage_manager
-
-    # update_axes = sm.update_axes
-    # moving = sm.moving
-
-    linear_move = controller.linear_move
-    find_lum_peak = sm.find_lum_peak
-    set_data = imgplot.data.set_data
-    set_data2 = imgplot2.data.set_data
-    pr = pattern.perimeter_radius * sm.pxpermm
-
-    def validate(xx, yy):
-        return (xx ** 2 + yy ** 2) ** 0.5 <= pr
-
-    duration = pattern.duration
-    while time.time() - st < pattern.total_duration:
-        (tx, ty), peaks, src = find_lum_peak()
-        set_data('imagedata', src)
-        set_data2('imagedata', peaks)
-        if validate(tx, ty):
-            try:
-                linear_move(tx+cx, ty+cy, block=False, velocity=pattern.velocity,
-                            update=False,
-                            immediate=True)
-            except PositionError:
-                break
-
-        time.sleep(duration)
-
 
 def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
     cx, cy = pattern.cx, pattern.cy
