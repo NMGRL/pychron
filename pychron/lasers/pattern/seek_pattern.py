@@ -131,6 +131,11 @@ class Triangle:
     def get_point(self, x, y):
         return next((p for p in self._points if abs(p.x - x) < 1e-6 and abs(p.y - y) < 1e-6), None)
 
+    def discount(self, scalar=0.5):
+        # discount
+        for p in self._points:
+            p.score *= scalar
+
     def point_xy(self, idx=None):
         if idx is None:
             pts = sorted([p.totuple() for p in self._points], reverse=True)
@@ -138,7 +143,6 @@ class Triangle:
 
             pt = self.get_point(rx, ry)
             self._points.remove(pt)
-
         else:
 
             pt = self._points[idx]
@@ -237,6 +241,7 @@ class SeekPattern(Pattern):
                             continue
 
                 x, y = tri.point_xy()
+                tri.discount()
                 if tri.point_cnt((x, y)) > 1:
                     print 'using centered'
                     self._data = []

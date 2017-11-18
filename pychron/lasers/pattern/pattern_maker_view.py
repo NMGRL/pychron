@@ -48,7 +48,7 @@ class PatternMakerView(Saveable, Patternable):
                          'Random',
                          'CircularContour', 'Trough',
                          'Rubberband', 'RasterRubberband',
-                         'Seek', 'DragonFly'),
+                         'Seek', 'DragonFly', 'DragonFlyPeak'),
                     depends_on='_kind')
     _kind = Str('Polygon')
 
@@ -171,6 +171,7 @@ class PatternMakerView(Saveable, Patternable):
 
     def _get_new_name(self):
         return self._generate_name()
+
     # ===============================================================================
     # factories
     # ===============================================================================

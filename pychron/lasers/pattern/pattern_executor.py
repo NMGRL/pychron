@@ -29,7 +29,7 @@ from traits.api import Any, Bool, List
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
-from pychron.lasers.pattern.dragonfly_pattern import dragonfly
+from pychron.lasers.pattern.dragonfly_pattern import dragonfly, dragonfly_peak
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
 
@@ -299,7 +299,7 @@ class PatternExecutor(Patternable):
             elif kind == 'CircularContourPattern':
 
                 self._execute_contour(controller, pattern)
-            elif kind in ('SeekPattern', 'DragonFlyPattern'):
+            elif kind in ('SeekPattern', 'DragonFlyPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
             elif kind == 'DegasPattern':
                 self._execute_lumen_degas(controller, pattern)
@@ -447,13 +447,38 @@ class PatternExecutor(Patternable):
         # g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
         return imgplot, cp
 
+    def _setup_dragonfly_peak_graph(self):
+        g = self._seek_graph
+
+        # peak location
+        imgplot = g.new_plot(padding_right=10)
+        imgplot.aspect_ratio = 1.0
+        imgplot.x_axis.visible = False
+        imgplot.y_axis.visible = False
+        imgplot.x_grid.visible = False
+        imgplot.y_grid.visible = False
+
+        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+
+        # lum
+        imgplot2 = g.new_plot(padding_right=10)
+        imgplot2.aspect_ratio = 1.0
+        imgplot2.x_axis.visible = False
+        imgplot2.y_axis.visible = False
+        imgplot2.x_grid.visible = False
+        imgplot2.y_grid.visible = False
+
+        imgplot2.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+        imgplot2.img_plot('imagedata', colormap=hot, origin='top left')
+
+        return imgplot, imgplot2
+
     def _execute_seek(self, controller, pattern):
         from pychron.core.ui.gui import invoke_in_main_thread
         # from pychron.graph.graph import Graph
         duration = pattern.duration
         total_duration = pattern.total_duration
-
-        imgplot, cp = self._setup_seek_graph(pattern)
 
         lm = self.laser_manager
         sm = lm.stage_manager
@@ -474,15 +499,17 @@ class PatternExecutor(Patternable):
         self.debug('dwell duration {}'.format(duration))
 
         if pattern.kind == 'DragonFly':
-            self._dragonfly(st, controller, pattern, imgplot, cp)
+            imgplot, cp = self._setup_seek_graph(pattern)
+            dragonfly(st, pattern, lm, controller, imgplot, cp)
+        elif pattern.kind == 'DragonFlyPeak':
+            imgplot, imgplot2 = self._setup_dragonfly_peak_graph()
+            dragonfly_peak(st, pattern, lm, controller, imgplot, imgplot2)
         else:
+            imgplot, cp = self._setup_seek_graph(pattern)
             self._hill_climber(st, controller, pattern, imgplot, cp)
 
         sm.canvas.show_desired_position = osdp
         invoke_in_main_thread(self._info.dispose)
-
-    def _dragonfly(self, st, controller, pattern, imgplot, cp):
-        dragonfly(st, pattern, self.laser_manager, controller, imgplot, cp)
 
     def _hill_climber(self, st, controller, pattern, imgplot, cp):
         g = self._seek_graph
@@ -558,11 +585,11 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                weights = [1 / (max(0.0001, (xi - ax) ** 2 + (yi - ay) ** 2)) for xi, yi in positions]
+                # weights = [1 / (max(0.0001, (xi - ax) ** 2 + (yi - ay) ** 2)) for xi, yi in positions]
 
-                avg_score = average(density_scores, weights=weights)
-                avg_sat_score = average(saturation_scores, weights=weights)
-
+                # avg_score = average(density_scores, weights=weights)
+                # avg_sat_score = average(saturation_scores, weights=weights)
+                avg_score = density_scores.mean()
                 score = avg_score
                 m, b = polyfit(ts, density_scores, 1)
                 if m > 0:

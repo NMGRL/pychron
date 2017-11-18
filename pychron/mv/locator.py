@@ -268,7 +268,7 @@ class Locator(Loggable):
         mask[c] = False
         src[mask] = 0
 
-        return invert(mask)
+        return c  # invert(mask)
 
     # ===============================================================================
     # filter

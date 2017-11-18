@@ -19,6 +19,7 @@
 from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
+from skimage.feature import peak_local_max
 from skimage.filters import canny, threshold_adaptive
 from skimage.measure import find_contours, approximate_polygon, regionprops, label
 from skimage.morphology import watershed
@@ -115,89 +116,89 @@ def area(a):
 #     else:
 #         return _coords_inside_image(pr, pc, shape)
 
-
-class PolygonLocator:
-    # def segment(self, src):
-    #     markers = threshold_adaptive(src, 10)
-    #     # n = markers[:].astype('uint8')
-    #     # n = markers.astype('uint8')
-    #     # n[markers] = 255
-    #     # n[not markers] = 1
-    #     # markers = n
-    #
-    #     # elmap = sobel(image, mask=image)
-    #     elmap = canny(src, sigma=1)
-    #     wsrc = watershed(elmap, markers, mask=src)
-    #
-    #     return invert(wsrc)
-    block_size = 20
-
-    # def _preprocess(self, src):
-    #     markers = threshold_adaptive(src, self.block_size)
-    #
-    #     # n = markers[:].astype('uint8')
-    #     n = markers.astype('uint8')
-    #     n[markers] = 255
-    #     n[invert(markers)] = 1
-    #     markers = n
-    #
-    #     # elmap = sobel(image, mask=image)
-    #     elmap = canny(src, sigma=1)
-    #     wsrc = watershed(elmap, markers, mask=src)
-    #     return invert(wsrc)
-    #
-    # def find_targets(self, src):
-    #     frm = grayspace(src) * 255
-    #     src = frm.astype('uint8')
-    #
-    #     src = self._preprocess(src)
-    #
-    #     # for i, contour in enumerate(find_contours(src, 0)):
-    #     #     coords = approximate_polygon(contour, tolerance=0)
-    #     #     x, y = coords.T
-    #     #     # print i, x,y
-    #     #     # rr, cc = polygon_perimeter(y, x)
-    #     #     rr, cc = polygon(y, x)
-    #     #
-    #     #     src[cc, rr] = 100
-    #
-    #     print 'found contours'
-    #     lsrc = label(src)
-    #     r, c = src.shape
-    #     ts = []
-    #     for i, rp in enumerate(regionprops(lsrc)):
-    #         cy, cx = rp.centroid
-    #         print 'region prop', i, cx, cy
-    #         # cy += 1
-    #         # cx += 1
-    #         tx, ty = cx - c / 2., cy - r / 2.
-    #         src[cy, cx] = 175
-    #         t = int(tx), int(ty)
-    #         if t not in ts:
-    #             ts.append((rp, t))
-    #     return ts, src
-
-    def find_best_target(self, osrc):
-        targetxy = None
-        ts, src = self.find_targets(osrc)
-        if ts:
-            scores = []
-            if len(ts) > 1:
-                for rp, center in ts:
-                    score = self.calculate_target_score(osrc, rp)
-                    scores.append((score, center))
-
-                targetxy = sorted(scores)[-1][1]
-            else:
-                targetxy = ts[0][1]
-
-        return targetxy, src
-
-    def calculate_target_score(self, src, rp):
-        rr, cc = rp.coords.T
-        region = src[rr, cc]
-        score = region.sum() / float(rp.area)
-        return score
+#
+# class PolygonLocator:
+#     # def segment(self, src):
+#     #     markers = threshold_adaptive(src, 10)
+#     #     # n = markers[:].astype('uint8')
+#     #     # n = markers.astype('uint8')
+#     #     # n[markers] = 255
+#     #     # n[not markers] = 1
+#     #     # markers = n
+#     #
+#     #     # elmap = sobel(image, mask=image)
+#     #     elmap = canny(src, sigma=1)
+#     #     wsrc = watershed(elmap, markers, mask=src)
+#     #
+#     #     return invert(wsrc)
+#     block_size = 20
+#
+#     # def _preprocess(self, src):
+#     #     markers = threshold_adaptive(src, self.block_size)
+#     #
+#     #     # n = markers[:].astype('uint8')
+#     #     n = markers.astype('uint8')
+#     #     n[markers] = 255
+#     #     n[invert(markers)] = 1
+#     #     markers = n
+#     #
+#     #     # elmap = sobel(image, mask=image)
+#     #     elmap = canny(src, sigma=1)
+#     #     wsrc = watershed(elmap, markers, mask=src)
+#     #     return invert(wsrc)
+#     #
+#     # def find_targets(self, src):
+#     #     frm = grayspace(src) * 255
+#     #     src = frm.astype('uint8')
+#     #
+#     #     src = self._preprocess(src)
+#     #
+#     #     # for i, contour in enumerate(find_contours(src, 0)):
+#     #     #     coords = approximate_polygon(contour, tolerance=0)
+#     #     #     x, y = coords.T
+#     #     #     # print i, x,y
+#     #     #     # rr, cc = polygon_perimeter(y, x)
+#     #     #     rr, cc = polygon(y, x)
+#     #     #
+#     #     #     src[cc, rr] = 100
+#     #
+#     #     print 'found contours'
+#     #     lsrc = label(src)
+#     #     r, c = src.shape
+#     #     ts = []
+#     #     for i, rp in enumerate(regionprops(lsrc)):
+#     #         cy, cx = rp.centroid
+#     #         print 'region prop', i, cx, cy
+#     #         # cy += 1
+#     #         # cx += 1
+#     #         tx, ty = cx - c / 2., cy - r / 2.
+#     #         src[cy, cx] = 175
+#     #         t = int(tx), int(ty)
+#     #         if t not in ts:
+#     #             ts.append((rp, t))
+#     #     return ts, src
+#
+#     def find_best_target(self, osrc):
+#         targetxy = None
+#         ts, src = self.find_targets(osrc)
+#         if ts:
+#             scores = []
+#             if len(ts) > 1:
+#                 for rp, center in ts:
+#                     score = self.calculate_target_score(osrc, rp)
+#                     scores.append((score, center))
+#
+#                 targetxy = sorted(scores)[-1][1]
+#             else:
+#                 targetxy = ts[0][1]
+#
+#         return targetxy, src
+#
+#     def calculate_target_score(self, src, rp):
+#         rr, cc = rp.coords.T
+#         region = src[rr, cc]
+#         score = region.sum() / float(rp.area)
+#         return score
 
 
 class LumenDetector(Locator):
@@ -231,7 +232,17 @@ class LumenDetector(Locator):
                 self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    # def find_best_target(self, src):
+    def find_lum_peak(self, lum):
+        self._mask(lum)
+        # v = lum.sum()
+        h, w = lum.shape[:2]
+        px, py = peak_local_max(lum, min_distance=5, num_peaks=1)[0]
+        peaks = zeros((h, w))
+        peaks[(py, px)] = 1
+        return (px - w / 2., py - h / 2.), peaks, lum
+
+        # def find_best_target(self, src):
+
     #     p = PolygonLocator()
     #     targetxy, src = p.find_best_target(src)
     #
@@ -262,33 +273,33 @@ class LumenDetector(Locator):
     #     return src, v
     #
     def get_scores(self, lum):
-        # src = grayspace(src)
-
-        mask = self._lum(lum)
+        mask = self._mask(lum)
         v = lum.sum()
+        x, y = peak_local_max(lum, min_distance=5, num_peaks=1)[0]
+
+        h, w = lum.shape[:2]
+        distance = ((x - w / 2.) ** 2 + (y - h / 2.) ** 2) ** 0.5
         try:
-            score_density = v / area(lum)
+            score_density = v / (area(lum) * distance)
         except ZeroDivisionError:
             score_density = 0
 
         score_saturation = v / (mask.sum() * 255.)
+
         return score_density, score_saturation, lum
 
-    def _lum(self, src):
-        # threshold = self.threshold
-        # src[src < threshold] = 0
-        mask = self._mask(src)
-
-        return mask
+    # def _lum(self, src):
+    #     # threshold = self.threshold
+    #     # src[src < threshold] = 0
+    #     mask = self._mask(src)
+    #
+    #     return mask
 
     def _mask(self, src, radius=None):
         if radius is None:
             radius = self.mask_radius
 
         return super(LumenDetector, self)._mask(src, radius)
-        # mask[c] = True
-        # src[invert(mask)] = 0
-        # return mask
 
     @property
     def mask_radius(self):

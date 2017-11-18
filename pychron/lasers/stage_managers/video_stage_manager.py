@@ -23,6 +23,8 @@ from threading import Thread, Timer, Event as TEvent
 
 from apptools.preferences.preference_binding import bind_preference
 from numpy import copy, array
+from skimage.color import rgb2gray
+from skimage.feature import peak_local_max
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
@@ -367,15 +369,13 @@ class VideoStageManager(StageManager):
 
     def get_scores(self, **kw):
         ld = self.lumen_detector
-        src = copy(self.video.get_cached_frame())
-        dim = self.stage_map.g_dimension
-        ld.pxpermm = self.pxpermm
-
-        offx, offy = self.canvas.get_screen_offset()
-        cropdim = dim * 2.25
-        src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
-
+        src = self._get_preprocessed_src()
         return ld.get_scores(src, **kw)
+
+    def find_lum_peak(self):
+        ld = self.lumen_detector
+        src = self._get_preprocessed_src()
+        return ld.find_lum_peak(src)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -401,6 +401,19 @@ class VideoStageManager(StageManager):
         #     self.close_open_images()
 
     # private
+    def _get_preprocessed_src(self):
+        ld = self.lumen_detector
+        src = copy(self.video.get_cached_frame())
+        dim = self.stage_map.g_dimension
+        ld.pxpermm = self.pxpermm
+
+        offx, offy = self.canvas.get_screen_offset()
+        cropdim = dim * 2.25
+
+        src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+        src = rgb2gray(src)
+        return src
+
     def _stage_map_changed_hook(self):
         self.lumen_detector.hole_radius = self.stage_map.g_dimension
 
