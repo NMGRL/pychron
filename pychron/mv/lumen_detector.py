@@ -59,17 +59,18 @@ class LumenDetector(Locator):
     def find_lum_peak(self, lum):
         self._mask(lum)
         h, w = lum.shape[:2]
-        pts = peak_local_max(rgb2gray(lum), min_distance=2, num_peaks=10,
-                             threshold_abs=75)
+        pts = peak_local_max(rgb2gray(lum), min_distance=3, num_peaks=5, threshold_abs=0.5)
         peaks = zeros((h, w, 3), dtype=uint8)
         cpeaks = zeros((h, w), dtype=uint8)
         pt = None
-        if pts:
-            peaks[pts] = (255, 0, 255)
-            cpeaks[pts] = 5
+        if pts.shape[0]:
+            idx = tuple(pts.T)
+            peaks[idx] = (255, 0, 255)
+            cpeaks[idx] = 50
 
-            intensites = lum.flat[ravel_multi_index(pts.transpose(), lum.shape)]
-            py, px = average(pts, axis=0, weights=intensites)
+            # intensites = lum.flat[ravel_multi_index(pts.transpose(), lum.shape)]
+            intensities = range(pts.shape[0], 0, -1)
+            py, px = average(pts, axis=0, weights=intensities)
             # py, px = pts.mean(axis=0)
 
             peaks[py, px] = (255, 255, 255)

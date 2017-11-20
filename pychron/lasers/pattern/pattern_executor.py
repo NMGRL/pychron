@@ -23,7 +23,7 @@ from threading import Thread, current_thread, Event
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
-from numpy import polyfit, linspace, hstack, array, average, zeros_like, zeros, uint8
+from numpy import polyfit, linspace, hstack, array, average, zeros_like, zeros, uint8, invert
 from skimage.color import gray2rgb
 from traits.api import Any, Bool, List
 
@@ -552,6 +552,7 @@ class PatternExecutor(Patternable):
         # hpeaks =
         series = []
         limit = -10
+        point_gen = None
         while time.time() - st < pattern.total_duration:
             if not self._alive:
                 break
@@ -560,7 +561,7 @@ class PatternExecutor(Patternable):
             pt, peaks, cpeaks, src = find_lum_peak()
 
             series.append(cpeaks)
-            hpeaks = array(series[limit:]).sum(axis=0).clip(0, 255)
+            hpeaks = invert(array(series[limit:]).sum(axis=0).clip(0, 255))
 
             # if hpeaks is not None:
             #     hpeaks += cpeaks
@@ -570,7 +571,8 @@ class PatternExecutor(Patternable):
 
             set_data('imagedata', src)
             set_data2('imagedata', peaks)
-            set_data3('imagedata', gray2rgb(hpeaks))
+            # img = gray2rgb(hpeaks).astype(uint8)
+            set_data3('imagedata', gray2rgb(hpeaks).astype(uint8))
 
             if pt is None:
                 if not point_gen:
