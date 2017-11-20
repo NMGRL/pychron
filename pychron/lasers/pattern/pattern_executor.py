@@ -222,16 +222,8 @@ class PatternExecutor(Patternable):
         pattern = self.pattern
 
         kind = pattern.kind
-        print kind
         if kind in ('SeekPattern', 'DragonFlyPeakPattern'):
-            from pychron.graph.graph import Graph
-
-            g = Graph(window_x=100, window_y=100,
-                      # window_height=900,
-                      window_width=1000,
-                      container_dict={'kind': 'h'})
-            self._info = open_view(g)
-            self._seek_graph = g
+            self._make_seek_graph(pattern)
 
         if evt is not None:
             evt.set()
@@ -393,6 +385,16 @@ class PatternExecutor(Patternable):
                 lm.set_laser_power(out)
                 invoke_in_main_thread(update, (cl, err, out, csrc, src))
 
+    def _make_seek_graph(self, pattern):
+        from pychron.graph.graph import Graph
+        g = Graph(window_x=100, window_y=100,
+                  window_title='{} - {}'.format(pattern.kind, pattern.name),
+                  window_width=1000,
+                  container_dict={'kind': 'h'})
+        self._info = open_view(g)
+        self._seek_graph = g
+        return g
+
     def _setup_seek_graph(self, pattern):
         g = self._seek_graph
 
@@ -449,7 +451,7 @@ class PatternExecutor(Patternable):
         # g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
         return imgplot, cp
 
-    def _setup_dragonfly_peak_graph(self):
+    def _setup_dragonfly_peak_graph(self, name):
         g = self._seek_graph
 
         def new_plot():
@@ -508,7 +510,7 @@ class PatternExecutor(Patternable):
         invoke_in_main_thread(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
-        imgplot, imgplot2, imgplot3 = self._setup_dragonfly_peak_graph()
+        imgplot, imgplot2, imgplot3 = self._setup_dragonfly_peak_graph(pattern.name)
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -543,13 +545,12 @@ class PatternExecutor(Patternable):
                             x, y = prevx, prevy - b * 2
                             b *= 1.1
                         prevx, prevy = x, y
-                        yield x, y
+                        yield x, y, 1
 
             return gen()
 
         duration = pattern.duration
         px, py = cx, cy
-        # hpeaks =
         series = []
         limit = -10
         point_gen = None
@@ -561,17 +562,11 @@ class PatternExecutor(Patternable):
             pt, peaks, cpeaks, src = find_lum_peak()
 
             series.append(cpeaks)
-            hpeaks = invert(array(series[limit:]).sum(axis=0).clip(0, 255))
-
-            # if hpeaks is not None:
-            #     hpeaks += cpeaks
-            #     hpeaks.clip(0, 255, out=hpeaks)
-            # else:
-            #     hpeaks = cpeaks
+            series = series[limit:]
+            hpeaks = invert(array(series).sum(axis=0).clip(0, 255))
 
             set_data('imagedata', src)
-            set_data2('imagedata', peaks)
-            # img = gray2rgb(hpeaks).astype(uint8)
+            set_data2('imagedata', gray2rgb(peaks).astype(uint8))
             set_data3('imagedata', gray2rgb(hpeaks).astype(uint8))
 
             if pt is None:
@@ -583,8 +578,11 @@ class PatternExecutor(Patternable):
                 point_gen = None
                 wait = True
 
-            px = px + pt[0] / sm.pxpermm
-            py = py - pt[1] / sm.pxpermm
+            dx = pt[0] / sm.pxpermm * pt[2]
+            dy = pt[1] / sm.pxpermm * pt[2]
+
+            px = px + dx
+            py = py - dy
 
             if validate(px - cx, py - cy):
                 try:
