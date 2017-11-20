@@ -24,6 +24,7 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
 from numpy import polyfit, linspace, hstack, array, average, zeros_like, zeros, uint8
+from skimage.color import gray2rgb
 from traits.api import Any, Bool, List
 
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -300,7 +301,7 @@ class PatternExecutor(Patternable):
             elif kind == 'CircularContourPattern':
 
                 self._execute_contour(controller, pattern)
-            elif kind in ('SeekPattern', 'DragonFlyPattern', 'DragonFlyPeakPattern'):
+            elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
             elif kind == 'DegasPattern':
                 self._execute_lumen_degas(controller, pattern)
@@ -451,29 +452,24 @@ class PatternExecutor(Patternable):
     def _setup_dragonfly_peak_graph(self):
         g = self._seek_graph
 
-        # peak location
-        imgplot = g.new_plot(padding_right=10)
-        imgplot.aspect_ratio = 1.0
-        imgplot.x_axis.visible = False
-        imgplot.y_axis.visible = False
-        imgplot.x_grid.visible = False
-        imgplot.y_grid.visible = False
+        def new_plot():
+            # peak location
+            imgplot = g.new_plot(padding_right=10)
+            imgplot.aspect_ratio = 1.0
+            imgplot.x_axis.visible = False
+            imgplot.y_axis.visible = False
+            imgplot.x_grid.visible = False
+            imgplot.y_grid.visible = False
 
-        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
-        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+            imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+            imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+            return imgplot
 
-        # lum
-        imgplot2 = g.new_plot(padding_right=10)
-        imgplot2.aspect_ratio = 1.0
-        imgplot2.x_axis.visible = False
-        imgplot2.y_axis.visible = False
-        imgplot2.x_grid.visible = False
-        imgplot2.y_grid.visible = False
+        img = new_plot()
+        peaks = new_plot()
+        hpeaks = new_plot()
 
-        imgplot2.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
-        imgplot2.img_plot('imagedata', colormap=hot, origin='top left')
-
-        return imgplot, imgplot2
+        return img, peaks, hpeaks
 
     def _execute_seek(self, controller, pattern):
         from pychron.core.ui.gui import invoke_in_main_thread
@@ -499,10 +495,10 @@ class PatternExecutor(Patternable):
         self.debug('total duration {}'.format(total_duration))
         self.debug('dwell duration {}'.format(duration))
 
-        if pattern.kind == 'DragonFly':
-            imgplot, cp = self._setup_seek_graph(pattern)
-            dragonfly(st, pattern, lm, controller, imgplot, cp)
-        elif pattern.kind == 'DragonFlyPeakPattern':
+        # if pattern.kind == 'DragonFly':
+        #     imgplot, cp = self._setup_seek_graph(pattern)
+        #     dragonfly(st, pattern, lm, controller, imgplot, cp)
+        if pattern.kind == 'DragonFlyPeakPattern':
             self._dragonfly_peak(st, pattern, lm, controller)
         else:
             imgplot, cp = self._setup_seek_graph(pattern)
@@ -512,7 +508,7 @@ class PatternExecutor(Patternable):
         invoke_in_main_thread(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
-        imgplot, imgplot2 = self._setup_dragonfly_peak_graph()
+        imgplot, imgplot2, imgplot3 = self._setup_dragonfly_peak_graph()
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -524,36 +520,82 @@ class PatternExecutor(Patternable):
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
         set_data2 = imgplot2.data.set_data
-        pr = pattern.perimeter_radius * sm.pxpermm
+        set_data3 = imgplot3.data.set_data
+        pr = pattern.perimeter_radius
 
         def validate(xx, yy):
             return (xx ** 2 + yy ** 2) ** 0.5 <= pr
 
+        def outward_square_spiral(base):
+            def gen():
+
+                b = base
+                prevx, prevy = b, 0
+                while 1:
+                    for cnt in xrange(4):
+                        if cnt == 0:
+                            x, y = b, prevy
+                        elif cnt == 1:
+                            x, y = prevx, b
+                        elif cnt == 2:
+                            x, y = prevx - b * 2, prevy
+                        elif cnt == 3:
+                            x, y = prevx, prevy - b * 2
+                            b *= 1.1
+                        prevx, prevy = x, y
+                        yield x, y
+
+            return gen()
+
         duration = pattern.duration
         px, py = cx, cy
+        # hpeaks =
+        series = []
+        limit = -10
         while time.time() - st < pattern.total_duration:
             if not self._alive:
                 break
 
-            (tx, ty), peaks, src = find_lum_peak()
+            ist = time.time()
+            pt, peaks, cpeaks, src = find_lum_peak()
+
+            series.append(cpeaks)
+            hpeaks = array(series[limit:]).sum(axis=0).clip(0, 255)
+
+            # if hpeaks is not None:
+            #     hpeaks += cpeaks
+            #     hpeaks.clip(0, 255, out=hpeaks)
+            # else:
+            #     hpeaks = cpeaks
+
             set_data('imagedata', src)
             set_data2('imagedata', peaks)
+            set_data3('imagedata', gray2rgb(hpeaks))
 
-            px = px + tx/sm.pxpermm
-            py = py - ty/sm.pxpermm
+            if pt is None:
+                if not point_gen:
+                    point_gen = outward_square_spiral(pattern.base)
+                wait = False
+                pt = next(point_gen)
+            else:
+                point_gen = None
+                wait = True
 
-            if validate(px-cx, py-cy):
+            px = px + pt[0] / sm.pxpermm
+            py = py - pt[1] / sm.pxpermm
+
+            if validate(px - cx, py - cy):
                 try:
-
                     linear_move(px, py, block=True, velocity=pattern.velocity,
-                                use_calibration=False
-                                # update=False,
-                                # immediate=False
-                                )
+                                use_calibration=False)
                 except PositionError:
                     break
 
-            time.sleep(duration)
+            if wait:
+                et = time.time() - ist
+                d = duration - et
+                if d > 0:
+                    time.sleep(d)
 
     def _hill_climber(self, st, controller, pattern, imgplot, cp):
         g = self._seek_graph
@@ -572,7 +614,7 @@ class PatternExecutor(Patternable):
         sat_threshold = pattern.saturation_threshold
         total_duration = pattern.total_duration
         duration = pattern.duration
-        # pattern.perimeter_radius *= sm.pxpermm
+        pattern.perimeter_radius *= sm.pxpermm
 
         avg_sat_score = -1
         for i, (x, y) in enumerate(pattern.point_generator()):
@@ -639,8 +681,8 @@ class PatternExecutor(Patternable):
                 avg_score = density_scores.mean()
                 score = avg_score
                 m, b = polyfit(ts, density_scores, 1)
-                if m > 0:
-                    score *= (1 + m)
+                # if m > 0:
+                #     score *= (1 + m)
 
                 # if use_update_point:
                 #     pattern.update_point(score, x, y)

@@ -25,7 +25,6 @@ from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
 
 
-
 def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
     cx, cy = pattern.cx, pattern.cy
 
@@ -93,7 +92,7 @@ def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
 
 def outward_square_spiral(base):
     def gen():
-        cnt = 0
+
         b = base
         py = 0
         while 1:
@@ -159,4 +158,5 @@ class DragonFlyPattern(SeekPattern):
 
 class DragonFlyPeakPattern(DragonFlyPattern):
     pass
+
 # ============= EOF =============================================

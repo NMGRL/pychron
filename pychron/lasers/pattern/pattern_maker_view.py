@@ -48,7 +48,7 @@ class PatternMakerView(Saveable, Patternable):
                          'Random',
                          'CircularContour', 'Trough',
                          'Rubberband', 'RasterRubberband',
-                         'Seek', 'DragonFly', 'DragonFlyPeak'),
+                         'Seek', 'DragonFlyPeak'),
                     depends_on='_kind')
     _kind = Str('Polygon')
 
