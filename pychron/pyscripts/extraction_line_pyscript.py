@@ -403,10 +403,10 @@ class ExtractionPyScript(ValvePyScript):
     def power_map(self, cx, cy, padding, bd, power):
         pass
 
-    @verbose_skip
-    @command_register
-    def degas(self, lumens=0, duration=0):
-        self._extraction_action([('do_machine_vision_degas', (lumens, duration), {})])
+    # @verbose_skip
+    # @command_register
+    # def degas(self, lumens=0, duration=0):
+    #     self._extraction_action([('do_machine_vision_degas', (lumens, duration), {})])
 
     @verbose_skip
     @command_register

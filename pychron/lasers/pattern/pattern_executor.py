@@ -35,17 +35,17 @@ from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
 
 
-class PeriodCTX:
-    def __init__(self, duration):
-        self._duration = duration
-
-    def __enter__(self):
-        self._st = time.time()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            et = time.time() - self._st
-            time.sleep(max(0, self._duration - et))
+# class PeriodCTX:
+#     def __init__(self, duration):
+#         self._duration = duration
+#
+#     def __enter__(self):
+#         self._st = time.time()
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if exc_type is None:
+#             et = time.time() - self._st
+#             time.sleep(max(0, self._duration - et))
 
 
 class CurrentPointOverlay(AbstractOverlay):
@@ -295,8 +295,8 @@ class PatternExecutor(Patternable):
                 self._execute_contour(controller, pattern)
             elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
-            elif kind == 'DegasPattern':
-                self._execute_lumen_degas(controller, pattern)
+            # elif kind == 'DegasPattern':
+            #     self._execute_lumen_degas(controller, pattern)
             else:
                 self._execute_points(controller, pattern, multipoint=False)
 
@@ -328,62 +328,62 @@ class PatternExecutor(Patternable):
         controller.single_axis_move('x', pattern.radius, block=True)
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
-    def _execute_lumen_degas(self, controller, pattern):
-        from pychron.core.pid import PID
-        from pychron.core.ui.gui import invoke_in_main_thread
-        from pychron.lasers.pattern.mv_viewer import MVViewer
-        from pychron.graph.stream_graph import StreamStackedGraph
-        from pychron.mv.mv_image import MVImage
-
-        lm = self.laser_manager
-        sm = lm.stage_manager
-
-        g = StreamStackedGraph()
-
-        img = MVImage()
-
-        img.setup_images(2, sm.get_frame_size())
-
-        mvviewer = MVViewer(graph=g, image=img)
-        mvviewer.edit_traits()
-        # g.edit_traits()
-
-        g.new_plot(xtitle='Time', ytitle='Lumens')
-        g.new_series()
-
-        g.new_plot(xtitle='Time', ytitle='Error')
-        g.new_series(plotid=1)
-
-        g.new_plot(xtitle='Time', ytitle='Power')
-        g.new_series(plotid=2)
-
-        duration = pattern.duration
-        lumens = pattern.lumens
-        dt = pattern.period
-        st = time.time()
-
-        pid = PID()
-
-        def update(c, e, o, cs, ss):
-            g.record(c, plotid=0)
-            g.record(e, plotid=1)
-            g.record(o, plotid=2)
-
-            img.set_image(cs, 0)
-            img.set_image(ss, 1)
-
-        while self._alive:
-
-            if duration and time.time() - st > duration:
-                break
-
-            with PeriodCTX(dt):
-                csrc, src, cl = sm.get_brightness()
-
-                err = lumens - cl
-                out = pid.get_value(err, dt)
-                lm.set_laser_power(out)
-                invoke_in_main_thread(update, (cl, err, out, csrc, src))
+    # def _execute_lumen_degas(self, controller, pattern):
+    #     from pychron.core.pid import PID
+    #     from pychron.core.ui.gui import invoke_in_main_thread
+    #     from pychron.lasers.pattern.mv_viewer import MVViewer
+    #     from pychron.graph.stream_graph import StreamStackedGraph
+    #     from pychron.mv.mv_image import MVImage
+    #
+    #     lm = self.laser_manager
+    #     sm = lm.stage_manager
+    #
+    #     g = StreamStackedGraph()
+    #
+    #     img = MVImage()
+    #
+    #     img.setup_images(2, sm.get_frame_size())
+    #
+    #     mvviewer = MVViewer(graph=g, image=img)
+    #     mvviewer.edit_traits()
+    #     # g.edit_traits()
+    #
+    #     g.new_plot(xtitle='Time', ytitle='Lumens')
+    #     g.new_series()
+    #
+    #     g.new_plot(xtitle='Time', ytitle='Error')
+    #     g.new_series(plotid=1)
+    #
+    #     g.new_plot(xtitle='Time', ytitle='Power')
+    #     g.new_series(plotid=2)
+    #
+    #     duration = pattern.duration
+    #     lumens = pattern.lumens
+    #     dt = pattern.period
+    #     st = time.time()
+    #
+    #     pid = PID()
+    #
+    #     def update(c, e, o, cs, ss):
+    #         g.record(c, plotid=0)
+    #         g.record(e, plotid=1)
+    #         g.record(o, plotid=2)
+    #
+    #         img.set_image(cs, 0)
+    #         img.set_image(ss, 1)
+    #
+    #     while self._alive:
+    #
+    #         if duration and time.time() - st > duration:
+    #             break
+    #
+    #         with PeriodCTX(dt):
+    #             csrc, src, cl = sm.get_brightness()
+    #
+    #             err = lumens - cl
+    #             out = pid.get_value(err, dt)
+    #             lm.set_laser_power(out)
+    #             invoke_in_main_thread(update, (cl, err, out, csrc, src))
 
     def _make_seek_graph(self, pattern):
         from pychron.graph.graph import Graph

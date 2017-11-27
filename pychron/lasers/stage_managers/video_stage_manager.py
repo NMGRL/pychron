@@ -109,14 +109,16 @@ class VideoStageManager(StageManager):
 
     def _test_button_fired(self):
         if self._test_state:
-            self.stop_measure_grain_polygon()
-
-            time.sleep(2)
-
-            d = self.get_grain_polygon_blob()
-            print d
+            # self.stop_measure_grain_polygon()
+            #
+            # time.sleep(2)
+            #
+            # d = self.get_grain_polygon_blob()
+            # print d
+            self.parent.disable_laser()
         else:
-            self.start_measure_grain_polygon()
+            self.parent.luminosity_degas_test()
+            # self.start_measure_grain_polygon()
         self._test_state = not self._test_state
 
     def motor_event_hook(self, name, value, *args, **kw):

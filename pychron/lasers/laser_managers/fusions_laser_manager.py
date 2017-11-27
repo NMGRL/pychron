@@ -101,27 +101,15 @@ class FusionsLaserManager(LaserManager):
 
     motor_event = Event
 
-    _degas_thread = None
-
-
-    # def initialize(self, *args, **kw):
-    #     super(FusionsLaserManager, self).initialize(*args, **kw)
-    #     self.do_motor_initialization()
+    # _degas_thread = None
 
     def finish_loading(self):
         super(FusionsLaserManager, self).finish_loading()
         self.do_motor_initialization()
 
-    @on_trait_change('laser_controller:refresh_canvas')
-    def refresh_canvas(self):
-        print 'frefasdfeasdfasd'
-        if self.stage_manager:
-            self.stage_manager.canvas.request_redraw()
-
-            # ===============================================================================
-            #   IExtractionDevice interface
-            # ===============================================================================
-
+    # ===============================================================================
+    #   IExtractionDevice interface
+    # ===============================================================================
     def stop_measure_grain_polygon(self):
         return self.stage_manager.stop_measure_grain_polygon()
 
@@ -182,6 +170,12 @@ class FusionsLaserManager(LaserManager):
     def set_light_intensity(self, v):
         self.fiber_light.intensity = min(max(0, v), 100)
 
+    @on_trait_change('laser_controller:refresh_canvas')
+    def refresh_canvas(self):
+        print 'frefasdfeasdfasd'
+        if self.stage_manager:
+            self.stage_manager.canvas.request_redraw()
+
     @on_trait_change('pointer')
     def pointer_ononff(self):
         """
@@ -217,14 +211,6 @@ class FusionsLaserManager(LaserManager):
                     self.stage_manager.motor_event_hook(obj.name, new)
 
                 motor.on_trait_change(handle, '_data_position')
-
-                    # n = 4
-                    # from pychron.core.ui.progress_dialog import myProgressDialog
-                    #
-                    # pd = myProgressDialog(max=n, size=(550, 15))
-                    # pd.open()
-                    # motor.initialize(progress=pd)
-                    # pd.close()
 
     def set_beam_diameter(self, bd, force=False, **kw):
         """
@@ -277,26 +263,26 @@ class FusionsLaserManager(LaserManager):
         if self.use_video:
             return self.stage_manager.stop_recording()
 
-    def degasser_factory(self):
-        from pychron.mv.degas.degasser import Degasser
-
-        dm = Degasser(
-            laser_manager=self,
-            video=self.stage_manager.video)
-        return dm
-
-    def do_machine_vision_degas(self, lumens, duration, new_thread=False):
-        if self.use_video:
-            dm = self.degasser_factory()
-
-            def func():
-                dm.degas(lumens, duration)
-
-            if new_thread:
-                self._degas_thread = Thread(target=func)
-                self._degas_thread.start()
-            else:
-                func()
+    # def degasser_factory(self):
+    #     from pychron.mv.degas.degasser import Degasser
+    #
+    #     dm = Degasser(
+    #         laser_manager=self,
+    #         video=self.stage_manager.video)
+    #     return dm
+    #
+    # def do_machine_vision_degas(self, lumens, duration, new_thread=False):
+    #     if self.use_video:
+    #         dm = self.degasser_factory()
+    #
+    #         def func():
+    #             dm.degas(lumens, duration)
+    #
+    #         if new_thread:
+    #             self._degas_thread = Thread(target=func)
+    #             self._degas_thread.start()
+    #         else:
+    #             func()
 
     def get_brightness(self, **kw):
         if self.use_video:
@@ -304,9 +290,17 @@ class FusionsLaserManager(LaserManager):
         else:
             return super(FusionsLaserManager, self).get_brightness(**kw)
 
-    def is_degassing(self):
-        if self._degas_thread:
-            return self._degas_thread.isRunning()
+    def luminosity_degas_test(self):
+
+        self.debug('luminosity degas test. {}'.format(self.pulse.power))
+        from pychron.mv.degas.degasser import Degasser
+        degasser = Degasser(laser_manager=self)
+        degasser.degas()
+
+        # self.set_laser_power(self.pulse.power, units='lumens')
+    # def is_degassing(self):
+    #     if self._degas_thread:
+    #         return self._degas_thread.isRunning()
             # ===============================================================================
             # pyscript interface
             # ===============================================================================

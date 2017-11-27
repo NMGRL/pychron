@@ -34,7 +34,7 @@ class LaserProtocol(ServiceProtocol):
         self._addr = addr
 
         services = (('GetError', '_get_error'),
-                    ('MachineVisionDegas', '_machine_vision_degas'),
+                    # ('MachineVisionDegas', '_machine_vision_degas'),
                     ('StartVideoRecording', '_start_video_recording'),
                     ('StopVideoRecording', '_stop_video_recording'),
                     ('ReadLaserPower', '_read_laser_power'),
@@ -99,14 +99,14 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Machine Vision
     # ===============================================================================
-    def _machine_vision_degas(self, data):
-        if isinstance(data, dict):
-            lumens, duration = data['lumens'], data['duration']
-        else:
-            lumens, duration = data
-
-        lumens, duration = float(lumens), float(duration)
-        self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
+    # def _machine_vision_degas(self, data):
+    #     if isinstance(data, dict):
+    #         lumens, duration = data['lumens'], data['duration']
+    #     else:
+    #         lumens, duration = data
+    #
+    #     lumens, duration = float(lumens), float(duration)
+    #     self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
     def _get_auto_correcting(self, data):
         return self._manager.stage_manager.is_auto_correcting()
