@@ -15,15 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change
-from traitsui.api import View, Item, UItem, ButtonEditor, HGroup
+from chaco.default_colormaps import hot
+from chaco.plot import Plot
+from chaco.plot_containers import HPlotContainer
+from enable.component_editor import ComponentEditor
+from skimage.color import gray2rgb
+from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, Button
+from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.graph import Graph
+from pychron.graph.stream_graph import StreamGraph, StreamStackedGraph
 from pychron.loggable import Loggable
-from pychron.mv.machine_vision_manager import MachineVisionManager
+from threading import Event, Thread
+# from pychron.mv.machine_vision_manager import MachineVisionManager
 # ============= standard library imports ========================
-from numpy import random
+from numpy import uint8, zeros, random
 import time
 
 
@@ -33,77 +41,127 @@ import time
 # from pychron.execute_mixin import ExecuteMixin
 # from pychron.mv.mv_image import MVImage
 
+class LM:
+    def __init__(self, t, dt=1):
+        self._pid = PID(kp=-0.5, ki=0.1)
+        self._dt = dt
+        self._target_value = t
+
+    def set_laser_power_hook(self, *args, **kw):
+        pass
+
+    def get_brightness(self, v):
+        err = self._target_value - v
+        out = self._pid.get_value(err, self._dt)
+        src = random.randint(0, 255, (150, 150))
+        return src.astype(uint8), out
+
+
 class Degasser(Loggable):
     laser_manager = None
 
-    p = Range(0.0, 100.0)
-    i = Range(0.0, 100.0)
-    d = Range(0.0, 100.0)
+    p = Range(0.0, 1.0)
+    i = Range(0.0, 1.0)
+    d = Range(0.0, 1.0)
 
     lumens = Float(50)
     dt = Float(1)
+    pid = None
+    stream_graph = Instance(StreamStackedGraph, ())
+    img_graph = Instance(Graph, ())
+    plot_container = Instance(HPlotContainer, ())
+    test = Button
 
-    def degas(self):
-        def update(c, e, o):
+    _lum_thread = None
+    _lum_evt = None
+    _luminosity_value = 0
+
+    def _test_fired(self):
+        self.degas()
+
+    def stop(self):
+        self.debug('stop')
+        self._lum_evt.set()
+
+    def degas(self, lumens=None):
+        if lumens is None:
+            lumens = self.lumens
+
+        self._setup_graph()
+        self.edit_traits()
+
+        self._lum_evt = Event()
+        self._lum_thread = Thread(target=self._degas, args=(lumens,))
+        self._lum_thread.start()
+
+    def _setup_graph(self):
+        g = self.stream_graph
+        g.clear()
+        g.new_plot(padding_left=70, padding_right=10)
+        g.new_series(plotid=0)
+        g.set_y_title('Lumens', plotid=0)
+        g.new_plot(padding_left=70, padding_right=10)
+        g.new_series(plotid=1)
+        g.set_y_title('Error', plotid=1)
+        g.new_plot(padding_left=70, padding_right=10)
+        g.new_series(plotid=2)
+        g.set_y_title('Output', plotid=2)
+
+        imgplot = self.img_graph.new_plot(padding_right=10)
+        imgplot.aspect_ratio = 1.0
+        imgplot.x_axis.visible = False
+        imgplot.y_axis.visible = False
+        imgplot.x_grid.visible = False
+        imgplot.y_grid.visible = False
+
+        imgplot.data.set_data('imagedata', zeros((150, 150, 3), dtype=uint8))
+        imgplot.img_plot('imagedata', origin='top left')
+
+        self.plot_container.add(self.stream_graph.plotcontainer)
+        self.plot_container.add(self.img_graph.plotcontainer)
+
+    def _degas(self, lumens):
+
+        self.lumens = lumens
+        g = self.stream_graph
+        img = self.img_graph.plots[0]
+
+        def update(c, e, o, src):
             g.record(c, plotid=0)
             g.record(e, plotid=1)
             g.record(o, plotid=2)
+            img.data.set_data('imagedata', gray2rgb(src))
 
-            # img.set_image(cs, 0)
-            # img.set_image(ss, 1)
-
-        # self.laser_manager.set_laser_power(self.lumens, units='lumens')
         evt = self._lum_evt
         set_laser_power = self.laser_manager.set_laser_power_hook
         self.pid = pid = PID()
 
-        get_brightness = self.stage_manager.get_peak_brightness
+        get_brightness = self.laser_manager.get_brightness
         dt = self.dt
-        v = self.lumens
+        target = self.lumens
+        out = 0
         while not evt.is_set():
-            p = get_brightness()
+            src, current = get_brightness(out)
 
-            err = v - p
+            err = target - current
             out = pid.get_value(err, dt)
 
-            invoke_in_main_thread(update, p, err, out)
+            invoke_in_main_thread(update, current, err, out, src)
 
-            set_laser_power(out)
+            # set_laser_power(out)
             evt.wait(dt)
 
     @on_trait_change('p,i,d')
     def update_pid_params(self, name, value):
-        setattr(self.pid, 'k{}'.format(name), value)
-        #
-        #     def update(c, e, o, cs, ss):
-        #         g.record(c, plotid=0)
-        #         g.record(e, plotid=1)
-        #         g.record(o, plotid=2)
-        #
-        #         img.set_image(cs, 0)
-        #         img.set_image(ss, 1)
-
-        # while not evt.is_set():
-        #
-        #         if duration and time.time() - st > duration:
-        #             break
-        #
-        # with PeriodCTX(dt):
-
-    #             csrc, src, cl = sm.get_brightness()
-    #
-    #             err = lumens - cl
-    #             out = pid.get_value(err, dt)
-    #             lm.set_laser_power(out)
-    #             invoke_in_main_thread(update, (cl, err, out, csrc, src))
-
+        if self.pid:
+            setattr(self.pid, 'k{}'.format(name), value)
 
     def traits_view(self):
-        v = View(Item('p'),
-                 Item('i'),
-                 Item('d'),
-                 Item('dt'))
+        v = View(VGroup(HGroup(Item('p'), Item('i'), Item('d'), Item('dt')),
+                        Item('test'),
+                        UItem('plot_container', style='custom', editor=ComponentEditor())))
         return v
+
 
 #
 # class PID(HasTraits):
@@ -257,7 +315,7 @@ class Degasser(Loggable):
 #         return v
 #
 #
-# if __name__ == '__main__':
-#     d = Degasser()
-#     d.configure_traits()
+if __name__ == '__main__':
+    d = Degasser(laser_manager=LM(30))
+    d.configure_traits()
 # # ============= EOF =============================================

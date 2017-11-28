@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
+
 import json
 import os
 import shutil
 import time
 from threading import Thread, Timer, Event as TEvent
 
-from apptools.preferences.preference_binding import bind_preference
 from numpy import copy, array
-from skimage.color import rgb2gray
-from skimage.feature import peak_local_max
-from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 from pychron.canvas.canvas2D.camera import Camera
 from pychron.core.helpers import binpack
@@ -381,12 +380,12 @@ class VideoStageManager(StageManager):
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
-
-        src = self.video.get_cached_frame()
-
-        csrc = copy(src)
-        src, v = ld.get_value(csrc, **kw)
-        return csrc, src, v
+        src = self._get_preprocessed_src()
+        return ld.get_value(src)
+        # src = self.video.get_cached_frame()
+        # csrc = copy(src)
+        # src, v = ld.get_value(csrc, **kw)
+        # return csrc, src, v
 
     def get_frame_size(self):
         cw = 2 * self.crop_width * self.pxpermm

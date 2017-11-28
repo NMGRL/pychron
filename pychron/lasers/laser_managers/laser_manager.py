@@ -54,9 +54,6 @@ class LaserManager(BaseLaserManager):
 
     auxilary_graph = Instance(Component)
 
-    _lum_thread = None
-    _lum_evt = None
-    _luminosity_value = 0
     # ===============================================================================
     # public interface
     # ===============================================================================
@@ -120,10 +117,6 @@ class LaserManager(BaseLaserManager):
         if self.monitor is not None:
             self.monitor.stop()
 
-        if self._lum_evt:
-            self._lum_evt.set()
-            self._lum_thread = None
-
         enabled = self._disable_hook()
 
         self.enabled = False
@@ -147,14 +140,7 @@ class LaserManager(BaseLaserManager):
         if units == 'percent':
             p = power
         elif units == 'lumens':
-            self._luminosity_value = power
-
-            if not self._lum_thread:
-                self._lum_evt = Event()
-                self._lum_thread = Thread(target=self._luminosity, name='Luminosity')
-                self._lum_thread.start()
-                return
-
+            self._luminosity_hook(power)
         else:
             try:
                 p = self._get_calibrated_power(power, verbose=verbose, **kw)
@@ -293,9 +279,11 @@ class LaserManager(BaseLaserManager):
 
             self.disable_laser()
 
-            # ===============================================================================
-            # hooks
-            # ===============================================================================
+    # ===============================================================================
+    # hooks
+    # ===============================================================================
+    def _luminosity_hook(self, power):
+        pass
 
     def _dispose_optional_windows_hook(self):
         pass

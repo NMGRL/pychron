@@ -44,10 +44,33 @@ class LumenDetector(Locator):
     beam_radius = 0
     custom_mask_radius = 0
     hole_radius = 0
+    _cached_mask_value = None
 
     def __init__(self, *args, **kw):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
+
+    def get_value(self, src, scaled=True):
+        """
+
+        if scaled is True
+        return sum of all pixels in masked area / (masked area *255)
+
+        @param src:
+        @param scaled:
+        @return:
+        """
+        mask = self._mask(src)
+
+        if self._cached_mask_value is None:
+            self._cached_mask_value = mask.sum()*255.
+
+        m = self._cached_mask_value
+        v = src.sum()
+        if scaled:
+            v /= m
+
+        return src, v
 
     def find_targets(self, image, src, dim, mask=False):
         targets = self._find_targets(image, src, dim, step=2,
