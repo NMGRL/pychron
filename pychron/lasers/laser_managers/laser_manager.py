@@ -141,6 +141,8 @@ class LaserManager(BaseLaserManager):
             p = power
         elif units == 'lumens':
             self._luminosity_hook(power)
+            return
+
         else:
             try:
                 p = self._get_calibrated_power(power, verbose=verbose, **kw)

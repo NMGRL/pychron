@@ -214,7 +214,7 @@ class LaserProtocol(ServiceProtocol):
         except:
             return InvalidArgumentsErrorCode('SetLaserOutput', value)
 
-        self._manager.set_laser_output(p, units)
+        self._manager.set_laser_output(p, units=units)
         return True
 
     def _get_achieved_output(self, data):

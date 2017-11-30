@@ -63,8 +63,8 @@ class Degasser(Loggable):
     laser_manager = None
 
     p = Range(0.0, 10.0, 1.25)
-    i = Range(0.0, 2.0, 0.0)
-    d = Range(0.0, 2.0, 0)
+    i = Range(0.0, 2.0, 0.25)
+    d = Range(0.0, 2.0, 0.25)
 
     lumens = Float(50)
     dt = Float(0.25)
@@ -72,17 +72,22 @@ class Degasser(Loggable):
     stream_graph = Instance(StreamStackedGraph, ())
     img_graph = Instance(Graph, ())
     plot_container = Instance(HPlotContainer, ())
-    threshold = Range(50, 200, 62)
+    threshold = Range(50, 200, 55)
     test = Button
 
     _lum_thread = None
     _lum_evt = None
     _luminosity_value = 0
     _testing = False
+    _info = None
 
     def stop(self):
         self.debug('stop')
-        self._lum_evt.set()
+        if self._lum_evt:
+            self._lum_evt.set()
+
+        if self._info:
+            invoke_in_main_thread(self._info.dispose, abort=True)
 
     def degas(self, lumens=None, autostart=True):
         self.pid = pid = PID()
@@ -99,7 +104,11 @@ class Degasser(Loggable):
 
         self.lumens = lumens
         self._setup_graph()
-        self.edit_traits()
+
+        def _open():
+            self._info = self.edit_traits()
+
+        invoke_in_main_thread(_open)
         if autostart:
             self.start()
 

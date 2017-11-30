@@ -63,22 +63,26 @@ class LumenDetector(Locator):
         mask = self._mask(src)
 
         if self._cached_mask_value is None:
-            self._cached_mask_value = 100/float(mask.sum())
+            self._cached_mask_value = 100 / float(mask.sum())
 
         gsrc = rgb2gray(src)
 
-        threshold /= 255.
-        tsrc = gsrc[gsrc > threshold]
+        # threshold /= 255.
+        tt = threshold/255.
+        tsrc = gsrc[gsrc > tt]
+
+        tsrc = (tsrc - tt)/(1-tt)
+        # tsrc = gsrc[gsrc>0]
+        # tsrc = tsrc - th
         n = tsrc.shape[0]
         v = 0
         if n:
             # print n, self._cached_mask_value, n*self._cached_mask_value
-            if n*self._cached_mask_value > area_threshold:
-                v = tsrc.sum()
+            if n * self._cached_mask_value > area_threshold:
                 if scaled:
                     pixel_area = float(n)
                     v /= pixel_area
-        src[src <= threshold*255] = 0
+        src[src <= threshold] = 0
         return src, v
 
     def find_targets(self, image, src, dim, mask=False):
