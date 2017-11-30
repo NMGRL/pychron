@@ -1179,7 +1179,9 @@ class Graph(ContextMenuMixin):
                 for k, pp in plot.plots.iteritems():
                     pp = pp[0]
                     a = column_stack((pp.index.get_data(), pp.value.get_data()))
-                    e = pp.yerror
+
+                    e = getattr(pp, 'yerror', None)
+
                     header = 'x,y'
                     if e is not None:
                         try:

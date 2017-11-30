@@ -381,7 +381,7 @@ class VideoStageManager(StageManager):
     def get_brightness(self, **kw):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        return ld.get_value(src)
+        return ld.get_value(src, **kw)
         # src = self.video.get_cached_frame()
         # csrc = copy(src)
         # src, v = ld.get_value(csrc, **kw)

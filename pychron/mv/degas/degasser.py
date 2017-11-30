@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from Queue import Queue
+
 from chaco.default_colormaps import hot
 from chaco.plot import Plot
 from chaco.plot_containers import HPlotContainer
@@ -60,41 +62,69 @@ class LM:
 class Degasser(Loggable):
     laser_manager = None
 
-    p = Range(0.0, 1.0)
-    i = Range(0.0, 1.0)
-    d = Range(0.0, 1.0)
+    p = Range(0.0, 10.0, 1.25)
+    i = Range(0.0, 2.0, 0.0)
+    d = Range(0.0, 2.0, 0)
 
     lumens = Float(50)
-    dt = Float(1)
+    dt = Float(0.25)
     pid = None
     stream_graph = Instance(StreamStackedGraph, ())
     img_graph = Instance(Graph, ())
     plot_container = Instance(HPlotContainer, ())
+    threshold = Range(50, 200, 62)
     test = Button
 
     _lum_thread = None
     _lum_evt = None
     _luminosity_value = 0
-
-    def _test_fired(self):
-        self.degas()
+    _testing = False
 
     def stop(self):
         self.debug('stop')
         self._lum_evt.set()
 
-    def degas(self, lumens=None):
+    def degas(self, lumens=None, autostart=True):
+        self.pid = pid = PID()
+        pid.kp = self.p
+        pid.ki = self.i
+        pid.kd = self.d
+
+        # self.p = pid.kp
+        # self.i = pid.ki
+        # self.d = pid.kd
+
         if lumens is None:
             lumens = self.lumens
 
+        self.lumens = lumens
         self._setup_graph()
         self.edit_traits()
+        if autostart:
+            self.start()
 
+    def start(self):
+        q = Queue()
+        self.pid.reset()
         self._lum_evt = Event()
-        self._lum_thread = Thread(target=self._degas, args=(lumens,))
+        self._lum_thread = Thread(target=self._degas, args=(self.lumens, self.pid, q))
         self._lum_thread.start()
 
+    def _test_fired(self):
+        if self._testing:
+            self.stop()
+            self.laser_manager.disable_laser()
+            self.stream_graph.export_data(path='/Users/argonlab3/Desktop/degas.csv')
+        else:
+            self.laser_manager.enable_laser()
+            self.start()
+
+        self._testing = not self._testing
+        # self._lum_consumer = Thread(target=self._degas_consume, args=(q,))
+        # self._lum_consumer.start()
+
     def _setup_graph(self):
+        self.plot_container = HPlotContainer()
         g = self.stream_graph
         g.clear()
         g.new_plot(padding_left=70, padding_right=10)
@@ -107,7 +137,9 @@ class Degasser(Loggable):
         g.new_series(plotid=2)
         g.set_y_title('Output', plotid=2)
 
-        imgplot = self.img_graph.new_plot(padding_right=10)
+        g = self.img_graph
+        g.clear()
+        imgplot = g.new_plot(padding_right=10)
         imgplot.aspect_ratio = 1.0
         imgplot.x_axis.visible = False
         imgplot.y_axis.visible = False
@@ -120,7 +152,7 @@ class Degasser(Loggable):
         self.plot_container.add(self.stream_graph.plotcontainer)
         self.plot_container.add(self.img_graph.plotcontainer)
 
-    def _degas(self, lumens):
+    def _degas(self, lumens, pid, q):
 
         self.lumens = lumens
         g = self.stream_graph
@@ -134,22 +166,30 @@ class Degasser(Loggable):
 
         evt = self._lum_evt
         set_laser_power = self.laser_manager.set_laser_power_hook
-        self.pid = pid = PID()
 
         get_brightness = self.laser_manager.get_brightness
-        dt = self.dt
         target = self.lumens
-        out = 0
+        prev = 0
+
         while not evt.is_set():
-            src, current = get_brightness(out)
+            dt = self.dt
+            st = time.time()
+            src, current = get_brightness(threshold=self.threshold)
 
             err = target - current
-            out = pid.get_value(err, dt)
+            out = pid.get_value(err, dt) or 0
 
             invoke_in_main_thread(update, current, err, out, src)
 
-            # set_laser_power(out)
-            evt.wait(dt)
+            if abs(prev - out) > 0.02:
+                self.debug('set power output={}'.format(out))
+                set_laser_power(out)
+                prev = out
+
+            et = time.time() - st
+            t = dt - et
+            if t > 0:
+                evt.wait(dt)
 
     @on_trait_change('p,i,d')
     def update_pid_params(self, name, value):
@@ -157,7 +197,8 @@ class Degasser(Loggable):
             setattr(self.pid, 'k{}'.format(name), value)
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('p'), Item('i'), Item('d'), Item('dt')),
+        v = View(VGroup(HGroup(Item('p'), Item('i'), Item('d'),
+                               Item('threshold', label='T'), Item('dt')),
                         Item('test'),
                         UItem('plot_container', style='custom', editor=ComponentEditor())))
         return v

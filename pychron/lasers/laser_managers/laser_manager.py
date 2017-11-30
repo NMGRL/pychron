@@ -302,7 +302,8 @@ class LaserManager(BaseLaserManager):
     def _set_laser_power_hook(self, *args, **kw):
         pass
 
-    set_laser_power_hook = _set_laser_power_hook
+    def set_laser_power_hook(self, *args, **kw):
+        self._set_laser_power_hook(*args, **kw)
 
     # ===============================================================================
     # factories

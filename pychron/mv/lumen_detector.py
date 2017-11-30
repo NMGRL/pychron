@@ -50,7 +50,7 @@ class LumenDetector(Locator):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
 
-    def get_value(self, src, scaled=True):
+    def get_value(self, src, scaled=True, threshold=50, area_threshold=10):
         """
 
         if scaled is True
@@ -63,13 +63,22 @@ class LumenDetector(Locator):
         mask = self._mask(src)
 
         if self._cached_mask_value is None:
-            self._cached_mask_value = mask.sum()*255.
+            self._cached_mask_value = 100/float(mask.sum())
 
-        m = self._cached_mask_value
-        v = src.sum()
-        if scaled:
-            v /= m
+        gsrc = rgb2gray(src)
 
+        threshold /= 255.
+        tsrc = gsrc[gsrc > threshold]
+        n = tsrc.shape[0]
+        v = 0
+        if n:
+            # print n, self._cached_mask_value, n*self._cached_mask_value
+            if n*self._cached_mask_value > area_threshold:
+                v = tsrc.sum()
+                if scaled:
+                    pixel_area = float(n)
+                    v /= pixel_area
+        src[src <= threshold*255] = 0
         return src, v
 
     def find_targets(self, image, src, dim, mask=False):

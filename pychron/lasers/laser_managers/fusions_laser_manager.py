@@ -297,9 +297,10 @@ class FusionsLaserManager(LaserManager):
             return super(FusionsLaserManager, self).get_brightness(**kw)
 
     def luminosity_degas_test(self):
+        self.enable_laser()
         p = self.pulse.power
         self.debug('luminosity degas test. {}'.format(p))
-        self._luminosity_hook(p)
+        self._luminosity_hook(p, autostart=False)
 
     def set_stage_map(self, mapname):
         if self.stage_manager is not None:
@@ -344,8 +345,8 @@ class FusionsLaserManager(LaserManager):
             self.response_recorder.stop()
 
     # private
-    def _luminosity_hook(self, power):
-        self.degasser.degas(power)
+    def _luminosity_hook(self, power, **kw):
+        self.degasser.degas(power, **kw)
 
     def _move_to_position(self, position, autocenter):
 
