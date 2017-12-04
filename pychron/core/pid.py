@@ -15,30 +15,79 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+from traits.api import HasTraits, Range, Float
+from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import json
+
+from pychron.paths import paths
+
+ATTRS = ('kp', 'ki', 'kd', 'kdt')
 
 
-class PID(object):
+class PID(HasTraits):
     _integral_err = 0
     _prev_err = 0
 
-    def __init__(self, kp=0.25, ki=0, kd=0, min_output=0, max_output=1):
+    kp = Range(0.0, 10.0, 1.25)
+    ki = Range(0.0, 2.0, 0.25)
+    kd = Range(0.0, 2.0, 0.25)
+    dt = Float(0.5)
+    max_output = Float
+    min_output = Float
+
+    def __init__(self, kp=0.25, ki=0, kd=0, dt=1, min_output=0, max_output=100):
         self.max_output = max_output
         self.min_output = min_output
         self.kd = kd
         self.ki = ki
         self.kp = kp
+        self.kdt = dt
+
+    def load_from_obj(self, jd):
+        for a in ATTRS:
+            setattr(self, a, jd.get(a))
+
+    def get_dump_obj(self):
+        obj = {a: getattr(self, a) for a in ATTRS}
+        return obj
+
+    def load(self):
+        p = self.persistence_path
+        with open(p, 'r') as rfile:
+            jd = json.load(rfile)
+            self.load_from_obj(jd)
+
+    def dump(self):
+        p = self.persistence_path
+        with open(p, 'w') as wfile:
+            obj = self.get_dump_obj()
+            json.dump(obj, wfile)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.setup_dir, 'pid.json')
 
     def reset(self):
         self._integral_err = 0
         self._prev_err = 0
 
-    def get_value(self, error, dt):
+    def get_value(self, error):
+        dt = self.kdt
         self._integral_err += (error * dt)
         derivative = (error - self._prev_err) / dt
         output = (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
         self._prev_err = error
         return min(self.max_output, max(self.min_output, output))
 
+    def traits_view(self):
+        v = View(VGroup(HGroup(Item('kp', label='P'),
+                        Item('ki', label='I'),
+                        Item('kd', label='D'),
+                        Item('kdt', label='Dt')),
+                        HGroup(Item('min_output'),
+                               Item('max_output'))))
+        return v
 # ============= EOF =============================================

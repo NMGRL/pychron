@@ -15,33 +15,29 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from Queue import Queue
-
-from chaco.default_colormaps import hot
-from chaco.plot import Plot
 from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
-from skimage.color import gray2rgb
 from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, Button
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
+# ============= standard library imports ========================
+
+from numpy import uint8, zeros, random
+from Queue import Queue
+from skimage.color import gray2rgb
+from threading import Event, Thread
+import json
+import os
+import time
+
+# ============= local library imports  ==========================
 from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
 from pychron.graph.stream_graph import StreamGraph, StreamStackedGraph
 from pychron.loggable import Loggable
-from threading import Event, Thread
-# from pychron.mv.machine_vision_manager import MachineVisionManager
-# ============= standard library imports ========================
-from numpy import uint8, zeros, random
-import time
+from pychron.paths import paths
 
-
-# ============= local library imports  ==========================
-# from pychron.mv.lumen_detector import LumenDetector
-# from pychron.graph.stacked_graph import StackedGraph
-# from pychron.execute_mixin import ExecuteMixin
-# from pychron.mv.mv_image import MVImage
 
 class LM:
     def __init__(self, t, dt=1):
@@ -62,16 +58,13 @@ class LM:
 class Degasser(Loggable):
     laser_manager = None
 
-    p = Range(0.0, 10.0, 1.25)
-    i = Range(0.0, 2.0, 0.25)
-    d = Range(0.0, 2.0, 0.25)
-
     lumens = Float(50)
-    dt = Float(0.25)
-    pid = None
+
+    pid = Instance(PID)
     stream_graph = Instance(StreamStackedGraph, ())
     img_graph = Instance(Graph, ())
     plot_container = Instance(HPlotContainer, ())
+
     threshold = Range(50, 200, 55)
     test = Button
 
@@ -83,21 +76,39 @@ class Degasser(Loggable):
 
     def stop(self):
         self.debug('stop')
+        self.dump()
         if self._lum_evt:
             self._lum_evt.set()
 
         if self._info:
             invoke_in_main_thread(self._info.dispose, abort=True)
 
-    def degas(self, lumens=None, autostart=True):
-        self.pid = pid = PID()
-        pid.kp = self.p
-        pid.ki = self.i
-        pid.kd = self.d
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.setup_dir, 'pid_degasser.json')
 
-        # self.p = pid.kp
-        # self.i = pid.ki
-        # self.d = pid.kd
+    def load(self):
+        self.debug('loading')
+        self.pid = PID()
+        p = self.persistence_path
+        if not os.path.isfile(p):
+            self.warning('No PID degasser file located at {}'.format(p))
+            return
+
+        with open(p, 'r') as rfile:
+            jd = json.load(rfile)
+            self.threshold = jd['threshold']
+            self.pid.load_from_obj(jd['pid'])
+
+    def dump(self):
+        self.debug('dump')
+        obj = self.pid.get_dump_obj()
+        jd = {'pid': obj, 'threshold': self.threshold}
+        with open(self.persistence_path, 'w') as wfile:
+            json.dump(jd, wfile)
+
+    def degas(self, lumens=None, autostart=True):
+        self.load()
 
         if lumens is None:
             lumens = self.lumens
@@ -113,10 +124,9 @@ class Degasser(Loggable):
             self.start()
 
     def start(self):
-        q = Queue()
         self.pid.reset()
         self._lum_evt = Event()
-        self._lum_thread = Thread(target=self._degas, args=(self.lumens, self.pid, q))
+        self._lum_thread = Thread(target=self._degas, args=(self.lumens, self.pid))
         self._lum_thread.start()
 
     def _test_fired(self):
@@ -129,8 +139,6 @@ class Degasser(Loggable):
             self.start()
 
         self._testing = not self._testing
-        # self._lum_consumer = Thread(target=self._degas_consume, args=(q,))
-        # self._lum_consumer.start()
 
     def _setup_graph(self):
         self.plot_container = HPlotContainer()
@@ -161,7 +169,7 @@ class Degasser(Loggable):
         self.plot_container.add(self.stream_graph.plotcontainer)
         self.plot_container.add(self.img_graph.plotcontainer)
 
-    def _degas(self, lumens, pid, q):
+    def _degas(self, lumens, pid):
 
         self.lumens = lumens
         g = self.stream_graph
@@ -181,12 +189,12 @@ class Degasser(Loggable):
         prev = 0
 
         while not evt.is_set():
-            dt = self.dt
+            dt = pid.kdt
             st = time.time()
             src, current = get_brightness(threshold=self.threshold)
 
             err = target - current
-            out = pid.get_value(err, dt) or 0
+            out = pid.get_value(err) or 0
 
             invoke_in_main_thread(update, current, err, out, src)
 
@@ -200,19 +208,18 @@ class Degasser(Loggable):
             if t > 0:
                 evt.wait(dt)
 
-    @on_trait_change('p,i,d')
-    def update_pid_params(self, name, value):
-        if self.pid:
-            setattr(self.pid, 'k{}'.format(name), value)
-
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('p'), Item('i'), Item('d'),
-                               Item('threshold', label='T'), Item('dt')),
+        v = View(VGroup(Item('pid', style='custom'),
+                        Item('threshold', label='T'),
                         Item('test'),
                         UItem('plot_container', style='custom', editor=ComponentEditor())))
         return v
 
 
+if __name__ == '__main__':
+    d = Degasser(laser_manager=LM(30))
+    d.configure_traits()
+# ============= EOF =============================================
 #
 # class PID(HasTraits):
 #     _integral_err = 0
@@ -365,7 +372,3 @@ class Degasser(Loggable):
 #         return v
 #
 #
-if __name__ == '__main__':
-    d = Degasser(laser_manager=LM(30))
-    d.configure_traits()
-# # ============= EOF =============================================
