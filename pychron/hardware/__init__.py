@@ -33,6 +33,7 @@ HW_PACKAGE_MAP = {
     'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
     'PychronMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
     'QtegraMicroIonController': 'pychron.hardware.gauges.granville_phillips.pychron_micro_ion_controller',
+    'MKSController': 'pychron.hardware.gauges.mks.controller',
     'ArgusController': 'pychron.hardware.thermo_spectrometer_controller',
     'HelixController':'pychron.hardware.thermo_spectrometer_controller',
     'FerrupsUPS': 'pychron.hardware.FerrupsUPS',

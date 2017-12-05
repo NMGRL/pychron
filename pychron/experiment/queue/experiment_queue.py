@@ -199,9 +199,14 @@ class ExperimentQueue(BaseExperimentQueue):
         self.selected = [si for si in self.cleaned_automated_runs if test(si)]
 
     def count_labnumber(self, ln):
-        ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
+        ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
         i = 0
-        for _ in groupby(ans, key=lambda x: x.user_defined_aliquot):
+
+        def key(x):
+            return x.user_defined_aliquot
+
+        ans = sorted(ans, key=key)
+        for _ in groupby(ans, key=key):
             i += 1
         return i
 

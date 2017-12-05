@@ -140,10 +140,10 @@ class PychronLaserManager(EthernetLaserManager):
         return self._ask('AcquireGrainPolygonBlob')
 
     def start_measure_grain_polygon(self):
-        return self._ask('StartMeasureGrainPolygon')
+        self._ask('StartMeasureGrainPolygon', verbose=True)
 
     def stop_measure_grain_polygon(self):
-        return self._ask('StopMeasureGrainPolygon')
+        self._ask('StopMeasureGrainPolygon', verbose=True)
 
     def get_grain_polygon_blob(self):
         blobs = []

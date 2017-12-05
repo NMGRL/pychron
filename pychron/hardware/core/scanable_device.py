@@ -218,7 +218,7 @@ class ScanableDevice(ViewableDevice):
         from pychron.core.helpers.timer import Timer
 
         self.timer = Timer(period, self.scan)
-        self.info('Scan started')
+        self.info('Scan started {}'.format(self.scan_func))
 
     def save_scan_to_db(self):
         from pychron.database.adapters.device_scan_adapter import DeviceScanAdapter

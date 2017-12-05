@@ -21,89 +21,19 @@ import time
 
 
 # =============local library imports  ==========================
-class BaseGauge(HasTraits):
-    name = Str
-    pressure = Float
-    display_name = Str
-    low = 5e-10
-    high = 1e-8
-    color_scalar = 1
-    width = Int(100)
+from pychron.hardware.gauges.base_controller import BaseGaugeController
 
 
-class BaseMicroIonController(HasTraits):
+class BaseMicroIonController(BaseGaugeController):
     address = '01'
-    gauges = List
-    display_name = Str
-    gauge_klass = BaseGauge
     mode = 'rs485'
 
     def load_additional_args(self, config, *args, **kw):
         self.address = self.config_get(config, 'General', 'address', optional=False)
         self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
         self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
-
-        ns = self.config_get(config, 'Gauges', 'names')
-        if ns:
-            ans = self.config_get(config, 'Gauges', 'display_names', optional=True)
-            if not ans:
-                ans = ns
-
-            lows = self.config_get(config, 'Gauges', 'lows', optional=True, default='1e-10, 1e-3, 1e-3')
-            highs = self.config_get(config, 'Gauges', 'highs', optional=True, default='1e-6, 1, 1')
-            cs = self.config_get(config, 'Gauges', 'color_scalars', optional=True, default='1, 1, 1')
-
-            for gi in zip(*map(lambda x: x.split(','), (ns, ans, lows, highs, cs))):
-                ni, ai, li, hi, ci = map(str.strip, gi)
-
-                g = self.gauge_klass(name=ni, display_name=ai)
-                try:
-                    g.low = float(li)
-                except ValueError, e:
-                    self.warning_dialog('Invalid lows string. {}'.format(e), title=self.config_path)
-                    continue
-
-                try:
-                    g.high = float(hi)
-                except ValueError, e:
-                    self.warning_dialog('Invalid highs string. {}'.format(e), title=self.config_path)
-                    continue
-                try:
-                    g.color_scalar = int(ci)
-                except ValueError, e:
-                    self.warning_dialog('Invalid color_scalar string. {}'.format(e), title=self.config_path)
-                    continue
-
-                p = '{}_pressure'.format(ni)
-                self.add_trait(p, Float)
-                g.on_trait_change(self._pressure_change, 'pressure')
-
-                self.gauges.append(g)
-
+        self._load_gauges(config)
         return True
-
-    def _pressure_change(self, obj, name, old, new):
-        self.trait_set(**{'{}_pressure'.format(obj.name): new})
-
-    def get_gauge(self, name):
-        return next((gi for gi in self.gauges
-                     if gi.name == name or gi.display_name == name), None)
-
-    def _set_gauge_pressure(self, name, v):
-        g = self.get_gauge(name)
-        if g is not None:
-            try:
-                g.pressure = float(v)
-            except (TypeError, ValueError):
-                pass
-
-    def get_pressure(self, name, force=False, verbose=False):
-        gauge = self.get_gauge(name)
-        if gauge is not None:
-            if force:
-                self._update_pressure(name, verbose)
-
-            return gauge.pressure
 
     def get_pressures(self, verbose=False):
         kw = {'verbose': verbose, 'force': True}
@@ -171,21 +101,8 @@ class BaseMicroIonController(HasTraits):
             r = r.split(',')
         return r
 
-    def _get_pressure(self, name, verbose=False, force=False):
-        if self._scanning and not force:
-            attr = '{}_pressure'.format(name)
-            if hasattr(self, attr):
-                return getattr(self, attr)
-
-        return self._read_pressure(name, verbose)
-
-    def _update_pressure(self, name, verbose):
-        gauge = self.get_gauge(name)
-        if gauge:
-            p = self._read_pressure(name, verbose)
-            gauge.pressure = float(p)
-
-    def _read_pressure(self, name, verbose=False):
+    def _read_pressure(self, gauge, verbose=False):
+        name = gauge.name
         key = 'DS'
         cmd = self._build_command(key, name)
 

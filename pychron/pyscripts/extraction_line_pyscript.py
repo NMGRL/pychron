@@ -924,8 +924,8 @@ class ExtractionPyScript(ValvePyScript):
     def _abort_hook(self):
         self.disable()
 
-    def _cancel_hook(self):
-        self.disable()
+    # def _cancel_hook(self):
+    #     self.disable()
 
     def _get_device(self, name):
         app = self._get_application()
@@ -992,6 +992,7 @@ class ExtractionPyScript(ValvePyScript):
 
         # stop patterning
         self._stop_pattern(**kw)
+        self.stop_grain_polygon()
 
     def _stop_pattern(self, protocol=None):
         self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
