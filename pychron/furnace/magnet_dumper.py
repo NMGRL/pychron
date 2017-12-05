@@ -62,9 +62,9 @@ class NMGRLRotaryDumper(BaseDumper):
     rpm = Int
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'nsteps', 'Motion', 'nsteps')
-        self.set_attribute(config, 'rpm', 'Motion', 'rpm')
-        super(NMGRLMagnetDumper, self).load_additional_args(config)
+        self.set_attribute(config, 'nsteps', 'Motion', 'nsteps', cast='int')
+        self.set_attribute(config, 'rpm', 'Motion', 'rpm', cast='int')
+        super(NMGRLRotaryDumper, self).load_additional_args(config)
 
     def energize(self):
         d = json.dumps({'command': 'EnergizeMagnets', 'nsteps': self.nsteps, 'rpm': self.rpm})
