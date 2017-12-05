@@ -30,7 +30,7 @@ SOURCE_CONTROL_PARAMETERS = {'IonEnergy': 'IE',
                              'ESA-Plate': 'ESA-'
                              }
 
-ERRORS = {'E00': 'ERR_SUCCESS',
+ERRORS = {
           'E01': 'ERR_INVALID_COMMAND',
           'E02': 'ERR_INVALID_PARAM',
           'E03': 'ERR_OUT_OF_RANGE',

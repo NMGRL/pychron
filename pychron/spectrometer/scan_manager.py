@@ -434,7 +434,7 @@ class ScanManager(StreamGraphManager):
 
     @property
     def update_period(self):
-        return self.integration_time
+        return self.integration_time * 1.1
 
     # ===============================================================================
     # handlers

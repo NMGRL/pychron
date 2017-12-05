@@ -37,7 +37,7 @@ class NGXMagnet(IsotopxMagnet):
         :return:
         """
         if delay is None:
-            delay = self.settling_time*1000
+            delay = int(self.settling_time*1000)
 
         deflect = ',deflect' if deflect else ''
         self.ask('SetMass {},{}{}'.format(v, delay, deflect))
