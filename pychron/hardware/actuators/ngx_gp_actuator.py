@@ -41,9 +41,9 @@ class NGXGPActuator(GPActuator):
         cmd = 'GetValveStatus {}'.format(obj.address)
 
         s = self.ask(cmd, verbose=verbose)
-
+        print 'get cna state cmd={}, resp={}'.format(cmd, s)
         if s is not None:
-            if s.strip() in 'True':
+            if s.strip() in 'OPEN':
                 return True
             else:
                 return False
@@ -60,7 +60,7 @@ class NGXGPActuator(GPActuator):
         if r is None and globalv.communication_simulation:
             return True
 
-        if r is not None and r.strip() == 'OK':
+        if r is not None and r.strip() == 'E00':
             return self.get_channel_state(obj) is False
 
     def open_channel(self, obj):
@@ -72,7 +72,7 @@ class NGXGPActuator(GPActuator):
         if r is None and globalv.communication_simulation:
             return True
 
-        if r is not None and r.strip() == 'OK':
+        if r is not None and r.strip() == 'E00':
             return self.get_channel_state(obj) is True
 
 # ============= EOF =====================================
