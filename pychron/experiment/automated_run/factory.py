@@ -137,7 +137,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # ===========================================================================
     extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
-    extract_units_names = List(['', 'watts', 'temp', 'percent'])
+    extract_units_names = List(['', 'watts', 'temp', 'percent', 'lumens'])
     _default_extract_units = 'watts'
 
     ramp_duration = EKlass(Float)
