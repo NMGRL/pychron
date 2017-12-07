@@ -310,9 +310,9 @@ class SampleEntry(DVCAble):
                 if not s.name:
                     self.warning_dialog('A Sample name is required')
                     continue
-                if s.project and not s.project.name:
-                    self.warning_dialog('A Project name is required. Skipping {}'.format(s.name))
-                if s.material and not s.material.name:
+                if (s.project and not s.project.name) or not s.project:
+                    self.warning_dialog('A project name is required. Skipping {}'.format(s.name))
+                if (s.material and not s.material.name) or not s.material:
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
 
                 if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name, s.material.name,
