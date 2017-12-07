@@ -622,7 +622,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_material(self, name, grainsize=None):
         with self.session_ctx():
-            a = self.get_material(name)
+            a = self.get_material(name, grainsize)
             if a is None:
                 a = MaterialTbl(name=name, grainsize=grainsize)
                 a = self._add_item(a)

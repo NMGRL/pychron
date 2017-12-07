@@ -315,7 +315,8 @@ class SampleEntry(DVCAble):
                 if (s.material and not s.material.name) or not s.material:
                     self.warning_dialog('A material is required. Skipping {}'.format(s.name))
 
-                if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name, s.material.name,
+                if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name,
+                                  s.material.name,
                                   s.material.grainsize or None,
                                   lat=s.lat, lon=s.lon,
                                   note=s.note):
