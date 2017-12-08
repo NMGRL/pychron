@@ -73,7 +73,7 @@ class GaugeManager(Manager):
         # sp = self.scan_period*1000
         sp = None
         if self.use_update:
-            sp = self.update_period
+            sp = self.update_period*1000
 
         sp = sp or None
         for k in self.devices:
