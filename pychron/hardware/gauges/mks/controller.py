@@ -18,7 +18,11 @@ from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
+import re
 
+ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
+LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
+NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
 
 class Gauge(BaseGauge):
     def traits_view(self):
@@ -70,16 +74,33 @@ class MKSController(BaseGaugeController, CoreDevice):
         cmd = self._build_query('PR{}'.format(channel))
         verbose=True
         r = self.ask(cmd, verbose=verbose)
-        if ' ' in r:
-            try:
-                return map(float, r.split(' '))
-            except ValueError:
-                pass
-        else:
-            try:
-                return float(r)
-            except ValueError:
-                pass
+
+        match =ACK_RE.match(r)
+        if match:
+            v = float(match.group('value'))
+            return v
+
+        for reg in (NO_GAUGE_RE, LO_RE):
+            match = reg.match(r)
+            if match:
+                return 0
+
+        # r = r.split('ACK')
+        # r = r[1]
+        # r = r.split(';')
+        # r = r[0]
+        #
+        # if ' ' in r:
+        #     try:
+        #         return map(float, r.split(' '))
+        #     except ValueError:
+        #         pass
+        # else:
+        #     try:
+        #         return float(r)
+        #         print(float(r))
+        #     except ValueError:
+        #         pass
 
     def _build_query(self, cmd):
         return self._build_command('{}?'.format(cmd))
