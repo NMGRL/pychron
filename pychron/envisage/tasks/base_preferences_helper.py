@@ -19,7 +19,7 @@ import re
 
 from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property
+from traits.api import List, Button, Any, Int, Str, Enum, Color, String, Property, BaseStr
 from traitsui.api import View, VGroup, UItem, HGroup, Item
 from traitsui.list_str_adapter import ListStrAdapter
 
@@ -58,7 +58,7 @@ class BasePreferencesHelper(PreferencesHelper):
     #     return value
 
 
-REPO_REGEX = re.compile(r'^[^\\]\w+/\w+')
+REPO_REGEX = re.compile(r'^\w+[\w\-\_]*\/\w+$')
 
 
 def test_connection_item():
@@ -79,9 +79,19 @@ def remote_status_item(label=None):
     return grp
 
 
+class RepoString(BaseStr):
+
+    def validate(self, obj, name, value):
+        if REPO_REGEX.match(value):
+            return value
+        else:
+            self.error(obj, name, value)
+
+
 class GitRepoPreferencesHelper(BasePreferencesHelper):
-    remote = Property(String, depends_on='_remote')
-    _remote = String
+    #remote = Property(String, depends_on='_remote')
+#    _remote = String
+    remote = RepoString
     test_connection = Button
     _remote_status = Str
     _remote_status_color = Color
@@ -89,6 +99,7 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     def _test_connection_fired(self):
         import urllib2
 
+        print 'fffff', self.remote
         if self.remote.strip():
             try:
                 cmd = 'https://github.com/{}.git'.format(self.remote)
@@ -106,19 +117,19 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     def _connection_hook(self):
         pass
 
-    def _set_remote(self, v):
-        if v is not None:
-            self._remote = v
-
-    def _get_remote(self):
-        return self._remote
-
-    def _validate_remote(self, v):
-        if not v.strip():
-            return ''
-
-        if REPO_REGEX.match(v):
-            return v
+    # def _set_remote(self, v):
+    #     if v is not None:
+    #         self._remote = v
+    #
+    # def _get_remote(self):
+    #     return self._remote
+    #
+    # def _validate_remote(self, v):
+    #     if not v.strip():
+    #         return ''
+    #
+    #     if REPO_REGEX.match(v):
+    #         return v
 
 
 class FavoritesPreferencesHelper(BasePreferencesHelper):

@@ -92,6 +92,7 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
     def __init__(self, *args, **kw):
         super(UpdatePreferencesHelper, self).__init__(*args, **kw)
+        print 'asdfsfsfsadf', self.remote
         if self.remote:
             self._connection_hook()
 
