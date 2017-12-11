@@ -20,14 +20,14 @@ import unittest
 
 import datetime
 
-from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCSource
+from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCMAPSource
 from pychron.data_mapper.tests import fget_data_dir
 
 
 class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.src = USGSVSCSource()
+        cls.src = USGSVSCMAPSource()
         p = os.path.join(fget_data_dir(), 'IRR330.txt')
         cls.src.irradiation_path = p
         cls.spec = cls.src.get_irradiation_import_spec()
@@ -58,38 +58,38 @@ class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
 class USGSVSCFileSourceUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.src = USGSVSCSource()
-        p = os.path.join(fget_data_dir(), '16F0203A.TXT')
+        cls.src = USGSVSCMAPSource()
+        p = os.path.join(fget_data_dir(), '16Z0071', '16K0071A.TXT')
         cls.src.path = p
         cls.spec = cls.src.get_analysis_import_spec()
 
     def test_runid(self):
-        self.assertEqual(self.spec.run_spec.runid, '16F0203A')
+        self.assertEqual(self.spec.run_spec.runid, '16K0071-01A')
 
     def test_irradiation(self):
-        self.assertEqual(self.spec.run_spec.irradiation, 'IRR351')
+        self.assertEqual(self.spec.run_spec.irradiation, 'IRR347')
 
     def test_level(self):
-        self.assertEqual(self.spec.run_spec.irradiation_level, 'OQ')
+        self.assertEqual(self.spec.run_spec.irradiation_level, 'A')
 
     def test_sample(self):
-        self.assertEqual(self.spec.run_spec.sample, 'TM-13-04')
+        self.assertEqual(self.spec.run_spec.sample, 'GA1550')
 
     def test_material(self):
-        self.assertEqual(self.spec.run_spec.material, 'Andesite')
+        self.assertEqual(self.spec.run_spec.material, 'Bio')
 
     def test_project(self):
-        self.assertEqual(self.spec.run_spec.project, 'Pagan')
+        self.assertEqual(self.spec.run_spec.project, 'Std')
 
     def test_j(self):
-        self.assertEqual(self.spec.j, 0.000229687907897)
+        self.assertEqual(self.spec.j, 0.0045)
 
     def test_j_err(self):
-        self.assertEqual(self.spec.j_err, 0.00000055732)
+        self.assertEqual(self.spec.j_err, 1e-07)
 
     def test_timestamp(self):
-        ts = self.spec.run_spec.analysis_timestamp
-        self.assertEqual(ts.month, 7)
+        ts = self.spec.timestamp
+        self.assertEqual(ts.month, 3)
 
     def test_40_count_xs(self):
         self._test_count_xs('Ar40', 40)
@@ -98,22 +98,22 @@ class USGSVSCFileSourceUnittest(unittest.TestCase):
         self._test_count_ys('Ar40', 40)
 
     def test_39_count_xs(self):
-        self._test_count_xs('Ar39', 40)
+        self._test_count_xs('Ar39', 50)
 
     def test_39_count_ys(self):
-        self._test_count_ys('Ar39', 40)
+        self._test_count_ys('Ar39', 50)
 
     def test_38_count_xs(self):
-        self._test_count_xs('Ar38', 5)
+        self._test_count_xs('Ar38', 10)
 
     def test_38_count_ys(self):
-        self._test_count_ys('Ar38', 5)
+        self._test_count_ys('Ar38', 10)
 
     def test_37_count_xs(self):
-        self._test_count_xs('Ar37', 5)
+        self._test_count_xs('Ar37', 10)
 
     def test_37_count_ys(self):
-        self._test_count_ys('Ar37', 5)
+        self._test_count_ys('Ar37', 10)
 
     def test_36_count_xs(self):
         self._test_count_xs('Ar36', 80)
@@ -131,7 +131,7 @@ class USGSVSCFileSourceUnittest(unittest.TestCase):
 
     def test_discrimination(self):
         disc = self.spec.discrimination
-        self.assertEqual(disc, 1.0505546075085326)
+        self.assertEqual(disc, 1.0462399093612802)
 
 
 if __name__ == '__main__':

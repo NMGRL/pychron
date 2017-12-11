@@ -16,8 +16,7 @@
 from envisage.service_offer import ServiceOffer
 from traits.api import List, Dict
 
-# from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCSource
-from pychron.data_mapper.sources.vfile_source import ViewUSGSVSCSource
+from pychron.data_mapper.sources.vfile_source import ViewUSGSVSCMAPSource
 from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
@@ -25,7 +24,7 @@ class USGSVSCDataPlugin(BasePlugin):
     sources = List(contributes_to='pychron.entry.data_sources')
 
     def _sources_default(self):
-        return [('USGSVSC', ViewUSGSVSCSource()),]
+        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource) ]
 
     # service_offers = List(contributes_to='envisage.service_offers')
     #

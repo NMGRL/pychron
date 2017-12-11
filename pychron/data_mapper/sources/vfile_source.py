@@ -14,10 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, VGroup, UItem
-from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCSource
+from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCMAPSource
 
+class ViewUSGSVSCNuSource(USGSVSCNuSource):
+    def traits_view(self):
+        return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
+                           VGroup(UItem('path'), show_border=True, label='File')))
 
-class ViewUSGSVSCSource(USGSVSCSource):
+    def irradiation_view(self):
+        v = View(VGroup(UItem('irradiation_path'), show_border=True, label='File'))
+        return v
+
+class ViewUSGSVSCMAPSource(USGSVSCMAPSource):
     def traits_view(self):
         return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
                            VGroup(UItem('path'), show_border=True, label='File')))

@@ -21,7 +21,7 @@ def suite():
     from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase1
     from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
     from pychron.spectrometer.tests.mftable import MFTableTestCase, DiscreteMFTableTestCase
-    from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest
+    from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest, USGSVSCIrradiationSourceUnittest
     from pychron.data_mapper.tests.nu_file_source import NuFileSourceUnittest
     from pychron.data_mapper.tests.nmgrl_legacy_source import NMGRLLegacySourceUnittest
     from pychron.experiment.tests.peak_hop_parse import PeakHopTxtCase
@@ -61,10 +61,10 @@ def suite():
 
     tests = (
              # data mappers
-
              NuFileSourceUnittest,
              USGSVSCFileSourceUnittest,
              NMGRLLegacySourceUnittest,
+             USGSVSCIrradiationSourceUnittest,
 
              MFTableTestCase,
              DiscreteMFTableTestCase,
