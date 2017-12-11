@@ -207,6 +207,7 @@ class DVCPersister(BasePersister):
 
         # stage files
         dvc = self.dvc
+
         if self.stage_files:
             if commit:
                 try:

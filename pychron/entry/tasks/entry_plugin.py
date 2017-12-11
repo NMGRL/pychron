@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List
+from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
@@ -27,7 +29,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     GenerateTrayAction, \
     ImportIrradiationHolderAction, ExportIrradiationAction, ImportIrradiationAction, \
     TransferJAction, ImportSamplesAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
-    GenerateStatusReportAction
+    GenerateStatusReportAction, ImportAnalysesAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
@@ -39,6 +41,8 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 class EntryPlugin(BaseTaskPlugin):
     id = 'pychron.entry.plugin'
+
+    data_sources = ExtensionPoint(List, id='pychron.entry.data_sources')
 
     def _help_tips_default(self):
         return ['Use <b>Entry>Labnumber</b> to add/edit irradiation information including '
@@ -109,7 +113,7 @@ class EntryPlugin(BaseTaskPlugin):
                  'Entry Tools',
                  [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
+                  # SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
                                  path=g2path),
@@ -130,6 +134,8 @@ class EntryPlugin(BaseTaskPlugin):
                                  path=spath, after='pychron.entry1.sample_prep'),
                   SchemaAddition(id='pychron.entry1.project', factory=ProjectAction,
                                  path=gpath),
+                  SchemaAddition(id='pychron.entry2.import_analyses', factory=ImportAnalysesAction, path=g2path),
+                  SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry1.make_template', factory=MakeIrradiationTemplateAction,
                                  path=g2path),
                   SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,

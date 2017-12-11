@@ -684,15 +684,17 @@ class DVCDatabase(DatabaseAdapter):
             return dblevel
 
     def add_principal_investigator(self, name):
-        pi = self.get_principal_investigator(name)
-        if pi is None:
-            if ',' in name:
-                last_name, fi = name.split(',')
-                pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
-            else:
-                pi = PrincipalInvestigatorTbl(last_name=name)
-            pi = self._add_item(pi)
-        return pi
+        with self.session_ctx():
+            pi = self.get_principal_investigator(name)
+            if pi is None:
+                if ',' in name:
+                    last_name, fi = name.split(',')
+                    pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
+                else:
+                    pi = PrincipalInvestigatorTbl(last_name=name)
+                pi = self._add_item(pi)
+                print 'adding', pi
+            return pi
 
     def add_project(self, name, principal_investigator=None, **kw):
         with self.session_ctx():
@@ -717,7 +719,9 @@ class DVCDatabase(DatabaseAdapter):
                 if identifier:
                     a.identifier = str(identifier)
 
+                print 'level', self.get_irradiation_level(irrad, level)
                 a.level = self.get_irradiation_level(irrad, level)
+
                 dbpos = self._add_item(a)
             else:
                 self.debug('Irradiation position exists {}{} {}'.format(irrad, level, pos))

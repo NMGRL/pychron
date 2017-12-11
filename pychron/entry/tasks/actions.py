@@ -125,7 +125,43 @@ class PreviewGenerateIdentifiersAction(TaskAction):
 class ImportIrradiationAction(TaskAction):
     name = 'Import Irradiation...'
     dname = 'Import Irradiation'
-    method = 'import_irradiation'
+    # method = 'import_irradiation'
+
+    def perform(self, event):
+        app = event.task.window.application
+        # mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        # mssource = app.get_service(mdb)
+        # mssource.bind_preferences()
+
+        from pychron.data_mapper import do_import_irradiation
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+        plugin = app.get_plugin('pychron.entry.plugin')
+
+        sources = {obj: name for name, obj in plugin.data_sources}
+        do_import_irradiation(dvc=dvc, sources=sources, default_source='Mass Spec')
+
+
+class ImportAnalysesAction(Action):
+    name = 'Import Analyses...'
+    dname = 'Import Analyses'
+
+    # method = 'import_analyses'
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service('pychron.dvc.dvc.DVC')
+
+        from pychron.data_mapper import do_import_analyses
+
+        # sources = {}
+        # usgsvsc = app.get_service('pychron.data_mapper.sources.usgs_vsc_source.ViewUSGSVSCSource')
+        # sources[usgsvsc] = 'USGS VSC'
+
+        plugin = app.get_plugin('pychron.entry.plugin')
+        sources = {obj: name for name, obj in plugin.data_sources}
+
+        repos = dvc.get_repository_identifiers()
+        do_import_analyses(dvc, sources, repos)
 
 
 class GenerateTrayAction(TaskAction):
@@ -227,7 +263,7 @@ class ImportIrradiationHolderAction(Action):
     dname = 'Import Irradiation Holder'
 
     def perform(self, event):
-        from pychron.entry.loaders.irradiation_holder_loader import IrradiationHolderLoader
+        from pychron.entry.irradiation_holder_loader import IrradiationHolderLoader
         from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
         man = IsotopeDatabaseManager()

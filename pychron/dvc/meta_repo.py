@@ -427,12 +427,18 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(paths.meta_root, irrad, 'productions.json')
 
         obj = dvc_load(p)
-        if obj[level] != production:
-            self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level,
-                                                                                  production))
+        if level in obj:
+            if obj[level] != production:
+                self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level,
+                                                                                      production))
+                obj[level] = production
+                dvc_dump(obj, p)
+
+                if add:
+                    self.add(p, commit=False)
+        else:
             obj[level] = production
             dvc_dump(obj, p)
-
             if add:
                 self.add(p, commit=False)
 
@@ -477,8 +483,8 @@ class MetaRepo(GitRepoManager):
             positions = jd
             z = 0
         else:
-            positions = jd['positions']
-            z = jd['z']
+            positions = jd.get('positions', [])
+            z = jd.get('z', 0)
 
         pd = next((p for p in positions if p['position'] == pos), None)
         if pd is None:
@@ -701,7 +707,7 @@ class MetaRepo(GitRepoManager):
         p = self._gain_path(name)
         return Gains(p)
 
-    #@cached('clear_cache')
+    # @cached('clear_cache')
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
@@ -712,7 +718,7 @@ class MetaRepo(GitRepoManager):
         # print 'new production id={}, name={}, irrad={}, level={}'.format(id(ip), pname, irrad, level)
         return pname, ip
 
-    #@cached('clear_cache')
+    # @cached('clear_cache')
     def get_chronology(self, name, **kw):
         return irradiation_chronology(name)
 

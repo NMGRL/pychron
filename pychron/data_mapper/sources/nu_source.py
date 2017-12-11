@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from datetime import datetime
+from traits.api import File
 
+
+from datetime import datetime
 from numpy import array
 
 from pychron.data_mapper.sources.file_source import FileSource
@@ -24,8 +26,10 @@ from pychron.processing.isotope_group import IsotopeGroup
 
 
 class NuFileSource(FileSource):
-    def get_analysis_import_spec(self, p, pnice, delimiter=None):
-        f = self.file_gen(p, delimiter)
+    nice_path = File
+
+    def get_analysis_import_spec(self, delimiter=None):
+        f = self.file_gen(delimiter)
         pspec = self.new_persistence_spec()
         rspec = pspec.run_spec
 
@@ -90,7 +94,7 @@ class NuFileSource(FileSource):
 
         signals = array(signals)
 
-        with open(pnice, 'r') as nice:
+        with open(self.nice_path, 'r') as nice:
 
             isotopes = {}
             parser = NiceParser(signals)

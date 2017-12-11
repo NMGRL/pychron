@@ -14,23 +14,31 @@
 # limitations under the License.
 # ===============================================================================
 
+from traits.api import File
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.data_mapper.sources.dvc_source import DVCSource
 
 
 class FileSource(DVCSource):
+    selectable = False
+    path = File
     _delimiter = ','
 
-    def file_gen(self, p, delimiter):
+    def url(self):
+        return '{}:{}'.format(self.__class__.__name__, self.path)
+
+    def file_gen(self, delimiter):
         if delimiter is None:
             delim = self._delimiter
 
         def gen():
-            with open(p, 'r') as rfile:
+            with open(self.path, 'r') as rfile:
                 for line in rfile:
                     yield line.strip().split(delim)
 
         return gen()
 
+    # def traits_view(self):
+    #     return View(VGroup(UItem('path'), show_border=True, label='File'))
 # ============= EOF =============================================

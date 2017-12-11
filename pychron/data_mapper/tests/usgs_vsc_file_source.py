@@ -18,16 +18,50 @@
 import os
 import unittest
 
-from pychron.data_mapper.sources.usgs_menlo_source import USGSMenloSource
+import datetime
+
+from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCSource
 from pychron.data_mapper.tests import fget_data_dir
 
 
-class USGSMenloFileSourceUnittest(unittest.TestCase):
+class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.src = USGSMenloSource()
+        cls.src = USGSVSCSource()
+        p = os.path.join(fget_data_dir(), 'IRR330.txt')
+        cls.src.irradiation_path = p
+        cls.spec = cls.src.get_irradiation_import_spec()
+
+    def test_name(self):
+        self.assertEqual('IRR330', self.spec.irradiation.name)
+
+    def test_doses(self):
+        self.assertEqual([(1.0, datetime.datetime(2014, 9, 23, 9, 13), datetime.datetime(2014, 9, 23, 10, 13))],
+                         self.spec.irradiation.doses, [])
+
+    def test_3637(self):
+        self.assertEqual((2.810000E-4, 6.21e-6), self.spec.irradiation.levels[0].production.Ca3637)
+
+    def test_4039(self):
+        self.assertEqual((1.003E-3, 3.79e-4), self.spec.irradiation.levels[0].production.K4039)
+
+    def test_3937(self):
+        self.assertEqual((7.10E-4, 4.96e-5), self.spec.irradiation.levels[0].production.Ca3937)
+
+    def test_3837(self):
+        self.assertEqual((3.29E-5, 7.5e-6), self.spec.irradiation.levels[0].production.Ca3837)
+
+    def test_3839(self):
+        self.assertEqual((1.314E-2, 1.2e-5), self.spec.irradiation.levels[0].production.K3839)
+
+
+class USGSVSCFileSourceUnittest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.src = USGSVSCSource()
         p = os.path.join(fget_data_dir(), '16F0203A.TXT')
-        cls.spec = cls.src.get_analysis_import_spec(p)
+        cls.src.path = p
+        cls.spec = cls.src.get_analysis_import_spec()
 
     def test_runid(self):
         self.assertEqual(self.spec.run_spec.runid, '16F0203A')

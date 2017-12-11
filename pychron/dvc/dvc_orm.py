@@ -350,7 +350,7 @@ class LevelTbl(Base, NameMixin):
 class IrradiationTbl(Base, NameMixin):
     id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
-    create_date = Column(TIMESTAMP)
+    create_date = Column(TIMESTAMP, default=func.now())
 
 
 class IrradiationPositionTbl(Base, BaseMixin):

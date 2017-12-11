@@ -131,20 +131,22 @@ class LabnumberEntry(DVCIrradiationable):
     def activated(self):
         pass
 
-    def import_irradiation(self):
-        self.debug('import irradiation')
+    # def import_irradiation(self):
+    #     self.debug('import irradiation')
         # from pychron.entry.dvc_import import do_import_irradiation
 
-        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
-        mssource = self.application.get_service(mdb)
-        mssource.bind_preferences()
+        # mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        # mssource = self.application.get_service(mdb)
+        # mssource.bind_preferences()
+        #
+        # from pychron.data_mapper import do_import_irradiation
+        # do_import_irradiation(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
+        # self.updated = True
 
-        from pychron.data_mapper import do_import_irradiation
-        do_import_irradiation(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
-        self.updated = True
-
-    def import_analyses(self):
-        self.info('import analyses')
+    # def import_analyses(self):
+    #     self.info('import analyses')
+    #     from pychron.data_mapper import do_import_analyses
+    #     do_import_analyses(dvc=self.dvc)
 
     def import_irradiation_load_xls(self, p):
         self.info('import irradiation file: {}'.format(p))

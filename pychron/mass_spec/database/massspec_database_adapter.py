@@ -80,7 +80,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     #
     #     return MassSpecSelector
     def get_irradiation_import_spec(self, name):
-        from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
+        from pychron.data_mapper.import_spec import ImportSpec, Irradiation, Level, \
             Sample, Project, Position, Production
         spec = ImportSpec()
 

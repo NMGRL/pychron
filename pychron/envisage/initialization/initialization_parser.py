@@ -97,6 +97,10 @@ class InitializationParser(XMLParser):
         tree = self.get_root()
         tree = tree.find('plugins')
         cat = tree.find(category)
+        if not cat:
+            tree.append(self.new_element(category, None))
+            cat = tree.find(category)
+
         cat.append(self.new_element('plugin', name, enabled=enabled))
         if save:
             self.save()

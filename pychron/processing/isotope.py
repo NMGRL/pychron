@@ -237,6 +237,9 @@ class IsotopicMeasurement(BaseMeasurement):
         for k, v in kw.iteritems():
             setattr(self, k, v)
 
+    def set_fit_error_type(self, e):
+        self.attr_set(error_type=e)
+
     def set_fit(self, fit, notify=True):
         if fit is not None:
             self.user_defined_value = False
@@ -604,9 +607,12 @@ class Isotope(BaseIsotope):
 
         return v
 
-    def set_blank(self, v, e):
+    def set_ublank(self, v):
         self.blank = Blank(self.name, self.detector)
-        self.blank.set_uvalue((v, e))
+        self.blank.set_uvalue(v)
+
+    def set_blank(self, v, e):
+        self.set_ublank((v, e))
 
     def set_baseline(self, v, e):
         self.baseline = Baseline(self.name, self.detector)

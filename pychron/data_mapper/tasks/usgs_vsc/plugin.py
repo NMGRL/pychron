@@ -13,14 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.data_mapper.sources.file_source import FileSource
+from envisage.service_offer import ServiceOffer
+from traits.api import List, Dict
+
+# from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCSource
+from pychron.data_mapper.sources.vfile_source import ViewUSGSVSCSource
+from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
-class NMGRLLegacySource(FileSource):
-    def get_analysis_import_spec(self):
-        pspec = self.new_persistence_spec()
-        return pspec
+class USGSVSCDataPlugin(BasePlugin):
+    sources = List(contributes_to='pychron.entry.data_sources')
 
+    def _sources_default(self):
+        return [('USGSVSC', ViewUSGSVSCSource()),]
 
-
+    # service_offers = List(contributes_to='envisage.service_offers')
+    #
+    # def _service_offers_default(self):
+    #     so = ServiceOffer(protocol='pychron.data_mapper.sources.usgs_vsc_source.ViewUSGSVSCSource',
+    #                       factory=ViewUSGSVSCSource)
+    #     return [so,]
 # ============= EOF =============================================

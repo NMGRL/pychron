@@ -37,4 +37,7 @@ class DVCSource(Loggable):
 
     def get_irradiation_names(self):
         pass
+
+    def url(self):
+        pass
 # ============= EOF =============================================

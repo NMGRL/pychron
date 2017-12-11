@@ -48,6 +48,9 @@ PACKAGE_DICT = dict(
 
     ClassifierPlugin='pychron.classifier.tasks.plugin',
 
+    # data mappers
+    USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
+
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',

@@ -28,7 +28,9 @@ class NuFileSourceUnittest(unittest.TestCase):
         cls.src = NuFileSource()
         p = os.path.join(fget_data_dir(), 'Data_NAG1072.RUN')
         pnice = os.path.join(fget_data_dir(), 'wiscar.nice')
-        cls.spec = cls.src.get_analysis_import_spec(p, pnice)
+        cls.src.path = p
+        cls.src.nice_path = pnice
+        cls.spec = cls.src.get_analysis_import_spec()
 
     # def test_runid(self):
     #     self.assertEqual(self.spec.run_spec.runid, '16F0203A')
