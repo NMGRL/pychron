@@ -14,7 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, VGroup, UItem
-from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCMAPSource
+from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCMAPSource, USGSVSCNuSource
+
 
 class ViewUSGSVSCNuSource(USGSVSCNuSource):
     def traits_view(self):
