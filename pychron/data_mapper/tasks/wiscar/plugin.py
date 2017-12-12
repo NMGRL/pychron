@@ -13,9 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.data_mapper.sources.nu_source import NuFileSource
+from traits.api import List, Dict
+from traitsui.api import View, UItem, VGroup
+from pychron.data_mapper.sources.wiscar_source import WiscArNuSource
+from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
-class WiscArNuSource(NuFileSource):
+class ViewWiscArNuSource(WiscArNuSource):
     pass
+
+
+class WiscArDataPlugin(BasePlugin):
+    sources = List(contributes_to='pychron.entry.data_sources')
+
+    def _sources_default(self):
+        return [('WiscAr Nu', ViewWiscArNuSource()), ]
+
 # ============= EOF =============================================

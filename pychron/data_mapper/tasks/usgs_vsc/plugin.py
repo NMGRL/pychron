@@ -13,23 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from envisage.service_offer import ServiceOffer
 from traits.api import List, Dict
+from traitsui.api import View, UItem, VGroup
 
-from pychron.data_mapper.sources.vfile_source import ViewUSGSVSCMAPSource
+from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCNuSource, USGSVSCMAPSource
 from pychron.envisage.tasks.base_plugin import BasePlugin
+
+
+class ViewUSGSVSCNuSource(USGSVSCNuSource):
+    def traits_view(self):
+        return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
+                           VGroup(UItem('path'), show_border=True, label='File')))
+
+    def irradiation_view(self):
+        v = View(VGroup(UItem('irradiation_path'), show_border=True, label='File'))
+        return v
+
+
+class ViewUSGSVSCMAPSource(USGSVSCMAPSource):
+    def traits_view(self):
+        return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
+                           VGroup(UItem('path'), show_border=True, label='File')))
+
+    def irradiation_view(self):
+        v = View(VGroup(UItem('irradiation_path'), show_border=True, label='File'))
+        return v
 
 
 class USGSVSCDataPlugin(BasePlugin):
     sources = List(contributes_to='pychron.entry.data_sources')
 
     def _sources_default(self):
-        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource) ]
+        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource)]
 
-    # service_offers = List(contributes_to='envisage.service_offers')
-    #
-    # def _service_offers_default(self):
-    #     so = ServiceOffer(protocol='pychron.data_mapper.sources.usgs_vsc_source.ViewUSGSVSCSource',
-    #                       factory=ViewUSGSVSCSource)
-    #     return [so,]
 # ============= EOF =============================================

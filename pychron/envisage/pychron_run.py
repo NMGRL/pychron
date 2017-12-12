@@ -50,6 +50,7 @@ PACKAGE_DICT = dict(
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
+    WiscArDataPlugin='pychron.data_mapper.tasks.wisc_ar.plugin',
 
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',
