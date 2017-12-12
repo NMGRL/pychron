@@ -62,7 +62,7 @@ class AutomatedRunDurationTracker(Loggable):
         self._frequencies = freq
 
     def update(self, run, t):
-        rh = run.spec.script_hash_truncated
+        rh = run.spec.script_hash
         self.debug('update duration runid={}, duration={}, md5={}'.format(run.spec.runid, t, rh[:8]))
 
         p = paths.duration_tracker
