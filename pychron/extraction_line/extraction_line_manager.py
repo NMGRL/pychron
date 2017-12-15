@@ -251,6 +251,7 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def refresh_canvas(self):
+        self.debug('refresh canvas')
         for ci in self.canvases:
             ci.refresh()
 
@@ -291,15 +292,15 @@ class ExtractionLineManager(Manager, Consoleable):
                         vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        # self.debug(
-        #     'update switch state {} {} args={} kw={} ncanvase={}'.format(name, state, args, kw, len(self.canvases)))
+        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+
         if self.use_network:
             self.network.set_valve_state(name, state)
             for c in self.canvases:
                 self.network.set_canvas_states(c, name)
 
         for c in self.canvases:
-            c.update_switch_state(name, state, *args)
+            c.update_switch_state(name, state, *args, **kw)
 
     def update_switch_lock_state(self, *args, **kw):
         for c in self.canvases:
@@ -515,10 +516,10 @@ class ExtractionLineManager(Manager, Consoleable):
     #     self.switch_manager.load_indicator_states()
     #     self._trigger_update()
 
-    def _refresh_canvas(self):
-        self.refresh_canvas()
-        if self._active:
-            do_after(200, self._refresh_canvas)
+    # def _refresh_canvas(self):
+    #     self.refresh_canvas()
+    #     if self._active:
+    #         do_after(200, self._refresh_canvas)
 
     def _deactivate_hook(self):
         pass
@@ -579,8 +580,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.refresh_canvas()
             return True
 
-    def _open_close_valve(self, name, action,
-                          description=None, address=None, mode='remote', **kw):
+    def _open_close_valve(self, name, action, description=None, address=None, mode='remote', **kw):
         vm = self.switch_manager
         if vm is not None:
             oname = name
@@ -596,6 +596,10 @@ class ExtractionLineManager(Manager, Consoleable):
                 return False, False
 
             result = self._change_switch_state(name, mode, action, **kw)
+
+            self.debug('open_close_valve, mode={}'.format(mode))
+            if mode == 'script':
+                do_after(200, self.refresh_canvas)
 
             if result:
                 if all(result):
