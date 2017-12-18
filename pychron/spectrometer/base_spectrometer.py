@@ -17,7 +17,7 @@ import os
 from random import random
 
 from numpy import array
-from traits.api import Any, cached_property, List, TraitError, Str, Property
+from traits.api import Any, cached_property, List, TraitError, Str, Property, Bool
 
 from pychron.core.helpers.filetools import list_directory2
 from pychron.globals import globalv
@@ -50,6 +50,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
     spectrometer_configuration = Str
     spectrometer_configurations = List
+
+    use_deflection_correction = Bool(True)
 
     _connection_status = False
     _saved_integration = None
@@ -134,6 +136,77 @@ class BaseSpectrometer(SpectrometerDevice):
         if self._saved_integration:
             self.set_integration_time(self._saved_integration)
             self._saved_integration = None
+
+    def correct_dac(self, det, dac, current=True):
+        """
+            correct for deflection
+            correct for hv
+        """
+        # correct for deflection
+        if self.use_deflection_correction:
+            dev = det.get_deflection_correction(current=current)
+            dac += dev
+
+        # correct for hv
+        # dac *= self.get_hv_correction(current=current)
+        dac = self.get_hv_correction(dac, current=current)
+        return dac
+
+    def uncorrect_dac(self, det, dac, current=True):
+        """
+                inverse of correct_dac
+        """
+
+        ndac = self.get_hv_correction(dac, uncorrect=True, current=current)
+        if self.use_deflection_correction:
+            ndac -= det.get_deflection_correction(current=current)
+        return ndac
+
+    def get_hv_correction(self, dac, uncorrect=False, current=False):
+        """
+        ion optics correction::
+
+            r=M*v_o/(q*B_o)
+            r=M*v_c/(q*B_c)
+
+            E=m*v^2/2
+            v=(2*E/m)^0.5
+
+            v_o/B_o = v_c/B_c
+            B_c = B_o*v_c/v_o
+
+            B_c = B_o*(E_c/E_o)^0.5
+
+            B_o = B_c*(E_o/E_c)^0.5
+
+            E_o = nominal hv
+            E_c = current hv
+            B_o = nominal dac
+            B_c = corrected dac
+
+        """
+        source = self.source
+        cur = source.current_hv
+        if current:
+            cur = source.read_hv()
+
+        if cur is None:
+            cor = 1
+        else:
+            try:
+                # cor = source.nominal_hv / cur
+                if uncorrect:
+                    cor = source.nominal_hv / cur
+                else:
+                    cor = cur / source.nominal_hv
+
+                cor **= 0.5
+
+            except ZeroDivisionError:
+                cor = 1
+
+        dac *= cor
+        return dac
 
     def get_parameter_word(self, keys):
         if self.simulation:
