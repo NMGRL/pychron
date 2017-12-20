@@ -548,16 +548,16 @@ class LabnumberEntry(DVCIrradiationable):
 
             proj = ir.project
             mat = ir.material
+            grainsize = ir.grainsize
+            principal_investigator = ir.principal_investigator
             if proj:
-                proj = db.add_project(proj)
+                proj = db.add_project(proj, principal_investigator)
 
             if mat:
-                mat = db.add_material(mat)
+                mat = db.add_material(mat, grainsize=grainsize)
 
             if sam:
-                sam = db.add_sample(sam,
-                                    project=proj,
-                                    material=mat)
+                sam = db.add_sample(sam, proj, principal_investigator, mat, grainsize=grainsize)
                 sam.igsn = ir.igsn
                 dbpos.sample = sam
 
