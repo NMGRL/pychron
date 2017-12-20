@@ -104,6 +104,7 @@ class Updater(Loggable):
             #
 
     def check_for_updates(self, inform=False):
+        self.debug('checking for updates')
         branch = self.branch
         remote = self.remote
         if self.use_tag:
