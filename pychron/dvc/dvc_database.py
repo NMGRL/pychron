@@ -1432,20 +1432,23 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_one(q)
 
     def get_project(self, name, pi=None):
-        if pi:
-            with self.session_ctx() as sess:
+        if isinstance(name, (str, unicode)):
+            if pi:
+                with self.session_ctx() as sess:
+    
+                    q = sess.query(ProjectTbl)
+                    q = q.join(PrincipalInvestigatorTbl)
+                    q = q.filter(ProjectTbl.name == name)
 
-                q = sess.query(ProjectTbl)
-                q = q.join(PrincipalInvestigatorTbl)
-                q = q.filter(ProjectTbl.name == name)
+                    dbpi = self.get_principal_investigator(pi)
+                    if dbpi:
+                        q = principal_investigator_filter(q, pi)
 
-                dbpi = self.get_principal_investigator(pi)
-                if dbpi:
-                    q = principal_investigator_filter(q, pi)
-
-                return self._query_one(q, verbose_query=True)
+                    return self._query_one(q, verbose_query=True)
+            else:
+                return self._retrieve_item(ProjectTbl, name)
         else:
-            return self._retrieve_item(ProjectTbl, name)
+            return name
 
     def get_principal_investigator(self, name):
         with self.session_ctx() as sess:
@@ -1483,6 +1486,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
+            print 'asdfasdf get sample', name, project, pi
             project = self.get_project(project, pi)
             material = self.get_material(material, grainsize)
 

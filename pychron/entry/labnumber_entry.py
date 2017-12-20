@@ -103,6 +103,7 @@ class LabnumberEntry(DVCIrradiationable):
 
     selected_sample = Any
     irradiation_prefix = Str
+    irradiation_project_prefix = Str
 
     dirty = Bool
     suppress_dirty = Bool
@@ -122,7 +123,9 @@ class LabnumberEntry(DVCIrradiationable):
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
-        for key in ('irradiation_prefix', 'monitor_name',
+        for key in ('irradiation_prefix',
+                    'irradiation_project_prefix',
+                    'monitor_name',
                     'monitor_material', 'j_multiplier'):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
@@ -814,13 +817,13 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
         irrad = self._get_irradiation_editor(name=name)
         new_irrad = irrad.add()
         if new_irrad:
-            pname = 'Irradiation-{}'.format(new_irrad)
+            pname = '{}{}'.format(self.irradiation_project_prefix, new_irrad)
             sname = self.monitor_name
 
             def add_default():
                 # add irradiation project for flux monitors
                 self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
-                self.dvc.add_sample(sname, pname, self.monitor_material)
+                self.dvc.add_sample(sname, pname, self.default_principal_investigator, self.monitor_material)
 
             if self.confirmation_dialog('Add default project ({}) and '
                                         'flux monitor sample ({}) for this irradiation?'.format(pname, sname)):

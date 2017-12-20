@@ -552,19 +552,19 @@ class MetaRepo(GitRepoManager):
     def remove_irradiation_position(self, irradiation, level, hole):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
+        if jd:
+            if isinstance(jd, list):
+                positions = jd
+                z = 0
+            else:
+                positions = jd['positions']
+                z = jd['z']
 
-        if isinstance(jd, list):
-            positions = jd
-            z = 0
-        else:
-            positions = jd['positions']
-            z = jd['z']
-
-        # njd = [ji for ji in jd if not ji['position'] == hole]
-        npositions = [ji for ji in positions if not ji['position'] == hole]
-        obj = {'z': z, 'positions': npositions}
-        dvc_dump(obj, p)
-        self.add(p, commit=False)
+            # njd = [ji for ji in jd if not ji['position'] == hole]
+            npositions = [ji for ji in positions if not ji['position'] == hole]
+            obj = {'z': z, 'positions': npositions}
+            dvc_dump(obj, p)
+            self.add(p, commit=False)
 
     def update_fluxes(self, irradiation, level, j, e, add=True):
         p = self.get_level_path(irradiation, level)
@@ -597,8 +597,8 @@ class MetaRepo(GitRepoManager):
             positions = jd
             z = 0
         else:
-            positions = jd['positions']
-            z = jd['z']
+            positions = jd.get('positions', [])
+            z = jd.get('z', 0)
 
         npos = {'position': pos, 'j': j, 'j_err': e,
                 'mean_j': mj, 'mean_j_err': me,

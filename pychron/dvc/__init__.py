@@ -44,11 +44,14 @@ def dvc_dump(obj, path):
 
 
 def dvc_load(path):
+    ret = {}
     if os.path.isfile(path):
         with open(path, 'r') as rfile:
-            return json.load(rfile)
-    else:
-        return {}
+            try:
+                ret = json.load(rfile)
+            except ValueError:
+                pass
+    return ret
 
 
 MASSES = None
