@@ -151,8 +151,12 @@ class Updater(Loggable):
 
                             conda = os.path.join(binroot, 'conda')
                             cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
-                            subprocess.call([conda, 'update', '-y', '-n', 'pychron', '--file={}'.format(cp)])
 
+                            args = [conda, 'update', '-y', '--file={}'.format(cp)]
+                            if conda_env:
+                                args.extend(('-n', conda_env))
+
+                            subprocess.call(args)
                             pip = os.path.join(binroot, 'pip')
                             pp = os.path.join(root, 'app_utils', 'requirements', 'pip_requirements.txt')
                             subprocess.call([pip, 'install', '-r', pp])
