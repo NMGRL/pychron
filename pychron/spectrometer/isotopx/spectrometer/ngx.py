@@ -40,24 +40,12 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     _test_connect_command = 'GETMASS'
 
+    use_deflection_correction = False
+
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
         return s
-
-    # def finish_loading(self):
-    #     self.microcontroller.bootstrap()
-    #
-    #     resp = self.read()
-    #
-    #     bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
-    #     bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
-    #
-    #     if resp:
-    #         self.info('NGX-{}'.format(resp))
-    #         self.ask('Login {},{}'.format(self.username, self.password))
-    #
-    #     super(NGXSpectrometer, self).finish_loading()
 
     def start(self):
         self.set_integration_time(1, force=True)
