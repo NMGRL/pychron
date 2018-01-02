@@ -32,7 +32,7 @@ class ProcessValue(HasTraits):
     units = Str
     tag = Str
     func_name = Str
-    change_threshold = Float(1e-10)
+    change_threshold = Float(1e-20)
     period = Either(Float, Str)  # "on_change" or number of seconds
     last_time = Float
     last_time_str = Property(depends_on='last_time')
@@ -52,7 +52,6 @@ class ProcessValue(HasTraits):
         ct = time.time()
         tt = 60 * 60  # max time (s) allowed without a measurement taken
         # even if the current value is the same as the last value
-
         threshold = self.change_threshold
         if abs(self.last_value - v) > threshold or (self.last_time and ct - self.last_time > tt):
             # a = abs(self.last_value - v) > threshold
@@ -61,7 +60,6 @@ class ProcessValue(HasTraits):
 
             self.last_value = v
             ret = True
-
 
         return ret
 
@@ -93,6 +91,3 @@ class ProcessValue(HasTraits):
         return r
 
 # ============= EOF =============================================
-
-
-

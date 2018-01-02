@@ -158,7 +158,7 @@ class DashboardServer(Loggable):
                 enabled = to_bool(get_xml_value(v, 'enabled', False))
                 record = to_bool(get_xml_value(v, 'record', False))
                 timeout = get_xml_value(v, 'timeout', 60)
-                threshold = float(get_xml_value(v, 'change_threshold', 1e-10))
+                threshold = float(get_xml_value(v, 'change_threshold', 1e-20))
                 units = get_xml_value(v, 'units', '')
                 bindname = get_xml_value(v, 'bind', '')
                 cs = []
