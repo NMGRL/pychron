@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 from traits.api import File
-
 
 from datetime import datetime
 from numpy import array
 
-from pychron.data_mapper.sources.file_source import FileSource
+from pychron.data_mapper.sources.file_source import FileSource, get_next, get_int
 from pychron.data_mapper.sources.nice_parser import NiceParser
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
@@ -31,19 +31,21 @@ class NuFileSource(FileSource):
     def get_analysis_import_spec(self, delimiter=None):
         f = self.file_gen(delimiter)
         pspec = self.new_persistence_spec()
+
+        pspec.run_spec.uuid = os.path.splitext(os.path.basename(self.path))[0]
+
         rspec = pspec.run_spec
 
         version = next(f)
         ncycles = next(f)
-        total_analysis_time = int(next(f)[1])
+        total_analysis_time = get_int(f, 1)
         start = next(f)
         end = next(f)
         nzeros = next(f)
         nanalysis_cycles = next(f)
         toffset = next(f)
 
-        ts = next(f)[1]
-        rspec.analysis_timestamp = datetime.strptime(ts, '#%Y-%m-%d %H:%M:%S#')
+        pspec.timestamp = datetime.strptime(get_next(f, 1), '#%Y-%m-%d %H:%M:%S#')
 
         collector_gains = next(f)
 
@@ -120,6 +122,5 @@ class NuFileSource(FileSource):
 
         pspec.isotope_group = IsotopeGroup(isotopes=isotopes)
         return pspec
-
 
 # ============= EOF =============================================

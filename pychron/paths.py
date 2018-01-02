@@ -524,14 +524,13 @@ class Paths(object):
 
     def write_file_defaults(self, fs, force=False):
         for p, d, o in fs:
-            print p, d, o
             txt = get_file_text(d)
             try:
                 p = getattr(paths, p)
             except AttributeError, e:
                 print 'write_file_defaults', e
 
-            self.write_default_file(p, txt, o or force)
+            self._write_default_file(p, txt, o or force)
 
     def _write_default_files(self):
         from pychron.file_defaults import DEFAULT_INITIALIZATION, DEFAULT_STARTUP_TESTS, SYSTEM_HEALTH
@@ -542,9 +541,7 @@ class Paths(object):
                      (self.simple_ui_file, SIMPLE_UI_DEFAULT),
                      (self.edit_ui_defaults, EDIT_UI_DEFAULT),
                      (self.task_extensions_file, TASK_EXTENSION_DEFAULT),
-                     (self.identifiers_file, IDENTIFIERS_DEFAULT),
-                     # (self.pipeline_template_file, PIPELINE_TEMPLATES)
-                     ):
+                     (self.identifiers_file, IDENTIFIERS_DEFAULT)):
             overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # overwrite = d in (SYSTEM_HEALTH, SIMPLE_UI_DEFAULT,)
             # print p
@@ -553,7 +550,6 @@ class Paths(object):
     def _write_default_file(self, p, default, overwrite=False):
         if not path.isfile(p) or overwrite:
             with open(p, 'w') as wfile:
-                print 'writing default {}'.format(p)
                 wfile.write(default)
                 return True
 
@@ -583,7 +579,6 @@ def build_directories():
 
 
 def migrate_hidden():
-    print 'migrating hidden directory'
 
     hd = os.path.join(paths.root_dir, '.hidden')
     for root, dirs, files in os.walk(hd):

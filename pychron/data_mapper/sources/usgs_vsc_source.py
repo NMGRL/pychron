@@ -17,11 +17,10 @@ from traits.api import File, Directory
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 from numpy import array
-from uncertainties import ufloat
 import os
 # ============= local library imports  ==========================
 
-from pychron.data_mapper.sources.file_source import FileSource
+from pychron.data_mapper.sources.file_source import FileSource, get_float, get_int, get_next, get_ufloat
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import INTERFERENCE_KEYS
@@ -36,22 +35,6 @@ def make_ed(s):
         ed = 'Furnace'
 
     return ed
-
-
-def get_next(f, idx=0):
-    return next(f)[idx]
-
-
-def get_int(f, idx=0):
-    return int(get_next(f, idx))
-
-
-def get_float(f, idx=0):
-    return float(get_next(f, idx))
-
-
-def get_ufloat(f):
-    return ufloat(*map(float, next(f)))
 
 
 class USGSVSCSource(FileSource):

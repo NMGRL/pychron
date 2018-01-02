@@ -16,8 +16,25 @@
 
 from traits.api import File
 # ============= standard library imports ========================
+from uncertainties import ufloat
 # ============= local library imports  ==========================
 from pychron.data_mapper.sources.dvc_source import DVCSource
+
+
+def get_next(f, idx=0):
+    return next(f)[idx]
+
+
+def get_int(f, idx=0):
+    return int(get_next(f, idx))
+
+
+def get_float(f, idx=0):
+    return float(get_next(f, idx))
+
+
+def get_ufloat(f):
+    return ufloat(*map(float, next(f)))
 
 
 class FileSource(DVCSource):

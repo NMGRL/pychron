@@ -22,6 +22,7 @@ import datetime
 
 from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCMAPSource
 from pychron.data_mapper.tests import fget_data_dir
+from pychron.data_mapper.tests.file_source import BaseFileSourceTestCase
 
 
 class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
@@ -55,83 +56,30 @@ class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
         self.assertEqual((1.314E-2, 1.2e-5), self.spec.irradiation.levels[0].production.K3839)
 
 
-class USGSVSCFileSourceUnittest(unittest.TestCase):
+class USGSVSCFileSourceUnittest(BaseFileSourceTestCase):
     @classmethod
     def setUpClass(cls):
         cls.src = USGSVSCMAPSource()
         p = os.path.join(fget_data_dir(), '16Z0071', '16K0071A.TXT')
         cls.src.path = p
         cls.spec = cls.src.get_analysis_import_spec()
-
-    def test_runid(self):
-        self.assertEqual(self.spec.run_spec.runid, '16K0071-01A')
-
-    def test_irradiation(self):
-        self.assertEqual(self.spec.run_spec.irradiation, 'IRR347')
-
-    def test_level(self):
-        self.assertEqual(self.spec.run_spec.irradiation_level, 'A')
-
-    def test_sample(self):
-        self.assertEqual(self.spec.run_spec.sample, 'GA1550')
-
-    def test_material(self):
-        self.assertEqual(self.spec.run_spec.material, 'Bio')
-
-    def test_project(self):
-        self.assertEqual(self.spec.run_spec.project, 'Std')
-
-    def test_j(self):
-        self.assertEqual(self.spec.j, 0.0045)
-
-    def test_j_err(self):
-        self.assertEqual(self.spec.j_err, 1e-07)
-
-    def test_timestamp(self):
-        ts = self.spec.timestamp
-        self.assertEqual(ts.month, 3)
-
-    def test_40_count_xs(self):
-        self._test_count_xs('Ar40', 40)
-
-    def test_40_count_ys(self):
-        self._test_count_ys('Ar40', 40)
-
-    def test_39_count_xs(self):
-        self._test_count_xs('Ar39', 50)
-
-    def test_39_count_ys(self):
-        self._test_count_ys('Ar39', 50)
-
-    def test_38_count_xs(self):
-        self._test_count_xs('Ar38', 10)
-
-    def test_38_count_ys(self):
-        self._test_count_ys('Ar38', 10)
-
-    def test_37_count_xs(self):
-        self._test_count_xs('Ar37', 10)
-
-    def test_37_count_ys(self):
-        self._test_count_ys('Ar37', 10)
-
-    def test_36_count_xs(self):
-        self._test_count_xs('Ar36', 80)
-
-    def test_36_count_ys(self):
-        self._test_count_ys('Ar36', 80)
-
-    def _test_count_xs(self, k, cnt):
-        xs = self.spec.isotope_group.isotopes[k].xs
-        self.assertEqual(len(xs), cnt)
-
-    def _test_count_ys(self, k, cnt):
-        ys = self.spec.isotope_group.isotopes[k].ys
-        self.assertEqual(len(ys), cnt)
-
-    def test_discrimination(self):
-        disc = self.spec.discrimination
-        self.assertEqual(disc, 1.0462399093612802)
+        cls.expected = {'runid': '16K0071-01A',
+                        'irradiation': 'IRR347',
+                        'irradiation_level': 'A',
+                        'sample': 'GA1550',
+                        'material': 'Bio',
+                        'project': 'Std',
+                        'j': 0.0045,
+                        'j_err': 1e-7,
+                        'timestamp_month': 3,
+                        'cnt40': 40,
+                        'cnt39': 50,
+                        'cnt38': 10,
+                        'cnt37': 10,
+                        'cnt36': 80,
+                        'discrimination': 1.0462399093612802,
+                        'uuid': ''
+                        }
 
 
 if __name__ == '__main__':
