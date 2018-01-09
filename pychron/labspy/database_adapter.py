@@ -64,9 +64,10 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
             self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
             return
 
+        add = False
         if conn is None:
             conn = Connections()
-            self._add_item(conn)
+            add = True
 
         conn.appname = appname
         conn.username = username
@@ -75,6 +76,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         conn.address = addr
         conn.status = bool(status)
         conn.timestamp = ts
+
+        if add:
+            self._add_item(conn)
 
     def get_connection(self, appname, devname):
         q = self.session.query(Connections)

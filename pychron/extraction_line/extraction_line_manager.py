@@ -503,7 +503,7 @@ class ExtractionLineManager(Manager, Consoleable):
         sm = self.switch_manager
         while 1:
             sm.load_hardware_states()
-            self.refresh_canvas()
+            # self.refresh_canvas()
             time.sleep(p)
 
     #     self._trigger_update()
@@ -628,7 +628,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self._check_ownership(name, sender_address):
             func = getattr(self.switch_manager, '{}_by_name'.format(action))
             ret = func(name, mode=mode, **kw)
-            self.debug('change switch state {}'.format(ret))
+            self.debug('change switch state name={} action={} ret={}'.format(name, action, ret))
             if ret:
                 result, change = ret
                 if isinstance(result, bool):

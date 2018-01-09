@@ -19,7 +19,7 @@ from traits.api import Bool, Property, Float, CInt, List, Str, Any
 from traitsui.api import View, Item, HGroup, spring
 # ============= standard library imports ========================
 from threading import Timer as OneShotTimer, Thread, Event
-from time import time
+import time
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
@@ -40,6 +40,17 @@ class Flag(Loggable):
     _thread = None
     _evt = None
 
+
+    def __init__(self, name, *args, **kw):
+        self.name = name
+
+        self.timeout = 600
+
+        self._monitor_thread = None
+        self._monitor_evt = None
+
+        super(Flag, self).__init__(*args, **kw)
+
     def set_owner(self, owner):
         self.owner = owner
 
@@ -55,9 +66,9 @@ class Flag(Loggable):
     def _set_display_state(self, v):
         self.set(v)
 
-    def __init__(self, name, *args, **kw):
-        self.name = name
-        super(Flag, self).__init__(*args, **kw)
+
+    def ping(self):
+        self._pinged = time.time()
 
     def get(self, *args, **kw):
         return int(self._set)
@@ -71,8 +82,13 @@ class Flag(Loggable):
         self.info('setting flag state to {} ({})'.format(value, ovalue))
 
         if value:
-            t = OneShotTimer(60, self.auto_clear)
-            t.start()
+            self._monitor_evt = Event()
+            self._monitor_thread = Thread(target=self._monitor_thread)
+            self._monitor_thread.setDaemon(1)
+            self._monitor_thread.start()
+        else:
+            if self._monitor_evt:
+                self._monitor_evt.set()
 
         self._set = value
         return True
@@ -80,14 +96,25 @@ class Flag(Loggable):
     def clear(self):
         self.info('clearing flag')
         self._set = False
+        if self._monitor_evt:
+            self._monitor_evt.set()
 
     def isSet(self):
         return self._set
 
-    def auto_clear(self):
-        if self._set:
-            self.info('auto canceling flag')
-            self.clear()
+    def _monitor_thread(self):
+        evt = self._monitor_evt
+        st = time.time()
+        timeout = self.timeout
+        self._pinged = time.time()
+        while not evt.is_set():
+            if time.time()-self._pinged > timeout:
+                if self._set:
+                    self.info('auto canceling flag')
+                    self.clear()
+                break
+
+            time.sleep(1)
 
 
 class TimedFlag(Flag):
@@ -107,15 +134,12 @@ class TimedFlag(Flag):
         return self._time_remaining
 
     def traits_view(self):
-        v = View(
-            HGroup(Item('name', style='readonly'),
-                   spring,
-                   Item('display_time',
-                        format_str='%03i', style='readonly'),
-                   Item('display_state'),
-                   show_labels=False
-                   )
-        )
+        v = View(HGroup(Item('name', style='readonly'),
+                        spring,
+                        Item('display_time',
+                             format_str='%03i', style='readonly'),
+                        Item('display_state'),
+                        show_labels=False))
         return v
 
     def set(self, value):
@@ -158,15 +182,15 @@ class TimedFlag(Flag):
 
 
 class ValveFlag(Flag):
-    '''
+    """
         a ValveFlag holds a list of valves keys (A, B, ...)
-        
-        if the flag is set then the these valves should be locked out 
-        from being actuated by ip addresses other than the owner of this 
+
+        if the flag is set then the these valves should be locked out
+        from being actuated by ip addresses other than the owner of this
         flag
-        
+
         valves should (can) not occur in multiple ValveFlags
-    '''
+    """
     valves = List
     owner = Str
     valves_str = Property(depends_on='valves')
@@ -180,12 +204,9 @@ class ValveFlag(Flag):
             self.manager.set_valve_owner(vi, owner)
 
     def traits_view(self):
-        v = View(
-            HGroup(Item('name', show_label=False, style='readonly'),
-                   Item('valves_str', style='readonly',
-                        label='Valves')
-                   )
-        )
+        v = View(HGroup(Item('name', show_label=False, style='readonly'),
+                        Item('valves_str', style='readonly',
+                             label='Valves')))
         return v
 
     def _get_valves_str(self):
