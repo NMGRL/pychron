@@ -640,10 +640,19 @@ class SwitchManager(Manager):
         action = 'set_closed'
         interlocked_valve = self._check_soft_interlocks(name)
         if interlocked_valve:
-            msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(interlocked_valve.name, name)
-            self.console_message = (msg, 'red')
-            self.warning(msg)
-            return False, False
+            s = self.get_switch_by_name(name)
+            ret = False
+
+            iname = interlocked_valve.name
+            if s and not s.state:
+                self.warning('Software Interlock. {} is OPEN. But {} is already closed'.format(iname, name))
+                ret = True
+            else:
+                msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(iname, name)
+                self.console_message = (msg, 'red')
+                self.warning(msg)
+
+            return ret, False
 
         return self._actuate_(name, action, mode, force=force)
 

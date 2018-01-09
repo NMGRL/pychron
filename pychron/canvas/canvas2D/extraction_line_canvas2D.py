@@ -83,9 +83,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.tools.append(tool)
         self.overlays.append(overlay)
 
-    @caller
-    def invalidate_and_redraw(self):
-        super(ExtractionLineCanvas2D, self).invalidate_and_redraw()
+    # @caller
+    # def invalidate_and_redraw(self):
+    #     super(ExtractionLineCanvas2D, self).invalidate_and_redraw()
 
     def toggle_item_identify(self, name):
         v = self._get_switch_by_name(name)

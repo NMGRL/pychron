@@ -29,33 +29,29 @@ from pychron.loggable import Loggable
 class LocalResource(_Event):
     def read(self, *args, **kw):
         return self.is_set()
-    def ping(self):
-        pass
+
 
 @provides(IPyScriptRunner)
 class PyScriptRunner(Loggable):
-    resources = Dict
-    _resource_lock = Any
-    scripts = List
+    def __init__(self, *args, **kw):
+        super(PyScriptRunner, self).__init__(*args, **kw)
+        self.resources = {}
+        self.scripts = []
+        self._resource_lock = Lock()
 
     def acquire(self, name):
         if self.connect():
             r = self.get_resource(name)
             if r:
-                if not r.isSet():
-                    self._ping_evt = Event()
-                    self._ping_thread = Thread(target=self._ping)
-                    self._ping_thread.setDaemon(1)
-                    self._ping_thread.start()
-
-                    return True
+                r.set()
+                return True
 
     def release(self, name):
-        self._ping_evt.set()
         if self.connect():
             r = self.get_resource(name)
             if r:
                 r.clear()
+                return True
 
     def reset_connection(self):
         pass
@@ -63,12 +59,9 @@ class PyScriptRunner(Loggable):
     def connect(self):
         return True
 
-    def __resource_lock_default(self):
-        return Lock()
-
     def get_resource(self, name):
         self.connect()
-        
+
         with self._resource_lock:
             if name not in self.resources:
                 self.resources[name] = self._get_resource(name)
@@ -76,41 +69,20 @@ class PyScriptRunner(Loggable):
             r = self.resources[name]
             return r
 
-    def _ping(self, resource):
-        evt = self._ping_evt
-        while not evt.is_set():
-            resource.ping()
-            time.sleep(1)
-
+    # private
     def _get_resource(self, name):
         return LocalResource()
 
-        # def traits_view(self):
-        #
-        # cols = [ObjectColumn(name='logger_name', label='Name',
-        #                           editable=False, width=150),
-        #             CheckboxColumn(name='cancel_flag', label='Cancel',
-        #                            width=50),
-        #           ]
-        #     v = View(Item('scripts', editor=TableEditor(columns=cols,
-        #                                                 auto_size=False),
-        #                   show_label=False
-        #                   ),
-        #              width=500,
-        #              height=500,
-        #              resizable=True,
-        #              # handler=self.handler_klass(),
-        #              title='ScriptRunner'
-        #              )
-        #     return v
-
 
 class RemoteResource(object):
-    handle = None
-    name = None
+    def __init__(self):
+        self.handle = None
+        self.name = None
+        self._ping_thread = None
+        self._ping_evt = None
 
     def ping(self):
-        self.handle.ask('Ping')
+        return self.handle.ask('Ping {}'.format(self.name), verbose=True)
 
     # ===============================================================================
     # threading.Event interface
@@ -137,8 +109,24 @@ class RemoteResource(object):
     def clear(self):
         self._set(0)
 
+    def _ping_loop(self):
+        evt = self._ping_evt
+        while not evt.is_set():
+            if self.ping() == 'Complete':
+                break
+
+            time.sleep(3)
+
     def _set(self, v):
         self.handle.ask('Set {} {}'.format(self.name, v))
+        if v:
+            self._ping_evt = Event()
+            self._ping_thread = Thread(target=self._ping_loop)
+            self._ping_thread.setDaemon(1)
+            self._ping_thread.start()
+        else:
+            if self._ping_evt:
+                self._ping_evt.set()
 
 
 @provides(IPyScriptRunner)

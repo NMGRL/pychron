@@ -738,7 +738,7 @@ class ExtractionPyScript(ValvePyScript):
 
         if not self._cancel:
             self._resource_flag = r
-            r.set()
+            self.runner.acquire(name)
             self.console_info('{} acquired'.format(name))
 
         self._set_extraction_state(False)
@@ -780,10 +780,7 @@ class ExtractionPyScript(ValvePyScript):
             self.debug('+++++++++++++++++++++++ Runner is None')
             return
 
-        r = self.runner.get_resource(name)
-        if r is not None:
-            r.clear()
-        else:
+        if not self.runner.release(name):
             self.console_info('Could not release {}'.format(name))
 
     @verbose_skip
