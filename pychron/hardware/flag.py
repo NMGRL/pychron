@@ -38,12 +38,11 @@ class Flag(Loggable):
     display_state = Property(Bool, depends_on='_set')
     owner = Str
 
-
     def __init__(self, name, *args, **kw):
         self.name = name
 
-        self.timeout = 600
-
+        self.timeout = 60
+        self._pinged = None
         self._monitor_thread = None
         self._monitor_evt = None
 
@@ -64,9 +63,9 @@ class Flag(Loggable):
     def _set_display_state(self, v):
         self.set(v)
 
-
     def ping(self):
         self._pinged = time.time()
+        return self._pinged
 
     def get(self, *args, **kw):
         return int(self._set)
@@ -81,7 +80,7 @@ class Flag(Loggable):
 
         if value:
             self._monitor_evt = Event()
-            self._monitor_thread = Thread(target=self._monitor_thread)
+            self._monitor_thread = Thread(target=self._monitor)
             self._monitor_thread.setDaemon(1)
             self._monitor_thread.start()
         else:
@@ -100,9 +99,8 @@ class Flag(Loggable):
     def isSet(self):
         return self._set
 
-    def _monitor_thread(self):
+    def _monitor(self):
         evt = self._monitor_evt
-        st = time.time()
         timeout = self.timeout
         self._pinged = time.time()
         while not evt.is_set():
@@ -112,7 +110,7 @@ class Flag(Loggable):
                     self.clear()
                 break
 
-            time.sleep(1)
+            time.sleep(5)
 
 
 class TimedFlag(Flag):
@@ -158,7 +156,7 @@ class TimedFlag(Flag):
             else:
                 self._time_remaining = self.duration
 
-            self._start_time = time()
+            self._start_time = time.time()
             self.pt = PTimer(self._uperiod, self._update_time)
             t = OneShotTimer(self.duration, self.clear)
             t.start()
@@ -171,7 +169,7 @@ class TimedFlag(Flag):
     def get(self, *args, **kw):
         t = 0
         if self.isSet() and self.isStarted():
-            t = max(0, self.duration - (time() - self._start_time))
+            t = max(0, self.duration - (time.time() - self._start_time))
 
         return t
 
