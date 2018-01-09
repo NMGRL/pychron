@@ -384,7 +384,7 @@ class PatternExecutor(Patternable):
                 csrc, src, cl = sm.get_brightness()
 
                 err = lumens - cl
-                out = pid.get_value(err, dt)
+                out = pid(err, dt)
                 lm.set_laser_power(out)
                 invoke_in_main_thread(update, (cl, err, out, csrc, src))
 

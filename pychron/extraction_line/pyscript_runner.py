@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from threading import _Event, Lock, Timer
+from threading import _Event, Lock, Timer, Thread, Event
 
+import time
 from traits.api import Any, Dict, List, provides
 
 from pychron.core.helpers.logger_setup import logging_setup
@@ -28,7 +29,8 @@ from pychron.loggable import Loggable
 class LocalResource(_Event):
     def read(self, *args, **kw):
         return self.is_set()
-
+    def ping(self):
+        pass
 
 @provides(IPyScriptRunner)
 class PyScriptRunner(Loggable):
@@ -36,28 +38,20 @@ class PyScriptRunner(Loggable):
     _resource_lock = Any
     scripts = List
 
-    _reacquire_enabled = False
-
     def acquire(self, name):
         if self.connect():
             r = self.get_resource(name)
             if r:
-                if r.isSet():
-                    return
-                else:
-                    self._reacquire_enabled = True
+                if not r.isSet():
+                    self._ping_evt = Event()
+                    self._ping_thread = Thread(target=self._ping)
+                    self._ping_thread.setDaemon(1)
+                    self._ping_thread.start()
 
-                    def reacquire():
-                        r.set()
-                        if self._reacquire_enabled:
-                            t = Timer(30, reacquire)
-                            t.start()
-
-                    reacquire()
                     return True
 
     def release(self, name):
-        self._reacquire_enabled = False
+        self._ping_evt.set()
         if self.connect():
             r = self.get_resource(name)
             if r:
@@ -81,6 +75,12 @@ class PyScriptRunner(Loggable):
 
             r = self.resources[name]
             return r
+
+    def _ping(self, resource):
+        evt = self._ping_evt
+        while not evt.is_set():
+            resource.ping()
+            time.sleep(1)
 
     def _get_resource(self, name):
         return LocalResource()
@@ -108,6 +108,9 @@ class PyScriptRunner(Loggable):
 class RemoteResource(object):
     handle = None
     name = None
+
+    def ping(self):
+        self.handle.ask('Ping')
 
     # ===============================================================================
     # threading.Event interface

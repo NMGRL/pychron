@@ -18,18 +18,20 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PID(object):
-    _integral_err = 0
-    _prev_err = 0
 
     def __init__(self, kp=0.25, ki=0, kd=0, min_output=0, max_output=100):
+        self._integral_err = 0
+        self._prev_err = 0
+
         self.max_output = max_output
         self.min_output = min_output
         self.kd = kd
         self.ki = ki
         self.kp = kp
 
-    def get_value(self, error, dt):
+    def __call__(self, error, dt):
         self._integral_err += (error * dt)
         derivative = (error - self._prev_err) / dt
         output = (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
