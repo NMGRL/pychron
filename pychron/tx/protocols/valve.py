@@ -101,9 +101,9 @@ class ValveProtocol(BaseValveProtocol):
 
     def _ping(self, data):
         if isinstance(data, dict):
-            dname, value = data['device'], data['value']
+            dname = data['device']
         else:
-            dname, value = data.split(' ')
+            dname = data
 
         d = self._get_device(dname, owner=self._addr)
         if d is not None:
@@ -111,7 +111,6 @@ class ValveProtocol(BaseValveProtocol):
                 result = d.ping()
         else:
             result = DeviceConnectionErrorCode(dname, logger=self)
-
         return result
 
     def _read(self, data):
