@@ -166,9 +166,10 @@ class ExperimentNotifier(Loggable):
             log = self._get_log(100)
 
         shorthost = socket.gethostname()
+        ip4host = socket.gethostbyname(shorthost).split('.')[-1]
         ctx = {'timestamp': datetime.now(),
                'log': log,
-               'host': socket.gethostbyname(shorthost),
+               'host': '.{}'.format(ip4host),
                'shorthost': shorthost,
                'version': __version__}
 

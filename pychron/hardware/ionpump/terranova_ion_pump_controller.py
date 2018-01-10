@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from traits.api import Float
 from traitsui.api import View, VGroup
@@ -56,11 +55,11 @@ class TerraNovaIonPumpController(CoreDevice):
         if r is not None:
             setattr(self, attr, r)
 
-# ============= views ===================================
+    # ============= views ===================================
     def traits_view(self):
         v = View(VGroup('pressure',
-                      'current',
-                      'voltage'))
+                        'current',
+                        'voltage'))
         return v
 
     def _build_commad(self, cmd, value):
@@ -96,6 +95,7 @@ class TerraNovaIonPumpController(CoreDevice):
         r = self.ask(qry)
         r = self._parse_response(r, kind='bool')
         return r
+
 
 if __name__ == '__main__':
     t = TerraNovaIonPumpController()
