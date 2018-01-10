@@ -372,7 +372,11 @@ class LabnumberEntry(DVCIrradiationable):
                 if lg.setup():
                     lg.overwrite = overwrite
                     lg.generate_identifiers()
+                    for level in self.levels:
+                        self._save_to_db(level, update=False)
+
                     self._update_level()
+                    self._inform_save()
 
     def preview_generate_identifiers(self):
         if self.check_monitor_name():
