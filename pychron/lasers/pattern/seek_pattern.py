@@ -222,6 +222,9 @@ class SeekPattern(Pattern):
     _points = List
     _data = List
 
+    def validate(self, xx, yy):
+        return ((xx-self.cx) ** 2 + (yy-self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+
     @property
     def total_duration(self):
         dur = self.external_duration

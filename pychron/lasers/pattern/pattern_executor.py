@@ -30,9 +30,11 @@ from traits.api import Any, Bool, List
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
-from pychron.lasers.pattern.dragonfly_pattern import dragonfly
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
+
+
+# from pychron.lasers.pattern.dragonfly_pattern import dragonfly
 
 
 # class PeriodCTX:
@@ -72,8 +74,11 @@ class PatternExecutor(Patternable):
     laser_manager = Any
     show_patterning = Bool(False)
     _alive = Bool(False)
-    _next_point = None
-    pattern = None
+
+    def __init__(self, *args, **kw):
+        super(PatternExecutor, self).__init__(*args, **kw)
+        self._next_point = None
+        self.pattern = None
 
     def start(self, show=False):
         self._alive = True
@@ -294,12 +299,9 @@ class PatternExecutor(Patternable):
             if kind == 'ArcPattern':
                 self._execute_arc(controller, pattern)
             elif kind == 'CircularContourPattern':
-
                 self._execute_contour(controller, pattern)
             elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
                 self._execute_seek(controller, pattern)
-            # elif kind == 'DegasPattern':
-            #     self._execute_lumen_degas(controller, pattern)
             else:
                 self._execute_points(controller, pattern, multipoint=False)
 
@@ -421,7 +423,6 @@ class PatternExecutor(Patternable):
 
     def _execute_seek(self, controller, pattern):
         from pychron.core.ui.gui import invoke_in_main_thread
-        # from pychron.graph.graph import Graph
         duration = pattern.duration
         total_duration = pattern.total_duration
 
@@ -443,9 +444,6 @@ class PatternExecutor(Patternable):
         self.debug('total duration {}'.format(total_duration))
         self.debug('dwell duration {}'.format(duration))
 
-        # if pattern.kind == 'DragonFly':
-        #     imgplot, cp = self._setup_seek_graph(pattern)
-        #     dragonfly(st, pattern, lm, controller, imgplot, cp)
         if pattern.kind == 'DragonFlyPeakPattern':
             self._dragonfly_peak(st, pattern, lm, controller)
         else:
@@ -469,31 +467,6 @@ class PatternExecutor(Patternable):
         set_data = imgplot.data.set_data
         set_data2 = imgplot2.data.set_data
         set_data3 = imgplot3.data.set_data
-        pr = pattern.perimeter_radius
-
-        def validate(xx, yy):
-            return (xx ** 2 + yy ** 2) ** 0.5 <= pr
-
-        def outward_square_spiral(base):
-            def gen():
-
-                b = base
-                prevx, prevy = b, 0
-                while 1:
-                    for cnt in xrange(4):
-                        if cnt == 0:
-                            x, y = b, prevy
-                        elif cnt == 1:
-                            x, y = prevx, b
-                        elif cnt == 2:
-                            x, y = prevx - b * 2, prevy
-                        elif cnt == 3:
-                            x, y = prevx, prevy - b * 2
-                            b *= 1.1
-                        prevx, prevy = x, y
-                        yield x, y, 1
-
-            return gen()
 
         duration = pattern.duration
         px, py = cx, cy
@@ -506,7 +479,7 @@ class PatternExecutor(Patternable):
                 break
 
             ist = time.time()
-            pt, peaks, cpeaks, src = find_lum_peak()
+            pt, peaks, cpeaks, src = find_lum_peak(pattern.min_distance)
 
             series.append(cpeaks)
             series = series[limit:]
@@ -518,25 +491,30 @@ class PatternExecutor(Patternable):
 
             if pt is None:
                 if not point_gen:
-                    point_gen = outward_square_spiral(pattern.base)
+                    point_gen = pattern.point_generator()
+                    # point_gen = outward_square_spiral(pattern.base)
                 wait = False
                 pt = next(point_gen)
             else:
                 point_gen = None
                 wait = True
 
-            dx = pt[0] / sm.pxpermm * pt[2]
-            dy = pt[1] / sm.pxpermm * pt[2]
+            # px = px + dx
+            # py = py - dy
+            scalar = pt[2]
+            while 1:
+                dx = pt[0] / sm.pxpermm * scalar
+                dy = pt[1] / sm.pxpermm * scalar
+                if pattern.validate(px + dx, py - dy):
+                    px, py = px + dx, py - dy
+                    try:
+                        linear_move(px, py, block=True, velocity=pattern.velocity,
+                                    use_calibration=False)
+                    except PositionError:
+                        break
 
-            px = px + dx
-            py = py - dy
-
-            if validate(px - cx, py - cy):
-                try:
-                    linear_move(px, py, block=True, velocity=pattern.velocity,
-                                use_calibration=False)
-                except PositionError:
                     break
+                scalar *= 0.95
 
             if wait:
                 et = time.time() - ist
@@ -619,7 +597,7 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                weights = [1 / (max(0.0001, ((xi - ax) ** 2 + (yi - ay) ** 2))**0.5) for xi, yi in positions]
+                weights = [1 / (max(0.0001, ((xi - ax) ** 2 + (yi - ay) ** 2)) ** 0.5) for xi, yi in positions]
 
                 avg_score = average(density_scores, weights=weights)
                 avg_sat_score = average(saturation_scores, weights=weights)

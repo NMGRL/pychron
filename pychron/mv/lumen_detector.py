@@ -99,11 +99,11 @@ class LumenDetector(Locator):
                 self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, pixel_depth=8):
+    def find_lum_peak(self, lum, pixel_depth=8, min_distance=5):
         self._mask(lum)
         h, w = lum.shape[:2]
         src = rgb2gray(lum)
-        pts = peak_local_max(src, min_distance=5, num_peaks=10, threshold_abs=0.5)
+        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
         peaks = zeros((h, w), dtype=uint8)
         cpeaks = zeros((h, w), dtype=uint8)
         pt = None

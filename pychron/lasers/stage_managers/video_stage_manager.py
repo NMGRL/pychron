@@ -381,10 +381,10 @@ class VideoStageManager(StageManager):
         src = self._get_preprocessed_src()
         return ld.get_scores(src, **kw)
 
-    def find_lum_peak(self):
+    def find_lum_peak(self, min_distance):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        return ld.find_lum_peak(src)
+        return ld.find_lum_peak(src, min_distance=min_distance)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
