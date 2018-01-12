@@ -201,6 +201,8 @@ class Pattern(HasTraits):
     z_duration = Float
     power_duration = Float
 
+    external_duration = Float
+
     z_period = Float(1)
     z_duty = Float
     z_min = Float

@@ -41,6 +41,11 @@ def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
     def validate(xx, yy):
         return (xx ** 2 + yy ** 2) ** 0.5 <= pr
 
+    def find():
+        targetxy, src = find_best_target()
+        set_data('imagedata', src)
+        return targetxy
+
     duration = pattern.duration
     found_target = None
     while time.time() - st < pattern.total_duration:
@@ -49,8 +54,9 @@ def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
             found_target = None
         else:
             # identify target
-            targetxy, src = find_best_target()
-            set_data('imagedata', src)
+            # targetxy, src = find_best_target()
+            # set_data('imagedata', src)
+            targetxy = find()
 
         if targetxy is not None:
             tx, ty = targetxy
@@ -62,17 +68,20 @@ def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
                 linear_move(tx, ty, block=False, velocity=pattern.velocity,
                             update=False,
                             immediate=True)
+                cux, cuy = tx, ty
             except PositionError:
                 break
 
             time.sleep(duration)
         else:
+
             # do a search until a target is found
             found_target = None
             for i, (x, y) in enumerate(pattern.point_generator()):
+                print i, x, y
                 # cp.add_point((x, y))
                 try:
-                    linear_move(cx + x, cy + y, block=False, velocity=pattern.velocity,
+                    linear_move(cux + x, cuy + y, block=False, velocity=pattern.velocity,
                                 update=False,
                                 immediate=True)
                 except PositionError:
@@ -80,19 +89,21 @@ def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
 
                 while moving(force_query=True):
                     update_axes()
-                    found_target, src = find_best_target()
-                    set_data('imagedata', src)
+                    # found_target, src = find_best_target()
+                    # set_data('imagedata', src)
+                    found_target = find()
                     if found_target:
                         break
                     time.sleep(0.1)
 
+                found_target = find()
                 if found_target:
                     break
 
 
 def outward_square_spiral(base):
     def gen():
-        cnt = 0
+
         b = base
         py = 0
         while 1:
@@ -123,13 +134,13 @@ class DragonFlyPattern(SeekPattern):
     spiral_kind = Enum('Hexagon', 'Square')
 
     def point_generator(self):
-        if self.spiral_kind == 'square':
+        if self.spiral_kind.lower() == 'square':
             return outward_square_spiral(self.base)
         else:
             return line_spiral_pattern(0, 0, self.base, 200, 0.75, 6)
 
     def maker_view(self):
-        v = View(Item('total_duration', label='Total Duration (s)',
+        v = View(Item('manual_total_duration', label='Total Duration (s)',
                       tooltip='Total duration of search (in seconds)'),
                  Item('duration',
                       label='Dwell Duration (s)',
@@ -154,5 +165,9 @@ class DragonFlyPattern(SeekPattern):
                  Item('custom_mask_radius', label='Mask Radius (mm)',
                       visible_when='mask_kind=="Custom"'))
         return v
+
+
+class DragonFlyPeakPattern(DragonFlyPattern):
+    pass
 
 # ============= EOF =============================================

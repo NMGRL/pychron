@@ -25,6 +25,11 @@ def format_blob(blob):
     return base64.b64decode(blob)
 
 
+def encode_blob(blob):
+    # print len(blob), len(base64.b64encode(blob))
+    return base64.b64encode(blob)
+
+
 def pack(fmt, data):
     """
     data should be something like [(x0,y0),(x1,y1), (xN,yN)]
@@ -32,7 +37,6 @@ def pack(fmt, data):
     @param data:
     @return:
     """
-
     # if len(args) > 1:
     #     args = zip(args)
     return ''.join([struct.pack(fmt, *datum) for datum in data])

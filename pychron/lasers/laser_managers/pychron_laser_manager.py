@@ -140,23 +140,13 @@ class PychronLaserManager(EthernetLaserManager):
         return self._ask('AcquireGrainPolygonBlob')
 
     def start_measure_grain_polygon(self):
-        self._ask('StartMeasureGrainPolygon', verbose=True)
+        return self._ask('StartMeasureGrainPolygon')
 
     def stop_measure_grain_polygon(self):
-        self._ask('StopMeasureGrainPolygon', verbose=True)
+        return self._ask('StopMeasureGrainPolygon')
 
     def get_grain_polygon_blob(self):
-        blobs = []
-        while 1:
-            blob = self._ask('GetGrainPolygonBlob')
-            if blob:
-                if blob == 'No Response':
-                    break
-                blobs.append(blob)
-            else:
-                break
-
-        return blobs
+        return self._ask('GetGrainPolygonBlob')
 
     def get_response_blob(self):
         return self._ask('GetResponseBlob')
@@ -174,12 +164,12 @@ class PychronLaserManager(EthernetLaserManager):
                 pass
         return rv
 
-    def do_machine_vision_degas(self, lumens, duration):
-        if lumens and duration:
-            self.info('Doing machine vision degas. lumens={}'.format(lumens))
-            self._ask('MachineVisionDegas {},{}'.format(lumens, duration))
-        else:
-            self.debug('lumens and duration not set {}, {}'.format(lumens, duration))
+    # def do_machine_vision_degas(self, lumens, duration):
+    #     if lumens and duration:
+    #         self.info('Doing machine vision degas. lumens={}'.format(lumens))
+    #         self._ask('MachineVisionDegas {},{}'.format(lumens, duration))
+    #     else:
+    #         self.debug('lumens and duration not set {}, {}'.format(lumens, duration))
 
     def start_video_recording(self, name):
         self.info('Start Video Recording')

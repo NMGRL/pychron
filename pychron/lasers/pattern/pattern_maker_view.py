@@ -48,7 +48,7 @@ class PatternMakerView(Saveable, Patternable):
                          'Random',
                          'CircularContour', 'Trough',
                          'Rubberband', 'RasterRubberband',
-                         'Seek', 'DragonFly'),
+                         'Seek', 'DragonFlyPeak'),
                     depends_on='_kind')
     _kind = Str('Polygon')
 
@@ -62,9 +62,10 @@ class PatternMakerView(Saveable, Patternable):
 
     def load_pattern(self, path=None):
         if path is None:
-            return
+            path = self.open_file_dialog(default_directory=paths.pattern_dir)
+            if path is None:
+                return
 
-        # path = self.open_file_dialog(default_directory=paths.pattern_dir)
         if not os.path.isfile(path):
             path = os.path.join(paths.pattern_dir, path)
 
@@ -115,7 +116,6 @@ class PatternMakerView(Saveable, Patternable):
         return '{}-{}'.format(self.pattern.generate_name(), self.tray_name).lower()
 
     def _selected_pattern_name_changed(self, new):
-        print new
         if not new:
             return
 
@@ -171,6 +171,7 @@ class PatternMakerView(Saveable, Patternable):
 
     def _get_new_name(self):
         return self._generate_name()
+
     # ===============================================================================
     # factories
     # ===============================================================================
@@ -179,6 +180,7 @@ class PatternMakerView(Saveable, Patternable):
         name = '{}Pattern'.format(kind)
         for pkg in ('pychron.lasers.pattern.patterns',
                     'pychron.lasers.pattern.seek_pattern',
+                    'pychron.lasers.pattern.dragonfly_pattern',
                     'pychron.lasers.pattern.degas_pattern'):
             try:
                 factory = __import__(pkg, fromlist=[name])
