@@ -548,13 +548,13 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def execute_pattern(self, pattern='', block=True):
+    def execute_pattern(self, pattern='', block=True, duration=None):
         if pattern == '':
             pattern = self.pattern
 
         st = time.time()
         # set block=True to wait for pattern completion
-        self._extraction_action([('execute_pattern', (pattern,), {'block': block})])
+        self._extraction_action([('execute_pattern', (pattern,), {'block': block, 'duration': duration})])
 
         return time.time() - st
 
