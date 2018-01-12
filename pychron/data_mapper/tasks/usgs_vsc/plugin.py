@@ -44,6 +44,6 @@ class USGSVSCDataPlugin(BasePlugin):
     sources = List(contributes_to='pychron.entry.data_sources')
 
     def _sources_default(self):
-        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource)]
+        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource())]
 
 # ============= EOF =============================================

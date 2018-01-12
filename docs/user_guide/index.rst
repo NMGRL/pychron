@@ -11,4 +11,5 @@ Pychron User Guide
   processing/index
   entry/index
   dashboard/index
+  data_mapper/index
   glossary
