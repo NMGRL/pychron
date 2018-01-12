@@ -428,8 +428,14 @@ class LaserProtocol(ServiceProtocol):
 
         return ret
 
-    def _do_pattern(self, name):
-        return self._manager.execute_pattern(name) or 'OK'
+    def _do_pattern(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+            duration = data['duration']
+        else:
+            name, duration = data
+
+        return self._manager.execute_pattern(name, duration) or 'OK'
 
     def _is_patterning(self, data):
         return self._manager.isPatterning()

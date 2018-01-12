@@ -140,7 +140,7 @@ class DragonFlyPattern(SeekPattern):
             return line_spiral_pattern(0, 0, self.base, 200, 0.75, 6)
 
     def maker_view(self):
-        v = View(Item('total_duration', label='Total Duration (s)',
+        v = View(Item('manual_total_duration', label='Total Duration (s)',
                       tooltip='Total duration of search (in seconds)'),
                  Item('duration',
                       label='Dwell Duration (s)',

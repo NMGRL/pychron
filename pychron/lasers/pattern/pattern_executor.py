@@ -167,7 +167,7 @@ class PatternExecutor(Patternable):
         self.pattern.window_y = 50
         open_view(self.pattern, view='graph_view')
 
-    def execute(self, block=False):
+    def execute(self, block=False, duration=None):
         """
             if block is true wait for patterning to finish
             before returning
@@ -188,6 +188,9 @@ class PatternExecutor(Patternable):
         self.debug('execute xy pattern')
 
         xyp = self.pattern.xy_pattern_enabled
+        if duration:
+            self.pattern.external_duration = float(duration)
+
         t = None
         if xyp:
             t = Thread(target=self._execute_xy_pattern)
@@ -327,63 +330,6 @@ class PatternExecutor(Patternable):
     def _execute_arc(self, controller, pattern):
         controller.single_axis_move('x', pattern.radius, block=True)
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
-
-    # def _execute_lumen_degas(self, controller, pattern):
-    #     from pychron.core.pid import PID
-    #     from pychron.core.ui.gui import invoke_in_main_thread
-    #     from pychron.lasers.pattern.mv_viewer import MVViewer
-    #     from pychron.graph.stream_graph import StreamStackedGraph
-    #     from pychron.mv.mv_image import MVImage
-    #
-    #     lm = self.laser_manager
-    #     sm = lm.stage_manager
-    #
-    #     g = StreamStackedGraph()
-    #
-    #     img = MVImage()
-    #
-    #     img.setup_images(2, sm.get_frame_size())
-    #
-    #     mvviewer = MVViewer(graph=g, image=img)
-    #     mvviewer.edit_traits()
-    #     # g.edit_traits()
-    #
-    #     g.new_plot(xtitle='Time', ytitle='Lumens')
-    #     g.new_series()
-    #
-    #     g.new_plot(xtitle='Time', ytitle='Error')
-    #     g.new_series(plotid=1)
-    #
-    #     g.new_plot(xtitle='Time', ytitle='Power')
-    #     g.new_series(plotid=2)
-    #
-    #     duration = pattern.duration
-    #     lumens = pattern.lumens
-    #     dt = pattern.period
-    #     st = time.time()
-    #
-    #     pid = PID()
-    #
-    #     def update(c, e, o, cs, ss):
-    #         g.record(c, plotid=0)
-    #         g.record(e, plotid=1)
-    #         g.record(o, plotid=2)
-    #
-    #         img.set_image(cs, 0)
-    #         img.set_image(ss, 1)
-    #
-    #     while self._alive:
-    #
-    #         if duration and time.time() - st > duration:
-    #             break
-    #
-    #         with PeriodCTX(dt):
-    #             csrc, src, cl = sm.get_brightness()
-    #
-    #             err = lumens - cl
-    #             out = pid.get_value(err, dt)
-    #             lm.set_laser_power(out)
-    #             invoke_in_main_thread(update, (cl, err, out, csrc, src))
 
     def _make_seek_graph(self, pattern):
         from pychron.graph.graph import Graph
@@ -554,6 +500,7 @@ class PatternExecutor(Patternable):
         series = []
         limit = -10
         point_gen = None
+
         while time.time() - st < pattern.total_duration:
             if not self._alive:
                 break
@@ -617,9 +564,10 @@ class PatternExecutor(Patternable):
         pattern.perimeter_radius *= sm.pxpermm
 
         avg_sat_score = -1
-        for i, (x, y) in enumerate(pattern.point_generator()):
+        for i, pt in enumerate(pattern.point_generator()):
             update_plot = True
 
+            x, y = pt.x, pt.y
             ax, ay = cx + x, cy + y
             if not self._alive:
                 break
@@ -631,7 +579,7 @@ class PatternExecutor(Patternable):
             if avg_sat_score < sat_threshold:
                 # use_update_point = False
                 try:
-                    linear_move(ax, ay, block=True, velocity=pattern.velocity,
+                    linear_move(ax, ay, block=False, velocity=pattern.velocity,
                                 use_calibration=False,
                                 update=False,
                                 immediate=True)
@@ -660,9 +608,8 @@ class PatternExecutor(Patternable):
                 ts.append(time.time() - st)
                 time.sleep(0.1)
 
-                # while moving(force_query=True):
-                #     pass
-                # measure_scores(update=True)
+            while moving(force_query=True):
+                measure_scores(update=True)
 
             mt = time.time()
             while time.time() - mt < duration:
@@ -674,33 +621,18 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                # weights = [1 / (max(0.0001, (xi - ax) ** 2 + (yi - ay) ** 2)) for xi, yi in positions]
+                weights = [1 / (max(0.0001, ((xi - ax) ** 2 + (yi - ay) ** 2))**0.5) for xi, yi in positions]
 
-                # avg_score = average(density_scores, weights=weights)
-                # avg_sat_score = average(saturation_scores, weights=weights)
-                avg_score = density_scores.mean()
+                avg_score = average(density_scores, weights=weights)
+                avg_sat_score = average(saturation_scores, weights=weights)
                 score = avg_score
+
                 m, b = polyfit(ts, density_scores, 1)
-                # if m > 0:
-                #     score *= (1 + m)
+                if m > 0:
+                    score *= (1 + m)
 
-                # if use_update_point:
-                #     pattern.update_point(score, x, y)
-                # else:
-                pattern.set_point(score, x, y)
-                # ff.write('{},{},{}, --- {}\n'.format(x, y, score, pattern.current_points()))
-                # if prev_xy:
-                #     weights = [1 / (max(0.0001, (xi - prev_xy[0]) ** 2 + (yi - prev_xy[1]) ** 2)) for xi, yi in
-                #                positions]
-                #     avg_score_prev = average(density_scores, weights=weights)
-                #     pattern.update_point(avg_score_prev, prev_xy[0], prev_xy[1], idx=-2)
-                #     if prev_xy2:
-                #         weights = [1 / (max(0.0001, (xi - prev_xy2[0]) ** 2 + (yi - prev_xy2[1]) ** 2)) for xi, yi in
-                #                    positions]
-                #         avg_score_prev2 = average(density_scores, weights=weights)
-                #         pattern.update_point(avg_score_prev2, prev_xy2[0], prev_xy2[1], idx=-3)
+                pattern.set_point(score, pt)
 
-                # lines.append('{:0.5f}   {:0.3f}   {:0.3f}   {}    {}\n'.format(avg_score, x, y, n, score))
                 self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
                 self.debug('Density. AVG:{:0.2f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
                 self.debug('Modified Density Score: {}'.format(score))
@@ -720,10 +652,4 @@ class PatternExecutor(Patternable):
                             update_y_limits=True, plotid=1)
 
             update_axes()
-            # if prev_xy:
-            #     prev_xy2 = prev_xy
-            # prev_xy = (x, y)
-            # invoke_in_main_thread(g.redraw, force=False)
-            # invoke_in_main_thread(update_graph, ts, zs, z, x, y)
-
 # ============= EOF =============================================
