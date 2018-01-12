@@ -546,10 +546,8 @@ class PatternExecutor(Patternable):
 
     def _hill_climber(self, st, controller, pattern, imgplot, cp):
         g = self._seek_graph
-        lines = []
+
         cx, cy = pattern.cx, pattern.cy
-        prev_xy = None
-        prev_xy2 = None
 
         sm = self.laser_manager.stage_manager
         linear_move = controller.linear_move

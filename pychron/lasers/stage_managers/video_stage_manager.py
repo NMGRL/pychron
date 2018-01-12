@@ -216,6 +216,10 @@ class VideoStageManager(StageManager):
     def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
         """
         """
+        directory = None
+        if os.path.sep in basename:
+            args = os.path.split(basename)
+            directory, basename = os.path.sep.join(args[:-1]), args[-1]
 
         if path is None:
             if use_dialog:
@@ -225,6 +229,10 @@ class VideoStageManager(StageManager):
                 self.debug('video archiver root {}'.format(vd))
                 if not vd:
                     vd = paths.video_dir
+                if directory:
+                    vd = os.path.join(vd, directory)
+                    if not os.path.isdir(vd):
+                        os.mkdir(vd)
 
                 path = unique_path_from_manifest(vd, basename, extension='avi')
 
@@ -428,7 +436,9 @@ class VideoStageManager(StageManager):
             srv = 'pychron.media_storage.manager.MediaStorageManager'
             msm = self.parent.application.get_service(srv)
             if msm is not None:
-                dest = os.path.join(self.parent.name, os.path.basename(src))
+                dest = os.path.join(self.parent.name,
+                                    os.path.dirname(src),
+                                    os.path.basename(src))
                 msm.put(src, dest)
 
                 if not self.keep_local_copy:
