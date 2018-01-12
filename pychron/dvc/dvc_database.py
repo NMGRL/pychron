@@ -1435,7 +1435,7 @@ class DVCDatabase(DatabaseAdapter):
         if isinstance(name, (str, unicode)):
             if pi:
                 with self.session_ctx() as sess:
-    
+
                     q = sess.query(ProjectTbl)
                     q = q.join(PrincipalInvestigatorTbl)
                     q = q.filter(ProjectTbl.name == name)
@@ -1937,8 +1937,6 @@ class DVCDatabase(DatabaseAdapter):
             for si in ss:
                 si.sessionID = session.id
 
-
-
                 # for s in samples:
                 #     sample = self.get_sample()
                 #
@@ -2035,32 +2033,14 @@ class DVCDatabase(DatabaseAdapter):
             if isinstance(order, str):
                 order = getattr(tbl.name, order)()
 
+            ret = None
             names = self._retrieve_items(tbl, order=order, distinct_=use_distinct, **kw)
-            if use_distinct:
-                return [ni[0] for ni in names]
-            else:
-                return [ni.name for ni in names or []]
+            if names:
+                if use_distinct:
+                    ret = [ni[0] for ni in names]
+                else:
+                    ret = [ni.name for ni in names or []]
+            return ret
 
-
-                # if __name__ == '__main__':
-
-    import random
-
-    # now = datetime.now()
-    # times = [now, now + timedelta(hours=11), now + timedelta(hours=12),
-    #          now + timedelta(hours=50),
-    #          now+timedelta(hours=55)]
-    #
-    # # times = [datetime.now() - timedelta(random.random() * 20) for i in range(10)]
-    # d = timedelta(hours=10)
-    #
-    # for t in times:
-    #     print t.strftime('%Y-%m-%d %H:%M')
-    # print
-    # for low, high in compress_times(times, d):
-    #     print low.strftime('%Y-%m-%d %H:%M'), \
-    #         high.strftime('%Y-%m-%d %H:%M')
-
-    # for low,
 
 # ============= EOF =============================================

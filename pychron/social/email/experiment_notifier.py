@@ -96,7 +96,7 @@ class ExperimentNotifier(Loggable):
             if pairs:
                 names, addrs = pairs
                 self.info('Notifying user group names={}'.format(','.join(names)))
-                for n, a in pairs:
+                for a in addrs:
                     self._send(a, subject, message)
 
     def start_queue(self, ctx):
