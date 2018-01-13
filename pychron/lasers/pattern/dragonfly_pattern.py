@@ -118,7 +118,7 @@ def outward_square_spiral(base):
                     x, y = prevx, prevy - b * 2
                     b *= 1.1
                 prevx, prevy = x, y
-                yield x, y, 1
+                yield x, y
 
     return gen()
 

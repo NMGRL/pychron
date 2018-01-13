@@ -24,6 +24,7 @@ from pychron.canvas.canvas2D.map_canvas import MapCanvas
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
+
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.stage.maps.base_stage_map import BaseStageMap

@@ -480,7 +480,7 @@ class PatternExecutor(Patternable):
                 break
 
             ist = time.time()
-            pt, peaks, cpeaks, sat, src = find_lum_peak()
+            pt, peaks, cpeaks, sat, src = find_lum_peak(pattern.min_distance)
 
             sats.append(sat)
             series.append(cpeaks)
@@ -500,12 +500,15 @@ class PatternExecutor(Patternable):
             else:
                 point_gen = None
                 wait = True
+            try:
+                scalar = pt[2]
+            except IndexError:
+                scalar = 1
 
-            scalar = pt[2]
             dx = pt[0] / sm.pxpermm * scalar
             dy = pt[1] / sm.pxpermm * scalar
-            px = px + dx
-            py = py - dy
+            px += dx
+            py -= dy
             avg_sat_score = sum(sats) / len(sats)
 
             if avg_sat_score < threshold:

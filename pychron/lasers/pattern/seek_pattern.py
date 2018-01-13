@@ -238,6 +238,10 @@ class SeekPattern(Pattern):
             dur = self.manual_total_duration
         return dur
 
+    @total_duration.setter
+    def total_duration(self, v):
+        self.manual_total_duration = v
+
     def point_generator(self):
         def gen():
 

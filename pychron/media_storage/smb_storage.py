@@ -34,13 +34,13 @@ class SMBStorage(RemoteStorage):
     service_name = Str
     url_name = 'SMB'
 
-    def get_base_url(self):
-        return 'SMB://{}/{}'.format(self.host, self.service_name)
-
     def __init__(self, bind=True, *args, **kw):
         super(SMBStorage, self).__init__(bind=bind, *args, **kw)
         if bind:
             bind_preference(self, 'service_name', 'pychron.media_storage.smb_service_name')
+
+    def get_base_url(self):
+        return 'SMB://{}/{}'.format(self.host, self.service_name)
 
     def getlist(self):
         conn = self._get_connection()
@@ -50,23 +50,14 @@ class SMBStorage(RemoteStorage):
 
             conn.close()
 
-    # def exists(self, ):
-    #     conn = self._get_connection()
-    #     if conn:
-
     def get(self, src, dest, use_cache=True):
-        # conn = self._get_connection()
-        # if conn:
+
         src = ':'.join(src.split(':')[2:])
 
         if isinstance(dest, (str, unicode)):
             dest = open(dest, 'wb')
-            # with open(dest, 'w') as rfile:
-            #     self._get_file(src, rfile)
-            #     conn.retrieveFile(self.service_name, src, rfile)
-        # else:
+
         self._get_file(src, dest, use_cache)
-        # conn.retrieveFile(self.service_name, src, dest)
 
     def put(self, src, dest):
         conn = self._get_connection()
@@ -74,6 +65,7 @@ class SMBStorage(RemoteStorage):
             # make sure directory available to write to
             if os.path.basename(dest) != dest:
                 self._r_mkdir(os.path.dirname(dest), conn)
+
             if not isinstance(src, (str, unicode)):
                 conn.storeFile(self.service_name, dest, src)
             else:
@@ -98,8 +90,8 @@ class SMBStorage(RemoteStorage):
                 with open(cp, 'wb') as cache:
                     cache.write(dest.read())
 
-                # os.chmod(cp, stat.S_IRUSR)
-                # os.chmod(cp, stat.S_IRUSR|stat.S_IROTH)
+                    # os.chmod(cp, stat.S_IRUSR)
+                    # os.chmod(cp, stat.S_IRUSR|stat.S_IROTH)
 
     def _get_cached(self, src, dest):
         p = cache_path(src)
@@ -109,26 +101,18 @@ class SMBStorage(RemoteStorage):
                 return True
 
     def _r_mkdir(self, dest, conn=None):
-        if not os.path.dirname(dest):
-            self._mkdir(dest, conn)
-        else:
-            self._r_mkdir(os.path.dirname(dest))
-            self._mkdir(dest, conn)
-
-    def _mkdir(self, dest, conn=None):
-        close = False
         if conn is None:
             conn = self._get_connection()
-            close = True
 
-        if conn:
-            try:
-                conn.createDirectory(self.service_name, dest)
-            except OperationFailure:
-                pass
-
-            if close:
-                conn.close()
+        sep = os.path.sep
+        directories = dest.split(sep)
+        tmp_path = ''
+        for d in directories:
+            dir_content = conn.listPath(self.service_name, tmp_path)
+            if d not in [x.filename for x in dir_content if x.isDirectory]:
+                self.info('Directory {} is missing. Create it'.format(d))
+                conn.createDirectory(self.service_name, '{}{}{}'.format(tmp_path, sep, d))
+            tmp_path = '{}{}{}'.format(tmp_path, sep, d)
 
     def _get_connection(self):
         localname = socket.gethostname()
@@ -150,11 +134,16 @@ if __name__ == '__main__':
     logger.addHandler(logging.StreamHandler())
 
     s = SMBStorage(bind=False,
+                   host='agustin.nmbgmr.nmt.edu',
                    service_name='argon',
                    username=os.getenv('bureau_username'),
                    password=os.getenv('bureau_password'))
     # s.getlist()
-    s.put('/Users/ross/Desktop/argonfiles.txt', 'test/a/argonfiles.txt')
+
+    src = '/Users/argonlab3/Pychron/data/videos/1842/65941-10C-001.avi'
+    dest = 'FusionsCO2/1842/65941-10C-001qwe22.avi'
+    s.put(src, dest)
+    # s.put('/Users/ross/Desktop/argonfiles.txt', 'test/a/argonfiles.txt')
     # s._r_mkdir('test/a')
 
 # ============= EOF =============================================

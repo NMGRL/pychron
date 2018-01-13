@@ -436,9 +436,10 @@ class VideoStageManager(StageManager):
             srv = 'pychron.media_storage.manager.MediaStorageManager'
             msm = self.parent.application.get_service(srv)
             if msm is not None:
-                dest = os.path.join(self.parent.name,
-                                    os.path.dirname(src),
+                d = os.path.split(os.path.dirname(src))[-1]
+                dest = os.path.join(self.parent.name, d,
                                     os.path.basename(src))
+                print dest
                 msm.put(src, dest)
 
                 if not self.keep_local_copy:
@@ -612,7 +613,10 @@ class VideoStageManager(StageManager):
             #            f = 'uncorrected'
             corrected = False
             if holenum is not None:
-                rpos = sm.get_hole(holenum).nominal_position
+                hole = sm.get_hole(holenum)
+                if hole:
+                    rpos = hole.nominal_position
+
         self.debug('Autocenter duration ={}'.format(time.time() - st))
         return rpos, corrected, interp
 
