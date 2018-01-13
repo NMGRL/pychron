@@ -50,9 +50,9 @@ import math
 #     QtCore.QCoreApplication.processEvents()
 
 
-def invoke_in_main_thread(fn, *args, **kw):
-    from pyface.gui import GUI
-    GUI.invoke_later(fn, *args,  **kw)
+# def invoke_in_main_thread(fn, *args, **kw):
+#     from pyface.gui import GUI
+#     GUI.invoke_later(fn, *args,  **kw)
 
 
 def convert_color(color, output='rgbF'):
