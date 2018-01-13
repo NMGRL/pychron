@@ -56,7 +56,12 @@ class ExperimentNotifier(Loggable):
 
     def end_queue(self, ctx):
         if ctx.get('use_email'):
-            tag = 'Stopped' if ctx.get('err_message') else 'Finished'
+            tag = 'Finished'
+            if ctx.get('err_message'):
+                tag = 'Stopped'
+            elif ctx.get('canceled'):
+                tag = 'Canceled'
+
             subject = 'Experiment "{}" {}'.format(ctx.get('experiment_name'), tag)
             self.notify(ctx, subject)
 

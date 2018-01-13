@@ -1211,12 +1211,17 @@ class AutomatedRun(Loggable):
         msg = 'Extraction Started {}'.format(script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'extraction'
+
+        executor = self.experiment_executor
         self.experiment_executor.refresh_table()
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
         script.runner = self.runner
         script.manager = self.experiment_executor
         script.set_run_identifier(self.runid)
+
+        queue = executor.experiment_queue
+        script.set_load_identifier(queue.load_name)
 
         syn_extractor = None
         if script.syntax_ok(warn=False):

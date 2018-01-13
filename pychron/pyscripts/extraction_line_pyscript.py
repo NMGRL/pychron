@@ -91,6 +91,9 @@ class ExtractionPyScript(ValvePyScript):
     _extraction_positions = List
     _grain_polygons = List
 
+    def set_load_identifier(self, v):
+        self.setup_context(load_identifier=v)
+
     def set_run_identifier(self, v):
         self.setup_context(run_identifier=v)
 
@@ -207,6 +210,7 @@ class ExtractionPyScript(ValvePyScript):
                            duration=0,
                            cleanup=0,
                            beam_diameter=None,
+                           load_identifier = 'default_load',
                            run_identifier='default_runid')
 
     # ==========================================================================
@@ -912,6 +916,9 @@ class ExtractionPyScript(ValvePyScript):
     def run_identifier(self):
         return self._get_property('run_identifier')
 
+    @property
+    def load_identifier(self):
+        return self._get_property('load_identifier')
     # ===============================================================================
     # private
     # ===============================================================================

@@ -415,6 +415,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         ctx = {'etf_iso': self.stats.etf_iso,
                'err_message': self._err_message,
+               'canceld': self._canceled,
                'experiment_name': exp.name,
                'experiment': exp,
                'starttime': exp.start_timestamp,
