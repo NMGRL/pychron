@@ -473,14 +473,16 @@ class PatternExecutor(Patternable):
         series = []
         limit = -10
         point_gen = None
-
+        threshold = 0.75
+        sats=[]
         while time.time() - st < pattern.total_duration:
             if not self._alive:
                 break
 
             ist = time.time()
-            pt, peaks, cpeaks, src = find_lum_peak(pattern.min_distance)
+            pt, peaks, cpeaks, sat, src = find_lum_peak()
 
+            sats.append(sat)
             series.append(cpeaks)
             series = series[limit:]
             hpeaks = invert(array(series).sum(axis=0).clip(0, 255))
@@ -499,22 +501,21 @@ class PatternExecutor(Patternable):
                 point_gen = None
                 wait = True
 
-            # px = px + dx
-            # py = py - dy
-            scalar = pt[2]
-            while 1:
-                dx = pt[0] / sm.pxpermm * scalar
-                dy = pt[1] / sm.pxpermm * scalar
-                if pattern.validate(px + dx, py - dy):
-                    px, py = px + dx, py - dy
+            dx = pt[0] / sm.pxpermm * pt[2]
+            dy = pt[1] / sm.pxpermm * pt[2]
+
+            px = px + dx
+            py = py - dy
+
+            avg_sat_score = sum(sats)/len(sats)
+
+            if avg_sat_score < threshold:
+                if pattern.validate(px - cx, py - cy):
                     try:
                         linear_move(px, py, block=True, velocity=pattern.velocity,
                                     use_calibration=False)
                     except PositionError:
                         break
-
-                    break
-                scalar *= 0.95
 
             if wait:
                 et = time.time() - ist
@@ -540,6 +541,7 @@ class PatternExecutor(Patternable):
         pattern.perimeter_radius *= sm.pxpermm
 
         avg_sat_score = -1
+        # current_x, current_y =None, None
         for i, pt in enumerate(pattern.point_generator()):
             update_plot = True
 
@@ -554,6 +556,7 @@ class PatternExecutor(Patternable):
             # use_update_point = False
             if avg_sat_score < sat_threshold:
                 # use_update_point = False
+                # current_x, current_y = x, y
                 try:
                     linear_move(ax, ay, block=False, velocity=pattern.velocity,
                                 use_calibration=False,
@@ -610,9 +613,9 @@ class PatternExecutor(Patternable):
                 pattern.set_point(score, pt)
 
                 self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
-                self.debug('Density. AVG:{:0.2f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
-                self.debug('Modified Density Score: {}'.format(score))
-                self.debug('Saturation. AVG:{:0.2f}'.format(avg_sat_score))
+                self.debug('Density. AVG:{:0.3f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
+                self.debug('Modified Density Score: {:0.3f}'.format(score))
+                self.debug('Saturation. AVG:{:0.3f}'.format(avg_sat_score))
                 if update_plot:
                     cp.add_point((x, y))
                     g.add_datum((x, y), plotid=0)

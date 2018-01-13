@@ -66,6 +66,7 @@ class StageControlPane(TraitsDockPane):
     def trait_context(self):
         return {'canvas': self.model.stage_manager.canvas,
                 'stage_manager': self.model.stage_manager,
+                'degasser': self.model.degasser,
                 'tray_calibration': self.model.stage_manager.tray_calibration_manager,
                 'object': self.model}
 
@@ -95,15 +96,18 @@ class StageControlPane(TraitsDockPane):
                      layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
+            degasser_grp = VGroup(VGroup(Item('degasser.threshold'),
+                                         show_border=True, label='Preprocess'),
+                                  VGroup(UItem('degasser.pid', style='custom'),
+                                         show_border=True, label='PID'),
+                                  label='Degas', show_border=True)
 
             mvgrp = VGroup(
                 # HGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled'),
                 # Item('stage_manager.autocenter_manager.crop_size', label='Crop (mm)'),
                 # Item('stage_manager.autocenter_manager.target_radius', label='Target Radius',
                 #      editor=RangeEditor(low=0., high=5.))),
-                VGroup(Item('degasser.threshold'),
-                       Item('degasser.pid', style='custom'),
-                       label='Degas', show_border=True),
+
                 # HGroup(Item('stage_manager.autocenter_manager.display_image.alpha')),
                 VGroup(UItem('stage_manager.autocenter_manager.display_image',
                              width=240, height=240,
@@ -133,6 +137,7 @@ class StageControlPane(TraitsDockPane):
                                 mvgrp,
                                 visible_when='use_video', label='Camera')
             tabs.content.append(camera_grp)
+            tabs.content.append(degasser_grp)
 
         mode = self.model.mode
         if mode != 'client':

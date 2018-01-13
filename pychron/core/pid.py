@@ -20,7 +20,7 @@ from traits.api import HasTraits, Range, Float
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-import json
+import yaml
 
 from pychron.paths import paths
 
@@ -57,18 +57,18 @@ class PID(HasTraits):
     def load(self):
         p = self.persistence_path
         with open(p, 'r') as rfile:
-            jd = json.load(rfile)
+            jd = yaml.load(rfile)
             self.load_from_obj(jd)
 
     def dump(self):
         p = self.persistence_path
         with open(p, 'w') as wfile:
             obj = self.get_dump_obj()
-            json.dump(obj, wfile)
+            yaml.dump(obj, wfile)
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.setup_dir, 'pid.json')
+        return os.path.join(paths.setup_dir, 'pid.yaml')
 
     def reset(self):
         self._integral_err = 0
@@ -83,7 +83,7 @@ class PID(HasTraits):
         return min(self.max_output, max(self.min_output, output))
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('kp', label='P'),
+        v = View(VGroup(VGroup(Item('kp', label='P'),
                         Item('ki', label='I'),
                         Item('kd', label='D'),
                         Item('kdt', label='Dt')),

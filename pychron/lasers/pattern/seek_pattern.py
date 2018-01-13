@@ -123,21 +123,20 @@ class Triangle:
 
         self.clear_point_cnts()
 
-    # def set_point(self, score, pt, idx=None):
+    # def set_point(self, score, x, y, idx=None):
     #     if idx is None:
-    #         pt.score = score
-    #         # pt = self.get_point(x, y)
-    #         # if pt:
-    #         #     pt.score = score
-    #         # else:
-    #         #     self._points.append(Point(x, y, score))
+    #         pt = self.get_point(x, y)
+    #         if pt and len(self._points) == 3:
+    #             pt.score = score
+    #         else:
+    #             self._points.append(Point(x, y, score))
     #     else:
     #         self._points[idx] = Point(x, y, score)
-
+    #
     # def get_point(self, x, y):
-    #     return next((p for p in self._points if abs(p.x - x) < 1e-6 and abs(p.y - y) < 1e-6), None)
+    #     return next((p for p in self._points if abs(p.x - x) < 1e-10 and abs(p.y - y) < 1e-10), None)
 
-    def discount(self, scalar=0.5):
+    def discount(self, scalar=0.99):
         # discount
         for p in self._points:
             p.score *= scalar
