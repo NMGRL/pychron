@@ -501,21 +501,22 @@ class PatternExecutor(Patternable):
                 point_gen = None
                 wait = True
 
-            dx = pt[0] / sm.pxpermm * pt[2]
-            dy = pt[1] / sm.pxpermm * pt[2]
-
+            scalar = pt[2]
+            dx = pt[0] / sm.pxpermm * scalar
+            dy = pt[1] / sm.pxpermm * scalar
             px = px + dx
             py = py - dy
-
-            avg_sat_score = sum(sats)/len(sats)
+            avg_sat_score = sum(sats) / len(sats)
 
             if avg_sat_score < threshold:
-                if pattern.validate(px - cx, py - cy):
-                    try:
-                        linear_move(px, py, block=True, velocity=pattern.velocity,
-                                    use_calibration=False)
-                    except PositionError:
-                        break
+                if not pattern.validate(px, py):
+                    px, py = pattern.reduce_vector_magnitude(px, py, 0.75)
+
+                try:
+                    linear_move(px, py, block=True, velocity=pattern.velocity,
+                                use_calibration=False)
+                except PositionError:
+                    break
 
             if wait:
                 et = time.time() - ist

@@ -81,8 +81,8 @@ def triangulator(pts, side):
     # mx = (x1 * s11 + x2 * s22)  # / 2.
     # my = (y1 * s11 + y2 * s22)  # / 2.
 
-    mx = (x1 + x2) /2.
-    my = (y1 + y2) /2.
+    mx = (x1 + x2) / 2.
+    my = (y1 + y2) / 2.
     v1 = mx - ox
     v2 = my - oy
     l = (v1 ** 2 + v2 ** 2) ** 0.5
@@ -222,7 +222,14 @@ class SeekPattern(Pattern):
     _data = List
 
     def validate(self, xx, yy):
-        return ((xx-self.cx) ** 2 + (yy-self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+        return ((xx - self.cx) ** 2 + (yy - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+
+    def reduce_vector_magnitude(self, px, py, scalar=1.0):
+        vx, vy = (px - self.cx), (py - self.cy)
+        mag = (vx ** 2 + vy ** 2) ** 0.5
+        px = vx * self.perimeter_radius / mag * scalar
+        py = vy * self.perimeter_radius / mag * scalar
+        return px+self.cx, py+self.cy
 
     @property
     def total_duration(self):
