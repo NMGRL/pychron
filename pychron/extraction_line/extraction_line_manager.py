@@ -345,6 +345,10 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.switch_manager is not None:
             return self.switch_manager.get_owners()
 
+    def has_locks(self):
+        if self.switch_manager is not None:
+            return self.switch_manager.has_locks()
+
     def get_valve_lock_states(self):
         if self.switch_manager is not None:
             return self.switch_manager.get_software_locks()

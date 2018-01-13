@@ -197,6 +197,9 @@ class SwitchManager(Manager):
 
         return ':'.join(owners)
 
+    def has_locks(self):
+        return any((int(v.software_lock) for v in self.switches.itervalues()))
+
     @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
