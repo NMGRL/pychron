@@ -897,7 +897,7 @@ class DVCDatabase(DatabaseAdapter):
                 return 0
 
     def get_greatest_aliquot(self, identifier):
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parenet_session=False) as sess:
             if identifier:
                 if not self.get_identifier(identifier):
                     return
@@ -918,7 +918,7 @@ class DVCDatabase(DatabaseAdapter):
             return greatest step for this labnumber and aliquot.
             return step as an integer. A=0, B=1...
         """
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parent_session=False) as sess:
             if ln:
                 dbln = self.get_identifier(ln)
                 if not dbln:

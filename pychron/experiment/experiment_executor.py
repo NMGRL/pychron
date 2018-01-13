@@ -288,8 +288,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
-        if not self._check_email_plugin():
-            return
 
         prog = open_progress(100, position=(100, 100))
 
@@ -1487,7 +1485,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
-    def _check_email_plugin(self, inform):
+    def _check_for_email_plugin(self, inform):
         if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
             if not self.application.get_plugin('pychron.social.email.plugin'):
                 if inform:
@@ -1508,6 +1506,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self.dashboard_client:
                 ef = self.dashboard_client.error_flag
                 if ef:
+                    self._err_message = 'Dashboard error. {}'.format(ef)
                     self.warning('Canceling experiment. Dashboard client reports an error\n {}'.format(ef))
                     return
 
@@ -1623,7 +1622,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self.datahub.massspec_enabled:
                 if not self.datahub.store_connect('massspec'):
                     if inform:
-                        return self.confirmation_dialog('Not connected to a Mass Spec database. Do you want to continue with pychron only?')
+                        return self.confirmation_dialog(
+                            'Not connected to a Mass Spec database. Do you want to continue with pychron only?')
                     else:
                         return False
 
@@ -1668,7 +1668,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         return
 
                 populate_repository_identifiers(no_repo, ms, curtag, debug=self.debug)
-                return True
+
+        return True
 
     def _check_automated_run_monitor(self, inform):
         if self.use_automated_run_monitor:
@@ -1710,10 +1711,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_locked_valves(self, inform):
         elm = self.extraction_line_manager
-        if elm.has_locks():
+        locks = elm.get_locked()
+        if locks:
             if inform:
-                return self.confirmation_dialog('Valves are locked. Do you want to continue?')
+                prep, suf = 'are', 's'
+                if len(locks) == 1:
+                    prep, suf = 'is', ''
+                return self.confirmation_dialog('Valve{} "{}" {} locked. '
+                                                'Do you want to continue?'.format(suf, ','.join(locks), prep))
 
+        return True
+
+    def _check_no_runs(self, inform):
+        exp = self.experiment_queue
+        runs = exp.cleaned_automated_runs
+        if not len(runs):
+            if inform:
+                self.warning_dialog('No analysis in the queue')
+            return
         return True
 
     def _pre_execute_check(self, prog=None, inform=True):
@@ -1729,7 +1744,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         funcs = ((self._check_no_runs, 'Check No Runs'),
                  (self._check_for_email_plugin, 'Check For Email Plugin'),
-                 (self._check_for_massspec_db,'Check For Mass Spec Plugin'),
+                 (self._check_for_massspec_db, 'Check For Mass Spec Plugin'),
                  (self._check_first_aliquot, 'Setting Aliquot'),
                  (self._check_dated_repos, 'Setup Dated Repositories'),
                  (self._check_repository_identifiers, 'Check Repositories'),
@@ -1738,10 +1753,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  (self._check_memory, 'Check Memory'),
                  (self._check_automated_run_monitor, 'Check Automated Run Monitor'),
                  (self._check_pyscript_runner, 'Check Pyscript Runner'),
-                 (self._check_preceding_blank, 'Set Preceding Blank'),
-                 (self._check_locked_valves,  'Locked Valves'))
+                 (self._check_locked_valves, 'Locked Valves'),
+                 (self._check_preceding_blank, 'Set Preceding Blank'))
 
         for func, msg in funcs:
+            self.debug('checking: {}'.format(msg))
             if prog:
                 prog.change_message(msg)
             if not func(inform):
@@ -1802,13 +1818,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #                 self.debug_exception()
         #                 self.warning('failed loading previous blank')
         #                 return
-            # if prog:
-            #     prog.change_message('Checking PyScript Runner')
-            # if not self.pyscript_runner.connect():
-            #     self.info('Failed connecting to pyscript_runner')
-            #     msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
-            #     invoke_in_main_thread(self.warning_dialog, msg)
-            #     return
+        # if prog:
+        #     prog.change_message('Checking PyScript Runner')
+        # if not self.pyscript_runner.connect():
+        #     self.info('Failed connecting to pyscript_runner')
+        #     msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+        #     invoke_in_main_thread(self.warning_dialog, msg)
+        #     return
 
         if prog:
             prog.change_message('Pre execute check complete')
@@ -1871,25 +1887,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_tray = man.get_tray()
                     return ed_tray != exp.tray
 
-    def _pre_run_check(self, spec):
+    def _pre_run_check(self, spec, inform=False):
         """
             return True to stop execution loop
         """
         self.heading('Pre Run Check')
 
-        ef = self._check_dashboard()
-        if ef:
-            self._err_message = 'Dashboard error. {}'.format(ef)
+        if not self._check_dashboard(inform):
+            return True
 
-        if self._check_memory():
+        if not self._check_memory(inform):
             self._err_message = 'Not enough memory'
             return True
 
-        if not self._check_managers():
+        if not self._check_managers(inform):
             self._err_message = 'Not all managers available'
             return True
 
-        if self._check_for_errors():
+        if self._check_for_errors(inform):
             return True
 
         if self.monitor:
@@ -2024,7 +2039,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                    'Post Run Termination'):
             return True
 
-    def _check_for_errors(self):
+    def _check_for_errors(self, inform):
         self.debug('checking for connectable errors')
         for c in self.connectables:
             self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))

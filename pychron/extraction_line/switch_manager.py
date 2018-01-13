@@ -197,8 +197,8 @@ class SwitchManager(Manager):
 
         return ':'.join(owners)
 
-    def has_locks(self):
-        return any((int(v.software_lock) for v in self.switches.itervalues()))
+    def get_locked(self):
+        return [v.name for v in self.switches.itervalues() if v.software_lock and not v.ignore_lock_warning]
 
     @add_checksum
     def get_software_locks(self):
@@ -780,6 +780,11 @@ class SwitchManager(Manager):
         if cae is not None:
             check_actuation_enabled = to_bool(cae.text.strip())
 
+        ignore_lock_warning = False
+        ilw = v_elem.find('ignore_lock_warning')
+        if ilw is not None:
+            ignore_lock_warning = to_bool(ilw.text.strip())
+
         check_actuation_delay = 0
         cad = v_elem.find('check_actuation_delay')
         if cad is not None:
@@ -798,6 +803,7 @@ class SwitchManager(Manager):
                    actuator=actuator,
                    description=description,
                    query_state=qs,
+                   ignore_lock_warning=ignore_lock_warning,
                    positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)
