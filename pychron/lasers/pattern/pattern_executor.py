@@ -469,18 +469,23 @@ class PatternExecutor(Patternable):
         set_data3 = imgplot3.data.set_data
 
         duration = pattern.duration
+        sat_threshold = pattern.saturation_threshold
+        total_duration = pattern.total_duration
+        min_distance = pattern.min_distance
+        aggressiveness = pattern.aggressiveness
+
         px, py = cx, cy
         series = []
         limit = -10
         point_gen = None
-        threshold = 0.75
-        sats=[]
-        while time.time() - st < pattern.total_duration:
+        sats = []
+        cnt = 0
+        while time.time() - st < total_duration:
             if not self._alive:
                 break
 
             ist = time.time()
-            pt, peaks, cpeaks, sat, src = find_lum_peak(pattern.min_distance)
+            pt, peaks, cpeaks, sat, src = find_lum_peak(min_distance)
 
             sats.append(sat)
             series.append(cpeaks)
@@ -494,7 +499,6 @@ class PatternExecutor(Patternable):
             if pt is None:
                 if not point_gen:
                     point_gen = pattern.point_generator()
-                    # point_gen = outward_square_spiral(pattern.base)
                 wait = False
                 pt = next(point_gen)
             else:
@@ -505,15 +509,20 @@ class PatternExecutor(Patternable):
             except IndexError:
                 scalar = 1
 
-            dx = pt[0] / sm.pxpermm * scalar
-            dy = pt[1] / sm.pxpermm * scalar
+            ascalar = scalar * aggressiveness
+            dx = pt[0] / sm.pxpermm * ascalar
+            dy = pt[1] / sm.pxpermm * ascalar
             px += dx
             py -= dy
             avg_sat_score = sum(sats) / len(sats)
-
-            if avg_sat_score < threshold:
+            self.debug(
+                'i: {}. point={},{}. Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
+            self.debug('Average Saturation: {} threshold={}'.format(avg_sat_score, sat_threshold))
+            if avg_sat_score < sat_threshold:
                 if not pattern.validate(px, py):
-                    px, py = pattern.reduce_vector_magnitude(px, py, 0.75)
+                    self.debug('invalid position. {},{}'.format(px, py))
+                    px, py = pattern.reduce_vector_magnitude(px, py, 0.85)
+                    self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
 
                 try:
                     linear_move(px, py, block=True, velocity=pattern.velocity,
@@ -526,6 +535,8 @@ class PatternExecutor(Patternable):
                 d = duration - et
                 if d > 0:
                     time.sleep(d)
+
+            cnt += 1
 
     def _hill_climber(self, st, controller, pattern, imgplot, cp):
         g = self._seek_graph
@@ -635,4 +646,5 @@ class PatternExecutor(Patternable):
                             update_y_limits=True, plotid=1)
 
             update_axes()
+
 # ============= EOF =============================================

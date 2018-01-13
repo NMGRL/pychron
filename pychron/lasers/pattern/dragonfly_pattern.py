@@ -15,90 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum, Int
+from traits.api import Enum, Int, Float
 from traitsui.api import View, Item
 # ============= standard library imports ========================
-import time
 # ============= local library imports  ==========================
-from pychron.hardware.motion_controller import PositionError
 from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
-
-#
-# def dragonfly(st, pattern, laser_manager, controller, imgplot, cp):
-#     cx, cy = pattern.cx, pattern.cy
-#
-#     lm = laser_manager
-#     sm = lm.stage_manager
-#
-#     update_axes = sm.update_axes
-#     linear_move = controller.linear_move
-#     moving = sm.moving
-#     find_best_target = sm.find_best_target
-#     set_data = imgplot.data.set_data
-#     pr = pattern.perimeter_radius * sm.pxpermm
-#
-#     def validate(xx, yy):
-#         return (xx ** 2 + yy ** 2) ** 0.5 <= pr
-#
-#     def find():
-#         targetxy, src = find_best_target()
-#         set_data('imagedata', src)
-#         return targetxy
-#
-#     duration = pattern.duration
-#     found_target = None
-#     while time.time() - st < pattern.total_duration:
-#         if found_target:
-#             targetxy = found_target
-#             found_target = None
-#         else:
-#             # identify target
-#             # targetxy, src = find_best_target()
-#             # set_data('imagedata', src)
-#             targetxy = find()
-#
-#         if targetxy is not None:
-#             tx, ty = targetxy
-#
-#             if not validate(tx - cx, ty - cy):
-#                 break
-#             # cp.add_point((tx - cx, ty - cy))
-#             try:
-#                 linear_move(tx, ty, block=False, velocity=pattern.velocity,
-#                             update=False,
-#                             immediate=True)
-#                 cux, cuy = tx, ty
-#             except PositionError:
-#                 break
-#
-#             time.sleep(duration)
-#         else:
-#
-#             # do a search until a target is found
-#             found_target = None
-#             for i, (x, y) in enumerate(pattern.point_generator()):
-#                 print i, x, y
-#                 # cp.add_point((x, y))
-#                 try:
-#                     linear_move(cux + x, cuy + y, block=False, velocity=pattern.velocity,
-#                                 update=False,
-#                                 immediate=True)
-#                 except PositionError:
-#                     break
-#
-#                 while moving(force_query=True):
-#                     update_axes()
-#                     # found_target, src = find_best_target()
-#                     # set_data('imagedata', src)
-#                     found_target = find()
-#                     if found_target:
-#                         break
-#                     time.sleep(0.1)
-#
-#                 found_target = find()
-#                 if found_target:
-#                     break
 
 
 def outward_square_spiral(base):
@@ -122,38 +44,11 @@ def outward_square_spiral(base):
 
     return gen()
 
-# def outward_square_spiral(base):
-#     def gen():
-#
-#         b = base
-#         py = 0
-#         while 1:
-#             if cnt == 0:
-#                 x = px = b
-#                 y = py
-#             elif cnt == 1:
-#                 x = px
-#                 y = py = b
-#             elif cnt == 2:
-#                 x = px - b * 2
-#                 y = py
-#                 px = x
-#             elif cnt == 3:
-#                 x = px
-#                 y = py - b * 2
-#                 b += 1
-#                 cnt = -1
-#                 py = y
-#
-#             cnt += 1
-#             yield x, y
-#
-#     return gen()
-
 
 class DragonFlyPeakPattern(SeekPattern):
     spiral_kind = Enum('Hexagon', 'Square')
     min_distance = Int
+    aggressiveness = Float(1)
 
     def point_generator(self):
         if self.spiral_kind.lower() == 'square':
@@ -182,12 +77,14 @@ class DragonFlyPeakPattern(SeekPattern):
                  Item('min_distance', label='Minimum pixel peak radius'),
                  Item('saturation_threshold', label='Saturation Threshold',
                       tooltip='If the saturation score is greater than X then do not move'),
+                 Item('aggressiveness', label='Move Aggressiveness',
+                      tooltip='Tuning factor to dampen the magnitude of moves, '
+                              '0<aggressiveness<1==reduce motion, >1 increase motion'),
                  Item('mask_kind', label='Mask', tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
                                                          "Beam= Beam radius + 10%\n"
                                                          "Hole= Hole radius"),
                  Item('custom_mask_radius', label='Mask Radius (mm)',
                       visible_when='mask_kind=="Custom"'))
         return v
-
 
 # ============= EOF =============================================
