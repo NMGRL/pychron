@@ -17,41 +17,42 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-from pyface.qt import QtCore
+
 # ============= local library imports  ==========================
 import math
 
 """
     http://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 """
+#
+#
+# class InvokeEvent(QtCore.QEvent):
+#     EVENT_TYPE = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
+#
+#     def __init__(self, fn, *args, **kwargs):
+#         QtCore.QEvent.__init__(self, InvokeEvent.EVENT_TYPE)
+#         self.fn = fn
+#         self.args = args
+#         self.kwargs = kwargs
+#
+#
+# class Invoker(QtCore.QObject):
+#     def event(self, event):
+#         event.fn(*event.args, **event.kwargs)
+#         return True
+#
+#
+# _invoker = Invoker()
+#
+# def invoke_in_main_thread(fn, *args, **kwargs):
+#     QtCore.QCoreApplication.postEvent(_invoker, InvokeEvent(fn, *args, **kwargs), QtCore.Qt.NormalEventPriority)
+#     QtCore.QCoreApplication.sendPostedEvents(_invoker)
+#     QtCore.QCoreApplication.processEvents()
 
 
-class InvokeEvent(QtCore.QEvent):
-    EVENT_TYPE = QtCore.QEvent.Type(QtCore.QEvent.registerEventType())
-
-    def __init__(self, fn, *args, **kwargs):
-        QtCore.QEvent.__init__(self, InvokeEvent.EVENT_TYPE)
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-
-
-class Invoker(QtCore.QObject):
-    def event(self, event):
-        event.fn(*event.args, **event.kwargs)
-        return True
-
-
-_invoker = Invoker()
-
-
-def invoke_in_main_thread(fn, *args, **kwargs):
-    # invoker = Invoker()
-    # QtCore.QCoreApplication.postEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
-    QtCore.QCoreApplication.postEvent(_invoker, InvokeEvent(fn, *args, **kwargs), -1)
-    # QtCore.QCoreApplication.processEvents()
-    # does this resolve the GUI responsiveness issue during when screen goes to sleep/screen saver
-    # QtCore.QCoreApplication.sendEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
+def invoke_in_main_thread(fn, *args, **kw):
+    from pyface.gui import GUI
+    GUI.invoke_later(fn, *args,  **kw)
 
 
 def convert_color(color, output='rgbF'):

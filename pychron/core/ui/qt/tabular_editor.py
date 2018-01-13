@@ -123,6 +123,7 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def copy_to_end(self, info, obj):
         obj.copy_selected_last()
 
+
 class ItemDelegate(_ItemDelegate):
     pass
     # def drawDecoration(self, painter, option, rect, pixmap):
@@ -436,7 +437,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                    self.state() != QtGui.QAbstractItemView.EditingState and
+                self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -449,7 +450,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-                  factory.editable and 'delete' in factory.operations):
+              factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -467,7 +468,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-                  factory.editable and 'insert' in factory.operations):
+              factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -719,6 +720,5 @@ class _TabularEditor(qtTabularEditor):
         row = min(row, self.model.rowCount(None)) - 1
         super(_TabularEditor, self)._scroll_to_row_changed(0)
         super(_TabularEditor, self)._scroll_to_row_changed(row)
-
 
 # ============= EOF =============================================
