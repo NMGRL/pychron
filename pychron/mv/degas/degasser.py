@@ -21,11 +21,11 @@ from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, 
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 # ============= standard library imports ========================
-
 from numpy import uint8, zeros, random
 from Queue import Queue
 from skimage.color import gray2rgb
 from threading import Event, Thread
+import yaml
 import json
 import os
 import time
@@ -85,7 +85,7 @@ class Degasser(Loggable):
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.setup_dir, 'pid_degasser.json')
+        return os.path.join(paths.setup_dir, 'pid_degasser.yaml')
 
     def load(self):
         self.debug('loading')
@@ -96,7 +96,7 @@ class Degasser(Loggable):
             return
 
         with open(p, 'r') as rfile:
-            jd = json.load(rfile)
+            jd = yaml.load(rfile)
             self.threshold = jd['threshold']
             self.pid.load_from_obj(jd['pid'])
 
@@ -105,7 +105,7 @@ class Degasser(Loggable):
         obj = self.pid.get_dump_obj()
         jd = {'pid': obj, 'threshold': self.threshold}
         with open(self.persistence_path, 'w') as wfile:
-            json.dump(jd, wfile)
+            yaml.dump(jd, wfile)
 
     def degas(self, lumens=None, autostart=True):
         self.load()

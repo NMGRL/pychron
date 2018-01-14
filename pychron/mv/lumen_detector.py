@@ -99,16 +99,16 @@ class LumenDetector(Locator):
                 self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, pixel_depth=8):
-        self._mask(lum)
+    def find_lum_peak(self, lum, pixel_depth=8, min_distance=5):
+        mask = self._mask(lum)
         h, w = lum.shape[:2]
         src = rgb2gray(lum)
-        pts = peak_local_max(src, min_distance=5, num_peaks=10, threshold_abs=0.5)
+        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
         peaks = zeros((h, w), dtype=uint8)
         cpeaks = zeros((h, w), dtype=uint8)
         pt = None
+        pd = calc_pixel_depth(pixel_depth)
         if pts.shape[0]:
-            pd = calc_pixel_depth(pixel_depth)
 
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
@@ -123,7 +123,9 @@ class LumenDetector(Locator):
             peaks[c] = pd
             pt = px - w / 2., py - h / 2, sorted(intensities)[-1]
 
-        return pt, peaks, cpeaks, lum
+        sat = lum.sum() / (mask.sum() * pd)
+
+        return pt, peaks, cpeaks, sat, lum
 
     def get_scores(self, lum, pixel_depth=8):
         mask = self._mask(lum)

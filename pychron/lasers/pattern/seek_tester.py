@@ -27,7 +27,7 @@ import time
 from numpy import zeros, ogrid
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.lasers.pattern.dragonfly_pattern import dragonfly, DragonFlyPattern
+# from pychron.lasers.pattern.dragonfly_pattern import dragonfly, DragonFlyPattern
 from pychron.lasers.pattern.pattern_executor import CurrentPointOverlay
 from pychron.mv.lumen_detector import LumenDetector
 

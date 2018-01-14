@@ -81,8 +81,8 @@ def triangulator(pts, side):
     # mx = (x1 * s11 + x2 * s22)  # / 2.
     # my = (y1 * s11 + y2 * s22)  # / 2.
 
-    mx = (x1 + x2) /2.
-    my = (y1 + y2) /2.
+    mx = (x1 + x2) / 2.
+    my = (y1 + y2) / 2.
     v1 = mx - ox
     v2 = my - oy
     l = (v1 ** 2 + v2 ** 2) ** 0.5
@@ -123,21 +123,20 @@ class Triangle:
 
         self.clear_point_cnts()
 
-    # def set_point(self, score, pt, idx=None):
+    # def set_point(self, score, x, y, idx=None):
     #     if idx is None:
-    #         pt.score = score
-    #         # pt = self.get_point(x, y)
-    #         # if pt:
-    #         #     pt.score = score
-    #         # else:
-    #         #     self._points.append(Point(x, y, score))
+    #         pt = self.get_point(x, y)
+    #         if pt and len(self._points) == 3:
+    #             pt.score = score
+    #         else:
+    #             self._points.append(Point(x, y, score))
     #     else:
     #         self._points[idx] = Point(x, y, score)
-
+    #
     # def get_point(self, x, y):
-    #     return next((p for p in self._points if abs(p.x - x) < 1e-6 and abs(p.y - y) < 1e-6), None)
+    #     return next((p for p in self._points if abs(p.x - x) < 1e-10 and abs(p.y - y) < 1e-10), None)
 
-    def discount(self, scalar=0.5):
+    def discount(self, scalar=0.99):
         # discount
         for p in self._points:
             p.score *= scalar
@@ -222,12 +221,26 @@ class SeekPattern(Pattern):
     _points = List
     _data = List
 
+    def validate(self, xx, yy):
+        return ((xx - self.cx) ** 2 + (yy - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+
+    def reduce_vector_magnitude(self, px, py, scalar=1.0):
+        vx, vy = (px - self.cx), (py - self.cy)
+        mag = (vx ** 2 + vy ** 2) ** 0.5
+        px = vx * self.perimeter_radius / mag * scalar
+        py = vy * self.perimeter_radius / mag * scalar
+        return px+self.cx, py+self.cy
+
     @property
     def total_duration(self):
         dur = self.external_duration
         if not dur:
             dur = self.manual_total_duration
         return dur
+
+    @total_duration.setter
+    def total_duration(self, v):
+        self.manual_total_duration = v
 
     def point_generator(self):
         def gen():

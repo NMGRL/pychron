@@ -381,10 +381,10 @@ class VideoStageManager(StageManager):
         src = self._get_preprocessed_src()
         return ld.get_scores(src, **kw)
 
-    def find_lum_peak(self):
+    def find_lum_peak(self, min_distance):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        return ld.find_lum_peak(src)
+        return ld.find_lum_peak(src, min_distance=min_distance)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -436,9 +436,10 @@ class VideoStageManager(StageManager):
             srv = 'pychron.media_storage.manager.MediaStorageManager'
             msm = self.parent.application.get_service(srv)
             if msm is not None:
-                dest = os.path.join(self.parent.name,
-                                    os.path.dirname(src),
+                d = os.path.split(os.path.dirname(src))[-1]
+                dest = os.path.join(self.parent.name, d,
                                     os.path.basename(src))
+                print dest
                 msm.put(src, dest)
 
                 if not self.keep_local_copy:
@@ -612,7 +613,10 @@ class VideoStageManager(StageManager):
             #            f = 'uncorrected'
             corrected = False
             if holenum is not None:
-                rpos = sm.get_hole(holenum).nominal_position
+                hole = sm.get_hole(holenum)
+                if hole:
+                    rpos = hole.nominal_position
+
         self.debug('Autocenter duration ={}'.format(time.time() - st))
         return rpos, corrected, interp
 

@@ -22,6 +22,7 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= local library imports  ==========================
 
 # invoke_in_main_thread = toolkit_factory('gui', 'invoke_in_main_thread')
+
 def invoke_in_main_thread(fn, *args, **kw):
     from pyface.gui import GUI
     GUI.invoke_later(fn, *args, **kw)

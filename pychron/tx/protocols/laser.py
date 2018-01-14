@@ -115,7 +115,12 @@ class LaserProtocol(ServiceProtocol):
     # Video
     # ===============================================================================
     def _start_video_recording(self, data):
-        return self._manager.start_video_recording(data)
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+
+        return self._manager.start_video_recording(name)
 
     def _stop_video_recording(self, data):
         return self._manager.stop_video_recording()
