@@ -897,7 +897,7 @@ class DVCDatabase(DatabaseAdapter):
                 return 0
 
     def get_greatest_aliquot(self, identifier):
-        with self.session_ctx(use_parenet_session=False) as sess:
+        with self.session_ctx(use_parent_session=False) as sess:
             if identifier:
                 if not self.get_identifier(identifier):
                     return
