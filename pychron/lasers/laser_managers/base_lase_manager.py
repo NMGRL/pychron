@@ -37,7 +37,7 @@ class BaseLaserManager(Manager):
 
     enable = Event
     enable_label = Property(depends_on='enabled')
-    enabled_led = Instance('pychron.core.ui.led_editor.LED')
+    enabled_led = Instance('pychron.core.ui.led_editor.LED', ())
     enabled = Bool(False)
 
     stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
@@ -125,17 +125,6 @@ class BaseLaserManager(Manager):
         extension = '.lp,.txt'
         patterns = list_directory(p, extension)
         return ['', ] + patterns
-
-    #     def new_pattern_maker(self):
-    #         pm = PatternMakerView()
-    #         self.open_view(pm)
-    #
-    #     def open_pattern_maker(self):
-    #         pm = PatternMakerView(
-    #                               executor=self.pattern_executor
-    #                               )
-    #         if pm.load_pattern():
-    #             self.open_view(pm)
 
     def execute_pattern(self, name=None, duration=None, block=False, lase=False):
         # if not self.stage_manager.temp_hole:
@@ -331,9 +320,9 @@ class BaseLaserManager(Manager):
     # ===============================================================================
     def _enabled_changed(self):
         if self.enabled:
-            self.enabled_led.state = 'green'
+            self.enabled_led.set_state('green')
         else:
-            self.enabled_led.state = 'red'
+            self.enabled_led.set_state('red')
 
     def _use_video_changed(self):
         if not self.use_video:
@@ -372,9 +361,9 @@ class BaseLaserManager(Manager):
         return sm
 
     # defaults
-    def _enabled_led_default(self):
-        from pychron.core.ui.led_editor import LED
-        return LED()
+    # def _enabled_led_default(self):
+    #     from pychron.core.ui.led_editor import LED
+    #     return LED()
 
     def _pattern_executor_default(self):
         from pychron.lasers.pattern.pattern_executor import PatternExecutor

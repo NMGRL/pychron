@@ -78,7 +78,7 @@ class FusionsUVControlPane(TraitsDockPane):
     def traits_view(self):
         grp = VGroup(
             HGroup(
-                Item('enabled_led', show_label=False,
+                Item('object.enabled_led.state', show_label=False,
                      style='custom', editor=LEDEditor()),
                 button_editor('enable', 'enable_label'),
                 spring),

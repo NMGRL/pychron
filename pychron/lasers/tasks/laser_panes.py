@@ -218,7 +218,7 @@ class ControlPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        led_grp = HGroup(UItem('enabled_led',
+        led_grp = HGroup(UItem('object.enabled_led.state',
                                editor=LEDEditor(),
                                style='custom',
                                height=-35),
@@ -374,7 +374,7 @@ class ClientMixin(object):
             # ogrp,
             pos_grp, layout='tabbed')
 
-        egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
+        egrp = HGroup(UItem('object.enabled_led.state', editor=LEDEditor()),
                       UItem('enable',
                             editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', enabled_when='enabled'),

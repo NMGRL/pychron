@@ -15,37 +15,32 @@
 # ===============================================================================
 
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Property, Int, Callable, Any, Str
-from traitsui.basic_editor_factory import BasicEditorFactory
-from traitsui.qt4.editor import Editor
+from pyface.qt.QtCore import Qt
+from pyface.qt.QtGui import QColor, QWidget, QLabel
 from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
     QPen, QRadialGradient, QVBoxLayout
-from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Int, Callable, Str
+from traitsui.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-# ============= views ===================================
+
+
 COLORS = ['red', 'yellow', 'green', 'black']
 QT_COLORS = [QColor(ci) for ci in COLORS]
 
 
 class LED(HasTraits):
-    state = Property(depends_on='_state')
-    _state = Int
+    state = Int
 
-    def _set_state(self, v):
-        ostate = self._state
+    def set_state(self, v):
         if isinstance(v, str):
-            self._state = COLORS.index(v)
-        elif isinstance(v, int):
-            self._state = v
-
-        self.trait_property_changed('state', ostate)
-
-    def _get_state(self):
-        return self._state
+            self.state = COLORS.index(v)
+        elif isinstance(v, (bool, int)):
+            self.state = v
 
 
 class ButtonLED(LED):
@@ -58,37 +53,38 @@ class ButtonLED(LED):
 def change_intensity(color, fac):
     rgb = [color.red(), color.green(), color.blue()]
     rgb = map(lambda c: min(int(round(c * fac, 0)), 255), rgb)
-    # for i, intensity in enumerate(rgb):
-    #     rgb[i] = min(int(round(intensity * fac, 0)), 255)
-
     return QColor(*rgb)
 
 
-class qtLED(QGraphicsView):
-    pass
+def get_color(state, cx, cy, rad):
+    if isinstance(state, str):
+        c = QColor(state)
+    else:
+        c = QT_COLORS[state]
+
+    gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
+    gradient.setColorAt(0, Qt.white)
+    gradient.setColorAt(1, c)
+    brush = QBrush(gradient)
+    return brush
+
+
+class LEDGraphicsView(QGraphicsView):
+    def __init__(self, rad, scene, *args, **kw):
+        super(LEDGraphicsView, self).__init__(*args, **kw)
+        self.setStyleSheet("border: 0px")
+        self.setMaximumWidth(rad + 15)
+        self.setMaximumHeight(rad + 15)
+        self.setScene(scene)
+
+
+DIAMETER_SCALAR = 1.75
 
 
 class _LEDEditor(Editor):
-    led = Any
-
-    # def _get_qt_color(self, state):
-    #     if isinstance(state, str):
-    #         c = QColor(state)
-    #     else:
-    #         c = QT_COLORS[state]
-    #     return c
-
-    def get_color(self, state, cx, cy, rad):
-        if isinstance(state, str):
-            c = QColor(state)
-        else:
-            c = QT_COLORS[state]
-
-        gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
-        gradient.setColorAt(0, Qt.white)
-        gradient.setColorAt(1, c)
-        brush = QBrush(gradient)
-        return brush
+    def __init__(self, *args, **kw):
+        super(_LEDEditor, self).__init__(*args, **kw)
+        self._led_ellipse = None
 
     def init(self, parent):
         """
@@ -99,63 +95,46 @@ class _LEDEditor(Editor):
 
         if self.control is None:
 
-            ctrl = qtLED()
-            layout = QVBoxLayout()
-
-            layout.addWidget(ctrl)
-
             scene = QGraphicsScene()
 
             # system background color
             scene.setBackgroundBrush(QBrush(QColor(237, 237, 237)))
-            ctrl.setStyleSheet("border: 0px")
-            ctrl.setMaximumWidth(rad + 15)
-            ctrl.setMaximumHeight(rad + 15)
 
             x, y = 10, 10
-            cx = x + rad / 1.75
-            cy = y + rad / 1.75
+            cx = x + rad / DIAMETER_SCALAR
+            cy = y + rad / DIAMETER_SCALAR
 
-            brush = self.get_color(self.value.state, cx, cy, rad / 2)
+            brush = get_color(self.value, cx, cy, rad / 2)
             pen = QPen()
             pen.setWidth(0)
-            self.led = scene.addEllipse(x, y, rad, rad,
-                                        pen=pen,
-                                        brush=brush)
+            self._led_ellipse = scene.addEllipse(x, y, rad, rad, pen=pen, brush=brush)
+
+            ctrl = LEDGraphicsView(rad, scene)
+
+            layout = QVBoxLayout()
+            layout.addWidget(ctrl)
+            layout.setAlignment(ctrl, Qt.AlignHCenter)
 
             if self.factory.label:
                 txt = QLabel(self.factory.label)
                 layout.addWidget(txt)
                 layout.setAlignment(txt, Qt.AlignHCenter)
 
-            ctrl.setScene(scene)
-
-            layout.setAlignment(ctrl, Qt.AlignHCenter)
-
-            self.value.on_trait_change(self.update_object, 'state')
-
             self.control = QWidget()
             self.control.setLayout(layout)
 
-    def update_object(self, obj, name, new):
+    def update_editor(self):
         """
         """
-        if name == 'state':
-            if self.control is not None:
-                rect = self.led.rect()
-                x = rect.x()
-                y = rect.y()
-                r = rect.width()
-                x += r / 1.75
-                y += r / 1.75
+        if self.control is not None:
+            rect = self._led_ellipse.rect()
+            x = rect.x()
+            y = rect.y()
+            r = rect.width()
+            x += r / DIAMETER_SCALAR
+            y += r / DIAMETER_SCALAR
 
-                self.led.setBrush(self.get_color(new, x, y, r / 2))
-
-    def update_editor(self, *args, **kw):
-        """
-        """
-        if self.control:
-            pass
+            self._led_ellipse.setBrush(get_color(self.value, x, y, r / 2))
 
 
 class LEDEditor(BasicEditorFactory):

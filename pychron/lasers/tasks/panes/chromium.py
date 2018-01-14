@@ -63,7 +63,7 @@ class ChromiumCO2ClientPane(ClientPane):
                      calibration_grp,
                      layout='tabbed')
 
-        egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
+        egrp = HGroup(UItem('object.enabled_led.state', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', editor=ButtonEditor(label_value='fire_label'),
                             enabled_when='enabled'),
