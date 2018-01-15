@@ -15,54 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from skimage.draw import circle
+from traits.api import Any, Bool, List
+
 import cStringIO
 import os
 import time
 from threading import Thread, current_thread, Event
-
-from chaco.abstract_overlay import AbstractOverlay
-from chaco.default_colormaps import hot
-from chaco.scatterplot import render_markers
-from numpy import polyfit, linspace, hstack, array, average, zeros_like, zeros, uint8, invert
+from numpy import polyfit, array, average, uint8
 from skimage.color import gray2rgb
-from traits.api import Any, Bool, List
 
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
-
-
-# from pychron.lasers.pattern.dragonfly_pattern import dragonfly
-
-
-# class PeriodCTX:
-#     def __init__(self, duration):
-#         self._duration = duration
-#
-#     def __enter__(self):
-#         self._st = time.time()
-#
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         if exc_type is None:
-#             et = time.time() - self._st
-#             time.sleep(max(0, self._duration - et))
-
-
-class CurrentPointOverlay(AbstractOverlay):
-    _points = List
-
-    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        if self._points:
-            with gc:
-                pts = self.component.map_screen(self._points)
-                render_markers(gc, pts[1:], 'circle', 3, (0, 1, 0), 1, (0, 1, 0))
-                render_markers(gc, pts[:1], 'circle', 3, (1, 1, 0), 1, (1, 1, 0))
-
-    def add_point(self, pt):
-        self._points.append(pt)
-        self._points = self._points[-3:]
 
 
 class PatternExecutor(Patternable):
@@ -231,7 +198,7 @@ class PatternExecutor(Patternable):
 
         kind = pattern.kind
         if kind in ('SeekPattern', 'DragonFlyPeakPattern'):
-            self._make_seek_graph(pattern)
+            self._info = open_view(pattern, view='execution_graph_view')
 
         if evt is not None:
             evt.set()
@@ -333,96 +300,8 @@ class PatternExecutor(Patternable):
         controller.single_axis_move('x', pattern.radius, block=True)
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
-    def _make_seek_graph(self, pattern):
-        from pychron.graph.graph import Graph
-        g = Graph(window_x=100, window_y=100,
-                  window_title='{} - {}'.format(pattern.kind, pattern.name),
-                  window_width=1000,
-                  container_dict={'kind': 'h'})
-        self._info = open_view(g)
-        self._seek_graph = g
-        return g
-
-    def _setup_seek_graph(self, pattern):
-        g = self._seek_graph
-
-        g.new_plot(padding_right=10)
-        s, p = g.new_series()
-        p.aspect_ratio = 1.0
-        cp = CurrentPointOverlay(component=s)
-        s.overlays.append(cp)
-
-        r = pattern.perimeter_radius
-        xs = linspace(-r, r)
-        xs2 = xs[::-1]
-        ys = (r ** 2 - xs ** 2) ** 0.5
-        ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
-
-        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type='line')
-
-        g.set_x_title('X (mm)', plotid=0)
-        g.set_y_title('Y (mm)', plotid=0)
-
-        # g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
-        # g.new_series(type='line')
-        # g.new_series()
-        # g.set_y_title('Density', plotid=1)
-        # g.set_x_title('Time (s)', plotid=1)
-
-        g.new_plot(padding_right=10)
-        g.new_series()
-        g.set_y_title('Score', plotid=1)
-        g.set_x_title('Time (s)', plotid=1)
-
-        # name = 'imagedata{:03d}'.format(i)
-        # plotdata.set_data(name, ones(wh))
-
-        imgplot = g.new_plot(padding_left=10, padding_right=10)
-        imgplot.aspect_ratio = 1.0
-
-        imgplot.x_axis.visible = False
-        imgplot.y_axis.visible = False
-        imgplot.x_grid.visible = False
-        imgplot.y_grid.visible = False
-
-        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
-        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
-
-        g.set_x_limits(-r, r)
-        g.set_y_limits(-r, r)
-
-        total_duration = pattern.total_duration
-        g.set_y_limits(min_=-0.1, max_=1.1, plotid=1)
-        g.set_x_limits(max_=total_duration * 1.1, plotid=1)
-
-        # g.set_x_limits(max_=total_duration * 1.1, plotid=2)
-        # g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
-        return imgplot, cp
-
-    def _setup_dragonfly_peak_graph(self, name):
-        g = self._seek_graph
-
-        def new_plot():
-            # peak location
-            imgplot = g.new_plot(padding_right=10)
-            imgplot.aspect_ratio = 1.0
-            imgplot.x_axis.visible = False
-            imgplot.y_axis.visible = False
-            imgplot.x_grid.visible = False
-            imgplot.y_grid.visible = False
-
-            imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
-            imgplot.img_plot('imagedata', colormap=hot, origin='top left')
-            return imgplot
-
-        img = new_plot()
-        peaks = new_plot()
-        hpeaks = new_plot()
-
-        return img, peaks, hpeaks
-
     def _execute_seek(self, controller, pattern):
-        from pychron.core.ui.gui import invoke_in_main_thread
+
         duration = pattern.duration
         total_duration = pattern.total_duration
 
@@ -447,26 +326,25 @@ class PatternExecutor(Patternable):
         if pattern.kind == 'DragonFlyPeakPattern':
             self._dragonfly_peak(st, pattern, lm, controller)
         else:
-            imgplot, cp = self._setup_seek_graph(pattern)
-            self._hill_climber(st, controller, pattern, imgplot, cp)
+            self._hill_climber(st, controller, pattern)
 
         sm.canvas.show_desired_position = osdp
-        invoke_in_main_thread(self._info.dispose)
+
+        from pyface.gui import GUI
+        GUI.invoke_later(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
-        imgplot, imgplot2, imgplot3 = self._setup_dragonfly_peak_graph(pattern.name)
+
+        # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
+        imgplot, imgplot2 = pattern.setup_execution_graph()
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
-
-        # update_axes = sm.update_axes
-        # moving = sm.moving
 
         linear_move = controller.linear_move
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
         set_data2 = imgplot2.data.set_data
-        set_data3 = imgplot3.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -475,71 +353,101 @@ class PatternExecutor(Patternable):
         aggressiveness = pattern.aggressiveness
 
         px, py = cx, cy
-        series = []
-        limit = -10
+
         point_gen = None
-        sats = []
         cnt = 0
+        peak = None
         while time.time() - st < total_duration:
             if not self._alive:
                 break
 
+            sats = []
+            pts = []
             ist = time.time()
-            pt, peaks, cpeaks, sat, src = find_lum_peak(min_distance)
+            npt = None
 
-            sats.append(sat)
-            series.append(cpeaks)
-            series = series[limit:]
-            hpeaks = invert(array(series).sum(axis=0).clip(0, 255))
+            while time.time() - ist < duration:
+                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
+                set_data('imagedata', src)
 
-            set_data('imagedata', src)
-            set_data2('imagedata', gray2rgb(peaks).astype(uint8))
-            set_data3('imagedata', gray2rgb(hpeaks).astype(uint8))
+                sats.append(sat)
+                if peak is None:
+                    peak = peak_img
+                else:
+                    peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
 
-            if pt is None:
+                img = gray2rgb(peak).astype(uint8)
+
+                if pt:
+                    pts.append(pt)
+                    img[circle(peakrow, peakcol, min_distance / 2)] = (255, 0, 0)
+
+                set_data2('imagedata', img)
+                time.sleep(0.150)
+
+            pattern.position_str = '---'
+
+            if pts:
+                w = array(sats)
+                avg_sat_score = w.mean()
+                self.debug('Average Saturation: {} threshold={}'.format(avg_sat_score, sat_threshold))
+                pattern.average_saturation = avg_sat_score
+                if avg_sat_score < sat_threshold:
+                    pts = array(pts)
+                    x, y, w = pts.T
+                    ws = w.sum()
+                    nx = (x * w).sum() / ws
+                    ny = (y * w).sum() / ws
+                    self.debug('New point {},{}'.format(nx, ny))
+                    npt = nx, ny, 1
+                else:
+                    continue
+
+            if npt is None:
                 if not point_gen:
                     point_gen = pattern.point_generator()
-                wait = False
-                pt = next(point_gen)
+                # wait = False
+                npt = next(point_gen)
             else:
                 point_gen = None
-                wait = True
+                # wait = True
             try:
-                scalar = pt[2]
+                scalar = npt[2]
             except IndexError:
                 scalar = 1
 
             ascalar = scalar * aggressiveness
-            dx = pt[0] / sm.pxpermm * ascalar
-            dy = pt[1] / sm.pxpermm * ascalar
+            dx = npt[0] / sm.pxpermm * ascalar
+            dy = npt[1] / sm.pxpermm * ascalar
             px += dx
             py -= dy
-            avg_sat_score = sum(sats) / len(sats)
-            self.debug(
-                'i: {}. point={},{}. Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
-            self.debug('Average Saturation: {} threshold={}'.format(avg_sat_score, sat_threshold))
-            if avg_sat_score < sat_threshold:
-                if not pattern.validate(px, py):
-                    self.debug('invalid position. {},{}'.format(px, py))
-                    px, py = pattern.reduce_vector_magnitude(px, py, 0.85)
-                    self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
+            self.debug('i: {}. point={},{}. '
+                       'Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
 
-                try:
-                    linear_move(px, py, block=True, velocity=pattern.velocity,
-                                use_calibration=False)
-                except PositionError:
-                    break
+            if not pattern.validate(px, py):
+                self.debug('invalid position. {},{}'.format(px, py))
+                px, py = pattern.reduce_vector_magnitude(px, py, 0.85)
+                self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
 
-            if wait:
-                et = time.time() - ist
-                d = duration - et
-                if d > 0:
-                    time.sleep(d)
+            pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
+
+            try:
+                linear_move(px, py, block=False, velocity=pattern.velocity,
+                            use_calibration=False)
+            except PositionError:
+                break
+
+            # if wait:
+            #     et = time.time() - ist
+            #     d = duration - et
+            #     if d > 0:
+            #         time.sleep(d)
 
             cnt += 1
 
-    def _hill_climber(self, st, controller, pattern, imgplot, cp):
-        g = self._seek_graph
+    def _hill_climber(self, st, controller, pattern):
+        g = pattern.execution_graph
+        imgplot, cp = pattern.setup_execution_graph()
 
         cx, cy = pattern.cx, pattern.cy
 

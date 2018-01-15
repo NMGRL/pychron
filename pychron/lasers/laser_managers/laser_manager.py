@@ -208,8 +208,8 @@ class LaserManager(BaseLaserManager):
     # ===============================================================================
     # manager interface
     # ===============================================================================
-    def finish_loading(self):
-        self.enabled_led.state = 'red' if not self.enabled else 'green'
+    # def finish_loading(self):
+    #     self.enabled_led.state = 'red' if not self.enabled else 'green'
 
     def dispose_optional_windows(self):
         #        if self.use_video:

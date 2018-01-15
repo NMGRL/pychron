@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Enum, Int, Float
-from traitsui.api import View, Item
+from traits.api import Enum, Int, Float, Str
+from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
+from numpy import zeros, uint8
+from chaco.default_colormaps import hot
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
@@ -49,6 +51,41 @@ class DragonFlyPeakPattern(SeekPattern):
     spiral_kind = Enum('Hexagon', 'Square')
     min_distance = Int
     aggressiveness = Float(1)
+
+    average_saturation = Float
+    position_str = Str
+
+    def execution_graph_view(self):
+        display_grp = HGroup(Item('average_saturation', style='readonly'),
+                             Item('position_str', style='readonly'))
+
+        v = View(VGroup(display_grp,
+                        UItem('execution_graph', style='custom')),
+                 x=100,
+                 y=100,
+                 width=1000, title='Executing {}'.format(self.name))
+        return v
+
+    def setup_execution_graph(self):
+        g = self.execution_graph
+
+        def new_plot():
+            # peak location
+            imgplot = g.new_plot(padding_right=10)
+            imgplot.aspect_ratio = 1.0
+            imgplot.x_axis.visible = False
+            imgplot.y_axis.visible = False
+            imgplot.x_grid.visible = False
+            imgplot.y_grid.visible = False
+
+            imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+            imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+            return imgplot
+
+        img = new_plot()
+        peaks = new_plot()
+
+        return img, peaks
 
     def point_generator(self):
         if self.spiral_kind.lower() == 'square':
