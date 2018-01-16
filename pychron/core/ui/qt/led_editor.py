@@ -15,11 +15,11 @@
 # ===============================================================================
 
 
+# ============= enthought library imports =======================
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor, QWidget, QLabel
 from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
     QPen, QRadialGradient, QVBoxLayout
-# ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -57,11 +57,6 @@ def change_intensity(color, fac):
 
 
 def get_gradient(c, cx, cy, rad):
-    # if isinstance(state, str):
-    #     c = QColor(state)
-    # else:
-    #     c = QT_COLORS[state]
-
     gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
     gradient.setColorAt(0, Qt.white)
     gradient.setColorAt(1, c)
@@ -147,7 +142,7 @@ class LEDEditor(BasicEditorFactory):
     klass = _LEDEditor
     radius = Int(20)
     label = Str
-    colors = List
+    colors = List(['red', 'yellow', 'green', 'black'])
 
 # ============= EOF ====================================
 

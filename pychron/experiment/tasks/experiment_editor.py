@@ -19,6 +19,7 @@ import os
 
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
+from traitsui.editors import TabularEditor
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
@@ -99,7 +100,7 @@ class ExperimentEditor(BaseTraitsEditor):
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
-    bgcolor = Color
+    # bgcolor = Color
     tabular_adapter = Instance(AutomatedRunSpecAdapter)
     executed_tabular_adapter = Instance(ExecutedAutomatedRunSpecAdapter)
 
@@ -114,7 +115,7 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.refresh_table_needed = True
 
     def setup_tabular_adapters(self, c, ec, colors):
-        self.bgcolor = c
+        # self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
         self.executed_tabular_adapter = self.executed_tabular_adapter_klass()
 
@@ -167,10 +168,9 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter,
                                                 operations=operations,
-                                                bgcolor=self.bgcolor,
                                                 editable=True,
                                                 mime_type='pychron.automated_run_spec',
-                                                # show_row_titles=True,
+                                                show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -183,7 +183,7 @@ class ExperimentEditor(BaseTraitsEditor):
 
         executed_grp = UItem('display_executed_runs',
                              editor=myTabularEditor(adapter=self.executed_tabular_adapter,
-                                                    bgcolor=self.bgcolor,
+                                                    # bgcolor=self.bgcolor,
                                                     editable=False,
                                                     # auto_update=True,
                                                     selectable=True,

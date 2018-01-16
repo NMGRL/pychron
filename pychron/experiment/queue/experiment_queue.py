@@ -400,7 +400,8 @@ class ExperimentQueue(BaseExperimentQueue):
             idx = self.automated_runs.index(new[-1])
             self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
             self.refresh_info_needed = True
-            invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
+            self.automated_runs_scroll_to_row = idx
+            # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
 
     @on_trait_change('automated_runs:state')
     def _refresh_table1(self):

@@ -97,7 +97,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     stop_button = Event
     configure_scheduled_button = Event
     can_start = Property(depends_on='executable, _alive')
-    executing_led = Instance(LED, ())
+    # executing_led = Instance(LED, ())
     delaying_between_runs = Bool
 
     # extraction_state_label = String
@@ -2297,8 +2297,8 @@ Use Last "blank_{}"= {}
         else:
             self.selected_run = None
 
-    def _alive_changed(self, new):
-        self.executing_led.state = 2 if new else 0
+    # def _alive_changed(self, new):
+    #     self.executing_led.state = 2 if new else 0
 
     def _configure_scheduled_button_fired(self):
         self.scheduler.setup()

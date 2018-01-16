@@ -152,7 +152,7 @@ class ControlPane(TraitsDockPane):
         #
         #                   show_border=True, label='Calibration')
         c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
+                              UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
                        label='Controller', show_border=True)
@@ -253,7 +253,7 @@ class ExperimentFurnacePane(TraitsDockPane):
 
     def traits_view(self):
         c_grp = VGroup(HGroup(Item('setpoint'),
-                              UItem('water_flow_led', editor=LEDEditor(label='H2O Flow')),
+                              UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel'),
                               Item('verbose_scan', label='Verbose Logging')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor(width=100, height=50))),

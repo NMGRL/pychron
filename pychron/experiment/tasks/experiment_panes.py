@@ -355,7 +355,7 @@ Quick=   measure_iteration stopped at current step
 
         schedule_tt = '''Set a scheduled start time'''
 
-        v = View(HGroup(UItem('executing_led', editor=LEDEditor(radius=30)),
+        v = View(HGroup(UItem('alive', editor=LEDEditor(colors=['red', 'green'], radius=30)),
                         spacer(-20),
                         icon_button_editor('start_button',
                                            'start',

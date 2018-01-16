@@ -164,7 +164,7 @@ class _TableView(TableView):
         if font is not None:
             fnt = QtGui.QFont(font)
             size = QtGui.QFontMetrics(fnt)
-            height = size.height() + 6
+            height = size.height() + 10
             vheader.setFont(fnt)
             hheader = self.horizontalHeader()
             hheader.setFont(fnt)
@@ -192,7 +192,7 @@ class _TableView(TableView):
         vheader = self.verticalHeader()
         vheader.setFont(fnt)
         size = QtGui.QFontMetrics(fnt)
-        vheader.setDefaultSectionSize(size.height() + 6)
+        vheader.setDefaultSectionSize(size.height() + 10)
 
     def set_horizontal_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
@@ -449,94 +449,6 @@ class _TabularEditor(qtTabularEditor):
 
     def init(self, layout):
         super(_TabularEditor,self).init(layout)
-        # factory = self.factory
-        #
-        # self.adapter = factory.adapter
-        # self.model = _TabularModel(editor=self)
-        #
-        # # Create the control
-        # control = self.control = self.widget_factory(self, layout=layout)
-        #
-        # control.set_drag_enabled(factory.drag_enabled)
-        #
-        # # Set up the selection listener
-        # if factory.multi_select:
-        #     self.sync_value(factory.selected, 'multi_selected', 'both',
-        #                     is_list=True)
-        #     self.sync_value(factory.selected_row, 'multi_selected_rows', 'both',
-        #                     is_list=True)
-        # else:
-        #     self.sync_value(factory.selected, 'selected', 'both')
-        #     self.sync_value(factory.selected_row, 'selected_row', 'both')
-        #
-        # # Connect to the mode specific selection handler
-        # if factory.multi_select:
-        #     slot = self._on_rows_selection
-        # else:
-        #     slot = self._on_row_selection
-        #
-        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        # QtCore.QObject.connect(self.control.selectionModel(),
-        #                        QtCore.SIGNAL(signal), slot)
-        #
-        # # Synchronize other interesting traits as necessary:
-        # self.sync_value(factory.update, 'update', 'from')
-        # self.sync_value(factory.refresh, 'refresh', 'from')
-        # self.sync_value(factory.activated, 'activated', 'to')
-        # self.sync_value(factory.activated_row, 'activated_row', 'to')
-        # self.sync_value(factory.clicked, 'clicked', 'to')
-        # self.sync_value(factory.dclicked, 'dclicked', 'to')
-        # self.sync_value(factory.right_clicked, 'right_clicked', 'to')
-        # self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
-        # self.sync_value(factory.column_clicked, 'column_clicked', 'to')
-        # self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
-        # self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
-        #
-        # # Connect other signals as necessary
-        # signal = QtCore.SIGNAL('activated(QModelIndex)')
-        # QtCore.QObject.connect(control, signal, self._on_activate)
-        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        # QtCore.QObject.connect(control, signal, self._on_click)
-        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        # QtCore.QObject.connect(control, signal, self._on_right_click)
-        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        # QtCore.QObject.connect(control, signal, self._on_dclick)
-        # signal = QtCore.SIGNAL('sectionClicked(int)')
-        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
-        #
-        # control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        # QtCore.QObject.connect(control, signal, self._on_context_menu)
-        #
-        # self.header_event_filter = HeaderEventFilter(self)
-        # control.horizontalHeader().installEventFilter(self.header_event_filter)
-        #
-        # # Make sure we listen for 'items' changes as well as complete list
-        # # replacements:
-        # try:
-        #     self.context_object.on_trait_change(
-        #         self.update_editor, self.extended_name + '_items', dispatch='ui')
-        # except:
-        #     pass
-        #
-        # # If the user has requested automatic update, attempt to set up the
-        # # appropriate listeners:
-        # if factory.auto_update:
-        #     self.context_object.on_trait_change(
-        #         self.refresh_editor, self.extended_name + '.-', dispatch='ui')
-        #
-        # # Create the mapping from user supplied images to QImages:
-        # for image_resource in factory.images:
-        #     self._add_image(image_resource)
-        #
-        # # Refresh the editor whenever the adapter changes:
-        # self.on_trait_change(self.refresh_editor, 'adapter.+update',
-        #                      dispatch='ui')
-        #
-        # # Rebuild the editor columns and headers whenever the adapter's
-        # # 'columns' changes:
-        # self.on_trait_change(self.update_editor, 'adapter.columns',
-        #                      dispatch='ui')
 
         factory = self.factory
         self.sync_value(factory.col_widths, 'col_widths', 'to')
@@ -545,8 +457,9 @@ class _TabularEditor(qtTabularEditor):
 
         control = self.control
 
-        if factory.bgcolor:
-            control.set_bg_color(factory.bgcolor)
+        # somehow this was causing all the majority of the lagginess
+        # if factory.bgcolor:
+        #     control.set_bg_color(factory.bgcolor)
 
         if hasattr(self.object, factory.paste_function):
             control.paste_func = getattr(self.object, factory.paste_function)
@@ -611,10 +524,10 @@ class _TabularEditor(qtTabularEditor):
                 row = self.value.index(row)
             self.scroll_to_row = row
 
-    def _scroll_to_row_changed(self, row):
-        row = min(row, self.model.rowCount(None)) - 1
-        super(_TabularEditor, self)._scroll_to_row_changed(0)
-        super(_TabularEditor, self)._scroll_to_row_changed(row)
+    # def _scroll_to_row_changed(self, row):
+    #     row = min(row, self.model.rowCount(None)) - 1
+    #     super(_TabularEditor, self)._scroll_to_row_changed(0)
+    #     super(_TabularEditor, self)._scroll_to_row_changed(row)
 
 # ============= EOF =============================================
 # def _paste(self):
