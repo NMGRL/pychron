@@ -18,6 +18,7 @@ python:
 #    - PYTHON=2.7
 
 before_install:
+  - export TZ=America/Denver
   # adapted from statsmodels travis file https://github.com/statsmodels/statsmodels/blob/master/.travis.yml
   # setup anaconda
   - wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh

@@ -81,9 +81,12 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         unklns = self.db.get_last_identifiers(excludes=(self.monitor_name,))
 
         if monlns:
-            self.mon_maxs = get_maxs(monlns)
+            self.mon_maxs = map(str, get_maxs(monlns))
         if unklns:
-            self.unk_maxs = get_maxs(unklns)
+            self.unk_maxs = map(str, get_maxs(unklns))
+
+        self.mon_start = self.mon_maxs[0]
+        self.unk_start = self.unk_maxs[0]
 
         info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
                                           Item('mon_start', label='Starting Monitor L#',

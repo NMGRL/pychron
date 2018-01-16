@@ -84,6 +84,7 @@ class DashboardDevice(Loggable):
             dt = st - value.last_time
             if value.period == 'on_change':
                 if value.timeout and dt > value.timeout:
+                    self.debug('Force trigger. timeout={}'.format(value.timeout))
                     self._trigger(value, force=True)
             elif dt > value.period:
                 self._trigger(value)
@@ -107,7 +108,7 @@ class DashboardDevice(Loggable):
 
             print self.hardware_device, self.hardware_device.name, value.func_name
             self.debug(traceback.format_exc())
-            value.use_pv = False
+            # value.use_pv = False
 
     def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record, bindname):
         pv = ProcessValue(name=name,
@@ -121,18 +122,18 @@ class DashboardDevice(Loggable):
                           record=record)
 
         if period == 'on_change':
-            self.debug('bind to {}'.format(bindname))
             if self.hardware_device:
                 if bindname:
+                    self.debug('bind to {}'.format(bindname))
                     if hasattr(self.hardware_device, bindname):
                         self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d),
                                                              bindname)
                     else:
                         self.debug('{} has not attribute "{}"'.format(self.hardware_device, bindname))
 
-                else:
-                    self.warning('need to set bindname for {}'.format(self.name, name))
-                    # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
+                        # else:
+                        #     self.warning('need to set bindname for {}'.format(self.name, name))
+                        # self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
         return pv
@@ -149,7 +150,13 @@ class DashboardDevice(Loggable):
         if pv.enabled:
 
             pv.last_time = time.time()
-            v = float(new)
+
+            try:
+                v = float(new)
+            except (ValueError, TypeError), e:
+                self.warning('failed to push value pv.name={}, value={}, error={}'.format(pv.name, new, e))
+                return
+
             tripped = pv.is_different(v)
             if tripped:
                 self.update_value_event = (pv.name, new, pv.units)

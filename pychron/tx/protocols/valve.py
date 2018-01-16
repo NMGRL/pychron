@@ -49,6 +49,7 @@ class ValveProtocol(BaseValveProtocol):
         services = (('GetData', '_get_data'),
                     ('Read', '_read'),
                     ('Set', '_set'),
+                    ('Ping', '_ping'),
                     ('GetPressure', '_get_pressure'))
 
         self._register_services(services)
@@ -96,6 +97,20 @@ class ValveProtocol(BaseValveProtocol):
         else:
             result = DeviceConnectionErrorCode(dname, logger=self)
 
+        return result
+
+    def _ping(self, data):
+        if isinstance(data, dict):
+            dname = data['device']
+        else:
+            dname = data
+
+        d = self._get_device(dname, owner=self._addr)
+        if d is not None:
+            if hasattr(d, 'ping'):
+                result = d.ping()
+        else:
+            result = DeviceConnectionErrorCode(dname, logger=self)
         return result
 
     def _read(self, data):

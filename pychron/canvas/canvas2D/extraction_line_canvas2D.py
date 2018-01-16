@@ -30,6 +30,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
 from pychron.canvas.scene_viewer import SceneCanvas
+from pychron.core.codetools.inspection import caller
 from pychron.globals import globalv
 
 W = 2
@@ -82,6 +83,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         self.tools.append(tool)
         self.overlays.append(overlay)
 
+    # @caller
+    # def invalidate_and_redraw(self):
+    #     super(ExtractionLineCanvas2D, self).invalidate_and_redraw()
+
     def toggle_item_identify(self, name):
         v = self._get_switch_by_name(name)
         if v is not None:
@@ -98,15 +103,15 @@ class ExtractionLineCanvas2D(SceneCanvas):
             switch.state = nstate
 
             if refresh:
-                print 'referehs {} {}'.format(name, nstate)
-                self.draw_valid = False
+                # print 'referehs {} {}'.format(name, nstate)
+                # self.draw_valid = False
                 self.invalidate_and_redraw()
 
     def update_switch_owned_state(self, name, owned):
         switch = self._get_switch_by_name(name)
         if switch is not None:
             switch.owned = owned
-        self.draw_valid = False
+        # self.draw_valid = False
         self.invalidate_and_redraw()
 
     def update_switch_lock_state(self, name, lockstate):
@@ -114,7 +119,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if switch is not None:
             switch.soft_lock = lockstate
             # self.request_redraw()
-        self.draw_valid = False
+        # self.draw_valid = False
         self.invalidate_and_redraw()
 
     def load_canvas_file(self, canvas_path=None, canvas_config_path=None, valves_path=None):

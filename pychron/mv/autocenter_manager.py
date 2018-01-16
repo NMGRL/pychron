@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Float, Button, Bool, Any, Instance, Event
 from traitsui.api import View, Item, HGroup, RangeEditor
-
+from math import ceil
 from pychron.image.standalone_image import FrameImage
 from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 
@@ -51,7 +51,7 @@ class AutoCenterManager(MachineVisionManager):
         if self.use_crop_size:
             cropdim = self.crop_size
         else:
-            cropdim = dim*2.5
+            cropdim = ceil(dim*2.55)
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
@@ -59,13 +59,14 @@ class AutoCenterManager(MachineVisionManager):
         # im = self.new_image(frame, alpha_enabled=alpha_enabled)
         # if open_image:
         #     view_image(im, auto_close=auto_close_image)
-
+        self.debug('calculate new center: dim={} ({},{}) {}'.format(dim, self.use_target_radius, self.target_radius, self.pxpermm))
         im = self.display_image
         im.source_frame = frame
+        dim = self.pxpermm * dim
         if self.use_hough_circle:
-            dx, dy = loc.find_circle(im, frame, dim=dim * self.pxpermm)
+            dx, dy = loc.find_circle(im, frame, dim=dim)
         else:
-            dx, dy = loc.find(im, frame, dim=dim * self.pxpermm)
+            dx, dy = loc.find(im, frame, dim=dim)
 
         frm = loc.preprocessed_frame
         im.overlay(frm, 0.5)

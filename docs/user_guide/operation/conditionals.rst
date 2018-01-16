@@ -83,12 +83,12 @@ conditionals file. All conditional files use standard yaml syntax. Here is an ex
     truncations: []
 
 
-Notice the special syntax used for the only Post Run Termination (Ar40 < $MIN_INTENSITY). This is the interpolation/templating syntax.
-The interpolation syntax ($VARIABLE_NAME) is used to define the conditional's sentinel values at runtime. For instance
-the above post run termination conditional terminates the experiment if an Air's Ar40 intensity is below a certain threshold.
-The reason for interpolating the minimum intensity is that this value is dependent on the extraction script, e.i. either a
-full air shot or a sniff air. To specify an interpolatable value simply assign the variable in the extraction scripts metadata
-docstring.
+Notice the special syntax used Post Run Termination (Ar40 < $MIN_INTENSITY). This is the interpolation/templating
+syntax. The interpolation syntax ($VARIABLE_NAME) is used to define the conditional's sentinel values at runtime. For
+instance the above post run termination conditional terminates the experiment if an Air's Ar40 intensity is below a
+certain threshold. The reason for interpolating the minimum intensity is that this value is dependent on the
+extraction script, e.i. either a full air shot or a sniff air. To specify an interpolatable value simply assign the
+variable in the extraction scripts metadata docstring.
 
 .. code-block:: Python
 

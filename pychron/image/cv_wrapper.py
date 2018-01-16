@@ -188,7 +188,7 @@ def convert_color(color):
 def draw_circle(src, center, radius, color=(255.0, 0, 0), thickness=1):
     if isinstance(center, tuple):
         center = new_point(*center)
-    circle(src, center, radius,
+    circle(src, center, int(radius),
            convert_color(color),
            thickness=thickness,
            lineType=CV_AA)
@@ -252,10 +252,12 @@ def get_polygons(src,
     areas = []
     centroids = []
     min_enclose = []
+    pactuals = []
+    pconvex_hulls = []
 
     for cont in contours:
-        m = arcLength(cont, True)
-        result = approxPolyDP(cont, m * perimeter_smooth_factor, True)
+        pactual = arcLength(cont, True)
+        result = approxPolyDP(cont, pactual * perimeter_smooth_factor, True)
 
         area = abs(contourArea(result))
         M = moments(cont)
@@ -276,10 +278,15 @@ def get_polygons(src,
         a, _, b = cont.shape
         polygons.append(cont.reshape(a, b))
         ca = minEnclosingCircle(result)
+
+        pconvex_hull = arcLength(convexHull(result), True)
+
         min_enclose.append(ca[1] ** 2 * 3.1415)
         areas.append(area)
         centroids.append(cent)
+        pactuals.append(pactual)
+        pconvex_hulls.append(pconvex_hull)
 
-    return polygons, areas, min_enclose, centroids
+    return zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls)
 
 # ============= EOF =============================================

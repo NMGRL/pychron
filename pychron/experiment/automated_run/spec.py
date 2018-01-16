@@ -129,6 +129,7 @@ class AutomatedRunSpec(HasTraits):
     irradiation_position = Int
     material = Str
     data_reduction_tag = Str
+    result_str = ''
 
     branch = 'master'
 

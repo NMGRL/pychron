@@ -346,11 +346,25 @@ class LevelTbl(Base, NameMixin):
 
     note = Column(BLOB)
 
+    @property
+    def projects(self):
+        ps = []
+        for p in self.positions:
+            try:
+                name = p.sample.project.name
+                if name != 'Irradiation-{}'.format(self.irradiation.name):
+                    ps.append(p.sample.project.pname)
+
+            except AttributeError:
+                pass
+
+        return list(set(ps))
+
 
 class IrradiationTbl(Base, NameMixin):
     id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
-    create_date = Column(TIMESTAMP)
+    create_date = Column(TIMESTAMP, default=func.now())
 
 
 class IrradiationPositionTbl(Base, BaseMixin):

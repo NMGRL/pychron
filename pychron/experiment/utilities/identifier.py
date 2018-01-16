@@ -240,6 +240,10 @@ def make_step(s):
     return s or ''
 
 
+def make_increment(s):
+    return ALPHAS.index(s)
+
+
 def make_aliquot(a):
     if not isinstance(a, str):
         a = '{:02d}'.format(int(a))

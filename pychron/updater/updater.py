@@ -104,6 +104,7 @@ class Updater(Loggable):
             #
 
     def check_for_updates(self, inform=False):
+        self.debug('checking for updates')
         branch = self.branch
         remote = self.remote
         if self.use_tag:
@@ -138,19 +139,24 @@ class Updater(Loggable):
                             import subprocess
                             root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
-                            binroot = os.path.join(os.path.expanduser('~'),
-                                                   os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
-                                                   'envs',
-                                                   os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
+                            conda_env = os.environ.get('CONDA_ENV', CONDA_ENV)
+                            conda_distro = os.environ.get('CONDA_DISTRO', CONDA_DISTRO)
+
+                            if conda_env:
+                                conda_distro = os.path.join(conda_distro, 'envs', conda_env)
+
+                            binroot = os.path.join(os.path.expanduser('~'), conda_distro, 'bin')
                             if not os.path.isdir(binroot):
-                                binroot = os.path.join(os.path.sep, os.environ.get('CONDA_DISTRO', CONDA_DISTRO),
-                                                       'envs',
-                                                       os.environ.get('CONDA_ENV', CONDA_ENV), 'bin')
+                                binroot = os.path.join(os.path.sep, conda_distro, 'bin')
 
                             conda = os.path.join(binroot, 'conda')
                             cp = os.path.join(root, 'app_utils', 'requirements', 'conda_requirements.txt')
-                            subprocess.call([conda, 'update', '-y', '-n', 'pychron', '--file={}'.format(cp)])
 
+                            args = [conda, 'update', '-y', '--file={}'.format(cp)]
+                            if conda_env:
+                                args.extend(('-n', conda_env))
+
+                            subprocess.call(args)
                             pip = os.path.join(binroot, 'pip')
                             pp = os.path.join(root, 'app_utils', 'requirements', 'pip_requirements.txt')
                             subprocess.call([pip, 'install', '-r', pp])

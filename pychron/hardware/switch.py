@@ -28,6 +28,7 @@ class BaseSwitch(Loggable):
     prefix_name = 'BASE_SWITCH'
     state = Bool(False)
     software_lock = Bool(False)
+    ignore_lock_warning = Bool(False)
     enabled = Bool(True)
     owner = Str
 

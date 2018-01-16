@@ -42,7 +42,7 @@ class RegionSegmenter(BaseSegmenter):
             # n = markers[:].astype('uint8')
             n = markers.astype('uint8')
             n[markers] = 255
-            n[not markers] = 1
+            n[invert(markers)] = 1
             markers = n
 
         else:

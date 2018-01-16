@@ -38,8 +38,10 @@ class BaseGaugeController(HasTraits):
     def update_pressures(self, verbose=False):
         self.debug('update pressures')
         for g in self.gauges:
-            self._update_pressure(g, verbose)
+            if not self._update_pressure(g, verbose):
+                return
 
+        return True
     def get_gauge(self, name):
         return next((gi for gi in self.gauges
                      if gi.name == name or gi.display_name == name), None)
@@ -66,6 +68,7 @@ class BaseGaugeController(HasTraits):
         if gauge is not None:
             try:
                 gauge.pressure = float(v)
+                return True
             except (TypeError, ValueError):
                 pass
 
@@ -83,7 +86,9 @@ class BaseGaugeController(HasTraits):
 
         if gauge:
             p = self._read_pressure(gauge, verbose)
-            self._set_gauge_pressure(gauge, p)
+            if self._set_gauge_pressure(gauge, p):
+                return True
+
 
     def _load_gauges(self, config, *args, **kw):
         ns = self.config_get(config, 'Gauges', 'names')

@@ -53,10 +53,11 @@ class Emailer(Loggable):
     server_port = Int
 
     sender = Str('pychron@gmail.com')
-    _server = None
 
     def __init__(self, *args, **kw):
         super(Emailer, self).__init__(*args, **kw)
+
+        self._server = None
 
         bind_preference(self, 'server_username', 'pychron.email.server_username')
         bind_preference(self, 'server_password', 'pychron.email.server_password')
@@ -131,55 +132,54 @@ class Emailer(Loggable):
                     msg.attach(part)
         return msg
 
-        # def broadcast(self, text, level=0, subject=None):
-        #
-        # recipients = self.get_emails(level)
-        #     self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
-        #     if recipients:
-        #         r = ','.join(recipients)
-        #
-        #         msg = self._message_factory(text, r, subject)
-        #         server = self.connect()
-        #         if server:
-        #             self.info('Broadcasting message to {}'.format(r))
-        #             server.sendmail(self.sender, recipients, msg.as_string())
-        #             server.close()
-        #         else:
-        #             self.debug('SMTP server not available')
-        #
-        # def get_emails(self, level):
-        #     return [u.email for u in self.users
-        #             if u.email_enabled and u.level <= level]
-        #
-        # def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
-        #     from email.mime.multipart import MIMEMultipart
-        #     from email.mime.text import MIMEText
-        #
-        #     msg = MIMEMultipart()
-        #     msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        #     msg['To'] = recipients
-        #     msg['Subject'] = subject
-        #
-        #     msg.attach(MIMEText(text))
-        #     return msg
-        #
-        # def _users_default(self):
-        #     path = os.path.join(paths.setup_dir, 'users.cfg')
-        #     config = self.configparser_factory()
-        #     config.read(path)
-        #     users = []
-        #     for user in config.sections():
-        #         self.info('loading user {}'.format(user))
-        #         kw = dict(name=user)
-        #         for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
-        #             if func is None:
-        #                 func = config.get
-        #             else:
-        #                 func = getattr(config, 'get{}'.format(func))
-        #
-        #             kw[opt] = func(user, opt)
-        #         users.append(User(**kw))
-        #
-        #     return users
-
-        # ============= EOF =============================================
+# ============= EOF =============================================
+# def broadcast(self, text, level=0, subject=None):
+#
+# recipients = self.get_emails(level)
+#     self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
+#     if recipients:
+#         r = ','.join(recipients)
+#
+#         msg = self._message_factory(text, r, subject)
+#         server = self.connect()
+#         if server:
+#             self.info('Broadcasting message to {}'.format(r))
+#             server.sendmail(self.sender, recipients, msg.as_string())
+#             server.close()
+#         else:
+#             self.debug('SMTP server not available')
+#
+# def get_emails(self, level):
+#     return [u.email for u in self.users
+#             if u.email_enabled and u.level <= level]
+#
+# def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
+#     from email.mime.multipart import MIMEMultipart
+#     from email.mime.text import MIMEText
+#
+#     msg = MIMEMultipart()
+#     msg['From'] = self.sender  # 'nmgrl@gmail.com'
+#     msg['To'] = recipients
+#     msg['Subject'] = subject
+#
+#     msg.attach(MIMEText(text))
+#     return msg
+#
+# def _users_default(self):
+#     path = os.path.join(paths.setup_dir, 'users.cfg')
+#     config = self.configparser_factory()
+#     config.read(path)
+#     users = []
+#     for user in config.sections():
+#         self.info('loading user {}'.format(user))
+#         kw = dict(name=user)
+#         for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
+#             if func is None:
+#                 func = config.get
+#             else:
+#                 func = getattr(config, 'get{}'.format(func))
+#
+#             kw[opt] = func(user, opt)
+#         users.append(User(**kw))
+#
+#     return users

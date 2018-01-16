@@ -287,19 +287,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def add_event(self, *events):
         self.events.extend(events)
 
-    def _check_email_plugin(self):
-        if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
-            if not self.application.get_plugin('pychron.social.email.plugin'):
-                if not self.confirmation_dialog('Email Plugin not initialized. '
-                                                'Required for sending email notifications. '
-                                                'Are you sure you want to continue?'):
-                    return
-
-        return True
-
     def execute(self):
-        if not self._check_email_plugin():
-            return
 
         prog = open_progress(100, position=(100, 100))
 
@@ -415,6 +403,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         ctx = {'etf_iso': self.stats.etf_iso,
                'err_message': self._err_message,
+               'canceld': self._canceled,
                'experiment_name': exp.name,
                'experiment': exp,
                'starttime': exp.start_timestamp,
@@ -629,7 +618,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                                                          exp.delay_after_blank,
                                                                          exp.delay_after_air)
 
-                self.debug('$$$$$$$$$$$$$$ delay after dp={}, d={} da={} db={}, at={}'.format(delay_after_previous_analysis,
+                self.debug(
+                    '$$$$$$$$$$$$$$ delay after dp={}, d={} da={} db={}, at={}'.format(delay_after_previous_analysis,
                                                                                        run.spec.delay_after,
                                                                                        exp.delay_between_analyses,
                                                                                        exp.delay_after_blank,
@@ -1089,6 +1079,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
+
     #
     # def _add_system_health(self, run):
     #     # save analysis. don't cancel immediately
@@ -1494,7 +1485,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===============================================================================
     # checks
     # ===============================================================================
-    def _check_dashboard(self, prog=None):
+    def _check_for_email_plugin(self, inform):
+        if any((eq.use_email or eq.use_group_email for eq in self.experiment_queues)):
+            if not self.application.get_plugin('pychron.social.email.plugin'):
+                if inform:
+                    return self.confirmation_dialog('Email Plugin not initialized. '
+                                                    'Required for sending email notifications. '
+                                                    'Are you sure you want to continue?')
+                else:
+                    return False
+
+        return True
+
+    def _check_dashboard(self, inform):
         """
         return True if dashboard has an error
         :return: boolean
@@ -1502,14 +1505,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self.use_dashboard_client:
             if self.dashboard_client:
                 ef = self.dashboard_client.error_flag
-                if prog:
-                    prog.change_message('Checking Dashboard client for errors')
-
                 if ef:
+                    self._err_message = 'Dashboard error. {}'.format(ef)
                     self.warning('Canceling experiment. Dashboard client reports an error\n {}'.format(ef))
-                    return ef
+                    return
 
-    def _check_memory(self, prog=None, threshold=None):
+        return True
+
+    def _check_memory(self, inform, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
             stop the experiment
@@ -1519,8 +1522,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             otherwise None
         """
         if self.use_memory_check:
-            if prog:
-                prog.change_message('Checking available memory')
             if threshold is None:
                 threshold = self.memory_threshold
 
@@ -1529,8 +1530,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Available memory {}. mem-threshold= {}'.format(amem, threshold))
             if amem < threshold:
                 msg = 'Memory limit exceeded. Only {} MB available. Stopping Experiment'.format(amem)
-                invoke_in_main_thread(self.warning_dialog, msg)
-                return True
+                if inform:
+                    invoke_in_main_thread(self.warning_dialog, msg)
+                return
+
+        return True
 
     def _check_managers(self, inform=True):
         self.debug('checking for managers')
@@ -1613,6 +1617,221 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         return nonfound
 
+    def _check_for_massspec_db(self, inform):
+        if self.use_db_persistence:
+            if self.datahub.massspec_enabled:
+                if not self.datahub.store_connect('massspec'):
+                    if inform:
+                        return self.confirmation_dialog(
+                            'Not connected to a Mass Spec database. Do you want to continue with pychron only?')
+                    else:
+                        return False
+
+        return True
+
+    def _check_first_aliquot(self, inform):
+        exp = self.experiment_queue
+        runs = exp.cleaned_automated_runs
+
+        # check the first aliquot before delaying
+        arv = runs[0]
+        if not self._set_run_aliquot(arv):
+            if inform:
+                self.warning_dialog('Failed setting aliquot')
+            return
+        else:
+            return True
+
+    def _check_dated_repos(self, inform):
+        if self.use_dvc_persistence:
+            exp = self.experiment_queue
+            runs = exp.cleaned_automated_runs
+
+            # create dated references repos
+            curtag = get_curtag()
+
+            dvc = self.datahub.stores['dvc']
+            ms = self.active_editor.queue.mass_spectrometer
+            for tag in ('air', 'cocktail', 'blank'):
+                repo = '{}_{}{}'.format(ms, tag, curtag)
+                dvc.add_repository(repo, self.default_principal_investigator, inform=False)
+
+            no_repo = []
+            for i, ai in enumerate(runs):
+                if not ai.repository_identifier:
+                    self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
+                    no_repo.append(ai)
+
+            if no_repo:
+                if inform:
+                    if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
+                        return
+
+                populate_repository_identifiers(no_repo, ms, curtag, debug=self.debug)
+
+        return True
+
+    def _check_automated_run_monitor(self, inform):
+        if self.use_automated_run_monitor:
+            self.monitor = self._monitor_factory()
+            if self.monitor:
+                self.monitor.set_additional_connections(self.connectables)
+                self.monitor.clear_errors()
+                if not self.monitor.check():
+                    return
+        return True
+
+    def _check_pyscript_runner(self, inform):
+        if not self.pyscript_runner.connect():
+            self.info('Failed connecting to pyscript_runner')
+            msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+            if inform:
+                invoke_in_main_thread(self.warning_dialog, msg)
+            return
+        return True
+
+    def _check_preceding_blank(self, inform):
+        mainstore = self.datahub.mainstore
+        with mainstore.session_ctx(use_parent_session=False):
+            an = self._get_preceding_blank_or_background(inform=inform)
+            if an is not True:
+                if an is None:
+                    return
+                else:
+                    self.info('using {} as the previous blank'.format(an.record_id))
+                    try:
+                        # self._prev_blank_id = an.meas_analysis_id
+                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
+                        self._prev_baselines = an.get_baseline_dict()
+                    except TraitError:
+                        self.debug_exception()
+                        self.warning('failed loading previous blank')
+                        return
+        return True
+
+    def _check_locked_valves(self, inform):
+        elm = self.extraction_line_manager
+        locks = elm.get_locked()
+        if locks:
+            if inform:
+                prep, suf = 'are', 's'
+                if len(locks) == 1:
+                    prep, suf = 'is', ''
+                return self.confirmation_dialog('Valve{} "{}" {} locked. '
+                                                'Do you want to continue?'.format(suf, ','.join(locks), prep))
+
+        return True
+
+    def _check_no_runs(self, inform):
+        exp = self.experiment_queue
+        runs = exp.cleaned_automated_runs
+        if not len(runs):
+            if inform:
+                self.warning_dialog('No analysis in the queue')
+            return
+        return True
+
+    def _pre_execute_check(self, prog=None, inform=True):
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
+
+        if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
+            if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
+                                            'Are you sure you want to continue?\n\n'
+                                            'Enable analysis saving in Preferences>>Experiment>>Automated Run'):
+                return
+
+        funcs = ((self._check_no_runs, 'Check No Runs'),
+                 (self._check_for_email_plugin, 'Check For Email Plugin'),
+                 (self._check_for_massspec_db, 'Check For Mass Spec Plugin'),
+                 (self._check_first_aliquot, 'Setting Aliquot'),
+                 (self._check_dated_repos, 'Setup Dated Repositories'),
+                 (self._check_repository_identifiers, 'Check Repositories'),
+                 (self._check_managers, 'Check Managers'),
+                 (self._check_dashboard, 'Check  Dashboard'),
+                 (self._check_memory, 'Check Memory'),
+                 (self._check_automated_run_monitor, 'Check Automated Run Monitor'),
+                 (self._check_pyscript_runner, 'Check Pyscript Runner'),
+                 (self._check_locked_valves, 'Locked Valves'),
+                 (self._check_preceding_blank, 'Set Preceding Blank'))
+
+        for func, msg in funcs:
+            self.debug('checking: {}'.format(msg))
+            if prog:
+                prog.change_message(msg)
+            if not func(inform):
+                raise PreExecuteCheckException(msg)
+
+        # exp = self.experiment_queue
+
+        # if prog:
+        #     prog.change_message('Checking Experiment Identifiers')
+
+        # if not self._check_repository_identifiers():
+        #     raise PreExecuteCheckException('Checking Repositories')
+
+        if prog:
+            prog.change_message('Syncing repositories')
+
+        e = self._sync_repositories(prog)
+        if e:
+            raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
+
+        # if self._check_dashboard(prog):
+        #     raise PreExecuteCheckException('Checking Dashboard')
+
+        # if self._check_memory(prog):
+        #     raise PreExecuteCheckException('Checking Memory')
+
+        # if not self._check_managers(inform=inform):
+        #     raise PreExecuteCheckException('Checking Managers')
+
+        # if self.use_automated_run_monitor:
+        #     self.monitor = self._monitor_factory()
+        #     if self.monitor:
+        #         if prog:
+        #             prog.change_message('Checking Automated Run Monitor')
+        #         self.monitor.set_additional_connections(self.connectables)
+        #         self.monitor.clear_errors()
+        #         if not self.monitor.check():
+        #             if inform:
+        #                 raise PreExecuteCheckException('Checking Automated Run Monitor')
+        #             return
+
+        # if prog:
+        #     prog.change_message('Get preceding blank')
+
+        # mainstore = self.datahub.mainstore
+        # with mainstore.session_ctx(use_parent_session=False):
+        #     an = self._get_preceding_blank_or_background(inform=inform)
+        #     if an is not True:
+        #         if an is None:
+        #             return
+        #         else:
+        #             self.info('using {} as the previous blank'.format(an.record_id))
+        #             try:
+        #                 # self._prev_blank_id = an.meas_analysis_id
+        #                 self._prev_blanks = an.get_baseline_corrected_signal_dict()
+        #                 self._prev_baselines = an.get_baseline_dict()
+        #             except TraitError:
+        #                 self.debug_exception()
+        #                 self.warning('failed loading previous blank')
+        #                 return
+        # if prog:
+        #     prog.change_message('Checking PyScript Runner')
+        # if not self.pyscript_runner.connect():
+        #     self.info('Failed connecting to pyscript_runner')
+        #     msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+        #     invoke_in_main_thread(self.warning_dialog, msg)
+        #     return
+
+        if prog:
+            prog.change_message('Pre execute check complete')
+
+        self.debug('pre execute check complete')
+        return True
+
     def _pre_extraction_check(self, run):
         """
             do pre_run_terminations
@@ -1668,25 +1887,24 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     ed_tray = man.get_tray()
                     return ed_tray != exp.tray
 
-    def _pre_run_check(self, spec):
+    def _pre_run_check(self, spec, inform=False):
         """
             return True to stop execution loop
         """
         self.heading('Pre Run Check')
 
-        ef = self._check_dashboard()
-        if ef:
-            self._err_message = 'Dashboard error. {}'.format(ef)
+        if not self._check_dashboard(inform):
+            return True
 
-        if self._check_memory():
+        if not self._check_memory(inform):
             self._err_message = 'Not enough memory'
             return True
 
-        if not self._check_managers():
+        if not self._check_managers(inform):
             self._err_message = 'Not all managers available'
             return True
 
-        if self._check_for_errors():
+        if self._check_for_errors(inform):
             return True
 
         if self.monitor:
@@ -1725,7 +1943,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             #         self._cached_runs = []
             #     self._active_experiment_identifier = exp_id
 
-    def _check_repository_identifiers(self):
+    def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db
 
         cr = ConflictResolver()
@@ -1782,143 +2000,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if not self.datahub.mainstore.sync_repo(e, use_progress=False):
                     return e
 
-    def _pre_execute_check(self, prog=None, inform=True):
-        if not self.use_db_persistence and not self.use_xls_persistence and not self.use_dvc_persistence:
-            if not self.confirmation_dialog('You do not have any Database or XLS saving enabled. '
-                                            'Are you sure you want to continue?\n\n'
-                                            'Enable analysis saving in Preferences>>Experiment>>Automated Run'):
-                return
-
-        if self.use_db_persistence:
-            if self.datahub.massspec_enabled:
-                if not self.datahub.store_connect('massspec'):
-                    if not self.confirmation_dialog(
-                            'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
-                        return
-
-        if prog:
-            prog.change_message('Checking queue length')
-
-        exp = self.experiment_queue
-        runs = exp.cleaned_automated_runs
-        if not len(runs):
-            if inform:
-                self.warning_dialog('No analysis in the queue')
-            return
-
-        if not self._check_email_plugin():
-            return
-
-        if self.datahub.massspec_enabled:
-            if not self.datahub.store_connect('massspec'):
-                if not self.confirmation_dialog(
-                        'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
-                    return
-
-        if prog:
-            prog.change_message('Setting aliquot for first analysis')
-
-        # check the first aliquot before delaying
-        arv = runs[0]
-        if not self._set_run_aliquot(arv):
-            if inform:
-                raise PreExecuteCheckException('Setting aliquot')
-                # self.warning_dialog('Failed setting aliquot')
-            return
-
-        if self.use_dvc_persistence:
-            # create dated references repos
-            curtag = get_curtag()
-
-            dvc = self.datahub.stores['dvc']
-            ms = self.active_editor.queue.mass_spectrometer
-            for tag in ('air', 'cocktail', 'blank'):
-                repo = '{}_{}{}'.format(ms, tag, curtag)
-                dvc.add_repository(repo, self.default_principal_investigator, inform=False)
-
-            no_repo = []
-            for i, ai in enumerate(runs):
-                if not ai.repository_identifier:
-                    self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
-                    no_repo.append(ai)
-
-            if no_repo:
-                if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
-                    return
-
-                populate_repository_identifiers(no_repo, ms, curtag, debug=self.debug)
-
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
-
-        if prog:
-            prog.change_message('Checking Experiment Identifiers')
-
-        if not self._check_repository_identifiers():
-            raise PreExecuteCheckException('Checking Repositories')
-
-        if prog:
-            prog.change_message('Syncing repositories')
-
-        e = self._sync_repositories(prog)
-        if e:
-            raise PreExecuteCheckException('Syncing Repository "{}"'.format(e))
-
-        if self._check_dashboard(prog):
-            raise PreExecuteCheckException('Checking Dashboard')
-
-        if self._check_memory(prog):
-            raise PreExecuteCheckException('Checking Memory')
-
-        if not self._check_managers(inform=inform):
-            raise PreExecuteCheckException('Checking Managers')
-
-        if self.use_automated_run_monitor:
-            self.monitor = self._monitor_factory()
-            if self.monitor:
-                if prog:
-                    prog.change_message('Checking Automated Run Monitor')
-                self.monitor.set_additional_connections(self.connectables)
-                self.monitor.clear_errors()
-                if not self.monitor.check():
-                    if inform:
-                        raise PreExecuteCheckException('Checking Automated Run Monitor')
-                    return
-
-        if prog:
-            prog.change_message('Get preceding blank')
-
-        mainstore = self.datahub.mainstore
-        with mainstore.session_ctx(use_parent_session=False):
-            an = self._get_preceding_blank_or_background(inform=inform)
-            if an is not True:
-                if an is None:
-                    return
-                else:
-                    self.info('using {} as the previous blank'.format(an.record_id))
-                    try:
-                        # self._prev_blank_id = an.meas_analysis_id
-                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = an.get_baseline_dict()
-                    except TraitError:
-                        self.debug_exception()
-                        self.warning('failed loading previous blank')
-                        return
-            if prog:
-                prog.change_message('Checking PyScript Runner')
-            if not self.pyscript_runner.connect():
-                self.info('Failed connecting to pyscript_runner')
-                msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
-                invoke_in_main_thread(self.warning_dialog, msg)
-                return
-
-        if prog:
-            prog.change_message('Pre execute check complete')
-
-        self.debug('pre execute check complete')
-        return True
-
     def _post_run_check(self, run):
         """
             1. check post run termination conditionals.
@@ -1958,7 +2039,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                    'Post Run Termination'):
             return True
 
-    def _check_for_errors(self):
+    def _check_for_errors(self, inform):
         self.debug('checking for connectable errors')
         for c in self.connectables:
             self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))

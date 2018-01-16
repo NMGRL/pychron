@@ -123,6 +123,7 @@ class TabularEditorHandler(UnselectTabularEditorHandler):
     def copy_to_end(self, info, obj):
         obj.copy_selected_last()
 
+
 class ItemDelegate(_ItemDelegate):
     pass
     # def drawDecoration(self, painter, option, rect, pixmap):
@@ -289,10 +290,6 @@ class _TableView(TableView):
 
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Copy):
-            # self._copy_cache = [self._editor.value[ci.row()] for ci in
-            # self.selectionModel().selectedRows()]
-            # self._copy_cache = self._get_selection()
-            # self._editor.copy_cache = self._copy_cache
             self._cut_indices = None
 
             # add the selected rows to the clipboard
@@ -300,10 +297,6 @@ class _TableView(TableView):
 
         elif event.matches(QtGui.QKeySequence.Cut):
             self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
-
-            # self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
-            # self._copy_cache = self._get_selection(self._cut_indices)
-            # self._editor.copy_cache = self._copy_cache
 
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
@@ -366,54 +359,6 @@ class _TableView(TableView):
             for ri, ci in reversed(items):
                 model.insertRow(idx, obj=ci)
 
-    # def _paste(self):
-    # selection = self.selectedIndexes()
-    # idx = None
-    #     if len(selection):
-    #         idx = selection[-1].row()
-    #
-    #     if self._cut_indices:
-    #         if not any((ci <= idx for ci in self._cut_indices)):
-    #             idx += len(self._cut_indices)
-    #
-    #         model = self._editor.model
-    #         for ci in self._cut_indices:
-    #             model.removeRow(ci)
-    #
-    #     self._cut_indices = None
-    #
-    #     items = None
-    #     if self.link_copyable:
-    #         items = self._linked_copy_cache
-    #
-    #     if not items:
-    #         items = self._copy_cache
-    #
-    #     if items:
-    #         insert_mode = 'after'
-    #         if idx is None:
-    #             if len(selection):
-    #                 offset = 1 if insert_mode == 'after' else 0
-    #                 idx = selection[-1].row() + offset
-    #             else:
-    #                 idx = len(self._editor.value)
-    #
-    #         paste_func = self.paste_func
-    #         if paste_func is None:
-    #             paste_func = lambda x: x.clone_traits()
-    #
-    #         editor = self._editor
-    #         # with no_update(editor.object):
-    #         model = editor.model
-    #         for ci in reversed(items):
-    #             model.insertRow(idx, obj=paste_func(ci))
-    #
-    #             # self._add(items, idx=idx)
-    #             # func = lambda a: self._add(a, idx=idx)
-    #             # self.add_consumable((self._add, (items,), {'idx':idx}))
-    #             # self.add_consumable((self._add, items))
-    #             # invoke_in_main_thread(self._add, items, idx=idx)
-
     def _get_selection(self, rows=None):
         if rows is None:
             rows = self._get_selection_indices()
@@ -436,7 +381,7 @@ class _TableView(TableView):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                    self.state() != QtGui.QAbstractItemView.EditingState and
+                self.state() != QtGui.QAbstractItemView.EditingState and
                 factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
@@ -449,7 +394,7 @@ class _TableView(TableView):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-                  factory.editable and 'delete' in factory.operations):
+              factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
@@ -467,7 +412,7 @@ class _TableView(TableView):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-                  factory.editable and 'insert' in factory.operations):
+              factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -484,61 +429,14 @@ class _TableView(TableView):
             QtGui.QTableView.keyPressEvent(self, event)
 
 
-class _TabularModel(TabularModel):
-    def data(self, mi, role=None):
-        """ Reimplemented to return the data.
-        """
-        if role is None:
-            role = QtCore.Qt.DisplayRole
-
-        editor = self._editor
-        adapter = editor.adapter
-        obj, name = editor.object, editor.name
-        row, column = mi.row(), mi.column()
-
-        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            return adapter.get_text(obj, name, row, column)
-
-        elif role == QtCore.Qt.DecorationRole:
-            image = editor._get_image(adapter.get_image(obj, name, row, column))
-
-            if image is not None:
-                return image
-
-        elif role == QtCore.Qt.ToolTipRole:
-            tooltip = adapter.get_tooltip(obj, name, row, column)
-            if tooltip:
-                return tooltip
-
-        elif role == QtCore.Qt.FontRole:
-            font = adapter.get_font(obj, name, row, column)
-            if font is not None:
-                return QtGui.QFont(font)
-
-        elif role == QtCore.Qt.TextAlignmentRole:
-            string = adapter.get_alignment(obj, name, column)
-            alignment = alignment_map.get(string, QtCore.Qt.AlignLeft)
-            return int(alignment | QtCore.Qt.AlignVCenter)
-
-        elif role == QtCore.Qt.BackgroundRole:
-            color = adapter.get_bg_color(obj, name, row, column)
-            if color is not None:
-                if isinstance(color, SequenceTypes):
-                    q_color = QtGui.QColor(*color)
-                else:
-                    q_color = QtGui.QColor(color)
-                return QtGui.QBrush(q_color)
-
-        elif role == QtCore.Qt.ForegroundRole:
-            color = adapter.get_text_color(obj, name, row, column)
-            if color is not None:
-                if isinstance(color, SequenceTypes):
-                    q_color = QtGui.QColor(*color)
-                else:
-                    q_color = QtGui.QColor(color)
-                return QtGui.QBrush(q_color)
-
-        return None
+# class _TabularModel(TabularModel):
+#     def data(self, mi, role=None):
+#         """ Reimplemented to return the data.
+#         """
+#         if role is None:
+#             role = QtCore.Qt.DisplayRole
+#
+#         return TabularModel.data(self, mi, role)
 
 
 class _TabularEditor(qtTabularEditor):
@@ -546,102 +444,100 @@ class _TabularEditor(qtTabularEditor):
     # copy_cache = List
     col_widths = List
     key_pressed = Any
-    model = Instance(_TabularModel)
+    # model = Instance(_TabularModel)
     image_size = (32, 32)
 
     def init(self, layout):
-        factory = self.factory
+        super(_TabularEditor,self).init(layout)
+        # factory = self.factory
+        #
+        # self.adapter = factory.adapter
+        # self.model = _TabularModel(editor=self)
+        #
+        # # Create the control
+        # control = self.control = self.widget_factory(self, layout=layout)
+        #
+        # control.set_drag_enabled(factory.drag_enabled)
+        #
+        # # Set up the selection listener
+        # if factory.multi_select:
+        #     self.sync_value(factory.selected, 'multi_selected', 'both',
+        #                     is_list=True)
+        #     self.sync_value(factory.selected_row, 'multi_selected_rows', 'both',
+        #                     is_list=True)
+        # else:
+        #     self.sync_value(factory.selected, 'selected', 'both')
+        #     self.sync_value(factory.selected_row, 'selected_row', 'both')
+        #
+        # # Connect to the mode specific selection handler
+        # if factory.multi_select:
+        #     slot = self._on_rows_selection
+        # else:
+        #     slot = self._on_row_selection
+        #
+        # signal = 'selectionChanged(QItemSelection,QItemSelection)'
+        # QtCore.QObject.connect(self.control.selectionModel(),
+        #                        QtCore.SIGNAL(signal), slot)
+        #
+        # # Synchronize other interesting traits as necessary:
+        # self.sync_value(factory.update, 'update', 'from')
+        # self.sync_value(factory.refresh, 'refresh', 'from')
+        # self.sync_value(factory.activated, 'activated', 'to')
+        # self.sync_value(factory.activated_row, 'activated_row', 'to')
+        # self.sync_value(factory.clicked, 'clicked', 'to')
+        # self.sync_value(factory.dclicked, 'dclicked', 'to')
+        # self.sync_value(factory.right_clicked, 'right_clicked', 'to')
+        # self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
+        # self.sync_value(factory.column_clicked, 'column_clicked', 'to')
+        # self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
+        # self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
+        #
+        # # Connect other signals as necessary
+        # signal = QtCore.SIGNAL('activated(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_activate)
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_click)
+        # signal = QtCore.SIGNAL('clicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_right_click)
+        # signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
+        # QtCore.QObject.connect(control, signal, self._on_dclick)
+        # signal = QtCore.SIGNAL('sectionClicked(int)')
+        # QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
+        #
+        # control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        # signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
+        # QtCore.QObject.connect(control, signal, self._on_context_menu)
+        #
+        # self.header_event_filter = HeaderEventFilter(self)
+        # control.horizontalHeader().installEventFilter(self.header_event_filter)
+        #
+        # # Make sure we listen for 'items' changes as well as complete list
+        # # replacements:
+        # try:
+        #     self.context_object.on_trait_change(
+        #         self.update_editor, self.extended_name + '_items', dispatch='ui')
+        # except:
+        #     pass
+        #
+        # # If the user has requested automatic update, attempt to set up the
+        # # appropriate listeners:
+        # if factory.auto_update:
+        #     self.context_object.on_trait_change(
+        #         self.refresh_editor, self.extended_name + '.-', dispatch='ui')
+        #
+        # # Create the mapping from user supplied images to QImages:
+        # for image_resource in factory.images:
+        #     self._add_image(image_resource)
+        #
+        # # Refresh the editor whenever the adapter changes:
+        # self.on_trait_change(self.refresh_editor, 'adapter.+update',
+        #                      dispatch='ui')
+        #
+        # # Rebuild the editor columns and headers whenever the adapter's
+        # # 'columns' changes:
+        # self.on_trait_change(self.update_editor, 'adapter.columns',
+        #                      dispatch='ui')
 
-        self.adapter = factory.adapter
-        self.model = _TabularModel(editor=self)
-
-        # Create the control
-        control = self.control = self.widget_factory(self, layout=layout)
-
-        control.set_drag_enabled(factory.drag_enabled)
-
-        # Set up the selection listener
-        if factory.multi_select:
-            self.sync_value(factory.selected, 'multi_selected', 'both',
-                            is_list=True)
-            self.sync_value(factory.selected_row, 'multi_selected_rows', 'both',
-                            is_list=True)
-        else:
-            self.sync_value(factory.selected, 'selected', 'both')
-            self.sync_value(factory.selected_row, 'selected_row', 'both')
-
-        # Connect to the mode specific selection handler
-        if factory.multi_select:
-            slot = self._on_rows_selection
-        else:
-            slot = self._on_row_selection
-
-        signal = 'selectionChanged(QItemSelection,QItemSelection)'
-        QtCore.QObject.connect(self.control.selectionModel(),
-                               QtCore.SIGNAL(signal), slot)
-
-        # Synchronize other interesting traits as necessary:
-        self.sync_value(factory.update, 'update', 'from')
-        self.sync_value(factory.refresh, 'refresh', 'from')
-        self.sync_value(factory.activated, 'activated', 'to')
-        self.sync_value(factory.activated_row, 'activated_row', 'to')
-        self.sync_value(factory.clicked, 'clicked', 'to')
-        self.sync_value(factory.dclicked, 'dclicked', 'to')
-        self.sync_value(factory.right_clicked, 'right_clicked', 'to')
-        self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
-        self.sync_value(factory.column_clicked, 'column_clicked', 'to')
-        self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
-        self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
-
-        # Connect other signals as necessary
-        signal = QtCore.SIGNAL('activated(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_activate)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_click)
-        signal = QtCore.SIGNAL('clicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_right_click)
-        signal = QtCore.SIGNAL('doubleClicked(QModelIndex)')
-        QtCore.QObject.connect(control, signal, self._on_dclick)
-        signal = QtCore.SIGNAL('sectionClicked(int)')
-        QtCore.QObject.connect(control.horizontalHeader(), signal, self._on_column_click)
-
-        control.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        signal = QtCore.SIGNAL('customContextMenuRequested(QPoint)')
-        QtCore.QObject.connect(control, signal, self._on_context_menu)
-
-        self.header_event_filter = HeaderEventFilter(self)
-        control.horizontalHeader().installEventFilter(self.header_event_filter)
-
-        # Make sure we listen for 'items' changes as well as complete list
-        # replacements:
-        try:
-            self.context_object.on_trait_change(
-                self.update_editor, self.extended_name + '_items', dispatch='ui')
-        except:
-            pass
-
-        # If the user has requested automatic update, attempt to set up the
-        # appropriate listeners:
-        if factory.auto_update:
-            self.context_object.on_trait_change(
-                self.refresh_editor, self.extended_name + '.-', dispatch='ui')
-
-        # Create the mapping from user supplied images to QImages:
-        for image_resource in factory.images:
-            self._add_image(image_resource)
-
-        # Refresh the editor whenever the adapter changes:
-        self.on_trait_change(self.refresh_editor, 'adapter.+update',
-                             dispatch='ui')
-
-        # Rebuild the editor columns and headers whenever the adapter's
-        # 'columns' changes:
-        self.on_trait_change(self.update_editor, 'adapter.columns',
-                             dispatch='ui')
-
-        self.my_init()
-
-    def my_init(self):
         factory = self.factory
         self.sync_value(factory.col_widths, 'col_widths', 'to')
         # self.sync_value(factory.copy_cache, 'copy_cache', 'both')
@@ -720,5 +616,51 @@ class _TabularEditor(qtTabularEditor):
         super(_TabularEditor, self)._scroll_to_row_changed(0)
         super(_TabularEditor, self)._scroll_to_row_changed(row)
 
-
 # ============= EOF =============================================
+# def _paste(self):
+    # selection = self.selectedIndexes()
+    # idx = None
+    #     if len(selection):
+    #         idx = selection[-1].row()
+    #
+    #     if self._cut_indices:
+    #         if not any((ci <= idx for ci in self._cut_indices)):
+    #             idx += len(self._cut_indices)
+    #
+    #         model = self._editor.model
+    #         for ci in self._cut_indices:
+    #             model.removeRow(ci)
+    #
+    #     self._cut_indices = None
+    #
+    #     items = None
+    #     if self.link_copyable:
+    #         items = self._linked_copy_cache
+    #
+    #     if not items:
+    #         items = self._copy_cache
+    #
+    #     if items:
+    #         insert_mode = 'after'
+    #         if idx is None:
+    #             if len(selection):
+    #                 offset = 1 if insert_mode == 'after' else 0
+    #                 idx = selection[-1].row() + offset
+    #             else:
+    #                 idx = len(self._editor.value)
+    #
+    #         paste_func = self.paste_func
+    #         if paste_func is None:
+    #             paste_func = lambda x: x.clone_traits()
+    #
+    #         editor = self._editor
+    #         # with no_update(editor.object):
+    #         model = editor.model
+    #         for ci in reversed(items):
+    #             model.insertRow(idx, obj=paste_func(ci))
+    #
+    #             # self._add(items, idx=idx)
+    #             # func = lambda a: self._add(a, idx=idx)
+    #             # self.add_consumable((self._add, (items,), {'idx':idx}))
+    #             # self.add_consumable((self._add, items))
+    #             # invoke_in_main_thread(self._add, items, idx=idx)

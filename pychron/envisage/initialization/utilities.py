@@ -90,6 +90,8 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                 'LabBook',
                                 'MediaStorage',
                                 'Update')),
+                   ('Data', ('USGSVSCData',
+                             'WiscArData')),
                    ('Hardware', ('ArgusSpectrometer',
                                  'HelixSpectrometer',
                                  'NGXSpectrometer',
@@ -102,7 +104,8 @@ DEFAULT_PLUGINS = (('General', ('Experiment',
                                  'FusionsDiode',
                                  'FusionsUV',
                                  'ExternalPipette')),
-                   ('Social', ('Email', 'GoogleCalendar')))
+                   ('Social', ('Email',
+                               'GoogleCalendar')))
 
 DEFAULT_GLOBALS = (('Use IPC', 'use_ipc'),
                    ('Pipeline Debug', 'pipeline_debug'),

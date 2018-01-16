@@ -1211,12 +1211,17 @@ class AutomatedRun(Loggable):
         msg = 'Extraction Started {}'.format(script.name)
         self.heading('{}'.format(msg))
         self.spec.state = 'extraction'
+
+        executor = self.experiment_executor
         self.experiment_executor.refresh_table()
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
         script.runner = self.runner
         script.manager = self.experiment_executor
         script.set_run_identifier(self.runid)
+
+        queue = executor.experiment_queue
+        script.set_load_identifier(queue.load_name)
 
         syn_extractor = None
         if script.syntax_ok(warn=False):
@@ -1259,10 +1264,9 @@ class AutomatedRun(Loggable):
             sblob = script.get_setpoint_blob()
             snapshots = script.snapshots
             videos = script.videos
-            grain_polygon_blob = script.get_grain_polygons()
-            self.debug('grain polygon blob {}'.format(len(grain_polygon_blob)))
+            grain_polygon_blob = script.get_grain_polygons() or []
+            self.debug('grain polygon blob n={}'.format(len(grain_polygon_blob)))
 
-            # grain_polygon_blob = array(grain_polygon).tostring()
             pid = script.get_active_pid_parameters()
             self._update_persister_spec(pid=pid or '',
                                         grain_polygon_blob=grain_polygon_blob,

@@ -211,9 +211,10 @@ class ReadoutView(Loggable):
     def _refresh(self):
         if self.use_word_query:
             keys = [r.name for r in self.readouts]
-            ds = self.spectrometer.get_parameter_word(keys)
-            for d, r in zip(ds, self.readouts):
-                r.set_value(d)
+            if keys:
+                ds = self.spectrometer.get_parameter_word(keys)
+                for d, r in zip(ds, self.readouts):
+                    r.set_value(d)
 
             keys = [r.name for r in self.deflections if r.use_deflection]
             if keys:

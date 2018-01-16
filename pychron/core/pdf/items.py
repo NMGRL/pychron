@@ -88,7 +88,8 @@ class BaseItem(HasTraits):
     def _set_font(self, v, size, name):
         if isinstance(v, Paragraph):
             for frag in v.frags:
-                if frag.super or frag.sub:
+
+                if (hasattr(frag, 'super') and frag.super) or (hasattr(frag, 'sub') and frag.sub):
                     frag.fontSize = size - 2
                 else:
                     frag.fontSize = size

@@ -156,8 +156,7 @@ class LabnumbersPane(TraitsTaskPane):
                        editor=TabularEditor(adapter=IrradiatedPositionAdapter(),
                                             refresh='refresh_table',
                                             multi_select=True,
-                                            selected='selected',
-                                            operations=['edit'])), )
+                                            selected='selected')))
         return v
 
 

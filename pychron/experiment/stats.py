@@ -181,11 +181,12 @@ class ExperimentStats(Loggable):
                 sh = a.script_hash
 
                 if sh in self.duration_tracker:
-                    t = a.make_truncated_script_hash()
-                    if a.has_conditionals() and t in self.duration_tracker:
-                        run_dur += self.duration_tracker.probability_model(sh, t)
-                    else:
-                        run_dur += self.duration_tracker[sh]
+                    # t = a.make_truncated_script_hash()
+                    # if a.has_conditionals() and t in self.duration_tracker:
+                    #     run_dur += self.duration_tracker.probability_model(sh, t)
+                    # else:
+                    #     run_dur += self.duration_tracker[sh]
+                    run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
                 d = a.get_delay_after(self.delay_between_analyses, self.delay_after_blank, self.delay_after_air)

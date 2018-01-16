@@ -197,6 +197,9 @@ class SwitchManager(Manager):
 
         return ':'.join(owners)
 
+    def get_locked(self):
+        return [v.name for v in self.switches.itervalues() if v.software_lock and not v.ignore_lock_warning]
+
     @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
@@ -523,16 +526,21 @@ class SwitchManager(Manager):
 
     def load_hardware_states(self):
         self.debug('load hardware states')
-        # update = False
+        update = False
         states = []
         for k, v in self.switches.iteritems():
             if v.query_state:
-                # ostate = v.state
+                ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
-                states.append((k, s))
+                states.append((k, s, False))
+                # self.refresh_state = (k, s, False)
+                if ostate != s:
+                    update = update or ostate != s
 
         if states:
             self.refresh_state = states
+            if update:
+                self.refresh_canvas_needed = True
 
     def load_indicator_states(self):
         self.debug('load indicator states')
@@ -635,10 +643,19 @@ class SwitchManager(Manager):
         action = 'set_closed'
         interlocked_valve = self._check_soft_interlocks(name)
         if interlocked_valve:
-            msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(interlocked_valve.name, name)
-            self.console_message = (msg, 'red')
-            self.warning(msg)
-            return False, False
+            s = self.get_switch_by_name(name)
+            ret = False
+
+            iname = interlocked_valve.name
+            if s and not s.state:
+                self.warning('Software Interlock. {} is OPEN. But {} is already closed'.format(iname, name))
+                ret = True
+            else:
+                msg = 'Software Interlock. {} is OPEN!. Will not close {}'.format(iname, name)
+                self.console_message = (msg, 'red')
+                self.warning(msg)
+
+            return ret, False
 
         return self._actuate_(name, action, mode, force=force)
 
@@ -763,6 +780,11 @@ class SwitchManager(Manager):
         if cae is not None:
             check_actuation_enabled = to_bool(cae.text.strip())
 
+        ignore_lock_warning = False
+        ilw = v_elem.find('ignore_lock_warning')
+        if ilw is not None:
+            ignore_lock_warning = to_bool(ilw.text.strip())
+
         check_actuation_delay = 0
         cad = v_elem.find('check_actuation_delay')
         if cad is not None:
@@ -781,6 +803,7 @@ class SwitchManager(Manager):
                    actuator=actuator,
                    description=description,
                    query_state=qs,
+                   ignore_lock_warning=ignore_lock_warning,
                    positive_interlocks=positive_interlocks,
                    interlocks=interlocks,
                    settling_time=st or 0)

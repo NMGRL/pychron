@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.data_mapper.sources.nu_source import NuFileSource
 
 
+class WiscArNuSource(NuFileSource):
+    pass
 # ============= EOF =============================================

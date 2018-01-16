@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from threading import Timer
 
@@ -56,8 +55,8 @@ class FiberLight(AbstractDevice):
             return True
 
     def initialize(self, *args, **kw):
-        if self._cdevice:
-            self._cdevice.setup_consumer(self._write_intensity)
+        # if self._cdevice:
+        #     self._cdevice.setup_consumer(self._write_intensity)
 
         return True
 
@@ -110,7 +109,9 @@ class FiberLight(AbstractDevice):
         """
         self._intensity = int(v)
         if self._cdevice is not None:
-            self._cdevice.add_consumable(self._intensity)
+            self._write_intensity(self._intensity)
+
+            # self._cdevice.add_consumable(self._intensity)
 
     @on_trait_change('power')
     def power_fired(self):
@@ -124,11 +125,7 @@ class FiberLight(AbstractDevice):
     def _get_power_label(self):
         """
         """
-        if self.state:
-            s = 'ON'
-        else:
-            s = 'OFF'
-        return s
+        return 'OFF' if self.state else 'ON'
 
     def get_control_group(self):
         return Group(HGroup(Item('power', editor=ButtonEditor(label_value='power_label'),

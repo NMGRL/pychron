@@ -66,6 +66,7 @@ class StageControlPane(TraitsDockPane):
     def trait_context(self):
         return {'canvas': self.model.stage_manager.canvas,
                 'stage_manager': self.model.stage_manager,
+                'degasser': self.model.degasser,
                 'tray_calibration': self.model.stage_manager.tray_calibration_manager,
                 'object': self.model}
 
@@ -95,16 +96,21 @@ class StageControlPane(TraitsDockPane):
                      layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
-            camera_grp = VGroup(visible_when='use_video', label='Camera')
+            degasser_grp = VGroup(VGroup(Item('degasser.threshold'),
+                                         show_border=True, label='Preprocess'),
+                                  VGroup(UItem('degasser.pid', style='custom'),
+                                         show_border=True, label='PID'),
+                                  label='Degas', show_border=True)
+
             mvgrp = VGroup(
                 # HGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled'),
                 # Item('stage_manager.autocenter_manager.crop_size', label='Crop (mm)'),
                 # Item('stage_manager.autocenter_manager.target_radius', label='Target Radius',
                 #      editor=RangeEditor(low=0., high=5.))),
-                HGroup(Item('stage_manager.autocenter_manager.display_image.alpha')),
+
+                # HGroup(Item('stage_manager.autocenter_manager.display_image.alpha')),
                 VGroup(UItem('stage_manager.autocenter_manager.display_image',
                              width=240, height=240,
-
                              editor=ImageEditor(
                                  refresh='stage_manager.autocenter_manager.display_image.refresh_needed'))),
                 label='Machine Vision', show_border=True)
@@ -125,8 +131,13 @@ class StageControlPane(TraitsDockPane):
             cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
                                  label='Coeff.'),
                             show_border=True, label='Zoom')
-            camera_grp.content.extend((HGroup(cfggrp, recgrp), mvgrp))
+            # camera_grp.content.extend((HGroup(cfggrp, recgrp), mvgrp))
+
+            camera_grp = VGroup(HGroup(cfggrp, recgrp),
+                                mvgrp,
+                                visible_when='use_video', label='Camera')
             tabs.content.append(camera_grp)
+            tabs.content.append(degasser_grp)
 
         mode = self.model.mode
         if mode != 'client':
@@ -207,7 +218,7 @@ class ControlPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        led_grp = HGroup(UItem('enabled_led',
+        led_grp = HGroup(UItem('object.enabled_led.state',
                                editor=LEDEditor(),
                                style='custom',
                                height=-35),
@@ -260,25 +271,25 @@ class PulsePane(TraitsDockPane):
 
     def traits_view(self):
         agrp = VGroup(HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
-                       Item('units', style='readonly', show_label=False),
-                       spring,
-                       Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
-                       Item('pulse_button',
-                            editor=ButtonEditor(label_value='pulse_label'),
-                            show_label=False,
-                            enabled_when='enabled')))
+                             Item('units', style='readonly', show_label=False),
+                             spring,
+                             Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds'),
+                             Item('pulse_button',
+                                  editor=ButtonEditor(label_value='pulse_label'),
+                                  show_label=False,
+                                  enabled_when='enabled')))
         mgrp = VGroup(HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.high', label='Set Max. Seconds'),
-                       spring, UItem('object.wait_control.continue_button')),
-                HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.current_time', show_label=False,
-                            editor=RangeEditor(mode='slider',
-                                               low=1,
-                                               # low_name='low_name',
-                                               high_name='object.wait_control.duration')),
-                       CustomLabel('object.wait_control.current_time',
-                                   size=14,
-                                   weight='bold')), show_border=True)
+                             Item('object.wait_control.high', label='Set Max. Seconds'),
+                             spring, UItem('object.wait_control.continue_button')),
+                      HGroup(Spring(width=-5, springy=False),
+                             Item('object.wait_control.current_time', show_label=False,
+                                  editor=RangeEditor(mode='slider',
+                                                     low=1,
+                                                     # low_name='low_name',
+                                                     high_name='object.wait_control.duration')),
+                             CustomLabel('object.wait_control.current_time',
+                                         size=14,
+                                         weight='bold')), show_border=True)
         # v = View(
         #     VGroup(
         #     VGroup(
@@ -363,7 +374,7 @@ class ClientMixin(object):
             # ogrp,
             pos_grp, layout='tabbed')
 
-        egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
+        egrp = HGroup(UItem('object.enabled_led.state', editor=LEDEditor()),
                       UItem('enable',
                             editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', enabled_when='enabled'),

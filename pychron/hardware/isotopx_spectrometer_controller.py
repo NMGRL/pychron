@@ -20,7 +20,7 @@
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
-from traits.api import Str
+from traits.api import Str, HasTraits
 # ============= local library imports  ==========================
 from apptools.preferences.preference_binding import bind_preference
 
@@ -30,6 +30,9 @@ from pychron.hardware.core.core_device import CoreDevice
 class NGXController(CoreDevice):
     username = Str('')
     password = Str('')
+
+    def set(self, *args, **kw):
+        return HasTraits.set(self, *args, **kw)
 
     def initialize(self, *args, **kw):
         ret = super(NGXController, self).initialize(*args, **kw)

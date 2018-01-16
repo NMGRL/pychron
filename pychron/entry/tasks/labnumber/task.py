@@ -153,8 +153,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.info('Transferring J Data')
         self.manager.transfer_j()
 
-    def import_irradiation(self):
-        self.manager.import_irradiation()
+    # def import_irradiation(self):
+    #     self.info('Import irradiation')
+    #     self.manager.import_irradiation()
+
+    # def import_analyses(self):
+    #     self.info('Import analyses')
+    #     self.manager.import_analyses()
 
     def generate_tray(self):
         # p='/Users/ross/Sandbox/entry_tray'

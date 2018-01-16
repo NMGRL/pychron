@@ -40,54 +40,44 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     _test_connect_command = 'GETMASS'
 
+    use_deflection_correction = False
+
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
         return s
 
-    # def finish_loading(self):
-    #     self.microcontroller.bootstrap()
-    #
-    #     resp = self.read()
-    #
-    #     bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
-    #     bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
-    #
-    #     if resp:
-    #         self.info('NGX-{}'.format(resp))
-    #         self.ask('Login {},{}'.format(self.username, self.password))
-    #
-    #     super(NGXSpectrometer, self).finish_loading()
-
-    # def start(self):
-    #     self.ask('StartAcq 500,{}'.format(self.rcs_id))
+    def start(self):
+        self.set_integration_time(1, force=True)
 
     def read_intensities(self, timeout=4):
-        self.tell('StartAcq 1,{}'.format(self.rcs_id))
-        keys = self.detector_names
+        resp = self.ask('StartAcq 1,{}'.format(self.rcs_id))
+
+        keys = []
         signals = []
+        if resp is not None:
+            keys = self.detector_names
+            tag = 'EVENT:ACQ,{}'.format(self.rcs_id)
+            ds = ''
+            st = time.time()
 
-        tag = 'EVENT:ACQ,{}'.format(self.rcs_id)
-        ds = ''
-        st = time.time()
-
-        while 1:
-            if time.time() - st > timeout:
-                break
-
-            ds += self.read(1024)
-
-            if tag in ds:
-                args = ds.split('#')
-                datastr = None
-                for a in args:
-                    if a.startswith(tag):
-                        datastr = a
-                        break
-
-                if datastr:
-                    signals = [float(i) for i in datastr.split(',')[5:]]
+            while 1:
+                if time.time() - st > timeout:
                     break
+
+                ds += self.read(1024)
+
+                if tag in ds:
+                    args = ds.split('#')
+                    datastr = None
+                    for a in args:
+                        if a.startswith(tag):
+                            datastr = a
+                            break
+
+                    if datastr:
+                        signals = [float(i) for i in datastr.split(',')[5:]]
+                        break
 
         return keys, signals
 
@@ -110,7 +100,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return it
 
     def read_parameter_word(self, keys):
-        print keys
+        self.debug('read parameter word. keys={}'.format(keys))
         values = []
         for kk in keys:
             try:

@@ -622,7 +622,7 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_material(self, name, grainsize=None):
         with self.session_ctx():
-            a = self.get_material(name)
+            a = self.get_material(name, grainsize)
             if a is None:
                 a = MaterialTbl(name=name, grainsize=grainsize)
                 a = self._add_item(a)
@@ -684,15 +684,17 @@ class DVCDatabase(DatabaseAdapter):
             return dblevel
 
     def add_principal_investigator(self, name):
-        pi = self.get_principal_investigator(name)
-        if pi is None:
-            if ',' in name:
-                last_name, fi = name.split(',')
-                pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
-            else:
-                pi = PrincipalInvestigatorTbl(last_name=name)
-            pi = self._add_item(pi)
-        return pi
+        with self.session_ctx():
+            pi = self.get_principal_investigator(name)
+            if pi is None:
+                if ',' in name:
+                    last_name, fi = name.split(',')
+                    pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
+                else:
+                    pi = PrincipalInvestigatorTbl(last_name=name)
+                pi = self._add_item(pi)
+                print 'adding', pi
+            return pi
 
     def add_project(self, name, principal_investigator=None, **kw):
         with self.session_ctx():
@@ -717,7 +719,9 @@ class DVCDatabase(DatabaseAdapter):
                 if identifier:
                     a.identifier = str(identifier)
 
+                print 'level', self.get_irradiation_level(irrad, level)
                 a.level = self.get_irradiation_level(irrad, level)
+
                 dbpos = self._add_item(a)
             else:
                 self.debug('Irradiation position exists {}{} {}'.format(irrad, level, pos))
@@ -893,7 +897,7 @@ class DVCDatabase(DatabaseAdapter):
                 return 0
 
     def get_greatest_aliquot(self, identifier):
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parent_session=False) as sess:
             if identifier:
                 if not self.get_identifier(identifier):
                     return
@@ -914,7 +918,7 @@ class DVCDatabase(DatabaseAdapter):
             return greatest step for this labnumber and aliquot.
             return step as an integer. A=0, B=1...
         """
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parent_session=False) as sess:
             if ln:
                 dbln = self.get_identifier(ln)
                 if not dbln:
@@ -1428,20 +1432,23 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_one(q)
 
     def get_project(self, name, pi=None):
-        if pi:
-            with self.session_ctx() as sess:
+        if isinstance(name, (str, unicode)):
+            if pi:
+                with self.session_ctx() as sess:
 
-                q = sess.query(ProjectTbl)
-                q = q.join(PrincipalInvestigatorTbl)
-                q = q.filter(ProjectTbl.name == name)
+                    q = sess.query(ProjectTbl)
+                    q = q.join(PrincipalInvestigatorTbl)
+                    q = q.filter(ProjectTbl.name == name)
 
-                dbpi = self.get_principal_investigator(pi)
-                if dbpi:
-                    q = principal_investigator_filter(q, pi)
+                    dbpi = self.get_principal_investigator(pi)
+                    if dbpi:
+                        q = principal_investigator_filter(q, pi)
 
-                return self._query_one(q, verbose_query=True)
+                    return self._query_one(q, verbose_query=True)
+            else:
+                return self._retrieve_item(ProjectTbl, name)
         else:
-            return self._retrieve_item(ProjectTbl, name)
+            return name
 
     def get_principal_investigator(self, name):
         with self.session_ctx() as sess:
@@ -1479,6 +1486,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
+            print 'asdfasdf get sample', name, project, pi
             project = self.get_project(project, pi)
             material = self.get_material(material, grainsize)
 
@@ -1929,8 +1937,6 @@ class DVCDatabase(DatabaseAdapter):
             for si in ss:
                 si.sessionID = session.id
 
-
-
                 # for s in samples:
                 #     sample = self.get_sample()
                 #
@@ -2027,32 +2033,14 @@ class DVCDatabase(DatabaseAdapter):
             if isinstance(order, str):
                 order = getattr(tbl.name, order)()
 
+            ret = None
             names = self._retrieve_items(tbl, order=order, distinct_=use_distinct, **kw)
-            if use_distinct:
-                return [ni[0] for ni in names]
-            else:
-                return [ni.name for ni in names or []]
+            if names:
+                if use_distinct:
+                    ret = [ni[0] for ni in names]
+                else:
+                    ret = [ni.name for ni in names or []]
+            return ret
 
-
-                # if __name__ == '__main__':
-
-    import random
-
-    # now = datetime.now()
-    # times = [now, now + timedelta(hours=11), now + timedelta(hours=12),
-    #          now + timedelta(hours=50),
-    #          now+timedelta(hours=55)]
-    #
-    # # times = [datetime.now() - timedelta(random.random() * 20) for i in range(10)]
-    # d = timedelta(hours=10)
-    #
-    # for t in times:
-    #     print t.strftime('%Y-%m-%d %H:%M')
-    # print
-    # for low, high in compress_times(times, d):
-    #     print low.strftime('%Y-%m-%d %H:%M'), \
-    #         high.strftime('%Y-%m-%d %H:%M')
-
-    # for low,
 
 # ============= EOF =============================================

@@ -34,7 +34,7 @@ class LaserProtocol(ServiceProtocol):
         self._addr = addr
 
         services = (('GetError', '_get_error'),
-                    ('MachineVisionDegas', '_machine_vision_degas'),
+                    # ('MachineVisionDegas', '_machine_vision_degas'),
                     ('StartVideoRecording', '_start_video_recording'),
                     ('StopVideoRecording', '_stop_video_recording'),
                     ('ReadLaserPower', '_read_laser_power'),
@@ -99,14 +99,14 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     # Machine Vision
     # ===============================================================================
-    def _machine_vision_degas(self, data):
-        if isinstance(data, dict):
-            lumens, duration = data['lumens'], data['duration']
-        else:
-            lumens, duration = data
-
-        lumens, duration = float(lumens), float(duration)
-        self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
+    # def _machine_vision_degas(self, data):
+    #     if isinstance(data, dict):
+    #         lumens, duration = data['lumens'], data['duration']
+    #     else:
+    #         lumens, duration = data
+    #
+    #     lumens, duration = float(lumens), float(duration)
+    #     self._manager.do_machine_vision_degas(lumens, duration, new_thread=True)
 
     def _get_auto_correcting(self, data):
         return self._manager.stage_manager.is_auto_correcting()
@@ -115,7 +115,12 @@ class LaserProtocol(ServiceProtocol):
     # Video
     # ===============================================================================
     def _start_video_recording(self, data):
-        return self._manager.start_video_recording(data)
+        if isinstance(data, dict):
+            name = data['name']
+        else:
+            name = data
+
+        return self._manager.start_video_recording(name)
 
     def _stop_video_recording(self, data):
         return self._manager.stop_video_recording()
@@ -214,7 +219,7 @@ class LaserProtocol(ServiceProtocol):
         except:
             return InvalidArgumentsErrorCode('SetLaserOutput', value)
 
-        self._manager.set_laser_output(p, units)
+        self._manager.set_laser_output(p, units=units)
         return True
 
     def _get_achieved_output(self, data):
@@ -428,8 +433,14 @@ class LaserProtocol(ServiceProtocol):
 
         return ret
 
-    def _do_pattern(self, name):
-        return self._manager.execute_pattern(name) or 'OK'
+    def _do_pattern(self, data):
+        if isinstance(data, dict):
+            name = data['name']
+            duration = data['duration']
+        else:
+            name, duration = data
+
+        return self._manager.execute_pattern(name, duration) or 'OK'
 
     def _is_patterning(self, data):
         return self._manager.isPatterning()
