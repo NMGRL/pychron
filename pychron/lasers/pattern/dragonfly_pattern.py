@@ -54,6 +54,7 @@ class DragonFlyPeakPattern(SeekPattern):
     update_period = Int(150)
     average_saturation = Float
     position_str = Str
+    move_threshold = Float(0.033)
 
     def execution_graph_view(self):
         display_grp = HGroup(Item('average_saturation', style='readonly'),
@@ -118,6 +119,7 @@ class DragonFlyPeakPattern(SeekPattern):
                       tooltip='Tuning factor to dampen the magnitude of moves, '
                               '0<aggressiveness<1==reduce motion, >1 increase motion'),
                  Item('update_period'),
+                 Item('move_threshold'),
                  Item('mask_kind', label='Mask', tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
                                                          "Beam= Beam radius + 10%\n"
                                                          "Hole= Hole radius"),

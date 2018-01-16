@@ -353,7 +353,7 @@ class PatternExecutor(Patternable):
         min_distance = pattern.min_distance
         aggressiveness = pattern.aggressiveness
         update_period = pattern.update_period / 1000.
-
+        move_threshold = pattern.move_threshold
         px, py = cx, cy
 
         point_gen = None
@@ -423,6 +423,9 @@ class PatternExecutor(Patternable):
             ascalar = scalar * aggressiveness
             dx = npt[0] / sm.pxpermm * ascalar
             dy = npt[1] / sm.pxpermm * ascalar
+            if abs(dx) < move_threshold or abs(dy) < move_threshold:
+                self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
+                continue
             px += dx
             py -= dy
             self.debug('i: {}. point={},{}. '
