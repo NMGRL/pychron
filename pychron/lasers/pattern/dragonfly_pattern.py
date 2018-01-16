@@ -51,7 +51,7 @@ class DragonFlyPeakPattern(SeekPattern):
     spiral_kind = Enum('Hexagon', 'Square')
     min_distance = Int
     aggressiveness = Float(1)
-
+    update_period = Int(150)
     average_saturation = Float
     position_str = Str
 
@@ -117,6 +117,7 @@ class DragonFlyPeakPattern(SeekPattern):
                  Item('aggressiveness', label='Move Aggressiveness',
                       tooltip='Tuning factor to dampen the magnitude of moves, '
                               '0<aggressiveness<1==reduce motion, >1 increase motion'),
+                 Item('update_period'),
                  Item('mask_kind', label='Mask', tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
                                                          "Beam= Beam radius + 10%\n"
                                                          "Hole= Hole radius"),

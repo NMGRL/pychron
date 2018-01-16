@@ -342,6 +342,7 @@ class PatternExecutor(Patternable):
         sm = lm.stage_manager
 
         linear_move = controller.linear_move
+        in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
         set_data2 = imgplot2.data.set_data
@@ -351,6 +352,7 @@ class PatternExecutor(Patternable):
         total_duration = pattern.total_duration
         min_distance = pattern.min_distance
         aggressiveness = pattern.aggressiveness
+        update_period = pattern.update_period / 1000.
 
         px, py = cx, cy
 
@@ -366,9 +368,8 @@ class PatternExecutor(Patternable):
             ist = time.time()
             npt = None
 
-            while time.time() - ist < duration:
+            while time.time() - ist < duration or in_motion():
                 pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
-                set_data('imagedata', src)
 
                 sats.append(sat)
                 if peak is None:
@@ -380,10 +381,13 @@ class PatternExecutor(Patternable):
 
                 if pt:
                     pts.append(pt)
-                    img[circle(peakrow, peakcol, min_distance / 2)] = (255, 0, 0)
+                    c = circle(peakrow, peakcol, min_distance / 2)
+                    img[c] = (255, 0, 0)
+                    src[c] = (255, 0, 0)
 
+                set_data('imagedata', src)
                 set_data2('imagedata', img)
-                time.sleep(0.150)
+                time.sleep(update_period)
 
             pattern.position_str = '---'
 

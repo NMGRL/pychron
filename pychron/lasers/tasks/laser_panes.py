@@ -37,19 +37,23 @@ class BaseLaserPane(TraitsTaskPane):
 
     def traits_view(self):
         editor = self.model.stage_manager.canvas_editor_factory()
-        canvas_grp = VGroup(
-            HGroup(UItem('stage_map_name',
-                         editor=EnumEditor(name='stage_map_names')),
-                   Item('stage_map',
-                        show_label=False),
-                   Item('back_button',
-                        enabled_when='linear_move_history',
-                        show_label=False),
-                   Item('test_button'),
-                   spring),
-            UItem('canvas', style='custom', editor=editor))
+        return View(UItem('canvas', style='custom', editor=editor))
 
-        return View(canvas_grp)
+        # canvas_grp = VGroup(
+        #     HGroup(
+        #
+        #         # UItem('stage_map_name',
+        #         #      editor=EnumEditor(name='stage_map_names')),
+        #         # Item('stage_map',
+        #         #      show_label=False),
+        #         Item('back_button',
+        #              enabled_when='linear_move_history',
+        #              show_label=False),
+        #         # Item('test_button'),
+        #         spring),
+        #     UItem('canvas', style='custom', editor=editor))
+        #
+        # return View(canvas_grp)
 
 
 class AxesPane(TraitsDockPane):
@@ -170,6 +174,8 @@ class StageControlPane(TraitsDockPane):
                                      editor=ListStrEditor()))
             cal_grp = HGroup(UItem('tray_calibration.style',
                                    enabled_when='not tray_calibration.isCalibrating()'),
+                             UItem('stage_manager.stage_map_name',
+                                   editor=EnumEditor(name='stage_manager.stage_map_names')),
                              UItem('tray_calibration.calibrate',
                                    enabled_when='tray_calibration.calibration_enabled',
                                    editor=ButtonEditor(label_value='tray_calibration.calibration_step'),
@@ -374,7 +380,7 @@ class ClientMixin(object):
             # ogrp,
             pos_grp, layout='tabbed')
 
-        egrp = HGroup(UItem('enabled', editor=LEDEditor(colors=['red','green'])),
+        egrp = HGroup(UItem('enabled', editor=LEDEditor(colors=['red', 'green'])),
                       UItem('enable',
                             editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', enabled_when='enabled'),
