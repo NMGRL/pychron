@@ -14,17 +14,32 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
-from traits.api import List, Float, Int, Enum, CFloat
-from traitsui.api import View, Item
+from chaco.scatterplot import render_markers
+from traits.api import List, Float, Int, Enum, CFloat, Instance
+from traitsui.api import View, Item, UItem
 # ============= standard library imports ========================
 import math
-import time
 from collections import defaultdict
-from numpy import random, copy, average, polyfit, arange, linspace, hstack
+from numpy import polyfit, linspace, hstack, average, zeros, uint8, arange
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
-from pychron.mv.lumen_detector import LumenDetector
+
+
+class CurrentPointOverlay(AbstractOverlay):
+    _points = List
+
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        if self._points:
+            with gc:
+                pts = self.component.map_screen(self._points)
+                render_markers(gc, pts[1:], 'circle', 3, (0, 1, 0), 1, (0, 1, 0))
+                render_markers(gc, pts[:1], 'circle', 3, (1, 1, 0), 1, (1, 1, 0))
+
+    def add_point(self, pt):
+        self._points.append(pt)
+        self._points = self._points[-3:]
 
 
 def rotate(x, y, center=(0, 0), theta=0):
@@ -221,6 +236,67 @@ class SeekPattern(Pattern):
     _points = List
     _data = List
 
+    execution_graph = Instance('pychron.graph.graph.Graph', transient=True)
+
+    def execution_graph_view(self):
+        v = View(UItem('execution_graph', style='custom'))
+        return v
+
+    def setup_execution_graph(self):
+        g = self.execution_graph
+        g.new_plot(padding_right=10)
+        s, p = g.new_series()
+        p.aspect_ratio = 1.0
+        cp = CurrentPointOverlay(component=s)
+        s.overlays.append(cp)
+
+        r = self.perimeter_radius
+        xs = linspace(-r, r)
+        xs2 = xs[::-1]
+        ys = (r ** 2 - xs ** 2) ** 0.5
+        ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
+
+        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type='line')
+
+        g.set_x_title('X (mm)', plotid=0)
+        g.set_y_title('Y (mm)', plotid=0)
+
+        # g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
+        # g.new_series(type='line')
+        # g.new_series()
+        # g.set_y_title('Density', plotid=1)
+        # g.set_x_title('Time (s)', plotid=1)
+
+        g.new_plot(padding_right=10)
+        g.new_series()
+        g.set_y_title('Score', plotid=1)
+        g.set_x_title('Time (s)', plotid=1)
+
+        # name = 'imagedata{:03d}'.format(i)
+        # plotdata.set_data(name, ones(wh))
+
+        imgplot = g.new_plot(padding_left=10, padding_right=10)
+        imgplot.aspect_ratio = 1.0
+
+        imgplot.x_axis.visible = False
+        imgplot.y_axis.visible = False
+        imgplot.x_grid.visible = False
+        imgplot.y_grid.visible = False
+
+        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
+        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+
+        g.set_x_limits(-r, r)
+        g.set_y_limits(-r, r)
+
+        total_duration = self.total_duration
+        g.set_y_limits(min_=-0.1, max_=1.1, plotid=1)
+        g.set_x_limits(max_=total_duration * 1.1, plotid=1)
+
+        # g.set_x_limits(max_=total_duration * 1.1, plotid=2)
+        # g.set_y_limits(min_=-0.1, max_=1.1, plotid=2)
+        return imgplot, cp
+
     def validate(self, xx, yy):
         return ((xx - self.cx) ** 2 + (yy - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
 
@@ -359,6 +435,11 @@ class SeekPattern(Pattern):
 
     def calculate_transit_time(self):
         pass
+
+    def _execution_graph_default(self):
+        from pychron.graph.graph import Graph
+        g = Graph(container_dict={'kind': 'h'})
+        return g
 
 # def test1():
 #     from numpy import zeros, ogrid

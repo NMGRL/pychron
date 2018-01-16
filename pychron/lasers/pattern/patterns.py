@@ -306,10 +306,13 @@ class Pattern(HasTraits):
 
     def clear_graph(self):
         graph = self.graph
-        graph.set_data([], series=1, axis=0)
-        graph.set_data([], series=1, axis=1)
-        graph.set_data([], series=2, axis=0)
-        graph.set_data([], series=2, axis=1)
+        try:
+            graph.set_data([], series=1, axis=0)
+            graph.set_data([], series=1, axis=1)
+            graph.set_data([], series=2, axis=0)
+            graph.set_data([], series=2, axis=1)
+        except IndexError:
+            pass
 
     def reset_graph(self, **kw):
         self.graph = self._graph_factory(**kw)

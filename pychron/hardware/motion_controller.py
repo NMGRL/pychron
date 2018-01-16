@@ -140,6 +140,10 @@ class MotionController(CoreDevice):
             self._z_position = v
             self.axes['z'].position = v
 
+    def in_motion(self):
+        if self.timer:
+            return self.timer.isActive()
+
     def moving(self, *args, **kw):
         return self._moving(*args, **kw)
 

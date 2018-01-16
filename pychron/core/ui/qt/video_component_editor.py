@@ -28,6 +28,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
     playTimer = Any
     fps = Int
     stop_timer = Event
+    _alive = None
 
     def init(self, parent):
         """
@@ -37,36 +38,48 @@ class _VideoComponentEditor(_LaserComponentEditor):
         """
         super(_VideoComponentEditor, self).init(parent)
 
-        self.playTimer = QTimer(self.control)
+        # self.playTimer = QTimer(self.control)
         # self.playTimer.timeout.connect(self.update)
-        self.control.connect(self.playTimer, SIGNAL('timeout()'), self.update)
+        # self.control.connect(self.playTimer, SIGNAL('timeout()'), self.update)
 
-        if self.value.fps:
-            self.playTimer.setInterval(1000 / float(self.value.fps))
-        self.playTimer.start()
+        # if self.value.fps:
+        #     self.playTimer.setInterval(1000 / float(self.value.fps))
+        # self.playTimer.start()
+
         self.value.on_trait_change(self.stop, 'closed_event')
 
-        self.value.on_trait_change(self._update_fps, 'fps')
+        # self.value.on_trait_change(self._update_fps, 'fps')
         self.sync_value('stop_timer', 'stop_timer', mode='from')
 
-    def _update_fps(self):
+        self._alive = True
+        QTimer.singleShot(self._get_interval(), self.update)
+
+    # def _update_fps(self):
+    #     pass
+        # if self.value.fps:
+        #     self.playTimer.setInterval(1000 / float(self.value.fps))
+
+    def _get_interval(self):
         if self.value.fps:
-            self.playTimer.setInterval(1000 / float(self.value.fps))
+            return 1000 / float(self.value.fps)
 
     def stop(self):
         print 'VideoComponentEditor stop'
-        try:
-            self.playTimer.stop()
-        except RuntimeError:
-            pass
+        self._alive = False
+        # try:
+        #     self.playTimer.stop()
+        # except RuntimeError:
+        #     pass
 
     def update(self):
-        if self.control:
+        if self.control and self._alive:
             self.value.invalidate_and_redraw()
+            QTimer.singleShot(self._get_interval(), self.update)
 
     def _stop_timer_fired(self):
         print 'VideoComponentEditor stopping playTimer'
-        self.playTimer.stop()
+        self._alive = False
+        # self.playTimer.stop()
 
 
 class VideoComponentEditor(LaserComponentEditor):
