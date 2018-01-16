@@ -124,7 +124,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     edit_comment_template = Button
 
     position = Property(depends_on='_position')
-    _position = String
+    _position = EKlass(String)
 
     # ===========================================================================
     # measurement

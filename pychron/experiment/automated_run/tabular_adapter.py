@@ -47,7 +47,7 @@ ORANGE_BALL = icon('orange_ball')
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     all_columns = [
-        ('-', 'result'),
+        ('-', 'result_str'),
         ('Labnumber', 'labnumber'),
         ('Aliquot', 'aliquot'),
         ('Sample', 'sample'),
@@ -73,7 +73,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Post Meas.', 'post_measurement_script'),
         ('Options', 'script_options'),
         ('Comment', 'comment'),
-        ('Delay After','delay_after')]
+        ('Delay After', 'delay_after')]
 
     columns = [('Labnumber', 'labnumber'),
                ('Aliquot', 'aliquot'), ]
@@ -83,7 +83,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # ===========================================================================
     # widths
     # ===========================================================================
-    result_width = Int(25)
+    result_str_width = Int(25)
     repository_identifier_width = Int(90)
     labnumber_width = Int(80)
     aliquot_width = Int(60)
@@ -125,31 +125,38 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # ===========================================================================
     # non cell editable
     # ===========================================================================
-    labnumber_text = Property
-    result_text = Property
-    extraction_script_text = Property
-    measurement_script_text = Property
-    post_measurement_script_text = Property
-    post_equilibration_script_text = Property
-    sample_text = Property
+    # result_text = Property
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
-    def get_tooltip(self, obj, trait, row, column):
-        name = self.column_map[column]
-        item = getattr(obj, trait)[row]
-        if name == 'result':
+    image = Property
+    menu = Property
+    tooltip = Property
+    bg_color = Property
+
+    def _get_tooltip(self):
+        name = self.column_id
+        item = self.item
+        if name == 'result_str':
             if item.state in ('success', 'truncated'):
                 return item.result.summary
         else:
             return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
-    def get_row_label(self, section, obj=None):
-        return section + 1
+    # def get_tooltip(self, obj, trait, row, column):
+    #     name = self.column_map[column]
+    #     item = getattr(obj, trait)[row]
+    #     if name == 'result':
+    #         if item.state in ('success', 'truncated'):
+    #             return item.result.summary
+    #     else:
+    #         return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
-    def get_bg_color(self, obj, trait, row, column=0):
-        # item = self.item
-        item = getattr(obj, trait)[row]
+    # def get_row_label(self, section, obj=None):
+    #     return section + 1
+    def _get_bg_color(self):
+        item = self.item
+
         # print item.identifier, item.state, item.executable
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
@@ -161,7 +168,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             elif item.end_after:
                 color = END_AFTER_COLOR
             else:
-                if row % 2 == 0:
+                if self.row % 2 == 0:
                     # color = 'white'
                     # color = self.even_bg_color
                     color = self.even_bg_color
@@ -170,18 +177,48 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                     # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
+    #
+    # def get_bg_color(self, obj, trait, row, column=0):
+    #     # item = self.item
+    #     item = getattr(obj, trait)[row]
+    #     # print item.identifier, item.state, item.executable
+    #     if not item.executable:
+    #         color = NOT_EXECUTABLE_COLOR
+    #     else:
+    #         if item.skip:
+    #             color = SKIP_COLOR  # '#33CCFF'  # light blue
+    #         elif item.state in self.colors:
+    #             color = self.colors[item.state]
+    #         elif item.end_after:
+    #             color = END_AFTER_COLOR
+    #         else:
+    #             if row % 2 == 0:
+    #                 # color = 'white'
+    #                 # color = self.even_bg_color
+    #                 color = self.even_bg_color
+    #             else:
+    #                 color = self.odd_bg_color  # '#E6F2FF'  # light gray blue
+    #                 # print row, color, self.odd_bg_color, self.even_bg_color
+    #
+    #     return color
 
-    def get_image(self, obj, trait, row, column):
-        name = self.column_map[column]
-        if name == 'result':
-            item = getattr(obj, trait)[row]
-            if item.state == 'success':
+    def _get_image(self):
+        if self.column_id == 'result_str':
+            if self.item.state == 'success':
                 return GREEN_BALL
-            elif item.state == 'truncated':
+            elif self.item.state == 'truncated':
                 return ORANGE_BALL
 
-    def get_menu(self, obj, trait, row, column):
-        item = getattr(obj, trait)[row]
+    # def get_image(self, obj, trait, row, column):
+    #     name = self.column_map[column]
+    #     if name == 'result':
+    #         item = getattr(obj, trait)[row]
+    #         if item.state == 'success':
+    #             return GREEN_BALL
+    #         elif item.state == 'truncated':
+    #             return ORANGE_BALL
+    def _get_menu(self):
+        item = self.item
         if item.state in ('success', 'truncated'):
 
             evo_actions = [Action(name='Show All', action='show_evolutions'),
@@ -203,62 +240,41 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                                   evo)
             return success
 
-    # ============ non cell editable ============
-    def _get_result_text(self):
-        return ''
+    # def get_menu(self, obj, trait, row, column):
+    #     item = getattr(obj, trait)[row]
+    #     if item.state in ('success', 'truncated'):
+    #
+    #         evo_actions = [Action(name='Show All', action='show_evolutions'),
+    #                        Action(name='Show All w/Equilibration', action='show_evolutions_w_eq'),
+    #                        Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
+    #                        Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
+    #         for iso in item.result.isotope_group.iter_isotopes():
+    #             actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
+    #                        Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
+    #                        Action(name='Equilibration/Signal/Baseline',
+    #                               action='show_evolution_eq_bs_{}'.format(iso.name)),
+    #                        Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
+    #             m = MenuManager(*actions, name=iso.name)
+    #             evo_actions.append(m)
+    #
+    #         evo = MenuManager(*evo_actions, name='Evolutions')
+    #
+    #         success = MenuManager(Action(name='Summary', action='show_summary'),
+    #                               evo)
+    #         return success
 
-    def _set_result_text(self, v):
-        pass
+    # ============ non cell editable ============
+    # def _get_result_text(self):
+    #     return ''
 
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
         if at not in ('unknown', 'degas'):
-            if at == 'blank_unknown':
-                if ',' not in p:
-                    p = ''
-            else:
+            p = ''
+            if at == 'blank_unknown' and ',' not in p:
                 p = ''
         return p
-
-    def _get_labnumber_text(self):
-        return self.item.labnumber
-
-    def _set_labnumber_text(self, v):
-        pass
-
-    def _set_sample_text(self, v):
-        pass
-
-    def _get_sample_text(self):
-        return self.item.sample
-
-    def _get_extraction_script_text(self):
-        return self.item.extraction_script
-
-    def _get_measurement_script_text(self):
-        return self.item.measurement_script
-
-    def _get_post_measurement_script_text(self):
-        return self.item.post_measurement_script
-
-    def _get_post_equilibration_script_text(self):
-        return self.item.post_equilibration_script
-
-    def _set_extraction_script_text(self, v):
-        pass
-
-    def _set_measurement_script_text(self, v):
-        pass
-
-    def _set_post_measurement_script_text(self, v):
-        pass
-
-    def _set_post_equilibration_script_text(self, v):
-        pass
-
-    def _set_position_text(self, v):
-        pass
 
     # ============================================
 
@@ -298,58 +314,77 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return 'Yes' if self.item.use_cdd_warming else 'No'
 
     # ===============set================
-    def _set_ramp_duration_text(self, v):
-        self._set_number(v, 'ramp_duration')
-
-    def _set_beam_diameter_text(self, v):
-        self._set_number(v, 'beam_diameter')
-
-    def _set_extract_value_text(self, v):
-        self._set_number(v, 'extract_value')
-
-    def _set_duration_text(self, v):
-        self._set_number(v, 'duration')
-
-    def _set_cleanup_text(self, v):
-        self._set_number(v, 'cleanup')
-
-    def _set_use_cdd_warming_text(self, v):
-        self.item.use_cdd_warming = to_bool(v)
-
-    def _set_aliquot_text(self, v):
-        self.item.user_defined_aliquot = int(v)
+    # def _set_labnumber_text(self, v):
+    #     pass
+    #
+    # def _set_sample_text(self, v):
+    #     pass
+    # def _set_extraction_script_text(self, v):
+    #     pass
+    #
+    # def _set_measurement_script_text(self, v):
+    #     pass
+    #
+    # def _set_post_measurement_script_text(self, v):
+    #     pass
+    #
+    # def _set_post_equilibration_script_text(self, v):
+    #     pass
+    #
+    # def _set_position_text(self, v):
+    #     pass
+    # def _set_ramp_duration_text(self, v):
+    #     self._set_number(v, 'ramp_duration')
+    #
+    # def _set_beam_diameter_text(self, v):
+    #     self._set_number(v, 'beam_diameter')
+    #
+    # def _set_extract_value_text(self, v):
+    #     self._set_number(v, 'extract_value')
+    #
+    # def _set_duration_text(self, v):
+    #     self._set_number(v, 'duration')
+    #
+    # def _set_cleanup_text(self, v):
+    #     self._set_number(v, 'cleanup')
+    #
+    # def _set_use_cdd_warming_text(self, v):
+    #     self.item.use_cdd_warming = to_bool(v)
+    #
+    # def _set_aliquot_text(self, v):
+    #     self.item.user_defined_aliquot = int(v)
 
     # ==============validate================
-    def _validate_aliquot_text(self, v):
-        return self._validate_number(v, 'aliquot', kind=int)
-
-    def _validate_extract_value_text(self, v):
-        return self._validate_number(v, 'extract_value')
-
-    def _validate_ramp_duration_text(self, v):
-        return self._validate_number(v, 'ramp_duration')
-
-    def _validate_beam_diameter_text(self, v):
-        return self._validate_number(v, 'beam_diameter')
-
-    def _validate_extract_value_text(self, v):
-        return self._validate_number(v, 'extract_value')
-
-    def _validate_duration_text(self, v):
-        return self._validate_number(v, 'duration')
-
-    def _validate_cleanup_text(self, v):
-        return self._validate_number(v, 'cleanup')
+    # def _validate_aliquot_text(self, v):
+    #     return self._validate_number(v, 'aliquot', kind=int)
+    #
+    # def _validate_extract_value_text(self, v):
+    #     return self._validate_number(v, 'extract_value')
+    #
+    # def _validate_ramp_duration_text(self, v):
+    #     return self._validate_number(v, 'ramp_duration')
+    #
+    # def _validate_beam_diameter_text(self, v):
+    #     return self._validate_number(v, 'beam_diameter')
+    #
+    # def _validate_extract_value_text(self, v):
+    #     return self._validate_number(v, 'extract_value')
+    #
+    # def _validate_duration_text(self, v):
+    #     return self._validate_number(v, 'duration')
+    #
+    # def _validate_cleanup_text(self, v):
+    #     return self._validate_number(v, 'cleanup')
 
     # ==========helpers==============
-    def _set_number(self, v, attr):
-        setattr(self.item, attr, v)
-
-    def _validate_number(self, v, attr, kind=float):
-        try:
-            return kind(v)
-        except ValueError:
-            return getattr(self.item, attr)
+    # def _set_number(self, v, attr):
+    #     setattr(self.item, attr, v)
+    #
+    # def _validate_number(self, v, attr, kind=float):
+    #     try:
+    #         return kind(v)
+    #     except ValueError:
+    #         return getattr(self.item, attr)
 
     def _get_number(self, attr, fmt='{:0.2f}'):
         """
@@ -369,8 +404,9 @@ class AutomatedRunMixin(object):
     """
         mixin for table of automated runs that have not yet been executed
     """
+    menu = Property
 
-    def get_menu(self, *args):
+    def _get_menu(self):
         jump = MenuManager(Action(name='Jump to End', action='jump_to_end'),
                            Action(name='Jump to Start', action='jump_to_start'),
                            name='Jump')

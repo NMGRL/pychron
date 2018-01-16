@@ -161,8 +161,8 @@ class ExperimentEditor(BaseTraitsEditor):
         # show row titles is causing a layout issue when resetting queues
         # disabling show_row_titles for the moment.
         operations = ['delete', 'move']
-        if self.automated_runs_editable:
-            operations.append('edit')
+        # if self.automated_runs_editable:
+        #     operations.append('edit')
 
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter,
@@ -201,11 +201,7 @@ class ExperimentEditor(BaseTraitsEditor):
                              height=-300,
                              visible_when='executed')
 
-        v = View(
-            executed_grp,
-            arun_grp,
-            handler=ExperimentEditorHandler(),
-            resizable=True)
+        v = View(executed_grp, arun_grp, handler=ExperimentEditorHandler())
         return v
 
     def trait_context(self):
