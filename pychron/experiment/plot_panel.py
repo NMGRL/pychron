@@ -96,7 +96,7 @@ class PlotPanel(Loggable):
     graph_container = Instance(GraphContainer)
     # analysis_view = Instance(ArArAutomatedRunAnalysisView, ())
     analysis_view = Instance('pychron.processing.analyses.view.automated_run_view.AutomatedRunAnalysisView')
-
+    summary_str = Str
     isotope_group = Instance(IsotopeGroup)
 
     sniff_graph = Instance(Graph)

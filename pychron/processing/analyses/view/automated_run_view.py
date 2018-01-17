@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Str
 from traitsui.api import View, UItem, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

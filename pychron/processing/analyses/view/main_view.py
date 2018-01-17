@@ -19,7 +19,7 @@ from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cac
 from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 
-from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error, uformat_percent_error
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
@@ -30,10 +30,13 @@ from pychron.processing.analyses.view.values import ExtractionValue, ComputedVal
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
 #         obj.show_iso_evo_needed = isos
+from pychron.pychron_constants import PLUSMINUS
 
 
 class MainView(HasTraits):
     name = 'Main'
+
+    summary_str = Str
 
     analysis_id = Str
     analysis_type = Str
@@ -436,6 +439,10 @@ class MainView(HasTraits):
 
             self.computed_values = cv
         else:
+            age = an.uage
+            nage, sage = nominal_value(age), std_dev(age)
+            self.summary_str = '{:0.5f} {}{}({}%)'.format(nage, PLUSMINUS, sage, format_percent_error(nage, sage))
+
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':

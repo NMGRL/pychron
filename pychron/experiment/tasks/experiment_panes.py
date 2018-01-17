@@ -443,7 +443,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
     continue_button = Button
 
     def _continue_button_fired(self):
-        print 'contuneusdfas'
         self.plot_panel.ncounts = 0
 
     def traits_view(self):
@@ -473,21 +472,22 @@ class IsotopeEvolutionPane(TraitsDockPane):
                                                   size=14,
                                                   width=50),
                                       Spring(springy=False, width=-5)),
+                               UItem('object.plot_panel.analysis_view.summary_str'),
                                UItem('object.plot_panel.analysis_view',
                                      style='custom',
                                      height=0.25))))
         return v
 
 
-class SummaryPane(TraitsDockPane):
-    id = 'pychron.experiment.summary'
-    name = 'Summary'
-    plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
-
-    def traits_view(self):
-        v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
-                       style='custom'))
-        return v
+# class SummaryPane(TraitsDockPane):
+#     id = 'pychron.experiment.summary'
+#     name = 'Summary'
+#     plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
+#
+#     def traits_view(self):
+#         v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
+#                        style='custom'))
+#         return v
 
 
 class AnalysisHealthAdapter(TabularAdapter):
