@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from skimage.draw._draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 
 import json
@@ -513,11 +514,28 @@ class VideoStageManager(StageManager):
             cw, ch = self.get_frame_size()
             frame = video.get_cached_frame()
             frame = video.crop(frame, 0, 0, cw, ch)
+
+            if self.render_with_markup:
+                # draw crosshairs
+                r = self.canvas.beam_radius * self.pxpermm
+
+                y = ch / 2
+                x = cw / 2
+
+                cp = circle_perimeter(y, x, r)
+                color = self.canvas.crosshairs_color.getRgb()
+                frame[cp] = color
+
+                frame[line(y, 0, y, x - r)] = color  # left
+                frame[line(y, x + r, y, cw)] = color  # right
+                frame[line(0, x, y - r, x)]  # bottom
+                frame[line(y + r, x, ch, x)]  # top
+
             if frame is not None:
                 pil_save(frame, p)
 
-        if self.render_with_markup:
-            renderer = self._render_snapshot
+        # if self.render_with_markup:
+        #     renderer = self._render_snapshot
 
         self.video.start_recording(path, renderer)
 
