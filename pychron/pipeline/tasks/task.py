@@ -252,7 +252,7 @@ class PipelineTask(BaseBrowserTask):
                         if not isinstance(it, InterpretedAge):
                             db.set_analysis_tag(it.uuid, tag)
 
-                        it.set_tag({'name': tag, 'note': note})
+                        it.set_tag({'name': tag, 'note': note or ''})
                         if dvc.update_tag(it):
                             cs.append(it)
                             # it.refresh_view()
