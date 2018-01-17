@@ -472,7 +472,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
                                                   size=14,
                                                   width=50),
                                       Spring(springy=False, width=-5)),
-                               UItem('object.plot_panel.analysis_view.summary_str'),
                                UItem('object.plot_panel.analysis_view',
                                      style='custom',
                                      height=0.25))))

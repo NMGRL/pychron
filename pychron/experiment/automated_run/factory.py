@@ -488,7 +488,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 'collection_time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
-                'sample','project','material', 'username',
+                'sample', 'project', 'material', 'username',
                 'ramp_duration',
                 'skip', 'mass_spectrometer', 'extract_device', 'repository_identifier',
                 'delay_after']
@@ -661,9 +661,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.labnumber = ''
             self.display_irradiation = ''
             self.sample = ''
-            self._suppress_special_labnumber_change=True
+            self._suppress_special_labnumber_change = True
             self.special_labnumber = 'Special Labnumber'
-            self._suppress_special_labnumber_change=False
+            self._suppress_special_labnumber_change = False
 
     def _template_closed(self, obj, name, new):
         self.template = obj.name
@@ -806,6 +806,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 e = self.extract_device.split(' ')[1].lower()
                                 if skey == 'extraction':
                                     new_script_name = e
+                                    try:
+                                        d = default_scripts[self.extract_device.replace(' ', '')]
+                                        new_script_name = d['extraction']
+                                    except KeyError:
+                                        pass
                                 elif skey == 'post_equilibration':
                                     new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
 
@@ -853,7 +858,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 project_name = d['project']
                 if ipp and project_name.startswith(ipp):
                     repo = project_name
-                    if repo=='REFERENCES':
+                    if repo == 'REFERENCES':
                         repo = ''
                 else:
                     repo = camel_case(project_name)

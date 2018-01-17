@@ -178,14 +178,17 @@ class _TableView(TableView):
             vheader.ResizeMode(QHeaderView.ResizeToContents)
 
     def set_bg_color(self, bgcolor):
-        if isinstance(bgcolor, tuple):
-            if len(bgcolor) == 3:
-                bgcolor = 'rgb({},{},{})'.format(*bgcolor)
-            elif len(bgcolor) == 4:
-                bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
-        elif isinstance(bgcolor, QColor):
-            bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
-        self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
+        # if isinstance(bgcolor, tuple):
+        #     if len(bgcolor) == 3:
+        #         bgcolor = 'rgb({},{},{})'.format(*bgcolor)
+        #     elif len(bgcolor) == 4:
+        #         bgcolor = 'rgba({},{},{},{})'.format(*bgcolor)
+        # elif isinstance(bgcolor, QColor):
+        #     bgcolor = 'rgba({},{},{},{})'.format(bgcolor.red(), bgcolor.green(), bgcolor.blue(), bgcolor.alpha())
+        # self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
+        p = self.palette()
+        p.setColor(QtGui.QPalette.Base, bgcolor)
+        self.setPalette(p)
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
@@ -545,8 +548,8 @@ class _TabularEditor(qtTabularEditor):
         control = self.control
 
         # somehow this was causing all the majority of the lagginess
-        # if factory.bgcolor:
-        #     control.set_bg_color(factory.bgcolor)
+        if factory.bgcolor:
+            control.set_bg_color(factory.bgcolor)
 
         if hasattr(self.object, factory.paste_function):
             control.paste_func = getattr(self.object, factory.paste_function)

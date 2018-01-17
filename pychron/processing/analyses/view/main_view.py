@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property
+from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
 from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 
@@ -24,7 +24,6 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-
 
 # class MainViewHandler(Handler):
 #     def show_isotope_evolution(self, uiinfo, obj):
@@ -36,7 +35,7 @@ from pychron.pychron_constants import PLUSMINUS
 class MainView(HasTraits):
     name = 'Main'
 
-    summary_str = Str
+    summary_str = Unicode
 
     analysis_id = Str
     analysis_type = Str
@@ -271,7 +270,7 @@ class MainView(HasTraits):
                 pass
         return ufloat(0, 1e-20), 1
 
-    def _update_ratios(self):
+    def _get_ratio(self, tag):
         def get_iso(kk):
             if '_' in kk:
                 iso, det = kk.split('_')
@@ -284,14 +283,19 @@ class MainView(HasTraits):
 
             return next((v for v in self.isotopes if test(v)), None)
 
+        n, d = tag.split('/')
+
+        niso, diso = get_iso(n), get_iso(d)
+        return niso, diso
+
+    def _update_ratios(self):
+
         for ci in self.computed_values:
             if not isinstance(ci, DetectorRatio):
                 continue
 
             nd = ci.detectors
-            n, d = nd.split('/')
-
-            niso, diso = get_iso(n), get_iso(d)
+            niso, diso = self._get_ratio(nd)
             if niso and diso:
                 noncorrected = self._get_non_corrected_ratio(niso, diso)
                 corrected, ic = self._get_corrected_ratio(niso, diso)
@@ -311,6 +315,19 @@ class MainView(HasTraits):
             self.computed_values = cv
 
         self._update_ratios()
+
+        try:
+            niso, diso = self._get_ratio('Ar40/Ar36')
+            if niso and diso:
+                noncorrected = self._get_non_corrected_ratio(niso, diso)
+                corrected, ic = self._get_corrected_ratio(niso, diso)
+                v, e = nominal_value(noncorrected), std_dev(noncorrected)
+
+                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.3f}'.format(floatfmt(v),
+                                                                               floatfmt(e), PLUSMINUS,
+                                                                               format_percent_error(v, e), ic)
+        except:
+            pass
 
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
@@ -333,7 +350,7 @@ class MainView(HasTraits):
                         ref = refs.get(name, 1)
                         ratios.append((name, name, ref))
 
-            print 'ratios a', ratios
+            # print 'ratios a', ratios
             # ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
             #           ('40Ar/37Ar', 'Ar40/Ar37', 1),
             #           ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
@@ -441,7 +458,11 @@ class MainView(HasTraits):
         else:
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
-            self.summary_str = '{:0.5f} {}{}({}%)'.format(nage, PLUSMINUS, sage, format_percent_error(nage, sage))
+            try:
+                self.summary_str = u'Age={} {}{}({}%)'.format(floatfmt(nage), PLUSMINUS,
+                                                              floatfmt(sage), format_percent_error(nage, sage))
+            except:
+                pass
 
             for ci in self.computed_values:
                 attr = ci.tag

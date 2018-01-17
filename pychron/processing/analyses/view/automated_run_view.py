@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Str
-from traitsui.api import View, UItem, Group
+from traitsui.api import View, UItem, Group, HGroup, spring, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -31,7 +31,7 @@ class AutomatedRunAnalysisView(MainView):
     def load(self, automated_run):
         isotope_group = automated_run.isotope_group
 
-        self.isotopes = isotope_group.sorted_values() #[isotope_group.isotopes[k] for k in isotope_group.isotope_keys]
+        self.isotopes = isotope_group.sorted_values()  # [isotope_group.isotopes[k] for k in isotope_group.isotope_keys]
         print 'load automated run view {}'.format(isotope_group.pairs())
 
         self._load_hook(automated_run, isotope_group)
@@ -68,8 +68,8 @@ class AutomatedRunAnalysisView(MainView):
                         editor=eeditor,
                         label='Extraction')
 
-        v = View(
-            Group(isotopes, ratios, extract, meas, layout='tabbed'))
+        v = View(VGroup(HGroup(spring, UItem('summary_str', style='readonly'), spring),
+                 Group(isotopes, ratios, extract, meas, layout='tabbed')))
         return v
 
 
