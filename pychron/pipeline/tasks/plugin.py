@@ -59,7 +59,8 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['report_template', 'REPORT', ov],
                  ['geochron_template', 'GEOCHRON', ov],
                  ['yield_template', 'YIELD', ov],
-                 ['csv_analyses_export_template', 'CSV_ANALYSES_EXPORT', ov]]
+                 ['csv_analyses_export_template', 'CSV_ANALYSES_EXPORT', ov],
+                 ['correction_factors_template', 'CORRECTION_FACTORS', ov]]
 
         files = paths.set_template_manifest(files)
         return files

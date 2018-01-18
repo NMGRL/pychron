@@ -50,6 +50,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - Yield
 - CSV Analyses Export
 - CSV Ideogram
+- Correction Factors
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -591,6 +592,14 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: CSVAnalysesExportNode
+"""
+
+CORRECTION_FACTORS = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: CorrectionFactorsNode
+
 """
 
 REACTORS_DEFAULT = '''{

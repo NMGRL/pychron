@@ -432,14 +432,14 @@ class _TableView(TableView):
             QtGui.QTableView.keyPressEvent(self, event)
 
 
-# class _TabularModel(TabularModel):
-#     def data(self, mi, role=None):
-#         """ Reimplemented to return the data.
-#         """
-#         if role is None:
-#             role = QtCore.Qt.DisplayRole
-#
-#         return TabularModel.data(self, mi, role)
+class _TabularModel(TabularModel):
+    def data(self, mi, role=None):
+        """ Reimplemented to return the data.
+        """
+        if role is None:
+            role = QtCore.Qt.DisplayRole
+
+        return TabularModel.data(self, mi, role)
 
 
 class _TabularEditor(qtTabularEditor):
@@ -447,14 +447,14 @@ class _TabularEditor(qtTabularEditor):
     # copy_cache = List
     col_widths = List
     key_pressed = Any
-    # model = Instance(_TabularModel)
+    model = Instance(_TabularModel)
     image_size = (32, 32)
 
     def init(self, layout):
         factory = self.factory
 
         self.adapter = factory.adapter
-        self.model = TabularModel(editor=self)
+        self.model = _TabularModel(editor=self)
 
         # Create the control
         control = self.control = self.widget_factory(self, layout=layout)

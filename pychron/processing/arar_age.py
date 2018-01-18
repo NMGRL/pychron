@@ -349,16 +349,18 @@ class ArArAge(IsotopeGroup):
 
         return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
-    def _calculate_F(self, iso_intensities=None):
+    def _calculate_F(self, iso_intensities=None, interferences=None):
 
         if iso_intensities is None:
             iso_intensities = self._assemble_isotope_intensities()
 
         if iso_intensities:
-            ifc = self.interference_corrections
+            if interferences is None:
+                interferences = self.interference_corrections
+
             f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
                                                                                   decay_time=self.decay_days,
-                                                                                  interferences=ifc,
+                                                                                  interferences=interferences,
                                                                                   arar_constants=self.arar_constants,
                                                                                   fixed_k3739=self.fixed_k3739)
 
@@ -383,7 +385,10 @@ class ArArAge(IsotopeGroup):
         iso_intensities[3] *= self.ar37decayfactor
         return iso_intensities
 
-    def _calculate_age(self, use_display_age=False, include_decay_error=None):
+    def calculate_no_interference(self):
+        self._calculate_age(interferences={})
+
+    def _calculate_age(self, use_display_age=False, include_decay_error=None, interferences=None):
         """
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
             Isotope.get_intensity takes about 5ms.
@@ -406,7 +411,8 @@ class ArArAge(IsotopeGroup):
                                           Ar37=iso_intensities[3],
                                           Ar36=iso_intensities[4])
 
-        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities)
+        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities,
+                                                                                    interferences=interferences)
 
         self.non_ar_isotopes = non_ar
         self.computed = computed

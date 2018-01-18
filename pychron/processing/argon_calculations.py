@@ -406,6 +406,7 @@ def calculate_F(isotopes,
         rp = ufloat(0, 0)
 
     computed = dict(rad40=rad40, rad40_percent=rp,
+                    ca37=ca37, ca39=ca39, ca36=ca36,
                     k39=k39, atm40=atm40)
 
     interference_corrected = dict(Ar40=a40 - k40,

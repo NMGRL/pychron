@@ -57,7 +57,9 @@ class DisplaySubOptions(TitleSubOptions):
                                       enabled_when='display_mean_indicator'),
                                  Item('display_percent_error', label='%Error',
                                       enabled_when='display_mean_indicator'),
-                                 Item('mean_sig_figs', label='SigFigs')),
+                                 Item('mean_sig_figs', label='SigFigs'),
+                                 Item('display_identifier_on_mean', label='Identifier'),
+                                 Item('display_sample_on_mean', label='Sample')),
                           show_border=True,
                           label='Mean')
         info_grp = HGroup(Item('show_info', label='Show'),

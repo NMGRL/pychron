@@ -287,6 +287,7 @@ class Paths(object):
     csv_analyses_export_template = None
     radial_template = None
     regression_series_template = None
+    correction_factors_template = None
 
     furnace_sample_states = None
 
@@ -523,12 +524,19 @@ class Paths(object):
         # self.write_file_defaults(self.plot_factory_defaults, force=True)
 
     def write_file_defaults(self, fs, force=False):
-        for p, d, o in fs:
+        for args in fs:
+            if len(args) == 3:
+                p, d, o = args
+            else:
+                d, o = args
+                p = None
+
             txt = get_file_text(d)
-            try:
-                p = getattr(paths, p)
-            except AttributeError, e:
-                print 'write_file_defaults', e
+            if p is not None:
+                try:
+                    p = getattr(paths, p)
+                except AttributeError, e:
+                    print 'write_file_defaults', e
 
             self._write_default_file(p, txt, o or force)
 
@@ -579,7 +587,6 @@ def build_directories():
 
 
 def migrate_hidden():
-
     hd = os.path.join(paths.root_dir, '.hidden')
     for root, dirs, files in os.walk(hd):
         if root == hd:

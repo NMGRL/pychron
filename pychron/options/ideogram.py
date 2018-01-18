@@ -53,8 +53,10 @@ class IdeogramOptions(AgeOptions):
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_percent_error = Bool(True)
-    aux_plot_name = 'Ideogram'
+    display_identifier_on_mean = Bool(False)
+    display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
+    aux_plot_name = 'Ideogram'
 
     use_asymptotic_limits = Bool
     # asymptotic_width = Float)

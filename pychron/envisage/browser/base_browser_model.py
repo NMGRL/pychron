@@ -187,7 +187,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     pattributes = ('project_enabled',
                    'repository_enabled',
                    'principal_investigator_enabled',
-                   'load_enabled','date_enabled',
+                   'load_enabled', 'date_enabled',
                    'sample_view_active', 'use_low_post', 'use_high_post',
                    'use_named_date_range', 'named_date_range',
                    'low_post', 'high_post')
@@ -237,8 +237,13 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self.selected_principal_investigators:
             pis = [p.name for p in self.selected_principal_investigators]
 
+        ls = []
+        if self.selected_loads:
+            ls = [l.name for l in self.selected_loads]
+
         obj = dict(projects=ps,
                    samples=ss,
+                   loads=ls,
                    # repositories=es,
                    principal_investigators=pis,
                    use_low_post=self.use_low_post,
@@ -499,7 +504,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         else:
             return ans
 
-    #def _retrieve_sample_analyses(self, samples, **kw):
+    # def _retrieve_sample_analyses(self, samples, **kw):
     #    return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_project_records(self, ps, ms=None, include_recent=True, include_recent_first=True):
@@ -580,6 +585,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         load('projects', self.projects)
         # load('experiments', self.repositories)
         load('samples', self.samples)
+        load('loads', self.loads)
 
     def _load_projects_for_principal_investigators(self, pis=None):
         ms = None

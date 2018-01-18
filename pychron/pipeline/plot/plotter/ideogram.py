@@ -497,6 +497,14 @@ class Ideogram(BaseArArFigure):
                                           mswd_args=mswd_args,
                                           sig_figs=self.options.mean_sig_figs,
                                           percent_error=self.options.display_percent_error)
+            tag = None
+            if self.options.display_identifier_on_mean:
+                tag = self.analysis_group.identifier
+            elif self.options.display_sample_on_mean:
+                tag = self.analysis_group.sample
+
+            if tag:
+                text = '{} {}'.format(tag, text)
 
         group = self.options.get_group(self.group_id)
         color = group.color
