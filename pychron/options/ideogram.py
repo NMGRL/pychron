@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button
+from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
@@ -38,6 +38,10 @@ class IdeogramOptions(AgeOptions):
     aux_plot_klass = IdeogramAuxPlot
 
     edit_label_format_button = Button
+    edit_mean_format_button = Button
+
+    mean_label_format = Str
+    mean_label_display = Str
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
@@ -53,8 +57,8 @@ class IdeogramOptions(AgeOptions):
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_percent_error = Bool(True)
-    display_identifier_on_mean = Bool(False)
-    display_sample_on_mean = Bool(False)
+    # display_identifier_on_mean = Bool(False)
+    # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
     aux_plot_name = 'Ideogram'
 
@@ -172,7 +176,17 @@ class IdeogramOptions(AgeOptions):
         if info.result:
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
-            self.refresh_plot_needed = True
+            # self.refresh_plot_needed = True
+
+    def _edit_mean_format_button_fired(self):
+        from pychron.processing.label_maker import MeanLabelTemplater, MeanLabelTemplateView
+
+        lm = MeanLabelTemplater(label=self.mean_label_display)
+        lv = MeanLabelTemplateView(model=lm)
+        info = lv.edit_traits()
+        if info.result:
+            self.mean_label_format = lm.formatter
+            self.mean_label_display = lm.label
 
     def _get_mean_indicator_font(self):
         return '{} {}'.format(self.mean_indicator_fontname,
