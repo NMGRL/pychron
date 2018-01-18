@@ -250,8 +250,7 @@ class FindReferencesNode(FindNode):
             obj = GraphicalFilterView(model=model)
             info = obj.edit_traits(kind='livemodal')
             if info.result:
-                unks, refs = model.get_filtered_selection()
-
+                refs = model.get_filtered_selection()
                 refs = self.dvc.make_analyses(refs)
                 if obj.is_append:
                     state.append_references = True
@@ -260,8 +259,8 @@ class FindReferencesNode(FindNode):
                     state.append_references = False
                     state.references = list(refs)
 
-                if unks is not None:
-                    state.unknowns.extend( unks)
+                # if unks is not None:
+                #     state.unknowns.extend( unks)
                 state.has_references = True
             else:
                 state.veto = self

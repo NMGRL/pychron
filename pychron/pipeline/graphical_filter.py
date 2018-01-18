@@ -258,15 +258,16 @@ class GraphicalFilterModel(HasTraits):
     def get_filtered_selection(self):
         selection = self.graph.scatter.index.metadata['selections']
         ans = self.analyses
-        unks = [ai for ai in self.analyses if ai.analysis_type == 'unknown']
+        # unks = [ai for ai in self.analyses if ai.analysis_type == 'unknown']
         if selection:
-            unks = [ai for i, ai in enumerate(unks) if i not in selection]
+            # unks = [ai for i, ai in enumerate(unks) if i not in selection]
             ans = [ai for i, ai in enumerate(self.analyses) if i not in selection]
 
         refs = self._filter_analysis_types(ans)
         self._calculate_groups(refs)
-        self._calculate_groups(unks)
-        return unks, refs
+        # self._calculate_groups(unks)
+        # return unks, refs
+        return refs
 
     def search_backward(self):
         def func():

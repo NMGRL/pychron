@@ -506,7 +506,7 @@ class Ideogram(BaseArArFigure):
                        'material': ag.material}
 
                 tag = f.format(**ctx)
-                text = '{} {}'.format(tag, text)
+                text = u'{} {}'.format(tag, text)
 
         group = self.options.get_group(self.group_id)
         color = group.color
