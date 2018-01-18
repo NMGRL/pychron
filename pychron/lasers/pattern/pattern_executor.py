@@ -336,7 +336,8 @@ class PatternExecutor(Patternable):
     def _dragonfly_peak(self, st, pattern, lm, controller):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
-        imgplot, imgplot2 = pattern.setup_execution_graph()
+        # imgplot, imgplot2 = pattern.setup_execution_graph()
+        imgplot = pattern.setup_execution_graph(nplots=1)
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -345,7 +346,7 @@ class PatternExecutor(Patternable):
         in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
-        set_data2 = imgplot2.data.set_data
+        # set_data2 = imgplot2.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -369,7 +370,7 @@ class PatternExecutor(Patternable):
             npt = None
 
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
+                pt, peakcol, peakrow, peak_img, sat = find_lum_peak(min_distance)
 
                 sats.append(sat)
                 if peak is None:
@@ -385,8 +386,9 @@ class PatternExecutor(Patternable):
                     img[c] = (255, 0, 0)
                     src[c] = (255, 0, 0)
 
-                set_data('imagedata', src)
-                set_data2('imagedata', img)
+                # set_data('imagedata', src)
+                # set_data2('imagedata', img)
+                set_data('imagedata', img)
                 time.sleep(update_period)
 
             pattern.position_str = '---'

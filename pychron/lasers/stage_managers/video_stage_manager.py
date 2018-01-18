@@ -510,10 +510,19 @@ class VideoStageManager(StageManager):
 
         video = self.video
 
+        crop_to_hole = True
+        dim = self.stage_map.g_dimension
+        cropdim = dim * 2.25 * self.pxpermm
+
+        # offx, offy = self.canvas.get_screen_offset()
+
         def renderer(p):
-            cw, ch = self.get_frame_size()
-            frame = video.get_cached_frame()
-            frame = video.crop(frame, 0, 0, cw, ch)
+            # cw, ch = self.get_frame_size()
+            frame = copy(video.get_cached_frame())
+            ch, cw, _ = frame.shape
+
+            if crop_to_hole:
+                frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
             if self.render_with_markup:
                 # draw crosshairs

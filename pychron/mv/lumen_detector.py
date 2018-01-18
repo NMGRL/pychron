@@ -123,7 +123,7 @@ class LumenDetector(Locator):
             peak_img[circle(py, px, min_distance)] = 255
 
         sat = lum.sum() / (mask.sum() * pd)
-        return pt, px, py, peak_img, sat, lum
+        return pt, px, py, peak_img, sat
 
     def get_scores(self, lum, pixel_depth=8):
         mask = self._mask(lum)
