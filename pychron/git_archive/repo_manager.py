@@ -152,11 +152,15 @@ class GitRepoManager(Loggable):
             apaths = (apaths,)
 
         changes = self.get_local_changes()
-        # changes = [os.path.join(self.path, c) for c in changes]
+        print 'aa', changes
+        changes = [os.path.join(self.path, c) for c in changes]
+        print 'bb', changes
         untracked = self.untracked_files()
+        print 'tt', untracked
         changes.extend(untracked)
 
         ps = [p for p in apaths if p in changes]
+        print 'ps', ps
         changed = bool(ps)
         for p in ps:
             self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
