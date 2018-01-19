@@ -95,7 +95,10 @@ class PychronLaserManager(EthernetLaserManager):
         return self._ask('GetSampleHolder')
 
     def get_error(self):
-        return self._ask('GetError')
+        error = self._ask('GetError')
+        if error is None:
+            error = 'Get Error Failed'
+        return error
 
     # ===============================================================================
     # patterning

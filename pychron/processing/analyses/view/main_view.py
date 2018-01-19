@@ -320,12 +320,12 @@ class MainView(HasTraits):
             niso, diso = self._get_ratio('Ar40/Ar36')
             if niso and diso:
                 noncorrected = self._get_non_corrected_ratio(niso, diso)
-                corrected, ic = self._get_corrected_ratio(niso, diso)
                 v, e = nominal_value(noncorrected), std_dev(noncorrected)
-
-                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.3f}'.format(floatfmt(v),
+                ref = 295.5
+                self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
                                                                                floatfmt(e), PLUSMINUS,
-                                                                               format_percent_error(v, e), ic)
+                                                                               format_percent_error(v, e),
+                                                                               nominal_value(noncorrected/ref))
         except:
             pass
 

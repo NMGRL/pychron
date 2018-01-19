@@ -27,16 +27,23 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     names = List
     height = 0
     ofit = None
-
-
-class IsotopeEvolutionOptions(FitOptions):
-    aux_plot_klass = IsoFilterFitAuxPlot
-    subview_names = List(['Main', 'IsoEvo'])
     goodness_threshold = Float  # in percent
     slope_goodness = Float
     outlier_goodness = Int
     curvature_goodness = Float
     curvature_goodness_at = Float
+
+
+class IsotopeEvolutionOptions(FitOptions):
+    aux_plot_klass = IsoFilterFitAuxPlot
+    subview_names = List(['Main', 'IsoEvo'])
+
+    global_goodness_threshold = Float  # in percent
+    global_slope_goodness = Float
+    global_outlier_goodness = Int
+    global_curvature_goodness = Float
+    global_curvature_goodness_at = Float
+
     # _main_options_klass = IsoEvoMainOptions
     show_sniff = Bool(False)
 

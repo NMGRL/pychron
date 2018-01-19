@@ -1545,10 +1545,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         nonfound = self._check_for_managers()
         if nonfound:
             self.info('experiment canceled because could connect to managers {}'.format(nonfound))
-            if inform:
-                invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not connect to managers {}. '
-                                      'Check that these instances are running.'.format(','.join(nonfound)))
+            self._err_message = 'Could not connect to "{}"'.format(','.join(nonfound))
+            # if inform:
+                # self.warning_dialog('Could not connect')
+                # invoke_in_main_thread(self.warning_dialog,
+                #                       'Canceled! Could not connect to managers {}. '
+                #                       'Check that these instances are running.'.format(','.join(nonfound)))
             return
 
         return True
@@ -1594,7 +1596,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not man:
                 nonfound.append(extract_device)
             else:
-                if not man.test_connection():
+                connected, error = man.test_connection()
+                if not connected:
                     nonfound.append(extract_device)
                 else:
                     ed_connectable.set_connection_parameters(man)
@@ -1761,7 +1764,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if prog:
                 prog.change_message(msg)
             if not func(inform):
-                raise PreExecuteCheckException(msg)
+                raise PreExecuteCheckException(msg, self._err_message)
 
         # exp = self.experiment_queue
 
@@ -2041,6 +2044,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_for_errors(self, inform):
         self.debug('checking for connectable errors')
+        ret = False
         for c in self.connectables:
             self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))
             man = c.manager
@@ -2053,7 +2057,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('connectable get error {}'.format(e))
                 if e and e.lower() != 'ok':
                     self._err_message = e
+                    ret = True
                     break
+
+        return ret
 
     def _load_system_conditionals(self, term_name, **kw):
         self.debug('loading system conditionals {}'.format(term_name))

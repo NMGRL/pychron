@@ -208,7 +208,7 @@ class BaseLaserManager(Manager):
 
         cnt = 0
         tries = 0
-        maxtries = int(500 / float(period))  # timeout after 50 s
+        maxtries = int(5 / float(period))  # timeout after 50 s
         nsuccess = 2
         self._cancel_blocking = False
         if cmpfunc is None:
@@ -242,7 +242,7 @@ class BaseLaserManager(Manager):
                             position_callback(*xyz)
             else:
                 cnt = 0
-            tries += 1
+                tries += 1
 
         state = cnt >= nsuccess
         if state:

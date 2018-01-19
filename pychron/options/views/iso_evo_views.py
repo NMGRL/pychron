@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from enable.markers import marker_names
 from traits.api import Bool, Enum, on_trait_change
-from traitsui.api import EnumEditor, Item, HGroup, UItem
+from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
@@ -24,18 +25,18 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 class IsoEvoSubOptions(SubOptions):
     def traits_view(self):
-        return self._make_view(Item('goodness_threshold', label='Intercept Goodness',
+        return self._make_view(Item('global_goodness_threshold', label='Intercept Goodness',
                                     tooltip='If % error is greater than "Goodness Threshold" '
                                             'mark regression as "Bad"'),
-                               Item('slope_goodness', label='Slope Goodness',
+                               Item('global_slope_goodness', label='Slope Goodness',
                                     tooltip='If slope of regression is positive and the isotope '
                                             'intensity is greater than "Slope Goodness Intensity" '
                                             'then mark regression as "Bad"'),
-                               Item('outlier_goodness', label='Outlier Goodness',
+                               Item('global_outlier_goodness', label='Outlier Goodness',
                                     tooltip='If more than "Outlier Goodness" points are identified as outliers'
                                             'then mark regression as "Bad"'),
-                               HGroup(Item('curvature_goodness'),
-                                      Item('curvature_goodness_at')))
+                               HGroup(Item('global_curvature_goodness'),
+                                      Item('global_curvature_goodness_at')))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):
@@ -49,6 +50,36 @@ class IsoEvoMainOptions(MainOptions):
     error_type = Enum(FIT_ERROR_TYPES)
     filter_outliers = Bool
 
+    def _get_edit_view(self):
+        main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                             Item('scale', editor=EnumEditor(values=['linear', 'log']))),
+                      Item('height'),
+                      HGroup(UItem('marker', editor=EnumEditor(values=marker_names)),
+                             Item('marker_size', label='Size'),
+                             show_border=True, label='Marker'),
+                      HGroup(Item('ymin', label='Min'),
+                             Item('ymax', label='Max'),
+                             show_border=True,
+                             label='Y Limits'),
+                      label='Fits')
+
+        goodness = VGroup(Item('goodness_threshold', label='Intercept Goodness',
+                               tooltip='If % error is greater than "Goodness Threshold" '
+                                       'mark regression as "Bad"'),
+                          Item('slope_goodness', label='Slope Goodness',
+                               tooltip='If slope of regression is positive and the isotope '
+                                       'intensity is greater than "Slope Goodness Intensity" '
+                                       'then mark regression as "Bad"'),
+                          Item('outlier_goodness', label='Outlier Goodness',
+                               tooltip='If more than "Outlier Goodness" points are identified as outliers'
+                                       'then mark regression as "Bad"'),
+                          HGroup(Item('curvature_goodness'),
+                                 Item('curvature_goodness_at')),
+                          label='Goodness')
+
+        v = View(Tabbed(main, goodness), show_border=True)
+        return v
+
     def _get_global_group(self):
         g = HGroup(
             # Item('controller.plot_enabled', label='Plot'),
@@ -58,6 +89,12 @@ class IsoEvoMainOptions(MainOptions):
             Item('controller.filter_outliers', label='Filter Outliers'),
             Item('show_sniff'))
         return g
+
+    @on_trait_change('global_+')
+    def _handle_goodness_global(self, name, new):
+        for a in self.model.aux_plots:
+            name = name[7:]
+            setattr(a, name, new)
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers')
     def _handle_global(self, name, new):
