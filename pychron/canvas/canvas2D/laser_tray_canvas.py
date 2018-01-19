@@ -147,6 +147,16 @@ class LaserTrayCanvas(StageCanvas):
         self._add_crosshairs()
         self.border_visible = False
 
+    def get_crosshairs_radius(self, screen=False):
+        if self.crosshairs_kind == 'UserRadius':
+            radius = self.crosshairs_radius
+        else:
+            radius = self.beam_radius
+
+        if screen:
+            radius = self.get_wh(radius, 0)[0]
+        return radius
+
     def add_image_underlay(self, p, alpha=1.0):
         im = ImageOverlay(path=p, alpha=alpha)
         self.overlays.append(im)

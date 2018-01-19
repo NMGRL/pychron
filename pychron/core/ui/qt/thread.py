@@ -46,8 +46,11 @@ class Thread(QThread):
             self.wait()
 
 
-
 def currentThreadName():
     return QThread.currentThread().objectName()
+
+
+def sleep(v):
+    QThread.msleep(int(v*1000))
 
 # ============= EOF =============================================

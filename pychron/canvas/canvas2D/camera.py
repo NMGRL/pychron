@@ -106,8 +106,10 @@ class Camera(ConfigLoadable):
                 canvas.set_mapper_limits(axis_key, lim)
 
         pxpermm = self.calculate_pxpermm(zoom)
-        _set_limits('x', pxpermm, cx, canvas)
-        _set_limits('y', pxpermm, cy, canvas)
+        if cx is not None:
+            _set_limits('x', pxpermm, cx, canvas)
+        if cy is not None:
+            _set_limits('y', pxpermm, cy, canvas)
         return pxpermm
 
 # if __name__ == '__main__':

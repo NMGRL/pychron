@@ -18,7 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from skimage.draw._draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
-
+from pychron.core.ui.thread import Thread as UIThread
 import json
 import os
 import shutil
@@ -239,11 +239,12 @@ class VideoStageManager(StageManager):
 
         kw['path'] = path
         kw['basename'] = basename
-        if new_thread:
-            t = Thread(target=self._start_recording, kwargs=kw)
-            t.start()
-        else:
-            self._start_recording(**kw)
+        # if new_thread:
+        #     t = UIThread(target=self._start_recording, kwargs=kw)
+        #     t.start()
+        # else:
+
+        self._start_recording(**kw)
         self.is_recording = True
         return path
 
@@ -257,7 +258,10 @@ class VideoStageManager(StageManager):
             p = self.video.output_path
             if self.video.stop_recording(wait=True):
                 if self.auto_upload:
-                    p = self._upload(p, inform=False)
+                    try:
+                        p = self._upload(p, inform=False)
+                    except BaseException, e:
+                        self.critical('Failed uploading {}. error={}'.format(p, e))
             return p
 
         if self.video.is_recording():
@@ -512,33 +516,37 @@ class VideoStageManager(StageManager):
 
         crop_to_hole = True
         dim = self.stage_map.g_dimension
-        cropdim = dim * 2.25 * self.pxpermm
+        cropdim = dim * 8 * self.pxpermm
+        color = self.canvas.crosshairs_color.getRgb()[:3]
 
+        r = int(self.canvas.get_crosshairs_radius() * self.pxpermm)
         # offx, offy = self.canvas.get_screen_offset()
 
         def renderer(p):
             # cw, ch = self.get_frame_size()
             frame = copy(video.get_cached_frame())
-            ch, cw, _ = frame.shape
+            # ch, cw, _ = frame.shape
+            # ch, cw = int(ch), int(cw)
 
             if crop_to_hole:
                 frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
             if self.render_with_markup:
                 # draw crosshairs
-                r = self.canvas.beam_radius * self.pxpermm
 
+                ch, cw, _ = frame.shape
+                ch, cw = int(ch), int(cw)
                 y = ch / 2
                 x = cw / 2
 
-                cp = circle_perimeter(y, x, r)
-                color = self.canvas.crosshairs_color.getRgb()
+                cp = circle_perimeter(y, x, r, shape=(ch, cw))
+
                 frame[cp] = color
 
                 frame[line(y, 0, y, x - r)] = color  # left
-                frame[line(y, x + r, y, cw)] = color  # right
-                frame[line(0, x, y - r, x)]  # bottom
-                frame[line(y + r, x, ch, x)]  # top
+                frame[line(y, x + r, y, int(cw)-1)] = color  # right
+                frame[line(0, x, y - r, x)] = color # bottom
+                frame[line(y + r, x, int(ch)-1, x)] = color  # top
 
             if frame is not None:
                 pil_save(frame, p)

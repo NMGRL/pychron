@@ -64,7 +64,7 @@ class DragonFlyPeakPattern(SeekPattern):
                         UItem('execution_graph', style='custom')),
                  x=100,
                  y=100,
-                 width=1000, title='Executing {}'.format(self.name))
+                 width=500, title='Executing {}'.format(self.name))
         return v
 
     def setup_execution_graph(self, nplots=1):
@@ -83,7 +83,7 @@ class DragonFlyPeakPattern(SeekPattern):
             imgplot.img_plot('imagedata', colormap=hot, origin='top left')
             return imgplot
 
-        return (new_plot() for _ in nplots)
+        return [new_plot() for _ in range(nplots)]
 
         # img = new_plot()
         # peaks = new_plot()

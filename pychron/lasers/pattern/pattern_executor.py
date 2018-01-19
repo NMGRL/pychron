@@ -15,13 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import current_thread, Event
+
 from skimage.draw import circle
 from traits.api import Any, Bool, List
 
 import cStringIO
 import os
 import time
-from threading import Thread, current_thread, Event
+# from threading import Thread, current_thread, Event
+from pychron.core.ui.thread import Thread, currentThreadName, sleep
 from numpy import polyfit, array, average, uint8
 from skimage.color import gray2rgb
 
@@ -46,6 +49,9 @@ class PatternExecutor(Patternable):
         super(PatternExecutor, self).__init__(*args, **kw)
         self._next_point = None
         self.pattern = None
+        self._xy_thread = None
+        self._power_thread = None
+        self._z_thread = None
 
     def start(self, show=False):
         self._alive = True
@@ -149,7 +155,8 @@ class PatternExecutor(Patternable):
 
         self.start(show=self.show_patterning)
         evt = None
-        if current_thread().name != 'MainThread':
+        # if current_thread().name != 'MainThread':
+        if currentThreadName() != 'MainThread':
             evt = Event()
             invoke_in_main_thread(self._pre_execute, evt)
             while not evt.is_set():
@@ -163,32 +170,30 @@ class PatternExecutor(Patternable):
         if duration:
             self.pattern.external_duration = float(duration)
 
-        t = None
         if xyp:
-            t = Thread(target=self._execute_xy_pattern)
-            t.start()
+            self._xy_thread = Thread(target=self._execute_xy_pattern)
+            self._xy_thread.start()
 
         pp = self.pattern.power_pattern
-        pt = None
         if pp:
             self.debug('execute power pattern')
-            pt = Thread(target=self._execute_power_pattern)
-            pt.start()
+            self._power_thread = Thread(target=self._execute_power_pattern)
+            self._power_thread.start()
 
         zp = self.pattern.z_pattern
-        zt = None
+
         if zp:
             self.debug('execute z pattern')
-            zt = Thread(target=self._execute_z_pattern)
-            zt.start()
+            self._z_thread = Thread(target=self._execute_z_pattern)
+            self._z_thread.start()
 
         if block:
-            if t:
-                t.join()
-            if zt:
-                zt.join()
-            if pt:
-                pt.join()
+            if self._xy_thread:
+                self._xy_thread.join()
+            if self._z_thread:
+                self._z_thread.join()
+            if self._power_thread:
+                self._power_thread.join()
 
             self.finish()
 
@@ -337,7 +342,7 @@ class PatternExecutor(Patternable):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
-        imgplot = pattern.setup_execution_graph(nplots=1)
+        imgplot = pattern.setup_execution_graph(nplots=1)[0]
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -384,12 +389,12 @@ class PatternExecutor(Patternable):
                     pts.append(pt)
                     c = circle(peakrow, peakcol, min_distance / 2)
                     img[c] = (255, 0, 0)
-                    src[c] = (255, 0, 0)
+                    # src[c] = (255, 0, 0)
 
                 # set_data('imagedata', src)
                 # set_data2('imagedata', img)
                 set_data('imagedata', img)
-                time.sleep(update_period)
+                sleep(update_period)
 
             pattern.position_str = '---'
 
