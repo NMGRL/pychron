@@ -57,7 +57,7 @@ class PipelineTemplate(HasTraits):
         self.name = name
         self.path = path
 
-    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True):
+    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True, exclude_klass=None):
         # if first node is an unknowns node
         # render into template
         datanode = None
@@ -78,13 +78,19 @@ class PipelineTemplate(HasTraits):
         with open(self.path, 'r') as rfile:
             yd = yaml.load(rfile)
 
-        print self.path, yd
+        # print self.path, yd
         nodes = yd['nodes']
+
+        if exclude_klass is None:
+            exclude_klass = []
 
         # print 'fafa', nodes
         for i, ni in enumerate(nodes):
             # print i, ni
             klass = ni['klass']
+            if klass in exclude_klass:
+                continue
+
             if i == 0 and klass == 'UnknownNode':
                 pipeline.nodes.append(datanode)
                 continue

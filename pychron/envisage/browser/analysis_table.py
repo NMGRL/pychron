@@ -25,6 +25,7 @@ from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_prope
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
+from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
@@ -35,7 +36,7 @@ def sort_items(ans):
     return sorted(ans, key=lambda x: x.timestampf)
 
 
-class AnalysisTable(ColumnSorterMixin):
+class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     analyses = List
     oanalyses = List
     selected = Any
@@ -67,6 +68,8 @@ class AnalysisTable(ColumnSorterMixin):
     _analysis_sets = None
     max_history = Int
     suppress_load_analysis_set = False
+
+    default_attr = 'identifier'
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
@@ -198,6 +201,13 @@ class AnalysisTable(ColumnSorterMixin):
             records = self.analyses
 
         return records
+
+    # selectsame
+    def _get_records(self):
+        return self.analyses
+
+    def _get_selection_attrs(self):
+        return ['identifier', 'aliquot', 'step', 'comment', 'tag']
 
     # handlers
     def _add_analysis_set_button_fired(self):

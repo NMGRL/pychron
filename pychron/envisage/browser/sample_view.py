@@ -346,6 +346,12 @@ class BrowserSampleView(BaseBrowserSampleView):
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 
+    def select_same_attr(self, info, obj):
+        obj.select_same_attr()
+
+    def select_same(self, info, obj):
+        obj.select_same()
+
     def load_review_status(self, info, obj):
         obj.load_review_status()
 

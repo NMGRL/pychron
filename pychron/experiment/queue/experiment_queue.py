@@ -26,11 +26,11 @@ from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.select_same import SelectSameMixin, SelectAttrView
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.envisage.view_util import open_view
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
-from pychron.experiment.queue.select_attr_view import SelectAttrView
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
@@ -62,7 +62,7 @@ class NewRunBlockView(HasTraits):
         return v
 
 
-class ExperimentQueue(BaseExperimentQueue):
+class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_selected = Any
     dclicked = Any
     database_identifier = Long
@@ -84,6 +84,8 @@ class ExperimentQueue(BaseExperimentQueue):
     refresh_blocks_needed = Event
     _auto_save_time = 0
     _temp_analysis = None
+
+    default_attr = 'identifier'
 
     def auto_save(self):
         if self._auto_save_time and time.time() - self._auto_save_time < 0.25:
@@ -177,26 +179,12 @@ class ExperimentQueue(BaseExperimentQueue):
         ident = self.selected[0].identifier
         self._select_same(lambda si: si.identifier == ident)
 
-    def select_same_attr(self):
+    def _get_records(self):
+        return self.cleaned_automated_runs
 
+    def _get_selection_attrs(self):
         hs, attrs = self._get_dump_attrs()
-        hs = list(attrs)
-
-        ev = SelectAttrView(available_attributes=hs)
-        ev.on_trait_change(self._handle_select_attributes, 'attributes')
-        ev.edit_traits()
-
-    def _handle_select_attributes(self, attributes):
-        if attributes:
-            s = self.selected[0]
-
-            def test(v):
-                return all([getattr(v, k) == getattr(s, k) for k in attributes])
-
-            self._select_same(test)
-
-    def _select_same(self, test):
-        self.selected = [si for si in self.cleaned_automated_runs if test(si)]
+        return list(attrs)
 
     def count_labnumber(self, ln):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
