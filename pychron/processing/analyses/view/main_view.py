@@ -323,7 +323,7 @@ class MainView(HasTraits):
                 v, e = nominal_value(noncorrected), std_dev(noncorrected)
                 ref = 295.5
                 self.summary_str = u'Ar40/Ar36={} {}{}({}%) IC={:0.5f}'.format(floatfmt(v),
-                                                                               floatfmt(e), PLUSMINUS,
+                                                                               PLUSMINUS, floatfmt(e),
                                                                                format_percent_error(v, e),
                                                                                nominal_value(noncorrected/ref))
         except:
