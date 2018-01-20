@@ -32,7 +32,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.browser.sample_view import BaseBrowserSampleView
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pipeline.engine import Pipeline, PipelineGroup
+from pychron.pipeline.engine import Pipeline, PipelineGroup, NodeGroup
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import DataNode, InterpretedAgeNode
@@ -46,7 +46,7 @@ from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
-    ReviewTreeNode, PipelineGroupTreeNode
+    ReviewTreeNode, PipelineGroupTreeNode, NodeGroupTreeNode
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
 
 
@@ -270,6 +270,10 @@ class PipelinePane(TraitsDockPane):
                                   auto_open=True,
                                   # menu=default_menu()
                                   ),
+                 NodeGroupTreeNode(node_for=[NodeGroup],
+                                   children='nodes',
+                                   auto_open=True,
+                                   label='name'),
                  DataTreeNode(node_for=[DataNode, InterpretedAgeNode], menu=data_menu_factory()),
                  FilterTreeNode(node_for=[FilterNode], menu=filter_menu_factory()),
                  IdeogramTreeNode(node_for=[IdeogramNode], menu=figure_menu_factory()),
@@ -441,7 +445,7 @@ class RepositoryTabularAdapter(TabularAdapter):
                            Action(name='Get Changes', action='pull'),
                            Action(name='Share Changes', action='push'))
 
-    def get_bg_color( self, obj, trait, row, column = 0):
+    def get_bg_color(self, obj, trait, row, column=0):
         if self.item.behind:
             c = LIGHT_RED
         elif self.item.ahead:
@@ -453,7 +457,7 @@ class RepositoryTabularAdapter(TabularAdapter):
 
 class RepositoryPaneHandler(Handler):
     def refresh_repository_status(self, info, obj):
-         obj.refresh_repository_status()
+        obj.refresh_repository_status()
 
     def pull(self, info, obj):
         obj.pull()
@@ -510,7 +514,6 @@ class SearcherPane(TraitsDockPane):
                                                      selected='object.analysis_table.selected',
                                                      dclicked='object.analysis_table.dclicked'))))
         return v
-
 
 # class AnalysisGroupsAdapter(TabularAdapter):
 #     columns = [('Set', 'name'),

@@ -473,6 +473,8 @@ IDEO = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: NodeGroup
+    name: IdeoGroup
   - klass: GroupingNode
   - klass: IdeogramNode
 """

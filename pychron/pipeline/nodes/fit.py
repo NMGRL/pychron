@@ -32,7 +32,8 @@ from pychron.pychron_constants import NULL_STR
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
-    has_save_node = False
+
+    # has_save_node = False
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -274,9 +275,10 @@ class FitIsotopeEvolutionNode(FitNode):
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
-                    slope_threshold = f.slope_goodness
-                    slope = iso.get_slope()
-                    slope_goodness = bool(slope < 0 or i < slope_threshold)
+                    if f.slope_goodness_intensity > i:
+                        slope_threshold = f.slope_goodness
+                        slope = iso.get_slope()
+                        slope_goodness = bool(slope < 0 or i < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None

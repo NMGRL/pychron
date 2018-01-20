@@ -154,7 +154,6 @@ class Globals(object):
                            ('cert_file', str),
                            ('laser_version', int)]:
             a = ip.get_global(attr)
-            print attr, a
             if a is not None:
                 setattr(globalv, attr, func(a))
 

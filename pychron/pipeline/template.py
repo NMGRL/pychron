@@ -84,7 +84,7 @@ class PipelineTemplate(HasTraits):
         if exclude_klass is None:
             exclude_klass = []
 
-        # print 'fafa', nodes
+        group = None
         for i, ni in enumerate(nodes):
             # print i, ni
             klass = ni['klass']
@@ -92,10 +92,15 @@ class PipelineTemplate(HasTraits):
                 continue
 
             if i == 0 and klass == 'UnknownNode':
-                pipeline.nodes.append(datanode)
+                pipeline.add_node(datanode)
+                continue
+
+            if klass == 'NodeGroup':
+                group = pipeline.add_group(ni['name'])
                 continue
 
             node = self._node_factory(klass, ni)
+
             if isinstance(node, InterpretedAgeNode):
                 node.trait_set(browser_model=iabmodel, dvc=dvc)
             elif isinstance(node, SetInterpretedAgeNode):
@@ -121,8 +126,10 @@ class PipelineTemplate(HasTraits):
             node.finish_load()
             # elif isinstance(node, FitICFactorNode):
             #     node.set_detectors()
-
-            pipeline.nodes.append(node)
+            if group:
+                group.add_node(node)
+            else:
+                pipeline.add_node(node)
 
     def _node_factory(self, klass, ni):
         mod = __import__('pychron.pipeline.nodes', fromlist=[klass])

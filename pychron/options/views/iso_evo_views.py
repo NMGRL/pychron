@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from enable.markers import marker_names
-from traits.api import Bool, Enum, on_trait_change
+from traits.api import Bool, Enum, on_trait_change, Float, Int
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
@@ -24,19 +24,20 @@ from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class IsoEvoSubOptions(SubOptions):
-    def traits_view(self):
-        return self._make_view(Item('global_goodness_threshold', label='Intercept Goodness',
-                                    tooltip='If % error is greater than "Goodness Threshold" '
-                                            'mark regression as "Bad"'),
-                               Item('global_slope_goodness', label='Slope Goodness',
-                                    tooltip='If slope of regression is positive and the isotope '
-                                            'intensity is greater than "Slope Goodness Intensity" '
-                                            'then mark regression as "Bad"'),
-                               Item('global_outlier_goodness', label='Outlier Goodness',
-                                    tooltip='If more than "Outlier Goodness" points are identified as outliers'
-                                            'then mark regression as "Bad"'),
-                               HGroup(Item('global_curvature_goodness'),
-                                      Item('global_curvature_goodness_at')))
+    pass
+    # def traits_view(self):
+    #     return self._make_view(Item('global_goodness_threshold', label='Intercept Goodness',
+    #                                 tooltip='If % error is greater than "Goodness Threshold" '
+    #                                         'mark regression as "Bad"'),
+    #                            Item('global_slope_goodness', label='Slope Goodness',
+    #                                 tooltip='If slope of regression is positive and the isotope '
+    #                                         'intensity is greater than "Slope Goodness Intensity" '
+    #                                         'then mark regression as "Bad"'),
+    #                            Item('global_outlier_goodness', label='Outlier Goodness',
+    #                                 tooltip='If more than "Outlier Goodness" points are identified as outliers'
+    #                                         'then mark regression as "Bad"'),
+    #                            HGroup(Item('global_curvature_goodness'),
+    #                                   Item('global_curvature_goodness_at')))
 
 
 class IsoEvoAppearanceOptions(AppearanceSubOptions):
@@ -49,6 +50,13 @@ class IsoEvoMainOptions(MainOptions):
     fit = Enum(FIT_TYPES)
     error_type = Enum(FIT_ERROR_TYPES)
     filter_outliers = Bool
+
+    goodness_threshold = Float  # in percent
+    slope_goodness = Float
+    slope_goodness_intensity = Float
+    outlier_goodness = Int
+    curvature_goodness = Float
+    curvature_goodness_at = Float
 
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
@@ -66,10 +74,11 @@ class IsoEvoMainOptions(MainOptions):
         goodness = VGroup(Item('goodness_threshold', label='Intercept Goodness',
                                tooltip='If % error is greater than "Goodness Threshold" '
                                        'mark regression as "Bad"'),
-                          Item('slope_goodness', label='Slope Goodness',
-                               tooltip='If slope of regression is positive and the isotope '
-                                       'intensity is greater than "Slope Goodness Intensity" '
-                                       'then mark regression as "Bad"'),
+                          HGroup(Item('slope_goodness', label='Slope Goodness',
+                                      tooltip='If slope of regression is positive and the isotope '
+                                              'intensity is greater than "Slope Goodness Intensity" '
+                                              'then mark regression as "Bad"'),
+                                 Item('slope_goodness_intensity', label='Intensity')),
                           Item('outlier_goodness', label='Outlier Goodness',
                                tooltip='If more than "Outlier Goodness" points are identified as outliers'
                                        'then mark regression as "Bad"'),
@@ -88,15 +97,24 @@ class IsoEvoMainOptions(MainOptions):
             UItem('controller.error_type', width=-75),
             Item('controller.filter_outliers', label='Filter Outliers'),
             Item('show_sniff'))
-        return g
+        gg = VGroup(Item('controller.goodness_threshold', label='Intercept Goodness',
+                         tooltip='If % error is greater than "Goodness Threshold" '
+                                 'mark regression as "Bad"'),
+                    HGroup(Item('controller.slope_goodness', label='Slope Goodness',
+                                tooltip='If slope of regression is positive and the isotope '
+                                        'intensity is greater than "Slope Goodness Intensity" '
+                                        'then mark regression as "Bad"'),
+                           Item('controller.slope_goodness_intensity', label='Intensity')),
+                    Item('controller.outlier_goodness', label='Outlier Goodness',
+                         tooltip='If more than "Outlier Goodness" points are identified as outliers'
+                                 'then mark regression as "Bad"'),
+                    HGroup(Item('controller.curvature_goodness'),
+                           Item('controller.curvature_goodness_at')))
+        return VGroup(g, gg)
 
-    @on_trait_change('global_+')
-    def _handle_goodness_global(self, name, new):
-        for a in self.model.aux_plots:
-            name = name[7:]
-            setattr(a, name, new)
-
-    @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers')
+    @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
+                     'goodness_threshold, slope_goodness, slope_goodness_intensity,'
+                     'outlier_goodness, curvature_goodness, curvature_goodness_at')
     def _handle_global(self, name, new):
         self._toggle_attr(name, new)
 
