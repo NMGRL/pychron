@@ -20,8 +20,8 @@ from traits.has_traits import on_trait_change
 from traitsui.api import EnumEditor, ButtonEditor
 from traitsui.api import HGroup, UItem
 
-from pychron.experiment.fits.fit import FilterFit
-from pychron.experiment.fits.fit_selector import ObjectColumn, CheckboxColumn, FitSelector
+from pychron.core.fits.fit import FilterFit
+from pychron.core.fits.fit_selector import ObjectColumn, CheckboxColumn, FitSelector
 
 
 class FilterFitSelector(FitSelector):

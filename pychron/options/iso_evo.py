@@ -20,7 +20,7 @@ from traits.api import List, Float, Bool, Int
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
-from pychron.processing.fits.fit import IsoFilterFit
+from pychron.core.fits.fit import IsoFilterFit
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):

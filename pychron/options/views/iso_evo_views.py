@@ -77,7 +77,7 @@ class IsoEvoMainOptions(MainOptions):
                                  Item('curvature_goodness_at')),
                           label='Goodness')
 
-        v = View(Tabbed(main, goodness), show_border=True)
+        v = View(Tabbed(main, goodness))
         return v
 
     def _get_global_group(self):

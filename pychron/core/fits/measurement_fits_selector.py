@@ -31,8 +31,8 @@ from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.experiment.fits.filter_fit_selector import FilterFitSelector
-from pychron.experiment.fits.fit import FilterFit
+from pychron.core.fits.filter_fit_selector import FilterFitSelector
+from pychron.core.fits.fit import FilterFit
 
 
 class MeasurementFit(FilterFit):
