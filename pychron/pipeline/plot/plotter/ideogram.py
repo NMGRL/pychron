@@ -493,20 +493,7 @@ class Ideogram(BaseArArFigure):
         if self.options.display_mean:
             n = self.xs.shape[0]
             mswd_args = (mswd, valid_mswd, n)
-            text = self._build_label_text(wm, we, n,
-                                          mswd_args=mswd_args,
-                                          sig_figs=self.options.mean_sig_figs,
-                                          percent_error=self.options.display_percent_error)
-
-            f = self.options.mean_label_format
-            if f:
-                ag = self.analysis_group
-                ctx = {'identifier': ag.identifier,
-                       'sample': ag.sample,
-                       'material': ag.material}
-
-                tag = f.format(**ctx)
-                text = u'{} {}'.format(tag, text)
+            text = self._make_mean_label(wm, we, n, n, mswd_args)
 
         group = self.options.get_group(self.group_id)
         color = group.color
@@ -588,7 +575,7 @@ class Ideogram(BaseArArFigure):
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
         else:
             n = 0
-            fxs,fxes = [],[]
+            fxs, fxes = [], []
             ys = []
             xs = []
             wm, we, mswd, valid_mswd = 0, 0, 0, False
@@ -603,11 +590,14 @@ class Ideogram(BaseArArFigure):
                 ov.error = we
                 if ov.label:
                     mswd_args = mswd, valid_mswd, n
-                    ov.label.text = self._build_label_text(wm, we, n,
-                                                           mswd_args=mswd_args,
-                                                           total_n=total_n,
-                                                           percent_error=self.options.display_percent_error,
-                                                           sig_figs=self.options.mean_sig_figs)
+                    # text = self._build_label_text(wm, we, n,
+                    #                               mswd_args=mswd_args,
+                    #                               total_n=total_n,
+                    #                               percent_error=self.options.display_percent_error,
+                    #                               sig_figs=self.options.mean_sig_figs)
+
+                    text = self._make_mean_label(wm, we, n, total_n, mswd_args)
+                    ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
 
@@ -632,6 +622,25 @@ class Ideogram(BaseArArFigure):
         # ===============================================================================
         # utils
         # ===============================================================================
+
+    def _make_mean_label(self, wm, we, n, total_n, mswd_args):
+
+        text = self._build_label_text(wm, we, n,
+                                      total_n=n,
+                                      mswd_args=mswd_args,
+                                      sig_figs=self.options.mean_sig_figs,
+                                      percent_error=self.options.display_percent_error)
+
+        f = self.options.mean_label_format
+        if f:
+            ag = self.analysis_group
+            ctx = {'identifier': ag.identifier,
+                   'sample': ag.sample,
+                   'material': ag.material}
+
+            tag = f.format(**ctx)
+            text = u'{} {}'.format(tag, text)
+        return text
 
     def _get_xs(self, key='age', nonsorted=False):
         xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
