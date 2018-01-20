@@ -1303,7 +1303,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
-        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+        from pychron.experiment.fits.measurement_fits_selector import MeasurementFitsSelector, \
             MeasurementFitsSelectorView
         from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
         from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
