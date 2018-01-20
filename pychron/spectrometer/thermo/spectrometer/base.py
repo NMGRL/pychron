@@ -427,7 +427,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             section = 'Trap'
             if config.has_section(section):
-                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance'):
+                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance', 'voltage'):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
 
@@ -481,6 +481,12 @@ class ThermoSpectrometer(BaseSpectrometer):
                             '$$$$$$$$$$ Not setting {}. Not in command_map'.format(
                                 k))
 
+                # set trap voltage
+                v = trap.get('voltage')
+                self.debug('send trap voltage {}'.format(v))
+                if v is not None:
+                    self.source.trap_voltage = v
+
                 # set the trap current
                 v = trap.get('current')
                 self.debug('send trap current {}'.format(v))
@@ -489,8 +495,9 @@ class ThermoSpectrometer(BaseSpectrometer):
                     period = trap.get('ramp_period', 1)
                     tol = trap.get('ramp_tolerance', 10)
                     if not self._ramp_trap_current(v, step, period, use_ramp, tol):
-                        self.set_parameter('SetParameter',
-                                           'Trap Current Set,{}'.format(v))
+                        self.source.trap_current = v
+                        # self.set_parameter('SetParameter',
+                        #                    'Trap Current Set,{}'.format(v))
                 # set the mftable
                 mftable_name = magnet.get('mftable')
                 if mftable_name:
@@ -514,9 +521,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                     prog = open_progress(1)
 
                     def func(x):
-                        cmd = 'SetParameter Trap Current Set,{:0.5f}'.format(x)
-                        prog.change_message(cmd)
-                        self.ask(cmd)
+                        prog.change_message('Set Trap Current {}'.format(x))
+                        self.source.trap_current = x
                         if not prog.accepted and not prog.canceled:
                             return True
 

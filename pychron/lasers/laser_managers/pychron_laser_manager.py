@@ -150,14 +150,15 @@ class PychronLaserManager(EthernetLaserManager):
 
     def get_grain_polygon_blob(self):
         blobs = []
-        while 1:
-            blob = self._ask('GetGrainPolygonBlob')
-            if blob:
-                if blob == 'No Response':
+        if globalv.laser_version > 0:
+            while 1:
+                blob = self._ask('GetGrainPolygonBlob')
+                if blob:
+                    if blob == 'No Response':
+                        break
+                    blobs.append(blob)
+                else:
                     break
-                blobs.append(blob)
-            else:
-                break
 
         return blobs
 
@@ -314,11 +315,16 @@ class PychronLaserManager(EthernetLaserManager):
             pat = pickle.dumps(path)
             self.debug('Sending Pattern:{}'.format(pat))
 
-        cmd = {'command': 'DoPattern',
-               'name': pat,
-               'duration': duration}
+        self.debug('-------- laser version {}'.format(globalv.laser_version))
+        if globalv.laser_version > 0:
+            cmd = {'command': 'DoPattern',
+                   'name': pat,
+                   'duration': duration}
+            cmd = json.dumps(cmd)
+        else:
+            cmd = 'DoPattern {}'.format(pat)
 
-        self._ask(json.dumps(cmd), verbose=False)
+        self._ask(cmd, verbose=True)
 
         if block:
             time.sleep(0.5)

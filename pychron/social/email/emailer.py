@@ -98,8 +98,8 @@ class Emailer(Loggable):
             server = self.connect()
             if server is not None:
                 break
-            time.sleep(20)
             self.debug('doing email connection retry {}'.format(i))
+            time.sleep(1)
 
         if server:
             if isinstance(addrs, (str, unicode)):

@@ -530,7 +530,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # self._add_event()
 
         # save experiment to database
-        self.info('saving experiment "{}" to database'.format(exp.name))
+        # self.info('saving experiment "{}" to database'.format(exp.name))
         exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
 
         exp.n_executed_display = int(self.application.preferences.get('pychron.experiment.n_executed_display', 5))
