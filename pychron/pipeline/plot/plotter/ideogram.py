@@ -23,7 +23,7 @@ from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
 from numpy import array, arange, Inf, argmax
 from pyface.message_dialog import warning
-from traits.api import Array
+from traits.api import Array, Event
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
@@ -114,6 +114,8 @@ class Ideogram(BaseArArFigure):
     xes = Array
     ytitle = 'Relative Probability'
 
+    xlimits_updated = Event
+    ylimits_updated = Event
     # _omit_key = 'omit_ideo'
 
     def plot(self, plots, legend=None):
@@ -184,22 +186,26 @@ class Ideogram(BaseArArFigure):
         # todo: handle other attributes
         return nominal_value(self.analysis_group.weighted_age)
 
-    def max_x(self, attr):
+    def max_x(self, attr, exclude_omit=False):
         try:
             return max([nominal_value(ai) + std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr) if ai is not None])
+                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
         except (AttributeError, ValueError), e:
             print 'max', e, 'attr={}'.format(attr)
             return 0
 
-    def min_x(self, attr):
+    def min_x(self, attr, exclude_omit=False):
         try:
             return min([nominal_value(ai) - std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr) if ai is not None])
+                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
         except (AttributeError, ValueError), e:
             print 'min', e
             return 0
 
+    def get_valid_xbounds(self):
+        l, h = self.min_x(self.options.index_attr, exclude_omit=True), \
+               self.max_x(self.options.index_attr, exclude_omit=True)
+        return l, h
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -369,7 +375,6 @@ class Ideogram(BaseArArFigure):
         self._add_mean_indicator(graph, line, po, bins, probs, pid)
 
         mi, ma = min(probs), max(probs)
-
         self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
@@ -541,6 +546,17 @@ class Ideogram(BaseArArFigure):
         if obj:
             self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
+    def get_ybounds(self):
+        plot = self.graph.plots[0]
+        gid = self.group_id + 1
+        lp = plot.plots['Current-{}'.format(gid)][0]
+        d = lp.value.get_data()
+        h = d.max()
+        return 0, h
+
+    def replot(self):
+        self._rebuild_ideo()
+
     def _rebuild_ideo(self, sel=None):
         if sel is None:
             sel = []
@@ -590,12 +606,6 @@ class Ideogram(BaseArArFigure):
                 ov.error = we
                 if ov.label:
                     mswd_args = mswd, valid_mswd, n
-                    # text = self._build_label_text(wm, we, n,
-                    #                               mswd_args=mswd_args,
-                    #                               total_n=total_n,
-                    #                               percent_error=self.options.display_percent_error,
-                    #                               sig_figs=self.options.mean_sig_figs)
-
                     text = self._make_mean_label(wm, we, n, total_n, mswd_args)
                     ov.label.text = text
 
@@ -618,15 +628,16 @@ class Ideogram(BaseArArFigure):
             # dp.index.set_data(xs)
         else:
             dp.visible = False
-        graph.redraw()
-        # ===============================================================================
-        # utils
-        # ===============================================================================
 
+        graph.redraw()
+
+    # ===============================================================================
+    # utils
+    # ===============================================================================
     def _make_mean_label(self, wm, we, n, total_n, mswd_args):
 
         text = self._build_label_text(wm, we, n,
-                                      total_n=n,
+                                      total_n=total_n,
                                       mswd_args=mswd_args,
                                       sig_figs=self.options.mean_sig_figs,
                                       percent_error=self.options.display_percent_error)
@@ -823,7 +834,7 @@ class Ideogram(BaseArArFigure):
 
         return wm, we, mswd, valid_mswd
 
-    def _handle_limits(self):
-        self._rebuild_ideo()
+    def _handle_xlimits(self):
+        self.xlimits_updated = True
 
 # ============= EOF =============================================

@@ -15,18 +15,52 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import on_trait_change
 # ============= standard library imports ========================
 from numpy import Inf
 
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.ideogram import Ideogram
 
+
 # ============= local library imports  ==========================
 
 
 class IdeogramPanel(FigurePanel):
     _figure_klass = Ideogram
+
     # _index_attr = 'uage'
+
+    @on_trait_change('figures:xlimits_updated')
+    def _handle_limits(self, obj, name, new):
+        for f in self.figures:
+            f.replot()
+
+    def _handle_rescale(self, obj, name, new):
+        if new == 'y':
+            m = -1
+            for f in self.figures:
+                mi, ma = f.get_ybounds()
+                m = max(ma * 1.025, m)
+
+            obj.set_y_limits(0, m, pad='0.025', pad_style='upper', plotid=obj.selected_plotid)
+        elif new == 'valid':
+            l, h = None, None
+            for f in self.figures:
+                ll, hh = f.get_valid_xbounds()
+                if l is None:
+                    l, h = ll, hh
+
+                l = min(l, ll)
+                h = max(h, hh)
+
+            obj.set_x_limits(l, h)
+
+        elif new == 'x':
+            center, xmi, xma = self._get_init_xlimits()
+            obj.set_x_limits(xmi, xma)
+            for f in self.figures:
+                f.replot()
 
     def _get_init_xlimits(self):
         po = self.plot_options

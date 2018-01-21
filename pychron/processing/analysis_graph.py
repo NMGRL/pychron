@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
+from traits.api import Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -24,17 +24,19 @@ from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class AnalysisGraph(Graph):
-    def _set_tag(self):
-        """
-        open the tag dialog
-        :return:
-        """
-        print 'set tag'
-        self.tag = True
+    rescale_event = Event
 
-    def _set_invalid(self):
-        print 'set invalid'
-        self.invalid = True
+    def get_rescale_actions(self):
+        return [('Valid Analyses', 'rescale_to_valid', {})]
+
+    def rescale_to_valid(self):
+        self.rescale_event = 'valid'
+
+    def rescale_x_axis(self):
+        self.rescale_event = 'x'
+
+    def rescale_y_axis(self):
+        self.rescale_event = 'y'
 
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):

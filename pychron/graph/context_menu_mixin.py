@@ -33,58 +33,40 @@ class ContextMenuMixin(HasTraits):
     def close_popup(self):
         pass
 
-    def action_factory(self, name, func, **kw):
-        """
-        """
-        a = Action(name=name, on_perform=getattr(self, func),
-                   #                   visible_when='0',
-                   **kw)
-
-        return a
-
-    def get_contextual_menu_save_actions(self):
-        """
-        """
-        return [
-            # ('Clipboard', '_render_to_clipboard', {}),
-            ('PDF', 'save_pdf', {}),
-            ('PNG', 'save_png', {})]
-
     def contextual_menu_contents(self):
         """
         """
-        save_actions = []
-        for n, f, kw in self.get_contextual_menu_save_actions():
-            save_actions.append(self.action_factory(n, f, **kw))
 
-        save_menu = MenuManager(name='Save Figure',*save_actions)
+        def action_factory(name, func, **kw):
+            return Action(name=name, on_perform=getattr(self, func), **kw)
 
-        #        if not self.crosshairs_enabled:
-        #            crosshairs_action = self.action_factory('Show Crosshairs',
-        #                           'show_crosshairs'
-        #                           )
-        #        else:
-        #            crosshairs_action = self.action_factory('Hide Crosshairs',
-        #                           'destroy_crosshairs')
-        #
-        export_actions = [
-            self.action_factory('CSV', 'export_data'), ]
-        #self.action_factory('All', 'export_raw_data'),]
+        save = [('PDF', 'save_pdf', {}), ('PNG', 'save_png', {})]
+        save_actions = [action_factory(n, f, **kw) for n, f, kw in save]
+        save_menu = MenuManager(name='Save Figure', *save_actions)
 
-        export_menu = MenuManager(name='Export',
-                                  *export_actions)
-        contents = [save_menu, export_menu]
-        c=self.get_child_context_menu_actions()
+        export_actions = [action_factory('CSV', 'export_data')]
+        export_menu = MenuManager(name='Export', *export_actions)
+
+        rescale = [('X', 'rescale_x_axis', {}),
+                   ('Y', 'rescale_y_axis', {}),
+                   ('Both', 'rescale_both', {})]
+        a = self.get_rescale_actions()
+
+        if a:
+            rescale.extend(a)
+
+        rescale_actions = [action_factory(n, f, **kw) for n, f, kw in rescale]
+        rescale_menu = MenuManager(name='Rescale', *rescale_actions)
+
+        contents = [save_menu, export_menu, rescale_menu]
+        c = self.get_child_context_menu_actions()
         if c:
             contents.extend(c)
 
-        # if self.editor_enabled:
-        #     pa = self.action_factory('Show Plot Editor', 'show_plot_editor')
-        #     pa.enabled = self.selected_plot is not None
-        #     contents += [pa]
-        #     contents += [self.action_factory('Show Graph Editor', 'show_graph_editor')]
-
         return contents
+
+    def get_rescale_actions(self):
+        return
 
     def get_child_context_menu_actions(self):
         return
@@ -95,7 +77,6 @@ class ContextMenuMixin(HasTraits):
         ctx_menu = MenuManager(*self.contextual_menu_contents())
 
         return ctx_menu
-
 
 
 # class IsotopeContextMenuMixin(ContextMenuMixin):
