@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Property, Instance
+from traits.api import Property, Instance, Button
 from traitsui.api import View, Item, Controller, VGroup, HGroup, UItem, \
     EnumEditor, TabularEditor, HSplit, InstanceEditor
 from traitsui.menu import Action
@@ -108,10 +108,15 @@ class DVCIrradiationImporterView(BaseDVCImporterView):
 
 class DVCAnalysisImporterView(BaseDVCImporterView):
     model = Instance(DVCAnalysisImporterModel)
+    add_repository_identifier_button = Button
+
+    def _add_repository_identifier_button_fired(self):
+        self.model.add_repository()
 
     def traits_view(self):
         grp = HGroup(UItem('source', editor=EnumEditor(name='sources')))
         grp1 = HGroup(Item('repository_identifier', editor=EnumEditor(name='repository_identifiers')),
+                      icon_button_editor('controller.add_repository_identifier_button', 'add'),
                       Item('mass_spectrometer'),
                       Item('extract_device'))
 

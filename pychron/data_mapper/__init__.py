@@ -33,12 +33,12 @@ def do_import_irradiation(dvc, sources, default_source=None):
     return info.result
 
 
-def do_import_analyses(dvc, sources, repos):
+def do_import_analyses(dvc, sources):
     from pychron.data_mapper.view import DVCIrradiationImporterView, DVCAnalysisImporterView
     from pychron.data_mapper.model import DVCIrradiationImporterModel, DVCAnalysisImporterModel
     from pychron.envisage.view_util import open_view
 
-    model = DVCAnalysisImporterModel(dvc=dvc, sources=sources, repository_identifiers=repos)
+    model = DVCAnalysisImporterModel(dvc=dvc, sources=sources)
 
     # model.source = next((k for k, v in sources.iteritems() if v == default_source), None)
     # model.source = sources.keys()[0]

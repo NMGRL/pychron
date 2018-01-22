@@ -83,9 +83,11 @@ class ExperimentRepoTask(BaseTask):
         org = Organization(self.organization)
         org._oauth_token = self.oauth_token
 
-        self.repository_names = org.repo_names
         self.refresh_local_names()
-        self.find_changes()
+        if self.confirmation_dialog('Check all Repositories for changes'):
+            self.find_changes()
+
+        self.repository_names = org.repo_names
 
     def refresh_local_names(self):
         self.local_names = [RepoItem(name=i) for i in sorted(self.list_repos())]
@@ -95,7 +97,8 @@ class ExperimentRepoTask(BaseTask):
 
         def func(item, prog, i, n):
             name = item.name
-            prog.change_message('Examining: {}({}/{})'.format(name, i, n))
+            if prog:
+                prog.change_message('Examining: {}({}/{})'.format(name, i, n))
             self.debug('examining {}'.format(name))
             r = Repo(os.path.join(paths.repository_dataset_dir, name))
             try:
@@ -105,13 +108,12 @@ class ExperimentRepoTask(BaseTask):
             except GitCommandError, e:
                 self.warning('error examining {}. {}'.format(name, e))
 
-        progress_loader(self.local_names, func)
+        if self.selected_local_repository_name:
+            names = (self.selected_local_repository_name,)
+        else:
+            names = self.local_names
 
-        # print changed
-        # r = GitRepoManager()
-        # r.open_repo(name, root=root)
-        #
-        # r.has_unpushed_commits()
+        progress_loader(names, func)
         self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
 
     def list_repos(self):

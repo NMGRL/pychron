@@ -246,6 +246,13 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
     extract_device = Str
     principal_investigator = Str
 
+    def __init__(self, *args, **kw):
+        super(DVCAnalysisImporterModel, self).__init__(*args, **kw)
+        self.refresh_repository_identifiers()
+
+    def refresh_repository_identifiers(self):
+        self.repository_identifiers = self.dvc.get_repository_identifiers()
+
     def add_repository(self):
         dest = self.dvc
         a = RepositoryIdentifierEntry(dvc=dest)
@@ -253,7 +260,9 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         with dest.session_ctx(use_parent_session=False):
             a.available = self.repository_identifiers
             a.principal_investigators = dest.get_principal_investigator_names()
-        a.do()
+
+        if a.do():
+            self.refresh_repository_identifiers()
 
     def do_import(self):
         self.debug('doing import')
@@ -266,7 +275,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         def key(s):
             return s.run_spec.irradiation
 
-        for irrad, aspec in groupby(sorted(aspecs,key=key), key=key):
+        for irrad, aspec in groupby(sorted(aspecs, key=key), key=key):
             if not dest.get_irradiation(irrad):
                 self.warning_dialog('No Irradiation {}. Please import the irradiation'.format(irrad))
                 continue
