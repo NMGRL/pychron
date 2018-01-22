@@ -19,7 +19,7 @@ from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, Handler
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, Handler, TabularEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
@@ -414,19 +414,19 @@ class AnalysesPane(TraitsDockPane):
     def traits_view(self):
         v = View(VGroup(UItem('object.selected_node.unknowns',
                               width=200,
-                              editor=myTabularEditor(adapter=UnknownsAdapter(),
+                              editor=TabularEditor(adapter=UnknownsAdapter(),
                                                      update='refresh_table_needed',
                                                      multi_select=True,
-                                                     drag_external=True,
-                                                     drop_factory=self.model.drop_factory,
+                                                     # drag_external=True,
+                                                     # drop_factory=self.model.drop_factory,
                                                      dclicked='dclicked_unknowns',
                                                      selected='selected_unknowns',
                                                      operations=['delete'])),
                         UItem('object.selected_node.references',
                               visible_when='object.selected_node.references',
-                              editor=myTabularEditor(adapter=ReferencesAdapter(),
+                              editor=TabularEditor(adapter=ReferencesAdapter(),
                                                      update='refresh_table_needed',
-                                                     drag_external=True,
+                                                     # drag_external=True,
                                                      multi_select=True,
                                                      dclicked='dclicked_references',
                                                      selected='selected_references',
