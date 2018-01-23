@@ -35,7 +35,7 @@ Create the file ``pychron_launcher.sh`` in a convenient place
 
     export APPLICATION_ID=0
 
-    ROOT=~/.pychron.$APPLICATION_ID/updates/pychron
+    ROOT=~/.pychron.$APPLICATION_ID/updates
 
     echo Using $ROOT as "ROOT" directory
 
@@ -49,6 +49,7 @@ Create the file ``pychron_launcher.sh`` in a convenient place
     export MassSpecDBVersion=16
     export CONDA_DISTRO=~/anaconda2
     export CONDA_ENV=pychron
+    export QT_API=pyqt
 
     $CONDA_DISTRO/envs/$CONDA_ENV/bin/python $ENTRY_POINT
 
