@@ -16,23 +16,24 @@ Step 0. Downloads
 
 For Update Plugin
 ==========================
-    #. Create hidden directory ``.pychron.<APPLLICATION_ID>`` in your Home folder. Replace ``APPLICATION_ID`` with an
-     integer. e.g. 0
-    #. Clone the pychron source
+    #. Create hidden directory ``.pychron.<APPLLICATION_ID>`` in your Home folder. Replace ``<APPLICATION_ID>`` with
+       an integer. e.g. 0
+    #. Clone the pychron source. Replace ``<ORGANIZATION>`` with the appropriate fork e.g. NMGRL
        ::
 
          cd ~/.pychron.0
          git clone https://github.com/<ORGANIZATION>/pychron.git updates
 
 
-Launch Script
+Launcher Script
 ==========================
-Create the file `pychron_launcher.sh` in a convenient place
-::
+Create the file ``pychron_launcher.sh`` in a convenient place
+
+ ::
 
     #!/bin/bash
 
-    APPLICATION_ID=0
+    export APPLICATION_ID=0
 
     ROOT=~/.pychron.$APPLICATION_ID/updates/pychron
 
