@@ -39,22 +39,6 @@ class BaseLaserPane(TraitsTaskPane):
         editor = self.model.stage_manager.canvas_editor_factory()
         return View(UItem('canvas', style='custom', editor=editor))
 
-        # canvas_grp = VGroup(
-        #     HGroup(
-        #
-        #         # UItem('stage_map_name',
-        #         #      editor=EnumEditor(name='stage_map_names')),
-        #         # Item('stage_map',
-        #         #      show_label=False),
-        #         Item('back_button',
-        #              enabled_when='linear_move_history',
-        #              show_label=False),
-        #         # Item('test_button'),
-        #         spring),
-        #     UItem('canvas', style='custom', editor=editor))
-        #
-        # return View(canvas_grp)
-
 
 class AxesPane(TraitsDockPane):
     name = 'Axes'
@@ -106,18 +90,11 @@ class StageControlPane(TraitsDockPane):
                                          show_border=True, label='PID'),
                                   label='Degas', show_border=True)
 
-            mvgrp = VGroup(
-                # HGroup(Item('stage_manager.autocenter_manager.use_autocenter', label='Enabled'),
-                # Item('stage_manager.autocenter_manager.crop_size', label='Crop (mm)'),
-                # Item('stage_manager.autocenter_manager.target_radius', label='Target Radius',
-                #      editor=RangeEditor(low=0., high=5.))),
-
-                # HGroup(Item('stage_manager.autocenter_manager.display_image.alpha')),
-                VGroup(UItem('stage_manager.autocenter_manager.display_image',
-                             width=240, height=240,
-                             editor=ImageEditor(
-                                 refresh='stage_manager.autocenter_manager.display_image.refresh_needed'))),
-                label='Machine Vision', show_border=True)
+            mvgrp = VGroup(VGroup(UItem('stage_manager.autocenter_manager.display_image',
+                                        width=240, height=240,
+                                        editor=ImageEditor(refresh='stage_manager.autocenter_manager.'
+                                                                   'display_image.refresh_needed'))),
+                           label='Machine Vision', show_border=True)
 
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',
@@ -198,11 +175,6 @@ class StageControlPane(TraitsDockPane):
                       icon_button_editor('stage_manager.autocenter_button', 'find',
                                          tooltip='Do an autocenter at the current location',
                                          enabled_when='stage_manager.autocenter_manager.use_autocenter'),
-                      # Item('stage_manager.keep_images_open',
-                      #      enabled_when='stage_manager.autocenter_manager.use_autocenter',
-                      #      label='Keep Images Open',
-                      #      tooltip='If checked  do not automatically close '
-                      #              'autocentering images when move finished'),
                       label='Calibrated Position',
                       show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),
@@ -212,7 +184,6 @@ class StageControlPane(TraitsDockPane):
                                 name='stage_manager.home_options')))
         tabs = self._get_tabs()
         v = View(VGroup(hgrp, pgrp, tabs))
-        # v = View(VGroup(hgrp, pgrp))
         return v
 
 
@@ -296,35 +267,6 @@ class PulsePane(TraitsDockPane):
                              CustomLabel('object.wait_control.current_time',
                                          size=14,
                                          weight='bold')), show_border=True)
-        # v = View(
-        #     VGroup(
-        #     VGroup(
-        #         ,
-        #     VGroup(
-        #         CustomLabel('object.wait_control.message',
-        #                     size=14,
-        #                     weight='bold',
-        #                     color_name='object.wait_control.message_color'),
-        #
-        #         HGroup(Spring(width=-5, springy=False),
-        #                Item('object.wait_control.high', label='Set Max. Seconds'),
-        #                spring, UItem('object.wait_control.continue_button')),
-        #         HGroup(Spring(width=-5, springy=False),
-        #                Item('object.wait_control.current_time', show_label=False,
-        #                     editor=RangeEditor(mode='slider',
-        #                                        low=1,
-        #                                        # low_name='low_name',
-        #                                        high_name='object.wait_control.duration')),
-        #                CustomLabel('object.wait_control.current_time',
-        #                            size=14,
-        #                            weight='bold')))),
-        #     # Item('wait_control', show_label=False, style='custom'),
-        #     id='pulse',
-        #     handler=PulseHandler())
-        #
-        #
-        #
-        # v = View(Group(UItem('pulse', style='custom'), show_border=True))
 
         v = View(VGroup(agrp, mgrp, show_border=True), id='pulse', handler=PulseHandler())
         return v
@@ -421,17 +363,4 @@ class AuxilaryGraphPane(TraitsDockPane):
         v = View(UItem('auxilary_graph', editor=ComponentEditor()))
         return v
 
-# from pyface.tasks.enaml_dock_pane import EnamlDockPane
-# import enaml
-# class TestPane(EnamlDockPane):
-#    model = Any
-#    def create_component(self):
-#        with enaml.imports():
-#            from test_view import TestView
-#
-#        view = TestView(model=self.model)
-#        return view
-# FusionsDiodePane = BaseLaserPane
-
-# FusionsDiodeControlPane = ControlPane
 # ============= EOF =============================================

@@ -79,12 +79,10 @@ class AerotechMotionController(MotionController):
             nx = self._sign_correct(nx, 'x', ratio=False)
             ny = self._sign_correct(ny, 'y', ratio=False)
 
-        x = self.axes['x']
-        y = self.axes['y']
-
         if velocity is not None:
-            xv = yv = velocity
+            xv = velocity
         else:
+            x = self.axes['x']
             xv = x.velocity
 
         if self.xy_swapped():
