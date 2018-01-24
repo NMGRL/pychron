@@ -41,39 +41,20 @@ from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
 
 
-# from scipy.interpolate.ndgriddata import griddata
+def _coords_inside_image(rr, cc, shape):
+    mask = (rr >= 0) & (rr < shape[0]) & (cc >= 0) & (cc < shape[1])
+    return rr[mask], cc[mask]
 
 
-# def debug_show(image, distance, wsrc, nimage=None):
-#     from pylab import subplots, show, subplots_adjust, cm
-# #     import matplotlib.pyplot as plt
-#     print 'asdsdaf'
-#     fig, axes = subplots(ncols=4, figsize=(8, 2.7))
-#     ax0, ax1, ax2, ax3 = axes
-#
-#     ax0.imshow(image, cmap=cm.gray, interpolation='nearest')
-#     ax1.imshow(-distance, cmap=cm.jet, interpolation='nearest')
-#     ax2.imshow(wsrc, cmap=cm.jet,
-#                 interpolation='nearest'
-#                )
-#     if nimage is not None:
-#         ax3.imshow(nimage, cmap=cm.jet,
-# #                    interpolation='nearest'
-#                    )
-#
-# #     for ax in axes:
-# #         ax.axis('off')
-#
-# #     subplots_adjust(hspace=0.01, wspace=0.01, top=1, bottom=0, left=0,
-# #                     right=1)
-#     invoke_in_main_thread(show)
 def draw_circle(frame, center_x, center_y, radius, color, **kw):
-    cx, cy = circle(int(center_x), int(center_y), int(radius))
+    cy, cx = circle(int(center_y), int(center_x), int(radius), shape=frame.shape)
     frame[cy, cx] = color
 
 
 def draw_circle_perimeter(frame, center_x, center_y, radius, color):
-    cx, cy = circle_perimeter(int(center_x), int(center_y), int(radius))
+    cy, cx = circle_perimeter(int(center_y), int(center_x), int(radius))
+
+    cy, cx = _coords_inside_image(cy, cx, frame.shape)
     frame[cy, cx] = color
 
 
