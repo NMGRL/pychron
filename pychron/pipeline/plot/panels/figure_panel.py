@@ -110,11 +110,12 @@ class FigurePanel(HasTraits):
             else:
                 legend = None
 
+            ymas, ymis = [], []
             update_dict = {}
             self._suppress_limits(True)
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
-                              # ymas=ymas, ymis=ymis,
+                              ymas=ymas, ymis=ymis,
                               center=center,
                               options=po,
                               graph=g,
@@ -127,6 +128,7 @@ class FigurePanel(HasTraits):
                 fig.plot(plots, legend)
 
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+                ymas, ymis = fig.ymas, fig.ymis
                 xpad = fig.xpad
 
                 update_dict = fig.get_update_dict()
@@ -138,7 +140,6 @@ class FigurePanel(HasTraits):
             if not self.track_value:
                 for p in g.plots:
                     l, h = p.value_range.low, p.value_range.high
-
                     p.value_range.low_setting = l
                     p.value_range.high_setting = h
 

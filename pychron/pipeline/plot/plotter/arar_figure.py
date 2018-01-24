@@ -114,8 +114,8 @@ class BaseArArFigure(SelectionFigure):
 
     bgcolor = None
 
-    # ymas = List
-    # ymis = List
+    ymas = List
+    ymis = List
     xmi = Float
     xma = Float
     xtitle = None
