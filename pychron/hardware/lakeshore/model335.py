@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traitsui.api import Group, Item
 from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
 
 class Model335TemperatureController(BaseLakeShoreController):
-    pass
+    def get_control_group(self):
+        grp = Group(Item('input_a', style='readonly'),
+                    Item('input_b', style='readonly'))
+        return grp
 
 # ============= EOF =============================================

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum
+from traits.api import Enum, Float
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
@@ -23,6 +23,10 @@ IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/\w{7},\d.\d')
 
 class BaseLakeShoreController(CoreDevice):
     units = Enum('C', 'K')
+    scan_func = 'update'
+
+    input_a = Float
+    input_b = Float
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='C')
@@ -35,6 +39,10 @@ class BaseLakeShoreController(CoreDevice):
         self.tell('*CLS')
         resp = self.ask('*IDN?')
         return bool(IDN_RE.match(resp))
+
+    def update(self):
+        self.input_a = self.read_input_a()
+        self.input_b = self.read_input_b()
 
     @get_float
     def read_setpoint(self, output):
