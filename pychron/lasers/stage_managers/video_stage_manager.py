@@ -18,7 +18,7 @@
 from apptools.preferences.preference_binding import bind_preference
 from skimage.draw._draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
-from pychron.core.ui.thread import Thread as UIThread
+from pychron.core.ui.thread import Thread as UIThread, sleep
 import json
 import os
 import shutil
@@ -36,7 +36,7 @@ from pychron.image.video import Video, pil_save
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from stage_manager import StageManager
-
+from pychron.core.ui.thread import Thread as QThread
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
         VideoLaserTrayCanvas
@@ -205,12 +205,12 @@ class VideoStageManager(StageManager):
                     t = time.time()
                     targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]
                     masks.extend(targets)
-                evt.wait(0.25)
+                sleep(0.25)
 
             self.grain_polygons = (m for m in masks)
             self.debug('exiting measure grain')
 
-        self._measure_grain_t = Thread(target=_measure_grain_polygon)
+        self._measure_grain_t = QThread(target=_measure_grain_polygon)
         self._measure_grain_t.start()
         return True
 
@@ -617,6 +617,7 @@ class VideoStageManager(StageManager):
                 if args is not None:
                     rpos, _ = args
                     self.linear_move(*rpos, block=True,
+                                     source='autocenter',
                                      use_calibration=False,
                                      update_hole=False,
                                      velocity_scalar=0.1)

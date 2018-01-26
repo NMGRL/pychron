@@ -210,8 +210,7 @@ class StageManager(BaseStageManager):
     def single_axis_move(self, *args, **kw):
         return self.stage_controller.single_axis_move(*args, **kw)
 
-    def linear_move(self, x, y, use_calibration=True,
-                    check_moving=False, abort_if_moving=False, **kw):
+    def linear_move(self, x, y, use_calibration=True, check_moving=False, abort_if_moving=False, **kw):
 
         if check_moving:
             if self.moving():
@@ -778,7 +777,8 @@ class StageManager(BaseStageManager):
                         self.info('using previously calculated corrected position')
                         autocentered_position = True
                 try:
-                    self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
+                    self.stage_controller.linear_move(block=True, source='move_to_hole {}'.format(pos),
+                                                      raise_zero_displacement=True, *pos)
                 except TargetPositionError, e:
                     self.warning('(001) Move to {} failed'.format(pos))
                     self.parent.emergency_shutoff(str(e))

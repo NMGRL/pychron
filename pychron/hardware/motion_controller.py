@@ -259,7 +259,7 @@ class MotionController(CoreDevice):
         z = self.get_current_position('z')
         self.z_progress = z
 
-    def _check_moving(self, axis=None, verbose=False):
+    def _check_moving(self, axis=None, verbose=True):
         m = self._moving(axis=axis, verbose=verbose)
         if verbose:
             self.debug('is moving={}'.format(m))
@@ -270,7 +270,7 @@ class MotionController(CoreDevice):
         else:
             self._not_moving_count = 0
 
-        if self._not_moving_count > 1:
+        if self._not_moving_count > 2:
             if verbose:
                 self.debug('not moving cnt={}'.format(self._not_moving_count))
             self._not_moving_count = 0
@@ -347,22 +347,18 @@ class MotionController(CoreDevice):
             event.clear()
 
         timer = self.timer
+        period = 0.1
+
         if timer is not None:
             self.debug('using existing timer')
 
-            def timerActive():
+            def func():
                 return self.timer.isActive()
-
-            func = timerActive
-            period = 0.05
         else:
             self.debug('check moving={}'.format(axis))
 
-            def moving():
+            def func():
                 return self._moving(axis=axis, verbose=True)
-
-            func = moving
-            period = 0.1
 
         i = 0
         cnt = 0
