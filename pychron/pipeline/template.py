@@ -84,7 +84,6 @@ class PipelineTemplate(HasTraits):
         if exclude_klass is None:
             exclude_klass = []
 
-        group = None
         for i, ni in enumerate(nodes):
             # print i, ni
             klass = ni['klass']
@@ -97,45 +96,49 @@ class PipelineTemplate(HasTraits):
 
             if klass == 'NodeGroup':
                 group = pipeline.add_group(ni['name'])
-                continue
+                for nii in ni['nodes']:
+                    klass = nii['klass']
+                    if klass in exclude_klass:
+                        continue
 
-            node = self._node_factory(klass, ni)
+                    node = self._node_factory(klass, nii, application, bmodel, iabmodel, dvc)
+                    if node:
+                        node.finish_load()
+                        group.add_node(node)
 
-            if isinstance(node, InterpretedAgeNode):
-                node.trait_set(browser_model=iabmodel, dvc=dvc)
-            elif isinstance(node, SetInterpretedAgeNode):
-                node.trait_set(dvc=dvc)
-            elif isinstance(node, (DVCNode, FindNode)):
-                node.trait_set(browser_model=bmodel, dvc=dvc)
-            elif isinstance(node, (PersistNode, GainCalibrationNode, PushNode)):
-                node.trait_set(dvc=dvc)
-            elif isinstance(node, DiffNode):
-                recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
-                node.trait_set(recaller=recaller)
-            elif isinstance(node, GeochronNode):
-                service = application.get_service('pychron.geochron.geochron_service.GeochronService')
-                node.trait_set(service=service)
-            elif isinstance(node, EmailNode):
-                emailer = application.get_service('pychron.social.email.emailer.Emailer')
-                if emailer is None:
-                    warning(None, 'Cannot load an Email Node, the Email Plugin required.')
-                    continue
-
-                node.trait_set(emailer=emailer)
-
-            node.finish_load()
-            # elif isinstance(node, FitICFactorNode):
-            #     node.set_detectors()
-            if group:
-                group.add_node(node)
             else:
-                pipeline.add_node(node)
+                node = self._node_factory(klass, ni, application, bmodel, iabmodel, dvc)
+                if node:
+                    node.finish_load()
+                    pipeline.add_node(node)
 
-    def _node_factory(self, klass, ni):
+    def _node_factory(self, klass, ni, application, bmodel, iabmodel, dvc):
         mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
         node = getattr(mod, klass)()
         node.pre_load(ni)
         node.load(ni)
+        if isinstance(node, InterpretedAgeNode):
+            node.trait_set(browser_model=iabmodel, dvc=dvc)
+        elif isinstance(node, SetInterpretedAgeNode):
+            node.trait_set(dvc=dvc)
+        elif isinstance(node, (DVCNode, FindNode)):
+            node.trait_set(browser_model=bmodel, dvc=dvc)
+        elif isinstance(node, (PersistNode, GainCalibrationNode, PushNode)):
+            node.trait_set(dvc=dvc)
+        elif isinstance(node, DiffNode):
+            recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+            node.trait_set(recaller=recaller)
+        elif isinstance(node, GeochronNode):
+            service = application.get_service('pychron.geochron.geochron_service.GeochronService')
+            node.trait_set(service=service)
+        elif isinstance(node, EmailNode):
+            emailer = application.get_service('pychron.social.email.emailer.Emailer')
+            if emailer is None:
+                warning(None, 'Cannot load an Email Node, the Email Plugin required.')
+                return
+
+            node.trait_set(emailer=emailer)
+
         return node
 
 # ============= EOF =============================================

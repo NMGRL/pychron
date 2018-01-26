@@ -261,7 +261,8 @@ class PipelinePane(TraitsDockPane):
 
         nodes = [PipelineGroupTreeNode(node_for=[PipelineGroup],
                                        children='pipelines',
-                                       auto_open=True),
+                                       auto_open=True
+                                       ),
 
                  PipelineTreeNode(node_for=[Pipeline],
                                   children='nodes',

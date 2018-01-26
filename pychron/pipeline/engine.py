@@ -427,19 +427,31 @@ class PipelineEngine(Loggable):
         self._add_node(node, newnode, run)
 
     def chain_ideogram(self, node):
-        self._set_template('ideogram', clear=False, exclude_klass=['UnknownsNode'])
+        group = self.pipeline.add_group('Ideo Group')
+
+        n = GroupingNode()
+        n.finish_load()
+        group.add_node(n)
+
+        n = IdeogramNode()
+        n.finish_load()
+        group.add_node(n)
 
     def chain_spectrum(self, node):
-        self._set_template('spectrum', clear=False, exclude_klass=['UnknownsNode'])
+        pass
+        # self._set_template('spectrum', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_blanks(self, node):
-        self._set_template('blanks', clear=False, exclude_klass=['UnknownsNode'])
+        pass
+        # self._set_template('blanks', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_icfactors(self, node):
-        self._set_template('icfactors', clear=False, exclude_klass=['UnknownsNode'])
+        pass
+        # self._set_template('icfactors', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_isotope_evolution(self, node):
-        self._set_template('isotope_evolution', clear=False, exclude_klass=['UnknownsNode'])
+        pass
+        # self._set_template('isotope_evolution', clear=False, exclude_klass=['UnknownsNode'])
 
     # preprocess
     def add_filter(self, node=None, run=True):

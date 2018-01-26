@@ -51,6 +51,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - CSV Analyses Export
 - CSV Ideogram
 - Correction Factors
+- Monitor Chain
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -435,6 +436,8 @@ nodes:
         denominator: CDD
         standard_ratio: 295.5
         analysis_type: Air
+        save_enabled: True
+        plot_enabled: True
   - klass: ReviewNode
   - klass: ICFactorPersistNode
 """
@@ -475,8 +478,9 @@ nodes:
   - klass: UnknownNode
   - klass: NodeGroup
     name: IdeoGroup
-  - klass: GroupingNode
-  - klass: IdeogramNode
+    nodes:
+      - klass: GroupingNode
+      - klass: IdeogramNode
 """
 
 INVERSE_ISOCHRON = """
