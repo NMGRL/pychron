@@ -30,12 +30,13 @@ def get_ports():
     usb = glob.glob('/dev/tty.usb*')
     furpi = glob.glob('/dev/furpi.*')
     pychron = glob.glob('/dev/pychron.*')
+    slab = glob.glob('/dev/tty.SLAB*')
     if sys.platform == 'darwin':
         keyspan = glob.glob('/dev/tty.U*')
     else:
         keyspan = glob.glob('/dev/ttyU*')
 
-    return keyspan + usb + furpi + pychron
+    return keyspan + usb + furpi + pychron + slab
 
 
 class SerialCommunicator(Communicator):
