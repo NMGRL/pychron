@@ -20,7 +20,7 @@ from traits.api import List
 # ============= local library imports  ==========================
 from pychron.options.views.blanks_views import VIEWS
 from pychron.options.series import SeriesOptions, SeriesFitAuxPlot
-from pychron.processing.fits.fit import FilterFit
+from pychron.core.fits.fit import FilterFit
 
 
 class BlanksFitAuxPlot(SeriesFitAuxPlot, FilterFit):

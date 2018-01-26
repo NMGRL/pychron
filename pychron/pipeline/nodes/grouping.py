@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from numpy import array, array_split
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
 
+from itertools import groupby
+from numpy import array, array_split
+
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.processing.utils.grouping import group_analyses_by_key
 
 
 def aliquot(x):
@@ -38,6 +39,25 @@ def increment(x):
 
 def comment(x):
     return x.comment
+
+
+def group_analyses_by_key(items, key, attr='group_id'):
+    if isinstance(key, str):
+        keyfunc = lambda x: getattr(x, key)
+    else:
+        keyfunc = key
+
+    ids = []
+    for it in items:
+        v = keyfunc(it)
+        if not v in ids:
+            ids.append(v)
+
+    sitems = sorted(items, key=keyfunc)
+    for k, analyses in groupby(sitems, key=keyfunc):
+        gid = ids.index(k)
+        for it in analyses:
+            setattr(it, attr, gid)
 
 
 class GroupingNode(BaseNode):

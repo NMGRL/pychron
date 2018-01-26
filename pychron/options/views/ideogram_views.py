@@ -58,6 +58,13 @@ class DisplaySubOptions(TitleSubOptions):
                                  Item('display_percent_error', label='%Error',
                                       enabled_when='display_mean_indicator'),
                                  Item('mean_sig_figs', label='SigFigs')),
+                          HGroup(Item('mean_label_display',
+                                      label='Mean Label Format',
+                                      width=100,
+                                      style='readonly'),
+                                 spring,
+                                 icon_button_editor('edit_mean_format_button', 'cog',
+                                                    tooltip='Open Mean Label maker')),
                           show_border=True,
                           label='Mean')
         info_grp = HGroup(Item('show_info', label='Show'),

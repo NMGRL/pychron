@@ -197,8 +197,8 @@ class BaseArArFigure(SelectionFigure):
 
         # add limit tools
 
-        self.graph.add_limit_tool(pp, 'x', self._handle_limits)
-        self.graph.add_limit_tool(pp, 'y', self._handle_limits)
+        self.graph.add_limit_tool(pp, 'x', self._handle_xlimits)
+        self.graph.add_limit_tool(pp, 'y', self._handle_ylimits)
 
         self.graph.add_axis_tool(pp, pp.x_axis)
         self.graph.add_axis_tool(pp, pp.y_axis)
@@ -307,12 +307,15 @@ class BaseArArFigure(SelectionFigure):
     def _cmp_analyses(self, x):
         return x.timestamp
 
-    def _unpack_attr(self, attr, nonsorted=False):
+    def _unpack_attr(self, attr, exclude_omit=False, nonsorted=False):
         def gen():
             ans = self.sorted_analyses
             if nonsorted:
                 ans = self.analyses
             for ai in ans:
+                if exclude_omit and ai.is_omitted():
+                    continue
+
                 v = ai.get_value(attr)
                 yield v or ufloat(0, 0)
 
@@ -321,8 +324,11 @@ class BaseArArFigure(SelectionFigure):
     def _set_y_limits(self, a, b, min_=None, max_=None,
                       pid=0, pad=None):
 
-        mi, ma = self.graph.get_y_limits(plotid=pid)
+        mi, ma = 0, 0
+        if self.group_id > 0:
+            mi, ma = self.graph.get_y_limits(plotid=pid)
 
+        # print mi, ma, a, b
         # print pid, self.group_id, mi, ma, a, b
         # mi = min(mi, a)
         # ma = max(ma, b)
@@ -334,8 +340,6 @@ class BaseArArFigure(SelectionFigure):
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
-
-        # print 'upl', pid, self.suppress_ylimits_update
         if hasattr(self.options, 'aux_plots'):
             n = len(self.options.aux_plots)
             ap = self.options.aux_plots[n - pid - 1]
@@ -344,6 +348,9 @@ class BaseArArFigure(SelectionFigure):
 
             if not self.suppress_xlimits_update:
                 ap.xlimits = self.graph.get_x_limits(pid)
+
+    def get_valid_xbounds(self):
+        pass
 
     # ===========================================================================
     # aux plots
@@ -479,7 +486,10 @@ class BaseArArFigure(SelectionFigure):
         t = AxisTool(component=axis)
         plot.tools.append(t)
 
-    def _handle_limits(self):
+    def _handle_ylimits(self):
+        pass
+
+    def _handle_xlimits(self):
         pass
 
     def _add_point_labels(self, scatter):

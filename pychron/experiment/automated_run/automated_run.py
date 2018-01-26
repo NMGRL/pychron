@@ -1383,7 +1383,8 @@ class AutomatedRun(Loggable):
 
         if script.execute():
             self.debug('setting _ms_pumptime')
-            self.experiment_executor.ms_pumptime_start = time.time()
+            if self.experiment_executor:
+                self.experiment_executor.ms_pumptime_start = time.time()
 
             self.heading('Post Measurement Finished')
             return True

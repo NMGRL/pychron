@@ -15,15 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ast
-import os
-
-import yaml
 from traits.api import Str, Button, List
 from traitsui.api import View, HGroup, UItem, VGroup, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
+
+import ast
+import os
+import yaml
 
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.core.helpers.iterfuncs import partition
@@ -31,8 +31,8 @@ from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.processing.fits.filter_fit_selector import FilterFitSelector
-from pychron.processing.fits.fit import FilterFit
+from pychron.core.fits.filter_fit_selector import FilterFitSelector
+from pychron.core.fits.fit import FilterFit
 
 
 class MeasurementFit(FilterFit):

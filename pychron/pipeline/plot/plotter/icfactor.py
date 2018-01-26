@@ -57,7 +57,7 @@ class ICFactor(ReferencesSeries):
 
             nys = array([ni.get_non_detector_corrected_value() for ni in nys if ni is not None])
             dys = array([di.get_non_detector_corrected_value() for di in dys if di is not None])
-            rys = nys/ dys
+            rys = nys / dys
         else:
             rys = array([ri.get_value(po.name) for ri in self.sorted_references])
         rys = rys / po.standard_ratio

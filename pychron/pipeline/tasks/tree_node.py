@@ -28,7 +28,9 @@ class PipelineGroupTreeNode(TreeNode):
     icon_name = ''
     label = 'name'
 
+
 ICON_MAP = {}
+
 
 class PipelineTreeNode(TreeNode):
     icon_name = ''
@@ -81,10 +83,13 @@ class PipelineTreeNode(TreeNode):
 
         return i
 
-
         # def get_background(self, obj):
         #     # print 'get', obj, obj.visited
         #     return 'green' if obj.visited else 'white'
+
+
+class NodeGroupTreeNode(PipelineTreeNode):
+    icon_name = ''
 
 
 class DataTreeNode(PipelineTreeNode):

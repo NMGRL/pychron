@@ -58,9 +58,36 @@ class ActiveCTX(object):
         self._node = None
 
 
+class NodeGroup(BaseNode):
+    nodes = List
+    name = Str
+    skip_configure = True
+
+    def add_node(self, node):
+        self.nodes.append(node)
+
+    def reset(self):
+        for ni in self.nodes:
+            ni.reset()
+
+    def run(self, state):
+        pass
+
+
 class Pipeline(HasTraits):
     name = Str('Pipeline 1')
     nodes = List
+
+    def group_nodes(self):
+        pass
+
+    def add_group(self, name):
+        g = NodeGroup(name=name)
+        self.nodes.append(g)
+        return g
+
+    def add_node(self, node):
+        self.nodes.append(node)
 
     def reset(self, clear_data=False):
         for ni in self.nodes:
@@ -69,17 +96,17 @@ class Pipeline(HasTraits):
 
             ni.reset()
 
-    @on_trait_change('nodes[]')
-    def _handle_nodes_changed(self):
-        for i, ni in enumerate(self.nodes):
-            for na, nb in ((FitICFactorNode, ICFactorPersistNode),
-                           (FitBlanksNode, BlanksPersistNode),
-                           (FitIsotopeEvolutionNode, IsotopeEvolutionPersistNode),
-                           (FitFluxNode, FluxPersistNode)):
-                if isinstance(ni, na):
-                    for nj in self.nodes[i + 1:]:
-                        if isinstance(nj, nb):
-                            ni.has_save_node = True
+    # @on_trait_change('nodes[]')
+    # def _handle_nodes_changed(self):
+    #     for i, ni in enumerate(self.nodes):
+    #         for na, nb in ((FitICFactorNode, ICFactorPersistNode),
+    #                        (FitBlanksNode, BlanksPersistNode),
+    #                        (FitIsotopeEvolutionNode, IsotopeEvolutionPersistNode),
+    #                        (FitFluxNode, FluxPersistNode)):
+    #             if isinstance(ni, na):
+    #                 for nj in self.nodes[i + 1:]:
+    #                     if isinstance(nj, nb):
+    #                         ni.has_save_node = True
 
     def get_experiment_ids(self):
         ps = set()
@@ -123,7 +150,15 @@ class Pipeline(HasTraits):
                 idx = self.nodes.index(start_node)
 
             try:
-                return self.nodes[idx + 1:]
+                def gen():
+                    for n in self.nodes[idx + 1:]:
+                        yield n
+                        if isinstance(n, NodeGroup):
+                            for nn in n.nodes:
+                                yield nn
+
+                return list(gen())
+
             except IndexError:
                 return []
 
@@ -392,19 +427,31 @@ class PipelineEngine(Loggable):
         self._add_node(node, newnode, run)
 
     def chain_ideogram(self, node):
-        self._set_template('ideogram', clear=False)
+        group = self.pipeline.add_group('Ideo Group')
+
+        n = GroupingNode()
+        n.finish_load()
+        group.add_node(n)
+
+        n = IdeogramNode()
+        n.finish_load()
+        group.add_node(n)
 
     def chain_spectrum(self, node):
-        self._set_template('spectrum', clear=False)
+        pass
+        # self._set_template('spectrum', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_blanks(self, node):
-        self._set_template('blanks', clear=False)
+        pass
+        # self._set_template('blanks', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_icfactors(self, node):
-        self._set_template('icfactors', clear=False)
+        pass
+        # self._set_template('icfactors', clear=False, exclude_klass=['UnknownsNode'])
 
     def chain_isotope_evolution(self, node):
-        self._set_template('isotope_evolution', clear=False)
+        pass
+        # self._set_template('isotope_evolution', clear=False, exclude_klass=['UnknownsNode'])
 
     # preprocess
     def add_filter(self, node=None, run=True):
@@ -731,7 +778,7 @@ class PipelineEngine(Loggable):
             self.selected.editor.refresh_needed = True
         self.refresh_table_needed = True
 
-    def _set_template(self, name, clear=True):
+    def _set_template(self, name, clear=True, exclude_klass=None):
         # self.reset_event = True
         args = self._get_template_path(name)
         if args is None:
@@ -745,7 +792,8 @@ class PipelineEngine(Loggable):
                       self.browser_model,
                       self.interpreted_age_browser_model,
                       self.dvc,
-                      clear=clear)
+                      clear=clear,
+                      exclude_klass=exclude_klass)
         except BaseException, e:
             import traceback
             traceback.print_exc()
@@ -835,8 +883,8 @@ class PipelineEngine(Loggable):
         # if new.configure():
         node = self._get_last_node(node)
         self.pipeline.add_after(node, new)
-            # if run:
-            #     self.run_needed = new
+        # if run:
+        #     self.run_needed = new
 
     def _get_last_node(self, node=None):
         if node is None:
@@ -886,7 +934,8 @@ class PipelineEngine(Loggable):
     def _selected_changed(self, old, new):
         if isinstance(new, Pipeline):
             self.pipeline = new
-
+        elif isinstance(new, NodeGroup):
+            pass
         else:
             self.selected_node = new
             if old:

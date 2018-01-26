@@ -152,11 +152,15 @@ class GitRepoManager(Loggable):
             apaths = (apaths,)
 
         changes = self.get_local_changes()
+        print 'aa', changes
         changes = [os.path.join(self.path, c) for c in changes]
+        print 'bb', changes
         untracked = self.untracked_files()
+        print 'tt', untracked
         changes.extend(untracked)
 
         ps = [p for p in apaths if p in changes]
+        print 'ps', ps
         changed = bool(ps)
         for p in ps:
             self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
@@ -346,6 +350,10 @@ class GitRepoManager(Loggable):
 
     def get_local_changes(self):
         repo = self._repo
+
+        diff = repo.index.diff(None)
+        return [di.a_blob.abspath for di in diff.iter_change_type('M')]
+
         # diff_str = repo.git.diff('HEAD', '--full-index')
         # diff_str = StringIO(diff_str)
         # diff_str.seek(0)
@@ -366,7 +374,7 @@ class GitRepoManager(Loggable):
         # proc = ProcessWrapper(diff_str)
         #
         # diff = Diff._index_from_patch_format(repo, proc)
-        root = self.path
+        # root = self.path
         #
         #
         #
@@ -374,8 +382,8 @@ class GitRepoManager(Loggable):
         #     print(diff_added)
 
         # diff = hcommit.diff()
-        diff = repo.index.diff(repo.head.commit)
-        return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
+        # diff = repo.index.diff(repo.head.commit)
+        # return [os.path.relpath(di.a_blob.abspath, root) for di in diff.iter_change_type('M')]
 
         # patches = map(str.strip, diff_str.split('diff --git'))
         # patches = ['\n'.join(p.split('\n')[2:]) for p in patches[1:]]

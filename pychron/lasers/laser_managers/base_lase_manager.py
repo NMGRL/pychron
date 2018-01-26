@@ -37,7 +37,7 @@ class BaseLaserManager(Manager):
 
     enable = Event
     enable_label = Property(depends_on='enabled')
-    enabled_led = Instance('pychron.core.ui.led_editor.LED', ())
+    # enabled_led = Instance('pychron.core.ui.led_editor.LED', ())
     enabled = Bool(False)
 
     stage_manager = Instance('pychron.lasers.stage_managers.stage_manager.StageManager')
@@ -208,7 +208,7 @@ class BaseLaserManager(Manager):
 
         cnt = 0
         tries = 0
-        maxtries = int(500 / float(period))  # timeout after 50 s
+        maxtries = int(5 / float(period))  # timeout after 50 s
         nsuccess = 2
         self._cancel_blocking = False
         if cmpfunc is None:
@@ -242,7 +242,7 @@ class BaseLaserManager(Manager):
                             position_callback(*xyz)
             else:
                 cnt = 0
-            tries += 1
+                tries += 1
 
         state = cnt >= nsuccess
         if state:
@@ -318,11 +318,11 @@ class BaseLaserManager(Manager):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _enabled_changed(self):
-        if self.enabled:
-            self.enabled_led.set_state('green')
-        else:
-            self.enabled_led.set_state('red')
+    # def _enabled_changed(self):
+    #     if self.enabled:
+    #         self.enabled_led.set_state('green')
+    #     else:
+    #         self.enabled_led.set_state('red')
 
     def _use_video_changed(self):
         if not self.use_video:

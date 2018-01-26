@@ -21,7 +21,7 @@ from threading import Thread
 
 import yaml
 from pyface.timer.do_later import do_later
-from traits.api import TraitError, Instance, Float, provides, Bool, Str, Property
+from traits.api import TraitError, Instance, Float, provides, Bool, Str, Property, Int
 
 from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
@@ -98,7 +98,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     mode = 'normal'
 
-    water_flow_led = Instance(LED, ())
+    # water_flow_led = Instance(LED, ())
+    water_flow_state = Int
 
     video_enabled = Bool
     video_canvas = Instance(VideoCanvas)
@@ -514,9 +515,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if d:
             state = d.get('h2o_state')
             if state in (0, 1):
-                self.water_flow_led.state = 2 if state else 0
+                # self.water_flow_led.state = 2 if state else 0
+                self.water_flow_state = 2 if state else 0
             else:
-                self.water_flow_led.state = 1
+                self.water_flow_state = 1
 
             with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
                 wfile.write('{},{}\n'.format(time.time(), state))

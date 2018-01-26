@@ -336,6 +336,7 @@ class DatabaseAdapter(Loggable):
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush,
+                                                        expire_on_commit=False,
                                                         autocommit=self.autocommit)
                     # self.session_factory = scoped_session(sessionmaker(bind=engine, autoflush=self.autoflush))
                     if test:

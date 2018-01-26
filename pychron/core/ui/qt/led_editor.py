@@ -15,12 +15,12 @@
 # ===============================================================================
 
 
+# ============= enthought library imports =======================
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor, QWidget, QLabel
 from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
     QPen, QRadialGradient, QVBoxLayout
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Int, Callable, Str
+from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
@@ -56,12 +56,7 @@ def change_intensity(color, fac):
     return QColor(*rgb)
 
 
-def get_color(state, cx, cy, rad):
-    if isinstance(state, str):
-        c = QColor(state)
-    else:
-        c = QT_COLORS[state]
-
+def get_gradient(c, cx, cy, rad):
     gradient = QRadialGradient(cx, cy, rad)  # (10, 10, 10, 10)
     gradient.setColorAt(0, Qt.white)
     gradient.setColorAt(1, c)
@@ -82,6 +77,8 @@ DIAMETER_SCALAR = 1.75
 
 
 class _LEDEditor(Editor):
+    colors = List
+
     def __init__(self, *args, **kw):
         super(_LEDEditor, self).__init__(*args, **kw)
         self._led_ellipse = None
@@ -90,6 +87,7 @@ class _LEDEditor(Editor):
         """
         """
         rad = self.factory.radius
+
         if not rad:
             rad = 20
 
@@ -104,7 +102,8 @@ class _LEDEditor(Editor):
             cx = x + rad / DIAMETER_SCALAR
             cy = y + rad / DIAMETER_SCALAR
 
-            brush = get_color(self.value, cx, cy, rad / 2)
+            self.colors = [QColor(ci) for ci in self.factory.colors]
+            brush = get_gradient(self.colors[self.value], cx, cy, rad / 2)
             pen = QPen()
             pen.setWidth(0)
             self._led_ellipse = scene.addEllipse(x, y, rad, rad, pen=pen, brush=brush)
@@ -134,7 +133,7 @@ class _LEDEditor(Editor):
             x += r / DIAMETER_SCALAR
             y += r / DIAMETER_SCALAR
 
-            self._led_ellipse.setBrush(get_color(self.value, x, y, r / 2))
+            self._led_ellipse.setBrush(get_gradient(self.colors[self.value], x, y, r / 2))
 
 
 class LEDEditor(BasicEditorFactory):
@@ -143,6 +142,7 @@ class LEDEditor(BasicEditorFactory):
     klass = _LEDEditor
     radius = Int(20)
     label = Str
+    colors = List(['red', 'yellow', 'green', 'black'])
 
 # ============= EOF ====================================
 

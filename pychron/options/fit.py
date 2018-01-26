@@ -21,7 +21,7 @@ from traits.api import Str, Int, Bool
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AuxPlotFigureOptions
-from pychron.processing.fits.fit import Fit
+from pychron.core.fits.fit import Fit
 from pychron.pychron_constants import FIT_ERROR_TYPES
 
 

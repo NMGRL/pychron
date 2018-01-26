@@ -73,6 +73,14 @@ class FigurePanel(HasTraits):
     def _make_graph_hook(self, g):
         pass
 
+    def _handle_rescale(self, obj, name, new):
+        pass
+
+    def _suppress_limits(self, state):
+        for fig in self.figures:
+            fig.suppress_ylimits_update = state
+            fig.suppress_xlimits_update = state
+
     @caller
     def make_graph(self):
 
@@ -86,6 +94,7 @@ class FigurePanel(HasTraits):
                                                   spacing=po.plot_spacing,
                                                   bgcolor=po.bgcolor))
 
+        g.on_trait_change(self._handle_rescale, 'rescale_event')
         center, mi, ma = self._get_init_xlimits()
 
         plots = list(po.get_plotable_aux_plots())
@@ -103,6 +112,7 @@ class FigurePanel(HasTraits):
 
             ymas, ymis = [], []
             update_dict = {}
+            self._suppress_limits(True)
             for i, fig in enumerate(self.figures):
                 fig.trait_set(xma=ma, xmi=mi,
                               ymas=ymas, ymis=ymis,
@@ -115,16 +125,14 @@ class FigurePanel(HasTraits):
                 if i == 0:
                     fig.build(plots)
 
-                fig.suppress_ylimits_update = True
-                fig.suppress_xlimits_update = True
                 fig.plot(plots, legend)
-                fig.suppress_ylimits_update = False
-                fig.suppress_xlimits_update = False
+
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
                 ymas, ymis = fig.ymas, fig.ymis
                 xpad = fig.xpad
 
                 update_dict = fig.get_update_dict()
+            self._suppress_limits(False)
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -138,6 +146,7 @@ class FigurePanel(HasTraits):
             if self.use_previous_limits:
                 if plots[0].has_xlimits():
                     tmi, tma = plots[0].xlimits
+                    print 'previous xllimits', tmi, tma
                     if tmi != -inf and tma != inf:
                         mi, ma = tmi, tma
 
@@ -150,7 +159,7 @@ class FigurePanel(HasTraits):
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print 'has ylimits', p.ylimits[0], p.ylimits[1]
+                    print 'has ylimits', i, p.ylimits[0], p.ylimits[1]
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
                     print 'has calculated', p.calculated_ymin, p.calculated_ymax
@@ -160,6 +169,7 @@ class FigurePanel(HasTraits):
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
+                print 'setting xlimits', mi, ma, xpad, self.plot_options.xpadding
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()

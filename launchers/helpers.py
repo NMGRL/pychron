@@ -45,22 +45,22 @@ warnings.simplefilter("ignore")
 logger = logging.getLogger()
 
 
-def set_stylesheet(path):
-    app = get_app_qt4()
-    app.setStyle('plastique')
-
-    if path is None:
-        import shutil
-
-        force = True
-        default_css = 'darkorange.css'
-        from pychron.paths import paths
-        path = paths.hidden_path(default_css)
-        if not os.path.isfile(path) or force:
-            shutil.copyfile(default_css, path)
-
-    with open(path, 'r') as rfile:
-        app.setStyleSheet(rfile.read())
+# def set_stylesheet(path):
+#     app = get_app_qt4()
+#     app.setStyle('plastique')
+#
+#     if path is None:
+#         import shutil
+#
+#         force = True
+#         default_css = 'darkorange.css'
+#         from pychron.paths import paths
+#         path = paths.hidden_path(default_css)
+#         if not os.path.isfile(path) or force:
+#             shutil.copyfile(default_css, path)
+#
+#     with open(path, 'r') as rfile:
+#         app.setStyleSheet(rfile.read())
 
 
 def monkey_patch_preferences():
@@ -321,10 +321,18 @@ def monkey_patch_checkbox_render():
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
 
-def entry_point(appname, klass, debug=False):
+KLASS_MAP = {'pyexperiment': 'PyExperiment',
+             'pyview': 'PyView',
+             'pyvalve': 'PyValve',
+             'pyco2': 'PyCO2',
+             'pydiode': 'PyDiode'}
+
+
+def entry_point(appname, debug=False):
     """
         entry point
     """
+    klass = KLASS_MAP.get(appname)
 
     monkey_patch_preferences()
     monkey_patch_checkbox_render()

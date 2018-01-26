@@ -44,6 +44,33 @@ GRAY_BALL = icon('gray_ball')
 GREEN_BALL = icon('green_ball')
 ORANGE_BALL = icon('orange_ball')
 
+jump = MenuManager(Action(name='Jump to Start', action='jump_to_start'),
+                   Action(name='Jump to End', action='jump_to_end'),
+                   name='Jump')
+
+move = MenuManager(Action(name='Move to Start', action='move_to_start'),
+                   Action(name='Move to End', action='move_to_end'),
+                   Action(name='Move to ...', action='move_to_row'),
+                   name='Move')
+
+copy = MenuManager(Action(name='Copy to Start', action='copy_to_start'),
+                   Action(name='Copy to End', action='copy_to_end'),
+                   name='Copy')
+
+blocks = MenuManager(Action(name='Make Block', action='make_block'),
+                     Action(name='Repeat Block', action='repeat_block'),
+                     name='Blocks')
+
+selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                      Action(name='Select Same Labnumber', action='select_same'),
+                      Action(name='Select Same Attributes...', action='select_same_attr'),
+                      name='Select')
+
+EDIT_MENU = MenuManager(move, copy, jump, blocks, selects,
+                        Action(name='Unselect', action='unselect'),
+                        Action(name='Toggle End After', action='toggle_end_after'),
+                        Action(name='Toggle Skip', action='toggle_skip'))
+
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     all_columns = [
@@ -83,6 +110,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     # ===========================================================================
     # widths
     # ===========================================================================
+    result_str_image = Property
+
     result_str_width = Int(25)
     repository_identifier_width = Int(90)
     labnumber_width = Int(80)
@@ -129,12 +158,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     use_cdd_warming_text = Property
     colors = Dict(COLORS)
 
-    image = Property
-    menu = Property
-    tooltip = Property
-    bg_color = Property
+    AutomatedRunSpec_tooltip = Property
+    AutomatedRunSpec_bg_color = Property
+    AutomatedRunSpec_menu = Property
 
-    def _get_tooltip(self):
+    def get_row_label(self, section, obj=None):
+        return section + 1
+
+    def _get_AutomatedRunSpec_tooltip(self):
         name = self.column_id
         item = self.item
         if name == 'result_str':
@@ -143,21 +174,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         else:
             return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
-    # def get_tooltip(self, obj, trait, row, column):
-    #     name = self.column_map[column]
-    #     item = getattr(obj, trait)[row]
-    #     if name == 'result':
-    #         if item.state in ('success', 'truncated'):
-    #             return item.result.summary
-    #     else:
-    #         return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
-
-    # def get_row_label(self, section, obj=None):
-    #     return section + 1
-    def _get_bg_color(self):
+    def _get_AutomatedRunSpec_bg_color(self):
         item = self.item
-
-        # print item.identifier, item.state, item.executable
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
         else:
@@ -169,55 +187,13 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                 color = END_AFTER_COLOR
             else:
                 if self.row % 2 == 0:
-                    # color = 'white'
-                    # color = self.even_bg_color
                     color = self.even_bg_color
                 else:
                     color = self.odd_bg_color  # '#E6F2FF'  # light gray blue
-                    # print row, color, self.odd_bg_color, self.even_bg_color
 
         return color
-    #
-    # def get_bg_color(self, obj, trait, row, column=0):
-    #     # item = self.item
-    #     item = getattr(obj, trait)[row]
-    #     # print item.identifier, item.state, item.executable
-    #     if not item.executable:
-    #         color = NOT_EXECUTABLE_COLOR
-    #     else:
-    #         if item.skip:
-    #             color = SKIP_COLOR  # '#33CCFF'  # light blue
-    #         elif item.state in self.colors:
-    #             color = self.colors[item.state]
-    #         elif item.end_after:
-    #             color = END_AFTER_COLOR
-    #         else:
-    #             if row % 2 == 0:
-    #                 # color = 'white'
-    #                 # color = self.even_bg_color
-    #                 color = self.even_bg_color
-    #             else:
-    #                 color = self.odd_bg_color  # '#E6F2FF'  # light gray blue
-    #                 # print row, color, self.odd_bg_color, self.even_bg_color
-    #
-    #     return color
 
-    def _get_image(self):
-        if self.column_id == 'result_str':
-            if self.item.state == 'success':
-                return GREEN_BALL
-            elif self.item.state == 'truncated':
-                return ORANGE_BALL
-
-    # def get_image(self, obj, trait, row, column):
-    #     name = self.column_map[column]
-    #     if name == 'result':
-    #         item = getattr(obj, trait)[row]
-    #         if item.state == 'success':
-    #             return GREEN_BALL
-    #         elif item.state == 'truncated':
-    #             return ORANGE_BALL
-    def _get_menu(self):
+    def _get_AutomatedRunSpec_menu(self):
         item = self.item
         if item.state in ('success', 'truncated'):
 
@@ -240,33 +216,13 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
                                   evo)
             return success
 
-    # def get_menu(self, obj, trait, row, column):
-    #     item = getattr(obj, trait)[row]
-    #     if item.state in ('success', 'truncated'):
-    #
-    #         evo_actions = [Action(name='Show All', action='show_evolutions'),
-    #                        Action(name='Show All w/Equilibration', action='show_evolutions_w_eq'),
-    #                        Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
-    #                        Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
-    #         for iso in item.result.isotope_group.iter_isotopes():
-    #             actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
-    #                        Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
-    #                        Action(name='Equilibration/Signal/Baseline',
-    #                               action='show_evolution_eq_bs_{}'.format(iso.name)),
-    #                        Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
-    #             m = MenuManager(*actions, name=iso.name)
-    #             evo_actions.append(m)
-    #
-    #         evo = MenuManager(*evo_actions, name='Evolutions')
-    #
-    #         success = MenuManager(Action(name='Summary', action='show_summary'),
-    #                               evo)
-    #         return success
+    def _get_result_str_image(self):
+        if self.item.state == 'success':
+            return GREEN_BALL
+        elif self.item.state == 'truncated':
+            return ORANGE_BALL
 
     # ============ non cell editable ============
-    # def _get_result_text(self):
-    #     return ''
-
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
@@ -313,79 +269,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_use_cdd_warming_text(self):
         return 'Yes' if self.item.use_cdd_warming else 'No'
 
-    # ===============set================
-    # def _set_labnumber_text(self, v):
-    #     pass
-    #
-    # def _set_sample_text(self, v):
-    #     pass
-    # def _set_extraction_script_text(self, v):
-    #     pass
-    #
-    # def _set_measurement_script_text(self, v):
-    #     pass
-    #
-    # def _set_post_measurement_script_text(self, v):
-    #     pass
-    #
-    # def _set_post_equilibration_script_text(self, v):
-    #     pass
-    #
-    # def _set_position_text(self, v):
-    #     pass
-    # def _set_ramp_duration_text(self, v):
-    #     self._set_number(v, 'ramp_duration')
-    #
-    # def _set_beam_diameter_text(self, v):
-    #     self._set_number(v, 'beam_diameter')
-    #
-    # def _set_extract_value_text(self, v):
-    #     self._set_number(v, 'extract_value')
-    #
-    # def _set_duration_text(self, v):
-    #     self._set_number(v, 'duration')
-    #
-    # def _set_cleanup_text(self, v):
-    #     self._set_number(v, 'cleanup')
-    #
-    # def _set_use_cdd_warming_text(self, v):
-    #     self.item.use_cdd_warming = to_bool(v)
-    #
-    # def _set_aliquot_text(self, v):
-    #     self.item.user_defined_aliquot = int(v)
-
-    # ==============validate================
-    # def _validate_aliquot_text(self, v):
-    #     return self._validate_number(v, 'aliquot', kind=int)
-    #
-    # def _validate_extract_value_text(self, v):
-    #     return self._validate_number(v, 'extract_value')
-    #
-    # def _validate_ramp_duration_text(self, v):
-    #     return self._validate_number(v, 'ramp_duration')
-    #
-    # def _validate_beam_diameter_text(self, v):
-    #     return self._validate_number(v, 'beam_diameter')
-    #
-    # def _validate_extract_value_text(self, v):
-    #     return self._validate_number(v, 'extract_value')
-    #
-    # def _validate_duration_text(self, v):
-    #     return self._validate_number(v, 'duration')
-    #
-    # def _validate_cleanup_text(self, v):
-    #     return self._validate_number(v, 'cleanup')
-
-    # ==========helpers==============
-    # def _set_number(self, v, attr):
-    #     setattr(self.item, attr, v)
-    #
-    # def _validate_number(self, v, attr, kind=float):
-    #     try:
-    #         return kind(v)
-    #     except ValueError:
-    #         return getattr(self.item, attr)
-
     def _get_number(self, attr, fmt='{:0.2f}'):
         """
             dont display 0.0's
@@ -400,41 +283,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             return ''
 
 
-class AutomatedRunMixin(object):
-    """
-        mixin for table of automated runs that have not yet been executed
-    """
-    menu = Property
-
-    def _get_menu(self):
-        jump = MenuManager(Action(name='Jump to End', action='jump_to_end'),
-                           Action(name='Jump to Start', action='jump_to_start'),
-                           name='Jump')
-
-        move = MenuManager(Action(name='Move to Start', action='move_to_start'),
-                           Action(name='Move to End', action='move_to_end'),
-                           Action(name='Move to ...', action='move_to_row'),
-                           name='Move')
-        copy = MenuManager(Action(name='Copy to Start', action='copy_to_start'),
-                           Action(name='Copy to End', action='copy_to_end'),
-                           name='Copy')
-
-        blocks = MenuManager(Action(name='Make Block', action='make_block'),
-                             Action(name='Repeat Block', action='repeat_block'),
-                             name='Blocks')
-        selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
-                              Action(name='Select Same Labnumber', action='select_same'),
-                              Action(name='Select Same Attributes...', action='select_same_attr'),
-                              name='Select')
-
-        return MenuManager(move, copy, jump, blocks, selects,
-                           Action(name='Unselect', action='unselect'),
-                           Action(name='Toggle End After', action='toggle_end_after'),
-                           Action(name='Toggle Skip', action='toggle_skip'))
-
-
-class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter):
-    pass
+class AutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
+    def _get_AutomatedRunSpec_menu(self):
+        return EDIT_MENU
 
 
 class RunBlockAdapter(AutomatedRunSpecAdapter):
@@ -490,40 +341,113 @@ class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
         ('Comment', 'comment')]
 
 
-class UVAutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedUVAutomatedRunSpecAdapter):
+class UVAutomatedRunSpecAdapter(ExecutedUVAutomatedRunSpecAdapter):
     pass
 
-    # ============= EOF =============================================
-    # def _columns_default(self):
-    # cols = self._columns_factory()
-    #         return cols
-    #
-    #     def _columns_factory(self):
-    #         cols = [
-    #             ('Labnumber', 'labnumber'),
-    #             ('Aliquot', 'aliquot'),
-    #             ('Sample', 'sample'),
-    #             ('Position', 'position'),
-    #             ('Extract', 'extract_value'),
-    #             ('Units', 'extract_units'),
-    #
-    #             ('Ramp (s)', 'ramp_duration'),
-    #             ('Duration (s)', 'duration'),
-    #             ('Cleanup (s)', 'cleanup'),
-    #             # ('Overlap (s)', 'overlap'),
-    #
-    #             ('Beam (mm)', 'beam_diameter'),
-    #             ('Pattern', 'pattern'),
-    #             ('Extraction', 'extraction_script'),
-    #             # ('T_o Offset', 'collection_time_zero_offset'),
-    #             ('Measurement', 'measurement_script'),
-    #             ('Conditionals', 'conditionals'),
-    #             # ('SynExtraction', 'syn_extraction'),
-    #             ('CDDWarm', 'use_cdd_warming'),
-    #             ('Post Eq.', 'post_equilibration_script'),
-    #             ('Post Meas.', 'post_measurement_script'),
-    #             # ('Options', 'script_options'),
-    #             # ('Comment', 'comment')
-    #         ]
-    #
-    #         return colss
+# ============= EOF =============================================
+
+# def _columns_default(self):
+# cols = self._columns_factory()
+#         return cols
+#
+#     def _columns_factory(self):
+#         cols = [
+#             ('Labnumber', 'labnumber'),
+#             ('Aliquot', 'aliquot'),
+#             ('Sample', 'sample'),
+#             ('Position', 'position'),
+#             ('Extract', 'extract_value'),
+#             ('Units', 'extract_units'),
+#
+#             ('Ramp (s)', 'ramp_duration'),
+#             ('Duration (s)', 'duration'),
+#             ('Cleanup (s)', 'cleanup'),
+#             # ('Overlap (s)', 'overlap'),
+#
+#             ('Beam (mm)', 'beam_diameter'),
+#             ('Pattern', 'pattern'),
+#             ('Extraction', 'extraction_script'),
+#             # ('T_o Offset', 'collection_time_zero_offset'),
+#             ('Measurement', 'measurement_script'),
+#             ('Conditionals', 'conditionals'),
+#             # ('SynExtraction', 'syn_extraction'),
+#             ('CDDWarm', 'use_cdd_warming'),
+#             ('Post Eq.', 'post_equilibration_script'),
+#             ('Post Meas.', 'post_measurement_script'),
+#             # ('Options', 'script_options'),
+#             # ('Comment', 'comment')
+#         ]
+#
+#         return colss
+# ===============set================
+# def _set_labnumber_text(self, v):
+#     pass
+#
+# def _set_sample_text(self, v):
+#     pass
+# def _set_extraction_script_text(self, v):
+#     pass
+#
+# def _set_measurement_script_text(self, v):
+#     pass
+#
+# def _set_post_measurement_script_text(self, v):
+#     pass
+#
+# def _set_post_equilibration_script_text(self, v):
+#     pass
+#
+# def _set_position_text(self, v):
+#     pass
+# def _set_ramp_duration_text(self, v):
+#     self._set_number(v, 'ramp_duration')
+#
+# def _set_beam_diameter_text(self, v):
+#     self._set_number(v, 'beam_diameter')
+#
+# def _set_extract_value_text(self, v):
+#     self._set_number(v, 'extract_value')
+#
+# def _set_duration_text(self, v):
+#     self._set_number(v, 'duration')
+#
+# def _set_cleanup_text(self, v):
+#     self._set_number(v, 'cleanup')
+#
+# def _set_use_cdd_warming_text(self, v):
+#     self.item.use_cdd_warming = to_bool(v)
+#
+# def _set_aliquot_text(self, v):
+#     self.item.user_defined_aliquot = int(v)
+
+# ==============validate================
+# def _validate_aliquot_text(self, v):
+#     return self._validate_number(v, 'aliquot', kind=int)
+#
+# def _validate_extract_value_text(self, v):
+#     return self._validate_number(v, 'extract_value')
+#
+# def _validate_ramp_duration_text(self, v):
+#     return self._validate_number(v, 'ramp_duration')
+#
+# def _validate_beam_diameter_text(self, v):
+#     return self._validate_number(v, 'beam_diameter')
+#
+# def _validate_extract_value_text(self, v):
+#     return self._validate_number(v, 'extract_value')
+#
+# def _validate_duration_text(self, v):
+#     return self._validate_number(v, 'duration')
+#
+# def _validate_cleanup_text(self, v):
+#     return self._validate_number(v, 'cleanup')
+
+# ==========helpers==============
+# def _set_number(self, v, attr):
+#     setattr(self.item, attr, v)
+#
+# def _validate_number(self, v, attr, kind=float):
+#     try:
+#         return kind(v)
+#     except ValueError:
+#         return getattr(self.item, attr)

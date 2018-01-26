@@ -56,7 +56,6 @@ def calculate_weighted_mean(x, errs):
     else:
         weights = 1 / errs ** 2
 
-
     wmean, sum_weights = average(x, weights=weights, returned=True)
     werr = sum_weights ** -0.5
     return wmean, werr

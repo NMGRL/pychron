@@ -355,7 +355,7 @@ Quick=   measure_iteration stopped at current step
 
         schedule_tt = '''Set a scheduled start time'''
 
-        v = View(HGroup(UItem('executing_led', editor=LEDEditor(radius=30)),
+        v = View(HGroup(UItem('alive', editor=LEDEditor(colors=['red', 'green'], radius=30)),
                         spacer(-20),
                         icon_button_editor('start_button',
                                            'start',
@@ -443,7 +443,6 @@ class IsotopeEvolutionPane(TraitsDockPane):
     continue_button = Button
 
     def _continue_button_fired(self):
-        print 'contuneusdfas'
         self.plot_panel.ncounts = 0
 
     def traits_view(self):
@@ -479,15 +478,15 @@ class IsotopeEvolutionPane(TraitsDockPane):
         return v
 
 
-class SummaryPane(TraitsDockPane):
-    id = 'pychron.experiment.summary'
-    name = 'Summary'
-    plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
-
-    def traits_view(self):
-        v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
-                       style='custom'))
-        return v
+# class SummaryPane(TraitsDockPane):
+#     id = 'pychron.experiment.summary'
+#     name = 'Summary'
+#     plot_panel = Instance('pychron.experiment.plot_panel.PlotPanel')
+#
+#     def traits_view(self):
+#         v = View(UItem('plot_panel', editor=InstanceEditor(view='summary_view'),
+#                        style='custom'))
+#         return v
 
 
 class AnalysisHealthAdapter(TabularAdapter):

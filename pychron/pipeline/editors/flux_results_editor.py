@@ -35,8 +35,35 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
-from pychron.processing.flux.utilities import mean_j
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
+from pychron.processing.argon_calculations import calculate_flux
+from pychron.pychron_constants import MSEM, SD
+
+
+def mean_j(ans, error_kind, monitor_age, lambda_k):
+    # ufs = (ai.uF for ai in ans)
+    # fs, es = zip(*((fi.nominal_value, fi.std_dev)
+    #                for fi in ufs))
+    fs = [nominal_value(ai.uF) for ai in ans]
+    es = [std_dev(ai.uF) for ai in ans]
+
+    av, werr = calculate_weighted_mean(fs, es)
+
+    if error_kind == SD:
+        n = len(fs)
+        werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
+    elif error_kind == MSEM:
+        mswd = calculate_mswd(fs, es)
+        werr *= (mswd ** 0.5 if mswd > 1 else 1)
+
+    # reg.trait_set(ys=fs, yserr=es)
+    # uf = (reg.predict([0]), reg.predict_error([0]))
+    uf = (av, werr)
+    j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
+    # print age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+    mswd = calculate_mswd(fs, es)
+    return j, mswd
 
 
 def make_grid(r, n):

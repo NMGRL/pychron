@@ -21,6 +21,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.legend import Legend
 from enable.font_metrics_provider import font_metrics_provider
 from numpy import zeros_like, array, asarray
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
 from traits.api import Property, on_trait_change, List, Array
 from uncertainties import nominal_value, std_dev
@@ -289,16 +290,20 @@ class ReferencesSeries(BaseSeries):
 
     def _new_fit_series(self, pid, po):
         ymi, yma = self._plot_unknowns_current(pid, po)
-        reg, a, b = self._plot_references(pid, po)
-        ymi = min(ymi, a)
-        yma = max(yma, b)
-        # print 'asdfa', reg
-        if reg:
-            a, b = self._plot_interpolated(pid, po, reg)
+        args = self._plot_references(pid, po)
+        if args:
+            reg, a, b = args
             ymi = min(ymi, a)
             yma = max(yma, b)
+            # print 'asdfa', reg
+            if reg:
+                a, b = self._plot_interpolated(pid, po, reg)
+                ymi = min(ymi, a)
+                yma = max(yma, b)
 
-        self.graph.set_y_limits(ymi, yma, pad='0.05', plotid=pid)
+            self.graph.set_y_limits(ymi, yma, pad='0.05', plotid=pid)
+        else:
+            warning(None, 'Invalid Detector choices for these analyses. {}'.format(po.name))
 
     def _get_min_max(self):
         mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)
@@ -332,12 +337,18 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-        rs = self._get_reference_data(po)
-        return array(map(nominal_value, rs)), array(map(std_dev, rs))
+        try:
+            rs = self._get_reference_data(po)
+            return array(map(nominal_value, rs)), array(map(std_dev, rs))
+        except ValueError, e:
+            print e
 
     def current_data(self, po):
-        cs = self._get_current_data(po)
-        return array(map(nominal_value, cs)), array(map(std_dev, cs))
+        try:
+            cs = self._get_current_data(po)
+            return array(map(nominal_value, cs)), array(map(std_dev, cs))
+        except ValueError, e:
+            print e
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)
@@ -421,54 +432,56 @@ class ReferencesSeries(BaseSeries):
         graph = self.graph
         efit = po.fit.lower()
         r_xs = self.rxs
-        r_ys, r_es = self.reference_data(po)
+        data = self.reference_data(po)
+        if data:
+            r_ys, r_es = data
 
-        ymi, yma = self._calc_limits(r_ys, r_es)
+            ymi, yma = self._calc_limits(r_ys, r_es)
 
-        reg = None
-        kw = dict(add_tools=True, add_inspector=True,
-                  add_point_inspector=False,
-                  # color='red',
-                  plotid=pid,
-                  selection_marker=po.marker,
-                  marker=po.marker,
-                  marker_size=po.marker_size, )
+            reg = None
+            kw = dict(add_tools=True, add_inspector=True,
+                      add_point_inspector=False,
+                      # color='red',
+                      plotid=pid,
+                      selection_marker=po.marker,
+                      marker=po.marker,
+                      marker_size=po.marker_size, )
 
-        update_meta_func = None
-        if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
-            reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
-            scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False, **kw)
+            update_meta_func = None
+            if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+                reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
+                scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False, **kw)
 
-            def update_meta_func(obj, b, c, d):
-                self.update_interpolation_regressor(po.name, reg, obj)
+                def update_meta_func(obj, b, c, d):
+                    self.update_interpolation_regressor(po.name, reg, obj)
 
-            self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
+                self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
 
-            ffit = po.fit
-        else:
-            ffit = '{}_{}'.format(po.fit, po.error_type)
-            _, scatter, l = graph.new_series(r_xs, r_ys,
-                                             yerror=ArrayDataSource(data=r_es),
-                                             fit=ffit,
-                                             **kw)
-            if hasattr(l, 'regressor'):
-                reg = l.regressor
-            self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
+                ffit = po.fit
+            else:
+                ffit = '{}_{}'.format(po.fit, po.error_type)
+                _, scatter, l = graph.new_series(r_xs, r_ys,
+                                                 yerror=ArrayDataSource(data=r_es),
+                                                 fit=ffit,
+                                                 **kw)
+                if hasattr(l, 'regressor'):
+                    reg = l.regressor
+                self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
 
-        def af(i, x, y, analysis):
-            return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
-                    'Rel. Time: {:0.4f}'.format(x))
+            def af(i, x, y, analysis):
+                return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
+                        'Rel. Time: {:0.4f}'.format(x))
 
-        self._add_scatter_inspector(scatter,
-                                    update_meta_func=update_meta_func,
-                                    add_selection=True,
-                                    additional_info=af,
-                                    items=self.sorted_references)
-        plot = graph.plots[pid]
-        plot.isotope = po.name
-        plot.fit = ffit
-        scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
-        return reg, ymi, yma
+            self._add_scatter_inspector(scatter,
+                                        update_meta_func=update_meta_func,
+                                        add_selection=True,
+                                        additional_info=af,
+                                        items=self.sorted_references)
+            plot = graph.plots[pid]
+            plot.isotope = po.name
+            plot.fit = ffit
+            scatter.index.metadata['selections'] = [i for i, r in enumerate(self.sorted_references) if r.temp_selected]
+            return reg, ymi, yma
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
         pass

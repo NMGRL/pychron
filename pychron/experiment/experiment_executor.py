@@ -97,7 +97,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     stop_button = Event
     configure_scheduled_button = Event
     can_start = Property(depends_on='executable, _alive')
-    executing_led = Instance(LED, ())
+    # executing_led = Instance(LED, ())
     delaying_between_runs = Bool
 
     # extraction_state_label = String
@@ -530,7 +530,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # self._add_event()
 
         # save experiment to database
-        self.info('saving experiment "{}" to database'.format(exp.name))
+        # self.info('saving experiment "{}" to database'.format(exp.name))
         exp.start_timestamp = datetime.now()  # .strftime('%m-%d-%Y %H:%M:%S')
 
         exp.n_executed_display = int(self.application.preferences.get('pychron.experiment.n_executed_display', 5))
@@ -1545,10 +1545,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         nonfound = self._check_for_managers()
         if nonfound:
             self.info('experiment canceled because could connect to managers {}'.format(nonfound))
-            if inform:
-                invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not connect to managers {}. '
-                                      'Check that these instances are running.'.format(','.join(nonfound)))
+            self._err_message = 'Could not connect to "{}"'.format(','.join(nonfound))
+            # if inform:
+                # self.warning_dialog('Could not connect')
+                # invoke_in_main_thread(self.warning_dialog,
+                #                       'Canceled! Could not connect to managers {}. '
+                #                       'Check that these instances are running.'.format(','.join(nonfound)))
             return
 
         return True
@@ -1594,7 +1596,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not man:
                 nonfound.append(extract_device)
             else:
-                if not man.test_connection():
+                connected, error = man.test_connection()
+                if not connected:
                     nonfound.append(extract_device)
                 else:
                     ed_connectable.set_connection_parameters(man)
@@ -1761,7 +1764,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if prog:
                 prog.change_message(msg)
             if not func(inform):
-                raise PreExecuteCheckException(msg)
+                raise PreExecuteCheckException(msg, self._err_message)
 
         # exp = self.experiment_queue
 
@@ -2041,6 +2044,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_for_errors(self, inform):
         self.debug('checking for connectable errors')
+        ret = False
         for c in self.connectables:
             self.debug('check connectable name: {} manager: {}'.format(c.name, c.manager))
             man = c.manager
@@ -2053,7 +2057,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.debug('connectable get error {}'.format(e))
                 if e and e.lower() != 'ok':
                     self._err_message = e
+                    ret = True
                     break
+
+        return ret
 
     def _load_system_conditionals(self, term_name, **kw):
         self.debug('loading system conditionals {}'.format(term_name))
@@ -2297,8 +2304,8 @@ Use Last "blank_{}"= {}
         else:
             self.selected_run = None
 
-    def _alive_changed(self, new):
-        self.executing_led.state = 2 if new else 0
+    # def _alive_changed(self, new):
+    #     self.executing_led.state = 2 if new else 0
 
     def _configure_scheduled_button_fired(self):
         self.scheduler.setup()

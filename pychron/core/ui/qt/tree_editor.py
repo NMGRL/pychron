@@ -150,7 +150,8 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         item = self._tree.itemFromIndex(index)
         try:
             expanded, node, obj = item._py_data
-        except AttributeError:
+        except AttributeError, e:
+            print 'asfasfas', e, item, index
             return
 
         text = node.get_label(obj)

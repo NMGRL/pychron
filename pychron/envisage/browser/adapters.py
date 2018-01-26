@@ -186,7 +186,7 @@ class AnalysisAdapter(BrowserAdapter):
         return '{:0.1f} {}'.format(dt, units)
 
     def get_menu(self, obj, trait, row, column):
-        e = obj.append_replace_enabled
+        # e = obj.append_replace_enabled
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
                    # Action(name='Replace', action='replace_items', enabled=e),
@@ -194,7 +194,9 @@ class AnalysisAdapter(BrowserAdapter):
                    Action(name='Open', action='recall_items'),
                    Action(name='Review Status Details', action='review_status_details'),
                    Action(name='Load Review Status', action='load_review_status'),
-                   Action(name='Toggle Freeze', action='toggle_freeze')
+                   Action(name='Toggle Freeze', action='toggle_freeze'),
+                   Action(name='Select Same Identifier', action='select_same'),
+                   Action(name='Select Same Attr', action='select_same_attr')
                    # Action(name='Open Copy', action='recall_copies'),
                    # Action(name='Find References', action='find_refs')
                    ]

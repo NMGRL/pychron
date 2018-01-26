@@ -73,7 +73,7 @@ class LumenDetector(Locator):
 
         tt = threshold / self.calc_pixel_depth(pixel_depth)
         tsrc = gsrc[gsrc > tt]
-        tsrc = (tsrc - tt)/(1-tt)
+        tsrc = (tsrc - tt) / (1 - tt)
 
         n = tsrc.shape[0]
         v = 0
@@ -104,28 +104,26 @@ class LumenDetector(Locator):
         h, w = lum.shape[:2]
         src = rgb2gray(lum)
         pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
-        peaks = zeros((h, w), dtype=uint8)
-        cpeaks = zeros((h, w), dtype=uint8)
-        pt = None
+        peak_img = zeros((h, w), dtype=uint8)
+        # cum_peaks = zeros((h, w), dtype=uint8)
+        pt, px, py = None, None, None
         pd = calc_pixel_depth(pixel_depth)
         if pts.shape[0]:
-
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
             py, px = average(pts, axis=0, weights=intensities)
-            mi, ma = intensities.min(), intensities.max()
-            ix = (intensities - mi) / (ma - mi) * pd
+            # mi, ma = intensities.min(), intensities.max()
+            # ix = (intensities - mi) / (ma - mi) * pd
+            # peak_img[idx] = pd
+            # cum_peaks[idx] = 50
 
-            peaks[idx] = ix
-            cpeaks[idx] = 50
-
-            c = circle(py, px, 3)
-            peaks[c] = pd
+            # c = circle(py, px, 5)
+            # peaks[c] = pd
             pt = px - w / 2., py - h / 2, sorted(intensities)[-1]
+            peak_img[circle(py, px, min_distance)] = 255
 
         sat = lum.sum() / (mask.sum() * pd)
-
-        return pt, peaks, cpeaks, sat, lum
+        return pt, px, py, peak_img, sat, lum
 
     def get_scores(self, lum, pixel_depth=8):
         mask = self._mask(lum)

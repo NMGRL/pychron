@@ -558,14 +558,17 @@ class LabnumberEntry(DVCIrradiationable):
             grainsize = ir.grainsize
             principal_investigator = ir.principal_investigator
             if proj:
-                proj = db.add_project(proj, principal_investigator)
+                proj = db.add_project(proj, pi=ir.principal_investigator)
 
             if mat:
                 mat = db.add_material(mat, grainsize=grainsize)
 
             if sam:
-                sam = db.add_sample(sam, proj, principal_investigator, mat, grainsize=grainsize)
-                sam.igsn = ir.igsn
+                sam = db.add_sample(sam,
+                                    proj.name,
+                                    ir.principal_investigator,
+                                    mat, grainsize=ir.grainsize)
+                # sam.igsn = ir.igsn
                 dbpos.sample = sam
 
             prog.change_message('Saving {}{}{} identifier={}'.format(irradiation, level, ir.hole, ln))

@@ -65,6 +65,7 @@ class AnalysisGroup(HasTraits):
     irradiation = Property
     irradiation_label = Property
     sample = Property
+    project = Property
     aliquot = Property
     material = Property
     unit = Str
@@ -189,6 +190,10 @@ class AnalysisGroup(HasTraits):
 
     def _set_sample(self, s):
         self._sample = s
+
+    @cached_property
+    def _get_project(self):
+        return self.analyses[0].project
 
     @cached_property
     def _get_percent_39Ar(self):

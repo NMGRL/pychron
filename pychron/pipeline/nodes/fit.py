@@ -32,7 +32,8 @@ from pychron.pychron_constants import NULL_STR
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
-    has_save_node = False
+
+    # has_save_node = False
 
     def _set_saveable(self, state):
         ps = self.plotter_options.get_saveable_aux_plots()
@@ -246,8 +247,6 @@ class FitIsotopeEvolutionNode(FitNode):
             state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
-        po = self.plotter_options
-
         if prog:
             prog.change_message('Load raw data {}'.format(xi.record_id))
 
@@ -267,7 +266,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 i, e = iso.value, iso.error
                 pe = abs(e / i * 100)
 
-                goodness_threshold = po.goodness_threshold
+                goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
                     int_err_goodness = bool(pe < goodness_threshold)
@@ -275,25 +274,26 @@ class FitIsotopeEvolutionNode(FitNode):
                 slope = None
                 slope_goodness = None
                 slope_threshold = None
-                if po.slope_goodness:
-                    slope_threshold = po.slope_goodness
-                    slope = iso.get_slope()
-                    slope_goodness = bool(slope < 0 or i < slope_threshold)
+                if f.slope_goodness:
+                    if f.slope_goodness_intensity > i:
+                        slope_threshold = f.slope_goodness
+                        slope = iso.get_slope()
+                        slope_goodness = bool(slope < 0 or i < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None
                 outlier_goodness = None
-                if po.outlier_goodness:
+                if f.outlier_goodness:
                     outlier = iso.noutliers()
-                    outliers_threshold = po.outlier_goodness
-                    outlier_goodness = bool(outlier < po.outlier_goodness)
+                    outliers_threshold = f.outlier_goodness
+                    outlier_goodness = bool(outlier < f.outlier_goodness)
 
                 curvature_goodness = None
                 curvature = None
                 curvature_threshold = None
-                if po.curvature_goodness:
-                    curvature = iso.curvature_at(po.curvature_goodness_at)
-                    curvature_threshold = po.curvature_goodness
+                if f.curvature_goodness:
+                    curvature = iso.curvature_at(f.curvature_goodness_at)
+                    curvature_threshold = f.curvature_goodness
                     curvature_goodness = curvature < curvature_threshold
 
                 yield IsoEvoResult(analysis=xi,

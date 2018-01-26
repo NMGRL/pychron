@@ -27,7 +27,7 @@ from traitsui.view import View
 
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.processing.fits.fit import Fit
+from pychron.core.fits.fit import Fit
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 

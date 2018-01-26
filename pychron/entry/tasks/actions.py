@@ -160,8 +160,7 @@ class ImportAnalysesAction(Action):
         plugin = app.get_plugin('pychron.entry.plugin')
         sources = {obj: name for name, obj in plugin.data_sources}
 
-        repos = dvc.get_repository_identifiers()
-        do_import_analyses(dvc, sources, repos)
+        do_import_analyses(dvc, sources)
 
 
 class GenerateTrayAction(TaskAction):

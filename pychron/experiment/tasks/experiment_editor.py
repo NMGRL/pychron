@@ -19,6 +19,7 @@ import os
 
 from traits.api import Instance, Unicode, Property, DelegatesTo, Color, Bool
 from traitsui.api import View, UItem
+from traitsui.editors import TabularEditor
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
@@ -167,10 +168,11 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter,
                                                 operations=operations,
-                                                bgcolor=self.bgcolor,
                                                 editable=True,
                                                 mime_type='pychron.automated_run_spec',
-                                                # show_row_titles=True,
+                                                show_row_titles=True,
+                                                bgcolor=self.bgcolor,
+
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -238,10 +240,15 @@ class ExperimentEditor(BaseTraitsEditor):
         for qi in eqs:
             runs = qi.cleaned_automated_runs
             no_repo = []
+            overriden_special = []
             for i, ai in enumerate(runs):
                 if not ai.repository_identifier:
                     self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
                     no_repo.append(ai)
+                elif ai.is_special() \
+                        and ai.repository_identifier \
+                        and not ai.is_default_repository(qi.mass_spectrometer, curtag):
+                    overriden_special.append(ai)
 
             if no_repo:
                 if not self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
@@ -249,6 +256,17 @@ class ExperimentEditor(BaseTraitsEditor):
 
                 populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
                 self.refresh()
+
+            if overriden_special:
+                if not self.confirmation_dialog('You have reference analyses with non-standard repositories. '
+                                                'Are you sure you want to do this? If you are confused or are '
+                                                'unsure then the answer is "NO"'):
+                    for ai in runs:
+                        if ai.is_special():
+                            ai.repository_identifier = ''
+
+                    populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+                    self.refresh()
 
             hec = qi.human_error_checker
 

@@ -14,6 +14,46 @@ Step 0. Downloads
 
     .. note:: For steps A-C you must open the downloaded package and run the installer.
 
+For Update Plugin
+==========================
+    #. Create hidden directory ``.pychron.<APPLLICATION_ID>`` in your Home folder. Replace ``<APPLICATION_ID>`` with
+       an integer. e.g. 0
+    #. Clone the pychron source. Replace ``<ORGANIZATION>`` with the appropriate fork e.g. NMGRL
+       ::
+
+         cd ~/.pychron.0
+         git clone https://github.com/<ORGANIZATION>/pychron.git updates
+
+
+Launcher Script
+==========================
+Create the file ``pychron_launcher.sh`` in a convenient place
+
+ ::
+
+    #!/bin/bash
+
+    export APPLICATION_ID=0
+
+    ROOT=~/.pychron.$APPLICATION_ID/updates
+
+    echo Using $ROOT as "ROOT" directory
+
+    ENTRY_POINT=$ROOT/launchers/pyexperiment_debug.py
+
+    export PYTHONPATH=$ROOT
+
+    export GITHUB_USER=
+    export GITHUB_PASSWORD=
+    export GITHUB_ORGANIZATION=
+    export MassSpecDBVersion=16
+    export CONDA_DISTRO=~/anaconda2
+    export CONDA_ENV=pychron
+    export QT_API=pyqt
+
+    $CONDA_DISTRO/envs/$CONDA_ENV/bin/python $ENTRY_POINT
+
+
 Manual
 ===========================
     #. Create a directory called ``Pychron`` in your Home folder. ie ``/Users/<username>/Pychron`` where ``<username>`` is

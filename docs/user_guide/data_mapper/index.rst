@@ -12,6 +12,7 @@ Importing analyses and metadata into pychron
     - Menubar> Entry> Import Irradiation...
     - Select USGSVSC MAP
     - Click the Folder icon and select the appropriate irradiation file
+    - Click "Import" to import the selected irradiation file
 
     example Irradiation File
 
@@ -32,4 +33,7 @@ Importing analyses and metadata into pychron
     Analyses can be imported either individually (file) or as a group (directory)
 
     - Menubar> Entry> Import Analyses
-    - Select
+    - Select USGSVSC MAP  from the first drop down
+    - Select a Repository Identifier. You can also add a repository using the (+) button
+    - Select either an entire directory or an individual analysis file to import.
+    - Click "Import" to import analyses
