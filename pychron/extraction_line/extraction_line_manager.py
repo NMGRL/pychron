@@ -52,6 +52,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     switch_manager = Any
     gauge_manager = Any
+    cryo_manager = Any
 
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
@@ -207,6 +208,16 @@ class ExtractionLineManager(Manager, Consoleable):
             v = self.network.calculate_volumes(node_name)[0][1]
 
         return v
+
+    def test_cryo_communication(self):
+        self.info('test cryo communication')
+        ret, err = True, ''
+        if self.cryo_manager:
+            if self.cryo_manager.simulation:
+                ret = globalv.communication_simulation
+            else:
+                ret = self.cryo_manager.test_connection()
+        return ret, err
 
     def test_gauge_communication(self):
         self.info('test gauge communication')
@@ -481,6 +492,12 @@ class ExtractionLineManager(Manager, Consoleable):
             wd = self.wait_group.add_control()
         return wd
 
+    def set_cryo(self, v):
+        self.debug('setting cryo to {}'.format(v))
+        if self.cryo_manager:
+            self.cryo_manager.set_setpoint(v)
+        else:
+            self.warning('cryo manager not avaialable')
     # ===============================================================================
     # private
     # ===============================================================================
@@ -699,7 +716,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             package = 'pychron.managers.{}'.format(manager)
 
-        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager'):
+        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager', 'cryo_manager'):
             if manager == 'switch_manager':
                 man = self._switch_manager_factory()
                 self.switch_manager = man
@@ -792,6 +809,10 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _cryo_manager_default(self):
+        from pychron.extraction_line.cryo_manager import CryoManager
+        return CryoManager(application=self.application)
+
     def _gauge_manager_default(self):
         from pychron.extraction_line.gauge_manager import GaugeManager
 

@@ -55,6 +55,18 @@ class CanvasDockPane(TraitsDockPane):
         return v
 
 
+class CryoPane(TraitsDockPane):
+    name = 'Cryo'
+    id = 'pychron.extraction_line.cryo'
+
+    def traits_view(self):
+        v = View(UItem('cryo_manager',
+                       editor=InstanceEditor(),
+                       style='custom',
+                       defined_when='cryo_manager'))
+        return v
+
+
 class GaugePane(TraitsDockPane):
     name = 'Gauges'
     id = 'pychron.extraction_line.gauges'
