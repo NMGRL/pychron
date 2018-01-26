@@ -34,31 +34,33 @@ class BaseLakeShoreController(CoreDevice):
 
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = chr(10)  # line feed \n
+        return super(BaseLakeShoreController, self).initialize(*args, **kw)
 
     def test_connection(self):
         self.tell('*CLS')
         resp = self.ask('*IDN?')
         return bool(IDN_RE.match(resp))
 
-    def update(self):
-        self.input_a = self.read_input_a()
-        self.input_b = self.read_input_b()
+    def update(self, **kw):
+        self.input_a = self.read_input_a(**kw)
+        self.input_b = self.read_input_b(**kw)
+        return self.input_a
 
-    @get_float
-    def read_setpoint(self, output):
-        return self.ask('SETP? {}'.format(output))
+    @get_float(default=0)
+    def read_setpoint(self, output, verbose=False):
+        return self.ask('SETP? {}'.format(output), verbose=verbose)
 
     def set_setpoint(self, output, v):
         self.tell('SETP {},{}'.format(output, v))
 
-    def read_input_a(self):
-        return self._read_input('a', self.units)
+    def read_input_a(self, **kw):
+        return self._read_input('a', self.units, **kw)
 
-    def read_input_b(self):
-        return self._read_input('b', self.units)
+    def read_input_b(self, **kw):
+        return self._read_input('b', self.units, **kw)
 
-    @get_float
-    def _read_input(self, tag, mode='C'):
-        return self.ask('{}RDG? {}'.format(mode, tag))
+    @get_float(default=0)
+    def _read_input(self, tag, mode='C', verbose=False):
+        return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
 
 # ============= EOF =============================================
