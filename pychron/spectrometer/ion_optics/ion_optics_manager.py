@@ -169,19 +169,27 @@ class IonOpticsManager(Manager):
         else:
             self._peak_center(*args)
 
-    def setup_peak_center(self, detector=None, isotope=None,
+    def setup_peak_center(self, detector=None,
+                          isotope=None,
                           integration_time=1.04,
                           directions='Increase',
-                          center_dac=None, plot_panel=None, new=False,
-                          standalone_graph=True, name='', show_label=False,
-                          window=0.015, step_width=0.0005, min_peak_height=1.0, percent=80,
+                          center_dac=None,
+                          name='',
+                          show_label=False,
+                          window=0.015,
+                          step_width=0.0005,
+                          min_peak_height=1.0,
+                          percent=80,
                           deconvolve=None,
                           use_interpolation=False,
                           interpolation_kind='linear',
-                          dac_offset=None, calculate_all_peaks=False,
+                          dac_offset=None,
+                          calculate_all_peaks=False,
                           config_name=None,
                           use_configuration_dac=True,
-                          update_others=True):
+                          new=False,
+                          update_others=True,
+                          plot_panel=None):
 
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
@@ -191,32 +199,33 @@ class IonOpticsManager(Manager):
             use_dac_offset = True
 
         spec = self.spectrometer
+        pcconfig = self.peak_center_config
 
         spec.save_integration()
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
-        self._setup_config()
-
         pcc = None
+        mass = None
 
+        self._setup_config()
         if config_name:
-            self.peak_center_config.load()
-            self.peak_center_config.active_name = config_name
-            pcc = self.peak_center_config.active_item
+            pcconfig.load()
+            pcconfig.active_name = config_name
+            pcc = pcconfig.active_item
 
         elif detector is None or isotope is None:
             self.debug('ask user for peak center configuration')
 
-            self.peak_center_config.load()
+            pcconfig.load()
             if config_name:
-                self.peak_center_config.active_name = config_name
+                pcconfig.active_name = config_name
 
-            info = self.peak_center_config.edit_traits()
+            info = pcconfig.edit_traits()
 
             if not info.result:
                 return
             else:
-                pcc = self.peak_center_config.active_item
+                pcc = pcconfig.active_item
 
         if pcc:
             if not detector:
@@ -228,11 +237,11 @@ class IonOpticsManager(Manager):
             directions = pcc.directions
             integration_time = pcc.integration_time
 
+            mass = pcc.mass
             window = pcc.window
             min_peak_height = pcc.min_peak_height
             step_width = pcc.step_width
             percent = pcc.percent
-
             use_interpolation = pcc.use_interpolation
             interpolation_kind = pcc.interpolation_kind
             n_peaks = pcc.n_peaks
@@ -250,13 +259,18 @@ class IonOpticsManager(Manager):
         if not isinstance(detector, (tuple, list)):
             detector = (detector,)
 
-        ref = detector[0]
-        ref = self.spectrometer.get_detector(ref)
-        self.reference_detector = ref
-        self.reference_isotope = isotope
+        ref = spec.get_detector(detector[0])
 
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
+
+        if mass:
+            mag = spec.magnet
+            center_dac = mag.map_mass_to_dac(mass, ref)
+            low = mag.map_mass_to_dac(mass - window / 2., ref)
+            high = mag.map_mass_to_dac(mass + window / 2., ref)
+            window = high - low
+            step_width = abs(mag.map_mass_to_dac(mass + step_width, ref) - center_dac)
 
         if len(detector) > 1:
             ad = detector[1:]
@@ -288,21 +302,15 @@ class IonOpticsManager(Manager):
                      calculate_all_peaks=calculate_all_peaks,
                      update_others=update_others)
 
-        self.peak_center = pc
         graph = pc.graph
         graph.name = name
         if plot_panel:
             plot_panel.set_peak_center_graph(graph)
-        else:
-            graph.close_func = self.close
-            if standalone_graph:
-                # set graph window attributes
-                graph.window_title = 'Peak Center {}({}) @ {:0.3f}'.format(ref, isotope, center_dac)
-                graph.window_width = 300
-                graph.window_height = 250
-                open_view(graph)
 
-        print 'pppp', self.peak_center
+        self.peak_center = pc
+        self.reference_detector = ref
+        self.reference_isotope = isotope
+
         return self.peak_center
 
     def backup_mftable(self):
