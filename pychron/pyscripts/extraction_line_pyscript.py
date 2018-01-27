@@ -31,7 +31,7 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pychron_constants import EXTRACTION_COLOR, LINE_STR, NULL_STR
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry, calculate_duration
-from pychron.pyscripts.valve_pyscript import ValvePyScript
+from pychron.pyscripts.valve_pyscript import ValvePyScript, ELPROTOCOL
 
 COMPRE = re.compile(r'[A-Za-z]*')
 
@@ -216,6 +216,11 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
+    @calculate_duration
+    @command_register
+    def set_cryo(self, value):
+        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
+
     @calculate_duration
     @command_register
     def begin_heating_interval(self, duration, min_rise_rate=None,
