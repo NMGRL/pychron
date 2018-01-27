@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum, Float
+from traits.api import Enum, Float, Property
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
 
-IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/\w{7},\d.\d')
+IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
 
 
 class BaseLakeShoreController(CoreDevice):
@@ -27,6 +27,8 @@ class BaseLakeShoreController(CoreDevice):
 
     input_a = Float
     input_b = Float
+    setpoint1 = Float(auto_set=False, enter_set=True)
+    setpoint1_readback = Float
 
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='C')
@@ -44,6 +46,7 @@ class BaseLakeShoreController(CoreDevice):
     def update(self, **kw):
         self.input_a = self.read_input_a(**kw)
         self.input_b = self.read_input_b(**kw)
+        self.setpoint1_readback = self.read_setpoint(1)
         return self.input_a
 
     @get_float(default=0)
@@ -62,5 +65,8 @@ class BaseLakeShoreController(CoreDevice):
     @get_float(default=0)
     def _read_input(self, tag, mode='C', verbose=False):
         return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
+
+    def _setpoint1_changed(self):
+        self.set_setpoint(1, self.setpoint1)
 
 # ============= EOF =============================================

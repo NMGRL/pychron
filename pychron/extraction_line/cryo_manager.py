@@ -34,8 +34,8 @@ class CryoManager(Manager):
     def test_connection(self):
         for di in self.devices:
             if not di.test_connection():
-                self.debug('Failed connection to "{}" (display_name={})'.format(di.name, di.display_name))
-                return
+                self.debug('Failed connection to "{}" '.format(di.name))
+                return False
         else:
             return True
 
