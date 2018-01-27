@@ -61,6 +61,9 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     #                                    ('valves_path', os.path.join(paths.extraction_line_dir, 'valves.xml'))),
     #                                    'pychron.extraction_line')
 
+    def test_cryo_communication(self):
+        return self._test('test_cryo_communication')
+
     def test_gauge_communication(self):
         return self._test('test_gauge_communication')
 
