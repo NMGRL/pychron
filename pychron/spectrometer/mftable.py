@@ -39,9 +39,16 @@ def get_detector_name(det):
 
 def least_squares(func, xs, ys, initial_guess):
     xs, ys = asarray(xs), asarray(ys)
-    errfunc = lambda p, x, v: func(p, x) - v
+
+    def errfunc(p, x, v):
+        return func(p, x) - v
+
     ret, info = leastsq(errfunc, initial_guess, args=(xs, ys))
     return ret
+
+
+def format_dac(dac):
+    return '{:0.5f}'.format(dac) if dac != NULL_STR else ''
 
 
 class FieldItem(HasTraits):
@@ -58,33 +65,28 @@ class MagnetFieldTable(Loggable):
     items = List
     molweights = Dict
 
-    _mftable = None
-    _detectors = None
-
-    db = None
     spectrometer_name = Str
     use_local_archive = Bool
     use_db_archive = Bool
-    path = Property(depends_on='_path_dirty')
-    _path_dirty = Event
+    path = Property
     mass_cal_func = 'parabolic'
-    _test_path = None
+
+    # path = Property(depends_on='_path_dirty')
+    # _path_dirty = Event
 
     def __init__(self, bind=True, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
-        # p = paths.mftable
-        # if not os.path.isfile(p):
-        # self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
-        # else:
-        # self.load_mftable()
 
-        # if os.environ.get('RTD', 'False') == 'False':
+        self.db = None
+        self._mftable = None
+        self._detectors = None
+        self._test_path = None
+
         if bind:
             self.bind_preferences()
 
     def initialize(self, molweights):
         self.molweights = molweights
-        # p = paths.mftable
         p = self.path
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
@@ -255,7 +257,7 @@ class MagnetFieldTable(Loggable):
                 for hi in detectors:
                     iso, xs, ys, _ = d[hi]
 
-                    fdac = self._format_dac(ys[i])
+                    fdac = format_dac(ys[i])
                     a.append(fdac)
 
                 writer.writerow(a)
@@ -273,7 +275,7 @@ class MagnetFieldTable(Loggable):
             for hi in detectors:
                 iso, xs, ys, _ = d[hi]
 
-                a.append(self._format_dac(ys[i]))
+                a.append(format_dac(ys[i]))
 
             print a
 
@@ -363,9 +365,7 @@ class MagnetFieldTable(Loggable):
                 if initial_guess:
                     try:
                         c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
-                    except TypeError, e:
-                        import traceback
-                        traceback.print_exc()
+                    except TypeError:
                         c = (0, 0, ys[0])
                 else:
                     c = None
@@ -376,9 +376,6 @@ class MagnetFieldTable(Loggable):
             # self._mftable={k: (isos, mws, table[2 + i], )
             # for i, k in enumerate(detectors)}
             self._detectors = detectors
-
-    def _format_dac(self, dac):
-        return '{:0.5f}'.format(dac) if dac != NULL_STR else ''
 
     def _clean_dacs(self, xx, dacs):
         """

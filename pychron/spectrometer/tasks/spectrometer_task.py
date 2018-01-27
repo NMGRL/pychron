@@ -211,16 +211,16 @@ class SpectrometerTask(EditorTask):
         i = max(es) + 1 if es else 1
 
         ret = -1
-        man = self.scan_manager.ion_optics_manager
+        ion = self.scan_manager.ion_optics_manager
         name = 'Peak Center {:02d}'.format(i)
-        if man.setup_peak_center(new=True, standalone_graph=False, **setup_kw):
+        if ion.setup_peak_center(new=True, **setup_kw):
             self._on_peak_center_start()
 
-            invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=man.peak_center, name=name))
+            invoke_in_main_thread(self._open_editor, PeakCenterEditor(model=ion.peak_center, name=name))
 
-            man.do_peak_center(**peak_kw)
+            ion.do_peak_center(**peak_kw)
 
-            ret = man.peak_center_result
+            ret = ion.peak_center_result
         return ret
 
     def _scan_factory(self):

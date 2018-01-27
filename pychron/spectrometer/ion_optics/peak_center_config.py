@@ -19,9 +19,10 @@ import os
 
 from apptools import sweet_pickle as pickle
 from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
-from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor, CheckListEditor
+from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
 
 from pychron.core.helpers.filetools import add_extension, list_directory2
+from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
@@ -56,6 +57,7 @@ class PeakCenterConfig(HasTraits):
     integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
+    mass = Float
     window = Float(0.015)
     step_width = Float(0.0005)
     min_peak_height = Float(1.0)
@@ -137,16 +139,24 @@ class PeakCenterConfig(HasTraits):
                                      Item('use_mftable_dac',
                                           label='Use DAC from MFTable')),
                               Item('dac', enabled_when='not use_current_dac and not use_mftable_dac')),
+                       Item('mass'),
                        Item('integration_time'),
                        Item('directions'),
-                       Item('window', label='Peak Width (V)'),
-                       Item('step_width', label='Step Width (V)'),
+
+                       Item('window', visible_when='not mass', label='Peak Width (V)'),
+                       Item('step_width', visible_when='not mass', label='Step Width (V)'),
+
+                       Item('window', visible_when='mass', label='Peak Width (amu)'),
+                       Item('step_width', visible_when='mass', label='Step Width (amu)'),
+
                        show_border=True, label='Measure')
         return m_grp
 
     def _get_additional_detectors_grp(self):
-        degrp = VGroup(UItem('additional_detectors', style='custom',
+        degrp = VGroup(UItem('additional_detectors',
+                             style='custom',
                              editor=CheckListEditor(name='available_detectors',
+                                                    capitalize=False,
                                                     cols=max(1, len(self.available_detectors)))),
                        show_border=True, label='Additional Detectors')
         return degrp
