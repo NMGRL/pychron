@@ -218,7 +218,7 @@ class ReadoutView(Loggable):
 
             keys = [r.name for r in self.deflections if r.use_deflection]
             if keys:
-                ds = self.spectrometer.get_deflection_word(keys)
+                ds = self.spectrometer.read_deflection_word(keys)
                 for d, r in zip(ds, self.deflections):
                     r.set_value(d)
 

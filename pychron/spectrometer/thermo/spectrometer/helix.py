@@ -30,6 +30,17 @@ class HelixSpectrometer(ThermoSpectrometer):
     detector_klass = HelixDetector
     microcontroller_klass = HelixController
 
+    def get_command_map(self):
+        command_map = dict(ionrepeller='IonRepeller',
+                           electronenergy='ElectronEnergy',
+                           ysymmetry='YSymmetry',
+                           extractionfocus='ExtractionFocus',
+                           extractionsymmetry='ExtractionSymmetry',
+                           extractionlens='ExtractionLens',
+                           ioncountervoltage='IonCounterVoltage',
+                           hv='HV')
+        return command_map
+
 
 class HelixPlusSpectrometer(HelixSpectrometer):
     pass

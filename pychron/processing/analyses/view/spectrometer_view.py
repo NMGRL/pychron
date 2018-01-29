@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, VGroup, TabularEditor, Group
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-from pychron.pychron_constants import QTEGRA_SOURCE_NAMES, QTEGRA_SOURCE_KEYS, NULL_STR
+from pychron.pychron_constants import NULL_STR
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -58,19 +58,18 @@ class SpectrometerView(HasTraits):
 
         # source
         sp = an.source_parameters
-        sd = [DValue(n, sp.get(k, NULL_STR)) for n, k in zip(QTEGRA_SOURCE_NAMES,
-                                                             QTEGRA_SOURCE_KEYS)]
+        sd = [DValue(k, v) for k, v in sp.iteritems()]
         self.source_parameters = sd
 
         # deflections
         defls = an.deflections
         names = sort_detectors(defls.keys())
-        ds = [DValue(ni, defls.get(ni, NULL_STR)) for ni in names]
+        ds = [DValue(ni, defls[ni]) for ni in names]
         self.deflections = ds
 
         # gains
         gains = an.gains
-        gs = [DValue(ni, gains.get(ni, NULL_STR)) for ni in names]
+        gs = [DValue(ni, gains[ni]) for ni in names]
         self.gains = gs
 
     def traits_view(self):

@@ -33,14 +33,26 @@ class BaseSpectrometerManager(Manager):
         self.application = application
         super(BaseSpectrometerManager, self).__init__(*args, **kw)
 
+    def read_trap_current(self):
+        return self.spectrometer.source.read_trap_current()
+
+    def read_emission(self):
+        return self.spectrometer.source.read_emission()
+
     def test_connection(self, **kw):
         return self.spectrometer.test_connection(**kw)
 
     def test_intensity(self, **kw):
         return self.spectrometer.test_intensity(**kw)
 
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+    def make_gains_dict(self):
+        return self.spectrometer.make_gains_dict()
+
+    def make_configuration_dict(self):
+        return self.spectrometer.make_configuration_dict()
+
+    def make_deflections_dict(self):
+        return self.spectrometer.make_deflection_dict()
 
     def send_configuration(self):
         if self.spectrometer:
@@ -135,10 +147,7 @@ class BaseSpectrometerManager(Manager):
                 r = self.spectrometer.microcontroller.name
         return r
 
-    def read_trap_current(self):
-        return self.spectrometer.source.read_trap_current()
-
-    def read_emission(self):
-        return self.spectrometer.source.read_emission()
+    def _spectrometer_default(self):
+        return self.spectrometer_klass(application=self.application)
 
 # ============= EOF =============================================
