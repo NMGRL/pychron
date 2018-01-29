@@ -30,7 +30,7 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, get_log, from_gitlog
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
 from pychron import json
@@ -399,20 +399,21 @@ class HistoryView(DVCCommitView):
                      ('ISOEVO', 'intercepts'),
                      ('ISOEVO', 'baselines'),
                      ('BLANKS', 'blanks'),
-                     ('ICFactor', 'icfactors'),
-                     ('IMPORT', ''),
-                     ('MANUAL', ''),
-                     ('COLLECTION', '')):
+                     ('ICFactor', 'icfactors')):
+
+            # ('IMPORT', ''),
+            # ('MANUAL', ''),
+            # ('COLLECTION', '')):
             path = an.make_path(b)
             if path:
-                args = [repo, repo.active_branch.name, path, a]
-                if a:
-                    args.append('--grep=^<{}>'.format(a))
-
-                css = get_commits(*args)
+                css = get_commits(repo, repo.active_branch.name, path, a, '--grep=^<{}>'.format(a))
                 for ci in css:
                     ci.path = path
                 cs.extend(css)
+
+        logtxt = get_log(repo, repo.active_branch.name, path)
+        if logtxt:
+            cs.extend((from_gitlog(l.strip(), path) for l in logtxt.split('\n')))
 
         self.commits = sorted(cs, key=lambda x: x.date, reverse=True)
 

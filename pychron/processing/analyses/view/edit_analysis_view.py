@@ -259,7 +259,6 @@ class AnalysisEditView(HasTraits):
         isos = self.editor.analysis.isotopes
         for iso in isos.itervalues():
             if iso.detector == det:
-                print 'asdfasdfasd', iso, iso.ic_factor, v, det
                 iso.ic_factor = v
 
     def _set_dirty(self, obj):

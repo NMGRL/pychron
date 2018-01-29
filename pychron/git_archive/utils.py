@@ -26,6 +26,8 @@ from traits.api import HasTraits, Str, Bool, Date
 
 # ============= local library imports  ==========================
 
+TAG_RE = re.compile(r'^\<\w+\>')
+
 
 class GitShaObject(HasTraits):
     message = Str
@@ -38,16 +40,18 @@ class GitShaObject(HasTraits):
     active = Bool
     tag = Str
 
-    # def traits_view(self):
-    #     return View(UItem('blob',
-    #                       style='custom',
-    #                       editor=TextEditor(read_only=True)))
-    #
 
-
-def from_gitlog(obj, path, tag):
+def from_gitlog(obj, path, tag=None):
     hexsha, author, email, ct, message = obj.split('|')
     date = datetime.fromtimestamp(float(ct))
+
+    if tag is None:
+        tag = TAG_RE.match('message')
+        if tag:
+            tag = tag.group('tag')
+        else:
+            tag = 'NULL'
+
     g = GitShaObject(hexsha=hexsha,
                      message=message,
                      date=date,
@@ -88,6 +92,15 @@ def get_commits(repo, branch, path, tag, *args):
     txt = gitlog(repo, branch=branch, args=args, path=path)
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
+
+
+def get_log(repo, branch, path):
+    if isinstance(repo, (str, unicode)):
+        if not os.path.isdir(repo):
+            return
+        repo = Repo(repo)
+
+    return gitlog(repo, branch=branch, path=path)
 
 
 def get_repo(repo):
