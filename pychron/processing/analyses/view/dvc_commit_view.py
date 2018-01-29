@@ -286,7 +286,6 @@ class DVCCommitView(HasTraits):
         self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
-
         self.initialize(an)
 
     def initialize(self, an):

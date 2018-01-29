@@ -16,25 +16,21 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Any, Property, List
-from traitsui.api import View, UItem, VGroup, TabularEditor, Group
+from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-from pychron.pychron_constants import NULL_STR
 
 
 class DictTabularAdapter(TabularAdapter):
     columns = [('', 'key'), ('Value', 'value')]
-    key_width = Int(200)
+    key_width = Int(100)
     value_text = Property
 
     def _get_value_text(self):
-        try:
-            return floatfmt(self.item.value)
-        except:
-            return 'Not Recorded'
+        return floatfmt(float(self.item.value))
 
 
 class DValue(HasTraits):
@@ -90,7 +86,7 @@ class SpectrometerView(HasTraits):
                                               editable=False)),
                    show_border=True,
                    label='Gains')
-        v = View(VGroup(g1, g2, g3))
+        v = View(HGroup(g1, g2, g3))
         return v
 
 # ============= EOF =============================================

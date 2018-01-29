@@ -134,6 +134,11 @@ class AnalysisView(HasTraits):
 
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
 
+    def refresh(self):
+        self.refresh_needed = True
+        self.main_view.load_computed(self.model, new_list=False)
+        self.main_view.refresh_needed = True
+
     def _make_subviews(self, an):
         for args in (
                 ('history', HistoryView),
