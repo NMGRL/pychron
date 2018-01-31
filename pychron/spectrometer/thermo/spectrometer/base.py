@@ -82,6 +82,19 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     _test_connect_command = 'GetIntegrationTime'
 
+    def make_deflection_dict(self):
+        names = self.detector_names
+        values = self.read_deflection_word(names)
+        return dict(zip(names, values))
+
+    def make_configuration_dict(self):
+        keys = self.get_command_map().values()
+        values = self.get_parameter_word(keys)
+        return dict(zip(keys, values))
+
+    def make_gains_dict(self):
+        return {di.name: di.get_gain() for di in self.detectors}
+
     def reload_mftable(self):
         self.magnet.reload_mftable()
 
@@ -203,18 +216,13 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         return deflection
 
-    def get_deflection_word(self, keys):
-        if self.simulation:
-            x = [random.random() for i in keys]
-        else:
-            x = self.ask('GetDeflections {}'.format(','.join(keys)),
-                         verbose=False)
-            x = self._parse_word(x)
+    def read_deflection_word(self, keys):
+        x = self.ask('GetDeflections {}'.format(','.join(keys)), verbose=False)
+        x = self._parse_word(x)
         return x
 
     def read_parameter_word(self, keys):
-        x = self.ask('GetParameters {}'.format(','.join(keys)),
-                     verbose=False)
+        x = self.ask('GetParameters {}'.format(','.join(keys)), verbose=False)
         x = self._parse_word(x)
         return x
 
@@ -452,16 +460,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     def _send_configuration(self, use_ramp=True):
         self.debug('======== Sending configuration ========')
-        command_map = dict(ionrepeller='IonRepeller',
-                           electronenergy='ElectronEnergy',
-                           ysymmetry='YSymmetry',
-                           zsymmetry='ZSymmetry',
-                           zfocus='ZFocus',
-                           extractionfocus='ExtractionFocus',
-                           extractionsymmetry='ExtractionSymmetry',
-                           extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage',
-                           hv='HV')
+        command_map = self.get_command_map()
 
         if self.microcontroller:
             ret = self._get_cached_config()

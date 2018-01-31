@@ -422,8 +422,8 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     @property
     def analysis_view(self):
-        print 'call analyis va'
         v = self._analysis_view
+        print 'call analyis va', v
         if v is None:
             mod, klass = self.analysis_view_klass
             mod = __import__(mod, fromlist=[klass, ])
@@ -431,7 +431,7 @@ class Analysis(ArArAge, IdeogramPlotable):
             # v = self.analysis_view_klass()
             v = klass()
             self._analysis_view = v
-        self._sync_view(v)
+            self._sync_view(v)
 
         return v
 

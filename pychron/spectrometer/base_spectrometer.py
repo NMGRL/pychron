@@ -62,6 +62,15 @@ class BaseSpectrometer(SpectrometerDevice):
     _prev_signals = None
     _no_intensity_change_cnt = 0
 
+    def make_deflection_dict(self):
+        raise NotImplementedError
+
+    def make_configuration_dict(self):
+        raise NotImplementedError
+
+    def make_gains_dict(self):
+        raise NotImplementedError
+
     def start(self):
         pass
 
@@ -207,6 +216,13 @@ class BaseSpectrometer(SpectrometerDevice):
 
         dac *= cor
         return dac
+
+    def get_deflection_word(self, keys):
+        if self.simulation:
+            x = [random.random() for i in keys]
+        else:
+            x = self.read_deflection_word(keys)
+        return x
 
     def get_parameter_word(self, keys):
         if self.simulation:
@@ -470,6 +486,12 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def read_intensities(self):
         raise NotImplementedError
+
+    def read_deflection_word(self):
+        pass
+
+    def read_parameter_word(self):
+        pass
 
     # private
     def _add_detector(self, **kw):

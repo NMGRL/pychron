@@ -1334,7 +1334,7 @@ class AutomatedRun(Loggable):
         sm = self.spectrometer_manager
         if sm:
             self.debug('setting trap, emission, spec, defl, and gains')
-            self._update_persister_spec(spec_dict=sm.make_parameters_dict(),
+            self._update_persister_spec(spec_dict=sm.make_configuration_dict(),
                                         defl_dict=sm.make_deflections_dict(),
                                         gains=sm.make_gains_dict(),
                                         trap=sm.read_trap_current(),

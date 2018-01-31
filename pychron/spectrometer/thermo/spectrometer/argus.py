@@ -36,4 +36,14 @@ class ArgusSpectrometer(ThermoSpectrometer):
     source_klass = ArgusSource
     detector_klass = ArgusDetector
     microcontroller_klass = ArgusController
+
+    def get_command_map(self):
+        command_map = dict(ionrepeller='IonRepeller',
+                           electronenergy='ElectronEnergy',
+                           ysymmetry='YSymmetry',
+                           zsymmetry='ZSymmetry',
+                           extractionlens='ExtractionLens',
+                           ioncountervoltage='IonCounterVoltage',
+                           hv='HV')
+        return command_map
 # ============= EOF =============================================
