@@ -13,13 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+import yaml
+from traits.api import Enum
 from traitsui.api import View, UItem, Item, InstanceEditor, ListEditor
 
 import time
 from pychron.managers.manager import Manager
+from pychron.paths import paths
 
 
 class CryoManager(Manager):
+    species = Enum('He', 'Ar', 'Ne')
+
     def finish_loading(self, *args, **kw):
         pass
 
@@ -61,8 +67,46 @@ class CryoManager(Manager):
     #             k.start_scan(sp)
     #             # stagger starts to reduce collisions
     #             time.sleep(0.25)
-    def set_setpoint(self, v):
-        pass
+    def set_setpoint(self, v, output=1, idx=0):
+        """
+        v is either a float or a str
+        if float interpret as degrees K
+        if str lookup species in cryotemps.yaml
+        :param v:
+        :return:
+        """
+        try:
+            v = float(v)
+        except ValueError:
+            v = self._lookup_species_temp(v)
+
+        if v is not None:
+            self.devices[idx].set_setpoint(v, output)
+
+    def _lookup_species_temp(self, v):
+        """
+        valid v
+
+        He_freeze
+        freeze
+        pump
+        release
+
+
+        :param v:
+        :return:
+        """
+
+        if v in ('freeze', 'pump', 'release'):
+            v = '{}_{}'.format(self.species, v)
+
+        p = os.path.join(paths.device_dir, 'cryotemps.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                return yd[v]
+        else:
+            self.warning('File {} does not exist. Cryostat setpoint can not be set')
 
     def traits_view(self):
         if self.devices:

@@ -492,12 +492,18 @@ class ExtractionLineManager(Manager, Consoleable):
             wd = self.wait_group.add_control()
         return wd
 
-    def set_cryo(self, v):
-        self.debug('setting cryo to {}'.format(v))
+    def set_cryo(self, v, output):
+        self.debug('setting cryo to {}, output={}'.format(v, output))
         if self.cryo_manager:
-            self.cryo_manager.set_setpoint(v)
+            self.cryo_manager.set_setpoint(v, output)
         else:
             self.warning('cryo manager not avaialable')
+
+    def set_experiment_type(self, v):
+        self.debug('setting experiment type={}'.format(v))
+        if self.cryo_manager:
+            self.cryo_manager.species = v
+
     # ===============================================================================
     # private
     # ===============================================================================

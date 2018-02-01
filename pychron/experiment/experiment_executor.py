@@ -1135,6 +1135,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # make sure status monitor is running a
         self.extraction_line_manager.setup_status_monitor()
 
+        self.extraction_line_manager.set_experiment_type(self.experiment_type)
         ret = True
         if ai.start_extraction():
             self.extracting = True

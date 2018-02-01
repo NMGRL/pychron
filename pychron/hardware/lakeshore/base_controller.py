@@ -53,7 +53,7 @@ class BaseLakeShoreController(CoreDevice):
     def read_setpoint(self, output, verbose=False):
         return self.ask('SETP? {}'.format(output), verbose=verbose)
 
-    def set_setpoint(self, output, v):
+    def set_setpoint(self, v, output=1):
         self.tell('SETP {},{}'.format(output, v))
 
     def read_input_a(self, **kw):
@@ -67,6 +67,6 @@ class BaseLakeShoreController(CoreDevice):
         return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
-        self.set_setpoint(1, self.setpoint1)
+        self.set_setpoint(self.setpoint1, 1)
 
 # ============= EOF =============================================

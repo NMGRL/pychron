@@ -218,8 +218,8 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     @calculate_duration
     @command_register
-    def set_cryo(self, value):
-        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
+    def set_cryo(self, value, channel=1):
+        result = self._manager_action([('set_cryo', (value, channel), {})], protocol=ELPROTOCOL)
 
     @calculate_duration
     @command_register
