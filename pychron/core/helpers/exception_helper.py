@@ -229,10 +229,9 @@ def ignored_exceptions(exctype, value, tb):
     if exctype in (RuntimeError, KeyboardInterrupt):
         return True
 
-    if value in ("'NoneType' object has no attribute 'text'",
-                 "'NoneType' object has no attribute 'size'",
-                 "too many indices for array"):
-        return True
+    return str(value) in ("'NoneType' object has no attribute 'text'",
+                     "'NoneType' object has no attribute 'size'",
+                     "too many indices for array")
 
 
 def except_handler(exctype, value, tb):

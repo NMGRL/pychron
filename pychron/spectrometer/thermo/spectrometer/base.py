@@ -21,7 +21,7 @@ import time
 
 from numpy import array, argmin
 from traits.api import Int, Property, List, \
-    Enum, Str, DelegatesTo, Bool
+    Enum, Str, DelegatesTo, Bool, Float
 
 from pychron.core.progress import open_progress
 from pychron.core.ramper import StepRamper
@@ -52,8 +52,8 @@ def calculate_radius(m_e, hv, mfield):
 
 
 class ThermoSpectrometer(BaseSpectrometer):
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-
+    integration_time = Float
+    integration_times = List(QTEGRA_INTEGRATION_TIMES)
     magnet_dac = DelegatesTo('magnet', prefix='dac')
 
     magnet_dacmin = DelegatesTo('magnet', prefix='dacmin')
@@ -77,7 +77,6 @@ class ThermoSpectrometer(BaseSpectrometer):
 
     max_deflection = Int(500)
 
-    _config = None
     _debug_values = None
 
     _test_connect_command = 'GetIntegrationTime'
@@ -176,12 +175,6 @@ class ThermoSpectrometer(BaseSpectrometer):
             self.trait_setq(integration_time=it)
 
         return it
-
-    def send_configuration(self, **kw):
-        """
-            send the configuration values to the device
-        """
-        self._send_configuration(**kw)
 
     def set_parameter(self, name, v):
         cmd = '{} {}'.format(name, v)
@@ -398,60 +391,12 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     # private
     # ===============================================================================
-    def _spectrometer_configuration_changed(self, new):
-        if new:
-            set_spectrometer_config_name(new)
-
     def _parse_word(self, word):
         try:
             x = [float(v) for v in word.split(',')]
         except (AttributeError, ValueError):
             x = []
         return x
-
-    def _get_cached_config(self):
-        if self._config is None:
-            p = get_spectrometer_config_path()
-            if not os.path.isfile(p):
-                self.warning_dialog('Spectrometer configuration file {} not found'.format(p))
-                return
-
-            self.debug('caching configuration from {}'.format(p))
-            config = self.get_configuration_writer(p)
-            d = {}
-            defl = {}
-            trap = {}
-            for section in config.sections():
-                if section in ('Default', 'Protection', 'General', 'Trap', 'Magnet'):
-                    continue
-
-                for attr in config.options(section):
-                    v = config.getfloat(section, attr)
-                    if v is not None:
-                        if section == 'Deflections':
-                            defl[attr.upper()] = v
-                        else:
-                            d[attr] = v
-
-            section = 'Trap'
-            if config.has_section(section):
-                for attr in ('current', 'ramp_step', 'ramp_period', 'ramp_tolerance', 'voltage'):
-                    if config.has_option(section, attr):
-                        trap[attr] = config.getfloat(section, attr)
-
-            section = 'Magnet'
-            magnet = {}
-            if config.has_section(section):
-                for attr in ('mftable',):
-                    if config.has_option(section, attr):
-                        magnet[attr] = config.get(section, attr)
-
-            if 'hv' in d:
-                self.source.nominal_hv = d['hv']
-
-            self._config = (d, defl, trap, magnet)
-
-        return self._config
 
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01, 38, 38.5]  # + random(6)

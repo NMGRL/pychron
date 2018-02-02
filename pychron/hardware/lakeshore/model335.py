@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import Group, Item, UItem, HGroup
+from traitsui.api import Group, Item, UItem, HGroup, VGroup, spring, Spring
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
@@ -21,11 +21,14 @@ from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 
 class Model335TemperatureController(BaseLakeShoreController):
     def get_control_group(self):
-        grp = Group(Item('input_a', style='readonly', editor=LCDEditor(width=200, ndigits=6, height=30)),
-                    Item('input_b', style='readonly', editor=LCDEditor(width=200, ndigits=6, height=30)),
-                    HGroup(Item('setpoint1'),
-                           UItem('setpoint1_readback', editor=LCDEditor(width=200, height=30),
-                                 style='readonly')))
+        grp = VGroup(Spring(height=10, springy=False), HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                           Item('setpoint1'),
+                           UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
+                                 style='readonly'), Spring(width=10, springy=False)),
+                    HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                           Item('setpoint2'),
+                           UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
+                                 style='readonly'), Spring(width=10, springy=False)))
         return grp
 
 # ============= EOF =============================================

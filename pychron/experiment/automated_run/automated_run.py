@@ -1750,9 +1750,9 @@ anaylsis_type={}
     def _get_default_fods(self):
         def extract_fit_dict(fods, yd):
             for yi in yd:
-                fod = {'filter_outliers': yi['filter_outliers'],
-                       'iterations': yi['filter_iterations'],
-                       'std_devs': yi['filter_std_devs']}
+                fod = {'filter_outliers': yi.get('filter_outliers', False),
+                       'iterations': yi.get('filter_iterations', 0),
+                       'std_devs': yi.get('filter_std_devs', 0)}
                 fods[yi['name']] = fod
 
         sfods, bsfods = {}, {}

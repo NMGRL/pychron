@@ -25,12 +25,12 @@ def parse_hop(args):
         counts = args['counts']
         settle = args['settle']
         cc = args['cup_configuration']
-        isos = [ci['isotope'] for ci in cc if ci['active']]
+        isos = [ci['isotope'] for ci in cc if ci.get('active', False)]
         dets = [ci['detector'] for ci in cc]
         defls = [ci.get('deflection') for ci in cc]
-        pdets = [ci['detector'] for ci in cc if ci['protect']]
+        pdets = [ci['detector'] for ci in cc if ci.get('protect', False)]
         is_baselines = [ci['is_baseline'] for ci in cc]
-        active_detectors = [ci['detector'] for ci in cc if ci['active']]
+        active_detectors = [ci['detector'] for ci in cc if ci.get('active',False)]
         pos = args['positioning']
 
     else:

@@ -54,7 +54,10 @@ class PeakCenterConfig(HasTraits):
     isotopes = List(transient=True)
     dac = Float
     use_current_dac = Bool(True)
-    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
+    # integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
+    integration_time = Float
+    integration_times = List(transient=True)
+
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
     mass = Float
@@ -76,8 +79,8 @@ class PeakCenterConfig(HasTraits):
 
     update_others = Bool(True)
 
-    def _integration_time_default(self):
-        return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
+    # def _integration_time_default(self):
+    #     return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def _n_peaks_changed(self, new):
 
@@ -139,15 +142,15 @@ class PeakCenterConfig(HasTraits):
                                      Item('use_mftable_dac',
                                           label='Use DAC from MFTable')),
                               Item('dac', enabled_when='not use_current_dac and not use_mftable_dac')),
-                       Item('mass'),
-                       Item('integration_time'),
+                       # Item('mass'),
+                       Item('integration_time', editor=EnumEditor(name='integration_times')),
                        Item('directions'),
 
                        Item('window', visible_when='not mass', label='Peak Width (V)'),
                        Item('step_width', visible_when='not mass', label='Step Width (V)'),
 
-                       Item('window', visible_when='mass', label='Peak Width (amu)'),
-                       Item('step_width', visible_when='mass', label='Step Width (amu)'),
+                       # Item('window', visible_when='mass', label='Peak Width (amu)'),
+                       # Item('step_width', visible_when='mass', label='Step Width (amu)'),
 
                        show_border=True, label='Measure')
         return m_grp
@@ -271,6 +274,7 @@ class PeakCenterConfigurer(ItemConfigurer):
 
     detectors = List
     isotopes = List
+    integration_times = List
     available_detectors = List
     display_detector_choice = True
 
@@ -281,7 +285,7 @@ class PeakCenterConfigurer(ItemConfigurer):
         kw['detectors'] = self.detectors
         kw['isotopes'] = self.isotopes
         kw['available_detectors'] = self.detectors
-
+        kw['integration_times'] = self.integration_times
         super(PeakCenterConfigurer, self).load(**kw)
 
         det = self.active_item.detector
@@ -292,7 +296,8 @@ class PeakCenterConfigurer(ItemConfigurer):
         item = super(PeakCenterConfigurer, self).get(*args, **kw)
         item.trait_set(detectors=self.detectors,
                        isotopes=self.isotopes,
-                       available_detectors=self.detectors)
+                       available_detectors=self.detectors,
+                       integration_times=self.integration_times)
 
         det = item.detector
         item.detector = ''

@@ -216,10 +216,18 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
-    @calculate_duration
+    @verbose_skip
     @command_register
-    def set_cryo(self, value, channel=1):
-        result = self._manager_action([('set_cryo', (value, channel), {})], protocol=ELPROTOCOL)
+    def set_cryo(self, value):
+        result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
+        print 'asfdasdf', result
+        return result
+
+    @verbose_skip
+    @command_register
+    def get_cryo_temp(self, value):
+        result = self._manager_action([('get_cryo_temp', (value, ), {})], protocol=ELPROTOCOL)
+        return result
 
     @calculate_duration
     @command_register

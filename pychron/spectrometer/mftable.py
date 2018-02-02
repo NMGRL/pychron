@@ -86,6 +86,7 @@ class MagnetFieldTable(Loggable):
             self.bind_preferences()
 
     def initialize(self, molweights):
+        print 'initialasdf', molweights
         self.molweights = molweights
         p = self.path
         if not os.path.isfile(p):
@@ -365,7 +366,8 @@ class MagnetFieldTable(Loggable):
                 if initial_guess:
                     try:
                         c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
-                    except TypeError:
+                    except TypeError, e:
+                        self.warning('load mftable {}'.format(e))
                         c = (0, 0, ys[0])
                 else:
                     c = None

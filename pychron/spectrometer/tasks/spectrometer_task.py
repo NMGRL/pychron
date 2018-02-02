@@ -21,6 +21,7 @@ from pyface.ui.qt4.tasks.advanced_editor_area_pane import EditorWidget
 from traits.api import Any, Instance, on_trait_change
 # ============= standard library imports ========================
 from threading import Thread
+import time
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.tasks.editor_task import EditorTask
@@ -212,6 +213,8 @@ class SpectrometerTask(EditorTask):
 
         ret = -1
         ion = self.scan_manager.ion_optics_manager
+        self.scan_manager.stop_scan()
+        time.sleep(2)
         name = 'Peak Center {:02d}'.format(i)
         if ion.setup_peak_center(new=True, **setup_kw):
             self._on_peak_center_start()
@@ -221,6 +224,7 @@ class SpectrometerTask(EditorTask):
             ion.do_peak_center(**peak_kw)
 
             ret = ion.peak_center_result
+        self.scan_manager.setup_scan()
         return ret
 
     def _scan_factory(self):

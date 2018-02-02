@@ -32,6 +32,7 @@ class NGXController(CoreDevice):
     password = Str('')
 
     def set(self, *args, **kw):
+        print 'nacsd', args, kw
         return HasTraits.set(self, *args, **kw)
 
     def initialize(self, *args, **kw):

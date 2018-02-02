@@ -24,7 +24,7 @@ from pychron.paths import paths
 
 
 class CryoManager(Manager):
-    species = Enum('He', 'Ar', 'Ne')
+    species = Enum('He', 'Ar/Ar', 'Ne')
 
     def finish_loading(self, *args, **kw):
         pass
@@ -67,7 +67,12 @@ class CryoManager(Manager):
     #             k.start_scan(sp)
     #             # stagger starts to reduce collisions
     #             time.sleep(0.25)
-    def set_setpoint(self, v, output=1, idx=0):
+
+    def read_input(self, iput, idx=0):
+        dev = self.devices[idx]
+        return dev.read_input(iput)
+
+    def set_setpoint(self, v1, v2=None, idx=0):
         """
         v is either a float or a str
         if float interpret as degrees K
@@ -76,12 +81,13 @@ class CryoManager(Manager):
         :return:
         """
         try:
-            v = float(v)
+            v1 = float(v1)
         except ValueError:
-            v = self._lookup_species_temp(v)
+            v1, v2 = self._lookup_species_temp(v1)
 
-        if v is not None:
-            self.devices[idx].set_setpoint(v, output)
+        if v1 is not None:
+            self.devices[idx].set_setpoints(v1, v2)
+        return v1, v2
 
     def _lookup_species_temp(self, v):
         """
@@ -98,13 +104,14 @@ class CryoManager(Manager):
         """
 
         if v in ('freeze', 'pump', 'release'):
-            v = '{}_{}'.format(self.species, v)
+            s = 'Ar' if self.species == 'Ar/Ar' else self.species
+            v = '{}_{}'.format(s, v)
 
         p = os.path.join(paths.device_dir, 'cryotemps.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
-                return yd[v]
+                return map(float, yd[v].split(','))
         else:
             self.warning('File {} does not exist. Cryostat setpoint can not be set')
 
@@ -118,7 +125,7 @@ class CryoManager(Manager):
                                             editor=InstanceEditor(view='control_view'))),
                      height=-100)
         else:
-            v =View()
+            v = View()
         return v
 
     def _get_simulation(self):

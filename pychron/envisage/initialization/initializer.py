@@ -104,6 +104,7 @@ class Initializer(Loggable):
             self.info('Manager loading {}'.format(name))
             manager.application = self.application
             manager.load()
+            # self.application.register_service(type(manager), manager)
 
         else:
             return False

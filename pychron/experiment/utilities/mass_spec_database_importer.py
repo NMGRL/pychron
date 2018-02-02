@@ -247,7 +247,6 @@ class MassSpecDatabaseImporter(Loggable):
         spectrometer = spec.mass_spectrometer
         if spectrometer.lower() == 'argus':
             spectrometer = 'UM'
-
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)

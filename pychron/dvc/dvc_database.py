@@ -1565,9 +1565,10 @@ class DVCDatabase(DatabaseAdapter):
     def get_analysis_types(self):
         return []
 
-    # def get_load_holders(self):
-    #     with self.session_ctx():
-    #         return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
+    def get_load_holders(self):
+        with self.session_ctx():
+            return [ni.name for ni in self._retrieve_items(LoadHolderTbl)]
+
     def get_measured_load_names(self):
         with self.session_ctx() as sess:
             q = sess.query(distinct(MeasuredPositionTbl.loadName))

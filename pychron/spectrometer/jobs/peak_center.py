@@ -112,8 +112,7 @@ class BasePeakCenter(MagnetSweep):
 
             center, smart_shift, success = self.iteration(start, end, width)
             if success:
-                self._post_execute()
-                # invoke_in_main_thread(self._post_execute)
+                invoke_in_main_thread(self._post_execute)
                 return center
 
     def get_result(self, detname):
@@ -169,10 +168,11 @@ class BasePeakCenter(MagnetSweep):
 
         # get the reference detectors current intensity
         cur_intensity = get_reference_intensity()
-        self.debug('current intensity={}'.format(cur_intensity))
+
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
+        time.sleep(1)
 
         tol = cur_intensity * (1 - self.percent / 100.)
         timeout = 10
@@ -191,11 +191,17 @@ class BasePeakCenter(MagnetSweep):
             if et > timeout:
                 self.warning('Peak center failed to move to a baseline position')
                 break
-            time.sleep(1)
+            time.sleep(0.5)
 
         # spec.restore_integration()
 
         center, smart_shift, success = None, False, False
+        # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
+        # check if cdd is still active
+        # if not spec.get_detector_active('CDD'):
+        #     self.warning('CDD has tripped!')
+        #     self.cancel()
+        # else:
 
         ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
         self.debug('result of _do_sweep={}'.format(ok))
@@ -219,8 +225,6 @@ class BasePeakCenter(MagnetSweep):
 
                     if self.calculate_all_peaks:
                         self.results = self.get_results()
-                    else:
-                        self.results = [self.get_result(self.reference_detector)]
 
                 else:
                     if max(intensities) > self.min_peak_height * 5:

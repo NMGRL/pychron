@@ -39,6 +39,10 @@ class NGXSpectrometerPlugin(IsotopxSpectrometerPlugin):
         return ngx
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(factory=self._controller_factory,
+        sos = super(NGXSpectrometerPlugin, self)._service_offers_default()
+        if sos:
+            so = self.service_offer_factory(factory=self._controller_factory,
                                         protocol=NGXController)
-        return [so]
+            sos.append(so)
+
+        return sos

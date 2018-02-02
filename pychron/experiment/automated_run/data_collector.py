@@ -298,14 +298,30 @@ class DataCollector(Consoleable):
         isotopes = self.isotope_group.isotopes
 
         # print 'isotopes', ['{}{}'.format(i.name, i.detector) for i in isotopes.itervalues()]
-        name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det and v.name == iso), (None, None))
+        # print 'fff', cnt, det, iso
+        # for k, v in isotopes.iteritems():
+        #     print v.detector, v.name
+
         # print 'pairs', [(k, v.detector, v.name) for k, v in isotopes.iteritems()]
         # print 'get_fit', det, iso, name
         # print 'gff', cnt, det, iso, ix.name, name
         if self.is_baseline:
+            name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det),
+                            (None, None))
             ix = ix.baseline
             name = det
-        fit = ix.get_fit(cnt)
+        else:
+            name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det and v.name == iso),
+                            (None, None))
+
+        fit = None
+        if ix is not None:
+            fit = ix.get_fit(cnt)
+        else:
+            print 'fff', cnt, det, iso
+            for k, v in isotopes.iteritems():
+                print v.detector, v.name
+
         return fit, name
 
     def _set_plot_data(self, cnt, iso, det, x, signal):
@@ -330,13 +346,18 @@ class DataCollector(Consoleable):
                                 continue
                             pids.append((pid, fit))
             else:
+
                 try:
                     # get fit and name
                     fit, name = self._get_fit(cnt, det, iso)
                 except AttributeError, e:
+                    name = None
                     self.debug('set_plot_data, get_fit {}'.format(e))
 
-                pid = g.get_plotid_by_ytitle(name)
+                pid = None
+                if name is not None:
+                    pid = g.get_plotid_by_ytitle(name)
+
                 if pid is None:
                     pid = g.get_plotid_by_ytitle(iso)
 
@@ -351,6 +372,7 @@ class DataCollector(Consoleable):
                                 plotid=p,
                                 update_y_limits=True,
                                 ypadding='0.1')
+
                     if f:
                         g.set_fit(f, plotid=p, series=fidx)
 

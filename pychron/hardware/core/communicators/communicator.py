@@ -75,7 +75,7 @@ class Communicator(HeadlessConfigLoadable):
         self._lock = RLock()
 
     def load(self, config, path):
-        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True)
+        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True, cast='boolean')
         self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
                            default=chr(13),
                            optional=True)

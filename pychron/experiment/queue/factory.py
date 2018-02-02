@@ -156,7 +156,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
         with db.session_ctx(use_parent_session=False):
             dbtrays = db.get_load_holders()
             if dbtrays:
-                trays.extend([d.name for d in dbtrays])
+                trays.extend(dbtrays)
         return trays
 
     @cached_property

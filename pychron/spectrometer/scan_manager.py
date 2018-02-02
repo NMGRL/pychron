@@ -323,7 +323,6 @@ class ScanManager(StreamGraphManager):
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
             #     return
-
             series, idxs = zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys))
             signals = [signals[idx] for idx in idxs]
 
@@ -554,7 +553,7 @@ class ScanManager(StreamGraphManager):
         if self.use_vertical_markers:
             bottom_pad = 120
 
-        plot = g.new_plot(padding=[55, 5, 5, bottom_pad],
+        plot = g.new_plot(padding=[70, 5, 5, bottom_pad],
                           data_limit=n,
                           xtitle='Time',
                           ytitle='Signal',

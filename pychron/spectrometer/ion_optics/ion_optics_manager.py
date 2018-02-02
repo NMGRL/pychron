@@ -322,23 +322,25 @@ class IonOpticsManager(Manager):
         config.detectors = self.spectrometer.detector_names
         keys = self.spectrometer.molecular_weights.keys()
         config.isotopes = sort_isotopes(keys)
+        config.integration_times = self.spectrometer.integration_times
 
-    def _get_peak_center_config(self, config_name):
-        if config_name is None:
-            config_name = 'default'
-
-        config = self.peak_center_config.get(config_name)
-
-        config.detectors = self.spectrometer.detectors_names
-        if config.detector_name:
-            config.detector = next((di for di in config.detectors if di == config.detector_name), None)
-
-        if not config.detector:
-            config.detector = config.detectors[0]
-
-        keys = self.spectrometer.molecular_weights.keys()
-        config.isotopes = sort_isotopes(keys)
-        return config
+    # def _get_peak_center_config(self, config_name):
+    #     if config_name is None:
+    #         config_name = 'default'
+    #
+    #     config = self.peak_center_config.get(config_name)
+    #
+    #     config.detectors = self.spectrometer.detectors_names
+    #     if config.detector_name:
+    #         config.detector = next((di for di in config.detectors if di == config.detector_name), None)
+    #
+    #     if not config.detector:
+    #         config.detector = config.detectors[0]
+    #
+    #     keys = self.spectrometer.molecular_weights.keys()
+    #     config.isotopes = sort_isotopes(keys)
+    #     config.integration_times = self.spectrometer.integration_times
+    #     return config
 
     # def _timeout_func(self, timeout, evt):
     #     st = time.time()

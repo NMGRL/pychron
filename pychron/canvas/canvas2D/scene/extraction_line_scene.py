@@ -37,6 +37,7 @@ KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
 
 class ExtractionLineScene(Scene):
     valves = Dict
+    valve_dimension = 2, 2
 
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
@@ -201,7 +202,7 @@ class ExtractionLineScene(Scene):
             try:
                 ox, oy = map(float, start.get('offset').split(','))
             except AttributeError:
-                ox = 1
+                ox = sanchor.width / 2.0
                 oy = sanchor.height / 2.0
 
             x += ox
@@ -215,7 +216,7 @@ class ExtractionLineScene(Scene):
             try:
                 ox, oy = map(float, end.get('offset').split(','))
             except AttributeError:
-                ox = 1
+                ox = eanchor.width / 2.0
                 oy = eanchor.height / 2.0
 
             x1 += ox
@@ -349,6 +350,10 @@ class ExtractionLineScene(Scene):
             key = v.text.strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(cp, v)
+            try:
+                w, h = self._get_floats(v, 'dimension')
+            except AttributeError:
+                w, h = self.valve_dimension
             # get the description from valves.xml
             vv = vp.get_valve(key)
             desc = ''
@@ -358,6 +363,7 @@ class ExtractionLineScene(Scene):
 
             v = Valve(x + ox, y + oy,
                       name=key,
+                      width=w, height=h,
                       description=desc,
                       border_width=3)
 
@@ -522,7 +528,6 @@ class ExtractionLineScene(Scene):
     def _load_config(self, p, canvas):
         color_dict = dict()
         ox, oy = 0, 0
-
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
 
@@ -532,6 +537,10 @@ class ExtractionLineScene(Scene):
 
                 canvas.view_x_range = xv
                 canvas.view_y_range = yv
+                dim = tree.find('valve_dimension')
+                if dim is not None:
+                    self.valve_dimension = map(float, dim.text.split(','))
+
                 # get label font
                 font = tree.find('font')
                 if font is not None:

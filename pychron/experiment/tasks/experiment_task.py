@@ -23,6 +23,7 @@ from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
 from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
+from traits.trait_errors import TraitError
 
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference
@@ -291,7 +292,7 @@ class ExperimentEditorTask(EditorTask):
     def _open_abort(self):
         try:
             self.notifier.close()
-        except AttributeError:
+        except (AttributeError, TraitError), e:
             pass
 
     def _open_file(self, path, **kw):

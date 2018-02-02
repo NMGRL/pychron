@@ -72,18 +72,17 @@ class MKSController(BaseGaugeController, CoreDevice):
             channel = 'Z'
 
         cmd = self._build_query('PR{}'.format(channel))
-        verbose=True
         r = self.ask(cmd, verbose=verbose)
-
-        match =ACK_RE.match(r)
-        if match:
-            v = float(match.group('value'))
-            return v
-
-        for reg in (NO_GAUGE_RE, LO_RE):
-            match = reg.match(r)
+        if r is not None:
+            match = ACK_RE.match(r)
             if match:
-                return 0
+                v = float(match.group('value'))
+                return v
+
+            for reg in (NO_GAUGE_RE, LO_RE):
+                match = reg.match(r)
+                if match:
+                    return 0
 
         # r = r.split('ACK')
         # r = r[1]
