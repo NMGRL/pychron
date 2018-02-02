@@ -52,21 +52,29 @@ class BaseLakeShoreController(CoreDevice):
         self.setpoint2_readback = self.read_setpoint(2)
         return self.input_a
 
+    def setpoints_achieved(self, tol=1):
+        v1 = self.read_input_a()
+        if abs(v1 - self.setpoint1) < tol:
+            v2 = self.read_input_a()
+            if abs(v2 - self.setpoint2) < tol:
+                return self.setpoints_achieved_cnt
+
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
         return self.ask('SETP? {}'.format(output), verbose=verbose)
 
     def set_setpoints(self, v1, v2):
-        self.set_setpoint(v1, 1)
+        # self.set_setpoint(v1, 1)
+        self.setpoint1 = v1
         if v2 is not None:
-            self.set_setpoint(v2, 2)
+            self.setpoint2 = v2
 
     def set_setpoint(self, v, output=1):
         self.tell('SETP {},{}'.format(output, v))
 
     def read_input(self, v, **kw):
         if isinstance(v, int):
-            v = 'ab'[v-1]
+            v = 'ab'[v - 1]
         return self._read_input(v, self.units, **kw)
 
     def read_input_a(self, **kw):
