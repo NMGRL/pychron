@@ -230,8 +230,9 @@ def ignored_exceptions(exctype, value, tb):
         return True
 
     return str(value) in ("'NoneType' object has no attribute 'text'",
-                     "'NoneType' object has no attribute 'size'",
-                     "too many indices for array")
+                          "'NoneType' object has no attribute 'size'",
+                          "too many indices for array",
+                          "unsupported operand type(s) for +=: 'NoneType' and 'list'")
 
 
 def except_handler(exctype, value, tb):

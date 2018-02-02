@@ -88,7 +88,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'email', 'use_email',
                   'use_group_email',
-                  'load_name',
+                  'load_name', 'tray',
                   'delay_after_blank',
                   'delay_between_analyses',
                   'delay_after_air',

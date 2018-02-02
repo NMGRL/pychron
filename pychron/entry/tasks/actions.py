@@ -129,15 +129,17 @@ class ImportIrradiationAction(TaskAction):
 
     def perform(self, event):
         app = event.task.window.application
-        # mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
-        # mssource = app.get_service(mdb)
-        # mssource.bind_preferences()
+
+        mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+        mssource = app.get_service(mdb)
+        mssource.bind_preferences()
 
         from pychron.data_mapper import do_import_irradiation
         dvc = app.get_service('pychron.dvc.dvc.DVC')
         plugin = app.get_plugin('pychron.entry.plugin')
 
         sources = {obj: name for name, obj in plugin.data_sources}
+        sources['Mass Spec'] = mssource
         do_import_irradiation(dvc=dvc, sources=sources, default_source='Mass Spec')
 
 

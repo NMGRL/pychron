@@ -38,11 +38,9 @@ class BaseGaugeController(HasTraits):
     def update_pressures(self, verbose=False):
         if verbose:
             self.debug('update pressures')
-        for g in self.gauges:
-            if not self._update_pressure(g, verbose):
-                return
 
-        return True
+        resps = [self._update_pressure(g, verbose) for g in self.gauges]
+        return any(resps)
 
     def get_gauge(self, name):
         return next((gi for gi in self.gauges
