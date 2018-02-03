@@ -25,7 +25,7 @@ class MassScanner(BaseScanner):
     start_mass = Float
     stop_mass = Float
 
-    pattributes = ('step', 'start_mass', 'stop_mass')
+    pattributes = ('step', 'start_value', 'stop_value')
 
     # private
     def _setup_graph(self, graph, plot):
@@ -41,7 +41,7 @@ class MassScanner(BaseScanner):
         return self.start_mass, self.stop_mass
 
     def _calculate_steps(self, l, h):
-        self.debug('scan limits: start_mass={}, stop_mass={}'.format(l, h))
+        self.debug('scan limits: start_value={}, stop_value={}'.format(l, h))
         step_size = self.step
 
         if l > h:

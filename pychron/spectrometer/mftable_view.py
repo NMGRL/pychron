@@ -20,11 +20,11 @@ from traitsui.api import View, UItem, TableEditor
 # ============= local library imports  ==========================
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
-from pychron.spectrometer.mftable import MagnetFieldTable
+from pychron.spectrometer.mftable import FieldTable
 
 
 class MagnetFieldTableView(Controller):
-    model = MagnetFieldTable
+    model = FieldTable
 
     def closed(self, info, is_ok):
         if is_ok:
@@ -54,7 +54,7 @@ class MagnetFieldTableView(Controller):
 if __name__ == '__main__':
     from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
 
-    m = MagnetFieldTable(molweights=molweights)
+    m = FieldTable(molweights=molweights)
     mv = MagnetFieldTableView(model=m)
     mv.configure_traits()
 

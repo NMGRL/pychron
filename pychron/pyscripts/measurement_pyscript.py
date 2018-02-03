@@ -496,6 +496,11 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def position_hv(self, pos, detector='AX'):
+        self._automated_run_call('py_position_hv', pos, detector)
+
+    @verbose_skip
+    @command_register
     def position_magnet(self, pos, detector='AX', use_dac=False):
         """
 

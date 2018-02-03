@@ -27,20 +27,23 @@ class IsotopxMagnet(BaseMagnet, IsotopxMixin):
         pass
 
     def traits_view(self):
-        v = View(VGroup(VGroup(
-                               Item('mass'),
-                                    # editor=RangeEditor(mode='slider', low_name='massmin',
-                                    #                            high_name='massmax',
-                                    #                            format='%0.3f')),
-                               HGroup(Spring(springy=False,
-                                             width=48),
-                                      Item('massmin', width=-40), Spring(springy=False,
-                                                                         width=138),
-                                      Item('massmax', width=-55),
-
-                                      show_labels=False),
-                               show_border=True,
-                               label='Control')))
-
+        v = View(VGroup(Item('mass'), show_border=True, label='Control'))
         return v
+        
+        # v = View(VGroup(VGroup(
+        #                        Item('mass'),
+        #                             # editor=RangeEditor(mode='slider', low_name='massmin',
+        #                             #                            high_name='massmax',
+        #                             #                            format='%0.3f')),
+        #                        HGroup(Spring(springy=False,
+        #                                      width=48),
+        #                               Item('massmin', width=-40), Spring(springy=False,
+        #                                                                  width=138),
+        #                               Item('massmax', width=-55),
+        #
+        #                               show_labels=False),
+        #                        show_border=True,
+        #                        label='Control')))
+        #
+        # return v
 # ============= EOF =============================================

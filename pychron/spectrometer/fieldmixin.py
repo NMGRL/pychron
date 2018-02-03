@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2017 ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,32 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Float
-from traitsui.api import View, Item, RangeEditor
-
-from pychron.spectrometer.fieldmixin import FieldMixin
-from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+from traits.api import Instance
 
 
-class BaseSource(SpectrometerDevice, FieldMixin):
-    nominal_hv = Float(4500)
-    current_hv = Float(4500)
+class FieldMixin:
+    field_table = Instance('pychron.spectrometer.field_table.FieldTable', ())
 
-    def sync_parameters(self):
-        pass
-        # self.read_y_symmetry()
-        # self.read_z_symmetry()
-        # self.read_trap_current()
-        # self.read_hv()
+    def reload_field_table(self):
+        self.field_table.load_mftable()
 
-    def set_hv(self, new):
-        pass
+    def set_mftable(self, name):
+        self.field_table.set_path_name(name)
 
-    # private
-    def _nominal_hv_changed(self, new):
-        if new is not None:
-            self.set_hv(new)
-
-
-
+    def update_field_table(self, *args, **kw):
+        self.field_table.update_field_table(*args, **kw)
 # ============= EOF =============================================

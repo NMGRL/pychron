@@ -282,9 +282,9 @@ class MagnetScan(SpectrometerTask):
         v = View(
             Group(
                 Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_mass', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_mass', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_mass', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
+                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
                 Item('integration_time', label='Integration (s)'),
                 HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
                                     show_label=False)),

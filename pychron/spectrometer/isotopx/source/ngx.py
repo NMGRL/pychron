@@ -17,6 +17,9 @@ from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class NGXSource(IsotopxSource):
+    def set_hv(self, new):
+        self.ask('SSO IE, {}'.format(new))
+
     def read_hv(self):
         resp = self.ask('GSO IE', verbose=True)
         actual = 0

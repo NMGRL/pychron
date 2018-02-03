@@ -46,10 +46,6 @@ class ThermoSource(BaseSource):
 
     _extraction_lens = Float  # Range(0.0, 100.)
 
-    def _nominal_hv_changed(self, new):
-        if new is not None:
-            self.set_hv(new)
-
     def set_hv(self, v):
         return self._set_value('SetHV', v)
 
