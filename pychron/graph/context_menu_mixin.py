@@ -33,18 +33,17 @@ class ContextMenuMixin(HasTraits):
     def close_popup(self):
         pass
 
+    def action_factory(self, name, func, **kw):
+        return Action(name=name, on_perform=getattr(self, func), **kw)
+
     def contextual_menu_contents(self):
         """
         """
-
-        def action_factory(name, func, **kw):
-            return Action(name=name, on_perform=getattr(self, func), **kw)
-
         save = [('PDF', 'save_pdf', {}), ('PNG', 'save_png', {})]
-        save_actions = [action_factory(n, f, **kw) for n, f, kw in save]
+        save_actions = [self.action_factory(n, f, **kw) for n, f, kw in save]
         save_menu = MenuManager(name='Save Figure', *save_actions)
 
-        export_actions = [action_factory('CSV', 'export_data')]
+        export_actions = [self.action_factory('CSV', 'export_data')]
         export_menu = MenuManager(name='Export', *export_actions)
 
         rescale = [('X', 'rescale_x_axis', {}),
@@ -55,7 +54,7 @@ class ContextMenuMixin(HasTraits):
         if a:
             rescale.extend(a)
 
-        rescale_actions = [action_factory(n, f, **kw) for n, f, kw in rescale]
+        rescale_actions = [self.action_factory(n, f, **kw) for n, f, kw in rescale]
         rescale_menu = MenuManager(name='Rescale', *rescale_actions)
 
         contents = [save_menu, export_menu, rescale_menu]

@@ -216,10 +216,18 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # commands
     # ==========================================================================
-    @calculate_duration
+    @verbose_skip
     @command_register
     def set_cryo(self, value):
-        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
+        result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
+        print 'asfdasdf', result
+        return result
+
+    @verbose_skip
+    @command_register
+    def get_cryo_temp(self, value):
+        result = self._manager_action([('get_cryo_temp', (value, ), {})], protocol=ELPROTOCOL)
+        return result
 
     @calculate_duration
     @command_register
@@ -343,7 +351,9 @@ class ExtractionPyScript(ValvePyScript):
                 check_period=1, timeout=0):
         """
 
-        tuple format: (device_name, function_name, comparison)
+        tuple format: (device_name, function_name, comparison, ...)
+        addition tuple elements are passed to function_name
+
         comparison ::
 
           x<10
@@ -943,7 +953,7 @@ class ExtractionPyScript(ValvePyScript):
         else:
             self.warning('_get_device - No application')
 
-    def _make_waitfor_func(self, name, funcname, comp):
+    def _make_waitfor_func(self, name, funcname, comp, *args):
         dev = self._get_device(name)
         if dev:
             devfunc = getattr(dev, funcname)
@@ -951,8 +961,8 @@ class ExtractionPyScript(ValvePyScript):
             if m:
                 k = m[0]
 
-                def func(*args):
-                    return eval(comp, {k: devfunc()})
+                def func(*a):
+                    return eval(comp, {k: devfunc(*args)})
 
                 return func
             else:

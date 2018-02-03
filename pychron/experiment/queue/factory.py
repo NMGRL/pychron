@@ -144,11 +144,20 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     def _get_ok_make(self):
         ms = self.mass_spectrometer.strip()
         un = self.username.strip()
-        return bool(ms and not ms in ('Spectrometer', LINE_STR) and un)
+        return bool(ms and ms not in ('Spectrometer', LINE_STR) and un)
 
     @cached_property
     def _get_trays(self):
-        return [NULL_STR, '221-hole', '221-small-hole', '145-hole', '61-hole', '37-hole', '10-hole', '9-hole']
+        db = self.get_database()
+        if db is None or not db.connect():
+            return []
+
+        trays = [NULL_STR]
+        with db.session_ctx(use_parent_session=False):
+            dbtrays = db.get_load_holders()
+            if dbtrays:
+                trays.extend(dbtrays)
+        return trays
 
     @cached_property
     def _get_usernames(self):

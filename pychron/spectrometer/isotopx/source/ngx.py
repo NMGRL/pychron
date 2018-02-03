@@ -17,5 +17,25 @@ from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class NGXSource(IsotopxSource):
-    pass
+    def read_hv(self):
+        resp = self.ask('GSO IE', verbose=True)
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = map(float, resp.split(','))
+        return actual
+
+    def read_trap_current(self):
+        resp = self.ask('GSO TC')
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = map(float, resp.split(','))
+        return actual
+
+    def read_emission(self):
+        resp = self.ask('GSO EC')
+        actual = 0
+        if ',' in resp:
+            setpoint, actual = map(float, resp.split(','))
+        return actual
+        # return self.ask('GSO ')
 # ============= EOF =============================================

@@ -172,6 +172,7 @@ class BasePeakCenter(MagnetSweep):
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
+        time.sleep(1)
 
         tol = cur_intensity * (1 - self.percent / 100.)
         timeout = 10

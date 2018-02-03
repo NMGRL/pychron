@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
@@ -26,6 +27,10 @@ from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane, MassSpec
 class MassSpecPlugin(BaseTaskPlugin):
     id = 'pychron.mass_spec.plugin'
     name = 'MassSpec'
+    # sources = List(contributes_to='pychron.entry.data_sources')
+    #
+    # def _sources_default(self):
+    #     return [('Mass Spec', MassSpecSource()), ]
 
     def test_database(self):
         ret, err = 'Skipped', ''

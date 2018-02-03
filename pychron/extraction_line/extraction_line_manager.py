@@ -24,6 +24,7 @@ from pyface.timer.do_later import do_after
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float
 
 from pychron.core.file_listener import FileListener
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
@@ -492,12 +493,27 @@ class ExtractionLineManager(Manager, Consoleable):
             wd = self.wait_group.add_control()
         return wd
 
-    def set_cryo(self, v):
-        self.debug('setting cryo to {}'.format(v))
+    def set_cryo(self, v, v2=None):
+        self.debug('setting cryo to {}, {}'.format(v, v2))
         if self.cryo_manager:
-            self.cryo_manager.set_setpoint(v)
+            return self.cryo_manager.set_setpoint(v, v2)
         else:
-            self.warning('cryo manager not avaialable')
+            self.warning('cryo manager not available')
+            return 0, 0
+
+    def get_cryo_temp(self, iput):
+        self.debug('get cryo temp {}'.format(iput))
+        if self.cryo_manager:
+            return self.cryo_manager.read_input(iput)
+        else:
+            self.warning('cryo manager not available')
+            return 0
+
+    def set_experiment_type(self, v):
+        self.debug('setting experiment type={}'.format(v))
+        if self.cryo_manager:
+            self.cryo_manager.species = v
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -624,7 +640,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
             self.debug('open_close_valve, mode={}'.format(mode))
             if mode == 'script':
-                do_after(200, self.refresh_canvas)
+                invoke_in_main_thread(self.refresh_canvas)
 
             if result:
                 if all(result):
@@ -780,7 +796,8 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             n = len(new)
             for i, ni in enumerate(new):
-                self.update_switch_state(refresh=i == n - 1, *ni)
+                self.update_switch_state(*ni)
+                # self.update_switch_state(refresh=i == n - 1, *ni)
 
     def _handle_lock_state(self, new):
         self.debug('refresh_lock_state fired. {}'.format(new))

@@ -85,8 +85,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         if unklns:
             self.unk_maxs = map(str, get_maxs(unklns))
 
-        self.mon_start = self.mon_maxs[0]
-        self.unk_start = self.unk_maxs[0]
+        self.mon_start = self.mon_maxs[0] if self.mon_maxs else 0
+        self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
 
         info = self.edit_traits(view=View(Item('offset'), Item('level_offset'),
                                           Item('mon_start', label='Starting Monitor L#',

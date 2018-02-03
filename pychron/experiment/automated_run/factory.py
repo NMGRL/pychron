@@ -353,7 +353,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._end_after = run.end_after
 
     def set_mass_spectrometer(self, new):
+        print 'asdfasdf', new, type(new), id(self)
         new = new.lower()
+        self.debug('setting mass spec to={}'.format(new))
         self.mass_spectrometer = new
         for s in self._iter_scripts():
             s.mass_spectrometer = new
@@ -973,7 +975,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         ids = ['']
         if db and db.connect():
             with db.session_ctx(use_parent_session=False):
-                ids.extend(db.get_repository_identifiers())
+                repoids = db.get_repository_identifiers()
+                if repoids:
+                    ids.extend(repoids)
         return ids
 
     @cached_property
@@ -1303,14 +1307,17 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
-        from pychron.experiment.fits.measurement_fits_selector import MeasurementFitsSelector, \
-            MeasurementFitsSelectorView
+        # from pychron.experiment.fits.measurement_fits_selector import MeasurementFitsSelector, \
+        #     MeasurementFitsSelectorView
         from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
         from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
+        from pychron.core.fits.measurement_fits_selector import MeasurementFitsSelector
+        from pychron.core.fits.measurement_fits_selector import MeasurementFitsSelectorView
 
         m = MeasurementFitsSelector()
         sp = self.measurement_script.script_path()
         m.open(sp)
+
         f = MeasurementFitsSelectorView(model=m)
         info = f.edit_traits(kind='livemodal')
         if info.result:
@@ -1442,7 +1449,7 @@ post_equilibration_script:name''')
             if ln:
                 if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-
+                    print 'asdfasdfasdf', self.mass_spectrometer, msname, id(self)
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
@@ -1513,6 +1520,7 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
+        print 'script factory', self.mass_spectrometer
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,

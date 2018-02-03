@@ -104,6 +104,7 @@ class Initializer(Loggable):
             self.info('Manager loading {}'.format(name))
             manager.application = self.application
             manager.load()
+            # self.application.register_service(type(manager), manager)
 
         else:
             return False
@@ -225,7 +226,6 @@ class Initializer(Loggable):
                 dev_class = dev_class.text.strip()
 
             try:
-                print manager, device
                 dev = getattr(manager, device)
                 if dev is None:
                     dev = manager.create_device(device,

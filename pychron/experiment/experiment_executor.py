@@ -1135,6 +1135,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # make sure status monitor is running a
         self.extraction_line_manager.setup_status_monitor()
 
+        self.extraction_line_manager.set_experiment_type(self.experiment_type)
         ret = True
         if ai.start_extraction():
             self.extracting = True
@@ -1576,7 +1577,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             else:
                 elm_connectable.connected = True
 
-        if exp.extract_device and exp.extract_device not in ('Extract Device', LINE_STR):
+        if exp.extract_device and exp.extract_device not in ('Extract Device', LINE_STR, 'No Extract Device'):
             # extract_device = convert_extract_device(exp.extract_device)
             extract_device = exp.extract_device.replace(' ', '')
             ed_connectable = Connectable(name=extract_device)

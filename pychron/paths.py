@@ -158,6 +158,7 @@ class Paths(object):
     furnace_map_dir = None
     user_points_dir = None
     irradiation_tray_maps_dir = None
+
     # ==============================================================================
     # data
     # ==============================================================================
@@ -290,6 +291,7 @@ class Paths(object):
     correction_factors_template = None
 
     furnace_sample_states = None
+    valid_pi_names = None
 
     def write_default_file(self, p, default, overwrite=False):
         return self._write_default_file(p, default, overwrite)
@@ -468,6 +470,7 @@ class Paths(object):
 
         self.furnace_firmware = join(self.setup_dir, 'furnace_firmware.yaml')
         self.furnace_sample_states = join(self.appdata_dir, 'furnace_sample_states.yaml')
+        self.valid_pi_names = join(self.setup_dir, 'valid_pi_names.yaml')
 
         # =======================================================================
         # pipeline templates

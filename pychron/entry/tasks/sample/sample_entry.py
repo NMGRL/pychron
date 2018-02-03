@@ -36,10 +36,15 @@ class RString(String):
         else:
             return value
 
+PI_NAMES = ('NMGRL',)
+if os.path.isfile(paths.valid_pi_names):
+    with open(paths.valid_pi_names, 'r') as rf:
+        PI_NAMES = yaml.load(rf)
+
 
 class PIStr(String):
     def validate(self, obj, name, value):
-        if not PI_REGEX.match(value) and value != 'NMGRL':
+        if not PI_REGEX.match(value) and value not in ('NMGRL', 'AGES-LDEO'):
             return self.error(obj, name, value)
         else:
             return value

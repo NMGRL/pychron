@@ -88,7 +88,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'email', 'use_email',
                   'use_group_email',
-                  'load_name',
+                  'load_name', 'tray',
                   'delay_after_blank',
                   'delay_between_analyses',
                   'delay_after_air',
@@ -250,8 +250,8 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             self.run_factory.set_mass_spectrometer(new)
 
         elif name == 'extract_device':
-            # self._set_extract_device(new)
-            do_later(self._set_extract_device, new)
+            self._set_extract_device(new)
+            # do_later(self._set_extract_device, new)
 
             # elif name == 'username':
             # self._username = new
@@ -326,13 +326,13 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
                    iso_db_man=self.iso_db_man,
                    application=self.application,
                    extract_device=self.extract_device,
-                   mass_spectrometer=self.default_mass_spectrometer)
+                   mass_spectrometer=self.mass_spectrometer)
 
         # rf.activate()
         # rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
-
+        print 'making new factory', id(rf)
         return rf
 
     # handlers

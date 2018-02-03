@@ -17,7 +17,6 @@
 
 # ============= enthought library imports =======================
 import math
-from PySide.QtCore import QSequentialAnimationGroup
 from traits.api import HasTraits, Property, Int, Callable, Any, Str, Dict
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -25,7 +24,8 @@ from traitsui.qt4.editor import Editor
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel, QSizePolicy, QGraphicsView, QGraphicsScene, QBrush, \
     QPen, QRadialGradient, QVBoxLayout, QGraphicsItem, QPolygon, QPainter
-from pyface.qt.QtCore import QPropertyAnimation, QObject, Property as QProperty, QPoint, QParallelAnimationGroup, Qt
+from pyface.qt.QtCore import QPropertyAnimation, QObject, Property as QProperty, QPoint, QParallelAnimationGroup, Qt, \
+    QSequentialAnimationGroup
 
 # ============= local library imports  ==========================
 # ============= views ===================================

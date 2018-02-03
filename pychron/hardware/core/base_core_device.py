@@ -165,6 +165,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     def ask(self, cmd, **kw):
         """
         """
+
         comm = self.communicator
         if comm is not None:
             if comm.scheduler:

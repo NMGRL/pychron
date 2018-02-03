@@ -86,10 +86,10 @@ class Coincidence(BasePeakCenter):
         """
         graph = self.graph
         plot = graph.plots[0]
-        time.sleep(0.05)
+        # time.sleep(0.05)
 
         # wait for graph to fully update
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
         # def get_peak_center(i, di):
         def get_peak_center(di):

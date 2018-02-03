@@ -85,7 +85,6 @@ class Script(Loggable):
 
     def _get_name_prefix(self):
         r = ''
-        # print self.use_name_prefix, self._name_prefix, self.mass_spectrometer
         if self.use_name_prefix:
             r = self._name_prefix if self._name_prefix else '{}_'.format(self.mass_spectrometer.lower())
         return r
@@ -95,6 +94,7 @@ class Script(Loggable):
 
     def get_parameter(self, key, default=None):
         p = self.script_path()
+
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 text = rfile.read()

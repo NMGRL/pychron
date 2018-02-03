@@ -15,7 +15,7 @@
 # ===============================================================================
 import time
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Enum, Str
+from traits.api import Enum, Str, Float, Int, List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
@@ -27,7 +27,8 @@ from pychron.spectrometer.isotopx.source.ngx import NGXSource
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
-    integration_time = Enum(ISOTOPX_INTEGRATION_TIMES)
+    integration_time = Int
+    integration_times = List(ISOTOPX_INTEGRATION_TIMES)
 
     magnet_klass = NGXMagnet
     detector_klass = NGXDetector
@@ -41,22 +42,51 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _test_connect_command = 'GETMASS'
 
     use_deflection_correction = False
+    use_hv_correction = False
 
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
         return s
 
+    def make_configuration_dict(self):
+        return {}
+
+    def make_gains_dict(self):
+        return {}
+
+    def make_deflection_dict(self):
+        return {}
+
+    def convert_to_axial(self, det, v):
+        print 'asdfsadf', det, det.index, v
+        v = v-(det.index-2)
+        return v
+
     def start(self):
         self.set_integration_time(1, force=True)
 
+    def finish_loading(self):
+        super(NGXSpectrometer, self).finish_loading()
+        ret = self._get_cached_config()
+        if ret is not None:
+            specparams, defl, trap, magnet = ret
+            mftable_name = magnet.get('mftable')
+            if mftable_name:
+                self.debug('updating mftable name {}'.format(mftable_name))
+                self.magnet.mftable.path = mftable_name
+                self.magnet.mftable.load_mftable(load_items=True)
+
+    def _send_configuration(self, **kw):
+        pass
+
     def read_intensities(self, timeout=4):
-        resp = self.ask('StartAcq 1,{}'.format(self.rcs_id))
+        resp = self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
 
         keys = []
         signals = []
         if resp is not None:
-            keys = self.detector_names
+            keys = self.detector_names[::-1]
             tag = 'EVENT:ACQ,{}'.format(self.rcs_id)
             ds = ''
             st = time.time()

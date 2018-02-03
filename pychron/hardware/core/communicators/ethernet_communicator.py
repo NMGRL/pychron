@@ -259,6 +259,7 @@ class EthernetCommunicator(Communicator):
                 self.handler = h
             return h
         except socket.error, e:
+            print 'ewafs', e, self.host, self.port
             self.debug('Get Handler {}. timeout={}. comms simulation={}'.format(str(e),
                                                                                 timeout,
                                                                                 globalv.communication_simulation))
@@ -316,7 +317,7 @@ class EthernetCommunicator(Communicator):
                     self.handler.end()
                 self._reset_connection()
 
-            if verbose or self.verbose and not quiet:
+            if verbose or (self.verbose and not quiet):
                 self.log_response(cmd, re, info)
 
         return r

@@ -54,130 +54,72 @@ class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
             v = new_readout_view(rv)
             open_view(rv, view=v)
 
-    def _hops_ext(self):
-        def hop_action(name):
-            def func():
-                return HopsAction(name=name, hop_name=name)
 
-            return func
-
-        actions = []
-
-        for f in list_directory2(paths.hops_dir, extension='.yaml', remove_extension=True):
-            actions.append(SchemaAddition(id='procedure.{}'.format(f),
-                                          factory=hop_action(f),
-                                          path='MenuBar/procedures.menu/hops.group'))
-
-        if actions:
-            m = SchemaAddition(id='procedures.menu',
-                               before='window.menu',
-                               after='tools.menu',
-                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
-                               path='MenuBar')
-            g = SchemaAddition(id='hops.group',
-                               factory=lambda: SGroup(name='Hops', id='hops.group'),
-                               path='MenuBar/procedures.menu')
-            actions.insert(0, g)
-            actions.insert(0, m)
-
-            ext = TaskExtension(actions=actions)
-            return ext
-
-    def _scripts_ext(self):
-        def script_action(name):
-            def func():
-                p = os.path.join(paths.spectrometer_scripts_dir, '{}.py'.format(name))
-                return SpectrometerScriptAction(name=name, script_path=p)
-
-            return func
-
-        actions = []
-
-        for f in list_directory2(paths.spectrometer_scripts_dir, extension='.py', remove_extension=True):
-            actions.append(SchemaAddition(id='spectrometer_script.{}'.format(f),
-                                          factory=script_action(f),
-                                          path='MenuBar/procedures.menu/spectrometer_script.group'))
-        if actions:
-            m = SchemaAddition(id='procedures.menu',
-                               before='window.menu',
-                               after='tools.menu',
-                               factory=lambda: SMenu(name='Procedures', id='procedures.menu'),
-                               path='MenuBar')
-            g = SchemaAddition(id='spectrometer_script.group',
-                               factory=lambda: SGroup(name='Spectrometer',
-                                                      id='spectrometer_script.group'),
-                               path='MenuBar/procedures.menu')
-
-            actions.insert(0, g)
-            actions.insert(0, m)
-
-            ext = TaskExtension(actions=actions)
-            return ext
     # ===============================================================================
     # defaults
     # ===============================================================================
 
-    def _task_extensions_default(self):
-
-        ext = []
-        hopext = self._hops_ext()
-        if hopext:
-            ext.append(hopext)
-
-        scriptext = self._scripts_ext()
-        if scriptext:
-            ext.append(scriptext)
-
-        ta1 = TaskExtension(actions=[SchemaAddition(id='spectrometer.menu',
-                                                    factory=lambda: SMenu(id='spectrometer.menu',
-                                                                          name='Spectrometer'),
-                                                    path='MenuBar',
-                                                    before='window.menu',
-                                                    after='tools.menu'),
-                                     SchemaAddition(id='update_mftable',
-                                                    path='MenuBar/spectrometer.menu',
-                                                    factory=PopulateMFTableAction),
-                                     SchemaAddition(id='send_config',
-                                                    factory=SendConfigAction,
-                                                    path='MenuBar/spectrometer.menu'),
-                                     SchemaAddition(id='view_readout',
-                                                    factory=ViewReadoutAction,
-                                                    path='MenuBar/spectrometer.menu'),
-                                     SchemaAddition(id='edit_gains',
-                                                    factory=EditGainsAction,
-                                                    path='MenuBar/spectrometer.menu'),
-                                     SchemaAddition(id='relood_table',
-                                                    factory=ReloadMFTableAction,
-                                                    path='MenuBar/spectrometer.menu'),
-                                     SchemaAddition(id='mftable',
-                                                    factory=MagnetFieldTableAction,
-                                                    path='MenuBar/spectrometer.menu'),
-                                     SchemaAddition(id='mftable_history',
-                                                    factory=MagnetFieldTableHistoryAction,
-                                                    path='MenuBar/spectrometer.menu')])
-        si = TaskExtension(task_id='pychron.spectrometer.scan_inspector',
-                           actions=[SchemaAddition(id='toggle_spectrometer_task',
-                                                   factory=ToggleSpectrometerTask,
-                                                   path='MenuBar/spectrometer.menu')])
-
-        sp = TaskExtension(task_id='pychron.spectrometer',
-                           actions=[SchemaAddition(id='toggle_spectrometer_task',
-                                                   factory=ToggleSpectrometerTask,
-                                                   path='MenuBar/spectrometer.menu'),
-                                    SchemaAddition(id='peak_center',
-                                                   factory=PeakCenterAction,
-                                                   path='MenuBar/spectrometer.menu'),
-                                    SchemaAddition(id='define_peak_center',
-                                                   factory=DefinePeakCenterAction,
-                                                   path='MenuBar/spectrometer.menu'),
-                                    SchemaAddition(id='coincidence',
-                                                   factory=CoincidenceScanAction,
-                                                   path='MenuBar/spectrometer.menu'),
-                                    SchemaAddition(id='parameters',
-                                                   factory=SpectrometerParametersAction,
-                                                   path='MenuBar/spectrometer.menu')])
-
-        ext.extend((ta1, si, sp))
-        return ext
+    # def _task_extensions_default(self):
+    #
+    #     ext = []
+    #     hopext = self._hops_ext()
+    #     if hopext:
+    #         ext.append(hopext)
+    #
+    #     scriptext = self._scripts_ext()
+    #     if scriptext:
+    #         ext.append(scriptext)
+    #
+    #     ta1 = TaskExtension(actions=[SchemaAddition(id='spectrometer.menu',
+    #                                                 factory=lambda: SMenu(id='spectrometer.menu',
+    #                                                                       name='Spectrometer'),
+    #                                                 path='MenuBar',
+    #                                                 before='window.menu',
+    #                                                 after='tools.menu'),
+    #                                  SchemaAddition(id='update_mftable',
+    #                                                 path='MenuBar/spectrometer.menu',
+    #                                                 factory=PopulateMFTableAction),
+    #                                  SchemaAddition(id='send_config',
+    #                                                 factory=SendConfigAction,
+    #                                                 path='MenuBar/spectrometer.menu'),
+    #                                  SchemaAddition(id='view_readout',
+    #                                                 factory=ViewReadoutAction,
+    #                                                 path='MenuBar/spectrometer.menu'),
+    #                                  SchemaAddition(id='edit_gains',
+    #                                                 factory=EditGainsAction,
+    #                                                 path='MenuBar/spectrometer.menu'),
+    #                                  SchemaAddition(id='relood_table',
+    #                                                 factory=ReloadMFTableAction,
+    #                                                 path='MenuBar/spectrometer.menu'),
+    #                                  SchemaAddition(id='mftable',
+    #                                                 factory=MagnetFieldTableAction,
+    #                                                 path='MenuBar/spectrometer.menu'),
+    #                                  SchemaAddition(id='mftable_history',
+    #                                                 factory=MagnetFieldTableHistoryAction,
+    #                                                 path='MenuBar/spectrometer.menu')])
+    #     si = TaskExtension(task_id='pychron.spectrometer.scan_inspector',
+    #                        actions=[SchemaAddition(id='toggle_spectrometer_task',
+    #                                                factory=ToggleSpectrometerTask,
+    #                                                path='MenuBar/spectrometer.menu')])
+    #
+    #     sp = TaskExtension(task_id='pychron.spectrometer',
+    #                        actions=[SchemaAddition(id='toggle_spectrometer_task',
+    #                                                factory=ToggleSpectrometerTask,
+    #                                                path='MenuBar/spectrometer.menu'),
+    #                                 SchemaAddition(id='peak_center',
+    #                                                factory=PeakCenterAction,
+    #                                                path='MenuBar/spectrometer.menu'),
+    #                                 SchemaAddition(id='define_peak_center',
+    #                                                factory=DefinePeakCenterAction,
+    #                                                path='MenuBar/spectrometer.menu'),
+    #                                 SchemaAddition(id='coincidence',
+    #                                                factory=CoincidenceScanAction,
+    #                                                path='MenuBar/spectrometer.menu'),
+    #                                 SchemaAddition(id='parameters',
+    #                                                factory=SpectrometerParametersAction,
+    #                                                path='MenuBar/spectrometer.menu')])
+    #
+    #     ext.extend((ta1, si, sp))
+    #     return ext
 
 # ============= EOF =============================================

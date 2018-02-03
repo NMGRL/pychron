@@ -94,10 +94,25 @@ class BaseSpectrometerManager(Manager):
             p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
             if os.path.isfile(p):
                 self.info('loading "molecular_weights.csv" file. {}'.format(p))
-                with open(p, 'U') as f:
+                with open(p, 'r') as f:
+                    # mws = {}
+                    # for l in f:
+                    #     print '"{}"'.format(l)
+                    #     try:
+                    #         a, b = l.split('\t')
+                    #         mws[a] = float(b)
+                    #     except (IndexError, ValueError):
+                    #         break
                     reader = csv.reader(f, delimiter='\t')
-                    args = [[l[0], float(l[1])] for l in reader]
-                    spec.molecular_weights = dict(args)
+                    # # args =[]
+                    # # for l in reader:
+                    # #     print 'aSAsda', l
+                    # #     args.append([l[0], float(l[1])])
+                    # # # args = [[l[0], float(l[1])] for l in reader]
+                    mws = {l[0]: float(l[1]) for l in reader}
+                    self.debug('Mol weights {}'.format(mws))
+
+                    spec.molecular_weights = mws
             else:
                 self.info('writing a default "molecular_weights.csv" file')
                 # make a default molecular_weights.csv file

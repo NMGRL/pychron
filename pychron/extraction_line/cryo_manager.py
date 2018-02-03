@@ -13,13 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+import yaml
+from traits.api import Enum
 from traitsui.api import View, UItem, Item, InstanceEditor, ListEditor
 
 import time
 from pychron.managers.manager import Manager
+from pychron.paths import paths
 
 
 class CryoManager(Manager):
+    species = Enum('He', 'Ar/Ar', 'Ne')
+
     def finish_loading(self, *args, **kw):
         pass
 
@@ -61,8 +67,53 @@ class CryoManager(Manager):
     #             k.start_scan(sp)
     #             # stagger starts to reduce collisions
     #             time.sleep(0.25)
-    def set_setpoint(self, v):
-        pass
+
+    def read_input(self, iput, idx=0):
+        dev = self.devices[idx]
+        return dev.read_input(iput)
+
+    def set_setpoint(self, v1, v2=None, idx=0):
+        """
+        v is either a float or a str
+        if float interpret as degrees K
+        if str lookup species in cryotemps.yaml
+        :param v:
+        :return:
+        """
+        try:
+            v1 = float(v1)
+        except ValueError:
+            v1, v2 = self._lookup_species_temp(v1)
+
+        if v1 is not None:
+            self.devices[idx].set_setpoints(v1, v2)
+        return v1, v2
+
+    def _lookup_species_temp(self, v):
+        """
+        valid v
+
+        He_freeze
+        freeze
+        pump
+        release
+
+
+        :param v:
+        :return:
+        """
+
+        if v in ('freeze', 'pump', 'release'):
+            s = 'Ar' if self.species == 'Ar/Ar' else self.species
+            v = '{}_{}'.format(s, v)
+
+        p = os.path.join(paths.device_dir, 'cryotemps.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                return map(float, yd[v].split(','))
+        else:
+            self.warning('File {} does not exist. Cryostat setpoint can not be set')
 
     def traits_view(self):
         if self.devices:
@@ -74,7 +125,7 @@ class CryoManager(Manager):
                                             editor=InstanceEditor(view='control_view'))),
                      height=-100)
         else:
-            v =View()
+            v = View()
         return v
 
     def _get_simulation(self):

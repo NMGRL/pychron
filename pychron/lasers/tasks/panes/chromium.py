@@ -30,17 +30,22 @@ class ChromiumCO2ClientPane(ClientPane):
     def trait_context(self):
         ctx = super(ChromiumCO2ClientPane, self).trait_context()
         ctx['tray_calibration'] = self.model.stage_manager.tray_calibration_manager
+        ctx['stage_manager'] = self.model.stage_manager
         return ctx
 
     def traits_view(self):
         pos_grp = VGroup(UItem('move_enabled_button'),
                          VGroup(HGroup(Item('position'),
-                                       UItem('object.stage_manager.stage_map_name',
-                                             editor=EnumEditor(name='object.stage_manager.stage_map_names')),
+                                       UItem('stage_manager.stage_map_name',
+                                             editor=EnumEditor(name='stage_manager.stage_map_names')),
                                        UItem('stage_stop_button')),
-                                Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-                                Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-                                Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+                                # Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
+                                # Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
+                                # Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
+                                Item('x', editor=RangeEditor(low_name='stage_manager.xmin', high_name='stage_manager.xmax')),
+                                Item('y', editor=RangeEditor(low_name='stage_manager.ymin', high_name='stage_manager.ymax')),
+                                Item('z', editor=RangeEditor(low_name='stage_manager.zmin', high_name='stage_manager.zmax')),
+
                                 enabled_when='_move_enabled'),
                          label='Positioning')
 
