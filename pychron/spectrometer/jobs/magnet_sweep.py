@@ -49,32 +49,20 @@ def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
         yield d
 
 
-class MagnetSweep(BaseSweep):
-    start_mass = Float(36)
-    stop_mass = Float(40)
-    step_mass = Float(1)
+class AccelVoltageSweep(BaseSweep):
+    def _step(self, v):
+        self.spectrometer.source.nominal_hv = v
 
+
+class MagnetSweep(BaseSweep):
     # _peak_generator = None
     def _make_pseudo(self, values):
         self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
 
     def _step(self, v):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
-                                         settling_time=self.integration_time*2,
+                                         settling_time=self.integration_time * 2,
                                          use_dac_changed=False)
-
-    def _execute(self):
-        sm = self.start_mass
-        em = self.stop_mass
-        stm = self.step_mass
-
-        self.verbose = True
-        if abs(sm - em) > stm:
-            self._do_sweep(sm, em, stm)
-            self._alive = False
-            self._post_execute()
-
-        self.verbose = False
 
     def _do_sweep(self, sm, em, stm, directions=None, map_mass=True):
         if map_mass:
@@ -108,9 +96,9 @@ class MagnetSweep(BaseSweep):
         v = View(
             Group(
                 Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_mass', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_mass', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_mass', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
+                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
                 Item('integration_time', label='Integration (s)'),
                 HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
                                     show_label=False)),

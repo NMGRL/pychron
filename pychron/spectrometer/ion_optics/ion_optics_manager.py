@@ -32,7 +32,7 @@ from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.ion_optics.coincidence_config import CoincidenceConfig
 from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfigurer
 from pychron.spectrometer.jobs.coincidence import Coincidence
-from pychron.spectrometer.jobs.peak_center import PeakCenter
+from pychron.spectrometer.jobs.peak_center import PeakCenter, AccelVoltagePeakCenter
 
 
 class IonOpticsManager(Manager):
@@ -205,7 +205,8 @@ class IonOpticsManager(Manager):
         self.debug('setup peak center. detector={}, isotope={}'.format(detector, isotope))
 
         pcc = None
-        mass = None
+        dataspace = 'dac'
+        use_accel_voltage = False
 
         self._setup_config()
         if config_name:
@@ -237,7 +238,8 @@ class IonOpticsManager(Manager):
             directions = pcc.directions
             integration_time = pcc.integration_time
 
-            mass = pcc.mass
+            dataspace = pcc.dataspace
+            use_accel_voltage = pcc.use_accel_voltage
             window = pcc.window
             min_peak_height = pcc.min_peak_height
             step_width = pcc.step_width
@@ -264,13 +266,13 @@ class IonOpticsManager(Manager):
         if center_dac is None:
             center_dac = self.get_center_dac(ref, isotope)
 
-        if mass:
-            mag = spec.magnet
-            center_dac = mag.map_mass_to_dac(mass, ref)
-            low = mag.map_mass_to_dac(mass - window / 2., ref)
-            high = mag.map_mass_to_dac(mass + window / 2., ref)
-            window = high - low
-            step_width = abs(mag.map_mass_to_dac(mass + step_width, ref) - center_dac)
+        # if mass:
+        #     mag = spec.magnet
+        #     center_dac = mag.map_mass_to_dac(mass, ref)
+        #     low = mag.map_mass_to_dac(mass - window / 2., ref)
+        #     high = mag.map_mass_to_dac(mass + window / 2., ref)
+        #     window = high - low
+        #     step_width = abs(mag.map_mass_to_dac(mass + step_width, ref) - center_dac)
 
         if len(detector) > 1:
             ad = detector[1:]
@@ -278,10 +280,13 @@ class IonOpticsManager(Manager):
             ad = []
 
         pc = self.peak_center
-        if not pc or new:
-            pc = PeakCenter()
+        klass = AccelVoltagePeakCenter if use_accel_voltage else PeakCenter
+        if not pc or new or (use_accel_voltage and not isinstance(pc, AccelVoltagePeakCenter)):
+            pc = klass()
 
         pc.trait_set(center_dac=center_dac,
+                     dataspace=dataspace,
+                     use_accel_voltage = use_accel_voltage,
                      period=period,
                      window=window,
                      percent=percent,
@@ -367,27 +372,37 @@ class IonOpticsManager(Manager):
         #     self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
         #     self.timeout_thread.start()
 
-        dac_d = pc.get_peak_center()
+        center_value = pc.get_peak_center()
 
-        self.peak_center_result = dac_d
-        if dac_d:
-            args = ref, isotope, dac_d
-            self.info('new center pos {} ({}) @ {}'.format(*args))
+        self.peak_center_result = center_value
+        if center_value:
 
             det = spec.get_detector(ref)
 
-            dac_a = spec.uncorrect_dac(det, dac_d)
-            self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
-            self.adjusted_peak_center_result = dac_a
+            if pc.use_accel_voltage:
+                args = ref, isotope, center_value
+            else:
+                dac_a = spec.uncorrect_dac(det, center_value)
+                self.info('dac uncorrected for HV and deflection {}'.format(dac_a))
+                args = ref, isotope, dac_a
+                self.adjusted_peak_center_result = dac_a
+
+            self.info('new center pos {} ({}) @ {}'.format(*args))
             if save:
                 if confirm_save:
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
+                    if pc.use_accel_voltage:
+                        msg = 'Update Accel Voltage Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
+
                     save = self.confirmation_dialog(msg)
 
                 if save:
-                    spec.magnet.update_field_table(det, isotope, dac_a, message,
-                                                   update_others=pc.update_others)
-                    spec.magnet.set_dac(dac_d)
+                    if pc.use_accel_voltage:
+                        spec.source.update_field_table(det, isotope, center_value, message)
+                    else:
+                        spec.magnet.update_field_table(det, isotope, dac_a, message,
+                                                       update_others=pc.update_others)
+                        spec.magnet.set_dac(dac_a)
 
         elif not self.canceled:
             msg = 'centering failed'

@@ -25,6 +25,7 @@ import time
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.stats.peak_detection import PeakCenterError
+from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
 from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePeakCenter
 from pychron.spectrometer import get_spectrometer_config_path
 
@@ -63,7 +64,7 @@ class DeflectionResult(HasTraits):
         self.new_deflection = n
 
 
-class Coincidence(BasePeakCenter):
+class Coincidence(BasePeakCenter, MagnetSweep):
     title = 'Coincidence'
     inform = False
 
@@ -169,9 +170,9 @@ class Coincidence(BasePeakCenter):
 # ============= EOF =============================================
 
 # class CoincidenceScan(MagnetScan):
-# start_mass = 39
-# stop_mass = 40
-# step_mass = 0.005
+# start_value = 39
+# stop_value = 40
+# step_value = 0.005
 # title = 'Coincidence Scan'
 # inform = True
 #

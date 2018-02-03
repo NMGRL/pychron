@@ -59,7 +59,7 @@ class BaseSpectrometerManager(Manager):
             self.spectrometer.send_configuration()
 
     def reload_mftable(self):
-        self.spectrometer.reload_mftable()
+        self.spectrometer.magnet.reload_field_table()
 
     def protect_detector(self, det, protect):
         pass

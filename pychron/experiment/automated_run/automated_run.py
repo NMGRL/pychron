@@ -252,7 +252,7 @@ class AutomatedRun(Loggable):
         self.spectrometer_manager.spectrometer.clear_cached_config()
 
     def py_reload_mftable(self):
-        self.spectrometer_manager.spectrometer.magnet.reload_mftable()
+        self.spectrometer_manager.spectrometer.reload_mftable()
 
     def py_set_integration_time(self, v):
         self.set_integration_time(v)
@@ -262,6 +262,9 @@ class AutomatedRun(Loggable):
 
     def py_define_detectors(self, isotope, det):
         self._define_detectors(isotope, det)
+
+    def py_position_hv(self, pos, detector):
+        self._set_hv_position(pos, detector)
 
     def py_position_magnet(self, pos, detector, use_dac=False):
         if not self._alive:
@@ -2107,6 +2110,12 @@ anaylsis_type={}
             self.isotope_group.set_isotope_detector(det, add=True)
 
         self._load_previous()
+
+    def _set_hv_position(self, pos, detector, update_detectors=True,
+                             update_labels=True, update_isotopes=True):
+        ion = self.ion_optics_manager
+        if ion is not None:
+            change = ion.hv_position(pos, detector, update_isotopes=update_isotopes)
 
     def _set_magnet_position(self, pos, detector,
                              use_dac=False, update_detectors=True,

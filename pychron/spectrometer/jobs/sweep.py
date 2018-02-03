@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from numpy import hstack, array, Inf
-from traits.api import DelegatesTo, List, Bool, Any
+from traits.api import DelegatesTo, List, Bool, Any, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -68,6 +68,10 @@ class BaseSweep(SpectrometerTask):
 
     testing = False
 
+    start_value = Float(36)
+    stop_value = Float(40)
+    step_value = Float(1)
+
     @property
     def active_detectors(self):
         return [self.reference_detector] + self.additional_detectors
@@ -100,6 +104,19 @@ class BaseSweep(SpectrometerTask):
 
         # self._sweep(alt, series=2, set_limits=False)
         return True
+
+    def _execute(self):
+        sm = self.start_value
+        em = self.stop_value
+        stm = self.step_value
+
+        self.verbose = True
+        if abs(sm - em) > stm:
+            self._do_sweep(sm, em, stm)
+            self._alive = False
+            self._post_execute()
+
+        self.verbose = False
 
     def _do_sweep(self, sm, em, stm, directions=None):
         self.debug('_do_sweep sm= {}, em= {}, stm= {}'.format(sm, em, stm))

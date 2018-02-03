@@ -19,9 +19,9 @@ import time
 
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
-from traits.api import Float, Str, Int, List, Enum
+from traits.api import Float, Str, Int, List, Enum, HasTraits
 
-from magnet_sweep import MagnetSweep
+from magnet_sweep import MagnetSweep, AccelVoltageSweep
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -50,9 +50,10 @@ class PeakCenterResult:
                 'low_signal', 'center_signal', 'high_signal')
 
 
-class BasePeakCenter(MagnetSweep):
+class BasePeakCenter(HasTraits):
     title = 'Base Peak Center'
     center_dac = Float
+    dataspace = Enum('dac', 'mass')
     reference_isotope = Str
     window = Float  # (0.015)
     step_width = Float  # (0.0005)
@@ -203,7 +204,7 @@ class BasePeakCenter(MagnetSweep):
         #     self.cancel()
         # else:
 
-        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
+        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
         self.debug('result of _do_sweep={}'.format(ok))
 
         # wait for graph to fully update
@@ -371,20 +372,15 @@ class BasePeakCenter(MagnetSweep):
 
     def _graph_factory(self, graph=None):
         if graph is None:
-            graph = Graph(
-                window_title=self.title,
-                container_dict=dict(padding=5,
-                                    bgcolor='lightgray'))
+            graph = Graph(window_title=self.title,
+                          container_dict=dict(padding=5, bgcolor='lightgray'))
 
-        graph.new_plot(
-            padding=[50, 5, 5, 50],
-            xtitle='DAC (V)',
-            ytitle='Intensity (fA)',
-            zoom=False,
-            show_legend='ul',
-            legend_kw=dict(
-                font='modern 8',
-                line_spacing=1))
+        graph.new_plot(padding=[50, 5, 5, 50],
+                       xtitle='DAC (V)',
+                       ytitle='Intensity (fA)',
+                       zoom=False,
+                       show_legend='ul',
+                       legend_kw=dict(font='modern 8', line_spacing=1))
 
         kind = 'line'
         if self.use_interpolation:
@@ -407,7 +403,10 @@ class BasePeakCenter(MagnetSweep):
         return graph
 
 
-class PeakCenter(BasePeakCenter):
+class PeakCenter(BasePeakCenter, MagnetSweep):
     title = 'Peak Center'
 
+
+class AccelVoltagePeakCenter(BasePeakCenter, AccelVoltageSweep):
+    title = 'Accel Voltage Peak Center'
 # ============= EOF =============================================

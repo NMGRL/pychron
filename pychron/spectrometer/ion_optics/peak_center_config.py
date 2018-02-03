@@ -60,7 +60,8 @@ class PeakCenterConfig(HasTraits):
 
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
-    mass = Float
+    dataspace = Enum('dac', 'mass')
+
     window = Float(0.015)
     step_width = Float(0.0005)
     min_peak_height = Float(1.0)
@@ -137,20 +138,26 @@ class PeakCenterConfig(HasTraits):
         return pp_grp
 
     def _get_measure_grp(self):
-        m_grp = VGroup(VGroup(HGroup(Item('use_current_dac',
-                                          label='Use Current DAC'),
-                                     Item('use_mftable_dac',
-                                          label='Use DAC from MFTable')),
-                              Item('dac', enabled_when='not use_current_dac and not use_mftable_dac')),
-                       # Item('mass'),
+        dac_grp = VGroup(HGroup(Item('use_current_dac',
+                                     label='Use Current DAC'),
+                                Item('use_mftable_dac',
+                                     label='Use DAC from MFTable')),
+                         Item('dac', enabled_when='not use_current_dac and not use_mftable_dac'),
+                         visible_when='dataspace=="dac"')
+
+        dataspace_grp = HGroup(Item('dataspace'), label='Dataspace', show_border=True)
+
+        m_grp = VGroup(dataspace_grp,
+                       dac_grp,
                        Item('integration_time', editor=EnumEditor(name='integration_times')),
                        Item('directions'),
+                       Item('use_accel_voltage'),
 
                        Item('window', visible_when='not mass', label='Peak Width (V)'),
                        Item('step_width', visible_when='not mass', label='Step Width (V)'),
 
-                       # Item('window', visible_when='mass', label='Peak Width (amu)'),
-                       # Item('step_width', visible_when='mass', label='Step Width (amu)'),
+                       Item('window', visible_when='mass', label='Peak Width (amu)'),
+                       Item('step_width', visible_when='mass', label='Step Width (amu)'),
 
                        show_border=True, label='Measure')
         return m_grp

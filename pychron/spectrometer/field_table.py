@@ -58,7 +58,7 @@ class FieldItem(HasTraits):
         return [self.isotope] + [fmt(getattr(self, k)) for k in keys]
 
 
-class MagnetFieldTable(Loggable):
+class FieldTable(Loggable):
     """
         map a voltage to a mass
     """
@@ -75,7 +75,7 @@ class MagnetFieldTable(Loggable):
     # _path_dirty = Event
 
     def __init__(self, bind=True, *args, **kw):
-        super(MagnetFieldTable, self).__init__(*args, **kw)
+        super(FieldTable, self).__init__(*args, **kw)
 
         self.db = None
         self._mftable = None

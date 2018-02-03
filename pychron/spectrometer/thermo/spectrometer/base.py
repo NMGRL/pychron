@@ -94,9 +94,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
 
-    def reload_mftable(self):
-        self.magnet.reload_mftable()
-
     def get_detector_active(self, dname):
         """
         return True if dname in the list of intensity keys
