@@ -17,17 +17,32 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 
-from pychron.lasers.tasks.plugins.chromium import ChromiumPlugin
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
-class ChromiumCO2Plugin(ChromiumPlugin):
-    id = 'pychron.chromium.co2'
-    name = 'ChromiumCO2'
-    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumCO2Manager')
-    task_name = 'Chromium CO2'
-    accelerator = 'Ctrl+Shift+]'
-    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumCO2Task')
+class ChromiumPlugin(BaseLaserPlugin):
 
+    def test_communication(self):
+        man = self._get_manager()
+        c = man.test_connection()
+        return 'Passed' if c else 'Failed'
+
+    def _get_task_klass(self):
+        factory = __import__(self.task_klass[0], fromlist=[self.task_klass[1]])
+        klassfactory = getattr(factory, self.task_klass[1])
+        return klassfactory
+
+    def _task_factory(self):
+        klass = self._get_task_klass()
+        t = klass(manager=self._get_manager(), application=self.application)
+        return t
+
+    def _tasks_default(self):
+        return [TaskFactory(id=self.id,
+                            task_group='hardware',
+                            factory=self._task_factory,
+                            name=self.task_name,
+                            image='laser',
+                            accelerator=self.accelerator)]
 
 # ============= EOF =============================================

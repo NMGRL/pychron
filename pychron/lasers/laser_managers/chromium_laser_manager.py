@@ -23,7 +23,7 @@ from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserMa
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 
-class ChromiumCO2Manager(EthernetLaserManager):
+class ChromiumLaserManager(EthernetLaserManager):
     stage_manager_id = 'chromium.pychron'
     configuration_dir_name = 'chromium'
     _alive = False
@@ -214,23 +214,10 @@ class ChromiumCO2Manager(EthernetLaserManager):
         return sm
 
 
-@provides(ILaserManager)
-class ChromiumUVManager(HasTraits):
-    def test_connection(self):
-        return True
+class ChromiumCO2Manager(ChromiumLaserManager):
+    pass
 
-    def bootstrap(self):
-        pass
 
-    def bind_preferences(self, *args, **kw):
-        pass
-
-    def load(self):
-        pass
-
-    def kill(self):
-        pass
-
-    def finish_loading(self):
-        pass
+class ChromiumDiodeManager(ChromiumLaserManager):
+    pass
 # ============= EOF =============================================

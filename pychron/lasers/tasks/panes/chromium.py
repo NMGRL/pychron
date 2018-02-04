@@ -26,9 +26,9 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.lasers.tasks.laser_panes import ClientPane
 
 
-class ChromiumCO2ClientPane(ClientPane):
+class ChromiumClientPane(ClientPane):
     def trait_context(self):
-        ctx = super(ChromiumCO2ClientPane, self).trait_context()
+        ctx = super(ChromiumClientPane, self).trait_context()
         ctx['tray_calibration'] = self.model.stage_manager.tray_calibration_manager
         ctx['stage_manager'] = self.model.stage_manager
         return ctx
@@ -42,9 +42,12 @@ class ChromiumCO2ClientPane(ClientPane):
                                 # Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
                                 # Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
                                 # Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
-                                Item('x', editor=RangeEditor(low_name='stage_manager.xmin', high_name='stage_manager.xmax')),
-                                Item('y', editor=RangeEditor(low_name='stage_manager.ymin', high_name='stage_manager.ymax')),
-                                Item('z', editor=RangeEditor(low_name='stage_manager.zmin', high_name='stage_manager.zmax')),
+                                Item('x',
+                                     editor=RangeEditor(low_name='stage_manager.xmin', high_name='stage_manager.xmax')),
+                                Item('y',
+                                     editor=RangeEditor(low_name='stage_manager.ymin', high_name='stage_manager.ymax')),
+                                Item('z',
+                                     editor=RangeEditor(low_name='stage_manager.zmin', high_name='stage_manager.zmax')),
 
                                 enabled_when='_move_enabled'),
                          label='Positioning')
@@ -64,11 +67,9 @@ class ChromiumCO2ClientPane(ClientPane):
                                              height=75, width=300),
                                  label='Tray Calibration')
 
-        tgrp = Group(pos_grp,
-                     calibration_grp,
-                     layout='tabbed')
+        tgrp = Group(pos_grp, calibration_grp, layout='tabbed')
 
-        egrp = HGroup(UItem('enabled', editor=LEDEditor(colors=['red','green'])),
+        egrp = HGroup(UItem('enabled', editor=LEDEditor(colors=['red', 'green'])),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
                       UItem('fire_laser_button', editor=ButtonEditor(label_value='fire_label'),
                             enabled_when='enabled'),
@@ -81,4 +82,11 @@ class ChromiumCO2ClientPane(ClientPane):
         v = View(VGroup(egrp, tgrp))
         return v
 
+
+class ChromiumCO2ClientPane(ChromiumClientPane):
+    pass
+
+
+class ChromiumDiodeClientPane(ChromiumClientPane):
+    pass
 # ============= EOF =============================================

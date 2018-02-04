@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from envisage.ui.tasks.task_factory import TaskFactory
 
-from chromium_laser_manager import ChromiumCO2Manager, ChromiumUVManager
-from pychron_laser_manager import PychronLaserManager
+from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
-__all__ = (ChromiumCO2Manager, ChromiumUVManager, PychronLaserManager)
+
+class ChromiumDiodePlugin(BaseLaserPlugin):
+    id = 'pychron.chromium.diode'
+    name = 'ChromiumDiode'
+    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumDiodeManager')
+    task_name = 'Chromium Diode'
+    accelerator = 'Ctrl+Shift+]'
+    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumDiodeTask')
+
 # ============= EOF =============================================
-
-
-
