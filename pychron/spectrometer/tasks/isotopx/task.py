@@ -13,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Instance, HasTraits
+from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
+
+import time
 
 
-class FieldMixin(HasTraits):
-    field_table = Instance('pychron.spectrometer.field_table.FieldTable', ())
+class IsotopxSpectrometerTask(SpectrometerTask):
+    def _peak_center_start_hook(self):
+        self.scan_manager.stop_scan()
+        time.sleep(self.scan_manager.update_period)
 
-    def reload_field_table(self, *args, **kw):
-        self.field_table.load_table(*args, **kw)
+    def _peak_center_stop_hook(self):
+        self.scan_manager.setup_scan()
 
-    def set_mftable(self, name):
-        self.field_table.set_path_name(name)
-
-    def update_field_table(self, *args, **kw):
-        self.field_table.update_field_table(*args, **kw)
 # ============= EOF =============================================

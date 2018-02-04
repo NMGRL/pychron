@@ -20,6 +20,7 @@
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.tasks.isotopx.base import IsotopxSpectrometerPlugin
+from pychron.spectrometer.tasks.isotopx.task import IsotopxSpectrometerTask
 from pychron.spectrometer.tasks.spectrometer_preferences import NGXSpectrometerPreferencesPane, \
     SpectrometerPreferencesPane
 
@@ -29,6 +30,7 @@ class NGXSpectrometerPlugin(IsotopxSpectrometerPlugin):
     spectrometer_manager_klass = NGXSpectrometerManager
     manager_name = 'ngx_spectrometer_manager'
     name = 'NGXSpectrometer'
+    task_klass = IsotopxSpectrometerTask
 
     def _preferences_panes_default(self):
         return [SpectrometerPreferencesPane, NGXSpectrometerPreferencesPane]

@@ -147,8 +147,12 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def sniff(self, ncounts=0, calc_time=False,
-              integration_time=1.04, block=True):
+    def measure_equilibration(self, *args, **kw):
+        self.sniff(*args, **kw)
+
+    @count_verbose_skip
+    @command_register
+    def sniff(self, ncounts=0, calc_time=False, integration_time=1.04, block=True):
         """
         collect a sniff measurement. Sniffs are the measurement of the equilibration gas.
 
@@ -168,7 +172,6 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero, self._time_zero_offset,
                                         series=self._series_count, block=block):
             self.cancel()
-            # self._series_count += 1
 
     @count_verbose_skip
     @command_register

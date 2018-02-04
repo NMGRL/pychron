@@ -100,7 +100,7 @@ class DataCollector(Consoleable):
         evt = self._evt
         if evt:
             evt.set()
-            evt.wait(0.05)
+            # evt.wait(0.05)
         else:
             evt = Event()
 
@@ -108,7 +108,7 @@ class DataCollector(Consoleable):
         evt.clear()
 
         # wait for graphs to be fully constructed in the MainThread
-        evt.wait(0.05)
+        # evt.wait(0.05)
 
         self._alive = True
 

@@ -1845,7 +1845,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank')
-            and not self.spec.analysis_type.startswith('background')):
+                and not self.spec.analysis_type.startswith('background')):
             cb = True
 
         # g = p.isotope_graph
@@ -2112,7 +2112,7 @@ anaylsis_type={}
         self._load_previous()
 
     def _set_hv_position(self, pos, detector, update_detectors=True,
-                             update_labels=True, update_isotopes=True):
+                         update_labels=True, update_isotopes=True):
         ion = self.ion_optics_manager
         if ion is not None:
             change = ion.hv_position(pos, detector, update_isotopes=update_isotopes)
@@ -2330,38 +2330,40 @@ anaylsis_type={}
 
         m = self.collector
 
-        m.trait_set(
-            automated_run=self,
-            console_display=self.experiment_executor.console_display,
-            measurement_script=script,
-            detectors=self._active_detectors,
-            collection_kind=grpname,
-            series_idx=series,
-            check_conditionals=check_conditionals,
-            ncounts=ncounts,
-            period_ms=period * 1000,
-            data_generator=get_data,
-            data_writer=data_writer,
-            starttime=starttime,
-            experiment_type=self.experiment_type,
-            refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
+        m.trait_set(automated_run=self,
+                    console_display=self.experiment_executor.console_display,
+                    measurement_script=script,
+                    detectors=self._active_detectors,
+                    collection_kind=grpname,
+                    series_idx=series,
+                    check_conditionals=check_conditionals,
+                    ncounts=ncounts,
+                    period_ms=period * 1000,
+                    data_generator=get_data,
+                    data_writer=data_writer,
+                    starttime=starttime,
+                    experiment_type=self.experiment_type,
+                    refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         if self.plot_panel:
             self.plot_panel.integration_time = period
             self.plot_panel.set_ncounts(ncounts)
             self.plot_panel.total_counts += ncounts
 
-            from pychron.core.ui.gui import invoke_in_main_thread
-            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            # from pychron.core.ui.gui import invoke_in_main_thread
+            # invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
+            # if grpname == 'sniff':
+            #     invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
+            # elif grpname == 'baseline':
+            #     invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
+
+            self._setup_isotope_graph(starttime_offset, color, grpname)
             if grpname == 'sniff':
-                invoke_in_main_thread(self._setup_sniff_graph, starttime_offset, color)
+                self._setup_sniff_graph(starttime_offset, color)
             elif grpname == 'baseline':
-                invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
+                self._setup_baseline_graph(starttime_offset, color)
 
-                # if self.spec.analysis_type in ('unknown', 'cocktail'):
-                #     invoke_in_main_thread(self._setup_figure_graph)
-
-        time.sleep(0.5)
+        # time.sleep(0.5)
         with self.persister.writer_ctx():
             m.measure()
 
@@ -2394,7 +2396,7 @@ anaylsis_type={}
         if starttime_offset > mi:
             min_ = -starttime_offset
 
-        graph.set_x_limits(min_=min_, max_=max_*1.1)
+        graph.set_x_limits(min_=min_, max_=max_ * 1.1)
         series = 0
         for k, iso in self.isotope_group.iteritems():
             idx = graph.get_plotid_by_ytitle(iso.detector)

@@ -70,65 +70,10 @@ class BaseSpectrometerManager(Manager):
     def bind_preferences(self):
         pass
 
-    def load(self, db_mol_weights=True):
+    def load(self):
         spec = self.spectrometer
-        mftable = spec.magnet.mftable
-
         self.debug('******************************* LOAD Spec')
-        if db_mol_weights:
-            # get the molecular weights from the database
-            # dbm = IsotopeDatabaseManager(application=self.application,
-            #                              warn=False)
-            dbm = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-            if dbm and dbm.is_connected():
-                self.info('loading molecular_weights from database')
-                mws = dbm.db.get_molecular_weights()
-                # convert to a dictionary
-                m = dict([(mi.name, mi.mass) for mi in mws])
-                spec.molecular_weights = m
-                mftable.db = dbm.db
-
-        if not spec.molecular_weights:
-            import csv
-            # load the molecular weights dictionary
-            p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
-            if os.path.isfile(p):
-                self.info('loading "molecular_weights.csv" file. {}'.format(p))
-                with open(p, 'r') as f:
-                    # mws = {}
-                    # for l in f:
-                    #     print '"{}"'.format(l)
-                    #     try:
-                    #         a, b = l.split('\t')
-                    #         mws[a] = float(b)
-                    #     except (IndexError, ValueError):
-                    #         break
-                    reader = csv.reader(f, delimiter='\t')
-                    # # args =[]
-                    # # for l in reader:
-                    # #     print 'aSAsda', l
-                    # #     args.append([l[0], float(l[1])])
-                    # # # args = [[l[0], float(l[1])] for l in reader]
-                    mws = {l[0]: float(l[1]) for l in reader}
-                    self.debug('Mol weights {}'.format(mws))
-
-                    spec.molecular_weights = mws
-            else:
-                self.info('writing a default "molecular_weights.csv" file')
-                # make a default molecular_weights.csv file
-                from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mw
-
-                with open(p, 'U' if os.path.isfile(p) else 'w') as f:
-                    writer = csv.writer(f, delimiter='\t')
-                    data = [a for a in mw.itervalues()]
-                    data = sorted(data, key=lambda x: x[1])
-                    for row in data:
-                        writer.writerow(row)
-                spec.molecular_weights = mw
-
-        self.spectrometer.load()
-        mftable.spectrometer_name = self.spectrometer.name
-
+        spec.load()
         return True
 
     def finish_loading(self):

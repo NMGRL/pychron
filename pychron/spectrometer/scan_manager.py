@@ -564,7 +564,6 @@ class ScanManager(StreamGraphManager):
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
-            print 'adding det {} {}'.format(i, det.name)
             g.new_series(visible=det.active,
                          color=det.color)
             g.set_series_label(det.name)

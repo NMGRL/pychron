@@ -207,7 +207,7 @@ class IonOpticsManager(Manager):
         pcc = None
         dataspace = 'dac'
         use_accel_voltage = False
-
+        use_extend = False
         self._setup_config()
         if config_name:
             pcconfig.load()
@@ -240,6 +240,7 @@ class IonOpticsManager(Manager):
 
             dataspace = pcc.dataspace
             use_accel_voltage = pcc.use_accel_voltage
+            use_extend = pcc.use_extend
             window = pcc.window
             min_peak_height = pcc.min_peak_height
             step_width = pcc.step_width
@@ -286,7 +287,8 @@ class IonOpticsManager(Manager):
 
         pc.trait_set(center_dac=center_dac,
                      dataspace=dataspace,
-                     use_accel_voltage = use_accel_voltage,
+                     use_accel_voltage=use_accel_voltage,
+                     use_extend=use_extend,
                      period=period,
                      window=window,
                      percent=percent,

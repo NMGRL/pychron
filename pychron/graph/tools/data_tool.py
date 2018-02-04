@@ -21,6 +21,8 @@ from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
 # ============= standard library imports ========================
 from datetime import datetime
+
+
 # ============= local library imports  ==========================
 
 class DataTool(BaseTool):
@@ -34,6 +36,7 @@ class DataTool(BaseTool):
     use_date_str = True
     normalize_time = False
     x_format = '{:0.2f}'
+
     def normal_key_pressed(self, event):
         if self.inspector_key.match(event):
             self.visible = not self.visible
@@ -47,7 +50,7 @@ class DataTool(BaseTool):
 
             x, y = comp.map_data([event.x, event.y + 2])
             comps = comp.container.components_at(event.x, event.y)
-#            print comps
+            #            print comps
             if not self.component in comps:
                 self.new_value = d
                 return
@@ -65,16 +68,20 @@ class DataTool(BaseTool):
                     return
 
             if self.use_date_str:
-            # convert timestamp to str
+                # convert timestamp to str
                 date = datetime.fromtimestamp(x)
                 xi = date.strftime('%d/%m %H:%M:%S')
             else:
-                xi = self.x_format.format(x)
+                try:
+                    xi = self.x_format.format(x)
+                except ValueError:
+                    xi = ''
 
             d['xy'] = (xi, '{:0.3f}'.format(y))
             self.new_value = d
 
             self.last_mouse_position = (event.x, event.y)
+
 
 class DataToolOverlay(TextBoxOverlay):
     border_visible = True
@@ -82,8 +89,8 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-#    visible = True
-#    tooltip_mode = Bool(True)
+    #    visible = True
+    #    tooltip_mode = Bool(True)
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):
@@ -110,21 +117,21 @@ class DataToolOverlay(TextBoxOverlay):
             self.alternate_position = None
 
         d = event
-#        newstring = ""
-#       ''' if 'indices' in d:
-#            newstring += '(%d, %d)' % d['indices'] + '\n'
-#        if 'color_value' in d:
-#            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
-#        if 'data_value' in d:
-#            newstring += str(d['data_value'])
+        #        newstring = ""
+        #       ''' if 'indices' in d:
+        #            newstring += '(%d, %d)' % d['indices'] + '\n'
+        #        if 'color_value' in d:
+        #            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
+        #        if 'data_value' in d:
+        #            newstring += str(d['data_value'])
         ns = []
         if 'xy' in d:
             ns.append('{},{}'.format(*d['xy']))
         if 'coeffs' in d:
             cs = d['coeffs']
             xx = ['', 'x', 'x2', 'x3']
-            ss = '+ '.join(map(lambda x:'{:0.2e}{}'.format(*x),
-                                              zip(cs, xx[:len(cs)][::-1])))
+            ss = '+ '.join(map(lambda x: '{:0.2e}{}'.format(*x),
+                               zip(cs, xx[:len(cs)][::-1])))
 
             ns.append(ss)
 

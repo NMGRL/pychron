@@ -371,9 +371,9 @@ class BaseSpectrometer(SpectrometerDevice):
         return self._config
 
     def load(self):
+        self.load_molecular_weights()
         self.load_detectors()
         self.magnet.load()
-
         # load local configurations
         self.spectrometer_configurations = list_directory2(paths.spectrometer_config_dir, remove_extension=True,
                                                            extension='.cfg')
@@ -386,6 +386,36 @@ class BaseSpectrometer(SpectrometerDevice):
         config = self.get_configuration_writer(p)
 
         return config
+
+    def load_molecular_weights(self):
+        import csv, yaml
+        # load the molecular weights dictionary
+
+        p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
+        yp = os.path.join(paths.spectrometer_dir, 'molecular_weights.yaml')
+        if os.path.isfile(p):
+            self.info('loading "molecular_weights.csv" file. {}'.format(p))
+            with open(p, 'r') as f:
+                reader = csv.reader(f, delimiter='\t')
+                mws = {l[0]: float(l[1]) for l in reader}
+        elif os.path.isfille(yp):
+            self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
+            with open(p, 'r') as f:
+                mws = yaml.load(f)
+        else:
+            self.info('writing a default "molecular_weights.csv" file')
+            # make a default molecular_weights.csv file
+            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as mws
+
+            with open(p, 'U' if os.path.isfile(p) else 'w') as f:
+                writer = csv.writer(f, delimiter='\t')
+                data = [a for a in mws.itervalues()]
+                data = sorted(data, key=lambda x: x[1])
+                for row in data:
+                    writer.writerow(row)
+
+        self.debug('Mol weights {}'.format(mws))
+        self.molecular_weights = mws
 
     def load_detectors(self):
         """

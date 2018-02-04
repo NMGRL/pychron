@@ -80,7 +80,7 @@ class ThermoMagnet(BaseMagnet):
                 self.debug('Do AF Demag. UseAFDemag={}, delta_volts={}, threshold={}'.format(use_af_demag,
                                                                                              dv,
                                                                                              self.af_demag_threshold))
-                self.ask('BlankBeam True', verbose)
+                self.ask('BlankBeam True', verbose=verbose)
                 self._do_af_demagnetization(v, lambda dd: self.ask('SetMagnetDAC {}'.format(dd)))
         else:
             self.debug('AF Demag not enabled. self.use_af_demag={}, use_af_demag={}'.format(self.use_af_demagnetization,
@@ -89,14 +89,13 @@ class ThermoMagnet(BaseMagnet):
 
         change = dv > 1e-7
         if change:
-            if not self.simulation:
-                if settling_time is None:
-                    settling_time = self.settling_time
+            if settling_time is None:
+                settling_time = self.settling_time
 
-                self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
-                if settling_time > 0:
-                    time.sleep(settling_time)
-                    self.debug('Magnet settling complete')
+            self.debug('Magnet settling time: {:0.3f} {:0.3f}'.format(settling_time, self.settling_time))
+            if settling_time > 0:
+                time.sleep(settling_time)
+                self.debug('Magnet settling complete')
 
             if unprotect or unblank:
                 self.debug('Wait for magnet to stop moving')

@@ -60,7 +60,7 @@ class PeakCenterConfig(HasTraits):
 
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
-    dataspace = Enum('dac', 'mass')
+    dataspace = Enum('dac', 'mass', 'av')
 
     window = Float(0.015)
     step_width = Float(0.0005)
@@ -80,6 +80,7 @@ class PeakCenterConfig(HasTraits):
 
     update_others = Bool(True)
 
+    use_extend = Bool(False)
     # def _integration_time_default(self):
     #     return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
@@ -151,13 +152,16 @@ class PeakCenterConfig(HasTraits):
                        dac_grp,
                        Item('integration_time', editor=EnumEditor(name='integration_times')),
                        Item('directions'),
-                       Item('use_accel_voltage'),
 
-                       Item('window', visible_when='not mass', label='Peak Width (V)'),
-                       Item('step_width', visible_when='not mass', label='Step Width (V)'),
+                       Item('window', visible_when='dataspace=="av"', label='Peak Width (V)'),
+                       Item('step_width', visible_when='dataspace=="av"', label='Step Width (V)'),
 
-                       Item('window', visible_when='mass', label='Peak Width (amu)'),
-                       Item('step_width', visible_when='mass', label='Step Width (amu)'),
+                       Item('window', visible_when='dataspace=="dac"', label='Peak Width (V)'),
+                       Item('step_width', visible_when='dataspace=="dac"', label='Step Width (V)'),
+
+                       Item('window', visible_when='dataspace=="mass"', label='Peak Width (amu)'),
+                       Item('step_width', visible_when='dataspace=="mass"', label='Step Width (amu)'),
+                       Item('use_extend'),
 
                        show_border=True, label='Measure')
         return m_grp
@@ -170,6 +174,10 @@ class PeakCenterConfig(HasTraits):
                                                     cols=max(1, len(self.available_detectors)))),
                        show_border=True, label='Additional Detectors')
         return degrp
+
+    @property
+    def use_accel_voltage(self):
+        return self.dataspace == 'av'
 
     @property
     def active_detectors(self):

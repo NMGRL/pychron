@@ -443,8 +443,9 @@ class ThermoSpectrometer(BaseSpectrometer):
                 mftable_name = magnet.get('mftable')
                 if mftable_name:
                     self.debug('updating mftable name {}'.format(mftable_name))
-                    self.magnet.mftable.path = mftable_name
-                    self.magnet.mftable.load_mftable(load_items=True)
+
+                    self.magnet.field_table.path = mftable_name
+                    self.magnet.field_table.load_table(load_items=True)
 
                 self.debug('======== Configuration Finished ========')
                 self.source.sync_parameters()

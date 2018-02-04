@@ -25,7 +25,7 @@ class MassScanner(BaseScanner):
     start_mass = Float
     stop_mass = Float
 
-    pattributes = ('step', 'start_value', 'stop_value')
+    pattributes = ('step', 'start_mass', 'stop_mass')
 
     # private
     def _setup_graph(self, graph, plot):

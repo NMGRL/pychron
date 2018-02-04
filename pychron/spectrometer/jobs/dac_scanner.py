@@ -230,7 +230,7 @@ class DACScanner(BaseScanner):
         plot.overlays.append(o)
 
     def _add_mftable_overlay(self, plot):
-        mft = self.spectrometer.magnet.mftable.get_table()
+        mft = self.spectrometer.magnet.field_table.get_table()
         isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
 
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
@@ -274,7 +274,7 @@ class DACScanner(BaseScanner):
     #     self.graph.redraw()
 
     def _use_mftable_limits_fired(self):
-        mft = self.spectrometer.magnet.mftable.get_table()
+        mft = self.spectrometer.magnet.field_table.get_table()
         try:
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:

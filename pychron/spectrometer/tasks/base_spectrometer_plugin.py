@@ -40,6 +40,7 @@ from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 class BaseSpectrometerPlugin(BaseTaskPlugin):
     spectrometer_manager = Any
     spectrometer_manager_klass = None
+    task_klass = SpectrometerTask
     manager_name = ''
     scan_manager = Any
     ion_optics_manager = Any
@@ -77,9 +78,9 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         return t
 
     def _task_factory(self):
-        t = SpectrometerTask(manager=self.spectrometer_manager,
-                             scan_manager=self.scan_manager,
-                             application=self.application)
+        t = self.task_klass(manager=self.spectrometer_manager,
+                            scan_manager=self.scan_manager,
+                            application=self.application)
         return t
 
     def _factory_spectrometer(self):
@@ -110,17 +111,13 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     def _service_offers_default(self):
         """
         """
-        so = self.service_offer_factory(
-            protocol=BaseSpectrometerManager,
-            # protocol=self.spectrometer_manager_klass,
-            factory=self._factory_spectrometer)
-        so1 = self.service_offer_factory(
-            protocol=IonOpticsManager,
-            factory=self._factory_ion_optics)
+        so = self.service_offer_factory(protocol=BaseSpectrometerManager,
+                                        factory=self._factory_spectrometer)
+        so1 = self.service_offer_factory(protocol=IonOpticsManager,
+                                         factory=self._factory_ion_optics)
 
-        so2 = self.service_offer_factory(
-            protocol=ScanManager,
-            factory=self._factory_scan_manager)
+        so2 = self.service_offer_factory(protocol=ScanManager,
+                                         factory=self._factory_scan_manager)
 
         so3 = self.service_offer_factory(protocol=ReadoutView,
                                          factory=self._readout_view_factory)

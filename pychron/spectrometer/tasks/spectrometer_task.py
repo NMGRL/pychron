@@ -213,7 +213,8 @@ class SpectrometerTask(EditorTask):
 
         ret = -1
         ion = self.scan_manager.ion_optics_manager
-        self.scan_manager.stop_scan()
+
+        self._peak_center_start_hook()
         time.sleep(2)
         name = 'Peak Center {:02d}'.format(i)
         if ion.setup_peak_center(new=True, **setup_kw):
@@ -224,8 +225,15 @@ class SpectrometerTask(EditorTask):
             ion.do_peak_center(**peak_kw)
 
             ret = ion.peak_center_result
-        self.scan_manager.setup_scan()
+
+        self._peak_center_stop_hook()
         return ret
+
+    def _peak_center_start_hook(self):
+        pass
+
+    def _peak_center_stop_hook(self):
+        pass
 
     def _scan_factory(self):
         sim = self.scan_manager.spectrometer.simulation

@@ -67,7 +67,7 @@ class FieldTable(Loggable):
 
     spectrometer_name = Str
     use_local_archive = Bool
-    use_db_archive = Bool
+    # use_db_archive = Bool
     path = Property
     mass_cal_func = 'parabolic'
 
@@ -77,7 +77,7 @@ class FieldTable(Loggable):
     def __init__(self, bind=True, *args, **kw):
         super(FieldTable, self).__init__(*args, **kw)
 
-        self.db = None
+        # self.db = None
         self._mftable = None
         self._detectors = None
         self._test_path = None
@@ -86,13 +86,12 @@ class FieldTable(Loggable):
             self.bind_preferences()
 
     def initialize(self, molweights):
-        print 'initialasdf', molweights
         self.molweights = molweights
         p = self.path
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         else:
-            self.load_mftable(load_items=True)
+            self.load_table(load_items=True)
 
     def bind_preferences(self):
         from apptools.preferences.preference_binding import bind_preference
@@ -100,8 +99,8 @@ class FieldTable(Loggable):
         prefid = 'pychron.spectrometer'
         bind_preference(self, 'use_local_archive',
                         '{}.use_local_mftable_archive'.format(prefid))
-        bind_preference(self, 'use_db_archive',
-                        '{}.use_db_mftable_archive'.format(prefid))
+        # bind_preference(self, 'use_db_archive',
+        #                 '{}.use_db_mftable_archive'.format(prefid))
 
     def backup(self):
         backup(self.path, paths.mftable_backup_dir)
@@ -285,7 +284,7 @@ class FieldTable(Loggable):
         return os.path.join(paths.spectrometer_dir,
                             '{}_mftable_archive'.format(self.spectrometer_name))
 
-    def load_mftable(self, path=None, load_items=False):
+    def load_table(self, path=None, load_items=False):
         """
             mftable format- first line is a header followed by
             Isotope, Dac_i, Dac_j,....
@@ -313,15 +312,17 @@ class FieldTable(Loggable):
             reader = csv.reader(f)
             table = []
 
+            mass_func = None
             line0 = next(reader)
             if line0[0].strip() == 'iso':
                 detline = line0
-                mass_func = 'cubic'
             else:
                 mass_func = line0[0].strip()
                 detline = next(reader)
             detectors = map(str.strip, detline[1:])
 
+            if mass_func is None:
+                self.warning('Using default ')
             self.mass_cal_func = mass_func
             for line in reader:
                 iso = line[0]
@@ -432,13 +433,13 @@ class FieldTable(Loggable):
         self._mftable_hash = self._make_hash(p)
 
     def _add_to_archive(self, p, message):
-        if self.use_db_archive:
-            if self.db:
-                self.info('db archiving mftable')
-                with open(p, 'r') as rfile:
-                    self.db.add_mftable(self.spectrometer_name, rfile.read())
-            else:
-                self.debug('no db instance available for archiving')
+        # if self.use_db_archive:
+        #     if self.db:
+        #         self.info('db archiving mftable')
+        #         with open(p, 'r') as rfile:
+        #             self.db.add_mftable(self.spectrometer_name, rfile.read())
+        #     else:
+        #         self.debug('no db instance available for archiving')
 
         if self.use_local_archive:
             try:

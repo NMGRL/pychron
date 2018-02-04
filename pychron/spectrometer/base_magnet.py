@@ -85,8 +85,8 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
 
             name = ''
 
-        self.mftable.initialize(molweights)
-        self.mftable.spectrometer_name = name.lower()
+        self.field_table.initialize(molweights)
+        self.field_table.spectrometer_name = name.lower()
 
         d = self.read_dac()
         if d is not None:
@@ -107,7 +107,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         :param detname: str, name of a detector, e.g H1
         :return: float, mass
         """
-        return self.mftable.map_dac_to_mass(dac, detname)
+        return self.field_table.map_dac_to_mass(dac, detname)
 
     def map_mass_to_dac(self, mass, detname):
         """
@@ -118,7 +118,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         :return: float, dac voltage
         """
 
-        dac = self.mftable.map_mass_to_dac(mass, detname)
+        dac = self.field_table.map_mass_to_dac(mass, detname)
         self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
         if dac is None:
             self.warning('Could not map mass to dac. Returning current DAC {}'.format(self._dac))
