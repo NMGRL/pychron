@@ -400,10 +400,6 @@ class HistoryView(DVCCommitView):
                      ('ISOEVO', 'baselines'),
                      ('BLANKS', 'blanks'),
                      ('ICFactor', 'icfactors')):
-
-            # ('IMPORT', ''),
-            # ('MANUAL', ''),
-            # ('COLLECTION', '')):
             path = an.make_path(b)
             if path:
                 css = get_commits(repo, repo.active_branch.name, path, a, '--grep=^<{}>'.format(a))

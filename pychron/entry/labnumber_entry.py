@@ -134,23 +134,6 @@ class LabnumberEntry(DVCIrradiationable):
     def activated(self):
         pass
 
-    # def import_irradiation(self):
-    #     self.debug('import irradiation')
-        # from pychron.entry.dvc_import import do_import_irradiation
-
-        # mdb = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
-        # mssource = self.application.get_service(mdb)
-        # mssource.bind_preferences()
-        #
-        # from pychron.data_mapper import do_import_irradiation
-        # do_import_irradiation(dvc=self.dvc, sources={mssource: 'Mass Spec'}, default_source='Mass Spec')
-        # self.updated = True
-
-    # def import_analyses(self):
-    #     self.info('import analyses')
-    #     from pychron.data_mapper import do_import_analyses
-    #     do_import_analyses(dvc=self.dvc)
-
     def import_irradiation_load_xls(self, p):
         self.info('import irradiation file: {}'.format(p))
 
@@ -394,22 +377,6 @@ class LabnumberEntry(DVCIrradiationable):
             self.warning_dialog('No monitor name set in Preferences.'
                                 ' Set before trying to generate identifiers. e.g "FC-2"')
             return True
-
-            # def make_irradiation_load_template(self, p):
-            #     from pychron.entry.loaders.irradiation_template import IrradiationTemplate
-            #     i = IrradiationTemplate()
-            #     i.make_template(p)
-
-            # loader = XLSIrradiationLoader()
-            # loader.make_template(p)
-
-    # def import_irradiation_load_xls(self, p):
-    #     self.warning_dialog('XLS Irradiation Import not currently available')
-    #     return
-    #
-    #     loader = XLSIrradiationLoader(db=self.dvc.db,
-    #                                   dvc=self.dvc)
-    #     loader.load_irradiation(p)
 
     def push_changes(self):
         if self.dvc.meta_repo.has_unpushed_commits():
@@ -727,6 +694,9 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                 if include_canvas:
                     item = self.canvas.scene.get_item(str(ir.hole))
                     item.fill = True
+
+                if v == self.monitor_name:
+                    item.monitor_indicator = True
 
                 set_color(item, v)
 
