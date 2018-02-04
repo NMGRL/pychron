@@ -35,6 +35,7 @@ from pychron.pychron_constants import DVC_PROTOCOL
 ATTRS = (('sample', ''),
          ('material', ''),
          ('project', ''),
+         ('principal_investigator', '')
          ('weight', 0),
          ('j', 0,),
          ('j_err', 0))
@@ -45,6 +46,7 @@ class ClearSelectionView(HasTraits):
     material = Bool(True)
     weight = Bool(True)
     project = Bool(True)
+    principal_investigator = Bool(True)
     j = Bool(True)
     j_err = Bool(True)
 
@@ -68,11 +70,12 @@ class ClearSelectionView(HasTraits):
         v = View(VGroup(HGroup(UItem('select_all'),
                                UItem('clear_all')),
                         VGroup(Item('sample'),
-                        Item('material'),
-                        Item('project'),
-                        Item('weight'),
-                        Item('j', label='J'),
-                        Item('j_err', label='J Err.'))),
+                               Item('material'),
+                               Item('project'),
+                               Item('principal_investigator'),
+                               Item('weight'),
+                               Item('j', label='J'),
+                               Item('j_err', label='J Err.'))),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  title='Clear Selection')

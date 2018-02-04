@@ -21,8 +21,7 @@ import os
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 
-from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction
-from pychron.entry.tasks.sample.actions import SaveAction
+from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction, SaveAction, ClearAction
 from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
 from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -34,7 +33,8 @@ class SampleEntryTask(BaseManagerTask):
     name = 'Sample'
     id = 'pychron.entry.sample.task'
     tool_bars = [SToolBar(SaveAction()),
-                 SToolBar(DumpAction(), LoadAction(), RecoverAction())]
+                 SToolBar(DumpAction(), LoadAction(), RecoverAction()),
+                 SToolBar(ClearAction())]
 
     def activated(self):
         self.manager.activated()
@@ -49,6 +49,9 @@ class SampleEntryTask(BaseManagerTask):
         return [SampleEditorPane(model=self.manager)]
 
     # toolbar handlers
+    def clear(self):
+        self.manager.clear()
+
     def save(self):
         self.manager.save()
 

@@ -87,6 +87,8 @@ class SampleAdapter(ProjectAdapter):
 class SampleEntryPane(TraitsTaskPane):
     def traits_view(self):
         pis = VGroup(UItem('_principal_investigators', editor=TabularEditor(adapter=PIAdapter(),
+                                                                            multi_select=True,
+                                                                            selected='selected_principal_investigators',
                                                                             editable=False,
                                                                             refresh='refresh_table')),
                      show_border=True,
@@ -98,10 +100,14 @@ class SampleEntryPane(TraitsTaskPane):
                     label='Materials')
 
         ps = VGroup(UItem('_projects', editor=TabularEditor(adapter=ProjectAdapter(),
+                                                            selected='selected_projects',
+                                                            multi_select=True,
                                                             editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Projects')
         ss = VGroup(UItem('_samples', editor=TabularEditor(adapter=SampleAdapter(),
+                                                           selected='selected_samples',
+                                                           multi_select=True,
                                                            editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Samples')

@@ -36,6 +36,7 @@ class RString(String):
         else:
             return value
 
+
 PI_NAMES = ('NMGRL',)
 if os.path.isfile(paths.valid_pi_names):
     with open(paths.valid_pi_names, 'r') as rf:
@@ -44,7 +45,7 @@ if os.path.isfile(paths.valid_pi_names):
 
 class PIStr(String):
     def validate(self, obj, name, value):
-        if not PI_REGEX.match(value) and value not in ('NMGRL', 'AGES-LDEO'):
+        if not PI_REGEX.match(value) and value not in PI_NAMES:
             return self.error(obj, name, value)
         else:
             return value
@@ -224,6 +225,10 @@ class SampleEntry(DVCAble):
     _principal_investigators = List
     _default_project_count = 0
 
+    selected_samples = List
+    selected_projects = List
+    selected_principal_investigators = List
+
     def activated(self):
         self.refresh_pis = True
         self.refresh_materials = True
@@ -234,6 +239,34 @@ class SampleEntry(DVCAble):
     def prepare_destroy(self):
         self._backup()
         self.dvc.close_session()
+
+    def clear(self):
+        if self.selected_principal_investigators:
+            for p in self.selected_principal_investigators:
+                if not p.added:
+                    self._principal_investigators.remove(p)
+
+            self._projects = [p for p in self._projects
+                              if p.principal_investigator not in self.selected_principal_investigators]
+            self._samples = [s for s in self._samples
+                             if s.project.principal_investigator not in self.selected_principal_investigators]
+
+            self.selected_principal_investigators = []
+
+        if self.selected_projects:
+            for p in self.selected_projects:
+                if not p.added:
+                    self._projects.remove(p)
+
+            self._samples = [s for s in self._samples if s.project not in self.selected_projects]
+            self.selected_projects = []
+
+        if self.selected_samples:
+            for ri in self.selected_samples:
+                if not ri.added:
+                    self._samples.remove(ri)
+
+            self.selected_samples = []
 
     def save(self):
         self._backup()
