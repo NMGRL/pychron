@@ -5,27 +5,6 @@ class BaseFileSourceTestCase(unittest.TestCase):
     def test_runid(self):
         self.assertEqual(self.spec.run_spec.runid, self.expected['runid'])
 
-    def test_irradiation(self):
-        self.assertEqual(self.spec.run_spec.irradiation, self.expected['irradiation'])
-
-    def test_level(self):
-        self.assertEqual(self.spec.run_spec.irradiation_level, self.expected['irradiation_level'])
-
-    def test_sample(self):
-        self.assertEqual(self.spec.run_spec.sample, self.expected['sample'])
-
-    def test_material(self):
-        self.assertEqual(self.spec.run_spec.material, self.expected['material'])
-
-    def test_project(self):
-        self.assertEqual(self.spec.run_spec.project, self.expected['project'])
-
-    def test_j(self):
-        self.assertEqual(self.spec.j, self.expected['j'])
-
-    def test_j_err(self):
-        self.assertEqual(self.spec.j_err, self.expected['j_err'])
-
     def test_timestamp(self):
         ts = self.spec.timestamp
         self.assertEqual(ts.month, self.expected['timestamp_month'])
@@ -60,9 +39,9 @@ class BaseFileSourceTestCase(unittest.TestCase):
     def test_36_count_ys(self):
         self._test_count_ys('Ar36', self.expected['cnt36'])
 
-    def test_discrimination(self):
-        disc = self.spec.discrimination
-        self.assertEqual(disc, self.expected['discrimination'])
+    # def test_discrimination(self):
+    #     disc = self.spec.discrimination
+    #     self.assertEqual(self.expected['discrimination'], disc)
 
     def test_uuid(self):
         self.assertEqual(self.spec.run_spec.uuid, self.expected['uuid'])

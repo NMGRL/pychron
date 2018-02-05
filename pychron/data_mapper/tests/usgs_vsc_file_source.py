@@ -81,6 +81,27 @@ class USGSVSCFileSourceUnittest(BaseFileSourceTestCase):
                         'uuid': ''
                         }
 
+    def test_irradiation(self):
+        self.assertEqual(self.spec.run_spec.irradiation, self.expected['irradiation'])
+
+    def test_level(self):
+        self.assertEqual(self.spec.run_spec.irradiation_level, self.expected['irradiation_level'])
+
+    def test_sample(self):
+        self.assertEqual(self.spec.run_spec.sample, self.expected['sample'])
+
+    def test_material(self):
+        self.assertEqual(self.spec.run_spec.material, self.expected['material'])
+
+    def test_project(self):
+        self.assertEqual(self.spec.run_spec.project, self.expected['project'])
+
+    def test_j(self):
+        self.assertEqual(self.spec.j, self.expected['j'])
+
+    def test_j_err(self):
+        self.assertEqual(self.spec.j_err, self.expected['j_err'])
+
 
 if __name__ == '__main__':
     unittest.main()

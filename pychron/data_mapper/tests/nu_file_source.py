@@ -33,14 +33,14 @@ class NuFileSourceUnittest(BaseFileSourceTestCase):
         cls.src.nice_path = pnice
         cls.spec = cls.src.get_analysis_import_spec()
 
-        cls.expected = {'runid': '16K0071-01A',
-                        'irradiation': 'IRR347',
-                        'irradiation_level': 'A',
-                        'sample': 'GA1550',
-                        'material': 'Bio',
-                        'project': 'Std',
-                        'j': 0.0045,
-                        'j_err': 1e-7,
+        cls.expected = {'runid': 'Data_NAG1072',
+                        # 'irradiation': 'IRR347',
+                        # 'irradiation_level': 'A',
+                        # 'sample': 'GA1550',
+                        # 'material': 'Bio',
+                        # 'project': 'Std',
+                        # 'j': 0.0045,
+                        # 'j_err': 1e-7,
                         'timestamp_month': 6,
                         'cnt40': 200,
                         'cnt39': 200,

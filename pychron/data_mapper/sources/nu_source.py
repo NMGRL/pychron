@@ -32,7 +32,9 @@ class NuFileSource(FileSource):
         f = self.file_gen(delimiter)
         pspec = self.new_persistence_spec()
 
-        pspec.run_spec.uuid = os.path.splitext(os.path.basename(self.path))[0]
+        ident = os.path.splitext(os.path.basename(self.path))[0]
+        pspec.run_spec.uuid = ident
+        pspec.run_spec.runid = ident
 
         rspec = pspec.run_spec
 

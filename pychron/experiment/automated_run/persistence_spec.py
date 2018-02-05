@@ -103,4 +103,5 @@ class PersistenceSpec(HasTraits):
     lat_long = Str
     rock_type = Str
     reference = Str
+
 # ============= EOF =============================================
