@@ -292,7 +292,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 curvature = None
                 curvature_threshold = None
                 if f.curvature_goodness:
-                    curvature = iso.curvature_at(f.curvature_goodness_at)
+                    curvature = iso.get_curvature(f.curvature_goodness_at)
                     curvature_threshold = f.curvature_goodness
                     curvature_goodness = curvature < curvature_threshold
 
