@@ -71,4 +71,9 @@ class RecoverAction(TaskAction):
     name = 'Recover'
     method = 'recover'
 
+
+class ClearAction(TaskAction):
+    name = 'Clear'
+    image = icon('clear')
+    method = 'clear'
 # ============= EOF =============================================
