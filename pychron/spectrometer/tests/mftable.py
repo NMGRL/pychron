@@ -61,7 +61,7 @@ class MFTableTestCase(unittest.TestCase):
             p = 'pychron/spectrometer/tests/data/mftable.csv'
 
         self.mftable._test_path = p
-        self.mftable.load_mftable(path=p)
+        self.mftable.load_table(path=p)
 
     def test_mass_func(self):
         self.assertEqual(self.mftable.mass_cal_func, 'parabolic')

@@ -125,18 +125,18 @@ class AutomatedRunDurationTracker(Loggable):
         write_txt_file(p, out)
         self.load()
 
-    def probability_model(self, h, ht):
-        self.debug('using probability model')
-        prob = self._frequencies.get(h, 0)
-
-        self.debug('probability: {}'.format(prob))
-        # probability run is truncated
-        if random() < prob:
-            h = ht
-            self.debug('use truncated duration')
-
-        dur = self._items[h]
-        return dur
+    # def probability_model(self, h, ht):
+    #     self.debug('using probability model')
+    #     prob = self._frequencies.get(h, 0)
+    #
+    #     self.debug('probability: {}'.format(prob))
+    #     # probability run is truncated
+    #     if random() < prob:
+    #         h = ht
+    #         self.debug('use truncated duration')
+    #     print self._items
+    #     dur = self._items[h]
+    #     return dur
 
     def __contains__(self, v):
         return v in self._items
