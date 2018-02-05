@@ -14,7 +14,7 @@ class Argon2CDDMFTableTestCase(unittest.TestCase):
             p = 'spectrometer/tests/data/argon_2CDD.csv'
 
         self.mftable._test_path = p
-        self.mftable.load_mftable(path=p)
+        self.mftable.load_table(path=p)
 
     def test_update(self):
         self.mftable.update_field_table('L2(CDD)', 'Ar36', 3.76439824048, report=True, save=False)
