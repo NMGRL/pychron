@@ -219,7 +219,7 @@ class FieldTable(Loggable):
         if name and self.path != name:
             self.path = name
             self.info('Using MFTable {}'.format(self.path))
-            self.load_mftable()
+            self.load_table()
 
     def get_table(self):
         mt = self._get_mftable()
@@ -413,7 +413,7 @@ class FieldTable(Loggable):
     def _get_mftable(self):
         if not self._mftable or not self._check_mftable_hash():
             self.debug('using mftable at {}'.format(self.path))
-            self.load_mftable()
+            self.load_table()
 
         return self._mftable
 
