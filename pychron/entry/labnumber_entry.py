@@ -353,7 +353,6 @@ class LabnumberEntry(DVCIrradiationable):
                                          dvc=self.dvc,
                                          db=self.dvc.db)
                 if lg.setup():
-                    lg.overwrite = overwrite
                     lg.generate_identifiers()
                     for level in self.levels:
                         self._save_to_db(level, update=False)

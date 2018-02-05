@@ -142,9 +142,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                         self._set_position_identifier(pos, ident)
                     else:
                         pos.identifier = ident
-                        self.dvc.set_identifier(pos.level.irradiation.name,
-                                                pos.level.name,
-                                                pos.position, ident)
+                        self.dvc.set_identifier(irradiation, le, po, ident)
 
                     # self._add_default_flux(pos)
                     msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
@@ -241,11 +239,10 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                 if self.is_preview:
                     r = self._get_position_is_monitor(x)
                 else:
-                    if not r:
-                        try:
-                            r = x.sample.name == self.monitor_name
-                        except AttributeError, e:
-                            pass
+                    try:
+                        r = x.sample.name == self.monitor_name
+                    except AttributeError, e:
+                        pass
 
                 if invert:
                     r = not r

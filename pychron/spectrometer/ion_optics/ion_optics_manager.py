@@ -321,7 +321,7 @@ class IonOpticsManager(Manager):
         return self.peak_center
 
     def backup_mftable(self):
-        self.spectrometer.magnet.mftable.backup()
+        self.spectrometer.magnet.field_table.backup()
 
     # private
     def _setup_config(self):

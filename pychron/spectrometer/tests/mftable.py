@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pychron.spectrometer.mftable import FieldTable
+from pychron.spectrometer.field_table import FieldTable
 
 
 class Argon2CDDMFTableTestCase(unittest.TestCase):
