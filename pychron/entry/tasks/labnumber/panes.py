@@ -81,6 +81,7 @@ class ChronologyPane(TraitsDockPane):
         #                                                   adapter=ChronologyAdapter())))))
         # return v
 
+
 class IrradiationEditorPane(TraitsDockPane):
     id = 'pychron.labnumber.editor'
     name = 'Editor'
@@ -89,7 +90,9 @@ class IrradiationEditorPane(TraitsDockPane):
     def traits_view(self):
         self.sample_tabular_adapter.columns = [('Sample', 'name'),
                                                ('Material', 'material'),
-                                               ('Grainsize','grainsize'),
+                                               ('Grainsize', 'grainsize'),
+                                               ('Project', 'project'),
+                                               ('PI', 'principal_investigator'),
                                                ('Note', 'note')]
 
         # tgrp = HGroup(icon_button_editor('clear_button', 'table_lightning',
@@ -131,22 +134,26 @@ class IrradiationEditorPane(TraitsDockPane):
                                                        stretch_last_section=False),
                                   width=75))
         jgrp = HGroup(UItem('j'), Label(PLUSMINUS_ONE_SIGMA), UItem('j_err'),
-                      icon_button_editor('estimate_j_button', 'cog'),
+                      icon_button_editor('estimate_j_button', 'cog', tooltip='Estimate J based on irradiation '
+                                                                             'chronology and the J/hr rate set in '
+                                                                             'Preferences/Entry'),
                       show_border=True, label='J')
         ngrp = HGroup(UItem('note'),
-                      UItem('weight'),
+                      Item('weight'),
                       show_border=True, label='Note')
-        sgrp = HGroup(UItem('invert_flag'),
-                      Item('selection_freq', label='Freq'),
-                      show_border=True,
-                      label='Selection')
-        v = View(VSplit(VGroup(HGroup(sgrp, jgrp),
-                               ngrp,
-                               pi_grp,
+        # sgrp = HGroup(UItem('invert_flag'),
+        #               Item('selection_freq', label='Freq'),
+        #               show_border=True,
+        #               label='Selection')
+
+        sagrp = HGroup(UItem('sample_search_str', tooltip='Search for sample from entire Database'),
+                       show_border=True,
+                       label='Sample')
+
+        v = View(VSplit(VGroup(HGroup(pi_grp, sagrp),
                                project_grp),
                         sample_grp,
-                        # style_sheet=load_stylesheet('labnumber_entry')
-                        ))
+                        HGroup(jgrp, ngrp)))
         return v
 
 

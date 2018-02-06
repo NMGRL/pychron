@@ -1677,7 +1677,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.name.like('%{}%'.format(name)))
             return self._query_all(q, verbose_query=True)
 
-    def get_samples(self, projects=None, principal_investigators=None, **kw):
+    def get_samples(self, projects=None, principal_investigators=None, name_like=None, **kw):
         # if projects:
         #     if hasattr(projects, '__iter__'):
         #         kw = self._append_filters(ProjectTbl.name.in_(projects), kw)
@@ -1708,6 +1708,9 @@ class DVCDatabase(DatabaseAdapter):
 
                 for p in principal_investigators:
                     q = principal_investigator_filter(q, p)
+
+            if name_like:
+                q = q.filter(SampleTbl.name.like('{}%'.format(name_like)))
             return self._query_all(q, **kw)
 
     def get_irradiations_by_repositories(self, repositories):
