@@ -35,7 +35,7 @@ from pychron.pychron_constants import DVC_PROTOCOL
 ATTRS = (('sample', ''),
          ('material', ''),
          ('project', ''),
-         ('principal_investigator', '')
+         ('principal_investigator', ''),
          ('weight', 0),
          ('j', 0,),
          ('j_err', 0))

@@ -154,6 +154,7 @@ class LabnumbersPane(TraitsTaskPane):
     def traits_view(self):
         v = View(UItem('irradiated_positions',
                        editor=TabularEditor(adapter=IrradiatedPositionAdapter(),
+                                            editable=False,
                                             refresh='refresh_table',
                                             multi_select=True,
                                             selected='selected')))
