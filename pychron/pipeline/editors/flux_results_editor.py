@@ -263,7 +263,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             if prev:
                 slope = prev < p.j
             prev = p.j
-            aa, xx, yy = self._sort_individuals(p, monage, lk, slope)
+            aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
             ans.extend(aa)
             # data = zip(p.analyses, xx, yy)
             # data = sorted(data, key=lambda x: x[2], reverse=p.slope)
@@ -412,7 +412,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             scatter, _ = g.new_series(xs, ys,
                                       yerror=yserr,
-                                      type='scatter', marker='circle')
+                                      type='scatter',
+                                      marker_size=4, marker='diamond')
 
             ebo = ErrorBarOverlay(component=scatter,
                                   orientation='y')
@@ -428,8 +429,14 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             line.overlays.append(ee)
 
             # plot the individual analyses
-            s, iys = self._graph_individual_analyses()
-            s.index.metadata['selections'] = sel
+            scatter, iys = self._graph_individual_analyses()
+            scatter.index.metadata['selections'] = sel
+
+            ebo = ErrorBarOverlay(component=scatter,
+                                  orientation='y')
+            scatter.overlays.append(ebo)
+            scatter.error_bars = ebo
+
             # s.index.metadata_changed = True
 
             ymi = min(lyy.min(), min(iys))
@@ -466,6 +473,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         ixs = []
         iys = []
+        ies = []
         ans = []
         m, k = po.monitor_age * 1e6, po.lambda_k
         slope = True
@@ -475,10 +483,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 if prev:
                     slope = prev < p.j
                 prev = p.j
-                aa, xx, yy = self._sort_individuals(p, m, k, slope)
+                aa, xx, yy, es = self._sort_individuals(p, m, k, slope)
                 ans.extend(aa)
                 ixs.extend(xx)
                 iys.extend(yy)
+                ies.extend(es)
                 p.slope = slope
                 # yy = sorted(yy, reverse=not slope)
 
@@ -486,7 +495,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 # ixs.extend(xx)
                 # iys.extend(yy)
 
-        s, _p = g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
+        s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
         add_analysis_inspector(s, ans)
 
         self.analyses = ans
@@ -496,9 +505,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _sort_individuals(self, p, m, k, slope):
         pp = arctan2(p.x, p.y)
         xx = linspace(pp - .1, pp + .1, len(p.analyses))
-        yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
+        ys = [a.model_j(m, k) for a in p.analyses]
+        yy = [nominal_value(a) for a in ys]
+        es = [std_dev(a) for a in ys]
 
-        data = zip(p.analyses, xx, yy)
+        data = zip(p.analyses, xx, yy, es)
         data = sorted(data, key=lambda x: x[2], reverse=not slope)
         return zip(*data)
 
