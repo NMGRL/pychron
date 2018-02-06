@@ -25,6 +25,7 @@ from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
 
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
+from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
@@ -90,7 +91,7 @@ class ExperimentRepoTask(BaseTask):
         self.repository_names = org.repo_names
 
     def refresh_local_names(self):
-        self.local_names = [RepoItem(name=i) for i in sorted(self.list_repos())]
+        self.local_names = [RepoItem(name=i) for i in sorted(list_local_repos())]
 
     def find_changes(self, remote='origin', branch='master'):
         self.debug('find changes')
@@ -115,19 +116,6 @@ class ExperimentRepoTask(BaseTask):
 
         progress_loader(names, func)
         self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
-
-    def list_repos(self):
-        for i in os.listdir(paths.repository_dataset_dir):
-            if i.startswith('.'):
-                continue
-            elif i.startswith('~'):
-                continue
-
-            d = os.path.join(paths.repository_dataset_dir, i)
-            if os.path.isdir(d):
-                gd = os.path.join(d, '.git')
-                if os.path.isdir(gd):
-                    yield i
 
     def pull(self):
         self._repo.smart_pull(quiet=False)

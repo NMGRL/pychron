@@ -110,7 +110,7 @@ class PlateauTestCase(unittest.TestCase):
     def _get_test_data_exclude_pass(self):
         ages = [7, 1, 1, 1, 1, 6, 7]
         errors = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-        signals = [1, 1, 1, 1, 1, 1, 100]
+        signals = [1, 1, 1, 1, 1, 1, 1]
         exclude = [6]
         idx = (1, 4)
         return ages, errors, signals, exclude, idx

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 import hashlib
 import random
+from threading import Thread
 
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.action.exit_action import ExitAction
@@ -52,6 +53,7 @@ class PychronTasksPlugin(BasePlugin):
     available_task_extensions = ExtensionPoint(List, id='pychron.available_task_extensions')
 
     my_tips = List(contributes_to='pychron.plugin.help_tips')
+    background_processes = ExtensionPoint(List, id='pychron.background_processes')
 
     # def _application_changed(self):
     #     # defaults = (('use_advanced_ui', False), ('show_random_tip', True))
@@ -60,13 +62,30 @@ class PychronTasksPlugin(BasePlugin):
     #         self._set_preference_defaults(defaults, 'pychron.general')
     #     except AttributeError, e:
     #         print 'exception', e
-
     def start(self):
         self.info('Writing plugin file defaults')
         paths.write_file_defaults(self.file_defaults)
 
         self._set_user()
         self._random_tip()
+        self._start_background_processes()
+
+    def _start_background_processes(self):
+        self.info('starting background processes')
+        print self.background_processes
+        for i, p in enumerate(self.background_processes):
+            print i, p
+            if isinstance(p, tuple):
+                name, func = p
+            else:
+                func = p
+                name = 'Background{:02n}'.format(i)
+
+            if hasattr(func, '__call__'):
+                print 'asdfas', func, name
+                t = Thread(target=func, name=name)
+                t.setDaemon(True)
+                t.start()
 
     def _set_user(self):
         self.application.preferences.set('pychron.general.username', globalv.username)

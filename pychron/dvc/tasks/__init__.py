@@ -17,8 +17,23 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import os
+
+from pychron.paths import paths
 
 
+def list_local_repos():
+    for i in os.listdir(paths.repository_dataset_dir):
+        if i.startswith('.'):
+            continue
+        elif i.startswith('~'):
+            continue
+
+        d = os.path.join(paths.repository_dataset_dir, i)
+        if os.path.isdir(d):
+            gd = os.path.join(d, '.git')
+            if os.path.isdir(gd):
+                yield i
 # ============= EOF =============================================
 
 
