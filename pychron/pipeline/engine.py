@@ -334,7 +334,14 @@ class PipelineEngine(Loggable):
             self.selected = osel
 
     def remove_node(self, node):
-        self.pipeline.nodes.remove(node)
+        try:
+            self.pipeline.nodes.remove(node)
+        except ValueError:
+            for ni in self.pipeline.nodes:
+                if isinstance(ni, NodeGroup):
+                    ni.nodes.remove(node)
+                    break
+
         # self.run_needed = True
 
     def set_template(self, name):
