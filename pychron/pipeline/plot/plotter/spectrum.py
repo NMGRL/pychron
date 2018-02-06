@@ -325,7 +325,6 @@ class Spectrum(BaseArArFigure):
         sel = obj.metadata['selections']
 
         sel1 = self._filter_metadata_changes(obj, self.sorted_analyses)
-        # print sel, sel1
 
         for sp in self.spectrum_overlays:
             sp.selections = sel
@@ -334,7 +333,7 @@ class Spectrum(BaseArArFigure):
             self.plateau_overlay.selections = sel
 
         ag = self.analysis_group
-        ag.dirty = True
+        # ag.dirty = True
 
         if self.age_label:
             # text = self._build_integrated_age_label(ag.integrated_age, ag.nanalyses)

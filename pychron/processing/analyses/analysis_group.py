@@ -19,6 +19,7 @@ import math
 
 from numpy import array, nan
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Float
+from traits.trait_base import TraitsCache, Undefined
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
@@ -28,7 +29,7 @@ from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 
 
 def AGProperty(*depends):
-    d = 'dirty,analyses:[status,temp_status]'
+    d = 'dirty,analyses:[temp_status]'
     # d = 'dirty'  # ,analyses:[status,temp_status]'
     if depends:
         d = '{},{}'.format(','.join(depends), d)
@@ -199,7 +200,7 @@ class AnalysisGroup(HasTraits):
     def _get_percent_39Ar(self):
         return 0
 
-    # @cached_property
+    @cached_property
     def _get_weighted_age(self):
         attr = self.attribute
         if attr.startswith('uage'):
@@ -235,15 +236,15 @@ class AnalysisGroup(HasTraits):
                     return nan
         return e
 
-    # @cached_property
+    @cached_property
     def _get_weighted_kca(self):
         return ufloat(*self._calculate_weighted_mean('kca'))
 
-    # @cached_property
+    @cached_property
     def _get_arith_kca(self):
         return ufloat(*self._calculate_arithmetic_mean('kca'))
 
-    # @cached_property
+    @cached_property
     def _get_arith_age(self):
         if self.include_j_error_in_individual_analyses:
             v, e = self._calculate_arithmetic_mean('uage')
@@ -384,7 +385,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         if not (l is None and h is None):
             return l, h
 
-    # @cached_property
+    @cached_property
     def _get_plateau_age(self):
         # ages, errors, k39 = self._get_steps()
 
@@ -396,8 +397,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                    'gas_fraction': self.plateau_gas_fraction,
                    'fixed_steps': self.fixed_steps}
 
-        excludes = [i for i in enumerate(self.analyses) if ai.is_omitted()]
+        excludes = [i for i, ai in enumerate(self.analyses) if ai.is_omitted()]
         args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
+
+        v, e = 0, 0
         if args:
             v, e, pidx = args
             if pidx[0] == pidx[1]:
@@ -424,7 +427,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             if math.isnan(e):
                 e = 0
 
-            return ufloat(v, max(0, e))
+        return ufloat(v, max(0, e))
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
