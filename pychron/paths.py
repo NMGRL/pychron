@@ -289,6 +289,7 @@ class Paths(object):
     radial_template = None
     regression_series_template = None
     correction_factors_template = None
+    analysis_metadata_template = None
 
     furnace_sample_states = None
     valid_pi_names = None

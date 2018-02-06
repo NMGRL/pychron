@@ -406,22 +406,39 @@ class DVC(Loggable):
     #
     # def manual_baselines(self, runid, experiment_identifier, values, errors):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
+    def analysis_metadata_edit(self, runid, repository_identifier, analysis_metadata, extraction_metadata):
+        ps = []
+        if analysis_metadata:
+            path = analysis_path(runid, repository_identifier)
+            obj = dvc_load(path)
+            obj.update(analysis_metadata)
+            ps.append(path)
+
+        if extraction_metadata:
+            path = analysis_path(runid, repository_identifier, modifier='extraction')
+            obj = dvc_load(path)
+            obj.update(extraction_metadata)
+            ps.append(path)
+
+        if ps:
+            self.repository_add_paths(repository_identifier, ps)
 
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
         self.debug('values {}'.format(values))
         self.debug('errors {}'.format(errors))
         path = analysis_path(runid, repository_identifier, modifier=modifier)
-        with open(path, 'r') as rfile:
-            obj = json.load(rfile)
-            for k, v in values.iteritems():
-                o = obj[k]
-                o['manual_value'] = v
-                o['use_manual_value'] = True
-            for k, v in errors.iteritems():
-                o = obj[k]
-                o['manual_error'] = v
-                o['use_manual_error'] = True
+        obj = dvc_load(path)
+        # with open(path, 'r') as rfile:
+        #     obj = json.load(rfile)
+        for k, v in values.iteritems():
+            o = obj[k]
+            o['manual_value'] = v
+            o['use_manual_value'] = True
+        for k, v in errors.iteritems():
+            o = obj[k]
+            o['manual_error'] = v
+            o['use_manual_error'] = True
 
         dvc_dump(obj, path)
         return path

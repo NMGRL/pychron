@@ -60,7 +60,8 @@ class PipelinePlugin(BaseTaskPlugin):
                  ['geochron_template', 'GEOCHRON', ov],
                  ['yield_template', 'YIELD', ov],
                  ['csv_analyses_export_template', 'CSV_ANALYSES_EXPORT', ov],
-                 ['correction_factors_template', 'CORRECTION_FACTORS', ov]]
+                 ['correction_factors_template', 'CORRECTION_FACTORS', ov],
+                 ['analysis_metadata_template', 'ANALYSIS_METADATA', ov]]
 
         files = paths.set_template_manifest(files)
         return files

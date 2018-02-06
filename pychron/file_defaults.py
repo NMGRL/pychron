@@ -52,6 +52,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - CSV Ideogram
 - Correction Factors
 - Monitor Chain
+- Analysis Metadata
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -607,6 +608,15 @@ nodes:
   - klass: CorrectionFactorsNode
 
 """
+
+ANALYSIS_METADATA = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: AnalysisMetadataNode
+
+"""
+
 
 REACTORS_DEFAULT = '''{
     "Triga": {
