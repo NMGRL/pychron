@@ -4,9 +4,11 @@ Quick Start (ish)
 Step 0. Downloads
 ==========================
 
-    A. Download and install the excellent python IDE, PyCharm. A free community edition is available at https://www.jetbrains.com/pycharm/
+    A. (Optional) Download and install the excellent python IDE, PyCharm. A free community edition is available at
+       https://www.jetbrains.com/pycharm/
     #. Install Git. https://git-scm.com/downloads
-    #. Download the Anaconda Python Distribution from https://store.continuum.io/cshop/anaconda/. This download includes the Python standard library and numerous open
+    #. Download the Anaconda Python 2.7 Distribution from https://store.continuum.io/cshop/anaconda/. This download
+       includes the Python standard library and numerous open
        source packages for science, engineering and application development. The excellent package manager ``conda`` is
        also included to install any additional dependencies
     #. Create an account at https://github.com. This free account will give you access to Pychron's source files, support files
@@ -39,8 +41,9 @@ Create the file ``pychron_launcher.sh`` in a convenient place
 
     echo Using $ROOT as "ROOT" directory
 
-    ENTRY_POINT=$ROOT/launchers/pyexperiment_debug.py
+    ENTRY_POINT=$ROOT/launchers/launcher.py
 
+    export PYCHRON_APPNAME=pyexperiment
     export PYTHONPATH=$ROOT
 
     export GITHUB_USER=
