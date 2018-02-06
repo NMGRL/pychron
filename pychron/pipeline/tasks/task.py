@@ -230,6 +230,7 @@ class PipelineTask(BaseBrowserTask):
                     self.warning_dialog('No analyses selected to Tag')
                 return
 
+        note = ''
         if items:
             if tag is None:
                 a = self._get_tagname(items)
