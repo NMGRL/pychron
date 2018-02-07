@@ -19,7 +19,7 @@ from itertools import groupby
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
@@ -189,6 +189,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
     analyses = List
     graph = Instance('pychron.graph.graph.Graph')
+    # flux_visualization = Instance('pychron.processing.flux_visualization3D.FluxVisualization3D', ())
     _regressor = None
 
     levels = 10
@@ -302,18 +303,18 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         if self.plotter_options.use_monte_carlo:
             from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+            for positions in (self.unknown_positions, self.monitor_positions):
+                pts = array([[p.x, p.y] for p in positions])
+                nominals = reg.predict(pts)
+                errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      ntrials=self.plotter_options.monte_carlo_ntrials)
+                for p, j, je in zip(positions, nominals, errors):
+                    oj = p.saved_j
 
-            pts = array([[p.x, p.y] for p in self.positions])
-            nominals = reg.predict(pts)
-            errors = monte_carlo_error_estimation(reg, nominals, pts,
-                                                  ntrials=self.plotter_options.monte_carlo_ntrials)
-            for p, j, je in zip(self.positions, nominals, errors):
-                oj = p.saved_j
+                    p.j = j
+                    p.jerr = je
 
-                p.j = j
-                p.jerr = je
-
-                p.dev = (oj - j) / j * 100
+                    p.dev = (oj - j) / j * 100
         else:
             for positions in (self.unknown_positions, self.monitor_positions):
                 for p in positions:
@@ -349,7 +350,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self.irradiation_tray_overlay = ito
         p.overlays.append(ito)
 
-        m = self._model_flux(reg, r)
+        gx, gy, m = self._model_flux(reg, r)
+        # self.flux_visualization.update(gx, gy, m)
+
         s, p = g.new_series(z=m,
                             xbounds=(-r, r),
                             ybounds=(-r, r),
@@ -570,14 +573,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         # d = 2 * r / n * ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
         # self.j_gradient = self.percent_j_change / d
 
-        return nz
+        return gx, gy, nz
 
     def _regressor_factory(self, x, y, z, ze):
-        if self.plotter_options.model_kind == 'Bowl':
-            # from pychron.core.regression.flux_regressor import BowlFluxRegressor
-            klass = BowlFluxRegressor
+        if self.plotter_options.plot_kind == '2D':
+            if self.plotter_options.model_kind == 'Bowl':
+                # from pychron.core.regression.flux_regressor import BowlFluxRegressor
+                klass = BowlFluxRegressor
+            else:
+                # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
+                klass = PlaneFluxRegressor
         else:
-            # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
             klass = PlaneFluxRegressor
 
         x = array(x)
@@ -701,6 +707,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                       icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                          tooltip='Toggle "save" for all positions'))
         # v = View(VGroup(ggrp, tgrp, pgrp))
+        # vgrp = VGroup(UItem('flux_visualization', style='custom', editor=InstanceEditor()))
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 
