@@ -477,11 +477,8 @@ IDEO = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: NodeGroup
-    name: IdeoGroup
-    nodes:
-      - klass: GroupingNode
-      - klass: IdeogramNode
+  - klass: GroupingNode
+  - klass: IdeogramNode
 """
 
 INVERSE_ISOCHRON = """

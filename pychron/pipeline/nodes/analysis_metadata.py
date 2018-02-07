@@ -31,12 +31,16 @@ class AnalysisMetadataOption(HasTraits):
     project = Str(analysis=True)
     comment = Str(analysis=True)
     weight = Float(extraction=True)
+    identifier = Float(identifier=True)
+    aliquot = Float(identifier=True)
 
     sample_enabled = Bool(False)
     material_enabled = Bool(False)
     project_enabled = Bool(False)
     comment_enabled = Bool(False)
     weight_enabled = Bool(False)
+    identifier_enabled = Bool(False)
+    aliquot_enabled = Bool(False)
 
     def traits_view(self):
         v = View(VGroup(HGroup(Item('sample_enabled', label='Sample'),
@@ -55,7 +59,8 @@ class AnalysisMetadataOption(HasTraits):
     def get_edit_dict(self):
         am = {k: getattr(self, k) for k in self.traits(analysis=True) if getattr(self, '{}_enabled'.format(k))}
         ext = {k: getattr(self, k) for k in self.traits(extraction=True) if getattr(self, '{}_enabled'.format(k))}
-        return am, ext
+        idn = {k: getattr(self, k) for k in self.traits(identifier=True) if getattr(self, '{}_enabled'.format(k))}
+        return am, ext, idn
 
 
 class AnalysisMetadataNode(DVCNode):
@@ -70,21 +75,24 @@ class AnalysisMetadataNode(DVCNode):
             self.options.project = unk.project
             self.options.comment = unk.comment
             self.options.weight = unk.weight
+            self.options.identifier = unk.identifier
+            self.options.aliquot = unk.aliquot
 
         return super(AnalysisMetadataNode, self).configure(*args, **kw)
 
     def run(self, state):
         dvc = self.dvc
 
-        am_dict, ext_dict = self.options.get_edit_dict()
-        if am_dict or ext_dict:
+        am_dict, ext_dict, idn_dict = self.options.get_edit_dict()
+        if am_dict or ext_dict or idn_dict:
             def key(xi):
                 return xi.repository_identifier
 
             for repo_id, ans in groupby(sorted(self.unknowns, key=key), key=key):
                 dvc.pull_repository(repo_id)
                 for ai in self.unknowns:
-                    dvc.analysis_metadata_edit(ai.runid, ai.repository_identifier, am_dict, ext_dict)
+                    dvc.analysis_metadata_edit(ai.uuid, ai.record_id, ai.repository_identifier, am_dict, ext_dict,
+                                               idn_dict)
 
                 dvc.repository_commit(repo_id, 'Analysis Metadata edits')
 

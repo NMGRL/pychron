@@ -230,6 +230,9 @@ class BaseArArFigure(SelectionFigure):
                 pp.y_axis.tick_visible = False
                 pp.y_axis.tick_label_formatter = lambda x: ''
 
+            if po.y_axis_right:
+                pp.y_axis.orientation = 'right'
+
         if self.use_sparse_ticks:
             if pp.value_scale == 'log':
                 pp.value_axis.tick_generator = SparseLogTicks()
