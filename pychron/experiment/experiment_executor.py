@@ -58,7 +58,7 @@ from pychron.experiment.utilities.repository_identifier import retroactive_repos
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL
+from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -171,7 +171,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     memory_threshold = Int
     use_dvc = Bool(False)
     use_autoplot = Bool(False)
-    monitor_name = 'FC-2'
+    monitor_name = DEFAULT_MONITOR_NAME
     experiment_type = Str(AR_AR)
 
     use_xls_persistence = Bool(False)

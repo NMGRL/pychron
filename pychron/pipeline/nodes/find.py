@@ -25,6 +25,7 @@ from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 
 class FindNode(DVCNode):
@@ -34,8 +35,10 @@ class FindNode(DVCNode):
 class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
-
+    samples = Property(depends_on='irradiation, level')
     levels = Property(depends_on='irradiation')
+    level = Str
+    monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -46,6 +49,13 @@ class BaseFindFluxNode(FindNode):
 
     def _to_template(self, d):
         d['irradiation'] = self.irradiation
+
+    @cached_property
+    def _get_samples(self):
+        if self.irradiation and self.level:
+            return self.dvc.distinct_sample_names(self.irradiation, self.level)
+        else:
+            return []
 
     @cached_property
     def _get_levels(self):
@@ -88,9 +98,8 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     name = 'Find Flux Monitors'
 
     # monitor_sample_name = Str('BW-2014-3')
-    monitor_sample_name = Str('FC-2')
+    # monitor_sample_name = Str('FC-2')
 
-    level = Str
     use_browser = Bool(False)
 
     def run(self, state):
@@ -146,6 +155,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
+                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
                                Item('use_browser'),
                                width=300,
                                title='Select Irradiation and Level')

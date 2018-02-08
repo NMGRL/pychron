@@ -29,6 +29,8 @@ from pychron.core.pdf.options import BasePDFOptions, dumpable
 from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronology
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME
+
 MATERIAL_MAP = {'GroundmassConcentrate': 'GMC'}
 
 
@@ -248,7 +250,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             project = sample.project.name
             pi = sample.project.principal_investigator.name
             sample = sample.name
-            if sample == 'FC-2':
+            if sample == DEFAULT_MONITOR_NAME:
                 project, pi, material = '', '', ''
 
         r.add_item(value='[  ]')

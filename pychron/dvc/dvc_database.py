@@ -1677,6 +1677,18 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.name.like('%{}%'.format(name)))
             return self._query_all(q, verbose_query=True)
 
+    def distinct_sample_names(self, irradiation, level):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(SampleTbl.name))
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationTbl)
+
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            records = self._query_all(q, verbose_query=False)
+            return [r[0] for r in records]
+
     def get_samples(self, projects=None, principal_investigators=None, name_like=None, **kw):
         # if projects:
         #     if hasattr(projects, '__iter__'):
@@ -2045,6 +2057,5 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     ret = [ni.name for ni in names or []]
             return ret
-
 
 # ============= EOF =============================================

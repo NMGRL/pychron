@@ -287,10 +287,22 @@ class SampleBrowserModel(BrowserModel):
         ans = self.analysis_table.analyses
         ms = list({a.mass_spectrometer for a in ans})
         es = list({a.extract_device for a in ans})
+        irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
+
+        samples = []
+        for il in irs:
+            i, l = il.split(',')
+            ns = self.dvc.distinct_sample_names(i, l)
+            samples.extend(ns)
 
         m = FindReferencesConfigModel(mass_spectrometers=ms[:],
                                       available_mass_spectrometers=ms,
-                                      extract_devices=es[:], available_extract_devices=es)
+                                      extract_devices=es[:],
+                                      available_extract_devices=es,
+                                      irradiations=irs[:],
+                                      monitor_samples=list(set(samples)),
+                                      available_irradiations=irs)
+
         v = FindReferencesConfigView(model=m)
         info = v.edit_traits()
         if info.result:
@@ -298,20 +310,33 @@ class SampleBrowserModel(BrowserModel):
                 self.warning_dialog('No Mass Spectrometer selected. Cannot find references. Select one or more Mass '
                                     'Spectrometers from the "Configure Find References" window')
                 return
-
             atypes = m.formatted_analysis_types
-            refs = self.db.find_references(ans, atypes,
-                                           extract_devices=m.extract_devices,
-                                           mass_spectrometers=m.mass_spectrometers,
-                                           hours=m.threshold, make_records=False)
-            if refs:
-                self.analysis_table.add_analyses(refs)
-            else:
-                atypes = ','.join(atypes)
-                ms = ','.join(m.mass_spectrometers)
-                self.warning_dialog('No References found.\n\n'
-                                    'Analysis Types: {}\n'
-                                    'Mass Spectrometers: {}'.format(atypes, ms))
+            if atypes:
+                refs = self.db.find_references(ans, atypes,
+                                               extract_devices=m.extract_devices,
+                                               mass_spectrometers=m.mass_spectrometers,
+                                               hours=m.threshold, make_records=False)
+                if refs:
+                    self.analysis_table.add_analyses(refs)
+                else:
+                    atypes = ','.join(atypes)
+                    ms = ','.join(m.mass_spectrometers)
+                    self.warning_dialog('No References found.\n\n'
+                                        'Analysis Types: {}\n'
+                                        'Mass Spectrometers: {}'.format(atypes, ms))
+
+            for irstr in m.irradiations:
+                i, l = irstr.split(',')
+                r = self.db.get_flux_monitor_analyses(i, l, m.monitor_sample)
+                if r:
+                    self.analysis_table.add_analyses(r)
+
+                refs = self.db.find_references(r, atypes,
+                                               extract_devices=m.extract_devices,
+                                               mass_spectrometers=m.mass_spectrometers,
+                                               hours=m.threshold, make_records=False)
+                if refs:
+                    self.analysis_table.add_analyses(refs)
 
     def _project_date_bins(self, identifier):
         db = self.db
