@@ -86,7 +86,12 @@ class IsoEvoMainOptions(MainOptions):
                                  Item('curvature_goodness_at')),
                           label='Goodness')
 
-        v = View(Tabbed(main, goodness))
+        auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
+                             Item('n_true', label='N>=', tooltip='Fit when ncounts > Threshold'),
+                             Item('n_false', label='N<', tooltip='Fit when ncounts < Threshold'),
+                             label='N'),
+                      label='Auto', enabled_when='fit=="Auto"')
+        v = View(Tabbed(main, goodness, auto))
         return v
 
     def _get_global_group(self):

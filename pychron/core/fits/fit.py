@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, List, Int
+from traits.api import HasTraits, Str, Bool, Property, List, Int, cached_property
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -44,6 +44,7 @@ class Fit(HasTraits):
     def _fit_default(self):
         return self.fit_types[0]
 
+    @cached_property
     def _get_fit_types(self):
         return FIT_TYPES
 
