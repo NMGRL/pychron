@@ -316,6 +316,7 @@ class DVCAnalysis(Analysis):
             fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
+                     reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
                      filter_outliers_dict=fd)
 
@@ -331,7 +332,6 @@ class DVCAnalysis(Analysis):
                 except KeyError:
                     pass
 
-            isos['reviewed'] = reviewed
             self._dump(isos, path)
 
         # save baselines
@@ -363,13 +363,13 @@ class DVCAnalysis(Analysis):
                     blank['error'] = e = float(siso.temporary_blank.error)
                     blank['fit'] = f = siso.temporary_blank.fit
                     blank['references'] = make_ref_list(refs)
+                    blank['reviewed'] = reviewed
                     isos[k] = blank
 
                     siso.blank.value = v
                     siso.blank.error = e
                     siso.blank.fit = f
 
-        isos['reviewed'] = reviewed
         self._dump(isos, path)
 
     def dump_icfactors(self, dkeys, fits, refs, reviewed=False):
@@ -419,6 +419,8 @@ class DVCAnalysis(Analysis):
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
                 i.blank.fit = fit = v['fit']
+                i.blank.reviewed = v.get('reviewed', False)
+
                 if fit.lower() in ('previous', 'preceding'):
                     refs = v.get('references')
                     if refs:
@@ -429,9 +431,6 @@ class DVCAnalysis(Analysis):
                             i.blank_source = ref.get('runid', '')
                 else:
                     i.blank_source = fit
-
-            elif key == 'reviewed':
-                self.blank_reviewed = v
 
     def _load_intercepts(self, jd):
         for iso, v in jd.iteritems():
@@ -444,6 +443,8 @@ class DVCAnalysis(Analysis):
                 fod = v.get('filter_outliers_dict')
                 if fod:
                     i.filter_outliers_dict = fod
+
+                i.reviewed = iso.get('reviewed', False)
 
     def _load_value_error(self, item, obj):
         item.use_manual_value = obj.get('use_manual_value', False)
