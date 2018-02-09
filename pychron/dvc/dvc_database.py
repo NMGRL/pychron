@@ -1328,23 +1328,31 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.join(AnalysisTbl)
                 q = q.join(LevelTbl, IrradiationTbl)
 
+            has_filter = False
             # filters
             if repositories:
+                has_filter = True
                 q = q.filter(RepositoryTbl.name.in_(repositories))
+
             if principal_investigators:
-                # q = q.filter(PrincipalInvestigatorTbl.name == principal_investigator)
+                has_filter = True
                 for p in principal_investigators:
                     q = principal_investigator_filter(q, p)
 
             if projects:
+                has_filter = True
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
+                has_filter = True
                 q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
             if low_post:
+                has_filter = True
                 q = q.filter(AnalysisTbl.timestamp >= low_post)
             if high_post:
+                has_filter = True
                 q = q.filter(AnalysisTbl.timestamp <= high_post)
             if analysis_types:
+                has_filter = True
                 q = analysis_type_filter(q, analysis_types)
                 # if 'blank' in analysis_types:
                 #     analysis_types.remove('blank')
@@ -1354,15 +1362,19 @@ class DVCDatabase(DatabaseAdapter):
                 # else:
                 #     q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
             if irradiation:
+                has_filter = True
                 q = q.filter(IrradiationTbl.name == irradiation)
                 q = q.filter(LevelTbl.name == level)
             if loads:
+                has_filter = True
                 q = q.filter(MeasuredPositionTbl.loadName.in_(loads))
+
             if filter_non_run:
                 q = q.group_by(IrradiationPositionTbl.id)
                 q = q.having(count(AnalysisTbl.id) > 0)
 
-            return self._query_all(q, verbose_query=True)
+            if has_filter:
+                return self._query_all(q, verbose_query=True)
 
     def get_analysis_groups(self, project_ids, **kw):
         ret = []
