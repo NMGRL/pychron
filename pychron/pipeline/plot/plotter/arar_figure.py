@@ -629,8 +629,8 @@ class BaseArArFigure(SelectionFigure):
         return a
 
     def _set_renderer_selection(self, rs, sel):
+        meta = {'selections': sel}
         for rend in rs:
-            meta = {'selections': sel}
             rend.index.trait_set(metadata=meta,
                                  trait_change_notify=False)
 

@@ -36,6 +36,7 @@ class FitNode(FigureNode):
     use_save_node = Bool(True)
     _fits = List
     _keys = List
+
     # has_save_node = False
 
     def _set_saveable(self, state):
@@ -45,7 +46,7 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if u.analysi_type in self.plotter_options.analysis_types]
+            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
         return unks
 
     def check_refit(self, unks):
@@ -58,10 +59,11 @@ class FitNode(FigureNode):
 
         if not fit_needed:
             if confirm(None, self._refit_message) == YES:
-                return
+                return True
 
     def _check_refit(self, ai):
         pass
+
 
 class FitReferencesNode(FitNode):
     basename = None
@@ -72,8 +74,8 @@ class FitReferencesNode(FitNode):
 
         self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
-
-        if not self.check_refit(state.unknowns):
+        unks = self._get_valid_unknowns(state.unknowns)
+        if self.check_refit(unks):
             return
 
         super(FitReferencesNode, self).run(state)
@@ -148,6 +150,10 @@ class FitICFactorNode(FitReferencesNode):
     basename = 'ICFactor'
 
     predefined = List
+    _refit_message = 'The selected IC Factors have already been fit. Would you like to skip refitting?'
+
+    def _get_reference_analysis_types(self):
+        return ['air', 'cocktail']
 
     def _options_view_default(self):
         return view('ICFactor Options')
@@ -275,6 +281,9 @@ class FitIsotopeEvolutionNode(FitNode):
                     names.extend(dets)
                 pom.set_names(names)
 
+            atypes = list({a.analysis_type for a in self.unknowns})
+            pom.set_analysis_types(atypes)
+
     def run(self, state):
         super(FitIsotopeEvolutionNode, self).run(state)
 
@@ -285,21 +294,23 @@ class FitIsotopeEvolutionNode(FitNode):
 
         unks = self._get_valid_unknowns(state.unknowns)
         if unks:
-            fit_needed = False
-            for k in self._keys:
-                if fit_needed:
-                    break
-
-                for ui in unks:
-                    i = ui.get_isotope(k)
-                    if not i.reviewed:
-                        fit_needed = True
-                        break
-
-            if not fit_needed:
-                if confirm(None, 'The selected Isotopes have already been fit. '
-                                 'Would you like to skip refitting?') == YES:
-                    return
+            if self.check_refit(unks):
+                return
+            # fit_needed = False
+            # for k in self._keys:
+            #     if fit_needed:
+            #         break
+            #
+            #     for ui in unks:
+            #         i = ui.get_isotope(k)
+            #         if not i.reviewed:
+            #             fit_needed = True
+            #             break
+            #
+            # if not fit_needed:
+            #     if confirm(None, 'The selected Isotopes have already been fit. '
+            #                      'Would you like to skip refitting?') == YES:
+            #         return
 
             fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
 

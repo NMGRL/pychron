@@ -66,6 +66,7 @@ class SampleBrowserModel(BrowserModel):
 
     def activated(self, force=False):
         self.analysis_table.load()
+        self.reattach()
 
         if not self.is_activated or force:
             self.load_browser_options()

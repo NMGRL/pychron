@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
+# from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -39,7 +39,7 @@ from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOve
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.processing.argon_calculations import calculate_flux
+from pychron.processing.argon_calculations import calculate_flux, age_equation
 from pychron.pychron_constants import MSEM, SD
 
 
@@ -63,7 +63,9 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
     # uf = (reg.predict([0]), reg.predict_error([0]))
     uf = (av, werr)
     j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
-    # print age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+
+    # print monitor_age, age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+
     mswd = calculate_mswd(fs, es)
     return j, mswd
 
@@ -162,7 +164,6 @@ class FluxPosition(HasTraits):
     def set_mean_j(self):
 
         ans = [a for a in self.analyses if not a.is_omitted()]
-
         if ans:
             j, mswd = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
@@ -212,7 +213,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     irradiation = Str
     level = Str
 
-    scene = Instance(MlabSceneModel, ())
+    # scene = Instance(MlabSceneModel, ())
 
     def set_items(self, analyses):
         if self.geometry:

@@ -71,7 +71,10 @@ class PychronTasksPlugin(BasePlugin):
         self._start_background_processes()
 
     def _start_background_processes(self):
-        self.info('starting background processes')
+
+        self.info('starting background processes disabled')
+        return
+
         print self.background_processes
         for i, p in enumerate(self.background_processes):
             print i, p

@@ -178,14 +178,7 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_visible = False
 
         if selection:
-            plot = graph.plots[1]
-            meta = {'selections': selection}
-            plot.default_index.trait_set(metadata=meta)
-
-            # self._rebuild_ideo(selection)
-
-            # if omit:
-            #     self._rebuild_ideo(list(omit))
+            self._rebuild_ideo(selection)
 
     def mean_x(self, attr):
         # todo: handle other attributes
@@ -222,8 +215,7 @@ class Ideogram(BaseArArFigure):
         selection = []
         invalid = []
 
-        scatter = self._add_aux_plot(ys,
-                                     title, po, pid)
+        scatter = self._add_aux_plot(ys, title, po, pid)
 
         nsigma = self.options.error_bar_nsigma
 
@@ -567,12 +559,16 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        # if len(graph.plots) > 1:
-        #     ss = [p.plots[key][0]
-        #           for p in graph.plots[1:]
-        #           for key in p.plots
-        #           if key.endswith('{}'.format(self.group_id + 1))]
-        #     self._set_renderer_selection(ss, sel)
+        if len(graph.plots) > 1:
+            for p in graph.plots[1:]:
+                for key in p.plots:
+                    print p, key
+
+        ss = [p.plots[key][0]
+              for p in graph.plots[1:]
+              for key in p.plots
+              if key.endswith('{}'.format(self.group_id + 1))]
+        self._set_renderer_selection(ss, sel)
 
         plot = graph.plots[0]
         #

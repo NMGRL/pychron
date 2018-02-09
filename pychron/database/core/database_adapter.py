@@ -254,13 +254,21 @@ class DatabaseAdapter(Loggable):
         with self._session_lock:
             return SessionCTX(self, use_parent_session)
 
-    def create_session(self):
+    def create_session(self, force=False):
         if self.connected:
             if self.session_factory:
-                if not self.session:
-                    self.debug('create new session {}'.format(id(self)))
+                if force:
+                    self.debug('force create new session {}'.format(id(self)))
+                    if self.session:
+                        self.session.close()
+
                     self.session = self.session_factory()
-                self._session_cnt += 1
+                    self._session_cnt = 0
+                else:
+                    if not self.session:
+                        self.debug('create new session {}'.format(id(self)))
+                        self.session = self.session_factory()
+                    self._session_cnt += 1
         else:
             self.session = MockSession()
 

@@ -78,7 +78,6 @@ class PipelineTemplate(HasTraits):
         with open(self.path, 'r') as rfile:
             yd = yaml.load(rfile)
 
-        # print self.path, yd
         nodes = yd['nodes']
 
         if exclude_klass is None:

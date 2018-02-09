@@ -161,7 +161,7 @@ class MLLabel(Label):
     def _calculate_text_width(self, gc):
         ofont = self.font
         sfont = self.font.copy()
-        sfont.size = int(sfont.size * 0.6)
+        sfont.size = int(sfont.size * 0.95)
         suph = int(ofont.size * 0.5)
         subh = -int(ofont.size * 0.3)
 
@@ -209,7 +209,7 @@ class MLLabel(Label):
     def _draw_horizontal(self, gc, poss):
         ofont = self.font
         sfont = self.font.copy()
-        sfont.size = int(sfont.size * 0.6)
+        sfont.size = int(sfont.size * 0.95)
         suph = int(ofont.size * 0.5)
         subh = -int(ofont.size * 0.3)
 
