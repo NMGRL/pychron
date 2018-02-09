@@ -66,33 +66,33 @@ class RectSelectionTool(BaseTool):
     def normal_mouse_leave(self, event):
         event.window.set_pointer('arrow')
 
-    def normal_mouse_move(self, event):
-        if event.handled:
-            return
-
-        plot = self.component
-        index = plot.map_index((event.x, event.y), threshold=self.threshold)
-
-        if index is not None:
-            #            plot.index.metadata['mouse_xy'] = mxy
-            plot.index.suppress_hover_update = True
-            plot.index.metadata[self.hover_metadata_name] = [index]
-            if hasattr(plot, "value"):
-                plot.value.suppress_hover_update = True
-                plot.value.metadata[self.hover_metadata_name] = [index]
-                plot.value.suppress_hover_update = False
-            plot.index.suppress_hover_update = False
-
-        elif not self.persistent_hover:
-            plot.index.suppress_hover_update = True
-            plot.index.metadata.pop(self.hover_metadata_name, None)
-            if hasattr(plot, "value"):
-                plot.value.suppress_hover_update = True
-                plot.value.metadata.pop(self.hover_metadata_name, None)
-                plot.value.suppress_hover_update = False
-            plot.index.suppress_hover_update = False
-
-        return
+    # def normal_mouse_move(self, event):
+    #     if event.handled:
+    #         return
+    #
+    #     plot = self.component
+    #     index = plot.map_index((event.x, event.y), threshold=self.threshold)
+    #
+    #     if index is not None:
+    #         #            plot.index.metadata['mouse_xy'] = mxy
+    #         plot.index.suppress_hover_update = True
+    #         # plot.index.metadata[self.hover_metadata_name] = [index]
+    #         if hasattr(plot, "value"):
+    #             plot.value.suppress_hover_update = True
+    #             plot.value.metadata[self.hover_metadata_name] = [index]
+    #             plot.value.suppress_hover_update = False
+    #         plot.index.suppress_hover_update = False
+    #
+    #     elif not self.persistent_hover:
+    #         plot.index.suppress_hover_update = True
+    #         plot.index.metadata.pop(self.hover_metadata_name, None)
+    #         if hasattr(plot, "value"):
+    #             plot.value.suppress_hover_update = True
+    #             plot.value.metadata.pop(self.hover_metadata_name, None)
+    #             plot.value.suppress_hover_update = False
+    #         plot.index.suppress_hover_update = False
+    #
+    #     return
 
     def _get_selection_token(self, event):
         return self.component.map_index((event.x, event.y), threshold=self.threshold)
@@ -174,6 +174,7 @@ class RectSelectionTool(BaseTool):
             selection = md.get(self.selection_metadata_name, None)
             if selection is None:
                 md[self.selection_metadata_name] = [token]
+
             else:
                 if append:
                     if token not in md[self.selection_metadata_name]:

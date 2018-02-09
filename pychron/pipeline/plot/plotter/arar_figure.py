@@ -57,29 +57,34 @@ class SelectionFigure(HasTraits):
 
     def _filter_metadata_changes(self, obj, ans, func=None):
         sel = obj.metadata.get('selections', [])
-        if sel:
-            obj.was_selected = True
+        self._set_selected(ans, sel)
+        if func:
+            func(sel)
 
-            prev = None
-            if hasattr(obj, 'prev_selection'):
-                prev = obj.prev_selection
-
-            if prev != sel:
-                self._set_selected(ans, sel)
-                if func:
-                    func(sel)
-
-            obj.prev_selection = sel
-
-        elif hasattr(obj, 'was_selected'):
-            if obj.was_selected:
-                self._set_selected(ans, sel)
-                if func:
-                    func(sel)
-            obj.was_selected = False
-            obj.prev_selection = None
-        else:
-            obj.prev_selection = None
+        # print 'fff', sel
+        # if sel:
+        #     obj.was_selected = True
+        #
+        #     prev = None
+        #     if hasattr(obj, 'prev_selection'):
+        #         prev = obj.prev_selection
+        #
+        #     if prev != sel:
+        #         self._set_selected(ans, sel)
+        #         if func:
+        #             func(sel)
+        #
+        #     obj.prev_selection = sel
+        #
+        # elif hasattr(obj, 'was_selected'):
+        #     if obj.was_selected:
+        #         self._set_selected(ans, sel)
+        #         if func:
+        #             func(sel)
+        #     obj.was_selected = False
+        #     obj.prev_selection = None
+        # else:
+        #     obj.prev_selection = None
 
         return sel
 

@@ -444,7 +444,7 @@ class DVCAnalysis(Analysis):
                 if fod:
                     i.filter_outliers_dict = fod
 
-                i.reviewed = iso.get('reviewed', False)
+                i.reviewed = v.get('reviewed', False)
 
     def _load_value_error(self, item, obj):
         item.use_manual_value = obj.get('use_manual_value', False)
