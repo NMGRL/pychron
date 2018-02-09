@@ -541,10 +541,10 @@ class Ideogram(BaseArArFigure):
             self.update_graph_metadata(None, name, old, new)
 
     def update_graph_metadata(self, obj, name, old, new):
-
-        sorted_ans = self.sorted_analyses
-        if obj:
-            self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
+        pass
+        # sorted_ans = self.sorted_analyses
+        # if obj:
+        #     self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
     def get_ybounds(self):
         plot = self.graph.plots[0]

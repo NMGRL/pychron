@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import re
 import time
 
 from chaco.array_data_source import ArrayDataSource
@@ -113,6 +114,10 @@ class BaseSeries(BaseArArFigure):
         self.graph.refresh()
 
 
+RATIO_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)\/(?P<di>[A-Za-z]+)(?P<dd>\d+)(?P<rem>[\S\s]*)')
+ISOTOPE_RE = re.compile(r'(?P<ni>[A-Za-z]+)(?P<nd>\d+)(?P<rem>[\S\s]*)')
+
+
 class Series(BaseSeries):
     # _omit_key = 'omit_series'
 
@@ -159,7 +164,30 @@ class Series(BaseSeries):
                 # graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
             p.value_range.tight_bounds = False
-            self._setup_plot(i, p, po)
+            self._setup_plot(i, p, po, ytitle)
+
+    def _setup_plot(self, pid, pp, po, ytitle):
+
+        match = RATIO_RE.match(ytitle)
+        if match:
+            ytitle = '<sup>{}</sup>{}/<sup>{}</sup>{}'.format(match.group('nd'),
+                                                              match.group('ni'),
+                                                              match.group('dd'),
+                                                              match.group('di'))
+            if match.group('rem'):
+                ytitle = '{}{}'.format(match.group('rem'))
+        else:
+            match = ISOTOPE_RE.match(ytitle)
+            if match:
+                ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
+            if match.group('rem'):
+                ytitle = '{}{}'.format(match.group('rem'))
+
+        super(Series, self)._setup_plot(pid, pp, po)
+        if '<sup>' in ytitle or '<sub>' in ytitle:
+            self._set_ml_title(ytitle, pid, 'y')
+        else:
+            self.graph.set_y_title(ytitle, plotid=pid)
 
     def plot(self, plots, legend=None):
         """

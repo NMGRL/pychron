@@ -114,6 +114,7 @@ class Video(Image):
                     self.cap = self._get_remote_device(identifier)
                     # identifier is a url
                 else:
+
                     # ideally an identifier is passed in
                     try:
                         self.cap = get_capture_device()

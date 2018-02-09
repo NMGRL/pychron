@@ -357,11 +357,9 @@ class MultipleLinearRegressor(OLSRegressor):
     """
 
     def _get_X(self, xs=None):
-        print 'get _X', xs
         if xs is None:
             xs = self.clean_xs
 
-        print 'asdfas', xs
         r, c = xs.shape
         if c == 2:
             xs = column_stack((xs, ones(r)))
