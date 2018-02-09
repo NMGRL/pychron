@@ -57,6 +57,7 @@ class OptionsManager(Loggable):
 
     _cached_names = List
     _cached_detectors = List
+    _cached_atypes = List
     _default_options_txt = None
 
     def __init__(self, *args, **kw):
@@ -88,14 +89,21 @@ class OptionsManager(Loggable):
             # for p in self.plotter_options_list:
             #     p.set_names(names)
 
+    def set_analysis_types(self, atypes):
+        self._cached_atypes = atypes
+        if self.selected_options:
+            self.selected_options.set_analysis_types(atypes)
+
     def _selected_options_changed(self, new):
         if new:
             if self._cached_names:
                 new.set_names(self._cached_names)
 
-            print 'selecae change', self._cached_detectors
             if self._cached_detectors:
                 new.set_detectors(self._cached_detectors)
+
+            if self._cached_atypes:
+                new.set_analysis_types(self._cached_atypes)
 
     def set_selected(self, obj):
         for name in self.names:

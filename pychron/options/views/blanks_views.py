@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, EnumEditor
+from traitsui.api import View, EnumEditor, UItem, HGroup, CheckListEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
 
@@ -43,6 +44,10 @@ class BlanksAppearance(AppearanceSubOptions):
 
 
 class BlanksMainOptions(MainOptions):
+    def _get_global_group(self):
+        print 'getadvsclaso'
+        return self._get_analysis_group()
+
     def _get_columns(self):
         return [object_column(name='name'),
                 checkbox_column(name='plot_enabled', label='Enabled'),

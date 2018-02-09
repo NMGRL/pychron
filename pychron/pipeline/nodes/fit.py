@@ -40,6 +40,11 @@ class FitNode(FigureNode):
         state.saveable_keys = [p.name for p in ps]
         state.saveable_fits = [p.fit for p in ps]
 
+    def _get_valid_unknowns(self, unks):
+        if self.plotter_options.analysis_types:
+            unks = [u for u in unks if u.analysi_type in self.plotter_options.analysis_types]
+        return unks
+
 
 class FitReferencesNode(FitNode):
     basename = None
@@ -62,11 +67,20 @@ class FitReferencesNode(FitNode):
                     state.editors.append(editor)
 
                 unks = [u for u in state.unknowns if u.group_id == gid]
+                unks = self._get_valid_unknowns(unks)
+
                 editor.set_items(unks, compress=False)
+                refas = self._get_reference_analysis_types()
+                if refas:
+                    refs = [r for r in refs if r.analysis_type in refas]
+
                 editor.set_references(list(refs))
 
         self._set_saveable(state)
         self.editor.force_update(force=True)
+
+    def _get_reference_analysis_types(self):
+        return []
 
 
 class FitBlanksNode(FitReferencesNode):
@@ -74,6 +88,9 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
+
+    def _get_reference_analysis_types(self):
+        return ['blank_{}'.format(a) for a in self.plotter_options.analysis_types]
 
     def _options_view_default(self):
         return view('Blanks Options')
@@ -86,8 +103,9 @@ class FitBlanksNode(FitReferencesNode):
             if names:
                 names = [NULL_STR] + names
                 pom.set_names(names)
-                # def _set_saveable(self, state):
-                #     super(FitBlanksNode, self)._set_saveable()
+
+            atypes = list({a.analysis_type for a in self.unknowns})
+            pom.set_analysis_types(atypes)
 
 
 ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
@@ -231,11 +249,12 @@ class FitIsotopeEvolutionNode(FitNode):
         self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
 
-        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1,
-                             step=10)
+        unks = self._get_valid_unknowns(state.unknowns)
+
+        fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
 
         if self.editor:
-            self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
+            self.editor.analysis_groups = [(ai,) for ai in unks]
 
         # for ai in state.unknowns:
         #     ai.graph_id = 0
