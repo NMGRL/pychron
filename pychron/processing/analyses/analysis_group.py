@@ -210,6 +210,7 @@ class AnalysisGroup(HasTraits):
         #     else:
         #         v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
         # else:
+
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
@@ -273,6 +274,7 @@ class AnalysisGroup(HasTraits):
             return vs, es
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
+
         args = self._get_values(attr)
         sem = 0
         if args:

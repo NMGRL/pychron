@@ -559,10 +559,10 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        if len(graph.plots) > 1:
-            for p in graph.plots[1:]:
-                for key in p.plots:
-                    print p, key
+        # if len(graph.plots) > 1:
+        #     for p in graph.plots[1:]:
+        #         for key in p.plots:
+        #             print p, key
 
         ss = [p.plots[key][0]
               for p in graph.plots[1:]
@@ -825,6 +825,7 @@ class Ideogram(BaseArArFigure):
         ag.weighted_age_error_kind = self.options.error_calc_method
         ag.include_j_error_in_mean = self.options.include_j_error_in_mean
         ag.include_j_error_in_individual_analyses = self.options.include_j_error
+        ag.dirty = True
 
         mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
@@ -836,7 +837,6 @@ class Ideogram(BaseArArFigure):
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
-
         return wm, we, mswd, valid_mswd
 
     def _handle_xlimits(self):
