@@ -29,7 +29,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension, \
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME
 from pychron import json
 
 
@@ -662,7 +662,7 @@ class MetaRepo(GitRepoManager):
     def get_flux(self, irradiation, level, position):
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, je, lambda_k = 0, 0, None
-        standard_name, standard_material, standard_age = 'FC-2', 'sanidine', ufloat(28.201, 0)
+        standard_name, standard_material, standard_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
         positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
@@ -678,7 +678,7 @@ class MetaRepo(GitRepoManager):
                     lambda_k = ufloat(v, e)
                 mon = pos.get('monitor')
                 if mon:
-                    standard_name = mon.get('name', 'FC-2')
+                    standard_name = mon.get('name', DEFAULT_MONITOR_NAME)
                     sa = mon.get('age', 28.201)
                     se = mon.get('error', 0)
                     standard_age = ufloat(sa, se)

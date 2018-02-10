@@ -21,6 +21,9 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
 from pychron.core.fits.fit import IsoFilterFit
+from traits.api import HasTraits, Enum, cached_property
+
+from pychron.pychron_constants import FIT_TYPES
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
@@ -33,6 +36,20 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     outlier_goodness = Int
     curvature_goodness = Float
     curvature_goodness_at = Float
+    n_threshold = Int
+    n_true = Enum(FIT_TYPES)
+    n_false = Enum(FIT_TYPES)
+
+    @cached_property
+    def _get_fit_types(self):
+        fts = super(IsoFilterFitAuxPlot, self)._get_fit_types()
+        return fts + ['Auto', ]
+
+    def auto_set_fit(self, n):
+        if n >= self.n_threshold:
+            self.fit = self.n_true
+        else:
+            self.fit = self.n_false
 
 
 class IsotopeEvolutionOptions(FitOptions):

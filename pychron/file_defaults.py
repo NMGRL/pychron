@@ -52,6 +52,7 @@ PIPELINE_TEMPLATES = '''- Isotope Evolutions
 - CSV Ideogram
 - Correction Factors
 - Monitor Chain
+- Analysis Metadata
 '''
 
 IDENTIFIERS_DEFAULT = """
@@ -428,7 +429,8 @@ nodes:
   - klass: UnknownNode
   - klass: FindReferencesNode
     threshold: 10
-    analysis_type: Air
+    analysis_types: 
+      - Air
   - klass: ReferenceNode
   - klass: FitICFactorNode
     fits:
@@ -458,7 +460,8 @@ nodes:
   - klass: UnknownNode
   - klass: FindReferencesNode
     threshold: 10
-    analysis_type: Blank Unknown
+    analysis_types: 
+      - Blank Unknown
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode
@@ -476,11 +479,8 @@ IDEO = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: NodeGroup
-    name: IdeoGroup
-    nodes:
-      - klass: GroupingNode
-      - klass: IdeogramNode
+  - klass: GroupingNode
+  - klass: IdeogramNode
 """
 
 INVERSE_ISOCHRON = """
@@ -607,6 +607,15 @@ nodes:
   - klass: CorrectionFactorsNode
 
 """
+
+ANALYSIS_METADATA = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: AnalysisMetadataNode
+
+"""
+
 
 REACTORS_DEFAULT = '''{
     "Triga": {

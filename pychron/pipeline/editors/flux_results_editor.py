@@ -15,17 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-
-from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
+# from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
+from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 from uncertainties import nominal_value, std_dev
+from itertools import groupby
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
+from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
@@ -37,7 +39,7 @@ from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOve
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.processing.argon_calculations import calculate_flux
+from pychron.processing.argon_calculations import calculate_flux, age_equation
 from pychron.pychron_constants import MSEM, SD
 
 
@@ -61,7 +63,9 @@ def mean_j(ans, error_kind, monitor_age, lambda_k):
     # uf = (reg.predict([0]), reg.predict_error([0]))
     uf = (av, werr)
     j = calculate_flux(uf, monitor_age, lambda_k=lambda_k)
-    # print age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+
+    # print monitor_age, age_equation(j, uf, lambda_k=lambda_k, scalar=1)
+
     mswd = calculate_mswd(fs, es)
     return j, mswd
 
@@ -160,7 +164,6 @@ class FluxPosition(HasTraits):
     def set_mean_j(self):
 
         ans = [a for a in self.analyses if not a.is_omitted()]
-
         if ans:
             j, mswd = mean_j(ans, self.error_kind, self.monitor_age, self.lambda_k)
             self.mean_j = nominal_value(j)
@@ -189,6 +192,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
     analyses = List
     graph = Instance('pychron.graph.graph.Graph')
+    # flux_visualization = Instance('pychron.processing.flux_visualization3D.FluxVisualization3D', ())
     _regressor = None
 
     levels = 10
@@ -208,6 +212,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     plotter_options = None
     irradiation = Str
     level = Str
+
+    # scene = Instance(MlabSceneModel, ())
 
     def set_items(self, analyses):
         if self.geometry:
@@ -263,7 +269,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             if prev:
                 slope = prev < p.j
             prev = p.j
-            aa, xx, yy = self._sort_individuals(p, monage, lk, slope)
+            aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
             ans.extend(aa)
             # data = zip(p.analyses, xx, yy)
             # data = sorted(data, key=lambda x: x[2], reverse=p.slope)
@@ -291,7 +297,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         if n >= 3:
             # n = z.shape[0] * 10
             r = max((max(abs(x)), max(abs(y))))
-            r *= 1.25
+            # r *= 1.25
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
@@ -301,19 +307,19 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             return
 
         if self.plotter_options.use_monte_carlo:
-            from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+            # from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+            for positions in (self.unknown_positions, self.monitor_positions):
+                pts = array([[p.x, p.y] for p in positions])
+                nominals = reg.predict(pts)
+                errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      ntrials=self.plotter_options.monte_carlo_ntrials)
+                for p, j, je in zip(positions, nominals, errors):
+                    oj = p.saved_j
 
-            pts = array([[p.x, p.y] for p in self.positions])
-            nominals = reg.predict(pts)
-            errors = monte_carlo_error_estimation(reg, nominals, pts,
-                                                  ntrials=self.plotter_options.monte_carlo_ntrials)
-            for p, j, je in zip(self.positions, nominals, errors):
-                oj = p.saved_j
+                    p.j = j
+                    p.jerr = je
 
-                p.j = j
-                p.jerr = je
-
-                p.dev = (oj - j) / j * 100
+                    p.dev = (oj - j) / j * 100
         else:
             for positions in (self.unknown_positions, self.monitor_positions):
                 for p in positions:
@@ -349,7 +355,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self.irradiation_tray_overlay = ito
         p.overlays.append(ito)
 
-        m = self._model_flux(reg, r)
+        gx, gy, m, me = self._model_flux(reg, r)
+        # self._visualization_update(gx, gy, m, me, reg.xs, reg.ys)
+
         s, p = g.new_series(z=m,
                             xbounds=(-r, r),
                             ybounds=(-r, r),
@@ -367,6 +375,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                          marker='circle',
                          marker_size=self.marker_size)
         self.cmap_scatter = s[0]
+
+    # def _visualization_update(self, gx, gy, z, ze, xs, ys):
+    #     gx, gy = gx.T, gy.T
+    #
+    #     x, y = xs.T
+    #
+    #     self.scene.mlab.points3d(x, y, ys)
+    #     self.scene.mlab.surf(z)
+    #     # self.scene.mlab.surf(gx, gy, z-ze, warp_scale='auto')
+    #     # self.scene.mlab.surf(gx, gy, z+ze, warp_scale='auto')
+    #     # self.scene.mlab.test_points3d()
 
     def _additional_info(self, ind):
         fm = self.monitor_positions[ind]
@@ -412,7 +431,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             scatter, _ = g.new_series(xs, ys,
                                       yerror=yserr,
-                                      type='scatter', marker='circle')
+                                      type='scatter',
+                                      marker_size=4, marker='diamond')
 
             ebo = ErrorBarOverlay(component=scatter,
                                   orientation='y')
@@ -428,8 +448,14 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             line.overlays.append(ee)
 
             # plot the individual analyses
-            s, iys = self._graph_individual_analyses()
-            s.index.metadata['selections'] = sel
+            scatter, iys = self._graph_individual_analyses()
+            scatter.index.metadata['selections'] = sel
+
+            ebo = ErrorBarOverlay(component=scatter,
+                                  orientation='y')
+            scatter.overlays.append(ebo)
+            scatter.error_bars = ebo
+
             # s.index.metadata_changed = True
 
             ymi = min(lyy.min(), min(iys))
@@ -466,6 +492,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         ixs = []
         iys = []
+        ies = []
         ans = []
         m, k = po.monitor_age * 1e6, po.lambda_k
         slope = True
@@ -475,10 +502,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 if prev:
                     slope = prev < p.j
                 prev = p.j
-                aa, xx, yy = self._sort_individuals(p, m, k, slope)
+                aa, xx, yy, es = self._sort_individuals(p, m, k, slope)
                 ans.extend(aa)
                 ixs.extend(xx)
                 iys.extend(yy)
+                ies.extend(es)
                 p.slope = slope
                 # yy = sorted(yy, reverse=not slope)
 
@@ -486,7 +514,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 # ixs.extend(xx)
                 # iys.extend(yy)
 
-        s, _p = g.new_series(ixs, iys, type='scatter', marker='circle', marker_size=1.5)
+        s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
         add_analysis_inspector(s, ans)
 
         self.analyses = ans
@@ -496,9 +524,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _sort_individuals(self, p, m, k, slope):
         pp = arctan2(p.x, p.y)
         xx = linspace(pp - .1, pp + .1, len(p.analyses))
-        yy = [nominal_value(a.model_j(m, k)) for a in p.analyses]
+        ys = [a.model_j(m, k) for a in p.analyses]
+        yy = [nominal_value(a) for a in ys]
+        es = [std_dev(a) for a in ys]
 
-        data = zip(p.analyses, xx, yy)
+        data = zip(p.analyses, xx, yy, es)
         data = sorted(data, key=lambda x: x[2], reverse=not slope)
         return zip(*data)
 
@@ -546,9 +576,18 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         gx, gy = make_grid(r, n)
 
         nz = zeros((n, n))
+        ne = zeros((n, n))
         for i in xrange(n):
             pts = vstack((gx[i], gy[i])).T
-            nz[i] = reg.predict(pts)
+            # nz[i] = reg.predict(pts)
+            # print 'asdfasfasfasdfasdfasdfsafadsfasdfsadfadsfasfas'
+            # ne[i] = reg.predict_error(pts)
+            # pts = array([[p.x, p.y] for p in positions])
+            nominals = reg.predict(pts)
+            nz[i] = nominals
+            # errors = monte_carlo_error_estimation(reg, nominals, pts,
+            #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
+            # ne[i] = errors
 
         self.max_j = nz.max()
         self.min_j = nz.min()
@@ -559,14 +598,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         # d = 2 * r / n * ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
         # self.j_gradient = self.percent_j_change / d
 
-        return nz
+        return gx, gy, nz, ne
 
     def _regressor_factory(self, x, y, z, ze):
-        if self.plotter_options.model_kind == 'Bowl':
-            # from pychron.core.regression.flux_regressor import BowlFluxRegressor
-            klass = BowlFluxRegressor
+        if self.plotter_options.plot_kind == '2D':
+            if self.plotter_options.model_kind == 'Bowl':
+                # from pychron.core.regression.flux_regressor import BowlFluxRegressor
+                klass = BowlFluxRegressor
+            else:
+                # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
+                klass = PlaneFluxRegressor
         else:
-            # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
             klass = PlaneFluxRegressor
 
         x = array(x)
@@ -690,6 +732,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                       icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                          tooltip='Toggle "save" for all positions'))
         # v = View(VGroup(ggrp, tgrp, pgrp))
+
+        # vgrp = VGroup(UItem('scene', editor=SceneEditor(scene_class=MayaviScene)))
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 

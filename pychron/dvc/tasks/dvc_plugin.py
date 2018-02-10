@@ -109,6 +109,7 @@ class DVCPlugin(BaseTaskPlugin):
                     r.git.fetch()
                 except GitCommandError, e:
                     self.warning('error examining {}. {}'.format(name, e))
+                time.sleep(1)
 
             time.sleep(period)
 

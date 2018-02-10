@@ -17,12 +17,12 @@
 # ============= enthought library imports =======================
 import os
 
-from traits.api import HasTraits, Int, List
-from traitsui.api import View, UItem, Item, VGroup, Controller
-from traitsui.editors.check_list_editor import CheckListEditor
+from traits.api import HasTraits, Int, List, Str
+from traitsui.api import View, UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
 
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 
 def formatter(x):
@@ -36,6 +36,11 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     available_mass_spectrometers = List
     extract_devices = List
     available_extract_devices = List
+    available_irradiations = List
+    irradiations = List
+    monitor_sample = Str(DEFAULT_MONITOR_NAME)
+    monitor_samples = List
+
     pattributes = ('analysis_types', 'threshold')
 
     @property
@@ -71,7 +76,12 @@ class FindReferencesConfigView(Controller):
                                      editor=CheckListEditor(name='available_extract_devices')),
                                show_border=True,
                                label='Extract Devices'),
-
+                        VGroup(UItem('irradiations', style='custom',
+                                     editor=CheckListEditor(name='available_irradiations')),
+                               Item('monitor_sample',
+                                    editor=EnumEditor(name='monitor_samples')),
+                               show_border=True,
+                               label='Monitors'),
                         Item('threshold', label='Threshold (hrs)')),
                  title='Configure Find References',
                  buttons=['OK', 'Cancel'],

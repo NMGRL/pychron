@@ -116,6 +116,7 @@ class Ideogram(BaseArArFigure):
 
     xlimits_updated = Event
     ylimits_updated = Event
+
     # _omit_key = 'omit_ideo'
 
     def plot(self, plots, legend=None):
@@ -179,9 +180,6 @@ class Ideogram(BaseArArFigure):
         if selection:
             self._rebuild_ideo(selection)
 
-            # if omit:
-            #     self._rebuild_ideo(list(omit))
-
     def mean_x(self, attr):
         # todo: handle other attributes
         return nominal_value(self.analysis_group.weighted_age)
@@ -206,6 +204,7 @@ class Ideogram(BaseArArFigure):
         l, h = self.min_x(self.options.index_attr, exclude_omit=True), \
                self.max_x(self.options.index_attr, exclude_omit=True)
         return l, h
+
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -216,8 +215,7 @@ class Ideogram(BaseArArFigure):
         selection = []
         invalid = []
 
-        scatter = self._add_aux_plot(ys,
-                                     title, po, pid)
+        scatter = self._add_aux_plot(ys, title, po, pid)
 
         nsigma = self.options.error_bar_nsigma
 
@@ -377,8 +375,8 @@ class Ideogram(BaseArArFigure):
         mi, ma = min(probs), max(probs)
         self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
-        d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
-        plot.index_mapper.on_trait_change(d, 'updated')
+        # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
+        # plot.index_mapper.on_trait_change(d, 'updated')
 
         if self.options.display_inset:
             xs = self.xs
@@ -536,15 +534,13 @@ class Ideogram(BaseArArFigure):
 
         return m
 
-    def update_index_mapper(self, obj, name, old, new):
-        if new:
-            self.update_graph_metadata(None, name, old, new)
+    # def update_index_mapper(self, obj, name, old, new):
+    #     if new:
+    #         self.update_graph_metadata(None, name, old, new)
 
     def update_graph_metadata(self, obj, name, old, new):
-
         sorted_ans = self.sorted_analyses
-        if obj:
-            self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
+        self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
     def get_ybounds(self):
         plot = self.graph.plots[0]
@@ -563,14 +559,23 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        if len(graph.plots) > 1:
-            ss = [p.plots[key][0]
-                  for p in graph.plots[1:]
-                  for key in p.plots
-                  if key.endswith('{}'.format(self.group_id + 1))]
-            self._set_renderer_selection(ss, sel)
+        # if len(graph.plots) > 1:
+        #     for p in graph.plots[1:]:
+        #         for key in p.plots:
+        #             print p, key
+
+        ss = [p.plots[key][0]
+              for p in graph.plots[1:]
+              for key in p.plots
+              if key.endswith('{}'.format(self.group_id + 1))]
+        self._set_renderer_selection(ss, sel)
 
         plot = graph.plots[0]
+        #
+        # meta = {'selections': sel}
+        # plot.default_index.trait_set(metadata=meta,
+        #                              trait_change_notify=False)
+
         gid = self.group_id + 1
         lp = plot.plots['Current-{}'.format(gid)][0]
         dp = plot.plots['Original-{}'.format(gid)][0]
@@ -820,6 +825,7 @@ class Ideogram(BaseArArFigure):
         ag.weighted_age_error_kind = self.options.error_calc_method
         ag.include_j_error_in_mean = self.options.include_j_error_in_mean
         ag.include_j_error_in_individual_analyses = self.options.include_j_error
+        ag.dirty = True
 
         mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
@@ -831,7 +837,6 @@ class Ideogram(BaseArArFigure):
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
-
         return wm, we, mswd, valid_mswd
 
     def _handle_xlimits(self):

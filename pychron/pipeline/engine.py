@@ -44,6 +44,7 @@ from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView
+from pychron.pychron_constants import LINE_STR
 
 
 class ActiveCTX(object):
@@ -334,8 +335,15 @@ class PipelineEngine(Loggable):
             self.selected = osel
 
     def remove_node(self, node):
-        self.pipeline.nodes.remove(node)
-        # self.run_needed = True
+        try:
+            self.pipeline.nodes.remove(node)
+        except ValueError:
+            for ni in self.pipeline.nodes:
+                if isinstance(ni, NodeGroup):
+                    ni.nodes.remove(node)
+                    break
+
+                    # self.run_needed = True
 
     def set_template(self, name):
         self.debug('Set template "{}"'.format(name))
@@ -862,9 +870,11 @@ class PipelineEngine(Loggable):
         def to_name(t):
             return ' '.join(map(str.capitalize, t.split('_')))
 
-        for u in user_templates:
-            name = to_name(u)
-            add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
+        if user_templates:
+            ns.append(LINE_STR)
+            for u in user_templates:
+                name = to_name(u)
+                add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
 
         self.available_pipeline_templates = ns
 
@@ -927,7 +937,7 @@ class PipelineEngine(Loggable):
             self.recall_references()
 
     def _selected_pipeline_template_changed(self, new):
-        if new:
+        if new and new != LINE_STR:
             self.debug('Pipeline template {} selected'.format(new))
             self._set_template(new)
 

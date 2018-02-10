@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, EnumEditor
+from traitsui.api import View, EnumEditor, UItem, HGroup, CheckListEditor, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, FIT_ERROR_TYPES
 
@@ -30,16 +31,6 @@ class BlanksSubOptions(SubOptions):
 
 class BlanksAppearance(AppearanceSubOptions):
     pass
-    # def traits_view(self):
-    #     fgrp = VGroup(UItem('fontname'),
-    #                   self._get_xfont_group(),
-    #                   self._get_yfont_group(),
-    #                   label='Fonts', show_border=True)
-    #
-    #     v = View(VGroup(self._get_bg_group(),
-    #                     self._get_padding_group(),
-    #                     fgrp))
-    #     return v
 
 
 class BlanksMainOptions(MainOptions):
@@ -57,13 +48,34 @@ class BlanksMainOptions(MainOptions):
                 object_column(name='filter_outlier_iterations', label='Iter.'),
                 object_column(name='filter_outlier_std_devs', label='SD')]
 
+    def traits_view(self):
+        aux_plots_grp = Item('aux_plots',
+                             style='custom',
+                             width=525,
+                             show_label=False,
+                             editor=myTableEditor(columns=self._get_columns(),
+                                                  sortable=False,
+                                                  deletable=True,
+                                                  clear_selection_on_dclicked=True,
+                                                  orientation='vertical',
+                                                  selected='selected',
+                                                  selection_mode='rows',
+                                                  edit_view=self._get_edit_view(),
+                                                  reorderable=False))
+
+        rgrp = HGroup(Item('use_restricted_references'), show_border=True)
+        atgrp = self._get_analysis_group()
+        v = self._make_view(atgrp, rgrp, aux_plots_grp)
+
+        return v
+
+
 # ===============================================================
 # ===============================================================
-VIEWS = {}
+VIEWS = dict()
 VIEWS['main'] = BlanksMainOptions
 VIEWS['blanks'] = BlanksSubOptions
 VIEWS['appearance'] = BlanksAppearance
-
 
 # ===============================================================
 # ===============================================================

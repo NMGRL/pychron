@@ -38,6 +38,7 @@ class AuxPlot(HasTraits):
     ytitle_visible = Bool(True)
     ytick_visible = Bool(True)
     show_labels = Bool(False)
+    y_axis_right = Bool(False)
 
     filter_str = FilterPredicate
     sigma_filter_n = Int

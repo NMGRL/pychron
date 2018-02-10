@@ -77,8 +77,8 @@ class TIsotope:
 
 
 class DVCAnalysis(Analysis):
-    icfactor_reviewed = False
-    blank_reviewed = False
+    # icfactor_reviewed = False
+    # blank_reviewed = False
 
     production_obj = None
     chronology_obj = None
@@ -302,6 +302,9 @@ class DVCAnalysis(Analysis):
 
                 continue
 
+            if fi.fit == 'Auto':
+                fi.auto_set_fit(iso.n)
+
             iso.set_fit(fi)
 
     def dump_fits(self, keys, reviewed=False):
@@ -313,6 +316,7 @@ class DVCAnalysis(Analysis):
             fd = i.filter_outliers_dict
             d.update(fit=i.fit, value=float(i.value), error=float(i.error),
                      n=i.n, fn=i.fn,
+                     reviewed=reviewed,
                      include_baseline_error=i.include_baseline_error,
                      filter_outliers_dict=fd)
 
@@ -328,7 +332,6 @@ class DVCAnalysis(Analysis):
                 except KeyError:
                     pass
 
-            isos['reviewed'] = reviewed
             self._dump(isos, path)
 
         # save baselines
@@ -360,13 +363,13 @@ class DVCAnalysis(Analysis):
                     blank['error'] = e = float(siso.temporary_blank.error)
                     blank['fit'] = f = siso.temporary_blank.fit
                     blank['references'] = make_ref_list(refs)
+                    blank['reviewed'] = reviewed
                     isos[k] = blank
 
                     siso.blank.value = v
                     siso.blank.error = e
                     siso.blank.fit = f
 
-        isos['reviewed'] = reviewed
         self._dump(isos, path)
 
     def dump_icfactors(self, dkeys, fits, refs, reviewed=False):
@@ -380,9 +383,10 @@ class DVCAnalysis(Analysis):
                 v, e = nominal_value(v), std_dev(v)
 
             jd[dk] = {'value': float(v), 'error': float(e),
+                      'reviewed': reviewed,
                       'fit': fi,
                       'references': make_ref_list(refs)}
-        jd['reviewed'] = reviewed
+        # jd['reviewed'] = reviewed
         self._dump(jd, path)
 
     def make_path(self, modifier):
@@ -416,6 +420,8 @@ class DVCAnalysis(Analysis):
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
                 i.blank.fit = fit = v['fit']
+                i.blank.reviewed = v.get('reviewed', False)
+
                 if fit.lower() in ('previous', 'preceding'):
                     refs = v.get('references')
                     if refs:
@@ -426,9 +432,6 @@ class DVCAnalysis(Analysis):
                             i.blank_source = ref.get('runid', '')
                 else:
                     i.blank_source = fit
-
-            elif key == 'reviewed':
-                self.blank_reviewed = v
 
     def _load_intercepts(self, jd):
         for iso, v in jd.iteritems():
@@ -441,6 +444,8 @@ class DVCAnalysis(Analysis):
                 fod = v.get('filter_outliers_dict')
                 if fod:
                     i.filter_outliers_dict = fod
+
+                i.reviewed = v.get('reviewed', False)
 
     def _load_value_error(self, item, obj):
         item.use_manual_value = obj.get('use_manual_value', False)
@@ -473,9 +478,16 @@ class DVCAnalysis(Analysis):
     def _load_icfactors(self, jd):
         for key, v in jd.iteritems():
             if isinstance(v, dict):
-                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
-            elif key == 'reviewed':
-                self.icfactor_reviewed = v
+                vv, ee = v['value'] or 0, v['error'] or 0
+                r = v.get('reviewed')
+                for iso in self.get_isotopes(key):
+                    iso.ic_factor = ufloat(vv, ee, tag='icfactor')
+                    iso.ic_factor_reviewed = r
+            # self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
+            # for iso in self.get_isotopes(det):
+            #     iso.ic
+            # elif key == 'reviewed':
+            #     self.icfactor_reviewed = v
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)

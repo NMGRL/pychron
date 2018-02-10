@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from itertools import groupby
 
+from pyface.confirmation_dialog import confirm
+from pyface.constant import NO, YES
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
 from pychron.core.progress import progress_loader
@@ -32,6 +34,8 @@ from pychron.pychron_constants import NULL_STR
 
 class FitNode(FigureNode):
     use_save_node = Bool(True)
+    _fits = List
+    _keys = List
 
     # has_save_node = False
 
@@ -40,12 +44,36 @@ class FitNode(FigureNode):
         state.saveable_keys = [p.name for p in ps]
         state.saveable_fits = [p.fit for p in ps]
 
+    def _get_valid_unknowns(self, unks):
+        if self.plotter_options.analysis_types:
+            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
+        return unks
+
+    def check_refit(self, unks):
+        unks = self._get_valid_unknowns(unks)
+        for ui in unks:
+            if self._check_refit(ui):
+                break
+        else:
+            if confirm(None, self._refit_message) == YES:
+                return True
+
+    def _check_refit(self, ai):
+        pass
+
 
 class FitReferencesNode(FitNode):
     basename = None
     auto_set_items = False
 
     def run(self, state):
+        po = self.plotter_options
+
+        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._keys = [fi.name for fi in self._fits]
+        unks = self._get_valid_unknowns(state.unknowns)
+        if self.check_refit(unks):
+            return
 
         super(FitReferencesNode, self).run(state)
         if state.canceled:
@@ -61,12 +89,20 @@ class FitReferencesNode(FitNode):
                     editor = self._editor_factory()
                     state.editors.append(editor)
 
-                unks = [u for u in state.unknowns if u.group_id == gid]
+                unks = [u for u in unks if u.group_id == gid]
                 editor.set_items(unks, compress=False)
+                if self.plotter_options.use_restricted_references:
+                    refas = self._get_reference_analysis_types()
+                    if refas:
+                        refs = [r for r in refs if r.analysis_type in refas]
+
                 editor.set_references(list(refs))
 
         self._set_saveable(state)
         self.editor.force_update(force=True)
+
+    def _get_reference_analysis_types(self):
+        return []
 
 
 class FitBlanksNode(FitReferencesNode):
@@ -74,6 +110,16 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
+    _refit_message = 'The selected Isotopes have already been fit for blanks. Would you like to skip refitting?'
+
+    def _check_refit(self, ai):
+        for k in self._keys:
+            i = ai.get_isotope(k)
+            if not i.blank.reviewed:
+                return True
+
+    def _get_reference_analysis_types(self):
+        return ['blank_{}'.format(a) for a in self.plotter_options.analysis_types]
 
     def _options_view_default(self):
         return view('Blanks Options')
@@ -86,8 +132,9 @@ class FitBlanksNode(FitReferencesNode):
             if names:
                 names = [NULL_STR] + names
                 pom.set_names(names)
-                # def _set_saveable(self, state):
-                #     super(FitBlanksNode, self)._set_saveable()
+
+            atypes = list({a.analysis_type for a in self.unknowns})
+            pom.set_analysis_types(atypes)
 
 
 ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
@@ -101,6 +148,10 @@ class FitICFactorNode(FitReferencesNode):
     basename = 'ICFactor'
 
     predefined = List
+    _refit_message = 'The selected IC Factors have already been fit. Would you like to skip refitting?'
+
+    def _get_reference_analysis_types(self):
+        return ['air', 'cocktail']
 
     def _options_view_default(self):
         return view('ICFactor Options')
@@ -115,6 +166,12 @@ class FitICFactorNode(FitReferencesNode):
 
     # def run(self, state):
     #     super(FitICFactorNode, self).run(state)
+
+    def _check_refit(self, ai):
+        for k in self._keys:
+            i = ai.get_isotope(k)
+            if not i.ic_factor_reviewed:
+                return True
 
     def load(self, nodedict):
         try:
@@ -205,9 +262,14 @@ class FitIsotopeEvolutionNode(FitNode):
                    'IsotopeEvolutionEditor'
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
     name = 'Fit IsoEvo'
-    _fits = List
-    _keys = List
     use_plotting = False
+    _refit_message = 'The selected Isotope Evolutions have already been fit. Would you like to skip refitting?'
+
+    def _check_refit(self, analysis):
+        for k in self._keys:
+            i = analysis.get_isotope(k)
+            if not i.reviewed:
+                return True
 
     def _options_view_default(self):
         return view('Iso Evo Options')
@@ -223,6 +285,9 @@ class FitIsotopeEvolutionNode(FitNode):
                     names.extend(dets)
                 pom.set_names(names)
 
+            atypes = list({a.analysis_type for a in self.unknowns})
+            pom.set_analysis_types(atypes)
+
     def run(self, state):
         super(FitIsotopeEvolutionNode, self).run(state)
 
@@ -231,20 +296,24 @@ class FitIsotopeEvolutionNode(FitNode):
         self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
 
-        fs = progress_loader(state.unknowns, self._assemble_result, threshold=1,
-                             step=10)
+        unks = self._get_valid_unknowns(state.unknowns)
+        if unks:
+            if self.check_refit(unks):
+                return
 
-        if self.editor:
-            self.editor.analysis_groups = [(ai,) for ai in state.unknowns]
+            fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
 
-        # for ai in state.unknowns:
-        #     ai.graph_id = 0
+            if self.editor:
+                self.editor.analysis_groups = [(ai,) for ai in unks]
 
-        self._set_saveable(state)
-        if fs:
-            e = IsoEvolutionResultsEditor(fs)
-            e.plotter_options = po
-            state.editors.append(e)
+            # for ai in state.unknowns:
+            #     ai.graph_id = 0
+
+            self._set_saveable(state)
+            if fs:
+                e = IsoEvolutionResultsEditor(fs)
+                e.plotter_options = po
+                state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
         if prog:

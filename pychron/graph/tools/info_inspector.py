@@ -107,7 +107,7 @@ class InfoOverlay(AbstractOverlay):
     tool = Instance(BaseTool)
     visible = False
 
-    def _update_(self):
+    def _update(self):
         if self.tool.current_position is not None:
             self.visible = True
         else:
@@ -204,9 +204,9 @@ class InfoOverlay(AbstractOverlay):
 
     def _tool_changed(self, old, new):
         if old:
-            old.on_trait_change(self._update_, 'metadata_changed', remove=True)
+            old.on_trait_change(self._update, 'metadata_changed', remove=True)
 
         if new:
-            new.on_trait_change(self._update_, 'metadata_changed')
+            new.on_trait_change(self._update, 'metadata_changed')
 
 # ============= EOF =============================================

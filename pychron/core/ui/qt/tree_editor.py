@@ -132,7 +132,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
     def sizeHint(self, option, index):
         """ returns area taken by the text. """
         # return self._size_map[self._tree.itemFromIndex(index)]
-        return QtCore.QSize(1, 30)
+        return QtCore.QSize(1, 20)
 
     def paint(self, painter, option, index):
         hint = painter.renderHints()

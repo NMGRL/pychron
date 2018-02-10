@@ -23,7 +23,7 @@ from enable.markers import marker_names
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
-    spring, UItem, ListEditor, InstanceEditor
+    spring, UItem, ListEditor, InstanceEditor, CheckListEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
@@ -170,6 +170,8 @@ class MainOptions(SubOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='y_axis_right', label='Y Right'),
+
                 checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]
@@ -189,6 +191,10 @@ class MainOptions(SubOptions):
                                label='Y Limits'),
                         show_border=True))
         return v
+
+    def _get_analysis_group(self):
+        return HGroup(UItem('analysis_types', style='custom', editor=CheckListEditor(name='available_types')),
+                      show_border=True, label='Analysis Types')
 
     def _get_global_group(self):
         return
@@ -253,6 +259,9 @@ class BaseOptions(HasTraits):
         pass
 
     def set_detectors(self, dets):
+        pass
+
+    def set_analysis_types(self, atypes):
         pass
 
     def _fontname_changed(self):

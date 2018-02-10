@@ -108,6 +108,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     j_err = Float
     note = Str
     weight = Float
+    sample_search_str = Str
 
     include_recent = False
     _suppress_load_labnumbers = True
@@ -349,6 +350,11 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if new:
             self.manager.set_selected_attr(new, name)
 
+    def _sample_search_str_changed(self, new):
+        if len(new) >= 3:
+            sams = self.db.get_samples(name_like=new)
+            self._set_sample_records(sams)
+
     def _selected_samples_changed(self, new):
         if new:
             ni = new[0]
@@ -363,6 +369,9 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
         # load associated samples
         sams = self.db.get_samples(projects=names)
+        self._set_sample_records(sams)
+
+    def _set_sample_records(self, sams):
         sams = [SampleRecordView(si) for si in sams]
 
         self.samples = sams

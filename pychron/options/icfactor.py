@@ -39,7 +39,7 @@ class ICFactorAuxPlot(FitAuxPlot):
         return ANALYSIS_MAPPING.values()
 
     def _get_name(self):
-        if self.denominator and self.denominator!=NULL_STR:
+        if self.denominator and self.denominator != NULL_STR:
             ret = '{}/{}'.format(self.numerator, self.denominator)
         else:
             ret = self.numerator
@@ -54,7 +54,6 @@ class ICFactorOptions(SeriesOptions):
     subview_names = List(['Main', 'ICFactor', 'Appearance'])
 
     def set_detectors(self, dets):
-
         dets = [NULL_STR, 'age'] + dets
         super(ICFactorOptions, self).set_detectors(dets)
 
@@ -83,5 +82,6 @@ class ICFactorOptions(SeriesOptions):
             pp.extend((self.aux_plot_klass() for i in xrange(n)))
 
         self.aux_plots = pp
+        self.selected = []
 
 # ============= EOF =============================================

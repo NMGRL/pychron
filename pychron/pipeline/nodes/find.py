@@ -18,13 +18,14 @@
 from itertools import groupby
 
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
-from traitsui.api import Item, EnumEditor, UItem
-from traitsui.editors.check_list_editor import CheckListEditor
+from traitsui.api import Item, EnumEditor, UItem, VGroup
 
+from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 
 class FindNode(DVCNode):
@@ -34,8 +35,10 @@ class FindNode(DVCNode):
 class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
-
+    samples = Property(depends_on='irradiation, level')
     levels = Property(depends_on='irradiation')
+    level = Str
+    monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
 
     def load(self, nodedict):
         self.irradiation = nodedict.get('irradiation', '')
@@ -46,6 +49,13 @@ class BaseFindFluxNode(FindNode):
 
     def _to_template(self, d):
         d['irradiation'] = self.irradiation
+
+    @cached_property
+    def _get_samples(self):
+        if self.irradiation and self.level:
+            return self.dvc.distinct_sample_names(self.irradiation, self.level)
+        else:
+            return []
 
     @cached_property
     def _get_levels(self):
@@ -88,9 +98,8 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     name = 'Find Flux Monitors'
 
     # monitor_sample_name = Str('BW-2014-3')
-    monitor_sample_name = Str('FC-2')
+    # monitor_sample_name = Str('FC-2')
 
-    level = Str
     use_browser = Bool(False)
 
     def run(self, state):
@@ -146,6 +155,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
+                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
                                Item('use_browser'),
                                width=300,
                                title='Select Irradiation and Level')
@@ -156,8 +166,8 @@ class FindReferencesNode(FindNode):
     user_choice = False
     threshold = Float
 
-    analysis_type = Str
     analysis_types = List
+    available_analysis_types = List
 
     extract_device = Str
     enable_extract_device = Bool
@@ -175,7 +185,7 @@ class FindReferencesNode(FindNode):
 
     def load(self, nodedict):
         self.threshold = nodedict['threshold']
-        self.analysis_type = nodedict['analysis_type']
+        self.analysis_types = nodedict.get('analysis_types', [])
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -185,7 +195,7 @@ class FindReferencesNode(FindNode):
     #     obj['threshold'] = self.threshold
     def _to_template(self, d):
         d['threshold'] = self.threshold
-        d['analysis_type'] = self.analysis_type
+        d['analysis_types'] = self.analysis_types
 
     def _analysis_type_changed(self, new):
         if new == 'Blank Unknown':
@@ -204,6 +214,7 @@ class FindReferencesNode(FindNode):
         self.enable_mass_spectrometer = len(ms) > 1
         self.mass_spectrometer = list(ms)[0]
 
+        self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
@@ -214,6 +225,9 @@ class FindReferencesNode(FindNode):
 
         self._compress_groups(state.unknowns)
         self._compress_groups(state.references)
+
+    def _pre_run_hook(self):
+        pass
 
     def _compress_groups(self, ans):
         if not ans:
@@ -230,8 +244,9 @@ class FindReferencesNode(FindNode):
     def _run_group(self, state, gid, unknowns):
         times = sorted((ai.rundate for ai in unknowns))
 
-        atype = self.analysis_type.lower().replace(' ', '_')
-        refs = self.dvc.find_references(times, atype, hours=self.threshold,
+        # atype = self.analysis_type.lower().replace(' ', '_')
+        atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
+        refs = self.dvc.find_references(times, atypes, hours=self.threshold,
                                         extract_devices=self.extract_device,
                                         mass_spectrometers=self.mass_spectrometer,
                                         make_records=False)
@@ -245,7 +260,7 @@ class FindReferencesNode(FindNode):
                                          gid=gid)
 
             model.setup()
-            model.analysis_types = [self.analysis_type]
+            model.analysis_types = self.analysis_types  # [self.analysis_type]
 
             obj = GraphicalFilterView(model=model)
             info = obj.edit_traits(kind='livemodal')
@@ -270,19 +285,23 @@ class FindReferencesNode(FindNode):
         v = self._view_factory(Item('threshold',
                                     tooltip='Maximum difference between blank and unknowns in hours',
                                     label='Threshold (Hrs)'),
-                               Item('analysis_type',
-                                    label='Analysis Type',
-                                    editor=EnumEditor(name='analysis_types')),
+                               VGroup(UItem('analysis_types',
+                                            style='custom',
+                                            editor=CheckListEditor(name='available_analysis_types', cols=3)),
+                                      show_border=True, label='Analysis Types'),
 
-                               Item('extract_device', editor=EnumEditor(name='extract_devices'),
+                               Item('extract_device',
+                                    enabled_when='enable_extract_device',
+                                    editor=EnumEditor(name='extract_devices'),
                                     label='Extract Device'),
                                Item('mass_spectrometer',
                                     label='Mass Spectrometer',
+                                    enabled_when='enable_mass_spectrometer',
                                     editor=EnumEditor(name='mass_spectrometers')))
 
         return v
 
-    def _analysis_types_default(self):
+    def _available_analysis_types_default(self):
         return [' '.join(map(str.capitalize, k.split('_'))) for k in SPECIAL_MAPPING.keys()]
 
 #

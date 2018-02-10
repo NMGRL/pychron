@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Int, Bool
-
+from traits.api import Str, Int, Bool, List
+from traitsui.api import View, UItem, Item
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AuxPlotFigureOptions
 from pychron.core.fits.fit import Fit
@@ -34,6 +35,8 @@ class FitOptions(AuxPlotFigureOptions):
     global_error_type = Str('Error')
     nsigma = Int(1)
     use_time_axis = Bool(True)
+    analysis_types = List
+    available_types = List
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:
@@ -46,6 +49,10 @@ class FitOptions(AuxPlotFigureOptions):
     def set_detectors(self, dets):
         for p in self.aux_plots:
             p.detectors = dets
+
+    def set_analysis_types(self, atypes):
+        self.analysis_types = atypes[:]
+        self.available_types = atypes
 
     # def traits_view(self):
     #     bg_grp = self._get_bg_group()

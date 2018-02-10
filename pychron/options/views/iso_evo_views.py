@@ -18,6 +18,7 @@
 from enable.markers import marker_names
 from traits.api import Bool, Enum, on_trait_change, Float, Int
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
+from traitsui.editors import CheckListEditor
 
 from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
@@ -86,7 +87,12 @@ class IsoEvoMainOptions(MainOptions):
                                  Item('curvature_goodness_at')),
                           label='Goodness')
 
-        v = View(Tabbed(main, goodness))
+        auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
+                             Item('n_true', label='N>=', tooltip='Fit when ncounts > Threshold'),
+                             Item('n_false', label='N<', tooltip='Fit when ncounts < Threshold'),
+                             label='N'),
+                      label='Auto', enabled_when='fit=="Auto"')
+        v = View(Tabbed(main, goodness, auto))
         return v
 
     def _get_global_group(self):
@@ -110,7 +116,8 @@ class IsoEvoMainOptions(MainOptions):
                                  'then mark regression as "Bad"'),
                     HGroup(Item('controller.curvature_goodness'),
                            Item('controller.curvature_goodness_at')))
-        return VGroup(g, gg)
+        agrp = self._get_analysis_group()
+        return VGroup(agrp, g, gg)
 
     @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
                      'goodness_threshold, slope_goodness, slope_goodness_intensity,'

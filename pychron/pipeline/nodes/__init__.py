@@ -39,5 +39,6 @@ from pychron.pipeline.nodes.report import ReportNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import XLSXAnalysisTableNode, InterpretedAgeTableNode
 from pychron.pipeline.nodes.correction_factors import CorrectionFactorsNode
+from pychron.pipeline.nodes.analysis_metadata import AnalysisMetadataNode
 
 # ============= EOF =============================================

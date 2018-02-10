@@ -253,7 +253,7 @@ class BaseSweep(SpectrometerTask):
                     oys = (oys - mir) * R / r + miR
 
             xs = get_data('x{}'.format(i))
-            if di >= xs[-1]:
+            if not xs.shape[0] or di >= xs[-1]:
                 xs = hstack((xs, di))
             else:
                 xs = hstack((di, xs))

@@ -51,24 +51,25 @@ class SampleEntryAction(Action):
 
 class SaveAction(TaskAction):
     name = 'Save'
-    image = icon('database-save')
+    image = icon('database_save')
     method = 'save'
 
 
 class LoadAction(TaskAction):
     name = 'Load'
-    image = icon('arrow_up')
+    image = icon('document-open')
     method = 'load'
 
 
 class DumpAction(TaskAction):
     name = 'Dump'
-    image = icon('arrow_down')
+    image = icon('document-save')
     method = 'dump'
 
 
 class RecoverAction(TaskAction):
     name = 'Recover'
+    image = icon('document-revert-3')
     method = 'recover'
 
 
