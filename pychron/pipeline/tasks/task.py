@@ -37,6 +37,7 @@ from pychron.pipeline.engine import PipelineEngine
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
+from pychron.pipeline.script import DataReductionScript
 from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
@@ -65,10 +66,12 @@ def select_experiment_repo():
 class PipelineTask(BaseBrowserTask):
     name = 'Pipeline Data Processing'
     engine = Instance(PipelineEngine)
-    tool_bars = [SToolBar(PipelineRecallAction(),
-                          IdeogramAction(),
-                          SpectrumAction(),
-                          InverseIsochronAction()),
+    tool_bars = [
+
+        # SToolBar(PipelineRecallAction(),
+        #               IdeogramAction(),
+        #               SpectrumAction(),
+        #               InverseIsochronAction()),
 
                  SToolBar(ConfigureRecallAction()),
                  SToolBar(RunAction(),
@@ -143,6 +146,13 @@ class PipelineTask(BaseBrowserTask):
         return panes
 
     # toolbar actions
+    def run_script(self):
+        path = self.open_file_dialog()
+        if path is not None:
+            script = DataReductionScript()
+            script.dvc = self.dvc
+            script.run(path)
+
     def diff_analysis(self):
         self.debug('diff analysis')
         if not self.has_active_editor():

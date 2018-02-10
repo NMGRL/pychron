@@ -184,7 +184,7 @@ class FindReferencesNode(FindNode):
         super(FindReferencesNode, self).reset()
 
     def load(self, nodedict):
-        self.threshold = nodedict['threshold']
+        self.threshold = nodedict.get('threshold', 10)
         self.analysis_types = nodedict.get('analysis_types', [])
 
     def finish_load(self):

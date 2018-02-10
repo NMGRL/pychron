@@ -39,11 +39,16 @@ from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, F
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
+from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
+    CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
+    AUTO_REPORT, REPORT, CORRECTION_FACTORS, ANALYSIS_METADATA, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
+    CSV_ANALYSES_EXPORT
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView
+from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
+    PipelineTemplateRoot
 from pychron.pychron_constants import LINE_STR
 
 
@@ -211,8 +216,8 @@ class PipelineEngine(Loggable):
     selected_repositories = List
     # show_group_colors = Bool
 
-    selected_pipeline_template = Str
-    available_pipeline_templates = List
+    selected_pipeline_template = Any
+    # available_pipeline_templates = List
 
     selected_unknowns = List
     selected_references = List
@@ -229,6 +234,8 @@ class PipelineEngine(Loggable):
 
     state = Instance(EngineState)
     editors = List
+
+    pipeline_template_root = Instance(PipelineTemplateRoot)
 
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
@@ -787,14 +794,11 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
-        # self.reset_event = True
-        args = self._get_template_path(name)
-        if args is None:
-            return
+        if isinstance(name, str):
+            pt = self.pipeline_template_root.get_template(name)
+        else:
+            pt = name
 
-        path = args[0]
-
-        pt = PipelineTemplate(name, path)
         try:
             pt.render(self.application, self.pipeline,
                       self.browser_model,
@@ -832,51 +836,120 @@ class PipelineEngine(Loggable):
 
     def _load_predefined_templates(self):
         self.debug('load predefined templates')
-        # templates = []
-        # for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
-        #                             remove_extension=True):
-        #     templates.append(temp)
-        # self.debug('loaded {} pychron templates'.format(len(templates)))
 
+        root = PipelineTemplateRoot()
+        self.pipeline_template_root = root
+
+        groups = []
+        for name, gs in (('Fit', (('Iso Evo', ISOEVO),
+                                  ('Blanks', BLANKS),
+                                  ('IC Factor', ICFACTOR),
+                                  ('Flux', FLUX),
+                                  ('Correction Factors', CORRECTION_FACTORS))),
+                         ('Plot', (('Ideogram', IDEO),
+                                   ('CSV Ideogram', CSV_IDEO),
+                                   ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                                   ('Spectrum', SPEC),
+                                   ('Series', SERIES),
+                                   ('InverseIsochron', INVERSE_ISOCHRON),
+                                   ('XY Scatter', XY_SCATTER),
+                                   ('Regresssion', REGRESSION_SERIES),
+                                   ('Vertical Flux', VERTICAL_FLUX))),
+                         ('Table', (('Analysis', ANALYSIS_TABLE),
+                                    ('Interpreted Age', INTERPRETED_AGE_TABLE),
+                                    ('Report', REPORT))),
+                         ('Auto', (('Ideogram', AUTO_IDEOGRAM),
+                                   ('Series', AUTO_SERIES),
+                                   ('Report', AUTO_REPORT))),
+                         ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
+                         ('Share', (('Geochron', GEOCHRON),
+                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT)))
+
+                         ):
+            grp = PipelineTemplateGroup(name=name)
+            grp.templates = [PipelineTemplate(n, t) for n, t in gs]
+            groups.append(grp)
+
+        grp = PipelineTemplateGroup(name='User')
         user_templates = []
         for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
                                     remove_extension=True):
-            user_templates.append(temp)
+            user_templates.append(PipelineTemplate(temp, os.path.join(paths.user_pipeline_template_dir,
+                                                                      '{}.yaml'.format(temp))))
+
+        grp.templates = user_templates
+        groups.append(grp)
+
         self.debug('loaded {} user templates'.format(len(user_templates)))
+        # add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
+        # with open(paths.pipeline_template_file, 'r') as rfile:
+        #     tnames = yaml.load(rfile)
+        #
+        # def to_pathname(t):
+        #     return t.replace(' ', '_').lower()
+        #
+        # def add_template(nn, pp):
+        #     if os.path.isfile(pp):
+        #         with open(pp, 'r') as rfile:
+        #             yd = yaml.load(rfile)
+        #             required = yd['required']
+        #             if required:
+        #                 if all((self.application.get_service(ri) for ri in required)):
+        #                     ns.append(PipelineTemplate(nn, pp))
+        #             else:
+        #                 ns.append(PipelineTemplate(nn, pp))
 
-        with open(paths.pipeline_template_file, 'r') as rfile:
-            tnames = yaml.load(rfile)
+        # def to_name(t):
+        #     return ' '.join(map(str.capitalize, t.split('_')))
 
-        ns = []
+        root.groups = groups
 
-        def to_pathname(t):
-            return t.replace(' ', '_').lower()
-
-        def add_template(nn, pp):
-            if os.path.isfile(pp):
-                with open(pp, 'r') as rfile:
-                    yd = yaml.load(rfile)
-                    required = yd['required']
-                    if required:
-                        if all((self.application.get_service(ri) for ri in required)):
-                            ns.append(nn)
-                    else:
-                        ns.append(nn)
-
-        for name in tnames:
-            p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
-            add_template(name, p)
-
-        def to_name(t):
-            return ' '.join(map(str.capitalize, t.split('_')))
-
-        if user_templates:
-            ns.append(LINE_STR)
-            for u in user_templates:
-                name = to_name(u)
-                add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
-
-        self.available_pipeline_templates = ns
+    # def _load_predefined_templates_old(self):
+    #     self.debug('load predefined templates')
+    #     # templates = []
+    #     # for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
+    #     #                             remove_extension=True):
+    #     #     templates.append(temp)
+    #     # self.debug('loaded {} pychron templates'.format(len(templates)))
+    #
+    #     user_templates = []
+    #     for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
+    #                                 remove_extension=True):
+    #         user_templates.append(temp)
+    #     self.debug('loaded {} user templates'.format(len(user_templates)))
+    #
+    #     with open(paths.pipeline_template_file, 'r') as rfile:
+    #         tnames = yaml.load(rfile)
+    #
+    #     ns = []
+    #
+    #     def to_pathname(t):
+    #         return t.replace(' ', '_').lower()
+    #
+    #     def add_template(nn, pp):
+    #         if os.path.isfile(pp):
+    #             with open(pp, 'r') as rfile:
+    #                 yd = yaml.load(rfile)
+    #                 required = yd['required']
+    #                 if required:
+    #                     if all((self.application.get_service(ri) for ri in required)):
+    #                         ns.append(PipelineTemplate(nn, pp))
+    #                 else:
+    #                     ns.append(PipelineTemplate(nn, pp))
+    #
+    #     for name in tnames:
+    #         p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
+    #         add_template(name, p)
+    #
+    #     def to_name(t):
+    #         return ' '.join(map(str.capitalize, t.split('_')))
+    #
+    #     if user_templates:
+    #         # ns.append(LINE_STR)
+    #         for u in user_templates:
+    #             name = to_name(u)
+    #             add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
+    #
 
     def _add_find_node(self, node, run, analysis_type):
         newnode = FindReferencesNode(dvc=self.dvc, analysis_type=analysis_type)
@@ -937,7 +1010,7 @@ class PipelineEngine(Loggable):
             self.recall_references()
 
     def _selected_pipeline_template_changed(self, new):
-        if new and new != LINE_STR:
+        if isinstance(new, PipelineTemplate) or isinstance(new, str):
             self.debug('Pipeline template {} selected'.format(new))
             self._set_template(new)
 

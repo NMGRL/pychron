@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, Button
+from traits.api import Int, Property, Button, Str
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, Handler, TabularEditor
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, \
+    Handler, TabularEditor, TreeEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
+from traitsui.tree_node import TreeNode
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.color_generators import colornames
@@ -47,6 +49,7 @@ from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode, NodeGroupTreeNode
+from pychron.pipeline.template import PipelineTemplate, PipelineTemplateGroup, PipelineTemplateRoot
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
 
 
@@ -300,12 +303,32 @@ class PipelinePane(TraitsDockPane):
                                 show_disabled=True,
                                 refresh_all_icons='refresh_all_needed',
                                 update='update_needed')
-        v = View(VGroup(HGroup(UItem('selected_pipeline_template',
-                                     editor=myEnumEditor(name='available_pipeline_templates')),
-                               icon_button_editor('run_needed', 'start'),
-                               icon_button_editor('add_pipeline', 'add')),
-                        UItem('pipeline_group',
-                              editor=editor)), handler=PipelineHandler())
+
+        tnodes = [TreeNode(node_for=[PipelineTemplateRoot],
+                           children='groups'),
+                  TreeNode(node_for=[PipelineTemplateGroup],
+                           label='name',
+                           children='templates'),
+                  TreeNode(node_for=[PipelineTemplate, ],
+                           label='name')]
+
+        teditor = TreeEditor(nodes=tnodes,
+                             editable=False,
+                             selected='selected_pipeline_template',
+                             hide_root=True,
+                             lines_mode='off')
+
+        # HGroup(UItem('selected_pipeline_template',
+        #              editor=myEnumEditor(name='available_pipeline_templates')),
+        #        icon_button_editor('run_needed', 'start'),
+        #        icon_button_editor('add_pipeline', 'add')),
+
+        v = View(VSplit(UItem('pipeline_template_root',
+                              editor=teditor),
+                        VGroup(HGroup(icon_button_editor('run_needed', 'start'),
+                                      icon_button_editor('add_pipeline', 'add')),
+                               UItem('pipeline_group',
+                                     editor=editor))), handler=PipelineHandler())
         return v
 
 
@@ -416,22 +439,22 @@ class AnalysesPane(TraitsDockPane):
         v = View(VGroup(UItem('object.selected_node.unknowns',
                               width=200,
                               editor=TabularEditor(adapter=UnknownsAdapter(),
-                                                     update='refresh_table_needed',
-                                                     multi_select=True,
-                                                     # drag_external=True,
-                                                     # drop_factory=self.model.drop_factory,
-                                                     dclicked='dclicked_unknowns',
-                                                     selected='selected_unknowns',
-                                                     operations=['delete'])),
+                                                   update='refresh_table_needed',
+                                                   multi_select=True,
+                                                   # drag_external=True,
+                                                   # drop_factory=self.model.drop_factory,
+                                                   dclicked='dclicked_unknowns',
+                                                   selected='selected_unknowns',
+                                                   operations=['delete'])),
                         UItem('object.selected_node.references',
                               visible_when='object.selected_node.references',
                               editor=TabularEditor(adapter=ReferencesAdapter(),
-                                                     update='refresh_table_needed',
-                                                     # drag_external=True,
-                                                     multi_select=True,
-                                                     dclicked='dclicked_references',
-                                                     selected='selected_references',
-                                                     operations=['delete']))),
+                                                   update='refresh_table_needed',
+                                                   # drag_external=True,
+                                                   multi_select=True,
+                                                   dclicked='dclicked_references',
+                                                   selected='selected_references',
+                                                   operations=['delete']))),
                  handler=AnalysesPaneHandler())
         return v
 

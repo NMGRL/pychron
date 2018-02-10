@@ -19,7 +19,7 @@ import os
 
 import yaml
 from pyface.message_dialog import warning
-from traits.api import HasTraits
+from traits.api import HasTraits, List, Str
 from traitsui.api import View, UItem
 
 from pychron.core.ui.strings import PascalCase
@@ -50,6 +50,21 @@ class PipelineTemplateSaveView(HasTraits):
         return v
 
 
+class PipelineTemplateRoot(HasTraits):
+    groups = List
+
+    def get_template(self, name):
+        for group in self.groups:
+            for t in group.templates:
+                if t.name == name:
+                    return t
+
+
+class PipelineTemplateGroup(HasTraits):
+    name = Str
+    templates = List
+
+
 class PipelineTemplate(HasTraits):
     def __init__(self, name, path, *args, **kw):
         super(PipelineTemplate, self).__init__(*args, **kw)
@@ -75,8 +90,11 @@ class PipelineTemplate(HasTraits):
         if clear:
             pipeline.nodes = []
 
-        with open(self.path, 'r') as rfile:
-            yd = yaml.load(rfile)
+        if os.path.isfile(self.path):
+            with open(self.path, 'r') as rfile:
+                yd = yaml.load(rfile)
+        else:
+            yd = yaml.load(self.path)
 
         nodes = yd['nodes']
 
