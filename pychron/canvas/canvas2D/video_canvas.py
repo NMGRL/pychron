@@ -51,7 +51,7 @@ class VideoCanvas(SceneCanvas):
             o.trait_set(**d)
 
         if self.camera:
-            self.fps = self.camera.fps
+            self.fps = self.video.fps
 
     def close_video(self):
         self.closed_event = True

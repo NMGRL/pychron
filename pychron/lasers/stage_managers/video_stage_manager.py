@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from skimage.draw._draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
@@ -27,7 +28,7 @@ from threading import Thread, Timer, Event as TEvent
 
 from numpy import copy, array
 
-from pychron.canvas.canvas2D.camera import Camera
+from pychron.canvas.canvas2D.camera import Camera, YamlCamera
 from pychron.core.helpers import binpack
 from pychron.core.helpers.binpack import pack, format_blob, encode_blob
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
@@ -156,10 +157,10 @@ class VideoStageManager(StageManager):
         bind_preference(self.video_archiver, 'root',
                         '{}.video_directory'.format(pref_id))
 
-        bind_preference(self.video, 'output_mode',
-                        '{}.video_output_mode'.format(pref_id))
-        bind_preference(self.video, 'ffmpeg_path',
-                        '{}.ffmpeg_path'.format(pref_id))
+        # bind_preference(self.video, 'output_mode',
+        #                 '{}.video_output_mode'.format(pref_id))
+        # bind_preference(self.video, 'ffmpeg_path',
+        #                 '{}.ffmpeg_path'.format(pref_id))
 
     def get_grain_polygon(self):
         ld = self.lumen_detector
@@ -214,7 +215,7 @@ class VideoStageManager(StageManager):
         self._measure_grain_t.start()
         return True
 
-    def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
+    def start_recording(self, path=None, use_dialog=False, basename='vm_recording', **kw):
         """
         """
         directory = None
@@ -239,10 +240,6 @@ class VideoStageManager(StageManager):
 
         kw['path'] = path
         kw['basename'] = basename
-        # if new_thread:
-        #     t = UIThread(target=self._start_recording, kwargs=kw)
-        #     t.start()
-        # else:
 
         self._start_recording(**kw)
         self.is_recording = True
@@ -273,8 +270,20 @@ class VideoStageManager(StageManager):
 
     def initialize_video(self):
         if self.video:
-            self.video.open(
-                identifier=self.video_identifier)
+            p = os.path.join(self.configuration_dir_path, 'camera.yaml')
+
+            identifier = 0
+            yd = None
+            if os.path.isfile(p):
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
+                    vid = yd['Device']
+                    identifier = vid.get('identifier', 0)
+
+            self.video.open(identifier=identifier)
+
+            if yd:
+                self.video.load_configuration(yd)
 
     def initialize_stage(self):
         super(VideoStageManager, self).initialize_stage()
@@ -745,11 +754,13 @@ class VideoStageManager(StageManager):
 
         x = self.stage_controller.get_current_position('x')
         y = self.stage_controller.get_current_position('y')
-        pxpermm = self.canvas.camera.set_limits_by_zoom(z, x, y)
-        self.canvas.request_redraw()
-        self.pxpermm = pxpermm
+        if self.camera:
+            pxpermm = self.camera.set_limits_by_zoom(z, x, y, self.canvas)
+            self.pxpermm = pxpermm
+            self.debug('updated xy limits zoom={}, pxpermm={}'.format(z, pxpermm))
 
-        self.debug('updated xy limits zoom={}, pxpermm={}'.format(z, pxpermm))
+        self.canvas.request_redraw()
+
 
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
@@ -770,7 +781,6 @@ class VideoStageManager(StageManager):
                                  padding=30,
                                  video=video,
                                  camera=self.camera)
-        self.camera.parent = v
         return v
 
     def _canvas_editor_factory(self):
@@ -782,21 +792,26 @@ class VideoStageManager(StageManager):
     # defaults
     # ===============================================================================
     def _camera_default(self):
-        camera = Camera()
+        klass = YamlCamera
+        p = os.path.join(self.configuration_dir_path, 'camera.yaml')
+        if not os.path.isfile(p):
+            klass = Camera
+            pp = os.path.join(self.configuration_dir_path, 'camera.cfg')
+            if not os.path.isfile(pp):
+                self.warning_dialog('No Camera configuration file a {} or {}'.format(p, pp))
+            p = pp
 
-        p = os.path.join(paths.canvas2D_dir, 'camera.cfg')
+        camera = klass()
         camera.load(p)
+        camera.set_limits_by_zoom(0, 0, 0, self.canvas)
 
-        #        camera.current_position = (0, 0)
-        camera.set_limits_by_zoom(0, 0, 0)
-
-        vid = self.video
-        if vid:
+        # vid = self.video
+        # if vid:
             # swap red blue channels True or False
-            vid.swap_rb = camera.swap_rb
-
-            vid.vflip = camera.vflip
-            vid.hflip = camera.hflip
+        # vid.swap_rb = camera.swap_rb
+        #
+        # vid.vflip = camera.vflip
+        # vid.hflip = camera.hflip
 
         self._camera_zoom_coefficients = camera.zoom_coefficients
 
