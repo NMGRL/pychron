@@ -429,7 +429,8 @@ nodes:
   - klass: UnknownNode
   - klass: FindReferencesNode
     threshold: 10
-    analysis_type: Air
+    analysis_types: 
+      - Air
   - klass: ReferenceNode
   - klass: FitICFactorNode
     fits:
@@ -459,7 +460,8 @@ nodes:
   - klass: UnknownNode
   - klass: FindReferencesNode
     threshold: 10
-    analysis_type: Blank Unknown
+    analysis_types: 
+      - Blank Unknown
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode

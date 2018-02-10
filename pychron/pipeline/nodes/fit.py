@@ -51,13 +51,10 @@ class FitNode(FigureNode):
 
     def check_refit(self, unks):
         unks = self._get_valid_unknowns(unks)
-        fit_needed = False
         for ui in unks:
             if self._check_refit(ui):
-                fit_needed = True
                 break
-
-        if not fit_needed:
+        else:
             if confirm(None, self._refit_message) == YES:
                 return True
 
@@ -94,9 +91,10 @@ class FitReferencesNode(FitNode):
 
                 unks = [u for u in unks if u.group_id == gid]
                 editor.set_items(unks, compress=False)
-                refas = self._get_reference_analysis_types()
-                if refas:
-                    refs = [r for r in refs if r.analysis_type in refas]
+                if self.plotter_options.use_restricted_references:
+                    refas = self._get_reference_analysis_types()
+                    if refas:
+                        refs = [r for r in refs if r.analysis_type in refas]
 
                 editor.set_references(list(refs))
 
@@ -112,7 +110,7 @@ class FitBlanksNode(FitReferencesNode):
     plotter_options_manager_klass = BlanksOptionsManager
     name = 'Fit Blanks'
     basename = 'Blanks'
-    _refit_message = 'The selected Isotopes have already been fit. Would you like to skip refitting?'
+    _refit_message = 'The selected Isotopes have already been fit for blanks. Would you like to skip refitting?'
 
     def _check_refit(self, ai):
         for k in self._keys:
@@ -168,6 +166,12 @@ class FitICFactorNode(FitReferencesNode):
 
     # def run(self, state):
     #     super(FitICFactorNode, self).run(state)
+
+    def _check_refit(self, ai):
+        for k in self._keys:
+            i = ai.get_isotope(k)
+            if not i.ic_factor_reviewed:
+                return True
 
     def load(self, nodedict):
         try:
@@ -296,21 +300,6 @@ class FitIsotopeEvolutionNode(FitNode):
         if unks:
             if self.check_refit(unks):
                 return
-            # fit_needed = False
-            # for k in self._keys:
-            #     if fit_needed:
-            #         break
-            #
-            #     for ui in unks:
-            #         i = ui.get_isotope(k)
-            #         if not i.reviewed:
-            #             fit_needed = True
-            #             break
-            #
-            # if not fit_needed:
-            #     if confirm(None, 'The selected Isotopes have already been fit. '
-            #                      'Would you like to skip refitting?') == YES:
-            #         return
 
             fs = progress_loader(unks, self._assemble_result, threshold=1, step=10)
 

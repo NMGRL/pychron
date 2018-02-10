@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List
+from traits.api import List, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.views.blanks_views import VIEWS
@@ -35,6 +35,7 @@ class BlanksOptions(SeriesOptions):
     subview_names = List(['Main', 'Blanks', 'Appearance'])
     aux_plot_klass = BlanksFitAuxPlot
     # _main_options_klass = BlanksMainOptions
+    use_restricted_references = Bool
 
     def _get_subview(self, name):
         return VIEWS[name]

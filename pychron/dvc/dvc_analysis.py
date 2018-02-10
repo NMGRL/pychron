@@ -77,8 +77,8 @@ class TIsotope:
 
 
 class DVCAnalysis(Analysis):
-    icfactor_reviewed = False
-    blank_reviewed = False
+    # icfactor_reviewed = False
+    # blank_reviewed = False
 
     production_obj = None
     chronology_obj = None
@@ -383,9 +383,10 @@ class DVCAnalysis(Analysis):
                 v, e = nominal_value(v), std_dev(v)
 
             jd[dk] = {'value': float(v), 'error': float(e),
+                      'reviewed': reviewed,
                       'fit': fi,
                       'references': make_ref_list(refs)}
-        jd['reviewed'] = reviewed
+        # jd['reviewed'] = reviewed
         self._dump(jd, path)
 
     def make_path(self, modifier):
@@ -477,9 +478,16 @@ class DVCAnalysis(Analysis):
     def _load_icfactors(self, jd):
         for key, v in jd.iteritems():
             if isinstance(v, dict):
-                self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
-            elif key == 'reviewed':
-                self.icfactor_reviewed = v
+                vv, ee = v['value'] or 0, v['error'] or 0
+                r = v.get('reviewed')
+                for iso in self.get_isotopes(key):
+                    iso.ic_factor = ufloat(vv, ee, tag='icfactor')
+                    iso.ic_factor_reviewed = r
+            # self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
+            # for iso in self.get_isotopes(det):
+            #     iso.ic
+            # elif key == 'reviewed':
+            #     self.icfactor_reviewed = v
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)
