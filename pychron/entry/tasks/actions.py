@@ -290,4 +290,18 @@ class GenerateStatusReportAction(TaskAction):
     name = 'Status Report...'
     dname = 'Status Report...'
     method = 'generate_status_report'
+
+
+class SyncMetaDataAction(TaskAction):
+    name = 'Sync Repo/DB Metadata'
+    method = 'sync_metadata'
+
+    # def perform(self, event):
+    #     app = event.task.window.application
+    #     app.information_dialog('Sync Repo disabled')
+    #     return
+    #
+    #     dvc = app.get_service('pychron.dvc.dvc.DVC')
+    #     if dvc:
+    #         dvc.repository_db_sync('IR986', dry_run=False)
 # ============= EOF =============================================

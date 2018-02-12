@@ -27,7 +27,7 @@ from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
 from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
-    FindChangesAction
+    FindChangesAction, LoadOriginAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -70,6 +70,7 @@ class ExperimentRepoTask(BaseTask):
                           CheckoutBranchAction(),
                           PushAction(),
                           PullAction(),
+                          LoadOriginAction(),
                           FindChangesAction())]
 
     commits = List
@@ -81,14 +82,10 @@ class ExperimentRepoTask(BaseTask):
     def activated(self):
         self._preference_binder('pychron.dvc', ('organization',))
         self._preference_binder('pychron.github', ('oauth_token',))
-        org = Organization(self.organization)
-        org._oauth_token = self.oauth_token
 
         self.refresh_local_names()
         if self.confirmation_dialog('Check all Repositories for changes'):
             self.find_changes()
-
-        self.repository_names = org.repo_names
 
     def refresh_local_names(self):
         self.local_names = [RepoItem(name=i) for i in sorted(list_local_repos())]
@@ -157,6 +154,10 @@ class ExperimentRepoTask(BaseTask):
     def checkout_branch(self):
         self.info('checkout branch {}'.format(self.branch))
         self._repo.checkout_branch(self.branch)
+
+    def load_origin(self):
+        org = Organization(self.organization, oauth_token=self.oauth_token)
+        self.repository_names = org.repo_names
 
     def create_central_pane(self):
         return RepoCentralPane(model=self)

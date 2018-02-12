@@ -861,7 +861,7 @@ class PipelineEngine(Loggable):
                          ('Auto', (('Ideogram', AUTO_IDEOGRAM),
                                    ('Series', AUTO_SERIES),
                                    ('Report', AUTO_REPORT))),
-                         ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
+                         # ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
                          ('Share', (('Geochron', GEOCHRON),
                                     ('CSV Analyses Export', CSV_ANALYSES_EXPORT)))
 

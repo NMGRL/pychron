@@ -73,17 +73,23 @@ class FindChangesAction(TaskAction):
     method = 'find_changes'
 
 
-class SyncMetaDataAction(Action):
-    name = 'Sync Repo/DB Metadata'
-    def perform(self, event):
+class LoadOriginAction(TaskAction):
+    name = 'Load Origin'
+    method = 'load_origin'
 
-        app =event.task.window.application
-        app.information_dialog('Sync Repo disabled')
-        return
 
-        dvc = app.get_service('pychron.dvc.dvc.DVC')
-        if dvc:
-            dvc.repository_db_sync('IR986', dry_run=False)
+# class SyncMetaDataAction(Action):
+#     name = 'Sync Repo/DB Metadata'
+#
+#     def perform(self, event):
+#         app = event.task.window.application
+#         app.information_dialog('Sync Repo disabled')
+#         return
+#
+#         dvc = app.get_service('pychron.dvc.dvc.DVC')
+#         if dvc:
+#             dvc.repository_db_sync('IR986', dry_run=False)
+
 
 class ShareChangesAction(Action):
     name = 'Share Changes'
@@ -125,6 +131,7 @@ class ShareChangesAction(Action):
 
         msg = 'Changes successfully shared' if shared else 'No changes to share'
         information(None, msg)
+
 
 # class PullAnalysesAction(Action):
 #     name = 'Pull Analyses'

@@ -153,6 +153,7 @@ class MockQuery:
         return self
 
     def filter(self, *args, **kw):
+        # type: (object, object) -> object
         return self
 
     def all(self, *args, **kw):
@@ -656,7 +657,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             # print compile_query(q)
             self.debug(compile_query(q))
 
-        return self._query(q, func, reraise)
+        items = self._query(q, func, reraise)
+        if items is None:
+            items = []
+        return items
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
         if value is not None:
