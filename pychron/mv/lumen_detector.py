@@ -23,11 +23,6 @@ from skimage.color import rgb2gray, gray2rgb
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
-from skimage.filters import canny, threshold_adaptive
-from skimage.measure import find_contours, approximate_polygon, regionprops, label
-from skimage.morphology import watershed
-
-from pychron.image.cv_wrapper import grayspace
 from pychron.mv.locator import Locator
 
 

@@ -25,7 +25,6 @@ from traitsui.api import View, UItem, Group, InstanceEditor, HGroup, \
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.image_editor import ImageEditor
-from pychron.core.ui.laser_status_editor import LaserStatusEditor
 from pychron.core.ui.led_editor import LEDEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device

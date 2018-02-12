@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 import yaml
 from apptools.preferences.preference_binding import bind_preference
-from skimage.draw._draw import circle_perimeter, line
+from skimage.draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 from pychron.core.ui.thread import Thread as UIThread, sleep
 import json
@@ -28,7 +28,7 @@ from threading import Thread, Timer, Event as TEvent
 
 from numpy import copy, array
 
-from pychron.canvas.canvas2D.camera import Camera, YamlCamera
+from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers import binpack
 from pychron.core.helpers.binpack import pack, format_blob, encode_blob
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
@@ -50,6 +50,8 @@ class VideoStageManager(StageManager):
     """
     """
     video = Instance(Video)
+    camera = Instance(BaseCamera)
+
     canvas_editor_klass = VideoComponentEditor
 
     camera_zoom_coefficients = Property(String(enter_set=True, auto_set=False),
@@ -91,7 +93,7 @@ class VideoStageManager(StageManager):
     auto_upload = Bool(False)
     keep_local_copy = Bool(False)
 
-    camera = Instance(Camera)
+
     lumen_detector = Instance(LumenDetector, ())
 
     render_with_markup = Bool(False)
@@ -676,7 +678,7 @@ class VideoStageManager(StageManager):
     # handlers
     # ===============================================================================
     def _update_zoom(self, v):
-        if self.canvas.camera:
+        if self.camera:
             self._update_xy_limits()
 
     @on_trait_change('parent:motor_event')
@@ -733,10 +735,10 @@ class VideoStageManager(StageManager):
             self.video_server.stop()
 
     def _get_camera_zoom_coefficients(self):
-        return self.canvas.camera.zoom_coefficients
+        return self.camera.zoom_coefficients
 
     def _set_camera_zoom_coefficients(self, v):
-        self.canvas.camera.zoom_coefficients = ','.join(map(str, v))
+        self.camera.zoom_coefficients = ','.join(map(str, v))
         self._update_xy_limits()
 
     def _validate_camera_zoom_coefficients(self, v):
@@ -761,7 +763,6 @@ class VideoStageManager(StageManager):
 
         self.canvas.request_redraw()
 
-
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
 
@@ -771,16 +772,8 @@ class VideoStageManager(StageManager):
     def _canvas_factory(self):
         """
         """
-        try:
-            video = self.video
-        except AttributeError:
-            self.warning('Video not Available')
-            video = None
-
         v = VideoLaserTrayCanvas(stage_manager=self,
-                                 padding=30,
-                                 video=video,
-                                 camera=self.camera)
+                                 padding=30)
         return v
 
     def _canvas_editor_factory(self):
@@ -814,11 +807,11 @@ class VideoStageManager(StageManager):
         # vid.hflip = camera.hflip
 
         self._camera_zoom_coefficients = camera.zoom_coefficients
-
         return camera
 
     def _video_default(self):
         v = Video()
+        self.canvas.video = v
         return v
 
     def _video_server_default(self):

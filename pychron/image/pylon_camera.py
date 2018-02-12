@@ -21,16 +21,23 @@ import yaml
 class PylonCamera:
     def __init__(self, identifier):
         available_cameras = pypylon.factory.find_devices()
-
+        print available_cameras
         # Grep the first one and create a camera for it
-        cam = pypylon.factory.create_device(available_cameras[identifier])
-        # Open camera and grep some images
+        try:
+            cam = pypylon.factory.create_device(available_cameras[identifier])
+        except IndexError:
+            cam = None
         self._cam = cam
+
+    def open(self):
+        if self._cam:
+            self._cam.open()
+            return True
 
     def load_configuration(self, cfg):
         # self._cam.properties['PixelFormat'] = 'Mono12'
         # self._cam.properties['GevSCPD'] = 1500
-        if cfg:
+        if cfg and self._cam:
             dev = cfg.get('Device')
             if dev:
                 pylon = dev.get('PylonParameters', {})
@@ -38,6 +45,7 @@ class PylonCamera:
                     self._cam.properties[k] = v
 
     def read(self):
-        img = self._cam.grab_image()
-        return img
+        if self._cam:
+            img = self._cam.grab_image()
+            return img
 # ============= EOF =============================================

@@ -25,7 +25,6 @@ from pychron.canvas.canvas2D.video_underlay import VideoUnderlay
 class VideoCanvas(SceneCanvas):
     use_backbuffer = True
     video = Any
-    camera = None
     padding = 0
     closed_event = Event
     fps = Int(24)
@@ -50,7 +49,7 @@ class VideoCanvas(SceneCanvas):
             o = getattr(self, key)
             o.trait_set(**d)
 
-        if self.camera:
+        if self.video:
             self.fps = self.video.fps
 
     def close_video(self):

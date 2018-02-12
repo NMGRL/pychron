@@ -134,7 +134,7 @@ class Video(Image):
                         self.cap = self._get_remote_device(identifier)
                     elif identifier.startswith('pylon'):
                         _, i = identifier.split(':')
-                        self.cap = self._get_pylon_device(i)
+                        self.cap = self._get_pylon_device(int(i))
                     # identifier is a url
                 else:
                     # ideally an identifier is passed in
@@ -277,10 +277,11 @@ class Video(Image):
             self._save_ok_event.set()
 
     def _get_pylon_device(self, identifier):
+        print 'identifiqe', identifier
         from pylon_camera import PylonCamera
         cam = PylonCamera(identifier)
-        cam.open()
-        return cam
+        if cam.open():
+            return cam
 
     def _get_remote_device(self, url):
         from pychron.image.video_source import VideoSource

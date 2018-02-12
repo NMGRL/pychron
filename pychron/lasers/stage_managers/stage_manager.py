@@ -170,7 +170,6 @@ class StageManager(BaseStageManager):
 
     def load(self):
         super(StageManager, self).load()
-
         config = self.get_configuration()
         if config:
             self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
