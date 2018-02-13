@@ -212,6 +212,68 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
+    def sync_metadata(self, irradiation, level, dry_run=False):
+        self.info('sync metadata {},{}'.format(irradiation, level))
+        db = self.db
+        with db.session_ctx():
+            ans = db.get_analyses_by_level(irradiation, level)
+
+            def key(x):
+                return x.repository_identifier
+
+            def ikey(x):
+                return x.identifier
+
+            for reponame, ans in groupby(ans, key=key):
+                repo = self._get_repository(reponame, as_current=False)
+                ps = []
+                for ln, anss in groupby(sorted(ans, key=ikey), key=ikey):
+                    ip = db.get_identifier(ln)
+                    dblevel = ip.level
+                    irrad = dblevel.irradiation.name
+                    level = dblevel.name
+                    pos = ip.position
+
+                    for ai in ans:
+                        p = analysis_path(ai.record_id, reponame)
+
+                        try:
+                            obj = dvc_load(p)
+                        except ValueError:
+                            print 'skipping {}'.format(p)
+
+                        sample = ip.sample.name
+                        project = ip.sample.project.name
+                        material = ip.sample.material.name
+                        changed = False
+                        for attr, v in (('sample', sample),
+                                        ('project', project),
+                                        ('material', material),
+                                        ('irradiation', irrad),
+                                        ('irradiation_level', level),
+                                        ('irradiation_position', pos)):
+                            ov = obj.get(attr)
+                            if ov != v:
+                                print '{:<20s} repo={} db={}'.format(attr, ov, v)
+                                obj[attr] = v
+                                changed = True
+
+                        if changed:
+                            print '{}'.format(p)
+                            ps.append(p)
+                            if not dry_run:
+                                dvc_dump(obj, p)
+
+                if ps and not dry_run:
+                    repo.pull()
+                    self.debug('edited paths')
+                    for p in ps:
+                        self.debug(p)
+
+                    repo.add_paths(ps)
+                    repo.commit('<SYNC> Synced repository with database {}'.format(db.datasource_url))
+                    repo.push()
+
     def repository_db_sync(self, reponame, dry_run=False):
         self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
         repo = self._get_repository(reponame, as_current=False)

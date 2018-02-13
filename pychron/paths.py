@@ -264,32 +264,33 @@ class Paths(object):
     # ('screen_formatting_options', 'SCREEN_FORMATTING_DEFAULTS', False),
     # ('presentation_formatting_options', 'PRESENTATION_FORMATTING_DEFAULTS', False),
     # ('display_formatting_options', 'DISPLAY_FORMATTING_DEFAULTS', False))
-    icfactor_template = None
-    blanks_template = None
-    iso_evo_template = None
-    ideogram_template = None
-    flux_template = None
-    vertical_flux_template = None
-    xy_scatter_template = None
-    csv_ideogram_template = None
-    spectrum_template = None
-    isochron_template = None
-    inverse_isochron_template = None
-    analysis_table_template = None
-    interpreted_age_table_template = None
-    interpreted_age_ideogram_template = None
-    auto_ideogram_template = None
-    auto_series_template = None
-    auto_report_template = None
-    report_template = None
-    series_template = None
-    geochron_template = None
-    yield_template = None
-    csv_analyses_export_template = None
-    radial_template = None
-    regression_series_template = None
-    correction_factors_template = None
-    analysis_metadata_template = None
+
+    # icfactor_template = None
+    # blanks_template = None
+    # iso_evo_template = None
+    # ideogram_template = None
+    # flux_template = None
+    # vertical_flux_template = None
+    # xy_scatter_template = None
+    # csv_ideogram_template = None
+    # spectrum_template = None
+    # isochron_template = None
+    # inverse_isochron_template = None
+    # analysis_table_template = None
+    # interpreted_age_table_template = None
+    # interpreted_age_ideogram_template = None
+    # auto_ideogram_template = None
+    # auto_series_template = None
+    # auto_report_template = None
+    # report_template = None
+    # series_template = None
+    # geochron_template = None
+    # yield_template = None
+    # csv_analyses_export_template = None
+    # radial_template = None
+    # regression_series_template = None
+    # correction_factors_template = None
+    # analysis_metadata_template = None
 
     furnace_sample_states = None
     valid_pi_names = None

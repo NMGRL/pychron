@@ -23,7 +23,7 @@ from traitsui.api import View, Item, VGroup, UItem, HGroup
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction
+    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction
 from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
     IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
@@ -98,7 +98,8 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                           PreviewGenerateIdentifiersAction(),
                           image_size=(16, 16)),
                  SToolBar(ClearSelectionAction()),
-                 SToolBar(RecoverAction())]
+                 SToolBar(RecoverAction(),
+                          SyncMetaDataAction())]
 
     invert_flag = Bool
     selection_freq = Int
@@ -127,13 +128,20 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
                 self.load_principal_investigators()
                 self.load_projects(include_recent=False)
 
+    def sync_metadata(self):
+        self.info('sync metadata')
+        self.manager.sync_metadata()
+
     def generate_status_report(self):
+        self.info('generate status report')
         self.manager.generate_status_report()
 
     def recover(self):
+        self.info('recover')
         self.manager.recover()
 
     def clear_selection(self):
+        self.info('clear selection')
         cs = ClearSelectionView()
         info = cs.edit_traits()
         if info.result:

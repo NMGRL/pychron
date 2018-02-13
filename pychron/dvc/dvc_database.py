@@ -1561,6 +1561,20 @@ class DVCDatabase(DatabaseAdapter):
             return items[0]
 
     # multi getters
+    def get_analyses_by_level(self, irradiation, level, verbose=False):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationTbl)
+            q = q.join(RepositoryAssociationTbl)
+
+            q = q.filter(IrradiationTbl.name == irradiation)
+            q = q.filter(LevelTbl.name == level)
+            q = q.order_by(RepositoryAssociationTbl.repository)
+
+            return self._query_all(q, verbose_query=verbose)
+
     def get_analyses(self, analysis_type=None, mass_spectrometer=None,
                      reverse_order=False):
         with self.session_ctx() as sess:

@@ -146,6 +146,10 @@ class LabnumberEntry(DVCIrradiationable):
         do_import_irradiation(dvc=self.dvc, sources={xlssource: name}, default_source=name)
         self.updated = True
 
+    def sync_metadata(self):
+        if self.irradiation and self.level:
+            self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
+
     def generate_status_report(self):
         irradname = self.irradiation
         self.info('generate irradiation status report for {}'.format(irradname))
