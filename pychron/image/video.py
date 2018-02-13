@@ -91,6 +91,13 @@ class Video(Image):
     fps = Int
     identifier = 0
 
+    @property
+    def pixel_depth(self):
+        pd = 255
+        if hasattr(self.cap, 'pixel_depth'):
+            pd = self.cap.pixel_depth
+        return pd
+
     def is_recording(self):
         return self._recording
 
@@ -169,8 +176,8 @@ class Video(Image):
                 self.cap = None
 
     def get_image_data(self, cmap=None, **kw):
-        frame = self.get_frame(**kw)
-        return asarray(frame)
+        return self.get_frame(**kw)
+        # return asarray(frame)
         # if frame is not None:
         #     return asarray(frame[:, :])
 

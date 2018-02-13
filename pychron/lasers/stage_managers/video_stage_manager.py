@@ -60,6 +60,8 @@ class VideoStageManager(StageManager):
 
     use_auto_center_interpolation = Bool(False)
 
+    configure_camera_device_button = Button
+
     autocenter_button = Button('AutoCenter')
     configure_autocenter_button = Button('Configure')
 
@@ -92,7 +94,6 @@ class VideoStageManager(StageManager):
     use_media_storage = Bool(False)
     auto_upload = Bool(False)
     keep_local_copy = Bool(False)
-
 
     lumen_detector = Instance(LumenDetector, ())
 
@@ -270,12 +271,15 @@ class VideoStageManager(StageManager):
             else:
                 return close()
 
+    @property
+    def video_configuration_path(self):
+        return os.path.join(self.configuration_dir_path, 'camera.yaml')
+
     def initialize_video(self):
         if self.video:
-            p = os.path.join(self.configuration_dir_path, 'camera.yaml')
-
             identifier = 0
             yd = None
+            p = self.video_configuration_path
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
@@ -677,6 +681,10 @@ class VideoStageManager(StageManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _configure_camera_device_button_fired(self):
+        if hasattr(self.video.cap, 'reload_configuration'):
+            self.video.cap.reload_configuration(self.video_configuration_path)
+
     def _update_zoom(self, v):
         if self.camera:
             self._update_xy_limits()
@@ -685,7 +693,7 @@ class VideoStageManager(StageManager):
     def _update_motor(self, new):
         print 'motor event', new, self.canvas, self.canvas.camera
         # s = self.stage_controller
-        if self.canvas.camera:
+        if self.camera:
             if not isinstance(new, (int, float)):
                 args, _ = new
                 name, v = args[:2]
@@ -786,7 +794,9 @@ class VideoStageManager(StageManager):
     # ===============================================================================
     def _camera_default(self):
         klass = YamlCamera
-        p = os.path.join(self.configuration_dir_path, 'camera.yaml')
+        # p = os.path.join(self.configuration_dir_path, 'camera.yaml')
+
+        p = self.video_configuration_path
         if not os.path.isfile(p):
             klass = Camera
             pp = os.path.join(self.configuration_dir_path, 'camera.cfg')

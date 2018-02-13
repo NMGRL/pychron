@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 import yaml
-from traits.api import Bool, Any, Float, Tuple, Int, Str
+from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
 # ============= standard library imports ========================
 from numpy import polyval, exp
 # ============= local library imports  ==========================
@@ -24,7 +24,7 @@ from pychron.config_loadable import ConfigLoadable
 from pychron.loggable import Loggable
 
 
-class BaseCamera:
+class BaseCamera(HasTraits):
     ratio = Float
     current_position = Tuple
     fit_degree = Int
@@ -137,7 +137,7 @@ class YamlCamera(Loggable, BaseCamera):
 
     def write_configuration(self, obj, path):
         with open(path, 'w') as wfile:
-            yaml.dump(obj, wfile)
+            yaml.dump(obj, wfile, default_flow_style=False)
 
 
 class Camera(ConfigLoadable, BaseCamera):

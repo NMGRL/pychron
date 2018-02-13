@@ -110,6 +110,8 @@ class StageControlPane(TraitsDockPane):
 
             cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
                                  label='Coeff.'),
+                            icon_button_editor('stage_manager.configure_camera_device_button', 'cog',
+                                               tooltip='Reload camera configuration file'),
                             show_border=True, label='Zoom')
             # camera_grp.content.extend((HGroup(cfggrp, recgrp), mvgrp))
 
