@@ -255,12 +255,15 @@ class IsotopicMeasurement(BaseMeasurement):
             if isinstance(fit, (int, str, six.text_type)):
                 self.attr_set(fit=fit)
             else:
+                fitname = fit.fit
+                if fitname == 'Auto':
+                    fitname = fit.auto_fit(self.n)
 
                 self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                                  iterations=int(fit.filter_outlier_iterations or 0),
                                                  std_devs=int(fit.filter_outlier_std_devs or 0))
                 # self.error_type=fit.error_type or 'SEM'
-                self.attr_set(fit=fit.fit,
+                self.attr_set(fit=fitname,
                               time_zero_offset=fit.time_zero_offset or 0,
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)

@@ -146,6 +146,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def clear(self):
         self.analyses = []
         self.oanalyses = []
+        self.selected = []
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:

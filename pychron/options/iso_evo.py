@@ -46,11 +46,13 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
         fts = super(IsoFilterFitAuxPlot, self)._get_fit_types()
         return fts + ['Auto', ]
 
-    def auto_set_fit(self, n):
+    def auto_fit(self, n):
         if n >= self.n_threshold:
-            self.fit = self.n_true
+            fit = self.n_true
         else:
-            self.fit = self.n_false
+            fit = self.n_false
+
+        return fit
 
 
 class IsotopeEvolutionOptions(FitOptions):

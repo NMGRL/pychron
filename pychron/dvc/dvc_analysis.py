@@ -307,9 +307,6 @@ class DVCAnalysis(Analysis):
 
                 continue
 
-            if fi.fit == 'Auto':
-                fi.auto_set_fit(iso.n)
-
             iso.set_fit(fi)
 
     def dump_fits(self, keys, reviewed=False):

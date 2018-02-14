@@ -20,7 +20,7 @@ from itertools import groupby
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import NO, YES
-from traits.api import Bool, List, HasTraits, Str, Float, Instance
+from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
 
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -201,6 +201,7 @@ GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
 class IsoEvoResult(HasTraits):
     # record_id = Str
     isotope = Str
+    n = Str
     fit = Str
     intercept_value = Float
     intercept_error = Float
@@ -369,7 +370,12 @@ class FitIsotopeEvolutionNode(FitNode):
                     curvature_threshold = f.curvature_goodness
                     curvature_goodness = curvature < curvature_threshold
 
+                nstr = str(iso.n)
+                if iso.noutliers():
+                    nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
+
                 yield IsoEvoResult(analysis=xi,
+                                   nstr=nstr,
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
@@ -389,7 +395,7 @@ class FitIsotopeEvolutionNode(FitNode):
                                    curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
                                    regression_str=iso.regressor.tostring(),
-                                   fit=f.fit,
+                                   fit=iso.fit,
                                    isotope=k)
 
 
