@@ -730,18 +730,20 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
         reponames = list({a.repository_identifier for items in (state.unknowns, state.references) for a in items})
-        if self.repositories:
-            enames = [r.name for r in self.repositories]
-            reponames = [n for n in reponames if n not in enames]
+        # print reponames
+        # if self.repositories:
+        #     enames = [r.name for r in self.repositories]
+        #     reponames = [n for n in reponames if n not in enames]
 
         if reponames:
             repos = [RepoItem(name=n) for n in reponames]
-            if self.repositories:
-                self.repositories.extend(repos)
-            else:
-                self.repositories = repos
+            self.repositories = repos
+            # if self.repositories:
+            #     self.repositories.extend(repos)
+            # else:
+            #     self.repositories = repos
 
-        self._update_repository_status()
+            self._update_repository_status()
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
