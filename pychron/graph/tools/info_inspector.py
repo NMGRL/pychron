@@ -93,7 +93,7 @@ class InfoInspector(BaseTool):
         else:
             txt = ''
             if self.event_queue:
-                if not any((v for v in six.itervalues(self.event_queue))):
+                if not any((v for v in self.event_queue.values())):
                     txt = ''
                 else:
                     txt = None

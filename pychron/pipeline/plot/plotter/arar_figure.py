@@ -640,7 +640,7 @@ class BaseArArFigure(SelectionFigure):
     def _handle_label_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in six.itervalues(p.plots)
+            if next((pp for pp in p.plots.values()
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
@@ -652,7 +652,7 @@ class BaseArArFigure(SelectionFigure):
     def _handle_overlay_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in six.itervalues(p.plots)
+            if next((pp for pp in p.plots.values()
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):

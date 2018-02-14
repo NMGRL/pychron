@@ -185,7 +185,7 @@ class SwitchManager(Manager):
         # self.valves['C'].owner = '129.138.12.135'
         # self.valves['X'].owner = '129.138.12.135'
 
-        vs = [(v.name.split('-')[1], v.owner) for v in six.itervalues(self.switches)]
+        vs = [(v.name.split('-')[1], v.owner) for v in self.switches.values()]
         key = lambda x: x[1]
         vs = sorted(vs, key=key)
 
@@ -202,12 +202,12 @@ class SwitchManager(Manager):
         return ':'.join(owners)
 
     def get_locked(self):
-        return [v.name for v in six.itervalues(self.switches) if v.software_lock and not v.ignore_lock_warning]
+        return [v.name for v in self.switches.values() if v.software_lock and not v.ignore_lock_warning]
 
     @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
-                         for k, v in six.iteritems(self.switches)])
+                         for k, v in self.switches.items()])
 
     @add_checksum
     def get_states(self, query=False, timeout=0.25):
@@ -476,7 +476,7 @@ class SwitchManager(Manager):
         return state
 
     def _get_valve_by(self, a, attr):
-        return next((valve for valve in six.itervalues(self.switches) if getattr(valve, attr) == a), None)
+        return next((valve for valve in self.switches.values() if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
         if word is not None:

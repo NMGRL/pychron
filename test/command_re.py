@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import re
+import six
 
 __author__ = 'ross'
 
@@ -22,7 +24,7 @@ class ValveCommand(object):
         m=desc_re.match(txt)
         if m:
             a=self._extract_attr(m)
-            v=next((k for k, v in vd.iteritems() if v==a), None)
+            v=next((k for k, v in six.iteritems(vd) if v==a), None)
             if v:
                 self.valve=v
                 return

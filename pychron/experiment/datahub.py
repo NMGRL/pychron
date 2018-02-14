@@ -253,7 +253,7 @@ class Datahub(Loggable):
 
     @property
     def sorted_stores(self):
-        return sorted(six.itervalues(self.stores), key=lambda x: x.precedence)
+        return sorted(self.stores.values(), key=lambda x: x.precedence)
 
         # if self._sorted_stores:
         #     return self._sorted_stores

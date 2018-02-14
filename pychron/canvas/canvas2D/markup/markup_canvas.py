@@ -146,7 +146,7 @@ class MarkupCanvas(BaseDataCanvas):
                 if test(i):
                     continue
 
-                for obj in six.itervalues(l):
+                for obj in l.values():
                     #                    print obj
                     try:
                         obj.render(gc)
@@ -165,7 +165,7 @@ class MarkupCanvas(BaseDataCanvas):
         """
         """
         if items is None:
-            items = six.itervalues(self.markupcontainer)
+            items = self.markupcontainer.values()
 
         return next((item for item in items if hasattr(item, 'is_in') and item.is_in(event)), None)
 

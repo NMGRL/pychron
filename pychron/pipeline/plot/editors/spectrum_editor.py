@@ -66,7 +66,7 @@ class SpectrumEditor(InterpretedAgeEditor):
 
     def _get_items_from_file(self, parser):
         ans = []
-        for i, d in enumerate(six.itervalues(parser)):
+        for i, d in enumerate(parser.itervalues()):
             missing_keys = self._check_for_necessary_attributes(d)
             if not missing_keys:
                 f = SpectrumFileAnalysis(age=float(d['age']),

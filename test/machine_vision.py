@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import unittest
 
 from pychron.mv.focus.autofocus_manager import AutoFocusManager

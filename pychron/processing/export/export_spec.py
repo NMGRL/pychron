@@ -160,7 +160,7 @@ class MassSpecExportSpec(Loggable):
             return ''
 
     def iter_isotopes(self):
-        return ((iso.name, iso.detector) for iso in six.itervalues(self.isotopes))
+        return ((iso.name, iso.detector) for iso in self.isotopes.values())
         # def _iter():
         # dm = self.data_manager
         # hfile = dm._frame

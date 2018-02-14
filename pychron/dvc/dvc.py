@@ -549,7 +549,8 @@ class DVC(Loggable):
             path = analysis_path(runid, repository_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)
-                for item in six.itervalues(obj):
+                # for item in six.itervalues(obj):
+                for item in obj.values():
                     if isinstance(item, dict):
                         item['use_manual_value'] = False
                         item['use_manual_error'] = False

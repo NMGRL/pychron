@@ -79,7 +79,7 @@ Do you want to send these parameters to the spectrometer?
 
         cfp = ConfigParser()
         cfp.read(p)
-        for gn, pn, v in six.itervalues(self):
+        for gn, pn, v in self.itervalues():
             cfp.set(gn, pn, v)
 
         with open(p, 'w') as wfile:

@@ -122,7 +122,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             return name
 
     def get_analysis_set(self, name):
-        return next((a[1] for a in six.itervalues(self._analysis_sets) if a[0] == name))
+        return next((a[1] for a in self._analysis_sets.values() if a[0] == name))
 
     def set_tags(self, tag, items):
         for i in items:

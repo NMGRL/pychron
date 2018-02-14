@@ -23,7 +23,8 @@ import six
 
 
 def get_detector_set(ans):
-    return {iso.detector for ai in ans if ai.isotopes for iso in six.itervalues(ai.isotopes)}
+    return {iso.detector for ai in ans for iso in ai.itervalues()}
+    # return {iso.detector for ai in ans if ai.isotopes for iso in six.itervalues(ai.isotopes)}
 
 
 class EngineState(HasTraits):

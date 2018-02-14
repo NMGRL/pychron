@@ -666,7 +666,7 @@ class AutomatedRunPersister(BasePersister):
         dbhist = db.add_fit_history(analysis,
                                     user=self.per_spec.run_spec.username)
 
-        for iso in six.itervalues(self.per_spec.isotope_group):
+        for iso in self.per_spec.isotope_group.itervalues():
             detname = iso.detector
             dbdet = db.get_detector(detname)
             if dbdet is None:

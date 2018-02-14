@@ -355,7 +355,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
-        iso = next((i for i in six.itervalues(self.isotopes) if i.detector == det), None)
+        iso = next((i for i in self.isotopes.values() if i.detector == det), None)
         if iso:
             r = iso.ic_factor
         else:
@@ -371,7 +371,7 @@ class Analysis(ArArAge, IdeogramPlotable):
                     try:
                         iso = self.isotopes[i]
                     except KeyError:
-                        iso = next((ii.baseline for ii in six.itervalues(self.isotopes) if ii.detector == i), None)
+                        iso = next((ii.baseline for ii in self.isotopes.values() if ii.detector == i), None)
                     if iso:
                         nisotopes.append(iso)
                 isotopes = nisotopes

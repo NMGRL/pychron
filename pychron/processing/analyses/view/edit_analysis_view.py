@@ -259,7 +259,7 @@ class AnalysisEditView(HasTraits):
 
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
-        for iso in six.itervalues(isos):
+        for iso in isos.values():
             if iso.detector == det:
                 iso.ic_factor = v
 

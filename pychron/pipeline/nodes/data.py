@@ -174,7 +174,7 @@ class CSVNode(BaseNode):
         from pychron.processing.analyses.file_analysis import FileAnalysis
 
         def gen():
-            for d in six.itervalues(parser):
+            for d in parser.itervalues():
                 if d['age'] is not None:
                     f = FileAnalysis(age=float(d['age']),
                                      age_err=float(d['age_err']),

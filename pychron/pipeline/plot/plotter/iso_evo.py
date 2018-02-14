@@ -53,7 +53,8 @@ class IsoEvo(BaseArArFigure):
             iso = ai.isotopes[name]
         except KeyError as e:
             is_baseline = True
-            iso = next((iso for iso in six.itervalues(ai.isotopes) if iso.detector == name), None)
+            iso = ai.get_isotope(detector=name)
+            # iso = next((iso for iso in six.itervalues(ai.isotopes) if iso.detector == name), None)
             if iso is None:
                 print('iso_evo _plot', ai.record_id, ai.isotopes_keys, name)
                 return

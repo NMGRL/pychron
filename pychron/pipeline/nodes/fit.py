@@ -332,7 +332,8 @@ class FitIsotopeEvolutionNode(FitNode):
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
+                iso = xi.get_isotope(detector=k, kind='baseline')
+                # iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error

@@ -470,7 +470,7 @@ class ArArAge(IsotopeGroup):
         # j.std_dev = 0
         # self.age_err_wo_j_irrad = age.std_dev
         #
-        for iso in six.itervalues(self.isotopes):
+        for iso in self.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
 
     # def _get_isotope_keys(self):

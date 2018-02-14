@@ -327,11 +327,11 @@ class ExtractionLineGraph(HasTraits):
             obj.state = False
 
     def _clear_visited(self):
-        for ni in six.itervalues(self.nodes):
+        for ni in self.nodes.values():
             ni.visited = False
 
     def _clear_fvisited(self):
-        for ni in six.itervalues(self.nodes):
+        for ni in self.nodes.values():
             ni.f_visited = False
 
     def __getitem__(self, key):

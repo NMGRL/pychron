@@ -324,13 +324,13 @@ class AutomatedRun(Loggable):
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
-            fits = {i.detector: fits[0] for i in six.itervalues(isotopes)}
+            fits = {i.detector: fits[0] for i in self.isotope_group.values()}
         elif isinstance(fits, str):
-            fits = {i.detector: fits for i in six.itervalues(isotopes)}
+            fits = {i.detector: fits for i in self.isotope_group.values()}
         else:
             fits = dict([f.split(':') for f in fits])
 
-        for k, iso in six.iteritems(isotopes):
+        for k, iso in self.isotope_group.items():
             try:
                 fi = fits[iso.detector]
             except KeyError:
@@ -1600,7 +1600,7 @@ anaylsis_type={}
                 fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
             return fod
 
-        for i in six.itervalues(self.isotope_group):
+        for i in self.isotope_group.itervalues():
             fod = _get_filter_outlier_dict(i, 'signal')
             self.debug('setting fod for {}= {}'.format(i.name, fod))
             i.set_filtering(fod)

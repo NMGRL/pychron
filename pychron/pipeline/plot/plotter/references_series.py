@@ -287,7 +287,7 @@ class ReferencesSeries(BaseSeries):
                 self._set_values(plotobj, reg, key)
 
     def _get_isotope(self, po, analysis):
-        iso = next((iso for iso in six.itervalues(analysis.isotopes) if iso.name == po.name), None)
+        iso = next((iso for iso in analysis.itervalues() if iso.name == po.name), None)
         return iso
 
     def _calc_limits(self, ys, ye):

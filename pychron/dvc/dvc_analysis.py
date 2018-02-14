@@ -233,7 +233,8 @@ class DVCAnalysis(Analysis):
             # except KeyError, e:
             #     print e, isotopes.keys()
             #     continue
-            iso = next((i for i in six.itervalues(isotopes) if i.detector == det and i.name == isok), None)
+            # iso = next((i for i in self.itervalues() if i.detector == det and i.name == isok), None)
+            iso = self.get_isotope(name=isok, detector=det)
             if not iso:
                 continue
 
@@ -249,7 +250,7 @@ class DVCAnalysis(Analysis):
             for k in keys:
                 bd = next((b for b in baselines if b.get('detector') == k), None)
                 if bd:
-                    for iso in six.itervalues(isotopes):
+                    for iso in self.itervalues():
                         if iso.detector == k:
                             iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
 
@@ -263,7 +264,7 @@ class DVCAnalysis(Analysis):
                 continue
 
             data = format_blob(sn.get('blob', ''))
-            for iso in six.itervalues(isotopes):
+            for iso in self.itervalues():
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
 
@@ -300,7 +301,7 @@ class DVCAnalysis(Analysis):
             except KeyError:
                 # print 'set fits {} {}'.format(fi.name, isos.keys())
                 # name is a detector
-                for i in six.itervalues(isos):
+                for i in self.itervalues():
                     if i.detector == fi.name:
                         i.baseline.set_fit(fi)
 
@@ -348,7 +349,8 @@ class DVCAnalysis(Analysis):
                     det = {}
                     baselines[di] = det
 
-                bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
+                # bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
+                bs = self.get_isotope(detector=di, kind='baseline')
                 if bs:
                     update(det, bs)
 
@@ -470,7 +472,7 @@ class DVCAnalysis(Analysis):
 
     def _load_baselines(self, jd):
         for det, v in six.iteritems(jd):
-            for iso in six.itervalues(self.isotopes):
+            for iso in self.itervalues():
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
 

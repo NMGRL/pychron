@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.core.stats import calculate_mswd2
 from test.processing.standard_data import pearson
 

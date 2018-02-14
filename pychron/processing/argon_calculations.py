@@ -419,7 +419,7 @@ def calculate_F(isotopes,
                                   Ar37=a37,
                                   Ar36=atm36)
     # clear errors in irrad
-    for pp in six.itervalues(pr):
+    for pp in pr.values():
         pp.std_dev = 0
     f_wo_irrad = f
 

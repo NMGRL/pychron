@@ -412,7 +412,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
             with open(p, 'U' if os.path.isfile(p) else 'w') as f:
                 writer = csv.writer(f, delimiter='\t')
-                data = [a for a in six.itervalues(mws)]
+                # data = [a for a in six.itervalues(mws)]
+                data = [a for a in mws.values()]
                 data = sorted(data, key=lambda x: x[1])
                 for row in data:
                     writer.writerow(row)

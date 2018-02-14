@@ -47,7 +47,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
-from pychron.pipeline.state import EngineState
+from pychron.pipeline.state import EngineState, get_detector_set
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
 from pychron.pychron_constants import LINE_STR
@@ -266,10 +266,13 @@ class PipelineEngine(Loggable):
         if self.state:
             for p in self.pipeline.nodes:
                 if isinstance(p, FitICFactorNode):
-                    udets = {iso.detector for ai in self.state.unknowns
-                             for iso in six.itervalues(ai.isotopes)}
-                    rdets = {iso.detector for ai in self.state.references
-                             for iso in six.itervalues(ai.isotopes)}
+                    # udets = {iso.detector for ai in self.state.unknowns
+                    #          for iso in six.itervalues(ai.isotopes)}
+                    udets = get_detector_set(self.state.unknowns)
+                    rdets = get_detector_set(self.state.references)
+
+                    # rdets = {iso.detector for ai in self.state.references
+                    #          for iso in six.itervalues(ai.isotopes)}
                     p.set_detectors(list(udets.union(rdets)))
 
     def get_unknowns_node(self):

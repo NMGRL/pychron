@@ -248,7 +248,7 @@ class DataCollector(Consoleable):
 
     def _update_baseline_peak_hop(self, x, keys, signals):
         ig = self.isotope_group
-        for iso in six.itervalues(ig.isotopes):
+        for iso in ig.itervalues():
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
                 if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
@@ -336,7 +336,7 @@ class DataCollector(Consoleable):
         def update_graph(g, sidx, fidx):
             if iso is None:
                 pids = []
-                for isotope in six.itervalues(self.isotope_group):
+                for isotope in self.isotope_group.itervalues():
                     # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
                     if isotope.detector == det:
                         pid = g.get_plotid_by_ytitle(isotope.detector)
