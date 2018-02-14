@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Instance
 
 # ============= standard library imports ========================
@@ -24,6 +25,7 @@ from pychron.options.options_manager import SpectrumOptionsManager
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
+import six
 
 
 # from zobs.options.plotter_options_manager import SpectrumOptionsManager
@@ -64,7 +66,7 @@ class SpectrumEditor(InterpretedAgeEditor):
 
     def _get_items_from_file(self, parser):
         ans = []
-        for i, d in enumerate(parser.itervalues()):
+        for i, d in enumerate(six.itervalues(parser)):
             missing_keys = self._check_for_necessary_attributes(d)
             if not missing_keys:
                 f = SpectrumFileAnalysis(age=float(d['age']),

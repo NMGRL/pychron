@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 from itertools import groupby
 
@@ -29,6 +30,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
+from six.moves import zip
 
 
 class TableNode(BaseNode):

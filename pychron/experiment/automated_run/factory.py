@@ -1094,7 +1094,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         """
         p = os.path.join(paths.hidden_dir, 'iht_counts.{}'.format(self.username))
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
             cs = [(ti, ucounts.get(ti, 0)) for ti in temps]

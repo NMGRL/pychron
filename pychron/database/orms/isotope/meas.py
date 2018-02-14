@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import uuid
 from time import mktime
 
@@ -27,7 +28,7 @@ from sqlalchemy.sql.expression import func
 from pychron.database.core.base_orm import BaseMixin, NameMixin, UserMixin
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.experiment.utilities.identifier import make_runid
-from util import Base
+from .util import Base
 
 
 class meas_SignalTable(Base, BaseMixin):

@@ -19,14 +19,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 import hashlib
 import os
-import re
 import shutil
 import subprocess
 import time
-from cStringIO import StringIO
 from datetime import datetime
 
-from git import Repo, Diff, RemoteProgress
+from git import Repo, RemoteProgress
 from git.exc import GitCommandError
 from traits.api import Any, Str, List, Event
 

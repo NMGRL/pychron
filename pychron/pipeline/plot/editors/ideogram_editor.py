@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
 from traits.api import Instance
@@ -34,16 +36,16 @@ class Caption(AbstractOverlay):
         self.label.text = text
 
     def _draw_component(self, gc, view_bounds=None, mode="normal"):
-        print 'casdcasd'
+        print('casdcasd')
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        print 'asdfasdfasdf'
+        print('asdfasdfasdf')
 
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
-        print 'unasdf'
+        print('unasdf')
 
     def draw(self, gc, view_bounds=None, mode="default"):
-        print 'dafasfasfd'
+        print('dafasfasfd')
         with gc:
             self.label.draw()
 

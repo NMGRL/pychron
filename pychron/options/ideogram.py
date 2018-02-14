@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.default_colormaps import color_map_name_dict
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str
+from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
@@ -60,6 +61,10 @@ class IdeogramOptions(AgeOptions):
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
+    peak_label_bgcolor = Color
+    peak_label_border = Int
+    peak_label_border_color = Color
+    peak_label_bgcolor_enabled = Bool(False)
     aux_plot_name = 'Ideogram'
 
     use_asymptotic_limits = Bool
@@ -77,7 +82,7 @@ class IdeogramOptions(AgeOptions):
     mean_sig_figs = Int
 
     use_cmap_analysis_number = Bool(False)
-    cmap_analysis_number = Enum(color_map_name_dict.keys())
+    cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
     use_latest_overlay = Bool(False)
 
     group_options_klass = IdeogramGroupOptions

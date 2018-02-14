@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from git import Repo
@@ -217,7 +219,7 @@ class DiffView(BaseDiffView):
                          for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_blanks(self, aj, bj):
-        keys = aj.keys()
+        keys = list(aj.keys())
         self.oblanks = [DiffValue(t, aj[name][k], bj[name][k])
                         for name in aj.keys() if name != 'reviewed'
                         for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
@@ -228,8 +230,8 @@ class DiffView(BaseDiffView):
                            for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
 
     def set_tags(self, aj, bj):
-        print 'a', aj
-        print 'b', bj
+        print('a', aj)
+        print('b', bj)
         self.otags = [DiffValue(name, aj[name], bj[name]) for name in ('name',)]
 
     def traits_view(self):

@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.ui.qt4.about_dialog import AboutDialog
 from traits.api import List, Str
 # ============= standard library imports ========================
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit
 import sys
+from six.moves import range
 # ============= local library imports  ==========================
 
 _ABOUT_TEXT = '''

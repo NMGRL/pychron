@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str, Dict
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
+import six
 
 
 def get_detector_set(ans):
-    return {iso.detector for ai in ans if ai.isotopes for iso in ai.isotopes.itervalues()}
+    return {iso.detector for ai in ans if ai.isotopes for iso in six.itervalues(ai.isotopes)}
 
 
 class EngineState(HasTraits):

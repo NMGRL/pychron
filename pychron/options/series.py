@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Bool, Enum
 
 from pychron.options.fit import FitAuxPlot, FitOptions

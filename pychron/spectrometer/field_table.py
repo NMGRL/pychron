@@ -431,7 +431,7 @@ class FieldTable(Loggable):
         return self._mftable_hash != current_hash
 
     def _make_hash(self, p):
-        with open(p, 'U') as rfile:
+        with open(p, 'rb') as rfile:
             return hashlib.md5(rfile.read())
 
     def _set_mftable_hash(self, p):

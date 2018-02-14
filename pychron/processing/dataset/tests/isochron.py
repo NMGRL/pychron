@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 from pychron.processing.dataset.tests.mixin import  IntensityMixin
 
 

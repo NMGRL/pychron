@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import time
@@ -31,6 +33,8 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME
 from pychron import json
+import six
+from six.moves import map
 
 
 class MetaObject(object):
@@ -40,7 +44,7 @@ class MetaObject(object):
             with open(path, 'r') as rfile:
                 self._load_hook(path, rfile)
         elif not new:
-            print 'failed loading {} {}'.format(path, os.path.isfile(path))
+            print('failed loading {} {}'.format(path, os.path.isfile(path)))
 
     def _load_hook(self, path, rfile):
         pass
@@ -221,7 +225,7 @@ class Production(MetaObject):
         obj = json.load(rfile)
 
         attrs = []
-        for k, v in obj.iteritems():
+        for k, v in six.iteritems(obj):
             if k == 'reactor':
                 self.reactor = v
             else:
@@ -236,7 +240,7 @@ class Production(MetaObject):
             self.attrs = []
 
         if isinstance(d, dict):
-            for k, v in d.iteritems():
+            for k, v in six.iteritems(d):
                 setattr(self, k, v)
                 if not k.endswith('_err') and k not in self.attrs:
                     self.attrs.append(k)
@@ -270,7 +274,7 @@ class BaseHolder(MetaObject):
     def _load_hook(self, path, rfile):
         holes = []
 
-        line = rfile.next()
+        line = next(rfile)
         _, radius = line.split(',')
         radius = float(radius)
 
@@ -414,7 +418,7 @@ class MetaRepo(GitRepoManager):
         self.debug('saving production {}'.format(prod.name))
 
         params = prod.get_params()
-        for k, v in params.iteritems():
+        for k, v in six.iteritems(params):
             self.debug('setting {}={}'.format(k, v))
             setattr(ip, k, v)
 
@@ -569,8 +573,8 @@ class MetaRepo(GitRepoManager):
     def update_fluxes(self, irradiation, level, j, e, add=True):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
-        print p
-        print jd
+        print(p)
+        print(jd)
         if isinstance(jd, list):
             positions = jd
         else:

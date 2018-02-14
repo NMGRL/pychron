@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import time
@@ -46,6 +48,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
 from pychron import json
+import six
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -75,7 +78,7 @@ class Tag(object):
         tag.repository_identifier = an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
 
-        for k, v in kw.iteritems():
+        for k, v in six.iteritems(kw):
             setattr(tag, k, v)
 
         return tag
@@ -240,7 +243,7 @@ class DVC(Loggable):
                         try:
                             obj = dvc_load(p)
                         except ValueError:
-                            print 'skipping {}'.format(p)
+                            print('skipping {}'.format(p))
 
                         sample = ip.sample.name
                         project = ip.sample.project.name
@@ -254,12 +257,12 @@ class DVC(Loggable):
                                         ('irradiation_position', pos)):
                             ov = obj.get(attr)
                             if ov != v:
-                                print '{:<20s} repo={} db={}'.format(attr, ov, v)
+                                print('{:<20s} repo={} db={}'.format(attr, ov, v))
                                 obj[attr] = v
                                 changed = True
 
                         if changed:
-                            print '{}'.format(p)
+                            print('{}'.format(p))
                             ps.append(p)
                             if not dry_run:
                                 dvc_dump(obj, p)
@@ -297,7 +300,7 @@ class DVC(Loggable):
                     try:
                         obj = dvc_load(p)
                     except ValueError:
-                        print 'skipping {}'.format(p)
+                        print('skipping {}'.format(p))
 
                     sample = ip.sample.name
                     project = ip.sample.project.name
@@ -311,12 +314,12 @@ class DVC(Loggable):
                                     ('irradiation_position', pos)):
                         ov = obj.get(attr)
                         if ov != v:
-                            print '{:<20s} repo={} db={}'.format(attr, ov, v)
+                            print('{:<20s} repo={} db={}'.format(attr, ov, v))
                             obj[attr] = v
                             changed = True
 
                     if changed:
-                        print '{}'.format(p)
+                        print('{}'.format(p))
                         ps.append(p)
                         if not dry_run:
                             dvc_dump(obj, p)
@@ -528,11 +531,11 @@ class DVC(Loggable):
         obj = dvc_load(path)
         # with open(path, 'r') as rfile:
         #     obj = json.load(rfile)
-        for k, v in values.iteritems():
+        for k, v in six.iteritems(values):
             o = obj[k]
             o['manual_value'] = v
             o['use_manual_value'] = True
-        for k, v in errors.iteritems():
+        for k, v in six.iteritems(errors):
             o = obj[k]
             o['manual_error'] = v
             o['use_manual_error'] = True
@@ -546,7 +549,7 @@ class DVC(Loggable):
             path = analysis_path(runid, repository_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)
-                for item in obj.itervalues():
+                for item in six.itervalues(obj):
                     if isinstance(item, dict):
                         item['use_manual_value'] = False
                         item['use_manual_error'] = False
@@ -577,7 +580,7 @@ class DVC(Loggable):
         ans = sorted(ans, key=key)
         mod_repositories = []
         for expid, ais in groupby(ans, key=key):
-            paths = map(lambda x: analysis_path(x.record_id, x.repository_identifier, modifier=modifier), ais)
+            paths = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
             # print expid, modifier, paths
             if self.repository_add_paths(expid, paths):
                 self.repository_commit(expid, msg)
@@ -820,7 +823,7 @@ class DVC(Loggable):
         self.information_dialog(msg)
 
     def pull_repository(self, repo):
-        if isinstance(repo, (str, unicode)):
+        if isinstance(repo, (str, six.text_type)):
             r = GitRepoManager()
             r.open_repo(repo, root=paths.repository_dataset_dir)
             repo = r
@@ -831,7 +834,7 @@ class DVC(Loggable):
             repo.smart_pull(remote=gi.default_remote_name)
 
     def push_repository(self, repo):
-        if isinstance(repo, (str, unicode)):
+        if isinstance(repo, (str, six.text_type)):
             r = GitRepoManager()
             r.open_repo(repo, root=paths.repository_dataset_dir)
             repo = r
@@ -1068,7 +1071,7 @@ class DVC(Loggable):
                         if i == 0:
                             try:
                                 repo = Repo.clone_from(url, root)
-                            except BaseException, e:
+                            except BaseException as e:
                                 self.debug('failed cloning repo. {}'.format(e))
                                 ret = False
 
@@ -1317,8 +1320,8 @@ class DVC(Loggable):
         except AttributeError:
             try:
                 return getattr(self.meta_repo, item)
-            except AttributeError, e:
-                print e, item
+            except AttributeError as e:
+                print(e, item)
                 # raise DVCException(item)
 
     # defaults
@@ -1337,7 +1340,7 @@ if __name__ == '__main__':
     paths.build('_dev')
     idn = '24138'
     exps = ['Irradiation-NM-272']
-    print find_interpreted_age_path(idn, exps)
+    print(find_interpreted_age_path(idn, exps))
     # d = DVC(bind=False)
     # with open('/Users/ross/Programming/githubauth.txt') as rfile:
     #     usr = rfile.readline().strip()

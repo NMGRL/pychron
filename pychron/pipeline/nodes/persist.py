@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from traits.api import Str, Instance, List
@@ -34,6 +36,7 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
+from six.moves import zip
 
 
 class PersistNode(BaseNode):
@@ -70,7 +73,7 @@ class PDFFigureNode(PDFNode):
     def run(self, state):
         for ei in state.editors:
             if hasattr(ei, 'save_file'):
-                print 'save file to', self._generate_path(ei)
+                print('save file to', self._generate_path(ei))
                 ei.save_file(self._generate_path(ei))
 
 

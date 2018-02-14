@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import File, Directory
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
@@ -24,6 +25,8 @@ from pychron.data_mapper.sources.file_source import FileSource, get_float, get_i
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import INTERFERENCE_KEYS
+from six.moves import range
+from six.moves import zip
 
 
 def make_ed(s):
@@ -226,8 +229,8 @@ class USGSVSCMAPSource(USGSVSCSource):
         return pspec
 
     def _get_baseline(self, f, ncnts):
-        rs = (next(f) for i in xrange(ncnts))
-        ys, xs = zip(*((float(r[0]), float(r[1])) for r in rs))
+        rs = (next(f) for i in range(ncnts))
+        ys, xs = list(zip(*((float(r[0]), float(r[1])) for r in rs)))
         return array(xs), array(ys)
 
     def _get_isotope(self, f, name, ncnts, bk):
@@ -237,8 +240,8 @@ class USGSVSCMAPSource(USGSVSCSource):
         iso.set_fit('linear')
         iso.set_fit_error_type('SEM')
 
-        rs = (next(f) for i in xrange(ncnts))
-        ys, xs = zip(*((float(r[0]), float(r[1])) for r in rs))
+        rs = (next(f) for i in range(ncnts))
+        ys, xs = list(zip(*((float(r[0]), float(r[1])) for r in rs)))
         iso.xs = array(xs)
         iso.ys = array(ys)
         return iso

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, List, Str, Float, Bool
 from traitsui.api import View, UItem, VGroup, VSplit

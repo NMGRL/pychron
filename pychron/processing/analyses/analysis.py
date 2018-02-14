@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from collections import namedtuple
 
 from numpy import Inf
@@ -34,6 +36,7 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
+import six
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -352,7 +355,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
-        iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
+        iso = next((i for i in six.itervalues(self.isotopes) if i.detector == det), None)
         if iso:
             r = iso.ic_factor
         else:
@@ -362,19 +365,19 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def show_isotope_evolutions(self, isotopes=None, **kw):
         if isotopes:
-            if isinstance(isotopes[0], (str, unicode)):
+            if isinstance(isotopes[0], (str, six.text_type)):
                 nisotopes = []
                 for i in isotopes:
                     try:
                         iso = self.isotopes[i]
                     except KeyError:
-                        iso = next((ii.baseline for ii in self.isotopes.itervalues() if ii.detector == i), None)
+                        iso = next((ii.baseline for ii in six.itervalues(self.isotopes) if ii.detector == i), None)
                     if iso:
                         nisotopes.append(iso)
                 isotopes = nisotopes
                 # isotopes = [self.isotopes[i] for i in isotopes]
         else:
-            isotopes = self.isotopes.values()
+            isotopes = list(self.isotopes.values())
 
         keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
 
@@ -423,7 +426,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     @property
     def analysis_view(self):
         v = self._analysis_view
-        print 'call analyis va', v
+        print('call analyis va', v)
         if v is None:
             mod, klass = self.analysis_view_klass
             mod = __import__(mod, fromlist=[klass, ])
@@ -443,11 +446,11 @@ class Analysis(ArArAge, IdeogramPlotable):
             av = self.analysis_view
         try:
             av.load(self)
-        except BaseException, e:
+        except BaseException as e:
             import traceback
 
             traceback.print_exc()
-            print 'sync view {}'.format(e)
+            print('sync view {}'.format(e))
 
     @property
     def age_string(self):
@@ -472,7 +475,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def _get_isotope_dict(self, get):
         d = dict()
-        for ki, v in self.isotopes.iteritems():
+        for ki, v in six.iteritems(self.isotopes):
             d[ki] = (v.detector, get(v))
 
         return d

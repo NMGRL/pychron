@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
 from datetime import datetime, timedelta
@@ -30,6 +32,7 @@ from traitsui.api import View, Item, EnumEditor, CheckListEditor
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
+import six
 
 
 class DVCNode(BaseNode):
@@ -121,7 +124,7 @@ class DataNode(DVCNode):
     check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
-        print self, pre_run, getattr(self, self.analysis_kind), self.index
+        print(self, pre_run, getattr(self, self.analysis_kind), self.index)
         if pre_run and getattr(self, self.analysis_kind) and self.index == 0:
             return True
 
@@ -171,7 +174,7 @@ class CSVNode(BaseNode):
         from pychron.processing.analyses.file_analysis import FileAnalysis
 
         def gen():
-            for d in parser.itervalues():
+            for d in six.itervalues(parser):
                 if d['age'] is not None:
                     f = FileAnalysis(age=float(d['age']),
                                      age_err=float(d['age_err']),
@@ -350,16 +353,16 @@ class BaseAutoUnknownNode(UnknownNode):
         with self.dvc.session_ctx(use_parent_session=False):
             ats = [a.lower().replace(' ', '_') for a in self.analysis_types]
 
-            print 'low={}'.format(low)
-            print 'high={}'.format(high)
-            print 'ats={}'.format(ats)
-            print 'ms={}'.format(self.mass_spectrometer)
+            print('low={}'.format(low))
+            print('high={}'.format(high))
+            print('ats={}'.format(ats))
+            print('ms={}'.format(self.mass_spectrometer))
             unks = self.dvc.get_analyses_by_date_range(low, high,
                                                        analysis_types=ats,
                                                        mass_spectrometers=self.mass_spectrometer, verbose=self.verbose)
             records = [ri for unk in unks for ri in unk.record_views]
 
-            print 'retrived n records={}'.format(len(records))
+            print('retrived n records={}'.format(len(records)))
             if not self._cached_unknowns:
                 ans = self.dvc.make_analyses(records)
             else:
@@ -421,10 +424,10 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
             return
 
         now = datetime.now()
-        print 'now={} run_time={}. hourmatch={}, minutematch={} ran={}'.format(now, self.run_time,
+        print('now={} run_time={}. hourmatch={}, minutematch={} ran={}'.format(now, self.run_time,
                                                                                now.hour >= self.run_time.hour,
                                                                                now.minute >= self.run_time.minute,
-                                                                               self._ran)
+                                                                               self._ran))
         if now.hour >= self.run_time.hour:
             if now.minute >= self.run_time.minute:
                 if not self._ran:
@@ -432,7 +435,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                     unks, updated = self._load_analyses()
                     if not self._alive:
                         return
-                    print 'updated={} loaded unks={}'.format(updated, unks)
+                    print('updated={} loaded unks={}'.format(updated, unks))
 
                     if unks:
                         self.engine.rerun_with(unks, post_run=False)

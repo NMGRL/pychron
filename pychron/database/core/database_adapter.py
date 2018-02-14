@@ -16,6 +16,8 @@
 
 # =============enthought library imports=======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 from datetime import datetime, timedelta
@@ -32,6 +34,9 @@ from pychron import version
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
+import six
+from six.moves import range
+from six.moves import zip
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -396,7 +401,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         if self.session:
             try:
                 self.session.commit()
-            except BaseException, e:
+            except BaseException as e:
                 self.warning('Commit exception: {}'.format(e))
                 self.session.rollback()
 
@@ -520,7 +525,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             connected = False
             self._test_connection_enabled = False
 
-        except Exception, e:
+        except Exception as e:
             self.warning('connection failed to {} exception={}'.format(self.public_url, e))
             connected = False
 
@@ -551,7 +556,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                     sess.commit()
 
                 return obj
-            except SQLAlchemyError, e:
+            except SQLAlchemyError as e:
                 import traceback
                 # traceback.print_exc()
                 self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
@@ -664,7 +669,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
         if value is not None:
-            if not isinstance(value, (str, int, unicode, long, float)):
+            if not isinstance(value, (str, int, six.text_type, int, float)):
                 return value
         q = self.session.query(table)
         if value is not None:
@@ -674,8 +679,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             if order_by is not None:
                 q = q.order_by(order_by)
             return q.first()
-        except SQLAlchemyError, e:
-            print 'execption first', e
+        except SQLAlchemyError as e:
+            print('execption first', e)
             return
 
     def _query_all(self, q, **kw):
@@ -698,7 +703,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         f = getattr(q, func)
         try:
             return f()
-        except SQLAlchemyError, e:
+        except SQLAlchemyError as e:
             if reraise:
                 raise e
                 # if self.verbose:
@@ -732,7 +737,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         #         sess = self.get_session()
         #         if sess is None:
         #             return
-        if not isinstance(value, (str, int, unicode, long, float, list, tuple)):
+        if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
         if not isinstance(value, (list, tuple)):
@@ -788,7 +793,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                             q = q.order_by(table.id.desc())
                         return q.limit(1).all()[-1]
 
-                    except (SQLAlchemyError, IndexError, AttributeError), e:
+                    except (SQLAlchemyError, IndexError, AttributeError) as e:
                         if verbose:
                             self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
                         break

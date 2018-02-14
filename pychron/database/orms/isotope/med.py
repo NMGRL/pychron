@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from __future__ import absolute_import
 from sqlalchemy import Column, BLOB, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-from util import Base
+from .util import Base
 
 
 class med_ImageTable(Base, NameMixin):

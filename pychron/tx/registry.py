@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from traits.has_traits import MetaHasTraits
 
 from pychron.core.helpers.logger_setup import new_logger
@@ -37,12 +38,12 @@ class DeviceFunctionRegistry(object):
     def __call__(self, func):
         name = self.name
         if name is None:
-            name = func.func_name
+            name = func.__name__
             if self.camel_case:
                 name = camel_case(name)
 
-        logger.debug('register function {} as {}'.format(func.func_name, name))
-        REGISTRY[name] = (func.func_name, self.postprocess)
+        logger.debug('register function {} as {}'.format(func.__name__, name))
+        REGISTRY[name] = (func.__name__, self.postprocess)
         return func
 
 
@@ -59,7 +60,7 @@ class RegisteredFunction(object):
         def wrapper(obj, *args, **kw):
             cmd = self.cmd
             if cmd is None:
-                cmd = func.func_name
+                cmd = func.__name__
                 if self.camel_case:
                     cmd = camel_case(cmd)
 

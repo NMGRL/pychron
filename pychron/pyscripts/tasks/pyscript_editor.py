@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import datetime
 from pyface.file_dialog import FileDialog
 from pyface.tasks.api import Editor
@@ -31,6 +33,7 @@ from pychron.pyscripts.context_editors.measurement_context_editor import Measure
 # from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupView
 from pychron.pyscripts.tasks.gosub_popup_view import GosubPopupWidget
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
+from six.moves import map
 
 SCRIPT_PKGS = dict(Extraction='pychron.pyscripts.extraction_line_pyscript',
                    Measurement='pychron.pyscripts.measurement_pyscript')
@@ -68,9 +71,9 @@ class Commands(HasTraits):
             try:
                 cmd = getattr(m, klass)()
                 setattr(self, cmd_name, cmd)
-            except AttributeError, e:
+            except AttributeError as e:
                 if scmd:
-                    print 'exception', e
+                    print('exception', e)
 
         return cmd
 

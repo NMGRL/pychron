@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 from datetime import timedelta
 from itertools import groupby
@@ -32,6 +33,10 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
+from six.moves import filter
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
 
@@ -248,7 +253,7 @@ class GraphicalFilterModel(HasTraits):
             ans = sorted(ans, key=lambda x: x.timestampf)
             self.analyses = ans
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
-            x, y = zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans])
+            x, y = list(zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans]))
             # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
         else:
             x, y, ans = [], [], []
@@ -283,7 +288,7 @@ class GraphicalFilterModel(HasTraits):
 
     def search(self, func):
         uuids = [a.uuid for a in self.analyses]
-        for i in xrange(10):
+        for i in range(10):
             records = self.dvc.find_references([self.low_post, self.high_post],
                                                [x.lower().replace(' ', '_') for x in self.analysis_types],
                                                self.threshold,
@@ -319,9 +324,9 @@ class GraphicalFilterModel(HasTraits):
             only use analyses with analysis_type in self.analyses_types
         """
 
-        ats = map(lambda x: x.lower().replace(' ', '_'), map(str, self.analysis_types))
+        ats = [x.lower().replace(' ', '_') for x in list(map(str, self.analysis_types))]
         f = lambda x: x.analysis_type.lower() in ats
-        ans = filter(f, ans)
+        ans = list(filter(f, ans))
         return ans
 
     def _toggle_analysis_types_changed(self):

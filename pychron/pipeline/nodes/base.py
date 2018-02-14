@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Bool, Any, List
 from traitsui.api import View
+import six
 
 
 # ============= standard library imports ========================
@@ -53,7 +55,7 @@ class BaseNode(HasTraits):
         self.active = False
 
     def pre_load(self, nodedict):
-        for k, v in nodedict.iteritems():
+        for k, v in six.iteritems(nodedict):
             if hasattr(self, k):
                 setattr(self, k, v)
 

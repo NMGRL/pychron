@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 

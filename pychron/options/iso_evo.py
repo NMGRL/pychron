@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Float, Bool, Int, on_trait_change
 
 from pychron.options.aux_plot import AuxPlot

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat

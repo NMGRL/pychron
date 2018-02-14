@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
@@ -162,7 +163,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         color = self.color
         # if isinstance(color, str):
         #    color=color_table[color]
-        self._color = map(lambda x: x / 255., (color.red(), color.green(), color.blue(), color.alpha()))
+        self._color = [x / 255. for x in (color.red(), color.green(), color.blue(), color.alpha())]
         # self._color=color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):

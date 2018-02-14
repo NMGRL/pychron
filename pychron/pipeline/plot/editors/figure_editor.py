@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Any, List
 
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor

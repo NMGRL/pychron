@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
@@ -44,7 +45,14 @@ class DisplaySubOptions(TitleSubOptions):
                    spring,
                    icon_button_editor('edit_label_format_button', 'cog',
                                       tooltip='Open Label maker')),
-            Item('label_all_peaks', label='Label Peaks', tooltip='Label each peak with its calculated age'),
+            VGroup(Item('label_all_peaks', label='Label Peaks', tooltip='Label each peak with its calculated age'),
+                   HGroup(Item('peak_label_bgcolor_enabled', label='Background'),
+                          UItem('peak_label_bgcolor', enabled_when='peak_label_bgcolor_enabled')),
+                   HGroup(Item('peak_label_border', label='Border Width',
+                               tooltip='Border width in pixels, user 0 to disable'),
+                          Item('peak_label_border_color', label='Border'), enabled_when='peak_label_border'),
+                   show_border=True,
+                   label='Peaks'),
             show_border=True, label='Label')
         inset_grp = VGroup(HGroup(Item('display_inset', label='Use'),
                                   Item('inset_location', label='Location'),

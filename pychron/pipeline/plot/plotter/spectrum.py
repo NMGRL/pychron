@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from math import isnan
 
 from numpy import hstack, array
@@ -28,6 +29,7 @@ from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM
+from six.moves import zip
 
 
 class Spectrum(BaseArArFigure):
@@ -81,7 +83,7 @@ class Spectrum(BaseArArFigure):
 
         # filter ys,es if 39Ar < 1% of total
         try:
-            vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
+            vs, es = list(zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs]))
             vs, es = array(vs), array(es)
             nes = es * self.options.step_nsigma
             yl = vs - nes
@@ -351,9 +353,9 @@ class Spectrum(BaseArArFigure):
     # utils
     # ===============================================================================
     def _get_age_errors(self, ans):
-        ages, errors = zip(*[(ai.uage.nominal_value,
+        ages, errors = list(zip(*[(ai.uage.nominal_value,
                               ai.uage.std_dev)
-                             for ai in ans])
+                             for ai in ans]))
         return array(ages), array(errors)
 
     def _calculate_spectrum(self,

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from chaco.data_range_1d import DataRange1D

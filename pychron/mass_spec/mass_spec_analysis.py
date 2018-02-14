@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-import StringIO
+from io import StringIO
 import struct
 
 from uncertainties import ufloat
@@ -44,7 +44,7 @@ def get_fn(blob):
 
 class Blob:
     def __init__(self, v):
-        self._buf = StringIO.StringIO(v)
+        self._buf = StringIO(v)
 
     def short(self):
         return struct.unpack('>h', self._buf.read(2))[0]

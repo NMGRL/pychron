@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from pyface.confirmation_dialog import confirm
@@ -30,6 +31,8 @@ from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pychron_constants import NULL_STR
+import six
+from six.moves import zip
 
 
 class FitNode(FigureNode):
@@ -176,7 +179,7 @@ class FitICFactorNode(FitReferencesNode):
     def load(self, nodedict):
         try:
             fits = nodedict['fits']
-        except KeyError, e:
+        except KeyError as e:
             return
 
         pom = self.plotter_options_manager
@@ -329,7 +332,7 @@ class FitIsotopeEvolutionNode(FitNode):
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = next((i.baseline for i in isotopes.itervalues() if i.detector == k), None)
+                iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error

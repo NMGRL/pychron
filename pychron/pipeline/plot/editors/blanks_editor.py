@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.pipeline.plot.editors.interpolation_editor import InterpolationEditor
 from pychron.pipeline.plot.models.blanks_model import BlanksModel
 

@@ -30,7 +30,7 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
     if busy:
         mi, ma = 0, 0
     else:
-        mi, ma = 0, n - 1
+        mi, ma = 0, int(max(1, n - 1))
 
     pd = myProgressDialog(min=mi, max=ma,
                           close_at_end=close_at_end,

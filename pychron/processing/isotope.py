@@ -18,10 +18,14 @@
 # from traits.api import HasTraits, Str, Float, Property, Instance, \
 #     String, Either, Dict, cached_property, Event, List, Bool, Int, Array
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import struct
 from binascii import hexlify
-from itertools import izip
+from six.moves import map
+from six.moves import range
+
 
 from numpy import array, Inf, polyfit
 from uncertainties import ufloat, nominal_value, std_dev
@@ -29,6 +33,8 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.geometry.geometry import curvature_at
 from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.mean_regressor import MeanRegressor
+import six
+from six.moves import zip
 
 
 def fit_abbreviation(fit, ):
@@ -74,7 +80,7 @@ class BaseMeasurement(object):
             endianness = self.endianness
 
         fmt = '{}ff'.format(endianness)
-        txt = ''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
+        txt = ''.join((struct.pack(fmt, x, y) for x, y in zip(self.xs, self.ys)))
         if as_hex:
             txt = hexlify(txt)
         return txt
@@ -82,9 +88,9 @@ class BaseMeasurement(object):
     def unpack_data(self, blob, n_only=False):
         try:
             xs, ys = self._unpack_blob(blob)
-        except (ValueError, TypeError, IndexError, AttributeError), e:
+        except (ValueError, TypeError, IndexError, AttributeError) as e:
             self.unpack_error = e
-            print e
+            print(e)
             return
 
         if n_only:
@@ -101,14 +107,14 @@ class BaseMeasurement(object):
             endianness = self.endianness
 
         try:
-            x, y = zip(*[struct.unpack('{}ff'.format(endianness), blob[i:i + 8]) for i in xrange(0, len(blob), 8)])
+            x, y = zip(*[struct.unpack('{}ff'.format(endianness), blob[i:i + 8]) for i in range(0, len(blob), 8)])
             if self.reverse_unpack:
                 return y, x
             else:
                 return x, y
 
-        except struct.error, e:
-            print 'unpack_blob', e
+        except struct.error as e:
+            print('unpack_blob', e)
 
     def get_slope(self, n=-1):
         if self.xs.shape[0] and self.ys.shape[0] and self.xs.shape[0] == self.ys.shape[0]:
@@ -194,7 +200,7 @@ class IsotopicMeasurement(BaseMeasurement):
             for m in re.finditer(r'\([\w\d\s,]*\)', fit):
                 a = m.group(0)
                 a = a[1:-1]
-                s, e, f = map(str.strip, a.split(','))
+                s, e, f = list(map(str.strip, a.split(',')))
 
                 if s is '':
                     s = -1
@@ -235,7 +241,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # self._dirty = notify
 
     def attr_set(self, **kw):
-        for k, v in kw.iteritems():
+        for k, v in six.iteritems(kw):
             setattr(self, k, v)
 
     def set_fit_error_type(self, e):
@@ -246,7 +252,7 @@ class IsotopicMeasurement(BaseMeasurement):
             self.user_defined_value = False
             self.user_defined_error = False
 
-            if isinstance(fit, (int, str, unicode)):
+            if isinstance(fit, (int, str, six.text_type)):
                 self.attr_set(fit=fit)
             else:
 
@@ -346,7 +352,7 @@ class IsotopicMeasurement(BaseMeasurement):
         # print self.name, self.fit, self.__class__.__name__
         fit = self.fit
         if fit is None:
-            print 'no fit for {} ({} {})'.format(self.name, self.__class__.__name__, id(self))
+            print('no fit for {} ({} {})'.format(self.name, self.__class__.__name__, id(self)))
             fit = 'linear'
             self.fit = fit
 
@@ -649,7 +655,7 @@ class Isotope(BaseIsotope):
     def __str__(self):
         try:
             return '{} {}'.format(self.name, self.get_baseline_corrected_value())
-        except (OverflowError, ValueError, AttributeError, TypeError), e:
+        except (OverflowError, ValueError, AttributeError, TypeError) as e:
             return '{} {}'.format(self.name, e)
 
 # ============= EOF =============================================

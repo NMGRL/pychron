@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 
 from pychron.envisage.icon_button_editor import icon_button_editor

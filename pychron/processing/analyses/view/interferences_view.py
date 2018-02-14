@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, List, Property
 from traitsui.api import View, Item, UItem, TabularEditor, VGroup, HGroup
 from traitsui.tabular_adapter import TabularAdapter
@@ -22,6 +23,7 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_PERCENT
+import six
 
 MAPPING = {'k4039': ('(Ar40/Ar39)K'),
            'k3839': ('(Ar38/Ar39)K'),
@@ -74,7 +76,7 @@ class InterferencesView(HasTraits):
         self.pr_name = an.production_name
         a = []
 
-        for k, v in sorted(an.interference_corrections.iteritems(), key=lambda x: x[0]):
+        for k, v in sorted(six.iteritems(an.interference_corrections), key=lambda x: x[0]):
             if k in MAPPING:
                 k = MAPPING[k]
 
@@ -83,7 +85,7 @@ class InterferencesView(HasTraits):
         self.interferences = a
 
         p = []
-        for k, v in an.production_ratios.iteritems():
+        for k, v in six.iteritems(an.production_ratios):
             p.append(Interference(name=k.replace('_', '/'),
                                   value=nominal_value(v),
                                   error=std_dev(v)))

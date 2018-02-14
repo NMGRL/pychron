@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Property, \
     Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
@@ -21,6 +22,7 @@ from traitsui.api import UItem, HGroup, Item, EnumEditor
 # ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
 from pychron.core.templater.templater_view import BaseTemplateView
+from six.moves import range
 
 
 class TitleTemplater(BaseTemplater):

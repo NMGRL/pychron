@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, String, Property, Str, List, Any, \
     Bool, cached_property, Event, Enum
 from traitsui.api import View, Item, EnumEditor
@@ -22,6 +24,9 @@ from traitsui.api import View, Item, EnumEditor
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
 from sqlalchemy import cast, Date, func
+from six.moves import map
+import six
+from six.moves import zip
 # ============= local library imports  ==========================
 now = datetime.now()
 one_year = timedelta(days=365)
@@ -31,41 +36,19 @@ def in_func(q, col, values):
     if values:
         col = func.lower(col)
         if not hasattr(values, '__iter__'):
-            if isinstance(values, (str, unicode)):
+            if isinstance(values, (str, six.text_type)):
                 values = values.lower()
 
             q = q.filter(col == values)
         else:
-            values = [v.lower() if isinstance(v, (str, unicode)) else v for v in values]
+            values = [v.lower() if isinstance(v, (str, six.text_type)) else v for v in values]
             q = q.filter(col.in_(values))
     return q
 
 
 def compile_query(query):
-    from sqlalchemy.sql import compiler
-    #    try:
-    #        from MySQLdb.converters import conversions, escape
-    #    except ImportError:
-    #        return 'no sql conversion available'
-
     dialect = query.session.bind.dialect
-    statement = query.statement
-    comp = compiler.SQLCompiler(dialect, statement)
-    enc = dialect.encoding
-    params = []
-    for k in comp.positiontup:
-        v = comp.params[k]
-        if isinstance(v, unicode):
-            v = v.encode(enc)
-        params.append(v)
-        #        params.append(
-    #                      escape(v, conversions)
-    #                      )
-
-    comp = comp.string.encode(enc)
-    comp = comp.replace('?', '%s')
-
-    txt = (comp % tuple(params)).decode(enc)
+    txt = query.statement.compile(dialect=dialect, compile_kwargs={"literal_binds": True})
     return txt
 
 
@@ -143,7 +126,7 @@ class Query(HasTraits):
             comp = self._convert_comparator(comp)
             ret = getattr(attr, comp)(c)
 
-        print self.parameter, self.chain_rule
+        print(self.parameter, self.chain_rule)
         return ret, self.chain_rule == 'Or'
         # if self.chain_rule=='Or':
         #     f = or_(f)
@@ -332,7 +315,7 @@ class Query(HasTraits):
                 # cs = list(set([getattr(ci, display_name) for ci in cs]))
                 cs = [func(ci, display_name) for ci in cs]
                 # cs.sort()
-                cs = map(str, cs)
+                cs = list(map(str, cs))
         return cs
 
     def _cumulate_joins(self):

@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import io
 import os
 import sys
 # ============= local library imports  ==========================
 from twisted.logger import eventsFromJSONLogFile, textFileLogObserver
+import six
 
 
 def print_log(path=None, output_stream=None):
@@ -30,7 +32,7 @@ def print_log(path=None, output_stream=None):
 
     if output_stream is None:
         output_stream = sys.stdout
-    elif isinstance(output_stream, (str, unicode)):
+    elif isinstance(output_stream, (str, six.text_type)):
         output_stream = io.open(output_stream, 'w')
 
     output = textFileLogObserver(output_stream)

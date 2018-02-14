@@ -339,7 +339,7 @@ class Manager(Viewable, ConfigLoadable):
 
             try:
                 package = HW_PACKAGE_MAP[klass]
-                m = __import__(package, globals(), locals(), [klass], -1)
+                m = __import__(package, globals(), locals(), [klass])
                 class_factory = getattr(m, klass)
 
             except ImportError:

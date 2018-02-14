@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, \
     Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any
 # ============= standard library imports ========================

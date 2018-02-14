@@ -17,6 +17,7 @@
 # =============enthought library imports=======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 from copy import deepcopy
 
@@ -26,6 +27,9 @@ from uncertainties import ufloat, umath, nominal_value, std_dev
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
 from pychron.pychron_constants import ALPHAS
+import six
+from six.moves import range
+from six.moves import zip
 
 
 # def calculate_F_ratio(m4039, m3739, m3639, pr):
@@ -61,7 +65,7 @@ def extract_isochron_xy(analyses):
 
 
 def unpack_value_error(xx):
-    return zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
+    return list(zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx]))
 
 
 def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
@@ -366,7 +370,7 @@ def calculate_F(isotopes,
         arar_constants = ArArConstants()
 
     # make local copy of interferences
-    pr = {k: v.__copy__() for k, v in interferences.iteritems()}
+    pr = {k: v.__copy__() for k, v in six.iteritems(interferences)}
 
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
                                                                      pr, arar_constants, fixed_k3739)
@@ -415,7 +419,7 @@ def calculate_F(isotopes,
                                   Ar37=a37,
                                   Ar36=atm36)
     # clear errors in irrad
-    for pp in pr.itervalues():
+    for pp in six.itervalues(pr):
         pp.std_dev = 0
     f_wo_irrad = f
 

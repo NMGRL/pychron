@@ -18,6 +18,8 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from copy import copy
 
 from uncertainties import ufloat, std_dev, nominal_value
@@ -29,6 +31,7 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS
+import six
 
 
 class ArArAge(IsotopeGroup):
@@ -255,7 +258,7 @@ class ArArAge(IsotopeGroup):
         return j
 
     def recalculate_age(self):
-        print 'recacl age', self
+        print('recacl age', self)
         if not self.uF:
             self._calculate_F()
 
@@ -419,7 +422,7 @@ class ArArAge(IsotopeGroup):
         self.rad40_percent = computed['rad40_percent']
 
         isotopes = self.isotopes
-        for k, v in interference_corrected.iteritems():
+        for k, v in six.iteritems(interference_corrected):
             isotopes[k].interference_corrected_value = v
 
         self._set_age_values(f, include_decay_error)
@@ -467,7 +470,7 @@ class ArArAge(IsotopeGroup):
         # j.std_dev = 0
         # self.age_err_wo_j_irrad = age.std_dev
         #
-        for iso in self.isotopes.itervalues():
+        for iso in six.itervalues(self.isotopes):
             iso.age_error_component = self.get_error_component(iso.name)
 
     # def _get_isotope_keys(self):

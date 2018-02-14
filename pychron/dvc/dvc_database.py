@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import timedelta, datetime
 
 from sqlalchemy import not_, func, distinct, or_, select, and_, join
@@ -38,6 +40,8 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
     AnalysisIntensitiesTbl
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
+import six
+from six.moves import map
 
 
 def make_filter(qq, table, col='value'):
@@ -104,7 +108,7 @@ def principal_investigator_filter(q, principal_investigator):
 
 def analysis_type_filter(q, analysis_types):
     if hasattr(analysis_types, '__iter__'):
-        analysis_types = map(str.lower, analysis_types)
+        analysis_types = list(map(str.lower, analysis_types))
     else:
         analysis_types = (analysis_types.lower(),)
 
@@ -236,7 +240,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(func.substring(lname, 2) == name)
                 q = q.filter(or_(lname == name))
 
-                print q
+                print(q)
                 pret = bool(self._query_one(q, verbose_query=True))
                 ret = pret or ret
 
@@ -693,7 +697,7 @@ class DVCDatabase(DatabaseAdapter):
                 else:
                     pi = PrincipalInvestigatorTbl(last_name=name)
                 pi = self._add_item(pi)
-                print 'adding', pi
+                print('adding', pi)
             return pi
 
     def add_project(self, name, principal_investigator=None, **kw):
@@ -719,7 +723,7 @@ class DVCDatabase(DatabaseAdapter):
                 if identifier:
                     a.identifier = str(identifier)
 
-                print 'level', self.get_irradiation_level(irrad, level)
+                print('level', self.get_irradiation_level(irrad, level))
                 a.level = self.get_irradiation_level(irrad, level)
 
                 dbpos = self._add_item(a)
@@ -883,7 +887,7 @@ class DVCDatabase(DatabaseAdapter):
                     'got last analysis {}-{}'.format(r.labnumber.identifier,
                                                      r.aliquot))
                 return r
-            except NoResultFound, e:
+            except NoResultFound as e:
                 if ln:
                     name = ln.identifier
                 elif spectrometer:
@@ -941,7 +945,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             try:
                 ai = int(ai)
-            except ValueError, e:
+            except ValueError as e:
                 self.debug('get_unique_analysis aliquot={}.  {}'.format(ai, e))
                 return
 
@@ -1013,7 +1017,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
             if step:
-                if isinstance(step, (str, unicode)):
+                if isinstance(step, (str, six.text_type)):
                     step = ALPHAS.index(step)
 
                 q = q.filter(AnalysisTbl.increment == step)
@@ -1043,7 +1047,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MeasuredPositionTbl.position == kw['position'])
                 kw.pop('position')
 
-            for k, v in kw.iteritems():
+            for k, v in six.iteritems(kw):
                 try:
                     q = q.filter(getattr(AnalysisTbl, k) == v)
                 except AttributeError:
@@ -1444,7 +1448,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_one(q)
 
     def get_project(self, name, pi=None):
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, (str, six.text_type)):
             if pi:
                 with self.session_ctx() as sess:
 
@@ -1483,7 +1487,7 @@ class DVCDatabase(DatabaseAdapter):
         return self._retrieve_item(IrradiationTbl, name)
 
     def get_material(self, name, grainsize=None):
-        if not isinstance(name, str) and not isinstance(name, unicode):
+        if not isinstance(name, str) and not isinstance(name, six.text_type):
             return name
 
         with self.session_ctx() as sess:
@@ -1498,7 +1502,7 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
-            print 'asdfasdf get sample', name, project, pi
+            print('asdfasdf get sample', name, project, pi)
             project = self.get_project(project, pi)
             material = self.get_material(material, grainsize)
 
@@ -1959,7 +1963,7 @@ class DVCDatabase(DatabaseAdapter):
     def update_sample_prep_session(self, oname, worker, **kw):
         s = self.get_sample_prep_session(oname, worker)
         if s:
-            for k, v in kw.iteritems():
+            for k, v in six.iteritems(kw):
                 setattr(s, k, v)
             self.commit()
 

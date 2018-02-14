@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
@@ -26,6 +28,7 @@ from pyface.message_dialog import warning
 from traits.api import Array, Event
 from uncertainties import nominal_value, std_dev
 
+from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
@@ -36,6 +39,10 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+import six
+from six.moves import filter
+from six.moves import range
+from six.moves import zip
 
 N = 5000
 
@@ -114,8 +121,8 @@ class Ideogram(BaseArArFigure):
     xes = Array
     ytitle = 'Relative Probability'
 
-    xlimits_updated = Event
-    ylimits_updated = Event
+    # xlimits_updated = Event
+    # ylimits_updated = Event
 
     # _omit_key = 'omit_ideo'
 
@@ -138,8 +145,8 @@ class Ideogram(BaseArArFigure):
             self.xs, self.xes = array([(nominal_value(ai), std_dev(ai))
                                        for ai in self._get_xs(key=index_attr)]).T
 
-        except (ValueError, AttributeError), e:
-            print 'asdfasdf', e, index_attr
+        except (ValueError, AttributeError) as e:
+            print('asdfasdf', e, index_attr)
             import traceback
             traceback.print_exc()
             return
@@ -188,16 +195,16 @@ class Ideogram(BaseArArFigure):
         try:
             return max([nominal_value(ai) + std_dev(ai) * 2
                         for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
-        except (AttributeError, ValueError), e:
-            print 'max', e, 'attr={}'.format(attr)
+        except (AttributeError, ValueError) as e:
+            print('max', e, 'attr={}'.format(attr))
             return 0
 
     def min_x(self, attr, exclude_omit=False):
         try:
             return min([nominal_value(ai) - std_dev(ai) * 2
                         for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
-        except (AttributeError, ValueError), e:
-            print 'min', e
+        except (AttributeError, ValueError) as e:
+            print('min', e)
             return 0
 
     def get_valid_xbounds(self):
@@ -269,7 +276,7 @@ class Ideogram(BaseArArFigure):
             # if title is not visible title=='' so check tag instead
 
             if p.y_axis.tag == tag:
-                for k, rend in p.plots.iteritems():
+                for k, rend in six.iteritems(p.plots):
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
                     if k.startswith(name) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
@@ -292,7 +299,7 @@ class Ideogram(BaseArArFigure):
         else:
             if nonsorted:
                 data = sorted(zip(xs, ys), key=lambda x: x[0])
-                xs, ys = zip(*data)
+                xs, ys = list(zip(*data))
 
             scatter = self._add_aux_plot(ys, name, po, pid, xs=xs)
 
@@ -386,7 +393,7 @@ class Ideogram(BaseArArFigure):
             if self.group_id > 0:
                 for ov in plot.overlays:
                     if isinstance(ov, IdeogramPointsInset):
-                        print 'ideogram point inset', self.group_id, startidx, ov.value.get_bounds()[1] + 1
+                        print('ideogram point inset', self.group_id, startidx, ov.value.get_bounds()[1] + 1)
                         startidx = max(startidx, ov.value.get_bounds()[1] + 1)
             else:
                 startidx = 1
@@ -454,10 +461,20 @@ class Ideogram(BaseArArFigure):
             ys = line.value.get_data()
             if xs.shape[0]:
                 xp, yp = fast_find_peaks(ys, xs)
+
+                border = self.options.peak_label_border
+                border_color = self.options.peak_label_border_color
+
+                bgcolor = self.options.peak_label_bgcolor if self.options.peak_label_bgcolor_enabled else 'transparent'
+
                 for xi, yi in zip(xp, yp):
                     label = PeakLabel(line,
                                       data_point=(xi, yi),
                                       label_text=floatfmt(xi, n=3),
+                                      border_visible=bool(border),
+                                      border_width=border,
+                                      border_color=border_color,
+                                      bgcolor=bgcolor,
                                       # label_style='bubble',
 
                                       # border_visible=False,
@@ -550,25 +567,29 @@ class Ideogram(BaseArArFigure):
         h = d.max()
         return 0, h
 
+    @caller
     def replot(self):
         self._rebuild_ideo()
 
+    @caller
     def _rebuild_ideo(self, sel=None):
-        if sel is None:
-            sel = []
+
+        #     sel = []
 
         graph = self.graph
+        if sel is None:
+            sel = graph.plots[1].default_index.metadata['selections']
 
         # if len(graph.plots) > 1:
         #     for p in graph.plots[1:]:
         #         for key in p.plots:
         #             print p, key
-
-        ss = [p.plots[key][0]
-              for p in graph.plots[1:]
-              for key in p.plots
-              if key.endswith('{}'.format(self.group_id + 1))]
-        self._set_renderer_selection(ss, sel)
+        if sel:
+            ss = [p.plots[key][0]
+                  for p in graph.plots[1:]
+                  for key in p.plots
+                  if key.endswith('{}'.format(self.group_id + 1))]
+            self._set_renderer_selection(ss, sel)
 
         plot = graph.plots[0]
         #
@@ -737,7 +758,7 @@ class Ideogram(BaseArArFigure):
         step_percent = 0.005
         step = step_percent * (xma - xmi)
         # aw = int(asymptotic_width * N * 0.01)
-        for i in xrange(max_iter):
+        for i in range(max_iter):
             if rx1 is None:
                 x1 -= step
             else:
@@ -788,7 +809,7 @@ class Ideogram(BaseArArFigure):
         x1, x2 = xmi, xma
         step = 0.01 * (xma - xmi)
         aw = int(asymptotic_width * N * 0.01)
-        for i in xrange(max_iter if aw else 1):
+        for i in range(max_iter if aw else 1):
             x1 = xmi - step * i if rx1 is None else rx1
             x2 = xma + step * i if rx2 is None else rx2
 
@@ -839,7 +860,7 @@ class Ideogram(BaseArArFigure):
             wm, we = nominal_value(wage), std_dev(wage)
         return wm, we, mswd, valid_mswd
 
-    def _handle_xlimits(self):
-        self.xlimits_updated = True
+    # def _handle_xlimits(self):
+    #     self.xlimits_updated = True
 
 # ============= EOF =============================================

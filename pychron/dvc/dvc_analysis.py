@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import datetime
 import os
 import time
@@ -33,6 +34,9 @@ from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
+import six
+from six.moves import map
+from six.moves import zip
 
 EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'extract_units',
@@ -179,7 +183,7 @@ class DVCAnalysis(Analysis):
                 func = getattr(self, '_load_{}'.format(modifier))
                 try:
                     func(jd)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning('Failed loading {}. error={}'.format(modifier, e))
 
     def load_spectrometer_parameters(self, spec_sha):
@@ -229,7 +233,7 @@ class DVCAnalysis(Analysis):
             # except KeyError, e:
             #     print e, isotopes.keys()
             #     continue
-            iso = next((i for i in isotopes.itervalues() if i.detector == det and i.name == isok), None)
+            iso = next((i for i in six.itervalues(isotopes) if i.detector == det and i.name == isok), None)
             if not iso:
                 continue
 
@@ -245,7 +249,7 @@ class DVCAnalysis(Analysis):
             for k in keys:
                 bd = next((b for b in baselines if b.get('detector') == k), None)
                 if bd:
-                    for iso in isotopes.itervalues():
+                    for iso in six.itervalues(isotopes):
                         if iso.detector == k:
                             iso.baseline.unpack_data(format_blob(bd.get('blob', '')), n_only)
 
@@ -259,7 +263,7 @@ class DVCAnalysis(Analysis):
                 continue
 
             data = format_blob(sn.get('blob', ''))
-            for iso in isotopes.itervalues():
+            for iso in six.itervalues(isotopes):
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
 
@@ -296,7 +300,7 @@ class DVCAnalysis(Analysis):
             except KeyError:
                 # print 'set fits {} {}'.format(fi.name, isos.keys())
                 # name is a detector
-                for i in isos.itervalues():
+                for i in six.itervalues(isos):
                     if i.detector == fi.name:
                         i.baseline.set_fit(fi)
 
@@ -310,7 +314,7 @@ class DVCAnalysis(Analysis):
     def dump_fits(self, keys, reviewed=False):
 
         sisos = self.isotopes
-        isoks, dks = map(tuple, partition(keys, lambda x: x in sisos))
+        isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
         def update(d, i):
             fd = i.filter_outliers_dict
@@ -344,7 +348,7 @@ class DVCAnalysis(Analysis):
                     det = {}
                     baselines[di] = det
 
-                bs = next((iso.baseline for iso in sisos.itervalues() if iso.detector == di), None)
+                bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
                 if bs:
                     update(det, bs)
 
@@ -404,7 +408,7 @@ class DVCAnalysis(Analysis):
             self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
-                                                for k, pd in jd.iteritems() if k not in (refdet, 'fmt',
+                                                for k, pd in six.iteritems(jd) if k not in (refdet, 'fmt',
                                                                                          'reference_detector',
                                                                                          'reference_isotope')}
 
@@ -415,7 +419,7 @@ class DVCAnalysis(Analysis):
         self.set_tag(jd)
 
     def _load_blanks(self, jd):
-        for key, v in jd.iteritems():
+        for key, v in six.iteritems(jd):
             if key in self.isotopes:
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
@@ -434,7 +438,7 @@ class DVCAnalysis(Analysis):
                     i.blank_source = fit
 
     def _load_intercepts(self, jd):
-        for iso, v in jd.iteritems():
+        for iso, v in six.iteritems(jd):
             if iso in self.isotopes:
                 i = self.isotopes[iso]
                 self._load_value_error(i, v)
@@ -465,8 +469,8 @@ class DVCAnalysis(Analysis):
                 setattr(item, k, obj[k])
 
     def _load_baselines(self, jd):
-        for det, v in jd.iteritems():
-            for iso in self.isotopes.itervalues():
+        for det, v in six.iteritems(jd):
+            for iso in six.itervalues(self.isotopes):
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
 
@@ -476,7 +480,7 @@ class DVCAnalysis(Analysis):
                         iso.baseline.filter_outliers_dict = fod
 
     def _load_icfactors(self, jd):
-        for key, v in jd.iteritems():
+        for key, v in six.iteritems(jd):
             if isinstance(v, dict):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')
@@ -507,9 +511,9 @@ class DVCAnalysis(Analysis):
         #             'Ar40L1': Isotope('Ar40', 'L1')}
 
         try:
-            isos = {k: Isotope(v['name'], v['detector']) for k, v in isos.iteritems()}
+            isos = {k: Isotope(v['name'], v['detector']) for k, v in six.iteritems(isos)}
         except KeyError:
-            isos = {k: Isotope(k, v['detector']) for k, v in isos.iteritems()}
+            isos = {k: Isotope(k, v['detector']) for k, v in six.iteritems(isos)}
 
         self.isotopes = isos
 

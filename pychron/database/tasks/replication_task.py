@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 
 from pychron.core.ui import set_qt
@@ -95,7 +96,7 @@ class ReplicationTask(BaseTask):
                                       user=self.user,
                                       passwd=self.password)
                 self._connection = con
-            except pymysql.OperationalError, e:
+            except pymysql.OperationalError as e:
                 self.sql_warning(e)
 
         return self._connection
@@ -110,7 +111,7 @@ class ReplicationTask(BaseTask):
             cur = con.cursor()
             try:
                 cur.execute(s)
-            except pymysql.InternalError, e:
+            except pymysql.InternalError as e:
                 self.sql_warning(e)
                 return
 

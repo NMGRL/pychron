@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from itertools import groupby
 
@@ -48,6 +50,7 @@ from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactory
     InterpretedAgeFactoryModel, set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
+import six
 
 
 class DataMenu(SMenu):
@@ -460,8 +463,8 @@ class PipelineTask(BaseBrowserTask):
         po = editor.plotter_options
         plotter_options = po.to_dict()
 
-        for k, v in plotter_options.iteritems():
-            print k, v
+        for k, v in six.iteritems(plotter_options):
+            print(k, v)
         obj = {}
         obj['plotter_options'] = plotter_options
         obj['analyses'] = [{'record_id': ai.record_id,

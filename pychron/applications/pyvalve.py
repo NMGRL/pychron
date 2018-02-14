@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
+from __future__ import absolute_import
 from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication

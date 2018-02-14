@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 
 from sqlalchemy.orm.exc import NoResultFound
@@ -50,7 +51,7 @@ class LocalLabAdapter(DatabaseAdapter):
         q = q.limit(1)
         try:
             return q.one()
-        except NoResultFound, e:
+        except NoResultFound as e:
             pass
 
 

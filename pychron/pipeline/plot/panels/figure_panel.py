@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from itertools import groupby
 from math import isinf
@@ -26,6 +28,7 @@ from traits.api import HasTraits, Any, List, Str
 
 from pychron.core.codetools.inspection import caller
 from pychron.processing.analysis_graph import AnalysisStackedGraph
+from six.moves import range
 
 
 class FigurePanel(HasTraits):
@@ -146,30 +149,30 @@ class FigurePanel(HasTraits):
             if self.use_previous_limits:
                 if plots[0].has_xlimits():
                     tmi, tma = plots[0].xlimits
-                    print 'previous xllimits', tmi, tma
+                    print('previous xllimits', tmi, tma)
                     if tmi != -inf and tma != inf:
                         mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    print 'has ymin max set', p.ymin, p.ymax
+                    print('has ymin max set', p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print 'has ylimits', i, p.ylimits[0], p.ylimits[1]
+                    print('has ylimits', i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print 'has calculated', p.calculated_ymin, p.calculated_ymax
+                    print('has calculated', p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print 'setting xlimits', mi, ma, xpad, self.plot_options.xpadding
+                print('setting xlimits', mi, ma, xpad, self.plot_options.xpadding)
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()

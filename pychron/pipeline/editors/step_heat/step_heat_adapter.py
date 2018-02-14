@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.pipeline.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
 
 

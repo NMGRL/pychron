@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 import yaml
@@ -24,6 +25,8 @@ from traits.api import Any, Dict
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
+import six
+from six.moves import zip
 
 
 class LoaderLogic(Loggable):
@@ -34,7 +37,7 @@ class LoaderLogic(Loggable):
     def get_check_message(self):
         # rt = ''.join(['<td>{}</td>'.format(r) for r in self._rules])
         # bt = ''.join(['<td>{}</td>'.format('X' if not b else '') for b in self._bits])
-        rs = zip(self._rules, self._bits)
+        rs = list(zip(self._rules, self._bits))
         rs = [ri for ri in rs if not ri[1]]
         checks = ', '.join([ri[0] for ri in rs])
         return '{} checks are not OK'.format(checks)
@@ -62,7 +65,7 @@ class LoaderLogic(Loggable):
 
     def _convert_switch_name(self, name):
 
-        return next((k for k, v in self.switches.iteritems() if v == name), None)
+        return next((k for k, v in six.iteritems(self.switches) if v == name), None)
 
     def _check_rule(self, key, rule):
         bits = []
@@ -80,7 +83,7 @@ class LoaderLogic(Loggable):
                     self.debug('switch state: name={}, state={}, s={}, b={}'.format(name, state, s, b))
                 else:
                     self.debug('name not in switches {}'.format(name))
-                    self.debug('switches={}'.format(self.switches.keys()))
+                    self.debug('switches={}'.format(list(self.switches.keys())))
                     b = self.manager.get_flag_state(flag)
             else:
                 b = self.manager.get_flag_state(flag)

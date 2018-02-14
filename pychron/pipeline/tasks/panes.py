@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Int, Property, Button, Str
@@ -51,6 +52,7 @@ from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, Groupi
     ReviewTreeNode, PipelineGroupTreeNode, NodeGroupTreeNode
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateGroup, PipelineTemplateRoot
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
+import six
 
 
 def node_adder(name):
@@ -79,9 +81,7 @@ class PipelineHandlerMeta(MetaHasTraits):
         return klass
 
 
-class PipelineHandler(Handler):
-    __metaclass__ = PipelineHandlerMeta
-
+class PipelineHandler(six.with_metaclass(PipelineHandlerMeta, Handler)):
     def save_template(self, info, obj):
         info.object.save_pipeline_template()
 

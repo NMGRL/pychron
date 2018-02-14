@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from traits.api import Bool, Dict
 # ============= standard library imports ========================
 from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
+from six.moves import zip
 # ============= local library imports  ==========================
 
 

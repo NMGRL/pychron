@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from chaco.tools.cursor_tool import CursorTool
 # ============= enthought library imports =======================
 from numpy import array, where
@@ -26,6 +27,8 @@ from uncertainties import nominal_value
 from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
+import six
+from six.moves import map
 
 
 class PeakCenterView(HasTraits):
@@ -43,7 +46,7 @@ class PeakCenterView(HasTraits):
             g.add_axis_tool(p, p.x_axis)
             g.add_axis_tool(p, p.y_axis)
 
-            ref_xs, ref_ys = map(array, an.peak_center_data)
+            ref_xs, ref_ys = list(map(array, an.peak_center_data))
             ref_k = an.peak_center_reference_detector
             s, p = g.new_series(ref_xs, ref_ys)
             s.index.sort_order = 'ascending'
@@ -86,7 +89,7 @@ class PeakCenterView(HasTraits):
                 g.add_axis_tool(p, p.x_axis)
                 g.add_axis_tool(p, p.y_axis)
 
-                for k, (xs, ys) in an.additional_peak_center_data.iteritems():
+                for k, (xs, ys) in six.iteritems(an.additional_peak_center_data):
                     ys = array(ys)
                     mir = ys.min()
                     r = ys.max() - mir

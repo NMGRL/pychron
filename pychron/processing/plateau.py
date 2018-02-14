@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import argmax, array
 from traits.api import HasTraits, List, Array
 
 from pychron.core.stats.core import validate_mswd, calculate_mswd
+from six.moves import range
 
 
 def memoize(function):
@@ -145,7 +147,7 @@ class Plateau(HasTraits):
                 try:
                     if not overlap_func(i, j, overlap_sigma):
                         return
-                except BaseException, e:
+                except BaseException as e:
                     import traceback
                     log.debug('Overlap exception: {}'.format(e, traceback.format_exc()))
                     continue

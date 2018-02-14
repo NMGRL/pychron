@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, on_trait_change, Bool, Event, Float, Str, Instance
 from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGroup, Group, Label
 from traitsui.table_column import ObjectColumn
@@ -24,6 +25,7 @@ from traitsui.table_column import ObjectColumn
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pychron_constants import PLUSMINUS
+import six
 
 
 class AnalysisEditViewHandler(Handler):
@@ -257,7 +259,7 @@ class AnalysisEditView(HasTraits):
 
     def _set_ic_factor(self, det, v):
         isos = self.editor.analysis.isotopes
-        for iso in isos.itervalues():
+        for iso in six.itervalues(isos):
             if iso.detector == det:
                 iso.ic_factor = v
 

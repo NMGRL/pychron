@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Property, List, cached_property, Str
@@ -132,7 +133,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         """
         status_width = 6
 
-        ac = map(lambda x: x * 0.6, self.col_widths[1:])
+        ac = [x * 0.6 for x in self.col_widths[1:]]
         cs = [status_width]
         cs.extend(ac)
 

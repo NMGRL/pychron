@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.ui import set_qt
 
 set_qt()
@@ -87,7 +89,7 @@ class RawExporter(IsotopeDatabaseManager):
                 args = yi.split('-')
                 ln, al = '-'.join(args[:-1]), args[-1]
                 ai = db.get_unique_analysis(ln, al)
-                print ai, ln, al
+                print(ai, ln, al)
                 yield ai
 
         return gen()

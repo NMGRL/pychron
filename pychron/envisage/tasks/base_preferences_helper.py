@@ -73,7 +73,7 @@ def test_connection_item():
 
 def remote_status_item(label=None):
     grp = HGroup(Item('remote',
-                      label='Name'),
+                      label='Name', springy=True),
                  test_connection_item(),
                  CustomLabel('_remote_status',
                              width=50,

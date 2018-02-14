@@ -15,12 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.has_traits import HasTraits
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
 # ============= standard library imports ========================
 import os
 from datetime import datetime
-from itertools import izip
+from six.moves import range
+
 import struct
 import time
 from uncertainties import ufloat
@@ -35,6 +38,8 @@ from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, QTEGRA_SOURCE_KEYS, QTEGRA_SOURCE_NAMES
+import six
+from six.moves import zip
 
 
 class DValue(HasTraits):
@@ -127,8 +132,8 @@ class DBAnalysis(Analysis):
             return next((fi for fi in fits
                          if fi.isotope.kind == kind and fi.isotope.molecular_weight.name == name), None)
 
-        except AttributeError, e:
-            print 'exception', e
+        except AttributeError as e:
+            print('exception', e)
 
     def init(self, meas_analysis):
         pass
@@ -171,7 +176,7 @@ class DBAnalysis(Analysis):
         if isinstance(dbrecord_tuple, meas_AnalysisTable):
             meas_analysis = dbrecord_tuple
         else:
-            args = izip(*dbrecord_tuple)
+            args = zip(*dbrecord_tuple)
             meas_analysis = args.next()[0]
 
         if load_changes:
@@ -187,7 +192,7 @@ class DBAnalysis(Analysis):
             and other associated tables
         """
 
-        ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
+        ms, ls, isos, samples, projects, materials = zip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
 
@@ -233,7 +238,7 @@ class DBAnalysis(Analysis):
 
             # get the data_reduction_tag_set entry associated with this analysis
             drentry = next((ai for ai in tag.analyses if ai.analysis_id == meas_analysis.id), None)
-            print drentry.selected_histories
+            print(drentry.selected_histories)
             return drentry.selected_histories
 
     def _sync_script_blobs(self, meas_analysis):
@@ -319,7 +324,7 @@ class DBAnalysis(Analysis):
 
                         self.source_parameters = sd
 
-                    except AttributeError, e:
+                    except AttributeError as e:
                         # self.source_parameters = [DValue(str(i), i) for i in range(10)]
                         self.debug('No source parameters available')
 
@@ -328,7 +333,7 @@ class DBAnalysis(Analysis):
                     try:
                         names = sort_detectors([di.detector.name for di in meas.deflections])
                         self.deflections = [DValue(ni, defls[i].deflection or '---') for i, ni in enumerate(names)]
-                    except AttributeError, e:
+                    except AttributeError as e:
                         # self.deflections = [DValue(str(i), i * 34) for i in range(10)]
                         self.debug('No deflection available')
 
@@ -465,7 +470,7 @@ class DBAnalysis(Analysis):
 
         # self.ic_factors = self._get_ic_factors(meas_analysis)
         ics = self._get_ic_factors(meas_analysis)
-        for iso in self.isotopes.itervalues():
+        for iso in six.itervalues(self.isotopes):
             det = iso.detector
             try:
                 r = ics[det]
@@ -679,7 +684,7 @@ class DBAnalysis(Analysis):
 
         if selected_histories:
             history = selected_histories.selected_blanks
-            keys = isotopes.keys()
+            keys = list(isotopes.keys())
             if history:
                 for ba in history.blanks:
                     isok = ba.isotope
@@ -713,7 +718,7 @@ class DBAnalysis(Analysis):
             center = float(pc.center)
             packed_xy = pc.points
             return center, zip(*[struct.unpack('<ff', packed_xy[i:i + 8])
-                                 for i in xrange(0, len(packed_xy), 8)])
+                                 for i in range(0, len(packed_xy), 8)])
         else:
             return 0.0, None
 

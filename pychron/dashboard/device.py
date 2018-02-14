@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
 # ============= standard library imports ========================
@@ -32,6 +34,8 @@ from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import range
+from six.moves import zip
 
 
 class DashboardDevice(Loggable):
@@ -93,9 +97,9 @@ class DashboardDevice(Loggable):
         try:
             self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
                                                                             value.name,
-                                                                            value.func_name))
+                                                                            value.__name__))
             nv = None
-            func = getattr(self.hardware_device, value.func_name)
+            func = getattr(self.hardware_device, value.__name__)
             if func is not None:
                 nv = func(**kw)
 
@@ -106,7 +110,7 @@ class DashboardDevice(Loggable):
         except BaseException:
             import traceback
 
-            print self.hardware_device, self.hardware_device.name, value.func_name
+            print(self.hardware_device, self.hardware_device.name, value.__name__)
             self.debug(traceback.format_exc())
             # value.use_pv = False
 
@@ -153,7 +157,7 @@ class DashboardDevice(Loggable):
 
             try:
                 v = float(new)
-            except (ValueError, TypeError), e:
+            except (ValueError, TypeError) as e:
                 self.warning('failed to push value pv.name={}, value={}, error={}'.format(pv.name, new, e))
                 return
 
@@ -214,7 +218,7 @@ class DashboardDevice(Loggable):
 
         if blob:
             step = 4 * fmt.count('f')
-            args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+            args = list(zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)]))
             ns = []
             for blobv, lastv in zip(args, new_args):
                 blobv = list(blobv)

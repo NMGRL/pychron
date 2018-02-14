@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Any, Bool, Instance, List
@@ -30,6 +31,7 @@ from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, 
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
     AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC, AR37
+import six
 
 
 class NoAnalysesError(BaseException):
@@ -144,7 +146,7 @@ class FigureNode(BaseNode):
 
     def _editor_factory(self):
         klass = self.editor_klass
-        if isinstance(klass, (str, unicode)):
+        if isinstance(klass, (str, six.text_type)):
             pkg, klass = klass.split(',')
             mod = __import__(pkg, fromlist=[klass])
             klass = getattr(mod, klass)

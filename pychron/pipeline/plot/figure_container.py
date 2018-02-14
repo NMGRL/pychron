@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.plot_containers import GridPlotContainer
 from traits.api import HasTraits, Any
+from six.moves import range
 
 
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
@@ -34,8 +36,8 @@ class FigureContainer(HasTraits):
     # @caller
     def refresh(self, clear=False):
         comp = self.component
-        for i in xrange(self.rows):
-            for j in xrange(self.cols):
+        for i in range(self.rows):
+            for j in range(self.cols):
                 try:
                     p = self.model.next_panel()
                 except StopIteration:

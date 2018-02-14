@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 
@@ -50,6 +51,7 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
 from pychron.pychron_constants import LINE_STR
+import six
 
 
 class ActiveCTX(object):
@@ -265,9 +267,9 @@ class PipelineEngine(Loggable):
             for p in self.pipeline.nodes:
                 if isinstance(p, FitICFactorNode):
                     udets = {iso.detector for ai in self.state.unknowns
-                             for iso in ai.isotopes.itervalues()}
+                             for iso in six.itervalues(ai.isotopes)}
                     rdets = {iso.detector for ai in self.state.references
-                             for iso in ai.isotopes.itervalues()}
+                             for iso in six.itervalues(ai.isotopes)}
                     p.set_detectors(list(udets.union(rdets)))
 
     def get_unknowns_node(self):
@@ -806,7 +808,7 @@ class PipelineEngine(Loggable):
                       self.dvc,
                       clear=clear,
                       exclude_klass=exclude_klass)
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             self.debug('Invalid Template: {}'.format(e))

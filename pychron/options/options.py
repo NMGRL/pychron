@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from itertools import groupby
 import yaml
@@ -34,6 +36,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
+from six.moves import range
 
 
 def _table_column(klass, *args, **kw):
@@ -265,7 +268,7 @@ class BaseOptions(HasTraits):
         pass
 
     def _fontname_changed(self):
-        print 'setting font name', self.fontname
+        print('setting font name', self.fontname)
         self._set_fonts(self.fontname)
         for attr in self.traits():
             if attr.endswith('_fontname'):

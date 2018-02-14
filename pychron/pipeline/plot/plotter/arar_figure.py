@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
@@ -39,6 +40,8 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
+import six
+from six.moves import map
 
 
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
@@ -637,11 +640,11 @@ class BaseArArFigure(SelectionFigure):
     def _handle_label_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in p.plots.itervalues()
+            if next((pp for pp in six.itervalues(p.plots)
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = map(float, new)
+                    new = list(map(float, new))
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
@@ -649,11 +652,11 @@ class BaseArArFigure(SelectionFigure):
     def _handle_overlay_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in p.plots.itervalues()
+            if next((pp for pp in six.itervalues(p.plots)
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = map(float, new)
+                    new = list(map(float, new))
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)

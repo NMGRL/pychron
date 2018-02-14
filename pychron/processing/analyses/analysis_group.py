@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 
 from numpy import array, nan
@@ -26,6 +27,8 @@ from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, val
 from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
+from six.moves import range
+from six.moves import zip
 
 
 def AGProperty(*depends):
@@ -269,7 +272,7 @@ class AnalysisGroup(HasTraits):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
         vs = [vi for vi in vs if vi is not None]
         if vs:
-            vs, es = zip(*[(nominal_value(v), std_dev(v)) for v in vs])
+            vs, es = list(zip(*[(nominal_value(v), std_dev(v)) for v in vs]))
             vs, es = array(vs), array(es)
             return vs, es
 
@@ -356,8 +359,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
-        rad40, k39 = zip(*[(a.get_computed_value('rad40'),
-                            a.get_computed_value('k39')) for a in self.clean_analyses()])
+        rad40, k39 = list(zip(*[(a.get_computed_value('rad40'),
+                            a.get_computed_value('k39')) for a in self.clean_analyses()]))
         rad40 = sum(rad40)
         k39 = sum(k39)
 
@@ -412,7 +415,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
-            step_idxs = [i for i in xrange(pidx[0], pidx[1] + 1) if not self.analyses[i].is_omitted()]
+            step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not self.analyses[i].is_omitted()]
             self.nsteps = len(step_idxs)
 
             pages = [ages[i] for i in step_idxs]

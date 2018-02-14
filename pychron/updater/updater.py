@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import sys
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
 from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
@@ -328,7 +329,7 @@ class Updater(Loggable):
                     repo.git.fetch(origin, branch)
                 else:
                     repo.git.fetch(origin)
-            except GitCommandError, e:
+            except GitCommandError as e:
                 self.warning('Failed to fetch. {}'.format(e))
 
     def _validate_branch(self, name):
@@ -363,7 +364,7 @@ class Updater(Loggable):
     def _validate_origin(self, name):
         try:
             cmd = 'https://github.com/{}'.format(name)
-            urllib2.urlopen(cmd)
+            six.moves.urllib.request.urlopen(cmd)
             return True
         except BaseException:
             return

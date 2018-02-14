@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, on_trait_change, List, Button
 # ============= standard library imports ========================
 from threading import Thread

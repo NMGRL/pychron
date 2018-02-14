@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import base64
 import hashlib
 import os
@@ -258,7 +259,7 @@ class DVCPersister(BasePersister):
 
                     # push commit
                     dvc.meta_push()
-                except GitCommandError, e:
+                except GitCommandError as e:
                     self.warning(e)
                     if self.confirmation_dialog('NON FATAL\n\n'
                                                 'DVC/Git upload of analysis not successful.'
@@ -589,7 +590,7 @@ class DVCPersister(BasePersister):
                 obj = self.per_spec.run_spec
             try:
                 return getattr(obj, ki)
-            except AttributeError, e:
+            except AttributeError as e:
                 self.warning('Attribute error: attr={}, error={}'.format(ki, e))
 
         d = {k: get(k) for k in keys}

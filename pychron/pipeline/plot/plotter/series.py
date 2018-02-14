@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import time
 
@@ -281,11 +283,11 @@ class Series(BaseSeries):
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
-        except (KeyError, ZeroDivisionError, AttributeError), e:
+        except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
 
             traceback.print_exc()
-            print 'Series', e
+            print('Series', e)
 
     def update_graph_metadata(self, obj, name, old, new):
         sorted_ans = self.sorted_analyses

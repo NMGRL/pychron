@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
@@ -26,6 +27,7 @@ from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
+from six.moves import map
 
 
 class FindNode(DVCNode):

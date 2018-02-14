@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from reportlab.lib import colors
 from traits.api import Bool, List, Instance
 from traitsui.api import View, UItem, Item, VGroup, InstanceEditor, Tabbed
