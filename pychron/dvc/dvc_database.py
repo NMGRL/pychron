@@ -1348,7 +1348,8 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(ProjectTbl.name.in_(projects))
             if mass_spectrometers:
                 has_filter = True
-                q = q.filter(AnalysisTbl.mass_spectrometer.in_(mass_spectrometers))
+                q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
+
             if low_post:
                 has_filter = True
                 q = q.filter(AnalysisTbl.timestamp >= low_post)

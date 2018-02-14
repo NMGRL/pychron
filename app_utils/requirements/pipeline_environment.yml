@@ -95,7 +95,6 @@ dependencies:
   - gitpython==2.1.8
   - modernize==0.6
   - peakutils==1.1.1
-  - pypylon==0.0.1
   - qimage2ndarray==1.6
   - smmap2==2.0.3
   - tables==3.3.0

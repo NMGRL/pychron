@@ -92,7 +92,7 @@ class PersistenceMixin(object):
         if p and os.path.isfile(p):
             self.debug('loading {}'.format(p))
             d = None
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     d = pickle.load(rfile)
                 except (pickle.PickleError, EOFError, BaseException):

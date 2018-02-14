@@ -39,9 +39,9 @@ one_year = timedelta(days=365)
 def in_func(q, col, values):
     if values:
         col = func.lower(col)
-        if not hasattr(values, '__iter__'):
-            if isinstance(values, (str, six.text_type)):
-                values = values.lower()
+        # if not hasattr(values, '__iter__'):
+        if isinstance(values, (str, six.text_type)):
+            values = values.lower()
 
             q = q.filter(col == values)
         else:
