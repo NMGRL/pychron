@@ -260,8 +260,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
                 # print self, 'fit for {}={}, {}'.format(key, fi, scatter)
                 scatter.fit = fi
-                scatter.index.metadata['selections'] = []
-                scatter.index.metadata['filtered'] = None
+                # scatter.index.metadata['selections'] = []
+                # scatter.index.metadata['filtered'] = None
 
                 # if redraw:
                 #     self.redraw()
