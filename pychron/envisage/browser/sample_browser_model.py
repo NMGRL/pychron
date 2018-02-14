@@ -313,6 +313,9 @@ class SampleBrowserModel(BrowserModel):
                 self.warning_dialog('No Mass Spectrometer selected. Cannot find references. Select one or more Mass '
                                     'Spectrometers from the "Configure Find References" window')
                 return
+            if m.replace:
+                self.analysis_table.clear()
+
             atypes = m.formatted_analysis_types
             if atypes:
                 refs = self.db.find_references(ans, atypes,

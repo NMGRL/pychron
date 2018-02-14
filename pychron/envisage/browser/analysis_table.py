@@ -143,6 +143,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.calculate_dts(self.analyses)
         self.scroll_to_row = len(self.analyses) - 1
 
+    def clear(self):
+        self.analyses = []
+        self.oanalyses = []
+
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:
             aa = self.analyses
@@ -157,6 +161,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         new_items = [ai for ai in new_items if ai not in items]
         items.extend(new_items)
 
+        self.selected = []
         self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)

@@ -17,16 +17,20 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+from sqlalchemy.engine.default import DefaultDialect
+from sqlalchemy.sql.sqltypes import NullType, String as SQLString
 from traits.api import HasTraits, String, Property, Str, List, Any, \
     Bool, cached_property, Event, Enum
 from traitsui.api import View, Item, EnumEditor
 
 # ============= standard library imports ========================
 from datetime import datetime, timedelta
-from sqlalchemy import cast, Date, func
+from sqlalchemy import cast, Date, func, DateTime
 from six.moves import map
 import six
 from six.moves import zip
+
 # ============= local library imports  ==========================
 now = datetime.now()
 one_year = timedelta(days=365)
@@ -46,10 +50,53 @@ def in_func(q, col, values):
     return q
 
 
+# ========================================================================
+# https://exceptionshub.com/sqlalchemy-print-the-actual-query.html
+class StringLiteral(SQLString):
+    """Teach SA how to literalize various things."""
+
+    def literal_processor(self, dialect):
+        super_processor = super(StringLiteral, self).literal_processor(dialect)
+
+        def process(value):
+            if isinstance(value, int):
+                return str(value)
+            if not isinstance(value, str):
+                value = str(value)
+            result = super_processor(value)
+            if isinstance(result, bytes):
+                result = result.decode(dialect.encoding)
+            return result
+
+        return process
+
+
+class LiteralDialect(DefaultDialect):
+    colspecs = {
+        # prevent various encoding explosions
+        String: StringLiteral,
+        # teach SA about how to literalize a datetime
+        DateTime: StringLiteral,
+        # don't format py2 long integers to NULL
+        NullType: StringLiteral}
+
+
+def literalquery(statement):
+    """NOTE: This is entirely insecure. DO NOT execute the resulting strings."""
+    # import sqlalchemy.orm
+    # if isinstance(statement, sqlalchemy.orm.Query):
+    #     statement = statement.statement
+
+    return statement.compile(
+        dialect=LiteralDialect(),
+        compile_kwargs={'literal_binds': True},
+    ).string
+
+
+# ==============================================================================
+
 def compile_query(query):
-    dialect = query.session.bind.dialect
-    txt = query.statement.compile(dialect=dialect, compile_kwargs={"literal_binds": True})
-    return txt
+    return literalquery(query.statement)
 
 
 class TableSelector(HasTraits):
