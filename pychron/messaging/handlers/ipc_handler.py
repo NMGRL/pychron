@@ -18,7 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from messaging_handler import MessagingHandler
+from __future__ import absolute_import
+from .messaging_handler import MessagingHandler
 
 class IPCHandler(MessagingHandler):
     def get_packet(self):

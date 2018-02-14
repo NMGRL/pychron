@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Int, Any, List, Instance, Button, Dict
 from traitsui.api import View, UItem, Item, HGroup, InstanceEditor, ListStrEditor
+import six
 
 
 # ============= standard library imports ========================
@@ -99,7 +101,7 @@ class StyleSheetEditor(HasTraits):
 
     def generate_css(self):
         txt = []
-        for ei in self.elements.itervalues():
+        for ei in six.itervalues(self.elements):
             txt.append(ei.generate_css())
 
         return '\n'.join(txt)

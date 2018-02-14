@@ -16,6 +16,7 @@
 
 
 
+from __future__ import absolute_import
 import socket
 
 from traits.api import Str, Int, Enum
@@ -36,7 +37,7 @@ class RemoteManager(Manager):
             r = conn.recv(4096)
             r = r.strip()
             self.info('-----ask----- {} ==> {}'.format(cmd, r))
-        except socket.error, e:
+        except socket.error as e:
             self.warning(e)
 
         return r

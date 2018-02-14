@@ -16,6 +16,8 @@
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import glob
 import os
 import sys
@@ -23,7 +25,9 @@ import time
 
 import serial
 # =============local library imports  ==========================
-from communicator import Communicator, process_response, prep_str, remove_eol_func
+from .communicator import Communicator, process_response, prep_str, remove_eol_func
+from six.moves import map
+from six.moves import range
 
 
 def get_ports():
@@ -375,7 +379,7 @@ class SerialCommunicator(Communicator):
         def write(cmd_str):
             try:
                 self.handle.write(cmd_str)
-            except (serial.serialutil.SerialException, OSError, IOError, ValueError), e:
+            except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
                 self.warning(e)
 
         if not self.simulation:
@@ -429,7 +433,7 @@ class SerialCommunicator(Communicator):
         handle = self.handle
         inw = handle.inWaiting()
         c = min(inw, nchars - len(r))
-        r += ''.join(map('{:02X}'.format, map(ord, handle.read(c))))
+        r += ''.join(map('{:02X}'.format, list(map(ord, handle.read(c)))))
 
         return r[:nchars], len(r) >= nchars
 
@@ -469,7 +473,7 @@ class SerialCommunicator(Communicator):
                     if t:
                         terminated = True
                         break
-        except BaseException, e:
+        except BaseException as e:
             self.warning(e)
         return r, terminated
 
@@ -515,7 +519,7 @@ if __name__ == '__main__':
     s.tell('A', verbose=False)
 
     for i in range(10):
-        print 'dddd', s.ask('1', verbose=False)
+        print('dddd', s.ask('1', verbose=False))
         time.sleep(1)
 #    s.tell('ddd', verbose=False)
 #    print s.ask('ddd', verbose=False)

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from threading import _Event, Lock, Timer, Thread, Event
 
 import time

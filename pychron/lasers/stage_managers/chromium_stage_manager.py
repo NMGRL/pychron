@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.lasers.stage_managers.stage_manager import StageManager
 
 from traits.api import Float

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 from math import pi
@@ -191,7 +192,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
             with open(p, 'r') as rfile:
                 try:
                     yd = yaml.load(rfile)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
                     return
 
@@ -209,7 +210,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
             with open(p, 'r') as rfile:
                 try:
                     yd = yaml.load(rfile)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
                     return
 

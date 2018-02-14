@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.core.stats.peak_detection import find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability
 

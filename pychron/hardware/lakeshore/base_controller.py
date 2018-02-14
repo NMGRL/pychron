@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import Enum, Float, Property
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice

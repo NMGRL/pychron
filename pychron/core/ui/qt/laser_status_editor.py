@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 from traits.api import HasTraits, Property, Int, Callable, Any, Str, Dict
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -26,6 +27,7 @@ from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel, QSizePolicy, QGraphi
     QPen, QRadialGradient, QVBoxLayout, QGraphicsItem, QPolygon, QPainter
 from pyface.qt.QtCore import QPropertyAnimation, QObject, Property as QProperty, QPoint, QParallelAnimationGroup, Qt, \
     QSequentialAnimationGroup
+from six.moves import range
 
 # ============= local library imports  ==========================
 # ============= views ===================================
@@ -96,7 +98,7 @@ class _LaserStatusEditor(Editor):
         vs = ((0, 50, 7), (s / 2, 30, 10))
         vs = ((0, 50, 10),)
         for j, l, ed in vs:
-            for i in xrange(n):
+            for i in range(n):
                 theta = math.radians(j + i * s)
                 x = l * math.cos(theta)
                 y = l * math.sin(theta)
@@ -169,7 +171,7 @@ class _LaserStatusEditor(Editor):
 
         for l, n in ((25, 12), (17, 24)):
             s = 360 / n
-            for theta in xrange(n):
+            for theta in range(n):
                 theta = math.radians(theta * s)
                 x = l * math.cos(theta)
                 y = l * math.sin(theta)

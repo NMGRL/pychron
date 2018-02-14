@@ -18,10 +18,12 @@
 '''
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import array, cross, vstack, dot, linalg
 # ============= local library imports  ==========================
 from pychron.core.geometry.geometry import sort_clockwise
 from pychron.core.geometry.convex_hull import convex_hull
+from six.moves import range
 # import euclid as eu
 # import copy
 

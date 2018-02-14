@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Button, DelegatesTo
 
-from fusions_laser_manager import FusionsLaserManager
+from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_co2_logic_board import FusionsCO2LogicBoard
 from pychron.monitors.fusions_co2_laser_monitor import FusionsCO2LaserMonitor
 from pychron.response_recorder import ResponseRecorder

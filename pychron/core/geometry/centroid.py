@@ -21,6 +21,8 @@
 # import numpy as np
 # cimport numpy as np
 # def _area(np.ndarray[np.float64_t, ndim=2] data):
+from __future__ import absolute_import
+from six.moves import range
 def _area(data):
 #    cdef int n = data.shape[0]
 #    cdef int j = n - 1
@@ -31,7 +33,7 @@ def _area(data):
     n = data.shape[0]
     j = n - 1
     a = 0
-    for i in xrange(n):
+    for i in range(n):
         p1 = data[i]
         p2 = data[j]
         a += (p1[0] * p2[1])
@@ -44,7 +46,7 @@ def calculate_centroid(data):
     j = n - 1
     x = 0
     y = 0
-    for i in xrange(n):
+    for i in range(n):
         p1 = data[i]
         p2 = data[j]
         f = p1[0] * p2[1] - p2[0] * p1[1]

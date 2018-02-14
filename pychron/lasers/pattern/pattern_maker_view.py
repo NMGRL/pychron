@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, Enum, Str, on_trait_change, List
 from traitsui.api import View, Item, InstanceEditor, Handler, ListStrEditor, EnumEditor, VGroup, UItem, HGroup
 # ============= standard library imports ========================
 from pychron.core.helpers.filetools import add_extension, list_directory2
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import os
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patternable import Patternable
@@ -186,7 +187,7 @@ class PatternMakerView(Saveable, Patternable):
                 factory = __import__(pkg, fromlist=[name])
                 pattern = getattr(factory, name)()
                 break
-            except (ImportError, AttributeError), e:
+            except (ImportError, AttributeError) as e:
                 pass
 
                 #

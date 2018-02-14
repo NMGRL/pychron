@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Bool
 from traits.api import Color as TraitsColor
 from traitsui.api import View, Item, VGroup
@@ -35,6 +36,7 @@ from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from six.moves import range
 
 
 class LoadingPDFOptions(BasePDFOptions):
@@ -55,7 +57,7 @@ class LoadingPDFOptions(BasePDFOptions):
     def get_alternating_background(self):
         color = self.alternating_background
         t = color.red(), color.green(), color.blue()
-        return map(lambda x: x / 255., t)
+        return [x / 255. for x in t]
 
     def traits_view(self):
         layout_grp = VGroup(Item('orientation'),
@@ -186,9 +188,9 @@ class LoadingPDFWriter(BasePDFTableWriter):
                            colors.lightgrey)
                 idx += 1
 
-        cw = map(lambda x: mm * x, [15, 22, 22, 22, 22, 80])
+        cw = [mm * x for x in [15, 22, 22, 22, 22, 80]]
 
-        rh = [mm * 5 for _ in xrange(len(data))]
+        rh = [mm * 5 for _ in range(len(data))]
 
         t = self._new_table(ts, data,
                             colWidths=cw,
@@ -234,9 +236,9 @@ class LoadingPDFWriter(BasePDFTableWriter):
 
             ts.add('BACKGROUND', (0, idx + 1), (-1, idx + 1), c)
 
-        cw = map(lambda x: mm * x, [13, 21, 22, 38])
+        cw = [mm * x for x in [13, 21, 22, 38]]
 
-        rh = [mm * 5 for _ in xrange(len(data))]
+        rh = [mm * 5 for _ in range(len(data))]
 
         t = self._new_table(ts, data, colWidths=cw, rowHeights=rh)
         return t

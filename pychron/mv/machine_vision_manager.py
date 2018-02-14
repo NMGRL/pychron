@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Float, List
 # ============= standard library imports ========================
 from threading import Timer

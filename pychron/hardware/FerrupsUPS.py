@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -101,5 +103,5 @@ if __name__ == '__main__':
     f = FerrupsUPS(name='ups')
     f.bootstrap()
 
-    print f.check_power_outage()
+    print(f.check_power_outage())
 # ============ EOF ==============================================

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 from datetime import datetime, timedelta
 
@@ -27,6 +29,7 @@ from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
+from six.moves import zip
 
 NCHARS = 60
 REG = re.compile(r'.' * NCHARS)
@@ -193,7 +196,7 @@ class SampleBrowserModel(BrowserModel):
             a = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p.name) for i, p in enumerate(self.oprojects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-            print 'asfasfasfasf', project, pp
+            print('asfasfasfasf', project, pp)
 
             project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
             a.project = project
@@ -344,7 +347,7 @@ class SampleBrowserModel(BrowserModel):
         hours = self.search_criteria.reference_hours_padding
         for pp in self.selected_projects:
             bins = db.get_project_date_bins(identifier, pp.name, hours)
-            print bins
+            print(bins)
             if bins:
                 for li, hi in bins:
                     yield li, hi

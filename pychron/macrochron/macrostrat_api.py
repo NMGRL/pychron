@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import requests
 
 
@@ -38,7 +40,7 @@ class MacroStrat:
         else:
             url = '{}{}'.format(url, '&'.join(qs))
 
-        print 'url={}'.format(url)
+        print('url={}'.format(url))
         r = s.get(url)
 
         obj = r.json()
@@ -71,7 +73,7 @@ class MacroStrat:
         else:
             url = '{}all'.format(url)
 
-        print 'url={}'.format(url)
+        print('url={}'.format(url))
         r = s.get(url)
         obj = r.json()
 
@@ -81,5 +83,5 @@ class MacroStrat:
 if __name__ == '__main__':
     c =  MacroStrat()
     # c.get_lithologies()
-    print c.get_lithology_values()
+    print(c.get_lithology_values())
 # ============= EOF =============================================

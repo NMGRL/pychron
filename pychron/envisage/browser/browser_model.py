@@ -34,6 +34,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 from datetime import datetime, timedelta
 
@@ -223,7 +225,7 @@ class BrowserModel(BaseBrowserModel):
         if lm:
             selection = lm.get_selection()
             if selection:
-                print 'load view', selection
+                print('load view', selection)
                 # lm.trait_set(db=self.db,
                 #              show_group_positions=True)
                 #
@@ -334,8 +336,8 @@ class BrowserModel(BaseBrowserModel):
                     for li in lns:
                         try:
                             yield li.sample.project
-                        except AttributeError, e:
-                            print 'exception', e
+                        except AttributeError as e:
+                            print('exception', e)
 
                 ps = sorted(list(set(get_projects())))
                 ps = [ProjectRecordView(p) for p in ps]

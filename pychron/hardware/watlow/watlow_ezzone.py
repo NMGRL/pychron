@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports========================
+from __future__ import absolute_import
 import os
 
 from traits.api import Enum, Float, Event, Property, Int, Button, Bool, Str, Any, on_trait_change, String

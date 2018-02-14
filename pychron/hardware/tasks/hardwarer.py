@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ConfigParser
+from __future__ import absolute_import
+import six.moves.configparser
 import os
 
 from traits.api import HasTraits, Button, Instance, List, Str, \
@@ -34,7 +35,7 @@ from pychron.paths import paths
 
 
 class ConfigGroup(HasTraits):
-    config_obj = Instance(ConfigParser.ConfigParser)
+    config_obj = Instance(six.moves.configparser.ConfigParser)
 
     def _anytrait_changed(self, name, new):
         """
@@ -111,7 +112,7 @@ class DeviceConfigurer(Loggable):
     def _load_configuration(self, path):
         self.config_path = path
         self.config_name = os.path.relpath(path, paths.device_dir)
-        self._config = cfg = ConfigParser.ConfigParser()
+        self._config = cfg = six.moves.configparser.ConfigParser()
 
         cfg.read(path)
 
@@ -126,7 +127,7 @@ class DeviceConfigurer(Loggable):
                     f = getattr(cfg, 'get{}'.format(cast if cast else ''))
                     try:
                         v = f(section, option, **kw)
-                    except ConfigParser.NoOptionError:
+                    except six.moves.configparser.NoOptionError:
                         v = default
                         if v is None:
                             if cast == 'boolean':
@@ -154,14 +155,14 @@ class DeviceConfigurer(Loggable):
         for attr in ('enabled', 'graph', 'record', 'auto_start'):
             try:
                 v = bfunc(section, attr)
-            except ConfigParser.NoOptionError:
+            except six.moves.configparser.NoOptionError:
                 v = False
             setattr(sgrp, attr, v)
 
         for attr in ('period',):
             try:
                 v = ffunc(section, attr)
-            except ConfigParser.NoOptionError:
+            except six.moves.configparser.NoOptionError:
                 v = 0
             setattr(sgrp, attr, v)
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 try:
     from kiva import JOIN_ROUND
 except ImportError:

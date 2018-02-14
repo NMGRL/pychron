@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 
@@ -210,12 +212,12 @@ class WebAction(PAction):
     def _open_url(self, url):
 
         import webbrowser
-        import urllib2
+        import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
         try:
-            urllib2.urlopen(url)
-        except (urllib2.HTTPError, urllib2.URLError), e:
-            print 'web action url:{} exception:{}'.format(url, e)
+            six.moves.urllib.request.urlopen(url)
+        except (six.moves.urllib.error.HTTPError, six.moves.urllib.error.URLError) as e:
+            print('web action url:{} exception:{}'.format(url, e))
             return
 
         webbrowser.open_new(url)

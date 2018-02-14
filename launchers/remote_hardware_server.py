@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
@@ -37,7 +38,7 @@ def build_directories():
 if __name__ == '__main__':
 
     root = os.path.dirname(__file__)
-    from helpers import add_eggs
+    from .helpers import add_eggs
     add_eggs(root)
 
     build_directories()

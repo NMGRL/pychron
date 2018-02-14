@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.workbench.api import Perspective, PerspectiveItem
 # ============= standard library imports ========================
 

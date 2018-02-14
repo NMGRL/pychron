@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.qt.QtCore import Qt, QThread
 from pyface.qt.QtGui import QColor, \
     QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
+from six.moves import range
+from six.moves import zip
 
 
 # ============= standard library imports ========================
@@ -34,7 +38,7 @@ class PieClock(QWidget):
     continue_flag = False
 
     def resizeEvent(self, event):
-        print self.width(), self.height()
+        print(self.width(), self.height())
 
     def paintEvent(self, event):
         qp = QPainter()
@@ -106,7 +110,7 @@ class PieClock(QWidget):
         start = 90 * 16
         cx, cy = cx - w / 2., cy - w / 2.
         if self.slices:
-            hours, colors = zip(*self.slices)
+            hours, colors = list(zip(*self.slices))
             sh = sum(hours)
 
             nh = []
@@ -129,14 +133,14 @@ class ClockThread(QThread):
 
     def run(self):
         control = self._control
-        s, _ = zip(*control.slices)
+        s, _ = list(zip(*control.slices))
         total = float(sum(s))
         period = self._period
         tc = 0
         try:
             for si in s:
                 n = int(si)
-                for i in xrange(n + 1):
+                for i in range(n + 1):
                     if control.continue_flag:
                         control.continue_flag = False
                         break

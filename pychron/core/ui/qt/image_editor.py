@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # =============standard library imports ========================
-from Image import Image
+from __future__ import absolute_import
 from PIL import Image as PILImage
 from pyface.image_resource import ImageResource
 # =============enthought library imports=======================
@@ -30,10 +30,10 @@ from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-def convert_bitmap(image, width=None, height=None):
+def convert_bitmap(image, width=0, height=0):
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
-    elif isinstance(image, (Image, PILImage.Image)):
+    elif isinstance(image, (PILImage.Image,)):
         try:
             data = image.tostring('raw', 'RGBA')
         except NotImplementedError:

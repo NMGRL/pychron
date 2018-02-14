@@ -17,14 +17,16 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.api import ColorBar, LinearMapper
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, gray
 # =============standard library imports ========================
 from numpy import array
 # =============local library imports  ==========================
-from graph import Graph
-from graph import name_generator
+from .graph import Graph
+from .graph import name_generator
 
 
 class ContourGraph(Graph):
@@ -58,7 +60,7 @@ class ContourGraph(Graph):
 
             if style == 'xy':
                 style = 'line'
-            print style
+            print(style)
             rd['type'] = style
             return plot.plot(names, **rd)
 
@@ -70,7 +72,7 @@ class ContourGraph(Graph):
 
             rd['poly_cmap'] = color_map_name_dict.get(cmap)
             rd['colormap'] = color_map_name_dict.get(cmap)
-            zname = self.zdataname_generators[plotid].next()
+            zname = next(self.zdataname_generators[plotid])
             plot.data.set_data(zname, z)
             contour = plot.img_plot(zname, **rd)[0]
             plot.contour_plot(zname, type='poly', **rd)

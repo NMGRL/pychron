@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.database.core.database_adapter import SQLiteDatabaseAdapter
 from pychron.labbook.labels.orm import LabelTable, PathTable
 
@@ -25,7 +26,7 @@ class LabelAdapter(SQLiteDatabaseAdapter):
     kind = 'sqlite'
 
     def _build_database(self, sess, meta):
-        from orm import Base
+        from .orm import Base
 
         Base.metadata.create_all(sess.bind)
 

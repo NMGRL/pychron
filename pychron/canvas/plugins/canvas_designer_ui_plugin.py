@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import  on_trait_change
 # ============= standard library imports ========================
 
@@ -33,7 +34,7 @@ class CanvasDesignerUIPlugin(CoreUIPlugin):
     def _action_sets_default(self):
         '''
         '''
-        from canvas_designer_action_set import CanvasDesignerActionSet
+        from .canvas_designer_action_set import CanvasDesignerActionSet
         return [CanvasDesignerActionSet]
 
     def _perspectives_default(self):

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Bool, Button
 from traits.has_traits import on_trait_change
 from traitsui.api import EnumEditor, ButtonEditor

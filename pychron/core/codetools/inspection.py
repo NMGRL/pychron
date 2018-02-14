@@ -18,9 +18,12 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 import inspect
 import logging
 import traceback
+from six.moves import map
 
 logger=logging.getLogger('Inspection')
 
@@ -32,7 +35,7 @@ def caller(func):
             cstack = stack[0]
             rstack = stack[1]
 
-            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+            msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                               cstack[0].f_back.f_locals['self'],
                                                               ''.join(map(str.strip, rstack[4])))
 
@@ -52,7 +55,7 @@ def conditional_caller(func):
             cstack = stack[0]
             rstack = stack[1]
 
-            msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+            msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                               cstack[0].f_back.f_locals['self'],
                                                               ''.join(map(str.strip, rstack[4])))
 
@@ -69,12 +72,12 @@ def pcaller(func):
         cstack = stack[0]
         rstack = stack[1]
 
-        msg = '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+        msg = '{} called by {}. parent call={} {}'.format(func.__name__, rstack[3],
                                                           'aaa',
                                                           # cstack[0].f_back.f_locals['self'],
                                                           ''.join(map(str.strip, rstack[4])))
 
-        print msg
+        print(msg)
         return func(*args, **kw)
 
     return dec
@@ -84,7 +87,7 @@ def caller_stack(func):
     def dec(*args, **kw):
         stack = inspect.stack()
         traceback.print_stack()
-        print '{} called by {}'.format(func.func_name, stack[1][3])
+        print('{} called by {}'.format(func.__name__, stack[1][3]))
         return func(*args, **kw)
 
     return dec

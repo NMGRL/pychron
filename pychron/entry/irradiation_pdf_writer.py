@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
@@ -30,6 +31,7 @@ from pychron.dvc.meta_repo import irradiation_holder_holes, irradiation_chronolo
 from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
+from six.moves import range
 
 MATERIAL_MAP = {'GroundmassConcentrate': 'GMC'}
 
@@ -196,7 +198,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
         srows = []
         spos = sorted(level.positions, key=lambda x: x.position)
-        for i in xrange(c.scene.nholes):
+        for i in range(c.scene.nholes):
             pos = i + 1
             item = next((p for p in spos if p.position == pos), None)
             if not item:
@@ -232,7 +234,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         r = Row()
         r.add_item(value='[  ]')
         r.add_item(value=pos)
-        for i in xrange(6):
+        for i in range(6):
             r.add_item(value='')
 
         return r

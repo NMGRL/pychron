@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import HasTraits, Any, List, Str, Bool, Float
 from traitsui.api import View, UItem, InstanceEditor, VGroup, Item, EnumEditor, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn

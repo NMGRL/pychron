@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 from numpy import uint8, asarray
 from skimage.color import gray2rgb

@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from threading import current_thread, Event
 
 from skimage.draw import circle
 from traits.api import Any, Bool, List
 
-import cStringIO
+from io import StringIO
 import os
 import time
 # from threading import Thread, current_thread, Event
@@ -33,6 +34,7 @@ from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError, TargetPositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
+from six.moves import range
 
 
 class PatternExecutor(Patternable):
@@ -99,7 +101,7 @@ class PatternExecutor(Patternable):
             wfile = open(path, 'rb')
         else:
             # convert name_or_pickle into a file like obj
-            wfile = cStringIO.StringIO(name_or_pickle)
+            wfile = StringIO(name_or_pickle)
 
         # self._load_pattern sets self.pattern
         pattern = self._load_pattern(wfile, path)
@@ -243,7 +245,7 @@ class PatternExecutor(Patternable):
         st = time.time()
         pat.cx, pat.cy = self.controller.x, self.controller.y
         try:
-            for ni in xrange(pat.niterations):
+            for ni in range(pat.niterations):
                 if not self.isPatterning():
                     break
 
@@ -257,7 +259,7 @@ class PatternExecutor(Patternable):
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
-        except (TargetPositionError,PositionError), e:
+        except (TargetPositionError,PositionError) as e:
             self.finish()
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))

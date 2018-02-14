@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import  Str, Int, Float, Bool, Array, Property
 from traitsui.api import View, Item, ModalButtons, Handler, \
      EnumEditor, HGroup, Label, Spring
@@ -23,6 +24,7 @@ import os
 from numpy import ones, save, load
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from six.moves import map
 class BaseConfigHandler(Handler):
     def closed(self, info, is_ok):
         if is_ok:

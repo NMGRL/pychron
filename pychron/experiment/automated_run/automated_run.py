@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import ast
 import os
 import re
@@ -51,6 +53,10 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
+import six
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 DEBUG = False
 
@@ -294,7 +300,7 @@ class AutomatedRun(Loggable):
             fits = dict([f.split(':') for f in fits])
 
         g = self.plot_panel.isotope_graph
-        for k, iso in isotopes.iteritems():
+        for k, iso in six.iteritems(isotopes):
             try:
                 fi = fits[k]
             except KeyError:
@@ -318,13 +324,13 @@ class AutomatedRun(Loggable):
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
-            fits = {i.detector: fits[0] for i in isotopes.itervalues()}
+            fits = {i.detector: fits[0] for i in six.itervalues(isotopes)}
         elif isinstance(fits, str):
-            fits = {i.detector: fits for i in isotopes.itervalues()}
+            fits = {i.detector: fits for i in six.itervalues(isotopes)}
         else:
             fits = dict([f.split(':') for f in fits])
 
-        for k, iso in isotopes.iteritems():
+        for k, iso in six.iteritems(isotopes):
             try:
                 fi = fits[iso.detector]
             except KeyError:
@@ -506,8 +512,8 @@ class AutomatedRun(Loggable):
                 name = iso
                 diso = '{}{}'.format(iso, di)
 
-                print iso, diso
-                print a.pairs()
+                print(iso, diso)
+                print(a.pairs())
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
                     ii.detector = di
@@ -518,7 +524,7 @@ class AutomatedRun(Loggable):
                     ii.detector = di
                     a.isotopes.pop(diso)
                 else:
-                    print 'new isotope', iso, di
+                    print('new isotope', iso, di)
                     ii = a.isotope_factory(name=iso, detector=di)
                     # if correct_for_blank:
                     #     if iso in pb:
@@ -899,7 +905,7 @@ class AutomatedRun(Loggable):
         if self.monitor.monitor():
             try:
                 return self._start()
-            except AttributeError, e:
+            except AttributeError as e:
                 self.warning('failed starting run: {}'.format(e))
         else:
             self.warning('failed to start monitor')
@@ -1249,7 +1255,7 @@ class AutomatedRun(Loggable):
 
         try:
             ex_result = script.execute()
-        except ExtractionException, e:
+        except ExtractionException as e:
             ex_result = False
             self.debug('extraction exception={}'.format(e))
 
@@ -1453,7 +1459,7 @@ anaylsis_type={}
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
             d = dict()
-            for k, iso in self.isotope_group.iteritems():
+            for k, iso in six.iteritems(self.isotope_group):
                 d[k] = (iso.detector, iso.get_baseline_corrected_value())
             return d
 
@@ -1474,7 +1480,7 @@ anaylsis_type={}
                 for tag in ('lab_temperatures', 'lab_humiditys', 'lab_pneumatics'):
                     try:
                         env[tag] = getattr(lclient, 'get_latest_{}'.format(tag))()
-                    except BaseException, e:
+                    except BaseException as e:
                         self.debug('Get Labspy Environmentals: {}'.format(e))
                         self.debug_exception()
             else:
@@ -1519,7 +1525,7 @@ anaylsis_type={}
 
         try:
             self._add_conditionals()
-        except BaseException, e:
+        except BaseException as e:
             self.warning('Failed adding conditionals {}'.format(e))
             raise e
 
@@ -1594,7 +1600,7 @@ anaylsis_type={}
                 fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
             return fod
 
-        for i in self.isotope_group.itervalues():
+        for i in six.itervalues(self.isotope_group):
             fod = _get_filter_outlier_dict(i, 'signal')
             self.debug('setting fod for {}= {}'.format(i.name, fod))
             i.set_filtering(fod)
@@ -1627,7 +1633,7 @@ anaylsis_type={}
 
             try:
                 getattr(p, func)(*args, **kw)
-            except BaseException, e:
+            except BaseException as e:
                 self.warning('{} persister action failed. {} func={}, excp={}'.format(i, p.__class__.__name__,
                                                                                       func, e))
                 import traceback
@@ -1866,13 +1872,13 @@ anaylsis_type={}
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
             pid, blanks = self.get_previous_blanks()
             self.debug('setting previous blanks')
-            for iso, v in blanks.iteritems():
+            for iso, v in six.iteritems(blanks):
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
         self.isotope_group.clear_baselines()
 
         baselines = self.get_previous_baselines()
-        for iso, v in baselines.iteritems():
+        for iso, v in six.iteritems(baselines):
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
@@ -1889,7 +1895,7 @@ anaylsis_type={}
                 with open(p, 'r') as rfile:
                     yd = yaml.load(rfile)
                     failure = False
-                    for kind, items in yd.iteritems():
+                    for kind, items in six.iteritems(yd):
                         try:
                             klass = klass_dict[kind]
                         except KeyError:
@@ -1903,7 +1909,7 @@ anaylsis_type={}
                                     kind = kind[:-1]
 
                                 self._conditional_appender(kind, cd, klass, location=p)
-                            except BaseException, e:
+                            except BaseException as e:
                                 self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))
                                 failure = True
 
@@ -1918,7 +1924,7 @@ anaylsis_type={}
 
                     freq = 1
                     acr = 0.5
-                except Exception, e:
+                except Exception as e:
                     self.debug('conditionals parse failed {} {}'.format(e, t))
                     return
 
@@ -1963,7 +1969,7 @@ anaylsis_type={}
     def _convert_valve(self, valve):
         if valve and not isinstance(valve, (tuple, list)):
             if ',' in valve:
-                valve = map(str.strip, valve.split(','))
+                valve = list(map(str.strip, valve.split(',')))
             else:
                 valve = (valve,)
         return valve
@@ -2020,7 +2026,7 @@ anaylsis_type={}
             # analyze the equilibration
             try:
                 self._analyze_equilibration()
-            except TypeError, e:
+            except TypeError as e:
                 self.debug('AutomatedRun._equilibrate _analyze_equilibration error. TypeError={}'.format(e))
 
             self.heading('Equilibration Finished')
@@ -2146,7 +2152,7 @@ anaylsis_type={}
             def key2(v):
                 return v[1].detector
 
-            for name, items in groupby(sorted(self.isotope_group.items(), key=key), key=key):
+            for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
                 items = list(items)
                 if len(items) > 1:
                     for det, items in groupby(sorted(items, key=key2), key=key2):
@@ -2157,7 +2163,7 @@ anaylsis_type={}
                                 if v.name == k:
                                     self.isotope_group.isotopes.pop(k)
 
-            self.debug('cleaned isotoped group {}'.format(self.isotope_group.keys()))
+            self.debug('cleaned isotoped group {}'.format(list(self.isotope_group.keys())))
 
         if self.plot_panel:
             self.debug('load analysis view')
@@ -2398,12 +2404,12 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_ * 1.1)
         series = 0
-        for k, iso in self.isotope_group.iteritems():
+        for k, iso in six.iteritems(self.isotope_group):
             idx = graph.get_plotid_by_ytitle(iso.detector)
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError, e:
+                except IndexError as e:
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
@@ -2431,14 +2437,14 @@ anaylsis_type={}
 
         # series = self.collector.series_idx
         series = 0
-        for k, iso in self.isotope_group.iteritems():
+        for k, iso in six.iteritems(self.isotope_group):
 
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
 
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError, e:
+                except IndexError as e:
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',
@@ -2481,12 +2487,12 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
-        for k, iso in self.isotope_group.iteritems():
+        for k, iso in six.iteritems(self.isotope_group):
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError, e:
+                except IndexError as e:
                     fit = None if grpname == 'sniff' else iso.get_fit(0)
                     graph.new_series(marker='circle',
                                      color=color,

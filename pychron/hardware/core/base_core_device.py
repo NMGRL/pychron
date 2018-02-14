@@ -16,6 +16,8 @@
 
 # =============enthought library imports=======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import provides, HasTraits
 
 # from pyface.timer.api import Timer
@@ -26,7 +28,7 @@ import inspect
 import time
 # =============local library imports  ==========================
 # from traits.has_traits import provides
-from i_core_device import ICoreDevice
+from .i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
@@ -35,6 +37,9 @@ from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.consumer_mixin import ConsumerMixin
+import six
+from six.moves import map
+from six.moves import range
 
 
 def crc_caller(func):
@@ -43,7 +48,7 @@ def crc_caller(func):
             return func(*args, **kw)
         except CRCError:
             stack = inspect.stack()
-            print '{} called by {}'.format(func.func_name, stack[1][3])
+            print('{} called by {}'.format(func.__name__, stack[1][3]))
 
     return d
 
@@ -157,8 +162,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             elif timeout:
                 et = time.time() - st
                 if et > timeout:
-                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.func_name, timeout))
-                    raise TimeoutError(func.func_name, timeout)
+                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.__name__, timeout))
+                    raise TimeoutError(func.__name__, timeout)
             time.sleep(period)
 
     @crc_caller
@@ -189,7 +194,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         """
         if self.communicator is not None:
-            cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
+            cmd = ' '.join(list(map(str, args)) + list(map(str, six.iteritems(kw))))
             self._communicate_hook(cmd, '-')
             return self.communicator.tell(*args, **kw)
 

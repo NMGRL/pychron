@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.experiment.utilities.aliquot_numbering import renumber_aliquots
 
 __author__ = 'ross'

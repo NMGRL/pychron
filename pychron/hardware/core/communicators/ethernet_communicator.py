@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import socket
 import time
 
@@ -25,6 +27,7 @@ from traits.api import Float
 from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.communicators.communicator import Communicator, process_response
+from six.moves import range
 
 
 class MessageFrame(object):
@@ -117,7 +120,7 @@ class Handler(object):
             data = data[:-nc]
             comp = computeCRC(data)
             if comp != checksum:
-                print 'checksum fail computed={}, expected={}'.format(comp, checksum)
+                print('checksum fail computed={}, expected={}'.format(comp, checksum))
                 return
 
         return data
@@ -258,8 +261,8 @@ class EthernetCommunicator(Communicator):
                 h.set_frame(self.message_frame)
                 self.handler = h
             return h
-        except socket.error, e:
-            print 'ewafs', e, self.host, self.port
+        except socket.error as e:
+            print('ewafs', e, self.host, self.port)
             self.debug('Get Handler {}. timeout={}. comms simulation={}'.format(str(e),
                                                                                 timeout,
                                                                                 globalv.communication_simulation))
@@ -295,7 +298,7 @@ class EthernetCommunicator(Communicator):
                 retries = 2
 
             re = 'ERROR: Connection refused: {}, timeout={}'.format(self.address, timeout)
-            for i in xrange(retries):
+            for i in range(retries):
                 r = self._ask(cmd, timeout=timeout, message_frame=message_frame, delay=delay,
                               use_error_mode=use_error_mode)
                 if r is not None:
@@ -341,7 +344,7 @@ class EthernetCommunicator(Communicator):
                 handler.send_packet(cmd)
                 if verbose or self.verbose and not quiet:
                     self.log_tell(cmd, info)
-            except socket.error, e:
+            except socket.error as e:
                 self.warning('tell. send packet. error: {}'.format(e))
                 self.error_mode = True
 
@@ -372,10 +375,10 @@ class EthernetCommunicator(Communicator):
 
             try:
                 return handler.get_packet(cmd, message_frame=message_frame)
-            except socket.error, e:
+            except socket.error as e:
                 self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
                 self.error_mode = True
-        except socket.error, e:
+        except socket.error as e:
             self.warning('ask. send packet. error: {} address: {}'.format(e, self.address))
             self.error_mode = True
 

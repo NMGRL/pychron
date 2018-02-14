@@ -16,12 +16,13 @@
 
 # =============enthought library imports=======================
 
+from __future__ import absolute_import
 from threading import Timer
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
-from fusions_laser_manager import FusionsLaserManager
+from .fusions_laser_manager import FusionsLaserManager
 from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogicBoard
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor

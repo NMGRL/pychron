@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property
 from traitsui.api import View, UItem, HGroup, VGroup, EnumEditor, VSplit, spring, Item

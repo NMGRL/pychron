@@ -13,11 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
-import pypylon
+try:
+    import pypylon
+    print('pylon successfully imported')
+except ImportError:
+    print('failed importing pylon')
+
 import yaml
-from traits.api import HasTraits, Int, Float, Enum, Range
-from traitsui.api import View, VGroup, UItem, Item
+import six
+
 
 from pychron.loggable import Loggable
 
@@ -25,11 +31,11 @@ from pychron.loggable import Loggable
 class PylonCamera(Loggable):
 
     def __init__(self, identifier, *args, **kw):
-        available_cameras = pypylon.factory.find_devices()
         # Grep the first one and create a camera for it
         try:
+            available_cameras = pypylon.factory.find_devices()
             cam = pypylon.factory.create_device(available_cameras[identifier])
-        except IndexError:
+        except (IndexError, NameError):
             cam = None
         self._cam = cam
         self.pixel_depth = 255
@@ -47,7 +53,7 @@ class PylonCamera(Loggable):
             dev = cfg.get('Device')
             if dev:
                 pylon = dev.get('PylonParameters', {})
-                for k, v in pylon.iteritems():
+                for k, v in six.iteritems(pylon):
                     try:
                         self._cam.properties[k] = v
                     except KeyError:

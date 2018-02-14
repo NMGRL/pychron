@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from numpy import linspace
@@ -46,8 +48,8 @@ def results():
     plt.plot(fxs, l, 'b')
     plt.plot(fxs, u, 'b')
     # plt.plot(fxs, reg.predict(fxs), 'b-')
-    print 'Age={}, SD={} SEM={} CI={}'.format(reg.predict(328), reg.predict_error(328), reg.predict_error(328, 'SEM'),
-                                        reg.predict_error(328, 'CI'))
+    print('Age={}, SD={} SEM={} CI={}'.format(reg.predict(328), reg.predict_error(328), reg.predict_error(328, 'SEM'),
+                                        reg.predict_error(328, 'CI')))
 
     reg = WeightedPolynomialRegressor(degree=1, xs=x, ys=y, yserr=e)
     reg.calculate()
@@ -56,9 +58,9 @@ def results():
     plt.plot(fxs, l, 'r')
     plt.plot(fxs, u, 'r')
 
-    print 'Weighted fit Age={}, SD={} SEM={} CI={}'.format(reg.predict(328),
+    print('Weighted fit Age={}, SD={} SEM={} CI={}'.format(reg.predict(328),
                                                      reg.predict_error(328), reg.predict_error(328,'SEM'),
-                                                     reg.predict_error(328, 'CI'))
+                                                     reg.predict_error(328, 'CI')))
     plt.show()
 
 

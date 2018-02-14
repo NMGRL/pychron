@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.axis_view import float_or_auto
 from enable.base_tool import BaseTool
 from traits.api import on_trait_change, HasTraits, Font

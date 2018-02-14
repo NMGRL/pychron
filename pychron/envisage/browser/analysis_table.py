@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 import os
 from collections import OrderedDict
 from datetime import datetime
@@ -30,6 +31,7 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
+import six
 
 
 def sort_items(ans):
@@ -120,7 +122,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             return name
 
     def get_analysis_set(self, name):
-        return next((a[1] for a in self._analysis_sets.itervalues() if a[0] == name))
+        return next((a[1] for a in six.itervalues(self._analysis_sets) if a[0] == name))
 
     def set_tags(self, tag, items):
         for i in items:

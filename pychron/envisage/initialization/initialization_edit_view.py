@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES

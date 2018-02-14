@@ -17,7 +17,9 @@
 # ========== standard library imports ==========
 
 # ========== local library imports =============
+from __future__ import absolute_import
 from pychron.hardware.actuators.gp_actuator import GPActuator
+from six.moves import range
 
 
 class AgilentGPActuator(GPActuator):
@@ -101,7 +103,7 @@ class AgilentGPActuator(GPActuator):
     def _get_errors(self):
         # maximum of 10 errors so no reason to use a while loop
         def gen_error():
-            for _i in xrange(10):
+            for _i in range(10):
                 error = self._get_error()
                 if error is None:
                     break

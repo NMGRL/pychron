@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, DelegatesTo, List, Str
 # import apptools.sweet_pickle as pickle
-import cPickle as pickle
+import six.moves.cPickle as pickle
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
@@ -40,7 +41,7 @@ class Patternable(Manager):
             self.pattern.path = path
             self.selected_pattern_name = self.pattern_name
             return obj
-        except (pickle.PickleError, Exception), e:
+        except (pickle.PickleError, Exception) as e:
             import traceback
             traceback.print_exc()
             self.debug('load pattern:{}'.format(e))

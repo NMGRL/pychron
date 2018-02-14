@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pychron.core.ui import set_qt
+from six.moves import range
+from six.moves import zip
 
 set_qt()
 
@@ -122,8 +125,8 @@ class MassSpecReverter(Loggable):
 
     def _unpack_data(self, blob):
         endianness = '>'
-        sx, sy = zip(*[struct.unpack('{}ff'.format(endianness),
-                                     blob[i:i + 8]) for i in xrange(0, len(blob), 8)])
+        sx, sy = list(zip(*[struct.unpack('{}ff'.format(endianness),
+                                     blob[i:i + 8]) for i in range(0, len(blob), 8)]))
         return array(sx), array(sy)
 
     def _get_analysis_from_source(self, rid):

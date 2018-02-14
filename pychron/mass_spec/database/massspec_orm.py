@@ -19,6 +19,7 @@
 
 # =============standard library imports ========================
 
+from __future__ import absolute_import
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \

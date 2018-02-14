@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.pychron_constants import LINE_STR, NULL_STR, LIGHT_YELLOW
 
 SYSTEM = 10

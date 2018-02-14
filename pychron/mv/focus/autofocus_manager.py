@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-import cPickle as pickle
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.cPickle as pickle
 
 from traits.api import Bool, Any, Instance, Button, Property, Event, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup
@@ -97,8 +99,8 @@ class AutoFocusManager(Manager):
                         params = FocusParameters()
                     return params
 
-                except Exception, e:
-                    print 'autofocus load parameter', e
+                except Exception as e:
+                    print('autofocus load parameter', e)
                     return FocusParameters()
         else:
             return FocusParameters()

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from enable.component_editor import ComponentEditor
 from traits.api import Instance, List, Property, Str
@@ -85,7 +86,7 @@ class StageVisualizer(Loggable):
         with open(tp, 'w') as wfile:
             for r in self.results:
                 args = r.nx, r.ny, r.dx, r.dy
-                args = map(lambda x: '{:0.5f}'.format(x), args)
+                args = ['{:0.5f}'.format(x) for x in args]
                 args = [r.hole_id, str(r.corrected)] + args
                 line = ','.join(args)
                 wfile.write('{}\n'.format(line))

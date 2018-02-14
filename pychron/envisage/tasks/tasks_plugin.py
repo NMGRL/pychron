@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import hashlib
 import random
 from threading import Thread
@@ -75,9 +77,9 @@ class PychronTasksPlugin(BasePlugin):
         self.info('starting background processes disabled')
         return
 
-        print self.background_processes
+        print(self.background_processes)
         for i, p in enumerate(self.background_processes):
-            print i, p
+            print(i, p)
             if isinstance(p, tuple):
                 name, func = p
             else:
@@ -85,7 +87,7 @@ class PychronTasksPlugin(BasePlugin):
                 name = 'Background{:02n}'.format(i)
 
             if hasattr(func, '__call__'):
-                print 'asdfas', func, name
+                print('asdfas', func, name)
                 t = Thread(target=func, name=name)
                 t.setDaemon(True)
                 t.start()
@@ -186,7 +188,7 @@ class myTasksPlugin(TasksPlugin):
         return [TaskExtension(actions=actions)]
 
     def _create_preferences_dialog_service(self):
-        from preferences_dialog import PreferencesDialog
+        from .preferences_dialog import PreferencesDialog
 
         dialog = PreferencesDialog(application=self.application)
         dialog.trait_set(categories=self.preferences_categories,

@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # from pyface.api import ProgressDialog
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import time
 
@@ -133,8 +135,8 @@ class myProgressDialog(ProgressDialog):
             self.message_control.setText(message)
             if auto_increment:
                 self.increment()
-        except RuntimeError, e:
-            print 'exception', e
+        except RuntimeError as e:
+            print('exception', e)
 
     def _create_message(self, dialog, layout):
         label = QLabel(self.message, dialog)

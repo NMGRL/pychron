@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.qt import QtCore
 from pyface.qt.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
     QSizePolicy, QPainterPath
@@ -26,11 +28,13 @@ from itertools import groupby
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from pychron.git_archive.diff_util import extract_line_numbers
+from six.moves import map
+import six
 
 def get_ranges(data):
-    return [map(itemgetter(1), g)
+    return [list(map(itemgetter(1), g))
             for k, g in groupby(enumerate(data),
-                                lambda (i, x): i - x)]
+                                lambda i_x: i_x[0] - i_x[1])]
 
 class QDiffConnector(QFrame):
     _left_y = 0
@@ -56,10 +60,10 @@ class QDiffConnector(QFrame):
         x = rect.x()
         w = rect.width()
         lineheight = 16
-        print '-------------------'
-        print 'lefts', self.lefts
-        print 'rights', self.rights
-        print '-------------------'
+        print('-------------------')
+        print('lefts', self.lefts)
+        print('rights', self.rights)
+        print('-------------------')
         ly = self._left_y + 5
         ry = self._right_y + 5
         rs=self.rights[:]
@@ -257,7 +261,7 @@ class _DiffEditor(Editor):
 
                 self.set_error_state(False)
 
-            except TraitError, excp:
+            except TraitError as excp:
                 pass
 
     def _get_user_value(self, attr):
@@ -267,7 +271,7 @@ class _DiffEditor(Editor):
         except AttributeError:
             value = ctrl.toPlainText()
 
-        value = unicode(value)
+        value = six.text_type(value)
 
         try:
             value = self.evaluate(value)

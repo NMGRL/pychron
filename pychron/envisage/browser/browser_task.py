@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Any, on_trait_change, Date, Time, Instance
 
 from pychron.core.ui.table_configurer import RecallTableConfigurer
@@ -25,6 +26,7 @@ from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 from pychron.pychron_constants import DVC_PROTOCOL
+from six.moves import range
 
 '''
 add toolbar action to open another editor tab
@@ -190,7 +192,7 @@ class BaseBrowserTask(BaseEditorTask):
         def extract_blob(blob):
             blob = base64.b64decode(blob)
             if blob != 'No Response':
-                x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in xrange(0, len(blob), 8)]).T
+                x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in range(0, len(blob), 8)]).T
                 x[0] = 0
             else:
                 x, y = [], []
@@ -378,7 +380,7 @@ class BaseBrowserTask(BaseEditorTask):
             # if self.editor_area.control:
             try:
                 self._recall_item(new.item)
-            except BaseException, e:
+            except BaseException as e:
                 import traceback
                 traceback.print_exc()
                 self.critical('analysis_table:dclicked error {}'.format(str(e)))

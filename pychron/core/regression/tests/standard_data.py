@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 
 from numpy import random
@@ -21,7 +22,7 @@ def pearson(expected=False):
                                    mswd=0))
     if expected:
         if not expected in solutions:
-            v = ','.join(solutions.keys())
+            v = ','.join(list(solutions.keys()))
             raise AttributeError('invalid expected value {}. use "{}"'.format(expected, v))
 
         return solutions[expected]

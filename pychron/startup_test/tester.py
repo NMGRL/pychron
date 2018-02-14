@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, Enum, List
 # ============= standard library imports ========================
 import os
@@ -70,7 +71,7 @@ class StartupTester(Loggable):
             st = time.time()
             try:
                 result, error = func()
-            except ValueError, e:
+            except ValueError as e:
                 self.critical('Invalid function {} {}'.format(plugin.name, ti))
                 raise e
             self.info('Test result={}'.format(result))

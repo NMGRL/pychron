@@ -31,6 +31,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
 from traits.api import Any
@@ -39,6 +40,7 @@ from traits.api import Any
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
+from six.moves import zip
 
 
 def group_position(pos, func=None):
@@ -69,8 +71,8 @@ class LoadingOverlay(AbstractOverlay):
             with gc:
                 gc.set_font(self.font)
                 lines = self.info_str.split('\n')
-                lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2]
-                                 for mi in lines])
+                lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2]
+                                 for mi in lines]))
                 rect_width = max(lws) + 4
                 rect_height = (max(lhs) + 2) * len(lhs)
 

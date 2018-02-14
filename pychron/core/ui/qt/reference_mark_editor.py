@@ -16,6 +16,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pyface.qt.QtGui import QBrush
 from pyface.qt.QtGui import QColor
 from pyface.qt.QtGui import QGraphicsScene

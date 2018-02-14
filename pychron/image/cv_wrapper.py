@@ -16,11 +16,15 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from collections import namedtuple
 
 from numpy import array, asarray, ndarray
 from numpy.lib.function_base import percentile
 from scipy.ndimage.filters import laplace
+from six.moves import map
+from six.moves import zip
 
 try:
     from cv2 import VideoCapture, VideoWriter, imwrite, line, fillPoly, \
@@ -38,9 +42,9 @@ try:
         CV_8UC3, CV_RGB, CV_16UC1, CV_32FC3, CV_CHAIN_APPROX_NONE, \
         CV_RETR_EXTERNAL, \
         CV_AA, CV_16UC3, CV_16SC1
-except ImportError, e:
-    print 'exception', e
-    print 'OpenCV required'
+except ImportError as e:
+    print('exception', e)
+    print('OpenCV required')
 
 # ============= local library imports  ==========================
 from pychron.core.geometry.centroid import calculate_centroid
@@ -170,7 +174,7 @@ _new_point = namedtuple('Point', 'x y')
 
 
 def new_point(x, y, tt=False):
-    x, y = map(int, (x, y))
+    x, y = list(map(int, (x, y)))
     if tt:
         return x, y
     else:
@@ -287,6 +291,6 @@ def get_polygons(src,
         pactuals.append(pactual)
         pconvex_hulls.append(pconvex_hull)
 
-    return zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls)
+    return list(zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls))
 
 # ============= EOF =============================================

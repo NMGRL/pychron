@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import is_special
 from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers

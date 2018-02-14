@@ -14,8 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import time
-from Queue import Queue
+from six.moves.queue import Queue
 from threading import Event, Thread, Timer
 
 # ============= enthought library imports =======================
@@ -24,6 +26,8 @@ from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 from pychron.envisage.consoleable import Consoleable
 from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
+import six
+from six.moves import zip
 
 
 class DataCollector(Consoleable):
@@ -202,7 +206,7 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-        except (AttributeError, TypeError, ValueError), e:
+        except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
 
@@ -229,7 +233,7 @@ class DataCollector(Consoleable):
 
         if data:
             if detectors:
-                data = zip(*[d for d in zip(*data) if d[0] in detectors])
+                data = list(zip(*[d for d in zip(*data) if d[0] in detectors]))
             self._data = data
             return data
 
@@ -244,7 +248,7 @@ class DataCollector(Consoleable):
 
     def _update_baseline_peak_hop(self, x, keys, signals):
         ig = self.isotope_group
-        for iso in ig.isotopes.itervalues():
+        for iso in six.itervalues(ig.isotopes):
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
                 if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
@@ -282,7 +286,7 @@ class DataCollector(Consoleable):
         return d
 
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
-        for k, v in self.isotope_group.iteritems():
+        for k, v in six.iteritems(self.isotope_group):
             signal = signals[keys.index(v.detector)]
             self._set_plot_data(i, None, v.detector, x, signal)
 
@@ -292,7 +296,7 @@ class DataCollector(Consoleable):
             if det:
                 self._set_plot_data(cnt, det.isotope, det.name, x, signal)
             else:
-                print 'no detector obj for {}'.format(dn), [d.name for d in self.detectors]
+                print('no detector obj for {}'.format(dn), [d.name for d in self.detectors])
 
     def _get_fit(self, cnt, det, iso):
         isotopes = self.isotope_group.isotopes
@@ -306,21 +310,21 @@ class DataCollector(Consoleable):
         # print 'get_fit', det, iso, name
         # print 'gff', cnt, det, iso, ix.name, name
         if self.is_baseline:
-            name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det),
+            name, ix = next(((k, v) for k, v in six.iteritems(isotopes) if v.detector == det),
                             (None, None))
             ix = ix.baseline
             name = det
         else:
-            name, ix = next(((k, v) for k, v in isotopes.iteritems() if v.detector == det and v.name == iso),
+            name, ix = next(((k, v) for k, v in six.iteritems(isotopes) if v.detector == det and v.name == iso),
                             (None, None))
 
         fit = None
         if ix is not None:
             fit = ix.get_fit(cnt)
         else:
-            print 'fff', cnt, det, iso
-            for k, v in isotopes.iteritems():
-                print v.detector, v.name
+            print('fff', cnt, det, iso)
+            for k, v in six.iteritems(isotopes):
+                print(v.detector, v.name)
 
         return fit, name
 
@@ -332,7 +336,7 @@ class DataCollector(Consoleable):
         def update_graph(g, sidx, fidx):
             if iso is None:
                 pids = []
-                for isotope in self.isotope_group.itervalues():
+                for isotope in six.itervalues(self.isotope_group):
                     # print '{:<10s}{:<10s}{:<5s}'.format(isotope.name, isotope.detector, det)
                     if isotope.detector == det:
                         pid = g.get_plotid_by_ytitle(isotope.detector)
@@ -340,7 +344,7 @@ class DataCollector(Consoleable):
                         if pid is not None:
                             try:
                                 fit, _ = self._get_fit(cnt, det, isotope.name)
-                            except BaseException, e:
+                            except BaseException as e:
                                 self.debug('set_plot_data, is_baseline={} det={}, get_fit {}'.format(self.is_baseline,
                                                                                                      det, e))
                                 continue
@@ -350,7 +354,7 @@ class DataCollector(Consoleable):
                 try:
                     # get fit and name
                     fit, name = self._get_fit(cnt, det, iso)
-                except AttributeError, e:
+                except AttributeError as e:
                     name = None
                     self.debug('set_plot_data, get_fit {}'.format(e))
 

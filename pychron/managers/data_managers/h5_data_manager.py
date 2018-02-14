@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Any
 # ============= standard library imports ========================
 from tables import open_file, Filters
 # ============= local library imports  ==========================
-from data_manager import DataManager
-from table_descriptions import table_description_factory
+from .data_manager import DataManager
+from .table_descriptions import table_description_factory
 import os
 import weakref
 
@@ -120,8 +122,8 @@ class H5DataManager(DataManager):
         p = self.get_current_path()
         try:
             os.remove(p)
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
 
     def new_frame_ctx(self, *args, **kw):
         p = self._new_frame_path(*args, **kw)
@@ -228,8 +230,8 @@ class H5DataManager(DataManager):
             self._frame.close()
             self._frame = None
 
-        except Exception, e:
-            print 'exception closing file', e
+        except Exception as e:
+            print('exception closing file', e)
 
     def open_file(self, path, mode='r+'):
         self._file_stack.append(1)
@@ -244,6 +246,6 @@ class H5DataManager(DataManager):
 
 if __name__ == '__main__':
     d = H5DataManager()
-    print d
+    print(d)
 
 # ============= EOF ====================================

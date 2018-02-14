@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import List

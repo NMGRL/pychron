@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import collections
 
 from pyface.qt import QtGui, QtCore
@@ -23,6 +25,7 @@ from pyface.qt.QtGui import QIcon, QTreeWidgetItemIterator, QColor
 from traits.api import Str, Bool, Event
 from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
+from six.moves import range
 
 
 class SimpleEditor(_SimpleEditor):
@@ -150,8 +153,8 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         item = self._tree.itemFromIndex(index)
         try:
             expanded, node, obj = item._py_data
-        except AttributeError, e:
-            print 'asfasfas', e, item, index
+        except AttributeError as e:
+            print('asfasfas', e, item, index)
             return
 
         text = node.get_label(obj)

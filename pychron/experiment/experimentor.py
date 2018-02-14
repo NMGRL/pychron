@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Instance, List, on_trait_change, Bool, Event

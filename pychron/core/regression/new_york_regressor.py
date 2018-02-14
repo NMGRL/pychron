@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Array, Property, Float
 # ============= enthought library imports =======================
 from numpy import linspace, Inf, identity
@@ -182,7 +184,7 @@ class NewYorkRegressor(YorkRegressor):
         cnt = 0
         b, a, cnt = self._calculate_slope_intercept(Inf, b, cnt)
         if cnt >= 500:
-            print 'regression did not converge'
+            print('regression did not converge')
             #             self.warning('regression did not converge')
         #         else:
         #             self.info('regression converged after {} iterations'.format(cnt))

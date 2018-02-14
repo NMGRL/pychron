@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int, Enum, Directory
 from traitsui.api import View, Item, VGroup, Group, Label
 # ============= standard library imports ========================

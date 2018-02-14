@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -27,6 +28,8 @@ from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGrou
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
+import six
+from six.moves import zip
 
 LAMBDA_K_ATTRS = ('lambda_e', 'lambda_e_error', 'lambda_b', 'lambda_b_error')
 ATM_ATTRS = ('Ar40_Ar36_atm', 'Ar40_Ar36_atm_error', 'Ar40_Ar36_atm_citation',
@@ -152,7 +155,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
             return all([getattr(self, attr) == pvalue
                         for attr, pvalue in zip(attrs, v)])
 
-        return next((k for k, v in entries.iteritems() if test_entry(v)), NULL_STR)
+        return next((k for k, v in six.iteritems(entries) if test_entry(v)), NULL_STR)
 
     def _find_decay_constant_entry(self):
         return self._find_entry(self.decay_constant_entries, LAMBDA_K_ATTRS)
@@ -187,7 +190,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.atm_constant_names:
                 nv = e.totuple()
-                exists = next((k for k, v in self.atm_constant_entries.iteritems() if nv == v), None)
+                exists = next((k for k, v in six.iteritems(self.atm_constant_entries) if nv == v), None)
                 if exists:
                     warning(None,
                             'Atm constant entry with those values already exists.\nExisting entry named "{}"'.format(
@@ -209,7 +212,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.decay_constant_names:
                 nv = e.totuple()
-                exists = next((k for k, v in self.decay_constant_entries.iteritems() if nv == v), None)
+                exists = next((k for k, v in six.iteritems(self.decay_constant_entries) if nv == v), None)
                 if exists:
                     warning(None,
                             'Decay constant entry with those values already exists.\nExisting entry named "{}"'.format(

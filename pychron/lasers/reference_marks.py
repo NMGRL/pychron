@@ -16,7 +16,9 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from traits.api import HasTraits, Dict, Str, List, Float
+from six.moves import range
 
 MARKS = {'1': '100 000 000',
          '2': '110 000 000',

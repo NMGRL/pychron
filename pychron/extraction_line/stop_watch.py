@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import time
 from pyface.timer.timer import Timer
 from traits.api import HasTraits, Button, Int, Bool, Property

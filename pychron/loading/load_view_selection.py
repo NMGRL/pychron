@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Instance, DelegatesTo, \
     Button, String
@@ -26,6 +27,8 @@ import re
 # ============= local library imports  ==========================
 
 from pychron.loading.loading_manager import LoadPosition
+from six.moves import map
+from six.moves import range
 
 POSITION_RANGE_REGEX = re.compile(r'^\d+(-\d+)*(,\d+(-\d+)*)*$')
 
@@ -63,13 +66,13 @@ class LoadViewSelectionModel(HasTraits):
             ss = []
             for r in new.split(','):
                 if '-' in r:
-                    s, e = map(int, r.split('-'))
+                    s, e = list(map(int, r.split('-')))
                     e += 1
                 else:
                     s = int(r)
                     e = s + 1
 
-                ss.extend([func(i) for i in xrange(s, e)])
+                ss.extend([func(i) for i in range(s, e)])
 
             self.selected_positions = ss
 

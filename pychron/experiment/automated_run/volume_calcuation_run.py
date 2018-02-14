@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 
 
@@ -52,5 +54,5 @@ if __name__ == '__main__':
     # v2*s2/s1 = v1 - s2/s1 *v1
     # v2*s2/s1 = v1(1-s2/s1)
     v1 = (v2 * s2 / s1) / (1 - s2 / s1)
-    print v1
+    print(v1)
 # ============= EOF =============================================

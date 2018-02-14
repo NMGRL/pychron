@@ -14,7 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from pychron.core.ui import set_qt
+import six
+from six.moves import range
+from six.moves import zip
 
 set_qt()
 # =============enthought library imports=======================
@@ -24,8 +28,8 @@ from numpy import hstack, Inf
 import time
 # =============local library imports  ==========================
 # from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
-from stacked_graph import StackedGraph
-from graph import Graph
+from .stacked_graph import StackedGraph
+from .graph import Graph
 
 MAX_LIMIT = int(-1 * 60 * 60 * 24)
 
@@ -118,7 +122,7 @@ class StreamGraph(Graph):
     def update_y_limits(self, plotid=0, **kw):
         ma = -1
         mi = 1e10
-        for _k, v in self.plots[plotid].plots.iteritems():
+        for _k, v in six.iteritems(self.plots[plotid].plots):
             ds = v[0].value.get_data()
             try:
                 ma = max(ma, max(ds))
@@ -139,14 +143,14 @@ class StreamGraph(Graph):
 
     def set_data_limits(self, d, plotid=None):
         if plotid is None:
-            for i in xrange(len(self.plots)):
+            for i in range(len(self.plots)):
                 self.data_limits[i] = d
         else:
             self.data_limits[plotid] = d
 
     def set_scan_widths(self, d, plotid=None):
         if plotid is None:
-            for i in xrange(len(self.plots)):
+            for i in range(len(self.plots)):
                 self.scan_widths[i] = d
         else:
             self.scan_widths[plotid] = d
@@ -178,7 +182,7 @@ class StreamGraph(Graph):
             except IndexError:
                 tg = time_generator(0)
                 self.time_generators.append(tg)
-            nx = tg.next()
+            nx = next(tg)
         else:
             nx = x
 
@@ -221,10 +225,10 @@ class StreamGraph(Graph):
             tg = time_generator(0)
             self.global_time_generator = tg
 
-        x = tg.next()
+        x = next(tg)
 
         if series is None:
-            series = xrange(len(ys))
+            series = range(len(ys))
 
         for i, yi in zip(series, ys):
             self.record(yi, x=x, series=i, track_x=False, track_y=track_y)

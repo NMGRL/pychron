@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 # ============= standard library imports ========================
 import smtplib
@@ -29,6 +30,8 @@ from traitsui.api import View
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+import six
+from six.moves import range
 
 
 class User(HasTraits):
@@ -79,7 +82,7 @@ class Emailer(Loggable):
             if test:
                 server.quit()
                 return True
-        except (smtplib.SMTPServerDisconnected, BaseException), e:
+        except (smtplib.SMTPServerDisconnected, BaseException) as e:
             self.debug('SMTPServer connection host={}, user={}, port={}'.format(self.server_host, self.server_username, self.server_port))
             if warn:
                 self.warning('SMTPServer not properly configured')
@@ -94,7 +97,7 @@ class Emailer(Loggable):
         #     self.debug(m)
         # self.debug('==========================')
 
-        for i in xrange(10):
+        for i in range(10):
             server = self.connect()
             if server is not None:
                 break
@@ -102,7 +105,7 @@ class Emailer(Loggable):
             time.sleep(1)
 
         if server:
-            if isinstance(addrs, (str, unicode)):
+            if isinstance(addrs, (str, six.text_type)):
                 addrs = [addrs]
 
             msg = self._message_factory(addrs, sub, msg, paths)
@@ -110,7 +113,7 @@ class Emailer(Loggable):
                 server.sendmail(self.sender, addrs, msg.as_string())
                 server.quit()
                 return True
-            except BaseException, e:
+            except BaseException as e:
                 self.warning('Failed sending mail. {}'.format(e))
         else:
             self.warning('Failed connecting to server')

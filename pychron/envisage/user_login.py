@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import os
 import pickle
 
@@ -44,8 +45,11 @@ def load_user_file():
     isfile = False
     if os.path.isfile(path):
         isfile = True
-        with open(path, 'r') as rfile:
-            users, last_login = pickle.load(rfile)
+        with open(path, 'rb') as rfile:
+            try:
+                users, last_login = pickle.load(rfile)
+            except (UnicodeDecodeError, EOFError):
+                pass
 
     # return users, last_login, isfile
     return last_login, users, isfile
@@ -56,14 +60,17 @@ def load_environments_file():
     envs = []
     last_env = ''
     if os.path.isfile(path):
-        with open(path, 'r') as rfile:
-            last_env, envs = pickle.load(rfile)
+        with open(path, 'rb') as rfile:
+            try:
+                last_env, envs = pickle.load(rfile)
+            except (UnicodeDecodeError, EOFError):
+                pass
     return last_env, envs
 
 
 def dump_environments_file(env, envs):
     path = environments_file
-    with open(path, 'w') as wfile:
+    with open(path, 'wb') as wfile:
         pickle.dump((env, envs), wfile)
 
 
@@ -80,7 +87,7 @@ def dump_user_file(names, last_login=None):
 
     names = [ni for ni in names if ni and ni.strip()]
 
-    with open(users_file, 'w') as wfile:
+    with open(users_file, 'wb') as wfile:
         pickle.dump((names, last_login), wfile)
 
 

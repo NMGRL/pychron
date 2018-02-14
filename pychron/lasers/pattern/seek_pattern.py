@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
@@ -25,6 +27,7 @@ from collections import defaultdict
 from numpy import polyfit, linspace, hstack, average, zeros, uint8, arange
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
+from six.moves import zip
 
 
 class CurrentPointOverlay(AbstractOverlay):
@@ -180,7 +183,7 @@ class Triangle:
         self._point_cnts = defaultdict(int)
 
     def weighted_centroid(self):
-        weights, xps, yps = zip(*[(p.score, p.x, p.y) for p in self._points])
+        weights, xps, yps = list(zip(*[(p.score, p.x, p.y) for p in self._points]))
         cx = average(xps, weights=weights)
         cy = average(yps, weights=weights)
         return self.centered(cx, cy)
@@ -338,7 +341,7 @@ class SeekPattern(Pattern):
                             # construct a new triangle centered at weighted centroid of current points
                             # weighted by score
                             p1, p2, p3 = tri.weighted_centroid()
-                            print 'using weighted centroid'
+                            print('using weighted centroid')
                             yield p1
                             yield p2
                             yield p3
@@ -349,7 +352,7 @@ class SeekPattern(Pattern):
                 tri.discount()
 
                 if tri.point_cnt(pt) > 1:
-                    print 'using centered'
+                    print('using centered')
                     self._data = []
                     tri.clear_point_cnts()
                     tri.set_scalar(0.75)
@@ -362,7 +365,7 @@ class SeekPattern(Pattern):
                     continue
 
                 if not self._validate(pt):
-                    print 'using invalid'
+                    print('using invalid')
                     self._tri = tri = Triangle(self.base)
                     yield tri.point_xy(0)
                     yield tri.point_xy(1)

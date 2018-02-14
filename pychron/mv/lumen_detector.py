@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import hot
 from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros, uint8, average, ravel_multi_index

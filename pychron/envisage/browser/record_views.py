@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Date, Long, Bool
 
 from pychron.experiment.utilities.identifier import get_analysis_type
+import six
 
 
 class RecordView(object):
@@ -132,12 +134,12 @@ class LabnumberRecordView(RecordView):
         sample = dbrecord.sample
         if sample:
             if sample.material:
-                if isinstance(sample.material, (str, unicode)):
+                if isinstance(sample.material, (str, six.text_type)):
                     self.material = sample.material
                 else:
                     self.material = sample.material.name
             if sample.project:
-                if isinstance(sample.material, (str, unicode)):
+                if isinstance(sample.material, (str, six.text_type)):
                     self.project = sample.project
                 else:
                     self.project = sample.project.name

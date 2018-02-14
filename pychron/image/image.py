@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from numpy import asarray, flipud, ndarray, fliplr
 from skimage.color import rgb2gray
 from skimage.transform import resize
@@ -25,6 +26,7 @@ from traits.api import HasTraits, Any, List, Int, Bool
 #     save_image, draw_lines
 # from cv_wrapper import swap_rb as cv_swap_rb
 from pychron.globals import globalv
+from six.moves import map
 
 
 class Image(HasTraits):
@@ -203,7 +205,7 @@ class Image(HasTraits):
     def _draw_crosshairs(self, src):
         r = 10
 
-        w, h = map(int, get_size(src))
+        w, h = list(map(int, get_size(src)))
         pts = [[(w / 2, 0), (w / 2, h / 2 - r)],
                [(w / 2, h / 2 + r), (w / 2, h)],
                [(0, h / 2), (w / 2 - r, h / 2)],

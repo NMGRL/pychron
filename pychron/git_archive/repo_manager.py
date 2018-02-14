@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import hashlib
 import os
 import re
@@ -152,15 +154,15 @@ class GitRepoManager(Loggable):
             apaths = (apaths,)
 
         changes = self.get_local_changes()
-        print 'aa', changes
+        print('aa', changes)
         changes = [os.path.join(self.path, c) for c in changes]
-        print 'bb', changes
+        print('bb', changes)
         untracked = self.untracked_files()
-        print 'tt', untracked
+        print('tt', untracked)
         changes.extend(untracked)
 
         ps = [p for p in apaths if p in changes]
-        print 'ps', ps
+        print('ps', ps)
         changed = bool(ps)
         for p in ps:
             self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
@@ -236,8 +238,8 @@ class GitRepoManager(Loggable):
         # rprogress=None
         try:
             Repo.clone_from(url, path, progress=rprogress)
-        except GitCommandError, e:
-            print e
+        except GitCommandError as e:
+            print(e)
             shutil.rmtree(path)
             # def foo():
             #     try:
@@ -264,7 +266,7 @@ class GitRepoManager(Loggable):
     def clone(self, url, path):
         try:
             self._repo = Repo.clone_from(url, path)
-        except GitCommandError, e:
+        except GitCommandError as e:
             self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path))
 
     def unpack_blob(self, hexsha, p):
@@ -285,7 +287,7 @@ class GitRepoManager(Loggable):
                         blob = bi
                         break
         else:
-            print 'failed unpacking', p
+            print('failed unpacking', p)
 
         return blob.data_stream.read() if blob else ''
 
@@ -302,7 +304,7 @@ class GitRepoManager(Loggable):
         repo.git.clone('--mirror', ''.format(name), './{}'.format(backup))
         logs = repo.git.log('--pretty=%H', '-after "{}"'.format(date))
         logs = reversed(logs.split('\n'))
-        sha = logs.next()
+        sha = next(logs)
 
         gpath = os.path.join(self.path, '.git', 'info', 'grafts')
         with open(gpath, 'w') as wfile:
@@ -510,7 +512,7 @@ class GitRepoManager(Loggable):
             self._load_branch_history()
             self.information_dialog('Repository now on branch "{}"'.format(name))
 
-        except BaseException, e:
+        except BaseException as e:
             self.warning_dialog('There was an issue trying to checkout branch "{}"'.format(name))
             raise e
 
@@ -518,7 +520,7 @@ class GitRepoManager(Loggable):
         repo = self._repo
 
         if name is None:
-            print repo.branches, type(repo.branches)
+            print(repo.branches, type(repo.branches))
             nb = NewBranchView(branches=repo.branches)
             info = nb.edit_traits()
             if info.result:
@@ -563,8 +565,8 @@ class GitRepoManager(Loggable):
         repo = self._repo
         try:
             remote = self._get_remote(remote)
-        except AttributeError, e:
-            print 'repo man pull', e
+        except AttributeError as e:
+            print('repo man pull', e)
             return
 
         if remote:
@@ -576,7 +578,7 @@ class GitRepoManager(Loggable):
                 prog.change_message('Fetching branch:"{}" from "{}"'.format(branch, remote))
             try:
                 self.fetch(remote)
-            except GitCommandError, e:
+            except GitCommandError as e:
                 self.debug(e)
                 if not handled:
                     raise e
@@ -610,7 +612,7 @@ class GitRepoManager(Loggable):
     def _git_command(self, func, tag):
         try:
             return func()
-        except GitCommandError, e:
+        except GitCommandError as e:
             self.warning('Git command failed. {}, {}'.format(e, tag))
 
     def smart_pull(self, branch='master', remote='origin',
@@ -618,7 +620,7 @@ class GitRepoManager(Loggable):
                    accept_our=False, accept_their=False):
         try:
             ahead, behind = self.ahead_behind(remote)
-        except GitCommandError, e:
+        except GitCommandError as e:
             self.debug('Smart pull error: {}'.format(e))
             return
 
@@ -797,7 +799,7 @@ class GitRepoManager(Loggable):
                 p = [p]
             try:
                 index.add(p)
-            except IOError, e:
+            except IOError as e:
                 self.warning('Failed to add file. Error:"{}"'.format(e))
 
                 # an IOError has been caused in the past by "'...index.lock' could not be obtained"
@@ -805,7 +807,7 @@ class GitRepoManager(Loggable):
                 try:
                     self.warning('Retry after "Failed to add file"'.format(e))
                     index.add(p)
-                except IOError, e:
+                except IOError as e:
                     self.warning('Retry failed. Error:"{}"'.format(e))
                     return
 

@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Str
 from traitsui.api import View, UItem, \

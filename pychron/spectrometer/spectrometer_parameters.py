@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.etsconfig.etsconfig import ETSConfig
+import six
 ETSConfig.toolkit = 'qt4'
 
 # ============= enthought library imports =======================
@@ -21,7 +23,7 @@ from traits.api import HasTraits, List, Instance, Str, Float, Any
 from traitsui.api import View, UItem, TableEditor, ListEditor, Handler
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -77,7 +79,7 @@ Do you want to send these parameters to the spectrometer?
 
         cfp = ConfigParser()
         cfp.read(p)
-        for gn, pn, v in self.itervalues():
+        for gn, pn, v in six.itervalues(self):
             cfp.set(gn, pn, v)
 
         with open(p, 'w') as wfile:

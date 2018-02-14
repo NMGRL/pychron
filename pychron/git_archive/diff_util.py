@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import difflib
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -70,8 +72,8 @@ def extract_bounds(line):
     sb, eb = b.split(',')
 
     bnds = (sa[1:], ea, sb, eb)
-    a,b,c,d = map(lambda x: int(x), bnds)
-    print line
+    a,b,c,d = [int(x) for x in bnds]
+    print(line)
     return a,b,c,d
 
     # return (int(sa[1:]), int(ea)), (int(sb), int(eb))
@@ -81,7 +83,7 @@ def extract_line_numbers(a, b):
     diff_iter = difflib.ndiff(a.split('\n'), b.split('\n'))
     ls, rs = [], []
     llineno,rlineno=0,0
-    print '-----------------------'
+    print('-----------------------')
     for di in diff_iter:
         di=str(di).rstrip()
         if di:
@@ -104,7 +106,7 @@ def extract_line_numbers(a, b):
         else:
             llineno+=1
             rlineno+=1
-        print di.rstrip()
+        print(di.rstrip())
 
     return ls, rs
 
@@ -112,7 +114,7 @@ def extract_line_changes(a, b):
     diff_iter = difflib.unified_diff(a.split('\n'), b.split('\n'))
     ls, rs = [], []
     for di in diff_iter:
-        print di.rstrip()
+        print(di.rstrip())
         if di.startswith('@@'):
             s1, e1, s2, e2 = extract_bounds(di)
             ls.append((s1, e1))
@@ -128,7 +130,7 @@ c=1
 d=1'''
     b = '''a=12
 b=1'''
-    print 'exception', extract_line_numbers(a, b)
+    print('exception', extract_line_numbers(a, b))
 # ============= EOF =============================================
 
 

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Button, Str, Enum, Bool, on_trait_change
 from traitsui.api import View, UItem, Item, VGroup, InstanceEditor, ListEditor, EnumEditor, HGroup
 from uncertainties import nominal_value, std_dev

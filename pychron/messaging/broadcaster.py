@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from socket import gethostbyname, gethostname
 
 import zmq
@@ -53,7 +54,7 @@ class Broadcaster(HeadlessLoggable):
             if self._sock:
                 try:
                     self._sock.send(msg)
-                except zmq.ZMQBaseError, e:
+                except zmq.ZMQBaseError as e:
                     self.warning('failed sending message: error {}: {}'.format(e, msg))
             else:
                 self.debug('notifier not setup')

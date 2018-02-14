@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from skimage.draw import circle_perimeter, line
@@ -36,8 +38,10 @@ from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video, pil_save
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
-from stage_manager import StageManager
+from .stage_manager import StageManager
 from pychron.core.ui.thread import Thread as QThread
+from six.moves import map
+from six.moves import range
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
         VideoLaserTrayCanvas
@@ -176,7 +180,7 @@ class VideoStageManager(StageManager):
         try:
             t, md, p = next(self.grain_polygons)
             return encode_blob('{}{}'.format(pack('ff', ((t, md),)), pack('HH', p)))
-        except (StopIteration, TypeError), e:
+        except (StopIteration, TypeError) as e:
             self.debug('No more grain polygons. {}'.format(e))
 
     def stop_measure_grain_polygon(self):
@@ -260,7 +264,7 @@ class VideoStageManager(StageManager):
                 if self.auto_upload:
                     try:
                         p = self._upload(p, inform=False)
-                    except BaseException, e:
+                    except BaseException as e:
                         self.critical('Failed uploading {}. error={}'.format(p, e))
             return p
 
@@ -459,7 +463,7 @@ class VideoStageManager(StageManager):
                 d = os.path.split(os.path.dirname(src))[-1]
                 dest = os.path.join(self.parent.name, d,
                                     os.path.basename(src))
-                print dest
+                print(dest)
                 msm.put(src, dest)
 
                 if not self.keep_local_copy:
@@ -619,7 +623,7 @@ class VideoStageManager(StageManager):
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.1)
             ox, oy = self.canvas.get_screen_offset()
-            for ti in xrange(max(1, ntries)):
+            for ti in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
                 args = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -691,7 +695,7 @@ class VideoStageManager(StageManager):
 
     @on_trait_change('parent:motor_event')
     def _update_motor(self, new):
-        print 'motor event', new, self.canvas, self.canvas.camera
+        print('motor event', new, self.canvas, self.canvas.camera)
         # s = self.stage_controller
         if self.camera:
             if not isinstance(new, (int, float)):
@@ -751,7 +755,7 @@ class VideoStageManager(StageManager):
 
     def _validate_camera_zoom_coefficients(self, v):
         try:
-            return map(float, v.split(','))
+            return list(map(float, v.split(',')))
         except ValueError:
             pass
 

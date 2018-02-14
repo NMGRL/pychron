@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.colors import ColorTrait
 from traits.has_traits import HasTraits
 from traits.trait_types import Float

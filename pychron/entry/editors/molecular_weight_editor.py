@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, List, Dict, Instance
 from traitsui.api import View, Item, HGroup
 
@@ -53,7 +54,7 @@ class MolecularWeightEditor(HasTraits):
             return
 
         wts = dvc.get_molecular_weights()
-        names = wts.keys()
+        names = list(wts.keys())
 
         wt = MolecularWeight(names=names, weights=wts)
         info = wt.edit_traits(kind='livemodal')

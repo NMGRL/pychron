@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.cPickle as pickle
 import os
 
 from traits.api import Range, Instance, Bool, \
@@ -327,7 +329,7 @@ class IonOpticsManager(Manager):
     def _setup_config(self):
         config = self.peak_center_config
         config.detectors = self.spectrometer.detector_names
-        keys = self.spectrometer.molecular_weights.keys()
+        keys = list(self.spectrometer.molecular_weights.keys())
         config.isotopes = sort_isotopes(keys)
         config.integration_times = self.spectrometer.integration_times
 
@@ -487,15 +489,15 @@ class IonOpticsManager(Manager):
                     config.detectors = dets = self.spectrometer.detectors
                     config.detector = next((di for di in dets if di.name == config.detector_name), None)
 
-            except Exception, e:
-                print 'coincidence config', e
+            except Exception as e:
+                print('coincidence config', e)
 
         if config is None:
             config = CoincidenceConfig()
             config.detectors = self.spectrometer.detectors
             config.detector = config.detectors[0]
 
-        keys = self.spectrometer.molecular_weights.keys()
+        keys = list(self.spectrometer.molecular_weights.keys())
         config.isotopes = sort_isotopes(keys)
 
         return config

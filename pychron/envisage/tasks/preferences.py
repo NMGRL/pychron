@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int, Str, Property
 from traitsui.api import View, Item, VGroup

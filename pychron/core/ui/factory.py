@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.etsconfig.api import ETSConfig
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

@@ -24,7 +24,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
+from six.moves import map
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

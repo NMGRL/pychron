@@ -18,12 +18,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 # ============= local library imports  ==========================
-from graph import Graph
+from .graph import Graph
 
 from pychron.graph.graph import name_generator
 from chaco.default_colormaps import color_map_name_dict
+from six.moves import range
 
 # GROUPNAMES=['spectrum','logr_ro','arrhenius','cooling_history', 'unconstrained_thermal_history']
 # GROUPNAMES = ['spectrum', 'logr_ro', 'arrhenius', 'cooling_history', 'unconstrained_thermal_history']
@@ -303,8 +305,8 @@ class DiffusionGraph(Graph):
             p1, p2 = colors
         else:
             cg = self.color_generators[pid]
-            p1 = cg.next()
-            p2 = cg.next()
+            p1 = next(cg)
+            p2 = next(cg)
 
         a, _p = self.new_series(ts, Tsl, type='polygon', plotid=pid, color=p1)
         b, _p = self.new_series(ts, Tsh, type='polygon', plotid=pid, color=p2)
@@ -324,7 +326,7 @@ class DiffusionGraph(Graph):
             else:
                 self.zdataname_generators.append(name_generator('z'))
 
-            zname = self.zdataname_generators[-1].next()
+            zname = next(self.zdataname_generators[-1])
             x = [10, 350]
             y = [100, 600]
             plot, names, rd = self._series_factory(x, y, plotid=pid)

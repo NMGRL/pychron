@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface import confirmation_dialog
 from pyface.constant import NO
 from pyface.qt import QtGui
@@ -26,6 +27,7 @@ from pyface.ui.qt4.tasks.editor_area_pane import EditorAreaDropFilter
 import sys
 from pyface.qt import QtCore
 from pyface.qt.QtGui import QAction, QCursor
+from six.moves import range
 # ============= local library imports  ==========================
 
 # class myEditorWidget(EditorWidget):
@@ -133,7 +135,7 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         mod = 'Ctrl+' if sys.platform == 'darwin' else 'Alt+'
         mapper = QtCore.QSignalMapper(self.control)
         mapper.mapped.connect(self._activate_tab)
-        for i in xrange(1, 10):
+        for i in range(1, 10):
             sequence = QtGui.QKeySequence(mod + str(i))
             shortcut = QtGui.QShortcut(sequence, self.control)
             shortcut.activated.connect(mapper.map)

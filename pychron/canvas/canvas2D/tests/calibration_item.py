@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import unittest
 
 from pychron.canvas.canvas2D.scene.primitives.calibration import CalibrationObject

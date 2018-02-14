@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 from datetime import datetime
 
@@ -22,6 +23,7 @@ import re
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
 from traits.api import HasTraits, Str, Bool, Date
+import six
 
 
 # ============= local library imports  ==========================
@@ -84,7 +86,7 @@ def get_head_commit(repo):
 
 
 def get_commits(repo, branch, path, tag, *args):
-    if isinstance(repo, (str, unicode)):
+    if isinstance(repo, (str, six.text_type)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
@@ -95,7 +97,7 @@ def get_commits(repo, branch, path, tag, *args):
 
 
 def get_log(repo, branch, path):
-    if isinstance(repo, (str, unicode)):
+    if isinstance(repo, (str, six.text_type)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)
@@ -104,7 +106,7 @@ def get_log(repo, branch, path):
 
 
 def get_repo(repo):
-    if isinstance(repo, (str, unicode)):
+    if isinstance(repo, (str, six.text_type)):
         if not os.path.isdir(repo):
             return
         repo = Repo(repo)

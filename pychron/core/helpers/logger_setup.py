@@ -16,6 +16,7 @@
 
 # =============enthought library imports=======================
 # =============standard library imports ========================
+from __future__ import absolute_import
 import logging
 import os
 import shutil
@@ -189,7 +190,7 @@ def wrap(items, width=40, indent=90, delimiter=','):
 
     while 1:
         try:
-            c = gcols.next()
+            c = next(gcols)
             t += 1 + len(c)
             if t < width:
                 r.append(c)

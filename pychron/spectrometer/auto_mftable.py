@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from contextlib import contextmanager
 
 from traits.api import Instance
@@ -170,7 +171,7 @@ class AutoMFTable(Loggable):
             yd['detectors'] = [di.strip() for di in yd['detectors'].split(',')]
             yd['isotopes'] = [iso.strip() for iso in yd['isotopes'].split(',')]
             yd['deflections'] = eval(yd['deflections'])
-        except BaseException, e:
+        except BaseException as e:
             self.debug('failed parsing config file {}. exception={}'.format(path, e))
         return yd
 

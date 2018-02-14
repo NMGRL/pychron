@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ========== standard library imports ==========
+from __future__ import absolute_import
 import glob
 import os
 import re
@@ -24,10 +25,12 @@ import sys
 from datetime import datetime
 
 import yaml
+from six.moves import map
+from six.moves import range
 
 
 def subdirize(root, name, n=1, l=2, mode='r'):
-    for i in xrange(n):
+    for i in range(n):
 
         n, name = name[:l], name[l:]
         path = os.path.join(root, n)
@@ -340,7 +343,7 @@ def parse_file(p, delimiter=None, cast=None):
             if delimiter:
                 if cast is None:
                     cast = str
-                r = [map(cast, ri.split(delimiter)) for ri in r]
+                r = [list(map(cast, ri.split(delimiter))) for ri in r]
 
             return r
 

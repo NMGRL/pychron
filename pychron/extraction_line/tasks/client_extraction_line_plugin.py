@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.envisage.initialization.initialization_parser import InitializationParser
 from pychron.extraction_line.client_extraction_line_manager import ClientExtractionLineManager
 from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner

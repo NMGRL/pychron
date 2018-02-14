@@ -16,6 +16,7 @@
 
 # from traitsui.api import View, Item, spring, ButtonEditor, HGroup
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from threading import Thread
 
 from numpy import linspace

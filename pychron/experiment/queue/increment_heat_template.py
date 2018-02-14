@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import csv
 import os
 
@@ -31,6 +32,8 @@ from pychron.experiment.utilities.save_dialog import IncrementalHeatTemplateSave
 from pychron.paths import paths
 from pychron.pychron_constants import alphas
 from pychron.viewable import Viewable
+from six.moves import map
+from six.moves import range
 
 
 # paths.build('_experiment')
@@ -171,7 +174,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         self.steps = []
         with open(path, 'r') as rfile:
             reader = csv.reader(rfile)
-            header = reader.next()
+            header = next(reader)
             cnt = 1
             for row in reader:
                 if row:

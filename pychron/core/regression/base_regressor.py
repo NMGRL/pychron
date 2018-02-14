@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import logging
 import math
 import re
@@ -26,7 +27,9 @@ from traits.api import Array, List, Event, Property, Any, \
 
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS, PLUSMINUS
-from tinv import tinv
+from .tinv import tinv
+from six.moves import range
+from six.moves import zip
 
 logger = logging.getLogger('BaseRegressor')
 

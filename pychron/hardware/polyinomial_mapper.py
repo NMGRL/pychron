@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import poly1d
 from scipy import optimize
 from traits.api import HasTraits, List, Float

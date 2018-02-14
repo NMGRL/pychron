@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
-from Queue import Queue
+from six.moves.queue import Queue
 from threading import Thread
 
 import yaml
@@ -39,6 +40,8 @@ from pychron.spectrometer.jobs.dac_scanner import DACScanner
 from pychron.spectrometer.jobs.mass_scanner import MassScanner
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.spectrometer.readout_view import ReadoutView
+import six
+from six.moves import zip
 
 
 class ScanManager(StreamGraphManager):
@@ -323,7 +326,7 @@ class ScanManager(StreamGraphManager):
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
             #     return
-            series, idxs = zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys))
+            series, idxs = list(zip(*((i, keys.index(d.name)) for i, d in enumerate(self.detectors) if d.name in keys)))
             signals = [signals[idx] for idx in idxs]
 
             x = self.graph.record_multiple(signals,
@@ -481,7 +484,7 @@ class ScanManager(StreamGraphManager):
             # self.scanner.detector = self.detector
             nominal_width = 1
             emphasize_width = 2
-            for name, plot in self.graph.plots[0].plots.iteritems():
+            for name, plot in six.iteritems(self.graph.plots[0].plots):
                 plot = plot[0]
                 plot.line_width = emphasize_width if name == self.detector.name else nominal_width
 

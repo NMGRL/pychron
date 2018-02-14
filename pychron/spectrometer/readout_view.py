@@ -15,19 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float
 from traitsui.api import View, Item, HGroup, spring
 from traitsui.handler import Handler
 
 # ============= standard library imports ========================
-import ConfigParser
+import six.moves.configparser
 import os
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import zip
 
 DEFAULT_CONFIG = '''-
   - name: HighVoltage
@@ -152,7 +154,7 @@ class ReadoutView(Loggable):
             self._load_yaml(ypath)
 
     def _load_cfg(self, path):
-        config = ConfigParser.ConfigParser()
+        config = six.moves.configparser.ConfigParser()
         config.read(path)
         for section in config.sections():
             rd = Readout(name=section,
@@ -250,10 +252,10 @@ class ReadoutView(Loggable):
 
             ns = ''
             if ne:
-                ns = '\n'.join(map(lambda n: '{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n), ne))
+                ns = '\n'.join(['{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n) for n in ne])
 
             if nd:
-                nnn = '\n'.join(map(lambda n: '{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n), nd))
+                nnn = '\n'.join(['{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n) for n in nd])
                 ns = '{}\n{}'.format(ns, nnn)
 
             if ns:

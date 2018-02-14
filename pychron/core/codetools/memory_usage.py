@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import cPickle
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.cPickle
 import gc
 import os
 import sys
 from itertools import groupby
+from six.moves import filter
+from six.moves import map
 try:
     import psutil
 except ImportError:
@@ -39,7 +43,7 @@ def write_mem(msg, m, verbose):
         msg = '{:<50s}:{}\n'.format(msg, m)
         wfile.write(msg)
         if verbose:
-            print msg.strip()
+            print(msg.strip())
 
 
 PID = None
@@ -61,7 +65,7 @@ def get_current_mem():
 
 
 def mem_log_func(func, *args, **kw):
-    n = func.func_name
+    n = func.__name__
     mem_log('pre {}'.format(n))
     r = func(*args, **kw)
     mem_log('post {}'.format(n))
@@ -102,7 +106,7 @@ def mem_dump(path):
                                                                                                        )
                         )
                     if isinstance(obj, dict):
-                        keys = ','.join(map(str, obj.keys()))
+                        keys = ','.join(map(str, list(obj.keys())))
                         wfile.write('keys: {}'.format(keys))
 
 
@@ -115,7 +119,7 @@ def mem_sort():
     i = 0
     while dump:
         try:
-            obj = cPickle.load(dump)
+            obj = six.moves.cPickle.load(dump)
             objs.append(obj)
         except EOFError:
             pass
@@ -143,13 +147,13 @@ class MemCTX(object):
         self._cls = cls
 
     def __enter__(self):
-        print 'enter'
+        print('enter')
         #         self._before = [id(o) for o in gc.get_objects() if isinstance(o, self._cls)]
         self._before = [id(o) for o in gc.get_objects() if self._cls in str(type(o))]
-        print len(self._before)
+        print(len(self._before))
 
     def __exit__(self, *args, **kw):
-        print 'exit'
+        print('exit')
         gc.collect()
         bf = self._before
         cls = self._cls
@@ -158,12 +162,12 @@ class MemCTX(object):
                 #                     if isinstance(o, cls)
                 ]
 
-        print len(objs), len(bf)
+        print(len(objs), len(bf))
         objs = [o for o in objs if not id(o) in bf]
-        print 'new objs {}'.format(len(objs))
+        print('new objs {}'.format(len(objs)))
         if len(objs) < 100:
             for oi in objs:
-                print oi, [type(oo) for oo in gc.get_referrers(oi)]
+                print(oi, [type(oo) for oo in gc.get_referrers(oi)])
 
         return
 
@@ -206,7 +210,7 @@ def measure_type(cls=None, group=None, before=None):
     else:
         objs = gc.get_objects()
         if group:
-            objs = filter(lambda x: group in str(type(x)), objs)
+            objs = [x for x in objs if group in str(type(x))]
 
         for o in objs:
             d[type(o)] += 1
@@ -222,7 +226,7 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
     gc.collect()
 
     after = measure_type(cls, group)
-    print 'after calcued'
+    print('after calcued')
     #     print len(after.keys())
     #     print len(before.keys())
     #     after = end_growth()
@@ -250,19 +254,19 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
             sb = set(ids)
             sa = set(after[k])
             ss = sa - sb
-            print 'sa-sb', len(sa) - len(sb), len(ss)
+            print('sa-sb', len(sa) - len(sb), len(ss))
             #             print len(sa) - a, len(sb) - len(ids), len(ss)
             for i in ss:
                 #                 if not i in ids:
                 obj = get_id(i)
                 if obj:
-                    ks = obj.keys()
+                    ks = list(obj.keys())
                     if ks[0] not in ('name', 'trait', 'owner',
                                      'handler', 'object',
                                      '_dispatch', '_remove', 'call_method'
                                      ):
-                        print 'keys      :{}'.format(ks)
-                        print 'referrers :{}'.format(gc.get_referrers(obj))
+                        print('keys      :{}'.format(ks))
+                        print('referrers :{}'.format(gc.get_referrers(obj)))
 
                     #                 print i,
                     #                 cnt += 1
@@ -277,7 +281,7 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
                     #             for o in get_type(k):
                     #                 if id(o) not in ids:
                     #                     print o.keys()
-            print '----------- {}'.format(cnt)
+            print('----------- {}'.format(cnt))
 
 
         #             obj = get_type(k).next()
@@ -293,13 +297,13 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
         if group:
             ts += s
         msg = '{:<70s}: {} size: {}'.format(k, v, s)
-        print msg
+        print(msg)
     #         if write:
     #             with open(gp, 'a') as fp:
     #                 fp.write('{}\n'.format(msg))
 
     if ts:
-        print 'total size: {}'.format(ts)
+        print('total size: {}'.format(ts))
 
 
 # gc.collect()
@@ -319,23 +323,23 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
 def show_refs(cls):
     obj = next((o for o in gc.get_objects() if type(o) == cls), None)
     if obj:
-        print '================= {} referrers ================'.format(cls)
+        print('================= {} referrers ================'.format(cls))
         #         print '{} referrers'.format(obj)
         for ri in gc.get_referrers(obj):
             keys = ''
             if isinstance(ri, dict):
-                keys = ','.join(ri.keys())
+                keys = ','.join(list(ri.keys()))
 
-            print '{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys)
+            print('{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys))
 
-        print '================== {} referents ================'.format(cls)
+        print('================== {} referents ================'.format(cls))
         #         print '{} referents'.format(obj)
         for ri in gc.get_referents(obj):
             keys = ''
             if isinstance(ri, dict):
-                keys = ','.join(ri.keys())
+                keys = ','.join(list(ri.keys()))
 
-            print '{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys)
+            print('{:<30s} {} {}'.format(str(id(ri)), type(ri), ri, keys))
 
 
 def get_type(cls):
@@ -350,7 +354,7 @@ def get_size(cls, show=False):
     vs = (sys.getsizeof(o) for o in get_type(cls))
     v = sum(vs) * 1024 ** -2
     if show:
-        print '{:<30s} {}'.format(cls, v)
+        print('{:<30s} {}'.format(cls, v))
     return v
 
 
@@ -365,19 +369,19 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
         #                 pass
         t = lambda x: group in str(type(x))
         n = group
-        objs = filter(t, gc.get_objects())
+        objs = list(filter(t, gc.get_objects()))
 
         s = sum(sys.getsizeof(o) for o in objs) * 1024 ** -2
         nn = len(objs)
-        print '{:<50s}:{} {} {} {}'.format(n, nn, s, prev, nn - prev)
+        print('{:<50s}:{} {} {} {}'.format(n, nn, s, prev, nn - prev))
         return nn
 
     elif inst:
         t = lambda x: isinstance(x, inst)
         n = str(inst)
-        objs = filter(t, gc.get_objects())
+        objs = list(filter(t, gc.get_objects()))
         s = sum(sys.getsizeof(o) for o in objs) * 1024 ** -2
-        print '{:<50s}:{} {}'.format(n, len(objs), s)
+        print('{:<50s}:{} {}'.format(n, len(objs), s))
 
     else:
         objs = gc.get_objects()
@@ -396,7 +400,7 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
 
         for g, s, n in sorted(xx, key=lambda x: x[1]):
             if s > 1000:
-                print '{:<50s} {} {}'.format(g, s, n)
+                print('{:<50s} {} {}'.format(g, s, n))
 
     if referrers:
         for obj in objs:
@@ -407,15 +411,15 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
 
 
 def show_referrers(obj):
-    print '============ {} referrers =========='.format(obj)
+    print('============ {} referrers =========='.format(obj))
     for ri in gc.get_referrers(obj):
-        print ri
+        print(ri)
 
 
 def show_referents(obj):
-    print '============ {} referents =========='.format(obj)
+    print('============ {} referents =========='.format(obj))
     for ri in gc.get_referents(obj):
-        print ri
+        print(ri)
 
 
 if __name__ == '__main__':

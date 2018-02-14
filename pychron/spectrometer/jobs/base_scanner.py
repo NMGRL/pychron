@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import random
 
 from traits.api import Bool, Any, Float, \
@@ -151,7 +153,7 @@ class BaseScanner(PersistenceLoggable):
 
     # handlers
     def _start_scanner_fired(self):
-        print 'start scanner'
+        print('start scanner')
         self.info('starting scanner')
         self.new_scanner_enabled = False
         self.start_scanner_enabled = False
@@ -164,7 +166,7 @@ class BaseScanner(PersistenceLoggable):
         self.new_scanner_enabled = True
 
     def _new_scanner_fired(self):
-        print 'new scanner'
+        print('new scanner')
         self.info('new scanner')
         self.new_scanner_enabled = False
         self.start_scanner_enabled = True

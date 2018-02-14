@@ -19,6 +19,7 @@
 # from pychron.core.ui import set_toolkit
 # set_toolkit('qt4')
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from unittest import TestCase
 
 from numpy import linspace, polyval
@@ -99,8 +100,7 @@ class OLSRegressionTest2(RegressionTestCase, TestCase):
         self.reg.calculate()
 
     def testcoefficients(self):
-        self.assertListEqual(list(map(lambda x: round(x, 6),
-                                      self.reg.coefficients[::-1])),
+        self.assertListEqual(list([round(x, 6) for x in self.reg.coefficients[::-1]]),
                              self.solution['coefficients'])
 
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):

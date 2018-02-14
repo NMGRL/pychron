@@ -20,6 +20,7 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
 from traits.trait_types import Range
 
 from pychron.core.ui.qt.dial_editor import DialEditor

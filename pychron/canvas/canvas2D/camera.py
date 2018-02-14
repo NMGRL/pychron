@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import yaml
 from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
 # ============= standard library imports ========================
@@ -22,6 +23,7 @@ from numpy import polyval, exp
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.loggable import Loggable
+from six.moves import map
 
 
 class BaseCamera(HasTraits):
@@ -80,7 +82,7 @@ class BaseCamera(HasTraits):
             func = eval(ff, {'exp': exp})
 
         if self.zoom_coefficients:
-            pxpermm = func(map(float, self.zoom_coefficients.split(',')), zoom)
+            pxpermm = func(list(map(float, self.zoom_coefficients.split(','))), zoom)
         else:
             pxpermm = 1
 

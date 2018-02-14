@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 from traits.api import Instance, on_trait_change, List
 # ============= standard library imports ========================

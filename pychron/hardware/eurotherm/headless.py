@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
 from pychron.hardware.eurotherm.base import BaseEurotherm
 
@@ -33,8 +35,8 @@ if __name__ == '__main__':
     h = HeadlessEurotherm(name='test_eurotherm', configuration_dir_name='furnace')
     h.bootstrap()
 
-    print h.communicator.handle
-    print h.get_process_value()
+    print(h.communicator.handle)
+    print(h.get_process_value())
 # ============= EOF =============================================
 
 

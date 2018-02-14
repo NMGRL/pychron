@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import PAction as Action, PTaskAction as TaskAction
 from pychron.pychron_constants import DVC_PROTOCOL

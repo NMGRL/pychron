@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 from itertools import groupby
 
@@ -160,13 +161,13 @@ class BaseStageMap(Loggable):
         d = 'north', 'east', 'south', 'west', 'center'
         try:
             idx = d.index(h)
-        except IndexError, e:
+        except IndexError as e:
             self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
             return
 
         try:
             key = self.calibration_holes[idx]
-        except IndexError, e:
+        except IndexError as e:
             self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}'.format(idx, e))
             self.debug('calibration holes={}'.format(self.calibration_holes))
             return

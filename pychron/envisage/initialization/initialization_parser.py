@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # from lxml.etree import Element
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.message_dialog import warning
 # ============= standard library imports ========================
 import os
@@ -33,7 +35,7 @@ def handle_uncaught_exception(func):
     def _handle(*args, **kw):
         try:
             return func(*args, **kw)
-        except Exception, e:
+        except Exception as e:
             import traceback
 
             traceback.print_exc()
@@ -217,7 +219,7 @@ class InitializationParser(XMLParser):
             port = text(rpc.find('port'))
             host = text(rpc.find('host'))
             return mode, host, int(port),
-        except Exception, e:
+        except Exception as e:
             pass
 
         return None, None, None
@@ -289,7 +291,7 @@ class InitializationParser(XMLParser):
 
     def _get_parameters(self, subtree, tag, all_=False, element=False):
         if subtree is None:
-            print subtree
+            print(subtree)
         return [d if element else d.text.strip()
                 for d in subtree.findall(tag)
                 if all_ or to_bool(d.get('enabled'))]

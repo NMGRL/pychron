@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Float, List
 from traitsui.api import View, UItem, VGroup, HSplit, TabularEditor
 from traitsui.editors import TextEditor

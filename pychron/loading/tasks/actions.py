@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.action.task_action import TaskAction
 
 from pychron.envisage.resources import icon

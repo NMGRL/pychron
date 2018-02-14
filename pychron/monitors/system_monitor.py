@@ -16,6 +16,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, Bool, List
 # from traitsui.api import View, Item
 from pychron.monitors.monitor import Monitor

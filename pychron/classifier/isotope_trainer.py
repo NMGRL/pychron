@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Button, Str
 from traitsui.api import View, UItem, HGroup, VGroup
 from traitsui.handler import Handler

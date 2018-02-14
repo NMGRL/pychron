@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Button, Event, Property, \
     Any, Bool, Enum, Instance, cached_property, String
 from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
@@ -27,6 +29,7 @@ from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker, GridMaker
+import six
 # from pychron.canvas.scene_viewer import LaserMineViewer
 # from pychron.regex import TRANSECT_REGEX
 maker_dict = dict(polygon=PolygonMaker,
@@ -116,9 +119,9 @@ class PointsProgrammer(Manager):
             try:
                 int(v)
                 self.point = canvas.get_point(v)
-                print v, self.point
-            except ValueError, e:
-                print 'exception', e
+                print(v, self.point)
+            except ValueError as e:
+                print('exception', e)
 
                 # ===============================================================================
                 # handlers
@@ -244,7 +247,7 @@ class PointsProgrammer(Manager):
     def _load_polygons(self, polygons, ptargs):
         point_color = self.maker.point_color
         canvas = self.canvas
-        for k, po in polygons.iteritems():
+        for k, po in six.iteritems(polygons):
             canvas._new_polygon = True
             v = po['velocity']
             use_convex_hull = po['use_convex_hull']

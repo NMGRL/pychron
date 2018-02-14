@@ -17,6 +17,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import HasTraits, \
     Str, Float, List, Any, Color, Property
 from traitsui.api import View, Item, Group, HGroup, \
@@ -26,7 +27,7 @@ from traitsui.table_column import ObjectColumn
 # =============standard library imports ========================
 import os
 import glob
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import copy
 # =============local library imports  ==========================
 

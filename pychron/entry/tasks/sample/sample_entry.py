@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import yaml
@@ -160,7 +162,7 @@ class SampleSpec(Spec):
         pname = project['name']
         piname = project['principal_investigator']['name']
         for pp in pps:
-            print pname, pp.name, piname, pp.principal_investigator.name
+            print(pname, pp.name, piname, pp.principal_investigator.name)
             if pp.name == pname and pp.principal_investigator.name == piname:
                 obj.project = pp
                 break

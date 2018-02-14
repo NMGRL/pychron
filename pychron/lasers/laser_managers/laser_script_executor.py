@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 import os
 from threading import Thread
 
@@ -24,6 +25,8 @@ from pychron.core.helpers.filetools import pathtolist
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import map
+from six.moves import range
 
 
 class LaserScriptExecutor(Loggable):
@@ -100,7 +103,7 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
         try:
             self.message = line
             func(*args)
-        except BaseException, e:
+        except BaseException as e:
             self.warning('Failed to execute err:{}, line={}'.format(e, line))
             self.message = ''
 
@@ -116,7 +119,7 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
         self.laser_manager.stage_manager.set_z(z, block=True)
 
     def _cmd_move_xy(self, x, y):
-        x, y = map(float, (x, y))
+        x, y = list(map(float, (x, y)))
         self.laser_manager.linear_move(x, y, block=True)
 
     def _cmd_fire(self, nburst):
@@ -134,7 +137,7 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
 
     def _gen_line(self, x, y, step, n, orientation):
         xi, yi = x, y
-        for i in xrange(n):
+        for i in range(n):
             if orientation == 'vertical':
                 yi = y + step * i
             else:

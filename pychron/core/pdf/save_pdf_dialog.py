@@ -16,6 +16,7 @@
 # ============= enthought library imports =======================
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 
 from kiva.fonttools.font_manager import findfont, FontProperties

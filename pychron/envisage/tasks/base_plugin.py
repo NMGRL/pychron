@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.plugin import Plugin
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

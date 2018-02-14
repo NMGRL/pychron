@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
@@ -60,7 +61,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
     def set_connection(self, ts, appname, username, devname, com, addr, status):
         try:
             conn = self.get_connection(appname, devname)
-        except SQLAlchemyError, e:
+        except SQLAlchemyError as e:
             self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
             return
 

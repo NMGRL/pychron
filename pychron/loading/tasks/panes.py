@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
@@ -45,7 +46,7 @@ class PositionsAdapter(TabularAdapter):
         item = getattr(obj, trait)[row]
         c = item.color
         if hasattr(c, '__iter__'):
-            c = map(lambda x: x * 255, c)
+            c = [x * 255 for x in c]
         return c
 
     def get_text_color(self, obj, trait, row, column=0):

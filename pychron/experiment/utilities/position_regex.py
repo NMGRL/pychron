@@ -15,7 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
+from six.moves import map
+from six.moves import range
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,7 +27,7 @@ import re
 def pos_gen(s, e, inc=1):
     if s > e:
         inc *= -1
-    return range(s, e + inc, inc)
+    return list(range(s, e + inc, inc))
 
 
 def increment_list(ps, start=0):
@@ -41,7 +45,7 @@ def increment_list(ps, start=0):
 
 
 def slice_func(pos):
-    s, e = map(int, pos.split('-'))
+    s, e = list(map(int, pos.split('-')))
     return pos_gen(s, e)
 
 
@@ -52,7 +56,7 @@ def islice_func(pos, start=0):
 
 
 def sslice_func(pos):
-    s, e, inc = map(int, pos.split(':'))
+    s, e, inc = list(map(int, pos.split(':')))
     return pos_gen(s, e, inc)
 
 
@@ -64,7 +68,7 @@ def isslice_func(pos):
 
 
 def pslice_func(pos):
-    s, e = map(int, pos.split(':'))
+    s, e = list(map(int, pos.split(':')))
     return pos_gen(s, e)
 
 
@@ -187,6 +191,6 @@ if __name__ == '__main__':
         for r, f, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
                               TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
             if r.match(pos):
-                print 'matched {} to {}'.format(name, pos)
-                print f(pos)
+                print('matched {} to {}'.format(name, pos))
+                print(f(pos))
 # ============= EOF =============================================

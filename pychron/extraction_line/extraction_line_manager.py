@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -35,6 +37,8 @@ from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
 from pychron.wait.wait_group import WaitGroup
+import six
+from six.moves import range
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -124,8 +128,8 @@ class ExtractionLineManager(Manager, Consoleable):
         for attr in attrs:
             try:
                 bind_preference(self, attr, '{}.{}'.format(prefid, attr))
-            except BaseException, e:
-                print 'fffffffff', attr, e
+            except BaseException as e:
+                print('fffffffff', attr, e)
         # bind_preference(self, 'canvas_path', '{}.canvas_path'.format(prefid))
         # bind_preference(self, 'canvas_config_path', '{}.canvas_config_path'.format(prefid))
         # bind_preference(self, 'valves_path', '{}.valves_path'.format(prefid))
@@ -156,9 +160,9 @@ class ExtractionLineManager(Manager, Consoleable):
             except KeyError:
                 self.debug('could not remove "{}". not in dict {}'.format(name,
                                                                           ','.join(
-                                                                              self.link_valve_actuation_dict.keys())))
+                                                                              list(self.link_valve_actuation_dict.keys()))))
         else:
-            self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.func_name))
+            self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.__name__))
             self.link_valve_actuation_dict[name] = func
 
     def enable_auto_reload(self):
@@ -297,7 +301,7 @@ class ExtractionLineManager(Manager, Consoleable):
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
-                for k, v in self.switch_manager.switches.iteritems():
+                for k, v in six.iteritems(self.switch_manager.switches):
                     vc = c.get_object(k)
                     if vc:
                         vc.soft_lock = v.software_lock
@@ -660,7 +664,7 @@ class ExtractionLineManager(Manager, Consoleable):
                             func(name, action)
                         except KeyError:
                             self.debug('name="{}" not in '
-                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
+                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
 
             return result
 
@@ -780,7 +784,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             net = self.network
             if self.switch_manager:
-                for k, vi in self.switch_manager.switches.iteritems():
+                for k, vi in six.iteritems(self.switch_manager.switches):
                     net.set_valve_state(k, vi.state)
             self.reload_canvas()
 

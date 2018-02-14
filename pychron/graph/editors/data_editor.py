@@ -17,12 +17,14 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Any, Float, List, Instance, Bool
 from traitsui.api import View, Item, Group, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # =============standard library imports ========================
 from numpy import vstack
+from six.moves import range
 # =============local library imports  ==========================
 
 
@@ -145,7 +147,7 @@ class RegressionDataEditor(DataEditor):
 
         for i in range(n):
             name, data = self._table_factory(i)
-            if name in self.traits().keys():
+            if name in list(self.traits().keys()):
                 self.trait_set(**{name: data})
             else:
                 self.add_trait(name, List(data))

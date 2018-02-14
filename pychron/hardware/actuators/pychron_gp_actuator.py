@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ========== standard library imports ==========
+from __future__ import absolute_import
 import time
 
 # ========== local library imports =============
-from gp_actuator import GPActuator
+from .gp_actuator import GPActuator
 from pychron.hardware.actuators import get_valve_name
 from pychron.core.communication_helper import trim, trim_bool
 

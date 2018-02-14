@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.text_box_overlay import TextBoxOverlay
 from enable.base_tool import BaseTool, KeySpec
 from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
 # ============= standard library imports ========================
 from datetime import datetime
+from six.moves import zip
 
 
 # ============= local library imports  ==========================
@@ -130,8 +132,7 @@ class DataToolOverlay(TextBoxOverlay):
         if 'coeffs' in d:
             cs = d['coeffs']
             xx = ['', 'x', 'x2', 'x3']
-            ss = '+ '.join(map(lambda x: '{:0.2e}{}'.format(*x),
-                               zip(cs, xx[:len(cs)][::-1])))
+            ss = '+ '.join(['{:0.2e}{}'.format(*x) for x in zip(cs, xx[:len(cs)][::-1])])
 
             ns.append(ss)
 

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.hardware.core.data_helper import make_bitarray
 '''
     National Control Devices
@@ -136,7 +138,7 @@ if __name__ == '__main__':
 #    time.sleep(1)
 #    a.close_channel(3)
 #    time.sleep(1)
-    print a.get_contact_state(6, bank=11)
+    print(a.get_contact_state(6, bank=11))
 
 
 # ============= EOF =============================================

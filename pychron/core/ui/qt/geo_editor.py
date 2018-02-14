@@ -22,6 +22,7 @@
     pychron uses pyside, qgis uses pyqt4
 
 """
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 

@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from numpy import linspace
 from scipy.optimize import leastsq
 from scipy.stats import norm
@@ -68,7 +70,7 @@ mm = sys3.argmax()
 mm = xs[mm]
 p = [(1, mm, 1), (1, mm, 1), (1, mm, 1)]
 plsq = leastsq(res, p, args=(sys3, xs))
-print plsq
+print(plsq)
 plt.vlines(plsq[0][1], 0, 1.8)
 plt.vlines(plsq[0][4], 0, 1.8)
 plt.vlines(plsq[0][7], 0, 1.8)

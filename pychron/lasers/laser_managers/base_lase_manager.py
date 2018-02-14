@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
 
@@ -26,6 +28,8 @@ from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from six.moves import map
+from six.moves import zip
 
 
 @provides(ILaserManager)
@@ -74,7 +78,7 @@ class BaseLaserManager(Manager):
         self.debug('got position {}'.format(pos))
         if pos:
             if self.stage_manager:
-                self.stage_manager.trait_set(**dict(zip(('_x_position', '_y_position', '_z_position'), pos)))
+                self.stage_manager.trait_set(**dict(list(zip(('_x_position', '_y_position', '_z_position'), pos))))
             return pos
 
     def wake(self):
@@ -228,8 +232,8 @@ class BaseLaserManager(Manager):
                 try:
                     if not cmpfunc(resp):
                         cnt += 1
-                except (ValueError, TypeError), e:
-                    print '_blocking exception {}'.format(e)
+                except (ValueError, TypeError) as e:
+                    print('_blocking exception {}'.format(e))
                     cnt = 0
 
                 if position_callback:
@@ -276,7 +280,7 @@ class BaseLaserManager(Manager):
         if config.has_section(section):
             cs = config.get(section, 'coefficients')
             try:
-                coeffs = map(float, cs.split(','))
+                coeffs = list(map(float, cs.split(',')))
             except ValueError:
                 self.warning_dialog('Invalid power calibration {}'.format(cs))
                 return
@@ -328,8 +332,8 @@ class BaseLaserManager(Manager):
         if not self.use_video:
             try:
                 self.stage_manager.video.close()
-            except AttributeError, e:
-                print 'use video 1', e
+            except AttributeError as e:
+                print('use video 1', e)
 
         try:
             sm = self._stage_manager_factory(self.stage_args)
@@ -343,8 +347,8 @@ class BaseLaserManager(Manager):
             sm.load()
 
             self.stage_manager = sm
-        except AttributeError, e:
-            print 'use video 2', e
+        except AttributeError as e:
+            print('use video 2', e)
 
     def _stage_manager_factory(self, args):
         self.stage_args = args

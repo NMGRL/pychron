@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
@@ -361,7 +363,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):
-        print 'asfdasfdasdfasdf', info, obj
+        print('asfdasfdasdfasdf', info, obj)
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()

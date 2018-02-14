@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Button, Bool, Property, \
     DelegatesTo, List, Str
@@ -332,7 +334,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         # rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
         rf.on_trait_change(self._auto_save, 'auto_save_needed')
-        print 'making new factory', id(rf)
+        print('making new factory', id(rf))
         return rf
 
     # handlers
@@ -442,7 +444,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
         q.changed = True
         rf.update_info_needed = True
         rf.suppress_meta = False
-        print 'totaltime', time.time() - st
+        print('totaltime', time.time() - st)
         pd.close()
         rf.labnumber = ''
         rf.sample = ''

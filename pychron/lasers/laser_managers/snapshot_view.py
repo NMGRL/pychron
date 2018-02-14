@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.ui import set_qt
 set_qt()
 # ============= enthought library imports =======================
@@ -39,8 +41,8 @@ class SnapshotView(HasTraits):
             try:
                 img = Image.open(buf)
                 self.image = img.convert('RGBA')
-            except IOError, e:
-                print 'snapshot view {}'.format(e)
+            except IOError as e:
+                print('snapshot view {}'.format(e))
                 pass
 
     def traits_view(self):

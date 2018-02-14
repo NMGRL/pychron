@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from traits.has_traits import HasTraits
 
 from pychron.experiment.queue.experiment_queue import ExperimentQueue

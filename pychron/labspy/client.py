@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import hashlib
 import os
 import time
@@ -31,6 +32,8 @@ from pychron.labspy.database_adapter import LabspyDatabaseAdapter
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import SCRIPT_NAMES, NULL_STR
+from six.moves import map
+from six.moves import range
 
 
 def auto_connect(func):
@@ -153,7 +156,7 @@ class LabspyClient(Loggable):
                                            dev.communicator.address,
                                            dev.test_connection(),
                                            verbose=verbose)
-                except BaseException, e:
+                except BaseException as e:
                     self.debug('Connection status. update connection failed: '
                                'error={}'.format(e))
                     break
@@ -255,7 +258,7 @@ class LabspyClient(Loggable):
         try:
             self.db.add_measurement(dev, tag, val, unit)
             self._check_notifications(dev, tag, val, unit)
-        except BaseException, e:
+        except BaseException as e:
             self.debug('failed adding measurement. {}'.format(e))
 
     def connect(self):

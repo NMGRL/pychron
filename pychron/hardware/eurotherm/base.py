@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Float, Property, provides, TraitError
 # ============= standard library imports ========================
 import os
@@ -23,6 +24,8 @@ import re
 from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.eurotherm import STX, ETX, EOT, ACK, ENQ
 from pychron.paths import paths
+from six.moves import map
+from functools import reduce
 
 
 PID_REGEX = re.compile(r'[A-Z]{2},\d+(;[A-Z]{2},\d+)*')
@@ -33,7 +36,7 @@ def get_pid_parameters(v):
     """
     p = os.path.join(paths.device_dir, 'furnace', 'eurotherm_control_parameters.txt')
     with open(p) as f:
-        params = [map(str.strip, l.split('\t')) for l in f]
+        params = [list(map(str.strip, l.split('\t'))) for l in f]
 
     for i, pa in enumerate(params[:-1]):
 
@@ -220,7 +223,7 @@ class BaseEurotherm(HasTraits):
             # extract the data
             try:
                 resp = float(resp)
-            except ValueError, e:
+            except ValueError as e:
                 resp = None
                 self.warning(e)
 

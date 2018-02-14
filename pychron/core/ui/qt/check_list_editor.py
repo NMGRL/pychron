@@ -14,10 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from traitsui.editors import CheckListEditor as tCheckListEditor
 from traitsui.qt4.check_list_editor import CustomEditor, parse_value
 
 from traits.api import Bool
+import six
+from six.moves import range
 
 
 class _CheckListEditor(CustomEditor):
@@ -27,7 +30,7 @@ class _CheckListEditor(CustomEditor):
 
         else:
             # sv = self.string_value
-            if (len(values) > 0) and isinstance(values[0], basestring):
+            if (len(values) > 0) and isinstance(values[0], six.string_types):
                 values = [(x, x) for x in values]
 
             self.values = valid_values = [x[0] for x in values]
@@ -41,12 +44,12 @@ class _CheckListEditor(CustomEditor):
                     try:
                         del cur_value[i]
                         modified = True
-                    except TypeError, e:
+                    except TypeError as e:
                         pass
                         # logger.warn('Unable to remove non-current value [%s] from '
                         #             'values %s', cur_value[i], values)
             if modified:
-                if isinstance(self.value, basestring):
+                if isinstance(self.value, six.string_types):
                     cur_value = ','.join(cur_value)
                 self.value = cur_value
 

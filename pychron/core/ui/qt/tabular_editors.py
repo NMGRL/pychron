@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt import QtCore
 from pyface.qt.QtCore import QRegExp, Qt
 from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \

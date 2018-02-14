@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtCore import QRect, QSize
 from pyface.qt.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
     QColor, QPainter, QPen

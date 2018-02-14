@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.util.guisupport import get_app_qt4
 from traits.etsconfig.api import ETSConfig
 from traitsui.qt4.ui_panel import heading_text
@@ -22,7 +24,7 @@ from pychron.environment.util import set_application_home
 
 ETSConfig.toolkit = "qt4"
 
-from ConfigParser import NoSectionError
+from six.moves.configparser import NoSectionError
 
 from pyface.confirmation_dialog import confirm
 from pyface.message_dialog import warning
@@ -480,7 +482,7 @@ def initialize_version(appname, debug):
     logger.debug('using Pychron environment: {}'.format(env))
     paths.build(env)
 
-    from ConfigParser import ConfigParser
+    from six.moves.configparser import ConfigParser
     cp = ConfigParser()
     pref_path = os.path.join(ETSConfig.application_home, 'preferences.ini')
     cp.read(pref_path)
@@ -536,13 +538,13 @@ def add_eggs(root):
             for egg_name in eggs:
                 # sys.path.insert(0, os.path.join(root, egg_name))
                 sys.path.append(os.path.join(root, egg_name))
-                print os.path.join(root, egg_name)
+                print(os.path.join(root, egg_name))
 
 
 def build_globals(user, debug):
     try:
         from pychron.envisage.initialization.initialization_parser import InitializationParser
-    except ImportError, e:
+    except ImportError as e:
         from pyface.message_dialog import warning
 
         warning(None, str(e))

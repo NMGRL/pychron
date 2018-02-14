@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import math
 
 from traits.api import Instance, Bool, Enum, Float, Color
@@ -23,6 +24,7 @@ from pychron.canvas.canvas2D.scene.primitives.calibration import CalibrationObje
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.core.geometry.affine import AffineTransform
 from pychron.stage.maps.base_stage_map import BaseStageMap
+from six.moves import map
 
 
 class MapCanvas(SceneCanvas):
@@ -136,7 +138,7 @@ class MapCanvas(SceneCanvas):
 
         if not all(map(rgb, color)):
             f = lambda x: x / 255.
-            color = map(f, color)
+            color = list(map(f, color))
         return color
 
     def _draw_map(self, gc, *args, **kw):

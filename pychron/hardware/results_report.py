@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports ======================
+from __future__ import absolute_import
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, CStr, Button

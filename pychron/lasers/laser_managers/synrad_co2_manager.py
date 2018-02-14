@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, Instance, DelegatesTo
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from traitsui.api import VGroup, Item, HGroup

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import StringIO
 import struct
 
@@ -26,6 +27,8 @@ from uncertainties import ufloat
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
+import six
+from six.moves import range
 
 
 def get_fn(blob):
@@ -192,7 +195,7 @@ class MassSpecAnalysis(Analysis):
         # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
-        for iso in self.isotopes.itervalues():
+        for iso in six.itervalues(self.isotopes):
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
                 if fn is not None:
@@ -203,15 +206,15 @@ class MassSpecAnalysis(Analysis):
         mb = Blob(blob)
         n_r_pts = mb.short()
         n_pos = mb.short()
-        ps = [mb.single() for i in xrange(n_pos)]
+        ps = [mb.single() for i in range(n_pos)]
 
         n_seg = mb.short()
         seg_end = []
         params = []
         seg_err = []
-        for i in xrange(n_seg):
+        for i in range(n_seg):
             seg_end.append(mb.single())
-            params.append([mb.double() for i in xrange(4)])
+            params.append([mb.double() for i in range(4)])
             seg_err.append(mb.single())
 
         v = params[0][0]

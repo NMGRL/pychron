@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -32,6 +34,7 @@ from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
 from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.core.codetools.inspection import caller
 from pychron.globals import globalv
+import six
 
 W = 2
 H = 2
@@ -169,8 +172,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
             tt = self.active_item.get_tooltip_text()
             ctrl.setToolTip(tt)
 
-        except AttributeError, e:
-            print 'select mouse move {}'.format(e)
+        except AttributeError as e:
+            print('select mouse move {}'.format(e))
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):
@@ -279,7 +282,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 self.invalidate_and_redraw()
 
     def iter_valves(self):
-        return (i for i in self.scene.valves.itervalues())
+        return (i for i in six.itervalues(self.scene.valves))
 
     # private
     def _select_hook(self, item):
@@ -298,7 +301,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             s = next((i for i in self.iter_valves() if i.name == name), None)
             if s is None:
                 names = [i.name for i in self.iter_valves()]
-                print 'No switch with name "{}". Names={}'.format(name, names)
+                print('No switch with name "{}". Names={}'.format(name, names))
 
             return s
 

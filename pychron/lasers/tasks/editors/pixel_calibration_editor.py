@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
 
 class PixelCalibrationEditor(LaserEditor):

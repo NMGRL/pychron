@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Button, Instance, String, Property
 from traitsui.api import View, HGroup, Item, Handler
 # ============= standard library imports ========================
@@ -28,6 +29,7 @@ from pychron.config_loadable import ConfigLoadable
 from pychron.globals import globalv
 from pychron.core.ui.led_editor import LED, LEDEditor
 from pychron.tx.errors import PychronCommErrorCode
+from six.moves import range
 
 
 class CRHandler(Handler):
@@ -172,7 +174,7 @@ class CommandRepeater(ConfigLoadable):
                 sent = self._sock.send(s[totalsent:])
                 totalsent += sent
 
-        except socket.error, e:
+        except socket.error as e:
             success = self._handle_socket_send_error(e, s, verbose)
 
         return success, e
@@ -196,7 +198,7 @@ class CommandRepeater(ConfigLoadable):
             rd = ''.join(ss)
             # self.debug('processor response len {}'.format(len(rd)))
             success = True
-        except socket.error, e:
+        except socket.error as e:
             success, rd = self._handle_socket_read_error(e, count, verbose)
 
         return success, rd
@@ -218,7 +220,7 @@ class CommandRepeater(ConfigLoadable):
                 self.open()
                 try:
                     self._sock.connect(self.path)
-                except socket.error, e:
+                except socket.error as e:
                     if verbose:
                         self.debug('connecting to {} failed. {}'.
                                    format(self.path, e))
@@ -229,7 +231,7 @@ class CommandRepeater(ConfigLoadable):
                     self.debug('send success on retry {}'.format(i + 1))
                 return True
 
-            except socket.error, e:
+            except socket.error as e:
                 if verbose:
                     self.debug('send retry {} failed. {}'.format(i + 1, e))
 

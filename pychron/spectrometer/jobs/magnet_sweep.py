@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 # ============= standard library imports ========================
@@ -23,6 +24,7 @@ from numpy.core.umath import exp
 import random
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.sweep import BaseSweep
+from six.moves import range
 
 
 def multi_peak_generator(values):
@@ -48,7 +50,7 @@ def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.004, chan
             # for j in xrange(channels):
             d = magnitude + magnitude / 50.0 * random.random()
 
-        yield [d * (j + 1) for j in xrange(channels)]
+        yield [d * (j + 1) for j in range(channels)]
 
 
 class AccelVoltageSweep(BaseSweep):

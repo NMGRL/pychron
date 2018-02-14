@@ -19,7 +19,10 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import math
+from six.moves import map
+from six.moves import range
 
 """
     http://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
@@ -63,9 +66,9 @@ def convert_color(color, output='rgbF'):
 
     tofloat = lambda x: x / 255.
     if output == 'rgbF':
-        return map(tofloat, rgb[:3])
+        return list(map(tofloat, rgb[:3]))
     elif output == 'rgbaF':
-        return map(tofloat, rgb)
+        return list(map(tofloat, rgb))
 
 
 def wake_screen():
@@ -89,7 +92,7 @@ def wake_screen():
     random_point = rgen()
 
     for i in range(5):
-        x, y = random_point.next()
+        x, y = next(random_point)
         q.setPos(x, y)
         time.sleep(0.1)
     q.setPos(ox, oy)

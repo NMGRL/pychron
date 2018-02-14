@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, Dict, Float, Any, Instance
 from traitsui.api import View, VGroup, Item, RangeEditor
 # from pyface.timer.api import Timer
@@ -462,10 +463,10 @@ class MotionController(CoreDevice):
         return self._get_negative_limit('z')
 
     def _get_positive_limit(self, key):
-        return self.axes[key].positive_limit if self.axes.has_key(key) else 0
+        return self.axes[key].positive_limit if key in self.axes else 0
 
     def _get_negative_limit(self, key):
-        return self.axes[key].negative_limit if self.axes.has_key(key) else 0
+        return self.axes[key].negative_limit if key in self.axes else 0
 
     # ===============================================================================
     # view
@@ -480,7 +481,7 @@ class MotionController(CoreDevice):
         g = VGroup(show_border=True,
                    label='Axes')
 
-        keys = self.axes.keys()
+        keys = list(self.axes.keys())
         keys.sort()
         for k in keys:
 

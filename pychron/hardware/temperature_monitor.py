@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Float, Property, Str
 from traits.trait_errors import TraitError
 from traitsui.api import Item, EnumEditor, VGroup
 
-from core.core_device import CoreDevice
+from .core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
 
 
@@ -243,8 +245,8 @@ if __name__ == '__main__':
     a.address = '01'
     a.load_communicator('serial', port='usbserial-FTT3I39P', baudrate=9600)
     a.open()
-    print a.communicator.handle
-    print a.read_input_type()
-    print a.read_temperature()
+    print(a.communicator.handle)
+    print(a.read_input_type())
+    print(a.read_temperature())
 
 # ============= EOF ============================================

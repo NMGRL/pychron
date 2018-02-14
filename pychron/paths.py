@@ -21,6 +21,8 @@ add a path verification function
 make sure directory exists and build if not
 """
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pickle
 import shutil
@@ -36,7 +38,7 @@ def get_file_text(d):
     try:
         mod = __import__('pychron.file_defaults', fromlist=[d])
         txt = getattr(mod, d)
-    except BaseException, e:
+    except BaseException as e:
         pass
     return txt
 
@@ -540,8 +542,8 @@ class Paths(object):
             if p is not None:
                 try:
                     p = getattr(paths, p)
-                except AttributeError, e:
-                    print 'write_file_defaults', e
+                except AttributeError as e:
+                    print('write_file_defaults', e)
 
             self._write_default_file(p, txt, o or force)
 
@@ -607,7 +609,7 @@ def migrate_hidden():
                 src = os.path.join(root, f)
                 dst = os.path.join(droot, f)
                 if not os.path.isfile(dst):
-                    print 'moving {} to {}'.format(src, dst)
+                    print('moving {} to {}'.format(src, dst))
                     shutil.move(src, dst)
 
 

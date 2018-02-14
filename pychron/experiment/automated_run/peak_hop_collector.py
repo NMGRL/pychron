@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Int, Instance
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.experiment.automated_run.data_collector import DataCollector
 from pychron.experiment.automated_run.hop_util import generate_hops
+from six.moves import zip
 
 
 class PeakHopCollector(DataCollector):
@@ -131,7 +133,7 @@ class PeakHopCollector(DataCollector):
                 return
 
             if count == 0:
-                zd = zip(dets, defls)
+                zd = list(zip(dets, defls))
                 self.debug('Peak hop Detectors={}'.format(dets))
                 self.debug('Peak hop Deflections={}'.format(defls))
                 self.debug('Peak hop DeflectionsPairs={}'.format(zd))
