@@ -24,12 +24,13 @@ class SQLFilter(HasTraits):
     attribute = Str
     comparator = Enum('=', '<', '>', '<=', '>=', '!=', 'between', 'not between')
     criterion = Str
-    attributes = List(['age', 'age_error'])
+    attributes = List
 
     chain_operator = Enum('and', 'or')
     show_chain = Bool(True)
     remove_button = Button
     remove_visible = Bool(True)
+
     # _eval_func = None
 
     # def __init__(self, txt=None, *args, **kw):
@@ -103,18 +104,18 @@ class SQLFilter(HasTraits):
 class AdvancedFilterView(HasTraits):
     filters = List
     add_filter_button = Button
-    attributes = List
+    attributes = List(['age', 'age_error'])
 
     def demo(self):
-        self.filters=[SQLFilter(comparator='<',
-                                attribute='Ar40',
-                                remove_visible=False,
-                                show_chain=False,
-                                criterion='55'),
-                      SQLFilter(comparator='<',
-                                attribute='Ar39',
-                                chain='and',
-                                criterion='55')]
+        self.filters = [SQLFilter(comparator='<',
+                                  attribute='Ar40',
+                                  remove_visible=False,
+                                  show_chain=False,
+                                  criterion='55'),
+                        SQLFilter(comparator='<',
+                                  attribute='Ar39',
+                                  chain='and',
+                                  criterion='55')]
 
     @on_trait_change('filters:remove_button')
     def _handle_remove(self, obj, name, old, new):

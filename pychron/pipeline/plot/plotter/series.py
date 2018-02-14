@@ -175,13 +175,13 @@ class Series(BaseSeries):
                                                               match.group('dd'),
                                                               match.group('di'))
             if match.group('rem'):
-                ytitle = '{}{}'.format(match.group('rem'))
+                ytitle = '{}{}'.format(ytitle, match.group('rem'))
         else:
             match = ISOTOPE_RE.match(ytitle)
             if match:
                 ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
                 if match.group('rem'):
-                    ytitle = '{}{}'.format(match.group('rem'))
+                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
         if '<sup>' in ytitle or '<sub>' in ytitle:

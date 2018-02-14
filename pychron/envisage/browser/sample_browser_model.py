@@ -168,7 +168,6 @@ class SampleBrowserModel(BrowserModel):
             attrs = self.dvc.get_search_attributes()
             if attrs:
                 attrs = list(zip(*attrs)[0])
-
             m = AdvancedFilterView(attributes=attrs)
             # m.demo()
             self._afilter = m
