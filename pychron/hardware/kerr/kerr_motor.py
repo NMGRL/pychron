@@ -113,9 +113,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         if self.nominal_position is not None:
             move_to_nominal = True
             if not globalv.ignore_initialization_questions:
-                move_to_nominal = self.confirmation_dialog(
-                    'Would you like to set the {} motor to its nominal pos of {}'.format(self.name.upper(),
-                                                                                         self.nominal_position))
+                msg = 'Would you like to set the {} motor to its nominal pos of {}'.format(self.name.upper(),
+                                                                                           self.nominal_position)
+                move_to_nominal = self.confirmation_dialog(msg)
 
             if move_to_nominal:
                 # move to the home position
@@ -169,7 +169,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         cmds.append((addr, cmd, 100, msg))
         if motor_off:
-            cmds.append((addr, '1707', 100, 'Moto ON'))
+            cmds.append((addr, '1707', 100, 'Motor ON'))
 
             # if motor_off:
             # cmds = [(addr, '', 100, )]
@@ -318,7 +318,8 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         psteps = None
         while 1:
             steps = self.load_data_position(set_pos=False)
-            invoke_in_main_thread(self.trait_set, homing_position=steps)
+            # invoke_in_main_thread(self.trait_set, homing_position=steps)
+            self.homing_position = steps
             status = self.read_defined_status()
 
             if not self._test_status_byte(status, setbits=[7]):

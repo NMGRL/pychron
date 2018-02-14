@@ -64,9 +64,9 @@ class BaseLaserManager(Manager):
         else:
             return True, None
 
-    def initialize_video(self):
-        if self.use_video:
-            self.stage_manager.initialize_video()
+    # def initialize_video(self):
+    #     if self.use_video:
+    #         self.stage_manager.initialize_video()
 
     def update_position(self):
         self.debug('update position')

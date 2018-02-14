@@ -15,9 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import yaml
 from apptools.preferences.preference_binding import bind_preference
+from skimage.draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
-
+from pychron.core.ui.thread import Thread as UIThread, sleep
 import json
 import os
 import shutil
@@ -26,7 +28,7 @@ from threading import Thread, Timer, Event as TEvent
 
 from numpy import copy, array
 
-from pychron.canvas.canvas2D.camera import Camera
+from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers import binpack
 from pychron.core.helpers.binpack import pack, format_blob, encode_blob
 from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
@@ -35,7 +37,7 @@ from pychron.image.video import Video, pil_save
 from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from stage_manager import StageManager
-
+from pychron.core.ui.thread import Thread as QThread
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
         VideoLaserTrayCanvas
@@ -48,6 +50,8 @@ class VideoStageManager(StageManager):
     """
     """
     video = Instance(Video)
+    camera = Instance(BaseCamera)
+
     canvas_editor_klass = VideoComponentEditor
 
     camera_zoom_coefficients = Property(String(enter_set=True, auto_set=False),
@@ -55,6 +59,8 @@ class VideoStageManager(StageManager):
     _camera_zoom_coefficients = String
 
     use_auto_center_interpolation = Bool(False)
+
+    configure_camera_device_button = Button
 
     autocenter_button = Button('AutoCenter')
     configure_autocenter_button = Button('Configure')
@@ -89,7 +95,6 @@ class VideoStageManager(StageManager):
     auto_upload = Bool(False)
     keep_local_copy = Bool(False)
 
-    camera = Instance(Camera)
     lumen_detector = Instance(LumenDetector, ())
 
     render_with_markup = Bool(False)
@@ -155,10 +160,10 @@ class VideoStageManager(StageManager):
         bind_preference(self.video_archiver, 'root',
                         '{}.video_directory'.format(pref_id))
 
-        bind_preference(self.video, 'output_mode',
-                        '{}.video_output_mode'.format(pref_id))
-        bind_preference(self.video, 'ffmpeg_path',
-                        '{}.ffmpeg_path'.format(pref_id))
+        # bind_preference(self.video, 'output_mode',
+        #                 '{}.video_output_mode'.format(pref_id))
+        # bind_preference(self.video, 'ffmpeg_path',
+        #                 '{}.ffmpeg_path'.format(pref_id))
 
     def get_grain_polygon(self):
         ld = self.lumen_detector
@@ -204,16 +209,16 @@ class VideoStageManager(StageManager):
                     t = time.time()
                     targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]
                     masks.extend(targets)
-                evt.wait(0.25)
+                sleep(0.25)
 
             self.grain_polygons = (m for m in masks)
             self.debug('exiting measure grain')
 
-        self._measure_grain_t = Thread(target=_measure_grain_polygon)
+        self._measure_grain_t = QThread(target=_measure_grain_polygon)
         self._measure_grain_t.start()
         return True
 
-    def start_recording(self, new_thread=True, path=None, use_dialog=False, basename='vm_recording', **kw):
+    def start_recording(self, path=None, use_dialog=False, basename='vm_recording', **kw):
         """
         """
         directory = None
@@ -238,11 +243,8 @@ class VideoStageManager(StageManager):
 
         kw['path'] = path
         kw['basename'] = basename
-        if new_thread:
-            t = Thread(target=self._start_recording, kwargs=kw)
-            t.start()
-        else:
-            self._start_recording(**kw)
+
+        self._start_recording(**kw)
         self.is_recording = True
         return path
 
@@ -256,7 +258,10 @@ class VideoStageManager(StageManager):
             p = self.video.output_path
             if self.video.stop_recording(wait=True):
                 if self.auto_upload:
-                    p = self._upload(p, inform=False)
+                    try:
+                        p = self._upload(p, inform=False)
+                    except BaseException, e:
+                        self.critical('Failed uploading {}. error={}'.format(p, e))
             return p
 
         if self.video.is_recording():
@@ -266,10 +271,25 @@ class VideoStageManager(StageManager):
             else:
                 return close()
 
+    @property
+    def video_configuration_path(self):
+        return os.path.join(self.configuration_dir_path, 'camera.yaml')
+
     def initialize_video(self):
         if self.video:
-            self.video.open(
-                identifier=self.video_identifier)
+            identifier = 0
+            yd = None
+            p = self.video_configuration_path
+            if os.path.isfile(p):
+                with open(p, 'r') as rfile:
+                    yd = yaml.load(rfile)
+                    vid = yd['Device']
+                    identifier = vid.get('identifier', 0)
+
+            self.video.open(identifier=identifier)
+
+            if yd:
+                self.video.load_configuration(yd)
 
     def initialize_stage(self):
         super(VideoStageManager, self).initialize_stage()
@@ -509,15 +529,45 @@ class VideoStageManager(StageManager):
 
         video = self.video
 
+        crop_to_hole = True
+        dim = self.stage_map.g_dimension
+        cropdim = dim * 8 * self.pxpermm
+        color = self.canvas.crosshairs_color.getRgb()[:3]
+
+        r = int(self.canvas.get_crosshairs_radius() * self.pxpermm)
+        # offx, offy = self.canvas.get_screen_offset()
+
         def renderer(p):
-            cw, ch = self.get_frame_size()
-            frame = video.get_cached_frame()
-            frame = video.crop(frame, 0, 0, cw, ch)
+            # cw, ch = self.get_frame_size()
+            frame = copy(video.get_cached_frame())
+            # ch, cw, _ = frame.shape
+            # ch, cw = int(ch), int(cw)
+
+            if crop_to_hole:
+                frame = video.crop(frame, 0, 0, cropdim, cropdim)
+
+            if self.render_with_markup:
+                # draw crosshairs
+
+                ch, cw, _ = frame.shape
+                ch, cw = int(ch), int(cw)
+                y = ch / 2
+                x = cw / 2
+
+                cp = circle_perimeter(y, x, r, shape=(ch, cw))
+
+                frame[cp] = color
+
+                frame[line(y, 0, y, x - r)] = color  # left
+                frame[line(y, x + r, y, int(cw)-1)] = color  # right
+                frame[line(0, x, y - r, x)] = color # bottom
+                frame[line(y + r, x, int(ch)-1, x)] = color  # top
+
             if frame is not None:
                 pil_save(frame, p)
 
-        if self.render_with_markup:
-            renderer = self._render_snapshot
+        # if self.render_with_markup:
+        #     renderer = self._render_snapshot
 
         self.video.start_recording(path, renderer)
 
@@ -582,6 +632,7 @@ class VideoStageManager(StageManager):
                 if args is not None:
                     rpos, _ = args
                     self.linear_move(*rpos, block=True,
+                                     source='autocenter',
                                      use_calibration=False,
                                      update_hole=False,
                                      velocity_scalar=0.1)
@@ -630,15 +681,19 @@ class VideoStageManager(StageManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _configure_camera_device_button_fired(self):
+        if hasattr(self.video.cap, 'reload_configuration'):
+            self.video.cap.reload_configuration(self.video_configuration_path)
+
     def _update_zoom(self, v):
-        if self.canvas.camera:
+        if self.camera:
             self._update_xy_limits()
 
     @on_trait_change('parent:motor_event')
     def _update_motor(self, new):
         print 'motor event', new, self.canvas, self.canvas.camera
         # s = self.stage_controller
-        if self.canvas.camera:
+        if self.camera:
             if not isinstance(new, (int, float)):
                 args, _ = new
                 name, v = args[:2]
@@ -688,10 +743,10 @@ class VideoStageManager(StageManager):
             self.video_server.stop()
 
     def _get_camera_zoom_coefficients(self):
-        return self.canvas.camera.zoom_coefficients
+        return self.camera.zoom_coefficients
 
     def _set_camera_zoom_coefficients(self, v):
-        self.canvas.camera.zoom_coefficients = ','.join(map(str, v))
+        self.camera.zoom_coefficients = ','.join(map(str, v))
         self._update_xy_limits()
 
     def _validate_camera_zoom_coefficients(self, v):
@@ -709,11 +764,12 @@ class VideoStageManager(StageManager):
 
         x = self.stage_controller.get_current_position('x')
         y = self.stage_controller.get_current_position('y')
-        pxpermm = self.canvas.camera.set_limits_by_zoom(z, x, y)
-        self.canvas.request_redraw()
-        self.pxpermm = pxpermm
+        if self.camera:
+            pxpermm = self.camera.set_limits_by_zoom(z, x, y, self.canvas)
+            self.pxpermm = pxpermm
+            self.debug('updated xy limits zoom={}, pxpermm={}'.format(z, pxpermm))
 
-        self.debug('updated xy limits zoom={}, pxpermm={}'.format(z, pxpermm))
+        self.canvas.request_redraw()
 
     def _get_record_label(self):
         return 'Start Recording' if not self.is_recording else 'Stop'
@@ -724,17 +780,8 @@ class VideoStageManager(StageManager):
     def _canvas_factory(self):
         """
         """
-        try:
-            video = self.video
-        except AttributeError:
-            self.warning('Video not Available')
-            video = None
-
         v = VideoLaserTrayCanvas(stage_manager=self,
-                                 padding=30,
-                                 video=video,
-                                 camera=self.camera)
-        self.camera.parent = v
+                                 padding=30)
         return v
 
     def _canvas_editor_factory(self):
@@ -746,28 +793,35 @@ class VideoStageManager(StageManager):
     # defaults
     # ===============================================================================
     def _camera_default(self):
-        camera = Camera()
+        klass = YamlCamera
+        # p = os.path.join(self.configuration_dir_path, 'camera.yaml')
 
-        p = os.path.join(paths.canvas2D_dir, 'camera.cfg')
+        p = self.video_configuration_path
+        if not os.path.isfile(p):
+            klass = Camera
+            pp = os.path.join(self.configuration_dir_path, 'camera.cfg')
+            if not os.path.isfile(pp):
+                self.warning_dialog('No Camera configuration file a {} or {}'.format(p, pp))
+            p = pp
+
+        camera = klass()
         camera.load(p)
+        camera.set_limits_by_zoom(0, 0, 0, self.canvas)
 
-        #        camera.current_position = (0, 0)
-        camera.set_limits_by_zoom(0, 0, 0)
-
-        vid = self.video
-        if vid:
+        # vid = self.video
+        # if vid:
             # swap red blue channels True or False
-            vid.swap_rb = camera.swap_rb
-
-            vid.vflip = camera.vflip
-            vid.hflip = camera.hflip
+        # vid.swap_rb = camera.swap_rb
+        #
+        # vid.vflip = camera.vflip
+        # vid.hflip = camera.hflip
 
         self._camera_zoom_coefficients = camera.zoom_coefficients
-
         return camera
 
     def _video_default(self):
         v = Video()
+        self.canvas.video = v
         return v
 
     def _video_server_default(self):

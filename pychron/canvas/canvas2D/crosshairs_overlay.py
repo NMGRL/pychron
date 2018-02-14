@@ -109,13 +109,13 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
         with gc:
             gc.clip_to_rect(component.x, component.y,
                             component.width, component.height)
-            if component.crosshairs_kind == 'UserRadius':
-                radius = component.crosshairs_radius
-            else:
-                radius = component.beam_radius
-
-            radius = component.get_wh(radius, 0)[0]
-
+            # if component.crosshairs_kind == 'UserRadius':
+            #     radius = component.crosshairs_radius
+            # else:
+            #     radius = component.beam_radius
+            #
+            # radius = component.get_wh(radius, 0)[0]
+            radius = component.get_crosshairs_radius(screen=True)
             sdp = component.show_desired_position
             dp = component.desired_position
 

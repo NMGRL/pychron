@@ -64,10 +64,10 @@ class DragonFlyPeakPattern(SeekPattern):
                         UItem('execution_graph', style='custom')),
                  x=100,
                  y=100,
-                 width=1000, title='Executing {}'.format(self.name))
+                 width=500, title='Executing {}'.format(self.name))
         return v
 
-    def setup_execution_graph(self):
+    def setup_execution_graph(self, nplots=1):
         g = self.execution_graph
 
         def new_plot():
@@ -83,10 +83,12 @@ class DragonFlyPeakPattern(SeekPattern):
             imgplot.img_plot('imagedata', colormap=hot, origin='top left')
             return imgplot
 
-        img = new_plot()
-        peaks = new_plot()
+        return [new_plot() for _ in range(nplots)]
 
-        return img, peaks
+        # img = new_plot()
+        # peaks = new_plot()
+
+        # return img, peaks
 
     def point_generator(self):
         if self.spiral_kind.lower() == 'square':

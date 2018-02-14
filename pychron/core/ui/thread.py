@@ -21,6 +21,7 @@ from pychron.core.ui.factory import toolkit_factory
 
 Thread = toolkit_factory('thread', 'Thread')
 currentThreadName = toolkit_factory('thread', 'currentThreadName')
+sleep = toolkit_factory('thread', 'sleep')
 
 
 

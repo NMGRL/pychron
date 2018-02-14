@@ -15,19 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from threading import current_thread, Event
+
 from skimage.draw import circle
 from traits.api import Any, Bool, List
 
 import cStringIO
 import os
 import time
-from threading import Thread, current_thread, Event
+# from threading import Thread, current_thread, Event
+from pychron.core.ui.thread import Thread, currentThreadName, sleep
 from numpy import polyfit, array, average, uint8
 from skimage.color import gray2rgb
 
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
-from pychron.hardware.motion_controller import PositionError
+from pychron.hardware.motion_controller import PositionError, TargetPositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
 
@@ -46,6 +49,9 @@ class PatternExecutor(Patternable):
         super(PatternExecutor, self).__init__(*args, **kw)
         self._next_point = None
         self.pattern = None
+        self._xy_thread = None
+        self._power_thread = None
+        self._z_thread = None
 
     def start(self, show=False):
         self._alive = True
@@ -121,7 +127,7 @@ class PatternExecutor(Patternable):
 
         if self.pattern is not None:
             if self.controller:
-                self.controller.linear_move(self.pattern.cx, self.pattern.cy)
+                self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
             # self.pattern.close_ui()
             self.info('Pattern {} stopped'.format(self.pattern_name))
 
@@ -149,7 +155,8 @@ class PatternExecutor(Patternable):
 
         self.start(show=self.show_patterning)
         evt = None
-        if current_thread().name != 'MainThread':
+        # if current_thread().name != 'MainThread':
+        if currentThreadName() != 'MainThread':
             evt = Event()
             invoke_in_main_thread(self._pre_execute, evt)
             while not evt.is_set():
@@ -163,32 +170,30 @@ class PatternExecutor(Patternable):
         if duration:
             self.pattern.external_duration = float(duration)
 
-        t = None
         if xyp:
-            t = Thread(target=self._execute_xy_pattern)
-            t.start()
+            self._xy_thread = Thread(target=self._execute_xy_pattern)
+            self._xy_thread.start()
 
         pp = self.pattern.power_pattern
-        pt = None
         if pp:
             self.debug('execute power pattern')
-            pt = Thread(target=self._execute_power_pattern)
-            pt.start()
+            self._power_thread = Thread(target=self._execute_power_pattern)
+            self._power_thread.start()
 
         zp = self.pattern.z_pattern
-        zt = None
+
         if zp:
             self.debug('execute z pattern')
-            zt = Thread(target=self._execute_z_pattern)
-            zt.start()
+            self._z_thread = Thread(target=self._execute_z_pattern)
+            self._z_thread.start()
 
         if block:
-            if t:
-                t.join()
-            if zt:
-                zt.join()
-            if pt:
-                pt.join()
+            if self._xy_thread:
+                self._xy_thread.join()
+            if self._z_thread:
+                self._z_thread.join()
+            if self._power_thread:
+                self._power_thread.join()
 
             self.finish()
 
@@ -245,14 +250,14 @@ class PatternExecutor(Patternable):
                 self.info('doing pattern iteration {}'.format(ni))
                 self._execute_iteration()
 
-            self.controller.linear_move(pat.cx, pat.cy, block=True)
+            self.controller.linear_move(pat.cx, pat.cy, block=True, source='execute_xy_pattern')
             if pat.disable_at_end:
                 self.laser_manager.disable_device()
 
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
-        except PositionError, e:
+        except (TargetPositionError,PositionError), e:
             self.finish()
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))
@@ -336,7 +341,8 @@ class PatternExecutor(Patternable):
     def _dragonfly_peak(self, st, pattern, lm, controller):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
-        imgplot, imgplot2 = pattern.setup_execution_graph()
+        # imgplot, imgplot2 = pattern.setup_execution_graph()
+        imgplot = pattern.setup_execution_graph(nplots=1)[0]
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -345,7 +351,7 @@ class PatternExecutor(Patternable):
         in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
-        set_data2 = imgplot2.data.set_data
+        # set_data2 = imgplot2.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -367,9 +373,9 @@ class PatternExecutor(Patternable):
             pts = []
             ist = time.time()
             npt = None
-
+            self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
+                pt, peakcol, peakrow, peak_img, sat = find_lum_peak(min_distance)
 
                 sats.append(sat)
                 if peak is None:
@@ -383,11 +389,14 @@ class PatternExecutor(Patternable):
                     pts.append(pt)
                     c = circle(peakrow, peakcol, min_distance / 2)
                     img[c] = (255, 0, 0)
-                    src[c] = (255, 0, 0)
+                    # src[c] = (255, 0, 0)
 
-                set_data('imagedata', src)
-                set_data2('imagedata', img)
-                time.sleep(update_period)
+                # set_data('imagedata', src)
+                # set_data2('imagedata', img)
+                set_data('imagedata', img)
+                sleep(update_period)
+
+            self.debug('iteration {} finished, npts={}'.format(cnt, len(pts)))
 
             pattern.position_str = '---'
 
@@ -412,6 +421,8 @@ class PatternExecutor(Patternable):
                     point_gen = pattern.point_generator()
                 # wait = False
                 npt = next(point_gen)
+                self.debug('generating new point={}'.format(npt))
+
             else:
                 point_gen = None
                 # wait = True
@@ -438,11 +449,11 @@ class PatternExecutor(Patternable):
 
             pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
 
-            try:
-                linear_move(px, py, block=False, velocity=pattern.velocity,
-                            use_calibration=False)
-            except PositionError:
-                break
+            # if there is less than 1 duration left then block is true
+            block = total_duration - (time.time() - st) < duration
+            self.debug('blocking ={}'.format(block))
+            linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
+                        use_calibration=False)
 
             # if wait:
             #     et = time.time() - ist
@@ -451,6 +462,10 @@ class PatternExecutor(Patternable):
             #         time.sleep(d)
 
             cnt += 1
+
+        # time.sleep(1)
+        self.debug('dragonfly complete')
+        controller.block()
 
     def _hill_climber(self, st, controller, pattern):
         g = pattern.execution_graph
@@ -487,13 +502,10 @@ class PatternExecutor(Patternable):
             if avg_sat_score < sat_threshold:
                 # use_update_point = False
                 # current_x, current_y = x, y
-                try:
-                    linear_move(ax, ay, block=False, velocity=pattern.velocity,
-                                use_calibration=False,
-                                update=False,
-                                immediate=True)
-                except PositionError:
-                    break
+                linear_move(ax, ay, block=False, velocity=pattern.velocity,
+                            use_calibration=False,
+                            update=False,
+                            immediate=True)
             else:
                 self.debug('Saturation target reached. not moving')
                 update_plot = False

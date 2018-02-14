@@ -86,9 +86,17 @@ class Video(Image):
     _last_get = None
 
     output_path = Str
-    output_mode = Str('MPEG')
+    # output_mode = Str('MPEG')
     ffmpeg_path = Str
     fps = Int
+    identifier = 0
+
+    @property
+    def pixel_depth(self):
+        pd = 255
+        if hasattr(self.cap, 'pixel_depth'):
+            pd = self.cap.pixel_depth
+        return pd
 
     def is_recording(self):
         return self._recording
@@ -96,7 +104,23 @@ class Video(Image):
     def is_open(self):
         return self.cap is not None
 
-    def open(self, user=None, identifier=0, force=False):
+    def load_configuration(self, cfg):
+        gen = cfg.get('General')
+        if gen:
+            self.swap_rb = gen.get('swap_rb', False)
+            self.hflip = gen.get('hflip', False)
+            self.vflip = gen.get('vflip', False)
+
+        vid = cfg.get('Video')
+        if vid:
+            # self.output_mode = vid.get('output_mode', 'MPEG')
+            self.ffmpeg_path = vid.get('ffmpeg_path', '')
+            self.fps = vid.get('fps')
+
+        if hasattr(self.cap, 'load_configuration'):
+            self.cap.load_configuration(cfg)
+
+    def open(self, user=None, identifier=None, force=False):
         """
         get a camera/capture device
 
@@ -109,9 +133,15 @@ class Video(Image):
             if globalv.video_test:
                 self.cap = 1
             else:
+                if identifier is None:
+                    identifier = self.identifier
 
-                if isinstance(identifier, str) and identifier.startswith('pvs'):
-                    self.cap = self._get_remote_device(identifier)
+                if isinstance(identifier, str):
+                    if identifier.startswith('pvs'):
+                        self.cap = self._get_remote_device(identifier)
+                    elif identifier.startswith('pylon'):
+                        _, i = identifier.split(':')
+                        self.cap = self._get_pylon_device(int(i))
                     # identifier is a url
                 else:
 
@@ -147,8 +177,8 @@ class Video(Image):
                 self.cap = None
 
     def get_image_data(self, cmap=None, **kw):
-        frame = self.get_frame(**kw)
-        return asarray(frame)
+        return self.get_frame(**kw)
+        # return asarray(frame)
         # if frame is not None:
         #     return asarray(frame[:, :])
 
@@ -253,6 +283,13 @@ class Video(Image):
 
         if self._save_ok_event:
             self._save_ok_event.set()
+
+    def _get_pylon_device(self, identifier):
+        print 'identifiqe', identifier
+        from pylon_camera import PylonCamera
+        cam = PylonCamera(identifier)
+        if cam.open():
+            return cam
 
     def _get_remote_device(self, url):
         from pychron.image.video_source import VideoSource

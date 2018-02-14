@@ -274,7 +274,9 @@ class NewportMotionController(MotionController):
             if not points:
                 break
 
-    def linear_move(self, x, y, raise_zero_displacement=False, **kw):
+    def linear_move(self, x, y, raise_zero_displacement=False, source=None, **kw):
+        if source is not None:
+            self.debug('linear move source ={}'.format(source))
 
         # calc the displacement
         dx = self._x_position - x
