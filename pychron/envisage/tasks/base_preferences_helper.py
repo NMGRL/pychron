@@ -94,8 +94,8 @@ class RepoString(BaseStr):
 
 
 class GitRepoPreferencesHelper(BasePreferencesHelper):
-    #remote = Property(String, depends_on='_remote')
-#    _remote = String
+    # remote = Property(String, depends_on='_remote')
+    #    _remote = String
     remote = RepoString
     test_connection = Button
     _remote_status = Str
@@ -145,6 +145,12 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
     delete_favorite = Button('-')
     selected = Any
     selected_index = Int
+
+    def _is_preference_trait(self, trait_name):
+        if trait_name == 'favorites_items':
+            return False
+        else:
+            return super(FavoritesPreferencesHelper, self)._is_preference_trait(trait_name)
 
     def _get_attrs(self):
         raise NotImplementedError

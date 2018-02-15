@@ -334,7 +334,7 @@ class IsotopeGroup(HasTraits):
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')
-
+        iso = None
         if name:
             try:
                 iso = self.isotopes[name]
@@ -351,10 +351,11 @@ class IsotopeGroup(HasTraits):
         else:
             iso = next((iso for iso in self.itervalues() if iso.detector == detector), None)
 
-        if kind == 'sniff':
-            iso = iso.sniff
-        elif kind == 'baseline':
-            iso = iso.baseline
+        if iso:
+            if kind == 'sniff':
+                iso = iso.sniff
+            elif kind == 'baseline':
+                iso = iso.baseline
         return iso
 
     def set_isotope(self, iso, det, v, **kw):

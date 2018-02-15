@@ -28,11 +28,11 @@ from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
 from pychron.dvc import dvc_dump, analysis_path
-from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 # from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
 
 

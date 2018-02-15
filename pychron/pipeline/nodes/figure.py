@@ -69,8 +69,8 @@ class FigureNode(BaseNode):
         if not state.unknowns and self.no_analyses_warning:
             raise NoAnalysesError
 
-        self.unknowns = state.unknowns
-        self.references = state.references
+        # self.unknowns = state.unknowns
+        # self.references = state.references
 
         # oname = ''
         if use_plotting and self.use_plotting:
@@ -159,9 +159,6 @@ class FigureNode(BaseNode):
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
 
-    def _configure_hook(self):
-        pass
-
     def _options_view_default(self):
         return view('{} Options'.format(self.name))
 
@@ -176,23 +173,9 @@ class XYScatterNode(FigureNode):
         if self.unknowns:
             unk = self.unknowns[0]
             # names = []
-            iso_keys = unk.isotope_keys
-            names = iso_keys
-            # if iso_keys:
-            #     names.extend(iso_keys)
-            #     names.extend(['{}bs'.format(ki) for ki in iso_keys])
-            #     names.extend(['{}ic'.format(ki) for ki in iso_keys])
-            #     if 'Ar40' in iso_keys:
-            #         if 'Ar39' in iso_keys:
-            #             names.append('Ar40/Ar39')
-            #             names.append('uAr40/Ar39')
-            #         if 'Ar36' in iso_keys:
-            #             names.append('Ar40/Ar36')
-            #             names.append('uAr40/Ar36')
-            #
-            # names.append('Peak Center')
-            # names.append('AnalysisType')
-            pom.set_names(names)
+            # iso_keys = unk.isotope_keys
+            # names = iso_keys
+            pom.set_names(unk.isotope_keys)
 
 
 class VerticalFluxNode(FigureNode):

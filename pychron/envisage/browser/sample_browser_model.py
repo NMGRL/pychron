@@ -302,7 +302,6 @@ class SampleBrowserModel(BrowserModel):
                                       available_mass_spectrometers=ms,
                                       extract_devices=es[:],
                                       available_extract_devices=es,
-                                      irradiations=irs[:],
                                       monitor_samples=list(set(samples)),
                                       available_irradiations=irs)
 

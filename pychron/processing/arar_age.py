@@ -422,7 +422,7 @@ class ArArAge(IsotopeGroup):
         self.rad40_percent = computed['rad40_percent']
 
         isotopes = self.isotopes
-        for k, v in six.iteritems(interference_corrected):
+        for k, v in interference_corrected.items():
             isotopes[k].interference_corrected_value = v
 
         self._set_age_values(f, include_decay_error)

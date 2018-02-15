@@ -31,28 +31,13 @@ from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_sp
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
-from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.analyses.analysis import Analysis, EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
 import six
 from six.moves import map
 from six.moves import zip
 
-EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
-                    'extract_units',
-                    # 'duration',
-                    # 'cleanup',
-                    'extract_duration',
-                    'cleanup_duration',
-                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
-
-META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
-              'irradiation', 'irradiation_level', 'irradiation_position',
-              'comment', 'mass_spectrometer',
-              'username', 'queue_conditionals_name', 'identifier',
-              'repository_identifier',
-              'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name')
 
 PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
                   'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')

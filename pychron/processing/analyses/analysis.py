@@ -44,6 +44,22 @@ Fit = namedtuple('Fit', 'fit '
 
 logger = new_logger('Analysis')
 
+EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
+                    'extract_units',
+                    # 'duration',
+                    # 'cleanup',
+                    'extract_duration',
+                    'cleanup_duration',
+                    'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
+
+META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
+              'irradiation', 'irradiation_level', 'irradiation_position',
+              'comment', 'mass_spectrometer',
+              'username', 'queue_conditionals_name', 'identifier',
+              'repository_identifier',
+              'acquisition_software',
+              'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name')
+
 
 def min_max(a, b, vs):
     return min(a, vs.min()), max(b, vs.max())
@@ -166,8 +182,8 @@ class IdeogramPlotable(HasTraits):
     def refresh_view(self):
         pass
 
-    def is_omitted(self):
-        return self.is_omitted_by_tag() or self.temp_selected
+    def is_omitted(self, tags=None):
+        return self.is_omitted_by_tag(tags) or self.temp_selected
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:

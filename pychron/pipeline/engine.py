@@ -258,22 +258,23 @@ class PipelineEngine(Loggable):
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
 
-    def update_detectors(self):
-        """
-        set valid detectors for FitICFactorNodes
-
-        """
-        if self.state:
-            for p in self.pipeline.nodes:
-                if isinstance(p, FitICFactorNode):
-                    # udets = {iso.detector for ai in self.state.unknowns
-                    #          for iso in six.itervalues(ai.isotopes)}
-                    udets = get_detector_set(self.state.unknowns)
-                    rdets = get_detector_set(self.state.references)
-
-                    # rdets = {iso.detector for ai in self.state.references
-                    #          for iso in six.itervalues(ai.isotopes)}
-                    p.set_detectors(list(udets.union(rdets)))
+    # def update_detectors(self):
+    #     """
+    #     set valid detectors for FitICFactorNodes
+    #
+    #     """
+    #     if self.state:
+    #         for p in self.pipeline.nodes:
+    #             if isinstance(p, FitICFactorNode):
+    #                 # udets = {iso.detector for ai in self.state.unknowns
+    #                 #          for iso in six.itervalues(ai.isotopes)}
+    #                 # udets = get_detector_set(self.state.unknowns)
+    #                 # rdets = get_detector_set(self.state.references)
+    #
+    #                 # rdets = {iso.detector for ai in self.state.references
+    #                 #          for iso in six.itervalues(ai.isotopes)}
+    #                 # p.set_detectors(list(udets.union(rdets)))
+    #                 p.set_detectors(self.state.union_detectors)
 
     def get_unknowns_node(self):
         nodes = self.get_nodes(UnknownNode)
@@ -690,7 +691,7 @@ class PipelineEngine(Loggable):
                         node.run(state)
                         node.visited = True
                         self.selected = node
-                        self.update_detectors()
+                        # self.update_detectors()
                     except NoAnalysesError:
                         self.information_dialog('No Analyses in Pipeline!')
                         self.pipeline.reset()
@@ -820,7 +821,7 @@ class PipelineEngine(Loggable):
             self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
             return
 
-        self.update_detectors()
+        # self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
 

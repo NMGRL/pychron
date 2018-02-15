@@ -19,13 +19,17 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 
-from traits.api import Str, Instance, List
-from traitsui.api import Item
-from traitsui.editors import DirectoryEditor, CheckListEditor
+from pyface.message_dialog import information
+from traits.api import Str, Instance, List, HasTraits, Bool, Float, Int, Button
+from traitsui.api import Item, UItem, VGroup, HGroup, View
+from traitsui.editors import DirectoryEditor, CheckListEditor, TableEditor
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_iterator
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
@@ -34,9 +38,12 @@ from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsView, InterpretedAgePersistOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
+from pychron.pipeline.state import get_isotope_set
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from six.moves import zip
+
+from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 
 
 class PersistNode(BaseNode):
@@ -236,85 +243,215 @@ class XLSXTablePersistNode(BaseNode):
             writer.build(**table)
 
 
+# ATTRS = ('record_id',
+#          'sample',
+#          'project',
+#          'repository_identifier',
+#          'irradiation',
+#          'irradiation_level',
+#          'irradiation_position',
+#          'mass_spectrometer',
+#          'extract_device',
+#          'position',
+#          'extract_value',
+#          'cleanup',
+#          'duration',
+#          'comment',
+#          'tag',
+#          'peak_center',
+#          'lab_temperature',
+#          'east_diffuser_temperature',
+#          'east_return_temperature',
+#          'ic_corrected',
+#          'blank_corrected',
+#          'intercepts',
+#          'blanks',
+#          'baselines')
+
+class Isot(HasTraits):
+    name = Str
+    intercept_enabled = Bool(True)
+    baseline_enabled = Bool(True)
+    blank_enabled = Bool(True)
+    bs_corrected_enabled = Bool(True)
+    bl_corrected_enabled = Bool(True)
+    ic_corrected_enabled = Bool(True)
+    detector_enabled = Bool(True)
+
+    # def enabled(self):
+    #     return ('{}_{}'.format(tag, self.name)
+    #             for tag in ('detector', 'intercept', 'blank', 'baseline', 'baseline_corrected',
+    #                         'blank_corrected', 'ic_corrected')
+    #             if getattr(self, '{}_enabled'.format(tag)))
+
+    def values(self):
+        return (('{}_{}'.format(tag, self.name), getattr(self, '{}_enabled'.format(tag)))
+                for tag in ('detector', 'intercept', 'blank', 'baseline', 'bs_corrected',
+                            'bl_corrected', 'ic_corrected'))
+
+
 class CSVAnalysesExportNode(BaseNode):
     name = 'Save CSV'
     pathname = SpacelessStr
-    available_attributes = List(['record_id',
-                                 'mass_spectrometer',
-                                 'intercepts'])
-    selected_attributes = List(['record_id',
-                                'mass_spectrometer',
-                                'intercepts'])
+    available_meta_attributes = List  # (ATTRS)
+    selected_meta_attributes = List  # (ATTRS)
+
+    available_isotopes = List
+    available_ratios = List
+
+    # selected_isotopes = List
+    # selected_ratios = List
+    select_all_meta = Button('Select All')
+    unselect_all_meta = Button('Unselect All')
 
     def traits_view(self):
+        cols = [ObjectColumn(name='name', editable=False),
+                CheckboxColumn(name='detector_enabled', label='Detector'),
+                CheckboxColumn(name='intercept_enabled', label='Intercept'),
+                CheckboxColumn(name='baseline_enabled', label='Baseline'),
+                CheckboxColumn(name='blank_enabled', label='Blank'),
+                CheckboxColumn(name='bs_corrected_enabled', label='Baseline Corrected'),
+                CheckboxColumn(name='bl_corrected_enabled', label='Blank Corrected'),
+                CheckboxColumn(name='ic_corrected_enabled', label='IC Corrected')]
+
         return self._view_factory(Item('pathname'),
-                                  Item('selected_attributes',
-                                       style='custom',
-                                       editor=CheckListEditor(cols=4,
-                                                              name='available_attributes'),
-                                       width=200))
+                                  HGroup(UItem('select_all_meta'), UItem('unselect_all_meta')),
+                                  UItem('selected_meta_attributes',
+                                        style='custom',
+                                        editor=CheckListEditor(cols=4,
+                                                               name='available_meta_attributes'),
+                                        width=200),
+                                  UItem('available_isotopes',
+                                        editor=TableEditor(columns=cols, sortable=False)))
 
     def run(self, state):
         import csv
-        p = os.path.join(paths.data_dir, add_extension(self.pathname, '.csv'))
+        p = os.path.join(paths.csv_data_dir, add_extension(self.pathname, '.csv'))
 
         with open(p, 'w') as wfile:
             writer = csv.writer(wfile)
             for ans in (state.unknowns, state.references):
                 if ans:
-                    header = self._get_header(ans[0])
+                    header = self._get_header()
                     writer.writerow(header)
                     for ai in ans:
                         row = self._get_row(header, ai)
                         writer.writerow(row)
 
-    def _get_header(self, ai):
-        header = []
-        for attr in self.selected_attributes:
-            if attr == 'intercepts':
-                for k in ai.isotope_keys:
-                    k = 'intercept{}.({})'.format(k, ai.isotopes[k].detector)
-                    ke = 'error'
-                    header.append(k)
-                    header.append(ke)
-            else:
-                header.append(attr)
+            if confirmation_dialog('File saved to {}.\n\nWould you like to open?'.format(p)):
+                view_file(p, application='Excel')
+
+    def _configure_hook(self):
+        if self.unknowns or self.references:
+            uisokeys = get_isotope_set(self.unknowns)
+            risokeys = get_isotope_set(self.references)
+            isokeys = list(uisokeys.union(risokeys))
+            self.available_isotopes = [Isot(name=i) for i in sort_isotopes(isokeys)]
+            # if self.unknowns:
+            #     ref = self.unknowns[0]
+            # else:
+            #     ref = self.references[0]
+        self.available_meta_attributes = list(META_ATTRS + EXTRACTION_ATTRS)
+        self._select_all_meta_fired()
+
+    def _unselect_all_meta_fired(self):
+        self.selected_meta_attributes = []
+
+    def _select_all_meta_fired(self):
+        self.selected_meta_attributes = self.available_meta_attributes
+
+    # def _get_attributes(self):
+    #     meta = self.selected_meta_attributes
+    #
+    #     isos = [k for i in self.available_isotopes for k in i.enabled()]
+    #     meta.extend(isos)
+
+    def _get_header(self):
+        header = self.selected_meta_attributes[:]
+
+        ints = []
+        blanks = []
+        baselines = []
+        bl_cs = []
+        bg_cs = []
+        ic_cs = []
+        dets = []
+        for i in self.available_isotopes:
+            for vs, (name, enabled) in zip((dets, ints, blanks, baselines, bg_cs, bl_cs, ic_cs),
+                                           i.values()):
+                if enabled:
+                    vs.append(name)
+                    if not name.startswith('detector'):
+                        vs.append('error')
+
+        header.extend(dets)
+        header.extend(ints)
+        header.extend(blanks)
+        header.extend(baselines)
+        header.extend(bg_cs)
+        header.extend(bl_cs)
+        header.extend(ic_cs)
 
         return header
 
     def _get_row(self, header, ai):
+
+        def get_intercept(iso):
+            return iso.uvalue
+
+        def get_baseline_corrected(iso):
+            return iso.get_baseline_corrected_value()
+
+        def get_blank(iso):
+            return iso.blank.uvalue
+
+        def get_baseline(iso):
+            return iso.baseline.uvalue
+
+        def get_blank_corrected(iso):
+            return iso.get_non_detector_corrected_value()
+
+        def get_ic_corrected(iso):
+            return iso.get_ic_corrected_value()
 
         row = []
         for attr in header:
             if attr == 'error':
                 continue
 
-            if attr.startswith('intercept'):
-                attr = attr[9:]
-                iso, det = attr.split('.')
-                det = det[1:-1]
-                iso = ai.get_isotope(iso, detector=det)
-                vs = ('', '')
-                if iso is not None:
-                    v = iso.get_baseline_corrected_value()
-                    vs = (nominal_value(v), std_dev(v))
-                row.extend(vs)
-            elif attr.startswith('detector'):
-                iso = ai.get_isotope(attr[8:])
-                det = ''
-                if iso is not None:
-                    det = iso.detector
-                row.append(det)
-            else:
-                try:
-                    if attr.endswith('err'):
-                        v = std_dev(ai.get_value(attr[-3:]))
-                    else:
-                        v = nominal_value(ai.get_value(attr))
-                except BaseException:
-                    v = ''
+            for tag, func in (('intercept', get_intercept),
+                              ('blank', get_blank),
+                              ('baseline', get_baseline),
+                              ('bs_corrected', get_baseline_corrected),
+                              ('bl_corrected', get_blank_corrected),
+                              ('ic_corrected', get_ic_corrected)):
+                if attr.startswith(tag):
+                    iso = attr[len(tag) + 1:]
+                    iso = ai.get_isotope(iso)
+                    vs = ('', '')
+                    if iso is not None:
+                        v = func(iso)
+                        vs = nominal_value(v), std_dev(v)
 
-                row.append(v)
+                    row.extend(vs)
+                    break
+            else:
+                if attr.startswith('detector'):
+                    iso = ai.get_isotope(attr[9:])
+                    det = ''
+                    if iso is not None:
+                        det = iso.detector
+                    row.append(det)
+                else:
+                    try:
+                        if attr.endswith('err'):
+                            v = std_dev(ai.get_value(attr[-3:]))
+                        else:
+                            v = nominal_value(ai.get_value(attr))
+                    except BaseException:
+                        v = ''
+
+                    row.append(v)
 
         return row
 

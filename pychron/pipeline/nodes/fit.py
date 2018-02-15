@@ -30,6 +30,7 @@ from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
 import six
 from six.moves import zip
@@ -82,7 +83,7 @@ class FitReferencesNode(FitNode):
         if state.canceled:
             return
 
-        self.plotter_options.set_detectors(state.union_detectors)
+        # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
             key = lambda x: x.group_id
             for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
@@ -159,8 +160,14 @@ class FitICFactorNode(FitReferencesNode):
     def _options_view_default(self):
         return view('ICFactor Options')
 
-    def set_detectors(self, dets):
+    def _configure_hook(self):
+        udets = get_detector_set(self.unknowns)
+        rdets = get_detector_set(self.references)
+        dets = list(udets.union(rdets))
         self.plotter_options_manager.set_detectors(dets)
+
+    # def set_detectors(self, dets):
+    #     self.plotter_options_manager.set_detectors(dets)
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)

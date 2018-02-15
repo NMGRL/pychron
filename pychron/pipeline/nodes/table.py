@@ -41,7 +41,7 @@ class XLSXAnalysisTableNode(TableNode):
     name = 'Analysis Table'
     options_klass = XLSXTableWriterOptions
 
-    def finish_configure(self):
+    def _finish_configure(self):
         self.options.dump()
 
     def run(self, state):
@@ -204,7 +204,7 @@ class InterpretedAgeTableNode(TableNode):
     name = 'Interpreted Age Table'
     options_klass = InterpretedAgeTableOptions
 
-    def finish_configure(self):
+    def _finish_configure(self):
         if self.options:
             self.options.dump()
 
