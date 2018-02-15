@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import csv
 import os
 
 from pyface.message_dialog import information
@@ -243,31 +245,6 @@ class XLSXTablePersistNode(BaseNode):
             writer.build(**table)
 
 
-# ATTRS = ('record_id',
-#          'sample',
-#          'project',
-#          'repository_identifier',
-#          'irradiation',
-#          'irradiation_level',
-#          'irradiation_position',
-#          'mass_spectrometer',
-#          'extract_device',
-#          'position',
-#          'extract_value',
-#          'cleanup',
-#          'duration',
-#          'comment',
-#          'tag',
-#          'peak_center',
-#          'lab_temperature',
-#          'east_diffuser_temperature',
-#          'east_return_temperature',
-#          'ic_corrected',
-#          'blank_corrected',
-#          'intercepts',
-#          'blanks',
-#          'baselines')
-
 class Isot(HasTraits):
     name = Str
     intercept_enabled = Bool(True)
@@ -278,14 +255,8 @@ class Isot(HasTraits):
     ic_corrected_enabled = Bool(True)
     detector_enabled = Bool(True)
 
-    # def enabled(self):
-    #     return ('{}_{}'.format(tag, self.name)
-    #             for tag in ('detector', 'intercept', 'blank', 'baseline', 'baseline_corrected',
-    #                         'blank_corrected', 'ic_corrected')
-    #             if getattr(self, '{}_enabled'.format(tag)))
-
     def values(self):
-        return (('{}_{}'.format(tag, self.name), getattr(self, '{}_enabled'.format(tag)))
+        return (('{}_{}'.format(self.name, tag), getattr(self, '{}_enabled'.format(tag)))
                 for tag in ('detector', 'intercept', 'blank', 'baseline', 'bs_corrected',
                             'bl_corrected', 'ic_corrected'))
 
@@ -293,14 +264,12 @@ class Isot(HasTraits):
 class CSVAnalysesExportNode(BaseNode):
     name = 'Save CSV'
     pathname = SpacelessStr
-    available_meta_attributes = List  # (ATTRS)
-    selected_meta_attributes = List  # (ATTRS)
+    available_meta_attributes = List
+    selected_meta_attributes = List
 
     available_isotopes = List
     available_ratios = List
 
-    # selected_isotopes = List
-    # selected_ratios = List
     select_all_meta = Button('Select All')
     unselect_all_meta = Button('Unselect All')
 
@@ -314,18 +283,23 @@ class CSVAnalysesExportNode(BaseNode):
                 CheckboxColumn(name='bl_corrected_enabled', label='Blank Corrected'),
                 CheckboxColumn(name='ic_corrected_enabled', label='IC Corrected')]
 
-        return self._view_factory(Item('pathname'),
-                                  HGroup(UItem('select_all_meta'), UItem('unselect_all_meta')),
-                                  UItem('selected_meta_attributes',
-                                        style='custom',
-                                        editor=CheckListEditor(cols=4,
-                                                               name='available_meta_attributes'),
-                                        width=200),
-                                  UItem('available_isotopes',
-                                        editor=TableEditor(columns=cols, sortable=False)))
+        pgrp = HGroup(Item('pathname', springy=True, label='File Name'),
+                      show_border=True)
+        mgrp = VGroup(HGroup(UItem('select_all_meta'),
+                             UItem('unselect_all_meta')),
+                      UItem('selected_meta_attributes',
+                            style='custom',
+                            editor=CheckListEditor(cols=4,
+                                                   name='available_meta_attributes'),
+                            width=200),
+                      show_border=True)
+        igrp = VGroup(UItem('available_isotopes',
+                            editor=TableEditor(columns=cols, sortable=False)),
+                      show_border=True)
+
+        return self._view_factory(VGroup(pgrp, mgrp, igrp))
 
     def run(self, state):
-        import csv
         p = os.path.join(paths.csv_data_dir, add_extension(self.pathname, '.csv'))
 
         with open(p, 'w') as wfile:
@@ -338,7 +312,7 @@ class CSVAnalysesExportNode(BaseNode):
                         row = self._get_row(header, ai)
                         writer.writerow(row)
 
-            if confirmation_dialog('File saved to {}.\n\nWould you like to open?'.format(p)):
+            if confirmation_dialog('File saved to {}\n\nWould you like to open?'.format(p)):
                 view_file(p, application='Excel')
 
     def _configure_hook(self):
@@ -360,37 +334,19 @@ class CSVAnalysesExportNode(BaseNode):
     def _select_all_meta_fired(self):
         self.selected_meta_attributes = self.available_meta_attributes
 
-    # def _get_attributes(self):
-    #     meta = self.selected_meta_attributes
-    #
-    #     isos = [k for i in self.available_isotopes for k in i.enabled()]
-    #     meta.extend(isos)
-
     def _get_header(self):
         header = self.selected_meta_attributes[:]
 
-        ints = []
-        blanks = []
-        baselines = []
-        bl_cs = []
-        bg_cs = []
-        ic_cs = []
-        dets = []
+        vargs = [], [], [], [], [], [], []
         for i in self.available_isotopes:
-            for vs, (name, enabled) in zip((dets, ints, blanks, baselines, bg_cs, bl_cs, ic_cs),
-                                           i.values()):
+            for vs, (name, enabled) in zip(vargs, i.values()):
                 if enabled:
                     vs.append(name)
-                    if not name.startswith('detector'):
+                    if not name.endswith('detector'):
                         vs.append('error')
 
-        header.extend(dets)
-        header.extend(ints)
-        header.extend(blanks)
-        header.extend(baselines)
-        header.extend(bg_cs)
-        header.extend(bl_cs)
-        header.extend(ic_cs)
+        for va in vargs:
+            header.extend(va)
 
         return header
 
@@ -425,9 +381,10 @@ class CSVAnalysesExportNode(BaseNode):
                               ('bs_corrected', get_baseline_corrected),
                               ('bl_corrected', get_blank_corrected),
                               ('ic_corrected', get_ic_corrected)):
-                if attr.startswith(tag):
-                    iso = attr[len(tag) + 1:]
-                    iso = ai.get_isotope(iso)
+                if attr.endswith(tag):
+                    # iso = attr[:len(tag) + 1]
+                    args = attr.split('_')
+                    iso = ai.get_isotope(args[0])
                     vs = ('', '')
                     if iso is not None:
                         v = func(iso)
@@ -436,18 +393,19 @@ class CSVAnalysesExportNode(BaseNode):
                     row.extend(vs)
                     break
             else:
-                if attr.startswith('detector'):
-                    iso = ai.get_isotope(attr[9:])
+                if attr.endswith('detector'):
+                    args = attr.split('_')
+                    iso = ai.get_isotope(args[0])
                     det = ''
                     if iso is not None:
                         det = iso.detector
                     row.append(det)
                 else:
                     try:
-                        if attr.endswith('err'):
-                            v = std_dev(ai.get_value(attr[-3:]))
-                        else:
-                            v = nominal_value(ai.get_value(attr))
+                        # if attr.endswith('err'):
+                        #     v = std_dev(ai.get_value(attr[-3:]))
+                        # else:
+                        v = nominal_value(ai.get_value(attr))
                     except BaseException:
                         v = ''
 
