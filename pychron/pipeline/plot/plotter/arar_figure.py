@@ -250,7 +250,7 @@ class BaseArArFigure(SelectionFigure):
         pp.y_grid.visible = options.use_ygrid
 
     def _get_omitted_by_tag(self, ans, tags=None):
-        return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag(tags)]
+        return [i for i, ai in enumerate(ans) if ai.is_omitted(tags)]
 
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)

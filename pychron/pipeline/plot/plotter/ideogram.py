@@ -383,7 +383,7 @@ class Ideogram(BaseArArFigure):
         self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
-        # plot.index_mapper.on_trait_change(d, 'updated')
+        plot.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
         if self.options.display_inset:
             xs = self.xs
@@ -551,13 +551,18 @@ class Ideogram(BaseArArFigure):
 
         return m
 
-    # def update_index_mapper(self, obj, name, old, new):
-    #     if new:
-    #         self.update_graph_metadata(None, name, old, new)
+    def update_index_mapper(self, obj, name, old, new):
+        self._rebuild_ideo()
+        # if new:
+        #     self.update_graph_metadata(None, name, old, new)
 
     def update_graph_metadata(self, obj, name, old, new):
-        sorted_ans = self.sorted_analyses
-        self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
+        ans = self.sorted_analyses
+        sel = obj.metadata.get('selections', [])
+        self._set_selected(ans, sel)
+        self._rebuild_ideo(ans)
+
+        # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
     def get_ybounds(self):
         plot = self.graph.plots[0]
@@ -574,16 +579,9 @@ class Ideogram(BaseArArFigure):
     @caller
     def _rebuild_ideo(self, sel=None):
 
-        #     sel = []
-
         graph = self.graph
         if sel is None:
             sel = graph.plots[1].default_index.metadata['selections']
-
-        # if len(graph.plots) > 1:
-        #     for p in graph.plots[1:]:
-        #         for key in p.plots:
-        #             print p, key
         if sel:
             ss = [p.plots[key][0]
                   for p in graph.plots[1:]
@@ -646,15 +644,18 @@ class Ideogram(BaseArArFigure):
         # ov.data_point = wm, y
         # n = len(fxs)
         # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
-
+        mi, ma = min(ys), max(ys)
         if sel:
             dp.visible = True
             # xs, ys = self._calculate_probability_curve(oxs, oxes)
             # dp.value.set_data(ys)
             # dp.index.set_data(xs)
+            oys = dp.value.get_data()
+            mi, ma = min(mi, min(oys)), max(mi, max(oys))
         else:
             dp.visible = False
 
+        self._set_y_limits(mi, ma, min_=0, pad='0.025')
         graph.redraw()
 
     # ===============================================================================
