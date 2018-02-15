@@ -154,10 +154,10 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._query_one(q)
 
     def get_latest_lab_temperatures(self):
-        return self._get_latest('Temp.')
+        return self._get_latest(('Temp.', 'NOAA'))
 
     def get_latest_lab_humiditys(self):
-        return self._get_latest('Hum.')
+        return self._get_latest(('Hum.', 'NOAA'))
 
     def get_latest_lab_pneumatics(self):
         return self._get_latest('Pressure')
@@ -166,7 +166,12 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         values = []
         with self.session_ctx(use_parent_session=False) as sess:
             q = sess.query(ProcessInfo)
-            q = q.filter(ProcessInfo.name.contains(tag))
+            if not isinstance(tag, tuple):
+                tag = (tag, )
+
+            for t in tag:
+                q = q.filter(ProcessInfo.name.contains(t))
+
             ps = self._query_all(q)
 
             for p in ps:

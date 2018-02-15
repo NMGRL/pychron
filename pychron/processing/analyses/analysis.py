@@ -52,10 +52,10 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'cleanup_duration',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
-META_ATTRS = ('analysis_type', 'uuid', 'sample', 'project', 'material', 'aliquot', 'increment',
+META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment', 'sample', 'project', 'material',
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
-              'username', 'queue_conditionals_name', 'identifier',
+              'username', 'queue_conditionals_name',
               'repository_identifier',
               'acquisition_software',
               'data_reduction_software', 'instrument_name', 'laboratory', 'experiment_queue_name')

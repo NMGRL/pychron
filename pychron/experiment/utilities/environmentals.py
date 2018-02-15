@@ -11,3 +11,4 @@ def set_environmentals(obj, ed):
     func('lab_airpressure', 'lab_pneumatics', 'AirPressure', 'Pressure')
     func('east_diffuser_temperature', 'lab_temperatures', 'RPiWeather', 'Lab Temp. 3')
     func('east_return_temperature', 'lab_temperatures', 'RPiWeather', 'Lab Temp. 4')
+    func('outside_temperature', 'lab_temperatures', 'NOAA', 'Outside Temp')
