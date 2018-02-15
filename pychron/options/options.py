@@ -490,6 +490,10 @@ class AuxPlotFigureOptions(FigureOptions):
 
     layout = Instance(FigureLayout, ())
 
+    error_info_font = Property
+    error_info_fontname = Enum(*FONTS)
+    error_info_fontsize = Enum(*SIZES)
+
     def add_aux_plot(self, name, i=0, **kw):
         plt = self.aux_plot_klass(name=name, **kw)
         plt.plot_enabled = True
@@ -513,6 +517,9 @@ class AuxPlotFigureOptions(FigureOptions):
         return list(reversed([pi for pi in self.aux_plots
                               if pi.name and pi.name != NULL_STR and pi.plot_enabled]))
 
+    def _get_error_info_font(self):
+        return '{} {}'.format(self.error_info_fontname, self.error_info_fontsize)
+
     def _aux_plots_default(self):
         return [self.aux_plot_klass() for _ in range(12)]
 
@@ -534,10 +541,6 @@ class AgeOptions(AuxPlotFigureOptions):
 
     analysis_label_format = Str
     analysis_label_display = Str
-
-    error_info_font = Property
-    error_info_fontname = Enum(*FONTS)
-    error_info_fontsize = Enum(*SIZES)
 
     label_font = Property
     label_fontname = Enum(*FONTS)
@@ -561,8 +564,5 @@ class AgeOptions(AuxPlotFigureOptions):
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
 
-    def _get_error_info_font(self):
-        return '{} {}'.format(self.error_info_fontname,
-                              self.error_info_fontsize)
 
 # ============= EOF =============================================

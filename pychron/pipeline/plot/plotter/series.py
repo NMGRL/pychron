@@ -306,6 +306,7 @@ class Series(BaseSeries):
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
+                                       font=self.options.error_info_font,
                                        component=plot)
                     plot.overlays.append(pl)
 

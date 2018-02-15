@@ -31,7 +31,6 @@ import sys
 from pyface.qt import QtCore
 from pyface.qt.QtGui import QAction, QCursor
 from six.moves import range
-from past.builtins import cmp
 
 
 # ============= local library imports  ==========================
@@ -91,6 +90,10 @@ class myEditorAreaWidget(EditorAreaWidget):
     def get_dock_widgets_ordered(self, visible_only=False):
         """ Gets all dock widgets in left-to-right, top-to-bottom order.
             """
+
+        def cmp(a, b):
+            return (a > b) - (a < b)
+
         def compare(one, two):
             y = cmp(one.pos().y(), two.pos().y())
             return cmp(one.pos().x(), two.pos().x()) if y == 0 else y
@@ -99,8 +102,8 @@ class myEditorAreaWidget(EditorAreaWidget):
         for child in self.children():
             if (child.isWidgetType() and child.isVisible() and
                     ((isinstance(child, QtGui.QTabBar) and not visible_only) or
-                     (isinstance(child, QtGui.QDockWidget) and
-                      (visible_only or not self.tabifiedDockWidgets(child))))):
+                         (isinstance(child, QtGui.QDockWidget) and
+                              (visible_only or not self.tabifiedDockWidgets(child))))):
                 children.append(child)
         children = sorted(children, key=cmp_to_key(compare))
         # children.sort(cmp=compare)
@@ -133,7 +136,6 @@ class myEditorAreaWidget(EditorAreaWidget):
 
 
 class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
-
     # def add_editor(self, editor):
     #     """ Adds an editor to the pane.
     #     """
