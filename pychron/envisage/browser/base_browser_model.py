@@ -540,7 +540,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return pss + recents
 
     def _make_records(self, ans):
-        self.debug('make records')
+        n = len(ans)
+        self.debug('make records {}'.format(n))
         import time
         st = time.time()
 
@@ -556,7 +557,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             return xi.record_views
 
-        ret = progress_loader(ans, func, threshold=25, step=50)
+        ret = progress_loader(ans, func, threshold=100, step=20)
         self.debug('make records {}'.format(time.time() - st))
         return ret
 

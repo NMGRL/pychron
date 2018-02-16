@@ -48,7 +48,7 @@ class DVCNode(BaseNode):
         from pychron.envisage.browser.view import BrowserView
 
         self.browser_model.activated()
-        self.browser_model.do_filter()
+        # self.browser_model.do_filter()
 
         if irradiation:
             self.browser_model.irradiation_enabled = True

@@ -113,16 +113,13 @@ class PipelineTask(BaseBrowserTask):
     diff_enabled = Bool
 
     def activated(self):
-        if self.application.get_plugin('pychron.mass_spec.plugin'):
-            self.diff_enabled = True
+        self.debug('activating pipeline')
+        super(PipelineTask, self).activated()
 
         self.engine.dvc = self.dvc
         self.browser_model.dvc = self.dvc
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
-
-        super(PipelineTask, self).activated()
-        # self.engine.add_data()
 
     def _debug(self):
         self.engine.add_data()

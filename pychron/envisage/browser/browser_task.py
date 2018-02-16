@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
-from traits.api import Any, on_trait_change, Date, Time, Instance
+from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
 from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.browser.recall_editor import RecallEditor
@@ -70,6 +70,7 @@ class BaseBrowserTask(BaseEditorTask):
     end_time = Time
 
     browser_pane = Any
+    diff_enabled = Bool
 
     _activated = False
     _top_level_filter = None
@@ -85,12 +86,9 @@ class BaseBrowserTask(BaseEditorTask):
 
             self._destroy_browser_model()
 
-            # self.dvc.db.close_session()
-
     def activated(self):
-        self.dvc = self.application.get_service(DVC_PROTOCOL)
-
-    #     self.dvc.create_session()
+        if self.application.get_plugin('pychron.mass_spec.plugin'):
+            self.diff_enabled = True
 
     def edit_analysis(self):
         self.debug('Edit analysis data')
