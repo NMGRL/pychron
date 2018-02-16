@@ -269,12 +269,14 @@ class DatabaseAdapter(Loggable):
                         self.session.close()
 
                     self.session = self.session_factory()
-                    self._session_cnt = 0
+                    self._session_cnt = 1
                 else:
                     if not self.session:
                         self.debug('create new session {}'.format(id(self)))
                         self.session = self.session_factory()
                     self._session_cnt += 1
+            else:
+                self.warning('no session factory')
         else:
             self.session = MockSession()
 
@@ -616,7 +618,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
-            self.debug('USING MOCKSESSION**************')
+            self.debug('USING MOCKSESSION************** {}'.format(sess))
             return []
 
         if distinct_:

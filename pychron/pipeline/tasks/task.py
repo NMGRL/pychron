@@ -76,29 +76,30 @@ class PipelineTask(BaseBrowserTask):
         #               SpectrumAction(),
         #               InverseIsochronAction()),
 
-                 SToolBar(ConfigureRecallAction()),
-                 SToolBar(RunAction(),
-                          ResumeAction(),
-                          RunFromAction(),
-                          ResetAction(),
-                          ClearAction(),
-                          # SavePipelineTemplateAction(),
-                          name='Pipeline'),
-                 SToolBar(SavePDFAction(),
-                          # SaveFigureAction(),
-                          name='Save'),
-                 SToolBar(EditAnalysisAction(),
-                          name='Edit'),
-                 SToolBar(LoadReviewStatusAction(),
-                          DiffViewAction(),
-                          name='View'),
-                 # SToolBar(GitRollbackAction(), label='Git Toolbar'),
-                 SToolBar(TagAction(),
-                          SetInvalidAction(),
-                          SetFilteringTagAction(),
-                          SetInterpretedAgeAction(),
-                          # TabularViewAction(),
-                          name='Misc')]
+        SToolBar(PipelineRecallAction(),
+                 ConfigureRecallAction()),
+        SToolBar(RunAction(),
+                 ResumeAction(),
+                 RunFromAction(),
+                 ResetAction(),
+                 ClearAction(),
+                 # SavePipelineTemplateAction(),
+                 name='Pipeline'),
+        SToolBar(SavePDFAction(),
+                 # SaveFigureAction(),
+                 name='Save'),
+        SToolBar(EditAnalysisAction(),
+                 name='Edit'),
+        SToolBar(LoadReviewStatusAction(),
+                 DiffViewAction(),
+                 name='View'),
+        # SToolBar(GitRollbackAction(), label='Git Toolbar'),
+        SToolBar(TagAction(),
+                 SetInvalidAction(),
+                 SetFilteringTagAction(),
+                 SetInterpretedAgeAction(),
+                 # TabularViewAction(),
+                 name='Misc')]
 
     state = Instance(EngineState)
     resume_enabled = Bool(False)
@@ -112,8 +113,6 @@ class PipelineTask(BaseBrowserTask):
     diff_enabled = Bool
 
     def activated(self):
-        super(PipelineTask, self).activated()
-
         if self.application.get_plugin('pychron.mass_spec.plugin'):
             self.diff_enabled = True
 
@@ -122,6 +121,7 @@ class PipelineTask(BaseBrowserTask):
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
+        super(PipelineTask, self).activated()
         # self.engine.add_data()
 
     def _debug(self):
@@ -196,6 +196,8 @@ class PipelineTask(BaseBrowserTask):
             if self._browser_info.control:
                 self._browser_info.control.raise_()
                 return
+
+        self.dvc.create_session(force=True)
 
         self.browser_model.activated()
         browser_view = BrowserView(show_append_replace_buttons=False,
@@ -456,21 +458,18 @@ class PipelineTask(BaseBrowserTask):
             self.run()
 
     def _set_action_template(self, name):
+        self.activated()
         self.engine.selected_pipeline_template = name
         self.run()
 
     def _make_save_figure_object(self, editor):
         po = editor.plotter_options
         plotter_options = po.to_dict()
-
-        for k, v in six.iteritems(plotter_options):
-            print(k, v)
-        obj = {}
-        obj['plotter_options'] = plotter_options
-        obj['analyses'] = [{'record_id': ai.record_id,
-                            'uuid': ai.uuid,
-                            # 'status': ai.temp_status,
-                            'group_id': ai.group_id} for ai in editor.analyses]
+        obj = {'plotter_options': plotter_options,
+               'analyses': [{'record_id': ai.record_id,
+                             'uuid': ai.uuid,
+                             # 'status': ai.temp_status,
+                             'group_id': ai.group_id} for ai in editor.analyses]}
         return obj
 
     def _close_editor(self, editor):
@@ -526,9 +525,9 @@ class PipelineTask(BaseBrowserTask):
     # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
-                                                 width=200),
-                                        PaneItem('pychron.pipeline.analyses',
-                                                 width=200)),
+                                                          width=200),
+                                                 PaneItem('pychron.pipeline.analyses',
+                                                          width=200)),
                                         PaneItem('pychron.pipeline.repository'),
                                         orientation='vertical'))
 

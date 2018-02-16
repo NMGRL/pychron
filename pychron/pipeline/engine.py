@@ -665,6 +665,8 @@ class PipelineEngine(Loggable):
 
         ost = time.time()
 
+        self.dvc.create_session(force=True)
+
         start_node = run_from or state.veto
         self.debug('pipeline run started')
         if start_node:
