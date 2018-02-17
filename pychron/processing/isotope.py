@@ -149,6 +149,7 @@ class IsotopicMeasurement(BaseMeasurement):
     user_defined_error = False
     use_stored_value = False
     reviewed = False
+    ic_factor_reviewed = False
 
     _value = 0
     _error = 0

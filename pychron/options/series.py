@@ -47,6 +47,7 @@ class SeriesOptions(FitOptions):
     error_bar_nsigma = Enum(1, 2, 3)
     end_caps = Bool(False)
     show_info = Bool(True)
+    use_restricted_references = Bool
 
     def _get_subview(self, name):
         return VIEWS[name]
