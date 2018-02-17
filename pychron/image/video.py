@@ -22,6 +22,7 @@ import shutil
 import time
 from threading import Thread, Lock, Event
 
+import yaml
 from PIL import Image as PImage
 from numpy import asarray
 from traits.api import Any, Bool, Float, List, Str, Int
@@ -106,21 +107,26 @@ class Video(Image):
     def is_open(self):
         return self.cap is not None
 
-    def load_configuration(self, cfg):
-        gen = cfg.get('General')
-        if gen:
-            self.swap_rb = gen.get('swap_rb', False)
-            self.hflip = gen.get('hflip', False)
-            self.vflip = gen.get('vflip', False)
+    def load_configuration(self, p):
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                cfg = yaml.load(rfile)
 
-        vid = cfg.get('Video')
-        if vid:
-            # self.output_mode = vid.get('output_mode', 'MPEG')
-            self.ffmpeg_path = vid.get('ffmpeg_path', '')
-            self.fps = vid.get('fps')
+                gen = cfg.get('General')
+                if gen:
+                    self.swap_rb = gen.get('swap_rb', False)
+                    self.hflip = gen.get('hflip', False)
+                    self.vflip = gen.get('vflip', False)
+                    self.rotate = gen.get('rotate', False)
 
-        if hasattr(self.cap, 'load_configuration'):
-            self.cap.load_configuration(cfg)
+                vid = cfg.get('Video')
+                if vid:
+                    # self.output_mode = vid.get('output_mode', 'MPEG')
+                    self.ffmpeg_path = vid.get('ffmpeg_path', '')
+                    self.fps = vid.get('fps')
+
+                if hasattr(self.cap, 'load_configuration'):
+                    self.cap.load_configuration(cfg)
 
     def open(self, user=None, identifier=None, force=False):
         """

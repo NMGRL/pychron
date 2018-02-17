@@ -18,8 +18,8 @@
 from __future__ import absolute_import
 from numpy import asarray, flipud, ndarray, fliplr
 from skimage.color import rgb2gray
-from skimage.transform import resize
-from traits.api import HasTraits, Any, List, Int, Bool
+from skimage.transform import resize, rotate as trotate
+from traits.api import HasTraits, Any, List, Int, Bool, Float
 
 # from cv_wrapper import flip as cv_flip
 # from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
@@ -44,6 +44,7 @@ class Image(HasTraits):
     swap_rb = Bool(False)
     hflip = Bool(False)
     vflip = Bool(False)
+    rotate = Float(0)
     panel_size = Int(300)
 
     _cached_frame = None
@@ -111,7 +112,7 @@ class Image(HasTraits):
     #         pass
 
     def modify_frame(self, frame, vflip=None, hflip=None, gray=False, swap_rb=None,
-                     clone=False, croprect=None, size=None):
+                     clone=False, rotate=None):
         if frame is not None:
             def _get_param(param, p):
                 if param is None:
@@ -119,60 +120,32 @@ class Image(HasTraits):
                 else:
                     return param
 
-            swap_rb = _get_param(swap_rb, 'swap_rb')
-            vflip = _get_param(vflip, 'vflip')
-            hflip = _get_param(hflip, 'hflip')
-
             if clone:
                 frame = frame.clone()
 
-            if swap_rb:
-                red = frame[:, :, 2].copy()
-                blue = frame[:, :, 0].copy()
+            if len(frame.shape) == 3:
+                swap_rb = _get_param(swap_rb, 'swap_rb')
+                if swap_rb:
+                    red = frame[:, :, 2].copy()
+                    blue = frame[:, :, 0].copy()
 
-                frame[:, :, 0] = red
-                frame[:, :, 2] = blue
+                    frame[:, :, 0] = red
+                    frame[:, :, 2] = blue
 
             if gray:
                 frame = rgb2gray(frame)
 
-            # if croprect:
-            #     if len(croprect) == 2:  # assume w, h
-            #         # w, h = get_size(frame)
-            #         args = frame.shape
-            #         h,w = args[0], args[1]
-            #
-            #         croprect = (w - croprect[0]) / 2, (h - croprect[1]) / 2, croprect[0], croprect[1]
-            #     else:
-            #         pass
-            #
-            #     rs = croprect[0]
-            #     re = croprect[0] + croprect[2]
-            #     cs = croprect[1]
-            #     ce = croprect[1] + croprect[3]
-            #
-            #     frame = frame.ndarray[cs:ce, rs:re]
+            vflip = _get_param(vflip, 'vflip')
+            hflip = _get_param(hflip, 'hflip')
 
-            # if size:
-            #     print size, frame.shape
-            #
-            #     frame = resize(frame, size)
-            #     print 'fff', frame.shape
+            if vflip:
+                frame = flipud(frame)
+            if hflip:
+                frame = fliplr(frame)
 
-
-            # if not globalv.video_test:
-            #     if vflip:
-            #         frame = flipud(frame)
-            #     if hflip:
-            #         frame = fliplr(frame)
-
-                # if vflip:
-                #     if hflip:
-                #         cv_flip(frame, -1)
-                #     else:
-                #         cv_flip(frame, 0)
-                # elif hflip:
-                #     cv_flip(frame, 1)
+            rotate = _get_param(rotate, 'rotate')
+            if rotate:
+                frame = trotate(frame, rotate, preserve_range=True)
 
         return asarray(frame)
 
@@ -193,24 +166,24 @@ class Image(HasTraits):
         except IndexError:
             pass
 
-    def save(self, path, src=None, swap=False):
-        if src is None:
-            src = self.render()
-
-        if swap:
-            src = cv_swap_rb(src)
-
-        save_image(src, path)
-
-    def _draw_crosshairs(self, src):
-        r = 10
-
-        w, h = list(map(int, get_size(src)))
-        pts = [[(w / 2, 0), (w / 2, h / 2 - r)],
-               [(w / 2, h / 2 + r), (w / 2, h)],
-               [(0, h / 2), (w / 2 - r, h / 2)],
-               [(w / 2 + r, h / 2), (w, h / 2)],
-               ]
-        draw_lines(src, pts, color=(0, 255, 255), thickness=1)
+    # def save(self, path, src=None, swap=False):
+    #     if src is None:
+    #         src = self.render()
+    #
+    #     if swap:
+    #         src = cv_swap_rb(src)
+    #
+    #     save_image(src, path)
+    #
+    # def _draw_crosshairs(self, src):
+    #     r = 10
+    #
+    #     w, h = map(int, get_size(src))
+    #     pts = [[(w / 2, 0), (w / 2, h / 2 - r)],
+    #            [(w / 2, h / 2 + r), (w / 2, h)],
+    #            [(0, h / 2), (w / 2 - r, h / 2)],
+    #            [(w / 2 + r, h / 2), (w, h / 2)],
+    #            ]
+    #     draw_lines(src, pts, color=(0, 255, 255), thickness=1)
 
 # ======== EOF ================================

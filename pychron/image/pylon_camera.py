@@ -50,16 +50,22 @@ class PylonCamera(Loggable):
             return True
 
     def load_configuration(self, cfg):
+        self.debug('Load configuration')
+
         if cfg and self._cam:
             dev = cfg.get('Device')
             if dev:
                 pylon = dev.get('PylonParameters', {})
-                for k, v in six.iteritems(pylon):
+                for k, v in pylon.items():
                     try:
                         self._cam.properties[k] = v
+                        self.debug('Set {} to {}'.format(k, v))
                     except KeyError:
                         self.warning('Invalid Camera Property "{}"'.format(k))
-
+                    except RuntimeError, e:
+                        self.warning('RunTimeError: {}. k={},v={}'.format(e, k, v))
+                    except IOError,e:
+                        self.warning('IOError: {}, k={}, k={}'.format(e, k, v))
             self.pixel_depth = self._cam.properties['PixelDynamicRangeMax']
 
     def read(self):

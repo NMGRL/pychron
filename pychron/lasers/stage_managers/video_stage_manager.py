@@ -99,7 +99,7 @@ class VideoStageManager(StageManager):
     auto_upload = Bool(False)
     keep_local_copy = Bool(False)
 
-    lumen_detector = Instance(LumenDetector, ())
+    lumen_detector = Instance(LumenDetector)
 
     render_with_markup = Bool(False)
 
@@ -282,7 +282,6 @@ class VideoStageManager(StageManager):
     def initialize_video(self):
         if self.video:
             identifier = 0
-            yd = None
             p = self.video_configuration_path
             if os.path.isfile(p):
                 with open(p, 'r') as rfile:
@@ -292,8 +291,7 @@ class VideoStageManager(StageManager):
 
             self.video.open(identifier=identifier)
 
-            if yd:
-                self.video.load_configuration(yd)
+            self.video.load_configuration(p)
 
     def initialize_stage(self):
         super(VideoStageManager, self).initialize_stage()
@@ -686,8 +684,11 @@ class VideoStageManager(StageManager):
     # handlers
     # ===============================================================================
     def _configure_camera_device_button_fired(self):
-        if hasattr(self.video.cap, 'reload_configuration'):
-            self.video.cap.reload_configuration(self.video_configuration_path)
+        if self.video:
+            self.video.load_configuration(self.video_configuration_path)
+
+            if hasattr(self.video.cap, 'reload_configuration'):
+                self.video.cap.reload_configuration(self.video_configuration_path)
 
     def _update_zoom(self, v):
         if self.camera:
@@ -822,6 +823,11 @@ class VideoStageManager(StageManager):
 
         self._camera_zoom_coefficients = camera.zoom_coefficients
         return camera
+
+    def _lumen_detector_default(self):
+        ld = LumenDetector()
+        ld.pixel_depth = self.video.pixel_depth
+        return ld
 
     def _video_default(self):
         v = Video()

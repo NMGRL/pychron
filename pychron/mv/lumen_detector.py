@@ -49,8 +49,9 @@ class LumenDetector(Locator):
     def __init__(self, *args, **kw):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
+        self.pixel_depth = 255
 
-    def get_value(self, src, scaled=True, threshold=50, area_threshold=10, pixel_depth=8):
+    def get_value(self, src, scaled=True, threshold=50, area_threshold=10, pixel_depth=None):
         """
 
         if scaled is True
@@ -60,6 +61,9 @@ class LumenDetector(Locator):
         @param scaled:
         @return:
         """
+        if pixel_depth is None:
+            pixel_depth = self.pixel_depth
+
         mask = self._mask(src)
 
         if self._cached_mask_value is None:
@@ -67,7 +71,7 @@ class LumenDetector(Locator):
 
         gsrc = rgb2gray(src)
 
-        tt = threshold / self.calc_pixel_depth(pixel_depth)
+        tt = threshold / pixel_depth
         tsrc = gsrc[gsrc > tt]
         tsrc = (tsrc - tt) / (1 - tt)
 
@@ -95,7 +99,10 @@ class LumenDetector(Locator):
                 self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, pixel_depth=8, min_distance=5):
+    def find_lum_peak(self, lum, pixel_depth=None, min_distance=5):
+        if pixel_depth is None:
+            pixel_depth = self.pixel_depth
+
         mask = self._mask(lum)
         h, w = lum.shape[:2]
         src = rgb2gray(lum)
@@ -103,7 +110,7 @@ class LumenDetector(Locator):
         peak_img = zeros((h, w), dtype=uint8)
         # cum_peaks = zeros((h, w), dtype=uint8)
         pt, px, py = None, None, None
-        pd = calc_pixel_depth(pixel_depth)
+        pd = pixel_depth
         if pts.shape[0]:
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
@@ -121,7 +128,10 @@ class LumenDetector(Locator):
         sat = lum.sum() / (mask.sum() * pd)
         return pt, px, py, peak_img, sat
 
-    def get_scores(self, lum, pixel_depth=8):
+    def get_scores(self, lum, pixel_depth=None):
+        if pixel_depth is None:
+            pixel_depth = self.pixel_depth
+
         mask = self._mask(lum)
         v = lum.sum()
         # x, y = peak_local_max(lum, min_distance=5, num_peaks=1)[0]
@@ -134,8 +144,7 @@ class LumenDetector(Locator):
         except ZeroDivisionError:
             score_density = 0
 
-        pd = calc_pixel_depth(pixel_depth)
-        score_saturation = v / (mask.sum() * pd)
+        score_saturation = v / (mask.sum() * pixel_depth)
 
         return score_density, score_saturation, lum
 
