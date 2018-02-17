@@ -178,12 +178,11 @@ class FitICFactorNode(FitReferencesNode):
     #     super(FitICFactorNode, self).run(state)
 
     def _check_refit(self, ai):
-        return True
-        # for k in self._keys:
-        #     print('keasdfas {}'.format(k))
-        #     i = ai.get_isotope(k)
-        #     if not i.ic_factor_reviewed:
-        #         return True
+        for k in self._keys:
+            num, dem = k.split('/')
+            i = ai.get_isotope(num)
+            if not i.ic_factor_reviewed:
+                return True
 
     def load(self, nodedict):
         try:

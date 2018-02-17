@@ -662,12 +662,20 @@ class MetaRepo(GitRepoManager):
     #         pr = Production(os.path.join(root, di))
     #         prs.append(pr)
     #     return prs
+    def get_flux_positions(self, irradiation, level):
+        positions = self._get_level_positions(irradiation, level)
+        return positions
 
     def get_flux(self, irradiation, level, position):
+        positions = self.get_flux_from_positions(irradiation, level)
+        return self.get_flux_from_positions(position, positions)
+
+    def get_flux_from_positions(self, position, positions):
+
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, je, lambda_k = 0, 0, None
         standard_name, standard_material, standard_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
-        positions = self._get_level_positions(irradiation, level)
+        # positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:

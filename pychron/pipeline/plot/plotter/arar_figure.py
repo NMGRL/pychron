@@ -189,7 +189,8 @@ class BaseArArFigure(SelectionFigure):
         pass
 
     def replot(self, *args, **kw):
-        self.plot(self.options.get_plotable_aux_plots())
+        if self.options:
+            self.plot(self.options.get_plotable_aux_plots())
 
     def max_x(self, *args):
         return -Inf
@@ -276,9 +277,9 @@ class BaseArArFigure(SelectionFigure):
     def _set_y_limits(self, a, b, min_=None, max_=None,
                       pid=0, pad=None):
 
-        mi, ma = 0, 0
-        if self.group_id > 0:
-            mi, ma = self.graph.get_y_limits(plotid=pid)
+        # mi, ma = 0, 0
+        # if self.group_id > 0:
+        mi, ma = self.graph.get_y_limits(plotid=pid)
 
         # print mi, ma, a, b
         # print pid, self.group_id, mi, ma, a, b

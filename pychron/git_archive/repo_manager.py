@@ -635,7 +635,9 @@ class GitRepoManager(Loggable):
                 # potentially conflicts
 
                 # do merge
-                self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'GitRepoManager.smart_pull/ahead')
+                self._git_command(lambda: repo.git.rebase('--preserve-merges',
+                                                          '{}/{}'.format(remote, branch)),
+                                  'GitRepoManager.smart_pull/ahead')
                 # try:
                 #     repo.git.merge('FETCH_HEAD')
                 # except BaseException:

@@ -715,11 +715,32 @@ class DVC(Loggable):
         # for ei in exps:
         branches = {ei: get_repository_branch(os.path.join(paths.repository_dataset_dir, ei)) for ei in exps}
 
+        fluxes = {}
+        productions = {}
+        chronos = {}
+        meta_repo = self.meta_repo
+        for r in records:
+            irrad = r.irradiation
+            if irrad != 'NoIrradiation':
+                level = r.irradiation_level
+                flux_levels = fluxes.get(irrad, {})
+                prod_levels = productions.get(irrad, {})
+
+                if level not in flux_levels:
+                    flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
+                if level not in prod_levels:
+                    prod_levels[level] = meta_repo.get_production(irrad, level)
+                if irrad not in chronos:
+                    chronos[irrad] = meta_repo.get_chronology(irrad)
+                fluxes[irrad] = flux_levels
+                productions[irrad] = prod_levels
+
         make_record = self._make_record
 
         def func(*args):
             try:
-                r = make_record(branches=branches, calculate_f_only=calculate_f_only, *args)
+                r = make_record(branches=branches, chronos=chronos, productions=productions,
+                                fluxes=fluxes, calculate_f_only=calculate_f_only, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -1149,7 +1170,8 @@ class DVC(Loggable):
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, branches=None, calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None,
+                     calculate_f_only=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1204,19 +1226,30 @@ class DVC(Loggable):
             # load irradiation
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 # self.debug('Irradiation {}'.format(a.irradiation))
-                chronology = meta_repo.get_chronology(a.irradiation)
+                if chronos:
+                    chronology = chronos[a.irradiation]
+                else:
+                    chronology = meta_repo.get_chronology(a.irradiation)
                 a.set_chronology(chronology)
 
                 frozen_production = self._get_frozen_production(rid, a.repository_identifier)
                 if frozen_production:
                     pname, prod = frozen_production.name, frozen_production
                 else:
-                    pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                    if productions:
+                        pname, prod = productions[a.irradiation][a.irradiation_level]
+                    else:
+                        pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+
                 a.set_production(pname, prod)
 
-                fd = meta_repo.get_flux(record.irradiation,
-                                        record.irradiation_level,
-                                        record.irradiation_position_position)
+                if fluxes:
+                    level_flux = fluxes[a.irradiation][a.irradiation_level]
+                    fd = meta_repo.get_flux_from_positions(record.irradiation_position_position, level_flux)
+                else:
+                    fd = meta_repo.get_flux(record.irradiation,
+                                            record.irradiation_level,
+                                            record.irradiation_position_position)
                 a.j = fd['j']
                 if fd['lambda_k']:
                     a.arar_constants.lambda_k = fd['lambda_k']

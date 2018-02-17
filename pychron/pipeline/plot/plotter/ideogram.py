@@ -383,6 +383,7 @@ class Ideogram(BaseArArFigure):
         self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
+        # if ogid == 0:
         plot.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
         if self.options.display_inset:
@@ -560,7 +561,7 @@ class Ideogram(BaseArArFigure):
         ans = self.sorted_analyses
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
-        self._rebuild_ideo(ans)
+        self._rebuild_ideo(sel)
 
         # self._filter_metadata_changes(obj, sorted_ans, self._rebuild_ideo)
 
@@ -578,24 +579,21 @@ class Ideogram(BaseArArFigure):
 
     @caller
     def _rebuild_ideo(self, sel=None):
-
         graph = self.graph
+        gid = self.group_id + 1
+        ss = [p.plots[key][0]
+              for p in graph.plots[1:]
+              for key in p.plots
+              if key.endswith('{}'.format(gid))]
+
         if sel is None:
-            sel = graph.plots[1].default_index.metadata['selections']
+            sel = ss[0].index.metadata['selections']
+
         if sel:
-            ss = [p.plots[key][0]
-                  for p in graph.plots[1:]
-                  for key in p.plots
-                  if key.endswith('{}'.format(self.group_id + 1))]
             self._set_renderer_selection(ss, sel)
 
         plot = graph.plots[0]
-        #
-        # meta = {'selections': sel}
-        # plot.default_index.trait_set(metadata=meta,
-        #                              trait_change_notify=False)
 
-        gid = self.group_id + 1
         lp = plot.plots['Current-{}'.format(gid)][0]
         dp = plot.plots['Original-{}'.format(gid)][0]
 
@@ -615,7 +613,6 @@ class Ideogram(BaseArArFigure):
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
         else:
             n = 0
-            fxs, fxes = [], []
             ys = []
             xs = []
             wm, we, mswd, valid_mswd = 0, 0, 0, False
@@ -655,7 +652,7 @@ class Ideogram(BaseArArFigure):
         else:
             dp.visible = False
 
-        self._set_y_limits(mi, ma, min_=0, pad='0.025')
+        self._set_y_limits(0, ma, min_=0)
         graph.redraw()
 
     # ===============================================================================
