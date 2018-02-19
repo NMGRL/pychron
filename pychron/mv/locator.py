@@ -44,8 +44,8 @@ from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
 from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
-from six.moves import range
-from six.moves import zip
+# from six.moves import range
+# from six.moves import zip
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -186,9 +186,8 @@ class Locator(Loggable):
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim, n=20, w=10, start=None, step=2,
-                      use_adaptive_threshold=False,
-                      preprocess=True,
+    def _find_targets(self, image, frame, dim,
+                      search=None, preprocess=True,
                       filter_targets=True,
                       convexity_filter=False,
                       mask=False,
@@ -196,6 +195,9 @@ class Locator(Loggable):
         """
             use a segmentor to segment the image
         """
+
+        if search is None:
+            search = {}
 
         if preprocess:
             if not isinstance(preprocess, dict):
@@ -214,12 +216,20 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
+        start = search.get('start')
         if start is None:
+            # n=20, w=10, start=None, step=2
+            w = search.get('width', 10)
             start = int(median(src)) - 3 * w
             # start = 2*w
             # start = 20
 
-        seg = RegionSegmenter(use_adaptive_threshold=use_adaptive_threshold)
+        step = search.get('step', 2)
+        n = search.get('n', 20)
+
+        blocksize_step = search.get('blocksize_step', 5)
+        seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
+                              blocksize=search.get('blocksize', 20))
         fa = self._get_filter_target_area(dim)
         phigh, plow = None, None
 
@@ -236,7 +246,7 @@ class Locator(Loggable):
                 phigh = seg.threshold_high
 
                 nsrc = seg.segment(src)
-                seg.block_size += 5
+                seg.blocksize += blocksize_step
 
                 nf = colorspace(nsrc)
                 # print(i, seg.threshold_high, seg.threshold_low)

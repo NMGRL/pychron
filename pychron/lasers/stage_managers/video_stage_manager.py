@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import yaml
 from apptools.preferences.preference_binding import bind_preference
+from skimage.color import gray2rgb
 from skimage.draw import circle_perimeter, line
 from traits.api import Instance, String, Property, Button, Bool, Event, on_trait_change, Str, Float
 from pychron.core.ui.thread import Thread as UIThread, sleep
@@ -40,8 +41,8 @@ from pychron.mv.lumen_detector import LumenDetector
 from pychron.paths import paths
 from .stage_manager import StageManager
 from pychron.core.ui.thread import Thread as QThread
-from six.moves import map
-from six.moves import range
+
+
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
         VideoLaserTrayCanvas
@@ -180,7 +181,12 @@ class VideoStageManager(StageManager):
 
         try:
             t, md, p = next(self.grain_polygons)
-            return encode_blob('{}{}'.format(pack('ff', ((t, md),)), pack('HH', p)))
+
+            a = pack('ff', ((t, md),))
+            b = pack('HH', p)
+
+            return encode_blob(a+b)
+
         except (StopIteration, TypeError) as e:
             self.debug('No more grain polygons. {}'.format(e))
 
@@ -408,7 +414,11 @@ class VideoStageManager(StageManager):
     def find_lum_peak(self, min_distance):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
-        return ld.find_lum_peak(src, min_distance=min_distance)
+        dim = self.stage_map.g_dimension
+        mask_dim = dim * 1.05
+        # mask_dim_mm = mask_dim * self.pxpermm
+
+        return ld.find_lum_peak(src, dim, mask_dim, min_distance=min_distance)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -441,7 +451,7 @@ class VideoStageManager(StageManager):
         ld.pxpermm = self.pxpermm
 
         offx, offy = self.canvas.get_screen_offset()
-        cropdim = dim * 2.25
+        cropdim = dim * 2.5
 
         src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
         return src
@@ -551,11 +561,13 @@ class VideoStageManager(StageManager):
 
             if self.render_with_markup:
                 # draw crosshairs
+                if len(frame.shape)==2:
+                    frame = gray2rgb(frame)
 
                 ch, cw, _ = frame.shape
                 ch, cw = int(ch), int(cw)
-                y = ch / 2
-                x = cw / 2
+                y = ch // 2
+                x = cw // 2
 
                 cp = circle_perimeter(y, x, r, shape=(ch, cw))
 
@@ -582,15 +594,15 @@ class VideoStageManager(StageManager):
             self._autocenter(holenum=holenum, ntries=ntries, save=True)
             self._auto_correcting = False
 
-    def find_center(self):
-        ox, oy = self.canvas.get_screen_offset()
-        rpos, src = self.autocenter_manager.calculate_new_center(
-            self.stage_controller.x,
-            self.stage_controller.y,
-            ox, oy,
-            dim=self.stage_map.g_dimension, open_image=False)
-
-        return rpos, src
+    # def find_center(self):
+    #     ox, oy = self.canvas.get_screen_offset()
+    #     rpos, src = self.autocenter_manager.calculate_new_center(
+    #         self.stage_controller.x,
+    #         self.stage_controller.y,
+    #         ox, oy,
+    #         dim=self.stage_map.g_dimension, open_image=False)
+    #
+    #     return rpos, src
 
     # def find_target(self):
     #     if self.video:
@@ -621,7 +633,7 @@ class VideoStageManager(StageManager):
             ox, oy = self.canvas.get_screen_offset()
             for ti in range(max(1, ntries)):
                 # use machine vision to calculate positioning error
-                args = self.autocenter_manager.calculate_new_center(
+                rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
                     ox, oy,
@@ -629,8 +641,7 @@ class VideoStageManager(StageManager):
                     alpha_enabled=alpha_enabled,
                     auto_close_image=auto_close_image)
 
-                if args is not None:
-                    rpos, _ = args
+                if rpos is not None:
                     self.linear_move(*rpos, block=True,
                                      source='autocenter',
                                      use_calibration=False,

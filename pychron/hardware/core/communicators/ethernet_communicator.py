@@ -94,7 +94,7 @@ class Handler(object):
         if frame.message_len:
             msg_len = 0
             nm = frame.nmessage_len
-
+        data = b''
         while 1:
             s = recv(self.datasize)  # self._sock.recv(2048)
             if not s:
@@ -104,12 +104,14 @@ class Handler(object):
                 msg_len = int(s[:nm], 16)
 
             sum += len(s)
-            ss.append(s)
+            data+=s
+            # ss.append(s)
             if sum >= msg_len:
                 break
 
-        data = ''.join(ss)
-        data = data.strip()
+        # data = ''.join(ss)
+        # data = data.strip()
+
         if frame.message_len:
             # trim off header
             data = data[nm:]
@@ -123,7 +125,7 @@ class Handler(object):
                 print('checksum fail computed={}, expected={}'.format(comp, checksum))
                 return
 
-        return data
+        return data.decode('utf-8')
 
 
 class TCPHandler(Handler):
@@ -140,7 +142,7 @@ class TCPHandler(Handler):
         return self._recvall(self.sock.recv, frame=message_frame)
 
     def send_packet(self, p):
-        self.sock.send(p)
+        self.sock.send(bytes(p,'utf-8'))
 
     def end(self):
         self.sock.close()
@@ -162,7 +164,7 @@ class UDPHandler(Handler):
         return self._recvall(recv)
 
     def send_packet(self, p):
-        self.sock.sendto(p, self.address)
+        self.sock.sendto(bytes(p, 'utf-8'), self.address)
 
 
 class EthernetCommunicator(Communicator):

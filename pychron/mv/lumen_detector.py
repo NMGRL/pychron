@@ -24,6 +24,8 @@ from skimage.color import rgb2gray, gray2rgb
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
+from skimage.filters import gaussian
+
 from pychron.mv.locator import Locator
 
 
@@ -85,25 +87,35 @@ class LumenDetector(Locator):
         src[src <= threshold] = 0
         return src, v
 
-    def find_targets(self, image, src, dim, mask=False):
+    def find_targets(self, image, src, dim, mask=False, search=None):
         targets = self._find_targets(image, src, dim,
                                      filter_targets=False,
                                      inverted=True,
                                      convexity_filter=0.75,
-                                     mask=mask)
+                                     mask=mask, search=search)
         if targets:
             targets = self._filter(targets, self._target_near_center, src)
             if targets:
-                self._draw_targets(image.source_frame, targets, dim)
+                if image is not None:
+                    self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, pixel_depth=None, min_distance=5):
+    def find_lum_peak(self, lum, dim, mask_dim,  pixel_depth=None, min_distance=5):
         if pixel_depth is None:
             pixel_depth = self.pixel_depth
 
+        targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
+
         mask = self._mask(lum)
+        if targets:
+            area = targets[0].area
+        else:
+            area = mask.sum()
+
         h, w = lum.shape[:2]
-        src = rgb2gray(lum)
+
+        src = gaussian(lum, 1) * pixel_depth
+        # src = rgb2gray(src)
         pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
         peak_img = zeros((h, w), dtype=uint8)
         # cum_peaks = zeros((h, w), dtype=uint8)
@@ -122,7 +134,7 @@ class LumenDetector(Locator):
             pt = px - w / 2., py - h / 2, sorted(intensities)[-1]
             peak_img[circle(py, px, min_distance)] = 255
 
-        sat = lum.sum() / (mask.sum() * pixel_depth)
+        sat = lum.sum() / (area * pixel_depth)
         return pt, px, py, peak_img, sat
 
     def get_scores(self, lum, pixel_depth=None):

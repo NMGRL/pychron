@@ -571,9 +571,9 @@ class NewportAxis(Axis):
         cp = self.get_configuration()
 
         # ensure 0 is not saved causing the axis to not move
-        cp.set('General', 'velocity', max(0.1, self.velocity))
-        cp.set('General', 'acceleration', max(0.1, self.acceleration))
-        cp.set('General', 'deceleration', max(0.1, self.deceleration))
+        cp.set('General', 'velocity', str(max(0.1, self.velocity)))
+        cp.set('General', 'acceleration', str(max(0.1, self.acceleration)))
+        cp.set('General', 'deceleration', str(max(0.1, self.deceleration)))
         for sect in cp.sections():
             for attr in cp.options(sect):
                 val = getattr(self, attr)
@@ -589,7 +589,7 @@ class NewportAxis(Axis):
                             ]:
                     val = '{:X}'.format(val)
 
-                cp.set(sect, attr, val)
+                cp.set(sect, attr, str(val))
 
         with open(self.config_path, 'w') as f:
             cp.write(f)

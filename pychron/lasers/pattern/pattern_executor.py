@@ -146,7 +146,7 @@ class PatternExecutor(Patternable):
         self.pattern.window_y = 50
         open_view(self.pattern, view='graph_view')
 
-    def execute(self, block=False, duration=None):
+    def execute(self, block=False, duration=None, thread_safe=True):
         """
             if block is true wait for patterning to finish
             before returning
@@ -157,8 +157,7 @@ class PatternExecutor(Patternable):
         self.start(show=self.show_patterning)
         evt = None
         # if current_thread().name != 'MainThread':
-        print('cur', currentThreadName())
-        if currentThreadName():
+        if thread_safe:
             evt = Event()
             invoke_in_main_thread(self._pre_execute, evt)
             while not evt.is_set():

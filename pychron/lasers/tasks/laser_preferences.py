@@ -58,6 +58,8 @@ class FusionsLaserPreferences(LaserPreferences):
     autocenter_blur = Int
     autocenter_stretch_intensity = Bool(False)
     autocenter_use_adaptive_threshold = Bool(False)
+    autocenter_blocksize = Int
+    autocenter_blocksize_step = Int
     autocenter_search_step = Int
     autocenter_search_n = Int
     autocenter_search_width = Int
@@ -140,16 +142,22 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                    Item('keep_local_copy'),
                                    Item('auto_upload'))
 
-        autocenter_grp = VGroup(Item('use_autocenter', label='Auto Center'),
+        autocenter_grp = VGroup(Item('use_autocenter', label='Auto Center Enabled'),
                                 VGroup(
                                     VGroup(Item('autocenter_blur', label='Blur'),
                                            Item('autocenter_stretch_intensity', label='Stretch Intensity'),
+                                           show_border=True,
                                            label='Preprocess'),
                                     VGroup(Item('autocenter_search_step', label='Step'),
                                            Item('autocenter_search_n', label='N'),
                                            Item('autocenter_search_width', label='Width'),
 
                                            Item('autocenter_use_adaptive_threshold', label='Use Adaptive Threshold'),
+                                           Item('autocenter_blocksize', label='Block Size',
+                                                enabled_when='autocenter_use_adaptive_threshold'),
+                                           Item('autocenter_blocksize_step', label='Block Size Step',
+                                                enabled_when='autocenter_use_adaptive_threshold'),
+                                           show_border=True,
                                            label='Search'),
 
                                     show_border=True),

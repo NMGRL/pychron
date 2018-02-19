@@ -30,14 +30,14 @@ class RegionSegmenter(BaseSegmenter):
     use_adaptive_threshold = Bool(True)
     threshold_low = 0
     threshold_high = 255
-    block_size = 20
+    blocksize = 20
 
     def segment(self, image):
         """
         """
         # image = src[:]
         if self.use_adaptive_threshold:
-            bs = self.block_size
+            bs = self.blocksize
             if not bs % 2:
                 bs += 1
 

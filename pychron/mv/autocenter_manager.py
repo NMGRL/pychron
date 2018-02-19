@@ -44,6 +44,8 @@ class AutoCenterManager(MachineVisionManager):
     search_step = Int
     search_n = Int
     search_width = Int
+    blocksize = Int
+    blocksize_step = Int
 
     display_image = Instance(FrameImage, ())
 
@@ -55,7 +57,8 @@ class AutoCenterManager(MachineVisionManager):
         bind_preference(self, 'search_step', '{}.autocenter_search_step'.format(pref_id))
         bind_preference(self, 'search_n', '{}.autocenter_search_n'.format(pref_id))
         bind_preference(self, 'search_width', '{}.autocenter_search_width'.format(pref_id))
-
+        bind_preference(self, 'blocksize', '{}.autocenter_blocksize'.format(pref_id))
+        bind_preference(self, 'blocksize_step', '{}.autocenter_blocksize_step'.format(pref_id))
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
                              open_image=True,
@@ -91,15 +94,17 @@ class AutoCenterManager(MachineVisionManager):
 
         preprop = {'stretch_intensity': self.stretch_intensity,
                    'blur': self.blur}
+        search = dict(n=self.search_n,
+                      step=self.search_step,
+                      w=self.search_width,
+                      blocksize=self.blocksize,
+                      blocksize_step=self.blocksize_step,
+                      use_adaptive_threshold=self.use_adaptive_threshold)
 
-        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop,
-                          n=self.search_n,
-                          step=self.search_step,
-                          w=self.search_width,
-                          use_adaptive_threshold=self.use_adaptive_threshold)
+        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search)
 
-        frm = loc.preprocessed_frame
-        im.overlay(frm, 0.5)
+        # frm = loc.preprocessed_frame
+        # im.overlay(frm, 0.5)
         if dx is None and dy is None:
             return
         else:
@@ -108,7 +113,7 @@ class AutoCenterManager(MachineVisionManager):
             mdy = dy / self.pxpermm
             self.info('calculated deviation px={:n},{:n}, '
                       'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy, self.pxpermm))
-            return (cx + mdx, cy + mdy), frm
+            return cx + mdx, cy + mdy
 
     # private
     def _get_locator(self):
@@ -150,19 +155,19 @@ class AutoCenterManager(MachineVisionManager):
             cx, cy = canvas.get_screen_center()
             canvas.add_markup_circle(cx, cy, r, identifier='target')
 
-    # views
-    # def configure_view(self):
-    #     v = View(Item('crop_size'),
-    #              Item('target_radius', editor=RangeEditor(low=0., high=5.)),
-    #              buttons=['OK', 'Cancel'])
-    #     return v
-    #
-    # def traits_view(self):
-    #     v = View(HGroup(Item('use_autocenter', label='Enabled'),
-    #                     # Item('configure_button', show_label=False),
-    #                     show_border=True,
-    #                     label='Autocenter'))
-    #     return v
+            # views
+            # def configure_view(self):
+            #     v = View(Item('crop_size'),
+            #              Item('target_radius', editor=RangeEditor(low=0., high=5.)),
+            #              buttons=['OK', 'Cancel'])
+            #     return v
+            #
+            # def traits_view(self):
+            #     v = View(HGroup(Item('use_autocenter', label='Enabled'),
+            #                     # Item('configure_button', show_label=False),
+            #                     show_border=True,
+            #                     label='Autocenter'))
+            #     return v
 
 
 class CO2AutocenterManager(AutoCenterManager):
