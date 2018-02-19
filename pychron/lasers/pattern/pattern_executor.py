@@ -343,7 +343,7 @@ class PatternExecutor(Patternable):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
-        imgplot = pattern.setup_execution_graph(nplots=1)[0]
+        imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)[0]
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -352,7 +352,7 @@ class PatternExecutor(Patternable):
         in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
-        # set_data2 = imgplot2.data.set_data
+        set_data2 = imgplot2.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -376,7 +376,7 @@ class PatternExecutor(Patternable):
             npt = None
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat = find_lum_peak(min_distance)
+                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
 
                 sats.append(sat)
                 if peak is None:
@@ -390,10 +390,10 @@ class PatternExecutor(Patternable):
                     pts.append(pt)
                     c = circle(peakrow, peakcol, min_distance / 2)
                     img[c] = (255, 0, 0)
-                    # src[c] = (255, 0, 0)
+                    src[c] = (255, 0, 0)
 
                 # set_data('imagedata', src)
-                # set_data2('imagedata', img)
+                set_data2('imagedata', src)
                 set_data('imagedata', img)
                 sleep(update_period)
 
@@ -437,6 +437,7 @@ class PatternExecutor(Patternable):
             dy = npt[1] / sm.pxpermm * ascalar
             if abs(dx) < move_threshold or abs(dy) < move_threshold:
                 self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
+                pattern.position_str = 'Deviation too small'
                 continue
             px += dx
             py -= dy

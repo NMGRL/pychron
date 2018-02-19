@@ -207,20 +207,22 @@ class VideoStageManager(StageManager):
             self.debug('Starting measure grain polygon')
             masks = []
             display_image = self.autocenter_manager.display_image
-            offx, offy = self.canvas.get_screen_offset()
-            cropdim = dim * 2.5
+
             mask_dim = dim * 1.05
             mask_dim_mm = mask_dim * self.pxpermm
+            ld.grain_measuring = True
             while not evt.is_set():
-                src = copy(self.video.get_cached_frame())
+                # src = copy(self.video.get_cached_frame())
                 # src = self.video.get_cached_frame()
-                src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+                # src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+                src = self._get_preprocessed_src()
                 targets = ld.find_targets(display_image, src, dim, mask=mask_dim)
                 if targets:
                     t = time.time()
                     targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]
                     masks.extend(targets)
                 sleep(0.25)
+            ld.grain_measuring = False
 
             self.grain_polygons = (m for m in masks)
             self.debug('exiting measure grain')
@@ -414,6 +416,7 @@ class VideoStageManager(StageManager):
     def find_lum_peak(self, min_distance):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
+
         dim = self.stage_map.g_dimension
         mask_dim = dim * 1.05
         # mask_dim_mm = mask_dim * self.pxpermm
