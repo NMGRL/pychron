@@ -137,8 +137,9 @@ class VideoStageManager(StageManager):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
         if self.autocenter_manager:
-            bind_preference(self.autocenter_manager, 'use_autocenter',
-                            '{}.use_autocenter'.format(pref_id))
+            self.autocenter_manager.bind_preferences(pref_id)
+            # bind_preference(self.autocenter_manager, 'use_autocenter',
+            #                 '{}.use_autocenter'.format(pref_id))
 
         bind_preference(self, 'render_with_markup',
                         '{}.render_with_markup'.format(pref_id))
@@ -568,9 +569,6 @@ class VideoStageManager(StageManager):
             if frame is not None:
                 pil_save(frame, p)
 
-        # if self.render_with_markup:
-        #     renderer = self._render_snapshot
-
         self.video.start_recording(path, renderer)
 
     def _move_to_hole_hook(self, holenum, correct, autocentered_position):
@@ -610,7 +608,7 @@ class VideoStageManager(StageManager):
     #         return self.lumen_detector.find_best_target(src)
 
     def _autocenter(self, holenum=None, ntries=3, save=False,
-                    use_interpolation=False, inform=False,
+                    inform=False,
                     alpha_enabled=True,
                     auto_close_image=True):
         self.debug('do autocenter')

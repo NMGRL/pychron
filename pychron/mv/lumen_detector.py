@@ -86,9 +86,8 @@ class LumenDetector(Locator):
         return src, v
 
     def find_targets(self, image, src, dim, mask=False):
-        targets = self._find_targets(image, src, dim, step=2,
+        targets = self._find_targets(image, src, dim,
                                      filter_targets=False,
-                                     preprocess=True,
                                      inverted=True,
                                      convexity_filter=0.75,
                                      mask=mask)

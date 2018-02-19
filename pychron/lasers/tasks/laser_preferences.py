@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Str, Enum, File, Directory, \
-    Color, Range, Float
+    Color, Range, Float, Int
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
@@ -55,6 +55,13 @@ class FusionsLaserPreferences(LaserPreferences):
     scaling = Range(1.0, 2.0, 1)
 
     use_autocenter = Bool(False)
+    autocenter_blur = Int
+    autocenter_stretch_intensity = Bool(False)
+    autocenter_use_adaptive_threshold = Bool(False)
+    autocenter_search_step = Int
+    autocenter_search_n = Int
+    autocenter_search_width = Int
+
     render_with_markup = Bool(False)
     crosshairs_offsetx = Float(0)
     crosshairs_offsety = Float(0)
@@ -133,18 +140,33 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                    Item('keep_local_copy'),
                                    Item('auto_upload'))
 
+        autocenter_grp = VGroup(Item('use_autocenter', label='Auto Center'),
+                                VGroup(
+                                    VGroup(Item('autocenter_blur', label='Blur'),
+                                           Item('autocenter_stretch_intensity', label='Stretch Intensity'),
+                                           label='Preprocess'),
+                                    VGroup(Item('autocenter_search_step', label='Step'),
+                                           Item('autocenter_search_n', label='N'),
+                                           Item('autocenter_search_width', label='Width'),
+
+                                           Item('autocenter_use_adaptive_threshold', label='Use Adaptive Threshold'),
+                                           label='Search'),
+
+                                    show_border=True),
+                                enabled_when='use_video',
+                                label='Autocenter')
+
         videogrp = VGroup(Item('use_video'),
                           VGroup(
                               # Item('video_identifier', label='ID',
                               #      enabled_when='use_video'),
                               # Item('video_output_mode', label='Output Mode'),
                               # Item('ffmpeg_path', label='FFmpeg Location'),
-                                 Item('use_autocenter', label='Auto Center'),
-                                 Item('render_with_markup', label='Render Snapshot with markup'),
-                                 recgrp,
-                                 archivergrp,
-                                 media_storage_grp,
-                                 enabled_when='use_video'),
+                              Item('render_with_markup', label='Render Snapshot with markup'),
+                              recgrp,
+                              archivergrp,
+                              media_storage_grp,
+                              enabled_when='use_video'),
                           label='Video')
 
         canvasgrp = VGroup(Item('show_bounds_rect', label='Display Bounds Rectangle'),
@@ -171,7 +193,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                        Item('show_patterning'), label='Pattern')
         powergrp = Group(Item('use_calibrated_power'),
                          label='Power')
-        return [canvasgrp, videogrp,
+        return [canvasgrp, videogrp, autocenter_grp,
                 patgrp, powergrp]
 
 

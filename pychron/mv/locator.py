@@ -163,10 +163,7 @@ class Locator(Loggable):
         """
         dx, dy = None, None
 
-        targets = self._find_targets(image, frame, dim, step=2,
-                                     preprocess=True,
-                                     filter_targets=True,
-                                     **kw)
+        targets = self._find_targets(image, frame, dim, **kw)
 
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
@@ -189,19 +186,21 @@ class Locator(Loggable):
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim, n=20, w=10, start=None, step=1,
-                      preprocess=False,
+    def _find_targets(self, image, frame, dim, n=20, w=10, start=None, step=2,
+                      use_adaptive_threshold=False,
+                      preprocess=True,
                       filter_targets=True,
                       convexity_filter=False,
                       mask=False,
-                      depth=0,
                       set_image=True, inverted=False):
         """
             use a segmentor to segment the image
         """
 
         if preprocess:
-            src = self._preprocess(frame)
+            if not isinstance(preprocess, dict):
+                preprocess = {}
+            src = self._preprocess(frame, **preprocess)
         else:
             src = grayspace(frame)
 
@@ -220,8 +219,7 @@ class Locator(Loggable):
             # start = 2*w
             # start = 20
 
-        seg = RegionSegmenter(use_adaptive_threshold=False)
-        j = 0
+        seg = RegionSegmenter(use_adaptive_threshold=use_adaptive_threshold)
         fa = self._get_filter_target_area(dim)
         phigh, plow = None, None
 
@@ -389,12 +387,10 @@ class Locator(Loggable):
                                          ti, ct, mi, ma)):
                     return ti
 
-                    # ===============================================================================
-                    # preprocessing
-                    # ===============================================================================
-
-    def _preprocess(self, frame,
-                    contrast=True, blur=1, denoise=0):
+    # ===============================================================================
+    # preprocessing
+    # ===============================================================================
+    def _preprocess(self, frame, stretch_intensity=True, blur=1, denoise=0):
         """
             1. convert frame to grayscale
             2. remove noise from frame. increase denoise value for more noise filtering
@@ -407,22 +403,22 @@ class Locator(Loggable):
 
         frm = frm.astype('uint8')
 
-        self.preprocessed_frame = frame
+        # self.preprocessed_frame = frame
         # if denoise:
         #     frm = self._denoise(frm, weight=denoise)
         # print 'gray', frm.shape
         if blur:
-            frm = gaussian(frm, blur)*255
+            frm = gaussian(frm, blur) * 255
             frm = frm.astype('uint8')
 
-            frm1 = gaussian(self.preprocessed_frame, blur,
-                            multichannel=True) * 255
-            self.preprocessed_frame = frm1.astype('uint8')
+            # frm1 = gaussian(self.preprocessed_frame, blur,
+            #                 multichannel=True) * 255
+            # self.preprocessed_frame = frm1.astype('uint8')
 
-        if contrast:
-            frm = self._contrast_equalization(frm)
-            self.preprocessed_frame = self._contrast_equalization(
-                self.preprocessed_frame)
+        if stretch_intensity:
+            frm = rescale_intensity(frm)
+            # frm = self._contrast_equalization(frm)
+            # self.preprocessed_frame = self._contrast_equalization(self.preprocessed_frame)
 
         return frm
 
@@ -440,16 +436,16 @@ class Locator(Loggable):
 
         return img.astype('uint8')
 
-    def _contrast_equalization(self, img):
-        """
-            rescale intensities to maximize contrast
-        """
-        #        from numpy import percentile
-        # Contrast stretching
-        #        p2 = percentile(img, 2)
-        #        p98 = percentile(img, 98)
-
-        return rescale_intensity(asarray(img))
+    # def _contrast_equalization(self, img):
+    #     """
+    #         rescale intensities to maximize contrast
+    #     """
+    #     #        from numpy import percentile
+    #     # Contrast stretching
+    #     #        p2 = percentile(img, 2)
+    #     #        p98 = percentile(img, 98)
+    #
+    #     return rescale_intensity(asarray(img))
 
     # ===============================================================================
     # deviation calc

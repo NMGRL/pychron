@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Float, Button, Bool, Any, Instance, Event
+
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Float, Button, Bool, Any, Instance, Event, Int
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
 from pychron.image.standalone_image import FrameImage
@@ -26,17 +28,34 @@ from pychron.mv.machine_vision_manager import MachineVisionManager, view_image
 class AutoCenterManager(MachineVisionManager):
     canvas = Any
 
-    use_crop_size = Bool(False)
-    use_target_radius = Bool(False)
+    # use_crop_size = Bool(False)
+    # use_target_radius = Bool(False)
 
-    crop_size = Float(4)
-    target_radius = Float(1.0)
+    # crop_size = Float(4)
+    # target_radius = Float(1.0)
 
     configure_button = Button('configure')
     use_autocenter = Bool
-    use_hough_circle = Bool(False)
+    # use_hough_circle = Bool(False)
+
+    use_adaptive_threshold = Bool(False)
+    blur = Int
+    stretch_intensity = Bool(False)
+    search_step = Int
+    search_n = Int
+    search_width = Int
 
     display_image = Instance(FrameImage, ())
+
+    def bind_preferences(self, pref_id):
+        bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
+        bind_preference(self, 'stretch_intensity', '{}.autocenter_stretch_intensity'.format(pref_id))
+        bind_preference(self, 'use_adaptive_threshold', '{}.autocenter_use_adaptive_threshold'.format(pref_id))
+        bind_preference(self, 'search_step', '{}.autocenter_search_step'.format(pref_id))
+        bind_preference(self, 'search_n', '{}.autocenter_search_n'.format(pref_id))
+        bind_preference(self, 'search_width', '{}.autocenter_search_width'.format(pref_id))
+
 
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
                              open_image=True,
@@ -46,13 +65,13 @@ class AutoCenterManager(MachineVisionManager):
 
         loc = self._get_locator()
 
-        if self.use_target_radius:
-            dim = self.target_radius
+        # if self.use_target_radius:
+        # dim = self.target_radius
 
-        if self.use_crop_size:
-            cropdim = self.crop_size
-        else:
-            cropdim = ceil(dim*2.55)
+        # if self.use_crop_size:
+        #     cropdim = self.crop_size
+        # else:
+        cropdim = ceil(dim * 2.55)
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
@@ -60,14 +79,24 @@ class AutoCenterManager(MachineVisionManager):
         # im = self.new_image(frame, alpha_enabled=alpha_enabled)
         # if open_image:
         #     view_image(im, auto_close=auto_close_image)
-        self.debug('calculate new center: dim={} ({},{}) {}'.format(dim, self.use_target_radius, self.target_radius, self.pxpermm))
+        # self.debug('calculate new center: dim={} ({},{}) {}'.format(dim, self.use_target_radius,
+        # self.target_radius, self.pxpermm))
+
         im = self.display_image
         im.source_frame = frame
         dim = self.pxpermm * dim
-        if self.use_hough_circle:
-            dx, dy = loc.find_circle(im, frame, dim=dim)
-        else:
-            dx, dy = loc.find(im, frame, dim=dim)
+        # if self.use_hough_circle:
+        #     dx, dy = loc.find_circle(im, frame, dim=dim)
+        # else:
+
+        preprop = {'stretch_intensity': self.stretch_intensity,
+                   'blur': self.blur}
+
+        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop,
+                          n=self.search_n,
+                          step=self.search_step,
+                          w=self.search_width,
+                          use_adaptive_threshold=self.use_adaptive_threshold)
 
         frm = loc.preprocessed_frame
         im.overlay(frm, 0.5)
@@ -78,8 +107,7 @@ class AutoCenterManager(MachineVisionManager):
             mdx = dx / self.pxpermm
             mdy = dy / self.pxpermm
             self.info('calculated deviation px={:n},{:n}, '
-                      'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy,
-                                                       self.pxpermm))
+                      'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy, self.pxpermm))
             return (cx + mdx, cy + mdy), frm
 
     # private
