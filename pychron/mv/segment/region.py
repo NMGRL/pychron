@@ -34,24 +34,30 @@ class RegionSegmenter(BaseSegmenter):
 
     def segment(self, image):
         """
-            pychron: preprocessing cv.Mat
         """
         # image = src[:]
         if self.use_adaptive_threshold:
-            markers = threshold_adaptive(image, self.block_size)
+            bs = self.block_size
+            if not bs % 2:
+                bs += 1
+
+            markers = threshold_adaptive(image, bs)
 
             # n = markers[:].astype('uint8')
             n = markers.astype('uint8')
-            n[markers] = 255
-            n[invert(markers)] = 1
-            markers = n
-
+            # n[markers] = 255
+            # n[invert(markers)] = 1
+            # markers = n
+            return n
         else:
             markers = zeros_like(image)
-            markers[image < self.threshold_low] = 1
+            # print('image',image.max(), image.min())
+            # print('le', image<self.threshold_low)
+            # print('ge', image>self.threshold_high)
+            markers[image <= self.threshold_low] = 1
             markers[image > self.threshold_high] = 255
 
-        # elmap = sobel(image, mask=image)
+        #elmap = sobel(image, mask=image)
         elmap = canny(image, sigma=1)
         wsrc = watershed(elmap, markers, mask=image)
 

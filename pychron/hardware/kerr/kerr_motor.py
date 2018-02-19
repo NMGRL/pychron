@@ -17,6 +17,10 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import codecs
+
+import sys
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
@@ -257,7 +261,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         self._initialize_motor(commands, *args, **kw)
 
     def _initialize_motor(self, commands, *args, **kw):
-        self.load_data_position()
+        # self.load_data_position()
 
         self._execute_hex_commands(commands)
 
@@ -340,16 +344,15 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             psteps = steps
 
             time.sleep(0.25)
-        self.debug('wait for home complete')
 
     def _parse_position(self, pos):
         if pos is not None:
-            pos = pos[2:-2]
-            return self._hexstr_to_float(pos)
+            return self._hexstr_to_float(pos[1:-1])
 
     def _test_status_byte(self, status, setbits):
         if status:
-            b = '{:08b}'.format(int(status[:2], 16))
+            # status = binascii.hexlify(status).decode('utf-8')
+            b = '{:08b}'.format(int.from_bytes(status[:1], 'little'))
             bb = [bool(int(b[7 - si])) for si in setbits]
 
             return all(bb)
@@ -359,7 +362,12 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         if status_byte in ('simulation', None):
             status_byte = 'DFDF'
-        status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
+        # else:
+            # status_byte = binascii.hexlify(status_byte).decode('utf-8')
+
+        status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], 'little'))))
+
+        # status_register = list(map(int, make_bitarray(int.from_bytes(status_byte[:1], sys.byteorder))))
         return not status_register[7]
 
     def _clear_bits(self):
@@ -371,16 +379,11 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         cmd = '13'
         control = '01'
 
-        cmd = ''.join((cmd, control))
+        cmd = '{}{}'.format(cmd, control)
         cmd = (addr, cmd, 100, '')
 
         pos = self._execute_hex_command(cmd, nbytes=6, **kw)
-
-        # trim off status and checksum bits
-        if pos is not None:
-            pos = pos[2:-2]
-            pos = self._hexstr_to_float(pos)
-            return pos
+        return self._parse_position(pos)
 
     def _load_home_control_byte(self):
         """
@@ -514,13 +517,13 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
     def _float_to_hexstr(self, f, endianness='little'):
         f = max(0, f)
         fmt = '%si' % ('<' if endianness == 'little' else '>')
-        return binascii.hexlify(struct.pack(fmt, int(f)))
+        return binascii.hexlify(struct.pack(fmt, int(f))).decode('utf-8')
 
     def _hexstr_to_float(self, h, endianness='little'):
-        # fmt = '%si'.('<' if endianness == 'little' else '>')
+
         fmt = '<i' if endianness == 'little' else '>i'
         try:
-            return struct.unpack(fmt, h.decode('hex'))[0]
+            return struct.unpack(fmt, h)[0]
         except Exception as e:
             print('exception', e)
 

@@ -16,17 +16,20 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import time
+from skimage.measure import find_contours
 from traits.api import Float
 # ============= standard library imports ========================
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert
+    nonzero, max, arange, argsort, invert, median
 from skimage.feature import peak_local_max
 from skimage.transform import hough_circle
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian_filter
+from skimage.filters import gaussian
 from skimage import feature
 from skimage.feature import canny
 # ============= local library imports  ==========================
@@ -67,6 +70,7 @@ class Locator(Loggable):
     use_histogram = False
     use_circle_minimization = True
     step_signal = None
+    pixel_depth = 255
 
     def wait(self):
         if self.step_signal:
@@ -212,37 +216,51 @@ class Locator(Loggable):
             src = invert(src)
 
         if start is None:
-            start = int(array(src).mean()) - 3 * w
+            start = int(median(src)) - 3 * w
+            # start = 2*w
+            # start = 20
 
         seg = RegionSegmenter(use_adaptive_threshold=False)
+        j = 0
         fa = self._get_filter_target_area(dim)
+        phigh, plow = None, None
 
-        for i in range(n):
-            seg.threshold_low = max((0, start + i * step - w))
-            seg.threshold_high = max((1, min((255, start + i * step + w))))
+        for j in range(n):
+            ww = w * (j + 1)
 
-            seg.block_size += 5
-            nsrc = seg.segment(src)
+            for i in range(n):
+                seg.threshold_low = max((0, start + i * step - ww))
+                seg.threshold_high = max((1, min((255, start + i * step + ww))))
+                if seg.threshold_low == plow and seg.threshold_high == phigh:
+                    break
 
-            nf = colorspace(nsrc)
+                plow = seg.threshold_low
+                phigh = seg.threshold_high
 
-            # draw contours
-            targets = self._find_polygon_targets(nsrc, frame=nf)
-            if set_image and image is not None:
-                image.set_frame(nf)
+                nsrc = seg.segment(src)
+                seg.block_size += 5
 
-            if targets:
+                nf = colorspace(nsrc)
+                # print(i, seg.threshold_high, seg.threshold_low)
+                # draw contours
+                targets = self._find_polygon_targets(nsrc, frame=nf)
+                # print('tasfdas', targets)
+                if set_image and image is not None:
+                    image.set_frame(nf)
 
-                # filter targets
-                if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
-                elif convexity_filter:
-                    # for t in targets:
-                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+                if targets:
 
-            if targets:
-                return targets
+                    # filter targets
+                    if filter_targets:
+                        targets = self._filter_targets(image, frame, dim, targets, fa)
+                    elif convexity_filter:
+                        # for t in targets:
+                        #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
+                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+
+                if targets:
+                    return targets
+                # time.sleep(0.5)
 
     def _mask(self, src, radius=None):
 
@@ -281,6 +299,7 @@ class Locator(Loggable):
         """
         ctest, centtest, atest = self._test_target(frame, target,
                                                    cthreshold, mi, ma)
+        # print('ctest', ctest, 'centtest', centtest, 'atereat', atest)
         result = ctest and atest and centtest
         if not ctest and (atest and centtest):
             target = self._segment_polygon(image, frame,
@@ -299,7 +318,9 @@ class Locator(Loggable):
         return ctest, centtest, atest
 
     def _find_polygon_targets(self, src, frame=None):
-        contours, hieararchy = contour(src)
+        src, contours, hieararchy = contour(src)
+        # contours, hieararchy = find_contours(src)
+
         # convert to color for display
         if frame is not None:
             draw_contour_list(frame, contours, hieararchy)
@@ -379,7 +400,11 @@ class Locator(Loggable):
             2. remove noise from frame. increase denoise value for more noise filtering
             3. stretch contrast
         """
-        frm = grayspace(frame) * 255
+        if len(frame.shape) != 2:
+            frm = grayspace(frame)
+        else:
+            frm = frame / self.pixel_depth * 255
+
         frm = frm.astype('uint8')
 
         self.preprocessed_frame = frame
@@ -387,11 +412,11 @@ class Locator(Loggable):
         #     frm = self._denoise(frm, weight=denoise)
         # print 'gray', frm.shape
         if blur:
-            frm = gaussian_filter(frm, blur) * 255
+            frm = gaussian(frm, blur)*255
             frm = frm.astype('uint8')
 
-            frm1 = gaussian_filter(self.preprocessed_frame, blur,
-                                   multichannel=True) * 255
+            frm1 = gaussian(self.preprocessed_frame, blur,
+                            multichannel=True) * 255
             self.preprocessed_frame = frm1.astype('uint8')
 
         if contrast:

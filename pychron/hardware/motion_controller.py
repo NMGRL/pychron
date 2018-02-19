@@ -359,7 +359,7 @@ class MotionController(CoreDevice):
             self.debug('check moving={}'.format(axis))
 
             def func():
-                return self._moving(axis=axis, verbose=True)
+                return self._moving(axis=axis, verbose=False)
 
         i = 0
         cnt = 0

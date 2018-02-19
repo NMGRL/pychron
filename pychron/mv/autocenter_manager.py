@@ -141,13 +141,13 @@ class CO2AutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self):
         from pychron.mv.co2_locator import CO2Locator
-        return CO2Locator(pxpermm=self.pxpermm)
+        return CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 
 
 class DiodeAutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self):
         from pychron.mv.diode_locator import DiodeLocator
-        return DiodeLocator(pxpermm=self.pxpermm)
+        return DiodeLocator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 
 # ============= EOF =============================================

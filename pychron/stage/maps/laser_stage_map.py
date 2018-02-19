@@ -67,7 +67,7 @@ class LaserStageMap(BaseStageMap):
                     cors = pickle.load(f)
                 except (ValueError, pickle.PickleError) as e:
                     self.warning_dialog('Failed to load the correction file:\n{}\n'
-                                        'If you are relying on SemiAuto or Auto calibration a'
+                                        'If you are relying on SemiAuto or Auto calibration a '
                                         'recalibration is required'.format(p))
                     if self.confirmation_dialog('Would you like to delete the file:\n {}'.format(p)):
                         os.remove(p)
@@ -86,7 +86,7 @@ class LaserStageMap(BaseStageMap):
         idx = row.index(h)
         n = len(row)
         eidx = n - 1
-        midx = eidx / 2
+        midx = eidx // 2
         if idx < midx:
             a, b = row[0], row[midx]
             p = idx / float(midx)

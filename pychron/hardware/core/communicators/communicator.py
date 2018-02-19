@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
+import codecs
 import time
 from threading import Lock, RLock
 # ============= local library imports  ==========================
@@ -42,7 +44,12 @@ def remove_eol_func(re):
     """
 
     if re is not None:
-        return str(re).rstrip()
+        if isinstance(re, bytes):
+            try:
+                re = re.decode('utf-8')
+            except UnicodeDecodeError:
+                re = codecs.decode(re, 'hex')
+        return re.rstrip()
 
 
 def process_response(re, replace=None, remove_eol=True):
@@ -53,7 +60,7 @@ def process_response(re, replace=None, remove_eol=True):
 
     if isinstance(replace, tuple):
         re = re.replace(replace[0], replace[1])
-    re = prep_str(re)
+    # re = prep_str(re)
     return re
 
 

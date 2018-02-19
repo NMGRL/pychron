@@ -49,7 +49,6 @@ class LumenDetector(Locator):
     def __init__(self, *args, **kw):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
-        self.pixel_depth = 255
 
     def get_value(self, src, scaled=True, threshold=50, area_threshold=10, pixel_depth=None):
         """
@@ -110,7 +109,6 @@ class LumenDetector(Locator):
         peak_img = zeros((h, w), dtype=uint8)
         # cum_peaks = zeros((h, w), dtype=uint8)
         pt, px, py = None, None, None
-        pd = pixel_depth
         if pts.shape[0]:
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
@@ -125,7 +123,7 @@ class LumenDetector(Locator):
             pt = px - w / 2., py - h / 2, sorted(intensities)[-1]
             peak_img[circle(py, px, min_distance)] = 255
 
-        sat = lum.sum() / (mask.sum() * pd)
+        sat = lum.sum() / (mask.sum() * pixel_depth)
         return pt, px, py, peak_img, sat
 
     def get_scores(self, lum, pixel_depth=None):

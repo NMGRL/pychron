@@ -77,7 +77,7 @@ class FusionsLogicBoard(CoreDevice):
         # no handle or response is none
         resp = True
         if self._test_comms:
-            resp = True if self.ask(';LB.VER') else False
+            resp =bool(self.ask(';LB.VER'))
 
         #        resp = self._disable_laser_()
         if self.communicator.handle is None or resp is not True:
@@ -290,7 +290,7 @@ class FusionsLogicBoard(CoreDevice):
             if not 0 <= value <= 100:
                 return
 
-            #        self._enable_motor_(motor, value)
+                #        self._enable_motor_(motor, value)
 
         self.info('setting {} to {}'.format(name, value))
         return motor.set_value(value, block)
@@ -329,7 +329,7 @@ class FusionsLogicBoard(CoreDevice):
         listeditor multi column
     '''
 
-#    def get_control_group(self):
+# def get_control_group(self):
 #        return Group(Item('motors', style='custom',
 #                          height= -100,
 #                          editor=ListEditor(mutable=False,

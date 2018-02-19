@@ -292,6 +292,7 @@ class VideoStageManager(StageManager):
             self.video.open(identifier=identifier)
 
             self.video.load_configuration(p)
+            self.lumen_detector.pixel_depth = self.video.pixel_depth
 
     def initialize_stage(self):
         super(VideoStageManager, self).initialize_stage()
@@ -461,7 +462,6 @@ class VideoStageManager(StageManager):
                 d = os.path.split(os.path.dirname(src))[-1]
                 dest = os.path.join(self.parent.name, d,
                                     os.path.basename(src))
-                print(dest)
                 msm.put(src, dest)
 
                 if not self.keep_local_copy:
@@ -689,6 +689,7 @@ class VideoStageManager(StageManager):
 
             if hasattr(self.video.cap, 'reload_configuration'):
                 self.video.cap.reload_configuration(self.video_configuration_path)
+            self.lumen_detector.pixel_depth = self.video.pixel_depth
 
     def _update_zoom(self, v):
         if self.camera:

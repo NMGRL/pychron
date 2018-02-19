@@ -951,11 +951,11 @@ class StageManager(BaseStageManager):
     def _home_fired(self):
         """
         """
-        # t = Thread(name='stage.home', target=self._home)
-        # t.start()
+        t = Thread(name='stage.home', target=self._home)
+        t.start()
         # need to store a reference to thread so it is not garbage collected
-        # self.move_thread = t
-        do_later(self._home)
+        self.move_thread = t
+        # do_later(self._home)
 
     def _test_fired(self):
         #        self.do_pattern('testpattern')

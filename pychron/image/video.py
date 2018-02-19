@@ -24,7 +24,7 @@ from threading import Thread, Lock, Event
 
 import yaml
 from PIL import Image as PImage
-from numpy import asarray
+from numpy import asarray, uint16
 from traits.api import Any, Bool, Float, List, Str, Int
 
 from .cv_wrapper import get_capture_device
@@ -59,13 +59,18 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
 
     # print 'calling {}, frame_rate={} '.format(ffmpeg, frame_rate)
     call_args = [ffmpeg, '-r', frame_rate, '-i', path, output]
-    print(' '.join(call_args))
-
     subprocess.call(call_args)
 
 
 def pil_save(src, p, ext='.jpg'):
+    if src.dtype == uint16:
+        src = src.astype('uint32')
+        src = src*255/4095
+        src = src.astype('uint8')
+    # print('src', src.shape)
+    # print('dtype', src.dtype)
     im = PImage.fromarray(src)
+    # print('p', p, ext)
     p = add_extension(p, ext=ext)
     im.save(p)
 
@@ -194,7 +199,6 @@ class Video(Image):
         self._stop_recording_event = Event()
         self.output_path = path
 
-        fps = 12
         if self.cap is None:
             self.open()
 
@@ -202,7 +206,7 @@ class Video(Image):
             self._recording = True
 
             t = Thread(target=self._ffmpeg_record, args=(path, self._stop_recording_event,
-                                                         fps, renderer))
+                                                         self.fps, renderer))
             t.start()
 
     def stop_recording(self, wait=False):
@@ -274,9 +278,11 @@ class Video(Image):
         #         cnt += 1
         #         dur = time.time() - st
         #         time.sleep(max(0, fps_1 - dur))
+        ext = 'tif'
+        ext='jpg'
         while not stop.is_set():
             st = time.time()
-            pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
+            pn = os.path.join(image_dir, 'image_{:05d}.{}'.format(cnt, ext))
 
             renderer(pn)
             # con.add_consumable(pn)
@@ -284,7 +290,7 @@ class Video(Image):
             dur = time.time() - st
             time.sleep(max(0, fps_1 - dur))
 
-        self._convert_to_video(image_dir, fps, name_filter='image_%05d.jpg', output=path)
+        self._convert_to_video(image_dir, fps, name_filter='image_%05d.{}'.format(ext), output=path)
 
         if remove_images:
             shutil.rmtree(image_dir)
@@ -293,7 +299,6 @@ class Video(Image):
             self._save_ok_event.set()
 
     def _get_pylon_device(self, identifier):
-        print('identifiqe', identifier)
         from .pylon_camera import PylonCamera
         cam = PylonCamera(identifier)
         if cam.open():
@@ -308,7 +313,6 @@ class Video(Image):
         return vs
 
     def _update_fps(self, fps):
-        print('update fps', fps)
         self.fps = fps
 
     def _get_frame(self, lock=True, **kw):
@@ -326,8 +330,6 @@ class Video(Image):
                 return img
 
     def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
-        print('convert to video. FFmpeg={}'.format(self.ffmpeg_path))
-
         ffmpeg = self.ffmpeg_path
         convert_to_video(path, fps, name_filter, ffmpeg, output)
 

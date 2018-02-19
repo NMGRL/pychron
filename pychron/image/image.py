@@ -17,7 +17,7 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from numpy import asarray, flipud, ndarray, fliplr
-from skimage.color import rgb2gray
+from skimage.color import rgb2gray, gray2rgb
 from skimage.transform import resize, rotate as trotate
 from traits.api import HasTraits, Any, List, Int, Bool, Float
 
@@ -89,7 +89,12 @@ class Image(HasTraits):
     def get_frame(self, **kw):
         frame = self._get_frame(**kw)
         frame = self.modify_frame(frame, **kw)
+
         self._cached_frame = frame
+        if len(frame.shape) == 2:
+            scalar = 255./self.pixel_depth
+            frame = gray2rgb(frame*scalar)
+
         return frame
 
     def get_cached_frame(self):

@@ -34,7 +34,6 @@ from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError, TargetPositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
-from six.moves import range
 
 
 class PatternExecutor(Patternable):
@@ -158,7 +157,8 @@ class PatternExecutor(Patternable):
         self.start(show=self.show_patterning)
         evt = None
         # if current_thread().name != 'MainThread':
-        if currentThreadName() != 'MainThread':
+        print('cur', currentThreadName())
+        if currentThreadName():
             evt = Event()
             invoke_in_main_thread(self._pre_execute, evt)
             while not evt.is_set():

@@ -50,9 +50,9 @@ class VideoUnderlay(AbstractOverlay):
                 img = self.video.get_image_data()
                 if img is not None:
 
-                    if len(img.shape) == 2:
-                        scalar = 255./self.video.pixel_depth
-                        img = gray2rgb(img*scalar)
+                    # if len(img.shape) == 2:
+                    #     scalar = 255./self.video.pixel_depth
+                    #     img = gray2rgb(img*scalar)
 
                     try:
                         img = asarray(resize(img, (int(component.height), int(component.width))),
