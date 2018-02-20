@@ -44,6 +44,8 @@ from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
 from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
+
+
 # from six.moves import range
 # from six.moves import zip
 
@@ -268,7 +270,7 @@ class Locator(Loggable):
 
                 if targets:
                     return targets
-                # time.sleep(0.5)
+                    # time.sleep(0.5)
 
     def _mask(self, src, radius=None):
 
@@ -592,7 +594,7 @@ class Locator(Loggable):
             #             color=(0,255,0),
             #             radius=int(dim))
 
-            draw_polygons(src, [ta.poly_points])
+            draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
                                size=10, radius=1):

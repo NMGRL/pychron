@@ -343,7 +343,7 @@ class PatternExecutor(Patternable):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
-        imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)[0]
+        imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -385,7 +385,7 @@ class PatternExecutor(Patternable):
                     peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
 
                 img = gray2rgb(peak).astype(uint8)
-
+                src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
                     c = circle(peakrow, peakcol, min_distance / 2)

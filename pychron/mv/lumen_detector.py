@@ -112,7 +112,8 @@ class LumenDetector(Locator):
             self.debug('active targets={}'.format(len(targets)))
         else:
             targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
-            self.debug('found targets={}'.format(len(targets)))
+            if targets:
+                self.debug('found targets={}'.format(len(targets)))
 
         src = gaussian(lum, 1) * pixel_depth
         mask = self._mask(lum)
@@ -139,7 +140,6 @@ class LumenDetector(Locator):
             x, y = average(pts, axis=0, weights=intensities)
             if pt is None:
                 pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
-            else:
                 px, py = x, y
 
             peak_img[circle(y, x, min_distance)] = 255
