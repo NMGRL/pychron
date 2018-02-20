@@ -28,7 +28,6 @@ from traits.api import HasTraits, Any, List, Str
 
 from pychron.core.codetools.inspection import caller
 from pychron.processing.analysis_graph import AnalysisStackedGraph
-from six.moves import range
 
 
 class FigurePanel(HasTraits):
@@ -48,7 +47,6 @@ class FigurePanel(HasTraits):
     use_previous_limits = True
 
     track_value = True
-
     # @on_trait_change('analyses[]')
     # def _analyses_items_changed(self):
     #     self.figures = self._make_figures()
@@ -87,10 +85,7 @@ class FigurePanel(HasTraits):
     @caller
     def make_graph(self):
 
-        st = time.time()
         po = self.plot_options
-
-        # bgcolor = po.get_formatting_value('bgcolor')
         g = self._graph_klass(panel_height=200,
                               equi_stack=self.equi_stack,
                               container_dict=dict(padding=0,
@@ -104,9 +99,9 @@ class FigurePanel(HasTraits):
         if plots:
             xpad = None
 
-            if self.plot_options.include_legend:
+            if po.include_legend:
 
-                align = self.plot_options.legend_location
+                align = po.legend_location
                 a, b = align.split(' ')
                 align = '{}{}'.format(a[0].lower(), b[0].lower())
                 legend = Legend(align=align)
@@ -147,11 +142,12 @@ class FigurePanel(HasTraits):
                     p.value_range.high_setting = h
 
             if self.use_previous_limits:
-                if plots[0].has_xlimits():
-                    tmi, tma = plots[0].xlimits
-                    print('previous xllimits', tmi, tma)
-                    if tmi != -inf and tma != inf:
-                        mi, ma = tmi, tma
+                for p in plots:
+                    if p.has_xlimits():
+                        tmi, tma = p.xlimits
+                        print('previous xllimits', tmi, tma)
+                        if tmi != -inf and tma != inf:
+                            mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
@@ -172,7 +168,7 @@ class FigurePanel(HasTraits):
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print('setting xlimits', mi, ma, xpad, self.plot_options.xpadding)
+                print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
@@ -182,7 +178,6 @@ class FigurePanel(HasTraits):
 
         self._make_graph_hook(g)
 
-        # print '----------------------- make graph {}'.format(time.time() - st)
         return g.plotcontainer
 
         # ============= EOF =============================================

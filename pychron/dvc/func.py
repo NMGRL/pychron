@@ -51,7 +51,7 @@ def push_repositories(ps, remote='origin', branch='master', quiet=True):
         repo.open_repo(pp)
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
-            repo.push(remote, branch)
+            repo.push(remote=remote, branch=branch)
 
 
 def get_review_status(record):

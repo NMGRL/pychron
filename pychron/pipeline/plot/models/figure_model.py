@@ -22,6 +22,7 @@ from traits.api import HasTraits, List, Property, Any, Instance
 from six.moves import zip
 
 # from pychron.pipeline.plot.layout import FigureLayout
+from pychron.core.codetools.inspection import caller
 
 
 class FigureModel(HasTraits):
@@ -63,6 +64,7 @@ class FigureModel(HasTraits):
     # def _analyses_items_changed(self):
     #     self.refresh_panels()
 
+    @caller
     def refresh_panels(self):
         ps = self._make_panels()
         self.panels = ps

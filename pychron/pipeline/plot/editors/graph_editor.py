@@ -33,6 +33,7 @@ class GraphEditor(BaseTraitsEditor):
     component = Property(depends_on='refresh_needed')
     basename = ''
     figure_model = Any
+    figure_container = Any
 
     def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)
@@ -109,7 +110,12 @@ class GraphEditor(BaseTraitsEditor):
 
     @cached_property
     def _get_component(self):
-        self.figure_model = None
+        if self.figure_container:
+            self.figure_container.model_changed(False)
+        # if self.figure_model:
+            # self.figure_model.refresh_panels()
+            # self.
+        # self.figure_model = None
         return self._component_factory()
 
     def _component_factory(self):

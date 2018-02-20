@@ -35,7 +35,6 @@ class FigureEditor(GraphEditor):
 
     # annotation_tool = Any
 
-    figure_container = Any
     analysis_groups = List
 
     # tag = Event

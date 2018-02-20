@@ -293,14 +293,19 @@ class BaseArArFigure(SelectionFigure):
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
-        if hasattr(self.options, 'aux_plots'):
-            n = len(self.options.aux_plots)
-            ap = self.options.aux_plots[n - pid - 1]
-            if not self.suppress_ylimits_update:
-                ap.ylimits = self.graph.get_y_limits(pid)
+        if not self.suppress_xlimits_update:
+            if hasattr(self.options, 'aux_plots'):
+                # n = len(self.options.aux_plots)
+                limits = self.graph.get_x_limits(pid)
+                for ap in self.options.aux_plots:
+                    ap.xlimits = limits
+                    # ap = self.options.aux_plots[n - pid - 1]
+                    # if not self.suppress_ylimits_update:
+                    #     ap.ylimits = self.graph.get_y_limits(pid)
 
-            if not self.suppress_xlimits_update:
-                ap.xlimits = self.graph.get_x_limits(pid)
+                    # if not self.suppress_xlimits_update:
+                    #     ap.xlimits = self.graph.get_x_limits(pid)
+                    #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
 
     def get_valid_xbounds(self):
         pass
@@ -309,20 +314,19 @@ class BaseArArFigure(SelectionFigure):
     # aux plots
     # ===========================================================================
     def _do_aux_plot_filtering(self, scatter, po, vs, es):
-        omits, invalids, outliers = self._get_aux_plot_filtered(po, vs, es)
-        for idx, item in enumerate(self.sorted_analyses):
-            if idx in omits:
-                s = 'omit'
-            elif idx in invalids:
-                s = 'invalid'
-            elif idx in outliers:
-                s = 'outlier'
-            else:
-                s = 'ok'
-            item.set_temp_status(s)
-
-        # if outliers:
-        #     self._add_outliers_overlay(scatter, outliers)
+        omits, invalids, outliers = [], [], []
+        if po.filter_str:
+            omits, invalids, outliers = self._get_aux_plot_filtered(po, vs, es)
+            for idx, item in enumerate(self.sorted_analyses):
+                if idx in omits:
+                    s = 'omit'
+                elif idx in invalids:
+                    s = 'invalid'
+                elif idx in outliers:
+                    s = 'outlier'
+                else:
+                    s = 'ok'
+                item.set_temp_status(s)
 
         return omits, invalids, outliers
 

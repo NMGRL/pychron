@@ -384,7 +384,7 @@ class Ideogram(BaseArArFigure):
 
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         # if ogid == 0:
-        plot.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
+        plot.index_mapper.range.on_trait_change(self.update_index_mapper, 'updated')
 
         if self.options.display_inset:
             xs = self.xs
@@ -553,6 +553,7 @@ class Ideogram(BaseArArFigure):
         return m
 
     def update_index_mapper(self, obj, name, old, new):
+        print('obj', obj, id(obj))
         self._rebuild_ideo()
         # if new:
         #     self.update_graph_metadata(None, name, old, new)
@@ -586,11 +587,13 @@ class Ideogram(BaseArArFigure):
               for key in p.plots
               if key.endswith('{}'.format(gid))]
 
-        if sel is None:
+        if sel is None and ss:
             sel = ss[0].index.metadata['selections']
 
         if sel:
             self._set_renderer_selection(ss, sel)
+        else:
+            sel = []
 
         plot = graph.plots[0]
 
@@ -606,8 +609,8 @@ class Ideogram(BaseArArFigure):
 
         xx = filter(f, enumerate(self.xs))
         if xx:
-            _, fxs = zip(*xx)
-            _, fxes = zip(*filter(f, enumerate(self.xes)))
+            _, fxs = zip(*list(xx))
+            _, fxes = zip(*list(filter(f, enumerate(self.xes))))
             n = len(fxs)
             xs, ys = self._calculate_probability_curve(fxs, fxes)
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
@@ -644,11 +647,11 @@ class Ideogram(BaseArArFigure):
         mi, ma = min(ys), max(ys)
         if sel:
             dp.visible = True
-            # xs, ys = self._calculate_probability_curve(oxs, oxes)
-            # dp.value.set_data(ys)
-            # dp.index.set_data(xs)
-            oys = dp.value.get_data()
-            mi, ma = min(mi, min(oys)), max(mi, max(oys))
+            xs, ys = self._calculate_probability_curve(self.xs, self.xes)
+            dp.value.set_data(ys)
+            dp.index.set_data(xs)
+            # oys = dp.value.get_data()
+            mi, ma = min(mi, min(ys)), max(mi, max(ys))
         else:
             dp.visible = False
 
@@ -858,7 +861,7 @@ class Ideogram(BaseArArFigure):
             wm, we = nominal_value(wage), std_dev(wage)
         return wm, we, mswd, valid_mswd
 
-    # def _handle_xlimits(self):
-    #     self.xlimits_updated = True
+        # def _handle_xlimits(self):
+        #     self.xlimits_updated = True
 
 # ============= EOF =============================================
