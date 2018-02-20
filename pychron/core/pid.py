@@ -57,13 +57,13 @@ class PID(HasTraits):
 
     def load(self):
         p = self.persistence_path
-        with open(p, 'r') as rfile:
+        with open(p, 'rb') as rfile:
             jd = yaml.load(rfile)
             self.load_from_obj(jd)
 
     def dump(self):
         p = self.persistence_path
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             obj = self.get_dump_obj()
             yaml.dump(obj, wfile)
 

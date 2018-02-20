@@ -361,11 +361,13 @@ class PatternExecutor(Patternable):
         aggressiveness = pattern.aggressiveness
         update_period = pattern.update_period / 1000.
         move_threshold = pattern.move_threshold
+        blur = pattern.blur
         px, py = cx, cy
 
         point_gen = None
         cnt = 0
         peak = None
+
         while time.time() - st < total_duration:
             if not self._alive:
                 break
@@ -376,7 +378,7 @@ class PatternExecutor(Patternable):
             npt = None
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance)
+                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance, blur)
 
                 sats.append(sat)
                 if peak is None:

@@ -23,11 +23,9 @@ from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 # ============= standard library imports ========================
 from numpy import uint8, zeros, random
-from six.moves.queue import Queue
 from skimage.color import gray2rgb
 from threading import Event, Thread
 import yaml
-import json
 import os
 import time
 
@@ -35,7 +33,7 @@ import time
 from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
-from pychron.graph.stream_graph import StreamGraph, StreamStackedGraph
+from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -96,7 +94,7 @@ class Degasser(Loggable):
             self.warning('No PID degasser file located at {}'.format(p))
             return
 
-        with open(p, 'r') as rfile:
+        with open(p, 'rb') as rfile:
             jd = yaml.load(rfile)
             self.threshold = jd['threshold']
             self.pid.load_from_obj(jd['pid'])
@@ -105,7 +103,7 @@ class Degasser(Loggable):
         self.debug('dump')
         obj = self.pid.get_dump_obj()
         jd = {'pid': obj, 'threshold': self.threshold}
-        with open(self.persistence_path, 'w') as wfile:
+        with open(self.persistence_path, 'wb') as wfile:
             yaml.dump(jd, wfile)
 
     def degas(self, lumens=None, autostart=True):

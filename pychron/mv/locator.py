@@ -571,8 +571,8 @@ class Locator(Loggable):
             convenience function for geting center of image in c,r from
         """
         w, h = get_size(src)
-        x = float(w / 2)
-        y = float(h / 2)
+        x = w / 2
+        y = h / 2
 
         return x, y
 

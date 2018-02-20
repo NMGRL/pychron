@@ -413,7 +413,7 @@ class VideoStageManager(StageManager):
         src = self._get_preprocessed_src()
         return ld.get_scores(src, **kw)
 
-    def find_lum_peak(self, min_distance):
+    def find_lum_peak(self, min_distance, blur):
         ld = self.lumen_detector
         src = self._get_preprocessed_src()
 
@@ -421,7 +421,9 @@ class VideoStageManager(StageManager):
         mask_dim = dim * 1.05
         # mask_dim_mm = mask_dim * self.pxpermm
 
-        return ld.find_lum_peak(src, dim, mask_dim, min_distance=min_distance)
+        return ld.find_lum_peak(src, dim, mask_dim,
+                                blur=blur,
+                                min_distance=min_distance)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector

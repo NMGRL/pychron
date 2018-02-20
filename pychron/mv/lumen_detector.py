@@ -54,7 +54,7 @@ class LumenDetector(Locator):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
 
-    def get_value(self, src, scaled=True, threshold=50, area_threshold=10, pixel_depth=None):
+    def get_value(self, src, threshold=50, area_threshold=10):
         """
 
         if scaled is True
@@ -64,17 +64,22 @@ class LumenDetector(Locator):
         @param scaled:
         @return:
         """
-        if pixel_depth is None:
-            pixel_depth = self.pixel_depth
+        pixel_depth = self.pixel_depth
 
         mask = self._mask(src)
 
         if self._cached_mask_value is None:
             self._cached_mask_value = 100 / float(mask.sum())
 
-        gsrc = rgb2gray(src)
+        if not len(src.shape) == 2:
+            gsrc = rgb2gray(src)
+            tt = threshold / pixel_depth
+            pd = 1
+        else:
+            gsrc = src
+            tt = threshold / 100 * pixel_depth
+            pd = pixel_depth
 
-        tt = threshold / pixel_depth
         tsrc = gsrc[gsrc > tt]
         tsrc = (tsrc - tt) / (1 - tt)
 
@@ -82,10 +87,11 @@ class LumenDetector(Locator):
         v = 0
         if n:
             # print n, self._cached_mask_value, n*self._cached_mask_value
-            if n * self._cached_mask_value > area_threshold:
-                if scaled:
-                    pixel_area = float(n)
-                    v /= pixel_area
+            # if n * self._cached_mask_value > area_threshold:
+            v = tsrc.sum() / (n*pd)
+                # pixel_area = float(n)
+                # v /= pixel_area
+
         src[src <= threshold] = 0
         return src, v
 
@@ -104,7 +110,7 @@ class LumenDetector(Locator):
                     self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, dim, mask_dim, min_distance=5):
+    def find_lum_peak(self, lum, dim, mask_dim, min_distance=5, blur=1):
         pixel_depth = self.pixel_depth
 
         if self.grain_measuring:
@@ -115,7 +121,7 @@ class LumenDetector(Locator):
             if targets:
                 self.debug('found targets={}'.format(len(targets)))
 
-        src = gaussian(lum, 1) * pixel_depth
+        src = gaussian(lum, blur, preserve_range=True)
         mask = self._mask(lum)
 
         h, w = lum.shape[:2]
