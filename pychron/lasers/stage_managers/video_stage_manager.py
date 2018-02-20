@@ -113,22 +113,22 @@ class VideoStageManager(StageManager):
     _measure_grain_evt = None
     grain_polygons = None
 
-    test_button = Button
-    _test_state = False
+    # test_button = Button
+    # _test_state = False
 
-    def _test_button_fired(self):
-        if self._test_state:
-            # self.stop_measure_grain_polygon()
-            #
-            # time.sleep(2)
-            #
-            # d = self.get_grain_polygon_blob()
-            # print d
-            self.parent.disable_laser()
-        else:
-            self.parent.luminosity_degas_test()
-            # self.start_measure_grain_polygon()
-        self._test_state = not self._test_state
+    # def _test_button_fired(self):
+    #     if self._test_state:
+    #         # self.stop_measure_grain_polygon()
+    #         #
+    #         # time.sleep(2)
+    #         #
+    #         # d = self.get_grain_polygon_blob()
+    #         # print d
+    #         self.parent.disable_laser()
+    #     else:
+    #         self.parent.luminosity_degas_test()
+    #         # self.start_measure_grain_polygon()
+    #     self._test_state = not self._test_state
 
     def motor_event_hook(self, name, value, *args, **kw):
         if name == 'zoom':

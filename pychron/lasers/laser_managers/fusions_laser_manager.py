@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
-    on_trait_change, Event, Bool, Any
+    on_trait_change, Event, Bool, Any, Button
 from traitsui.api import VGroup, Item, HGroup, spring
 
 from .laser_manager import LaserManager
@@ -105,6 +105,16 @@ class FusionsLaserManager(LaserManager):
     motor_event = Event
 
     degasser = Instance(Degasser)
+
+    degas_test_button = Button('test')
+    _test_state = False
+
+    def _degas_test_button_fired(self):
+        if self._test_state:
+            self.disable_laser()
+        else:
+            self.luminosity_degas_test()
+        self._test_state = not self._test_state
 
     def finish_loading(self):
         super(FusionsLaserManager, self).finish_loading()
@@ -302,7 +312,7 @@ class FusionsLaserManager(LaserManager):
         self.enable_laser()
         p = self.pulse.power
         self.debug('luminosity degas test. {}'.format(p))
-        self._luminosity_hook(p, autostart=False)
+        self._luminosity_hook(p, autostart=True)
 
     def set_stage_map(self, mapname):
         if self.stage_manager is not None:

@@ -32,7 +32,7 @@ class PID(HasTraits):
     kp = Range(0.0, 10.0, 1.25)
     ki = Range(0.0, 2.0, 0.25)
     kd = Range(0.0, 2.0, 0.25)
-    dt = Float(0.5)
+    kdt = Float(0.5)
     max_output = Float
     min_output = Float
 
@@ -89,6 +89,8 @@ class PID(HasTraits):
                         Item('kd', label='D'),
                         Item('kdt', label='Dt')),
                         HGroup(Item('min_output'),
-                               Item('max_output'))))
+                               Item('max_output'))),
+                 title='Edit PID',
+                 buttons=['OK','Cancel'])
         return v
 # ============= EOF =============================================

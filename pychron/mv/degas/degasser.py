@@ -22,7 +22,7 @@ from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, 
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 # ============= standard library imports ========================
-from numpy import uint8, zeros, random
+from numpy import uint8, zeros, random, uint16
 from skimage.color import gray2rgb
 from threading import Event, Thread
 import yaml
@@ -64,8 +64,9 @@ class Degasser(Loggable):
     img_graph = Instance(Graph, ())
     plot_container = Instance(HPlotContainer, ())
 
-    threshold = Range(50, 200, 55)
+    threshold = Range(0,100, 25)
     test = Button
+    edit_pid_button = Button
 
     _lum_thread = None
     _lum_evt = None
@@ -96,15 +97,16 @@ class Degasser(Loggable):
 
         with open(p, 'rb') as rfile:
             jd = yaml.load(rfile)
-            self.threshold = jd['threshold']
-            self.pid.load_from_obj(jd['pid'])
+            if jd:
+                self.threshold = jd['threshold']
+                self.pid.load_from_obj(jd['pid'])
 
     def dump(self):
         self.debug('dump')
         obj = self.pid.get_dump_obj()
         jd = {'pid': obj, 'threshold': self.threshold}
         with open(self.persistence_path, 'wb') as wfile:
-            yaml.dump(jd, wfile)
+            yaml.dump(jd, wfile, encoding='utf-8')
 
     def degas(self, lumens=None, autostart=True):
         self.load()
@@ -115,10 +117,10 @@ class Degasser(Loggable):
         self.lumens = lumens
         self._setup_graph()
 
-        def _open():
-            self._info = self.edit_traits()
-
-        invoke_in_main_thread(_open)
+        # def _open():
+        #     self._info = self.edit_traits()
+        #
+        # invoke_in_main_thread(_open)
         if autostart:
             self.start()
 
@@ -127,6 +129,11 @@ class Degasser(Loggable):
         self._lum_evt = Event()
         self._lum_thread = Thread(target=self._degas, args=(self.lumens, self.pid))
         self._lum_thread.start()
+
+    def _edit_pid_button_fired(self):
+        info = self.pid.edit_traits(kind='livemodal')
+        if info.result:
+            self.dump()
 
     def _test_fired(self):
         if self._testing:
@@ -178,7 +185,14 @@ class Degasser(Loggable):
             g.record(c, plotid=0)
             g.record(e, plotid=1)
             g.record(o, plotid=2)
-            img.data.set_data('imagedata', gray2rgb(src))
+
+            if src.dtype == uint16:
+                src = src.astype('uint32')
+                src = src/4095 * 255
+                src = src.astype('uint8')
+
+            imgdata = gray2rgb(src)
+            img.data.set_data('imagedata', imgdata)
 
         evt = self._lum_evt
         set_laser_power = self.laser_manager.set_laser_power_hook

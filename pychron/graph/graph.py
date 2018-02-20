@@ -429,7 +429,7 @@ class Graph(ContextMenuMixin):
         #         print 'len plots {}'.format(len(self.plots))
         for pi in self.plots:
             #             print 'len pi.renderers {}'.format(len(pi.plots.keys()))
-            for k, pp in pi.plots.items():
+            for k, pp in list(pi.plots.items()):
                 for renderer in pp:
                     try:
                         pi.remove(renderer)

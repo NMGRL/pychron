@@ -84,10 +84,18 @@ class StageControlPane(TraitsDockPane):
                      layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
-            degasser_grp = VGroup(VGroup(Item('degasser.threshold'),
+            degasser_grp = VGroup(HGroup(VGroup(UItem('degas_test_button'),
+                                         show_border=True, label='Testing'),
+                                  VGroup(Item('degasser.threshold'),
                                          show_border=True, label='Preprocess'),
-                                  VGroup(UItem('degasser.pid', style='custom'),
-                                         show_border=True, label='PID'),
+                                         icon_button_editor('degasser.edit_pid_button','cog'),
+                                         VGroup(Item('degasser.pid.kp'), Item('degasser.pid.ki'),
+                                                Item('degasser.pid.kd')),
+
+                                         ),
+                                  # VGroup(UItem('degasser.pid', style='custom'),
+                                  #        show_border=True, label='PID'),
+                                  UItem('degasser.plot_container', style='custom', editor=ComponentEditor()),
                                   label='Degas', show_border=True)
 
             mvgrp = VGroup(VGroup(UItem('stage_manager.autocenter_manager.display_image',
