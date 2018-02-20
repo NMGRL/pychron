@@ -359,11 +359,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
-        rad40, k39 = list(zip(*[(a.get_computed_value('rad40'),
-                            a.get_computed_value('k39')) for a in self.clean_analyses()]))
+
+        rad40, k39 = list(zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
         rad40 = sum(rad40)
         k39 = sum(k39)
 
+        a = next(self.clean_analyses())
         j = a.j
         try:
             return age_equation(rad40 / k39, j, a.arar_constants)

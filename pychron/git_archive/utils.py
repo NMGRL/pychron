@@ -118,7 +118,7 @@ def get_diff(repo, a, b, path, change_type='M'):
     repo = get_repo(repo)
     diff = repo.git.diff(a, b, '--full-index', '--', path)
     if diff:
-        return fu(repo, diff)
+        return fu(repo, diff.encode('utf-8'))
 
 
 aregex = re.compile(r'\[ahead (?P<count>\d+)')

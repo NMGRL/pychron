@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from io import StringIO
+from io import StringIO, BytesIO
 import struct
 
 from uncertainties import ufloat
@@ -34,6 +34,7 @@ from six.moves import range
 def get_fn(blob):
     fn = None
     if blob is not None:
+        blob = blob.decode('utf-8')
         ps = blob.strip().split('\n')
         fn = len(ps)
         if fn == 1 and ps[0] == '':
@@ -44,7 +45,7 @@ def get_fn(blob):
 
 class Blob:
     def __init__(self, v):
-        self._buf = StringIO(v)
+        self._buf = BytesIO(v)
 
     def short(self):
         return struct.unpack('>h', self._buf.read(2))[0]
@@ -85,9 +86,10 @@ class MassSpecAnalysis(Analysis):
                 self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
 
         prefs = obj.changeable.preferences_set
+        # prefs = None
         fo, fi, fs = 0, 0, 0
         if prefs:
-            fo = prefs.DelOutliersAfterFit == 'true'
+            # fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
             self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta

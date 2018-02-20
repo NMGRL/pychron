@@ -366,7 +366,7 @@ class DVCCommitView(HasTraits):
             rhsdate = rhs.date.isoformat()
 
             diffs = []
-            for a in ('blanks', 'icfactors', 'tags', 'intercepts'):
+            for a in ('blanks', 'icfactors', 'intercepts'):
                 p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
@@ -376,8 +376,10 @@ class DVCCommitView(HasTraits):
                 v = DiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
                 for a, (aa, bb) in diffs:
                     func = getattr(v, 'set_{}'.format(a))
-                    func(json.load(aa.data_stream),
-                         json.load(bb.data_stream))
+
+                    a = aa.data_stream.read().decode('utf-8')
+                    b = bb.data_stream.read().decode('utf-8')
+                    func(json.loads(a), json.loads(b))
                 v.finish()
                 open_view(v)
             else:

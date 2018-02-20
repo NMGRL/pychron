@@ -100,8 +100,6 @@ class DVCIsotopeRecordView:
         #     self.timestampf = 0
         #     self.delta_time = 0
         self.record_id = ''
-        #     self.sample = ''
-        #     self.project = ''
         #     self.irradiation_info = ''
         #     self.irradiation = ''
         #     self.irradiation_level = ''
@@ -112,7 +110,6 @@ class DVCIsotopeRecordView:
         #
 
         self.review_status = 0
-        self.position = 0
 
     #
     #     self.extract_value = 0
@@ -132,9 +129,9 @@ class DVCIsotopeRecordView:
         if self.use_repository_suffix:
             rid = '{}-{}'.format(rid, self.repository_identifier)
         self.record_id = rid
-        self.tag = self.dbrecord.tag
 
-        self.position = self.dbrecord.position
+        self.tag = self.dbrecord.tag
+        # self.position = self.dbrecord.position
 
     def set_tag(self, tag):
         self.tag = tag

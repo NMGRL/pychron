@@ -83,6 +83,41 @@ class DVCAnalysis(Analysis):
         head, ext = os.path.splitext(bname)
 
         jd = dvc_load(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext)))
+        self.load_extraction(jd)
+
+        jd = dvc_load(path)
+        self.load_meta(jd)
+
+        self.load_paths()
+        self.load_spectrometer_parameters(jd['spec_sha'])
+        self.load_environmentals(jd.get('environmental'))
+
+    def load_meta(self, jd):
+        self.measurement_script_name = jd.get('measurement', NULL_STR)
+        self.extraction_script_name = jd.get('extraction', NULL_STR)
+
+        for attr in META_ATTRS:
+            v = jd.get(attr)
+            # print 'attr={},{}'.format(attr, v)
+            if v is not None:
+                setattr(self, attr, v)
+
+        if self.increment is not None:
+            self.step = make_step(self.increment)
+
+        ts = jd['timestamp']
+        try:
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
+
+        self.timestamp = self.timestampf = make_timef(self.rundate)
+        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
+
+        # self.collection_version = jd['collection_version']
+        self._set_isotopes(jd)
+
+    def load_extraction(self, jd):
         for attr in EXTRACTION_ATTRS:
             tag = attr
             if attr == 'cleanup_duration':
@@ -121,37 +156,6 @@ class DVCAnalysis(Analysis):
 
         if not self.extract_units:
             self.extract_units = 'W'
-
-        jd = dvc_load(path)
-
-        self.measurement_script_name = jd.get('measurement', NULL_STR)
-        self.extraction_script_name = jd.get('extraction', NULL_STR)
-
-        for attr in META_ATTRS:
-            v = jd.get(attr)
-            # print 'attr={},{}'.format(attr, v)
-            if v is not None:
-                setattr(self, attr, v)
-
-        if self.increment is not None:
-            self.step = make_step(self.increment)
-
-        ts = jd['timestamp']
-        try:
-            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
-        except ValueError:
-            self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
-
-        # self.collection_version = jd['collection_version']
-        self._set_isotopes(jd)
-
-        self.timestamp = self.timestampf = make_timef(self.rundate)
-        self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
-
-        self.load_paths()
-        self.load_spectrometer_parameters(jd['spec_sha'])
-
-        self.load_environmentals(jd.get('environmental'))
 
     def load_environmentals(self, ed):
         if ed is not None:
@@ -495,9 +499,9 @@ class DVCAnalysis(Analysis):
         #             'Ar40L1': Isotope('Ar40', 'L1')}
 
         try:
-            isos = {k: Isotope(v['name'], v['detector']) for k, v in six.iteritems(isos)}
+            isos = {k: Isotope(v['name'], v['detector']) for k, v in isos.items()}
         except KeyError:
-            isos = {k: Isotope(k, v['detector']) for k, v in six.iteritems(isos)}
+            isos = {k: Isotope(k, v['detector']) for k, v in isos.items()}
 
         self.isotopes = isos
 

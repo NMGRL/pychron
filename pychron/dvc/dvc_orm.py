@@ -208,6 +208,10 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.position
 
     @property
+    def material(self):
+        return self.irradiation_position.sample.material.name
+
+    @property
     def tag(self):
         return self.change.tag
 
