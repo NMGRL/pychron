@@ -464,7 +464,7 @@ class ArArAge(IsotopeGroup):
 
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
-        self.age_err_wo_j = float(age.std_dev)
+        self.age_err_wo_j = std_dev(age)
 
         # self.uage = ufloat(self.age, self.age_err)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)

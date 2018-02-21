@@ -31,6 +31,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
 from pychron import version
+from pychron.core.codetools.inspection import caller
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
@@ -272,7 +273,7 @@ class DatabaseAdapter(Loggable):
                     self._session_cnt = 1
                 else:
                     if not self.session:
-                        self.debug('create new session {}'.format(id(self)))
+                        # self.debug('create new session {}'.format(id(self)))
                         self.session = self.session_factory()
                     self._session_cnt += 1
             else:

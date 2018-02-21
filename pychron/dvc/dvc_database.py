@@ -1503,7 +1503,6 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(SampleTbl)
             q = q.join(ProjectTbl)
 
-            print('asdfasdf get sample', name, project, pi)
             project = self.get_project(project, pi)
             material = self.get_material(material, grainsize)
 
@@ -1511,7 +1510,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(SampleTbl.material == material)
             q = q.filter(SampleTbl.name == name)
 
-            return self._query_one(q, verbose_query=True)
+            return self._query_one(q, verbose_query=False)
 
     def get_last_identifier(self, sample=None):
         with self.session_ctx() as sess:

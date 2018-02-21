@@ -364,6 +364,40 @@ def calculate_F(isotopes,
     """
     a40, a39, a38, a37, a36 = isotopes
 
+    def calc_f(pr):
+        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
+                                                                         pr, arar_constants, fixed_k3739)
+        atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
+                                                  decay_time,
+                                                  pr,
+                                                  arar_constants)
+
+        # calculate radiogenic
+        # dont include error in 40/36
+        atm40 = atm36 * nominal_value(arar_constants.atm4036)
+
+        k4039 = pr.get('K4039', 0)
+        k40 = k39 * k4039
+
+        rad40 = a40 - atm40 - k40
+        try:
+            ff = rad40 / k39
+        except ZeroDivisionError:
+            ff = ufloat(1.0, 0)
+
+        nar = {'k40': k40, 'ca39': ca39, 'k38': k38, 'ca38': ca38, 'cl38': cl38, 'k37': k37, 'ca37': ca37, 'ca36': ca36,
+               'cl36': cl36}
+        try:
+            rp = rad40 / a40 * 100
+        except ZeroDivisionError:
+            rp = ufloat(0, 0)
+
+        comp = {'rad40': rad40, 'rad40_percent': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
+                'atm40': atm40}
+
+        ifc = {'Ar40': a40 - k40, 'Ar39': k39, 'Ar38': a38, 'Ar37': a37, 'Ar36': atm36}
+        return ff, nar, comp, ifc
+
     if interferences is None:
         interferences = {}
 
@@ -371,60 +405,12 @@ def calculate_F(isotopes,
         arar_constants = ArArConstants()
 
     # make local copy of interferences
-    pr = {k: v.__copy__() for k, v in interferences.items()}
+    pr = {k: ufloat(nominal_value(v), std_dev=0, tag=v.tag) for k, v in interferences.items()}
 
-    k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                     pr, arar_constants, fixed_k3739)
-    atm36, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                              decay_time,
-                                              pr,
-                                              arar_constants)
+    f_wo_irrad, _, _, _ = calc_f(pr)
+    f, non_ar_isotopes, computed, interference_corrected = calc_f(interferences)
 
-    # calculate radiogenic
-    # dont include error in 40/36
-    atm40 = atm36 * nominal_value(arar_constants.atm4036)
-
-    k4039 = pr.get('K4039', 0)
-    k40 = k39 * k4039
-
-    rad40 = a40 - atm40 - k40
-    try:
-        f = rad40 / k39
-    except ZeroDivisionError:
-        f = ufloat(1.0, 0)
-
-    rf = deepcopy(f)
-
-    non_ar_isotopes = dict(k40=k40,
-                           ca39=ca39,
-                           k38=k38,
-                           ca38=ca38,
-                           cl38=cl38,
-                           k37=k37,
-                           ca37=ca37,
-                           ca36=ca36,
-                           cl36=cl36)
-
-    try:
-        rp = rad40 / a40 * 100
-    except ZeroDivisionError:
-        rp = ufloat(0, 0)
-
-    computed = dict(rad40=rad40, rad40_percent=rp,
-                    ca37=ca37, ca39=ca39, ca36=ca36,
-                    k39=k39, atm40=atm40)
-
-    interference_corrected = dict(Ar40=a40 - k40,
-                                  Ar39=k39,
-                                  Ar38=a38,
-                                  Ar37=a37,
-                                  Ar36=atm36)
-    # clear errors in irrad
-    for pp in pr.values():
-        pp.std_dev = 0
-    f_wo_irrad = f
-
-    return rf, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
+    return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
 def age_equation(j, f,
