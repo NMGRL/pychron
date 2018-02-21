@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 import os
 import sys
+
+import requests
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
 from apptools.preferences.preference_binding import bind_preference
@@ -364,9 +366,11 @@ class Updater(Loggable):
     def _validate_origin(self, name):
         try:
             cmd = 'https://github.com/{}'.format(name)
-            six.moves.urllib.request.urlopen(cmd)
+            # six.moves.urllib.request.urlopen(cmd)
+            requests.get(cmd)
             return True
-        except BaseException:
+        except BaseException as e:
+            print('excepiton validating origin', cmd, e)
             return
 
     def _check_for_updates(self):
