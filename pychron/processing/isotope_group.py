@@ -205,14 +205,14 @@ class IsotopeGroup(HasTraits):
 
         p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
         # factors=None
-        ic = 1, 1e-20
+        ic = 1, 0
         if os.path.isfile(p):
             c = ConfigParser()
             c.read(p)
             det = det.lower()
             for si in c.sections():
                 if si.lower() == det:
-                    v, e = 1, 1e-20
+                    v, e = 1, 0
                     if c.has_option(si, 'ic_factor'):
                         v = c.getfloat(si, 'ic_factor')
                     if c.has_option(si, 'ic_factor_err'):
@@ -414,7 +414,7 @@ class IsotopeGroup(HasTraits):
             try:
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
-                return ufloat(0, 1e-20)
+                return ufloat(0, 0)
         elif attr.startswith('u') or attr in self.isotope_keys:
             return self.get_value(attr)
         else:

@@ -328,9 +328,9 @@ class BaseBrowserTask(BaseEditorTask):
 
                 # av.application = self.application
                 # mv = av.isotopes_view
-                av.isotope_adapter = self.isotope_adapter
-                av.intermediate_adapter = self.intermediate_adapter
-                av.show_intermediate = self.recall_configurer.show_intermediate
+                av.isotope_view.isotope_adapter = self.isotope_adapter
+                av.isotope_view.intermediate_adapter = self.intermediate_adapter
+                av.isotope_view.show_intermediate = self.recall_configurer.show_intermediate
 
                 self.recall_configurer.set_fonts(av)
                 av.main_view.set_options(rec, self.recall_configurer.recall_options)

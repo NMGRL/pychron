@@ -102,8 +102,8 @@ class PipelineTask(BaseBrowserTask):
                  name='Misc')]
 
     state = Instance(EngineState)
-    resume_enabled = Bool(False)
-    run_enabled = Bool(True)
+    # resume_enabled = Bool(False)
+    # run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
     # run_to = None
 
@@ -350,8 +350,8 @@ class PipelineTask(BaseBrowserTask):
         self.close_all()
 
     def reset(self):
-        self.run_enabled = True
-        self.resume_enabled = False
+        self.engine.run_enabled = True
+        self.engine.resume_enabled = False
         # self._temp_state = None
         # self.state = None
         self.engine.reset()
@@ -484,12 +484,12 @@ class PipelineTask(BaseBrowserTask):
         self.dvc.create_session()
 
         if not getattr(self.engine, func)():
-            self.resume_enabled = True
-            self.run_enabled = False
+            self.engine.resume_enabled = True
+            self.engine.run_enabled = False
             self.debug('false {} {}'.format(message, func))
         else:
-            self.run_enabled = True
-            self.resume_enabled = False
+            self.engine.run_enabled = True
+            self.engine.resume_enabled = False
             self.debug('true {} {}'.format(message, func))
 
         for editor in self.engine.state.editors:
@@ -507,8 +507,8 @@ class PipelineTask(BaseBrowserTask):
         self._run('run pipeline', 'run_pipeline')
 
     def _toggle_run(self, v):
-        self.resume_enabled = v
-        self.run_enabled = not v
+        self.engine.resume_enabled = v
+        self.engine.run_enabled = not v
 
     def _sa_factory(self, path, factory, **kw):
         return SchemaAddition(path=path, factory=factory, **kw)

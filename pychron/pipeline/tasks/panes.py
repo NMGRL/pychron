@@ -325,7 +325,8 @@ class PipelinePane(TraitsDockPane):
 
         v = View(VSplit(UItem('pipeline_template_root',
                               editor=teditor),
-                        VGroup(HGroup(icon_button_editor('run_needed', 'start'),
+                        VGroup(HGroup(icon_button_editor('run_needed', 'start', visible_when='run_enabled'),
+                                      icon_button_editor('run_needed', 'edit-redo-3', visible_when='resume_enabled'),
                                       icon_button_editor('add_pipeline', 'add')),
                                UItem('pipeline_group',
                                      editor=editor))), handler=PipelineHandler())

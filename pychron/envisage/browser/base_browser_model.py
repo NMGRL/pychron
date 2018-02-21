@@ -214,7 +214,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.dump_browser_selection()
 
     def load_browser_options(self):
-        self.load(verbose=True)
+        self.load(verbose=False)
 
     def load_browser_selection(self):
         obj = self._get_browser_persistence()

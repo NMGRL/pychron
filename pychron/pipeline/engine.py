@@ -20,12 +20,10 @@ import os
 import time
 
 import yaml
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
-
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc.tasks.repo_task import RepoItem
-from pychron.git_archive.utils import ahead_behind
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -50,8 +48,6 @@ from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState, get_detector_set
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
-from pychron.pychron_constants import LINE_STR
-import six
 
 
 class ActiveCTX(object):
@@ -205,6 +201,9 @@ class PipelineEngine(Loggable):
     active_editor = Event
     active_inspector_item = Instance(BaseInspectorItem, ())
     selected_editor = Any
+
+    resume_enabled = Bool(False)
+    run_enabled = Bool(True)
 
     # unknowns = List
     # references = List

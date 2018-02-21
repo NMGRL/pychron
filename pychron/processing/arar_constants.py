@@ -174,7 +174,7 @@ class ArArConstants(HasTraits):
     def _get_ufloat(self, attr):
         v = getattr(self, '{}_v'.format(attr))
         e = getattr(self, '{}_e'.format(attr))
-        return ufloat(v, e)
+        return ufloat(v, e, tag=attr)
 
     def _get_atm4036(self):
         return self._get_ufloat('atm4036')

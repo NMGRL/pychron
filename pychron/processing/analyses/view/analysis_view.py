@@ -56,9 +56,52 @@ class AnalysisViewHandler(Handler):
         obj.show_iso_evolutions(show_evo=True, show_equilibration=True, show_baseline=True)
 
 
+class MetaView(HasTraits):
+    name = 'Meta'
+    spectrometer = Instance(SpectrometerView)
+    interference = Instance(InterferencesView)
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(UItem('spectrometer', style='custom'), show_border=True, label='Spectrometer'),
+                        VGroup(UItem('interference', style='custom'), show_border=True, label='Reactor')))
+        return v
+
+
+class IsotopeView(HasTraits):
+    name = 'Isotopes'
+    isotopes = List
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    show_intermediate = Bool(True)
+
+    def traits_view(self):
+        teditor = myTabularEditor(adapter=self.isotope_adapter,
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  editable=False,
+                                  multi_select=True,
+                                  selected='selected',
+                                  dclicked='dclicked',
+                                  refresh='refresh_needed')
+        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
+                                  editable=False,
+                                  drag_enabled=False,
+                                  stretch_last_section=False,
+                                  refresh='refresh_needed')
+        isotope_grp = Group(UItem('isotopes',
+                                  editor=teditor, ),
+                            UItem('isotopes',
+                                  editor=ieditor,
+                                  visible_when='show_intermediate'))
+        v = View(isotope_grp)
+        return v
+
+
 class ExtractionView(HasTraits):
     graph = Instance(StackedGraph)
     name = 'Extraction'
+    refresh_needed = Event
+
     def setup_graph(self, response_data, request_data):
         self.graph = g = StackedGraph()
 
@@ -84,29 +127,28 @@ class AnalysisView(HasTraits):
     model = Instance('pychron.processing.analyses.analysis.Analysis')
     # selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
     selected = List
-    refresh_needed = Event
     analysis_id = Str
     dclicked = Event
     selected_tab = Any
 
-    main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
-    history_view = Instance(HistoryView)
+    main_view = Instance(MainView)
+    # history_view = Instance(HistoryView)
     # isotopes_view = Instance(IsotopeView)
 
+    # interference_view = Instance(InterferencesView)
     experiment_view = Instance(ExperimentView)
-    interference_view = Instance(InterferencesView)
     measurement_view = Instance(MeasurementView)
     extraction_view = Instance(ExtractionView)
-    snapshot_view = Instance(SnapshotView)
-    detector_ic_view = Instance(DetectorICView)
-    spectrometer_view = Instance(SpectrometerView)
-    peak_center_view = Instance(PeakCenterView)
-    error_comp_view = Instance(ErrorComponentsView)
-
-    isotopes = List
-    isotope_adapter = Instance(IsotopeTabularAdapter, ())
-    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
-    show_intermediate = Bool(True)
+    # snapshot_view = Instance(SnapshotView)
+    # detector_ic_view = Instance(DetectorICView)
+    # spectrometer_view = Instance(SpectrometerView)
+    # peak_center_view = Instance(PeakCenterView)
+    # error_comp_view = Instance(ErrorComponentsView)
+    isotope_view = Instance(IsotopeView)
+    # isotopes = List
+    # isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    # intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    # show_intermediate = Bool(True)
 
     groups = List
 
@@ -137,47 +179,55 @@ class AnalysisView(HasTraits):
         self.main_view = main_view
 
         self.groups.append(main_view)
+
+        isos = [an.isotopes[k] for k in an.isotope_keys]
+        iso_view = IsotopeView(isotopes=isos)
+        self.isotope_view = iso_view
+        self.groups.append(iso_view)
         self._make_subviews(an)
 
-        self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
-
     def refresh(self):
-        self.refresh_needed = True
+        self.isotope_view.refresh_needed = True
         self.main_view.load_computed(self.model, new_list=False)
         self.main_view.refresh_needed = True
 
     def _selected_tab_changed(self, new):
-        print('selasdf', new)
         if isinstance(new, HistoryView):
             new.initialize(self.model)
 
     def _make_subviews(self, an):
-        for args in (
-                ('history', HistoryView),
-                # ('blanks', BlanksView),
-                # ('fits', FitsView),
-                # ('experiment', ExperimentView, 'experiment_txt'),
-                # ('extraction', ExtractionView, 'extraction_script_blob'),
-                # ('measurement', MeasurementView, 'measurement_script_blob'),
-                ('interference', InterferencesView, 'interference_corrections'),
-                ('spectrometer', SpectrometerView, 'source_parameters')):
+        # for args in (
+        #         ('history', HistoryView),
+        #         # ('blanks', BlanksView),
+        #         # ('fits', FitsView),
+        #         # ('experiment', ExperimentView, 'experiment_txt'),
+        #         # ('extraction', ExtractionView, 'extraction_script_blob'),
+        #         # ('measurement', MeasurementView, 'measurement_script_blob'),
+        #         ('interference', InterferencesView, 'interference_corrections'),
+        #         ('spectrometer', SpectrometerView, 'source_parameters')):
+        #
+        #     if len(args) == 2:
+        #         vname, klass = args
+        #         tattr = None
+        #     else:
+        #         vname, klass, tattr = args
+        #
+        #     if tattr:
+        #         if not getattr(an, tattr):
+        #             continue
+        #
+        #     # name = '{}_view'.format(vname)
+        #     # view = getattr(self, name)
+        #     # if view is None:
+        #     view = klass(an)
+        #     # setattr(self, name, view)
+        #     self.groups.append(view)
+        view = HistoryView(an)
+        self.groups.append(view)
 
-            if len(args) == 2:
-                vname, klass = args
-                tattr = None
-            else:
-                vname, klass, tattr = args
-
-            if tattr:
-                if not getattr(an, tattr):
-                    continue
-
-            # name = '{}_view'.format(vname)
-            # view = getattr(self, name)
-            # if view is None:
-            view = klass(an)
-            # setattr(self, name, view)
-            self.groups.append(view)
+        view = MetaView(interference=InterferencesView(an),
+                        spectrometer=SpectrometerView(an))
+        self.groups.append(view)
 
         if an.measured_response_stream:
             ev = ExtractionView()
@@ -214,25 +264,7 @@ class AnalysisView(HasTraits):
         # main_grp = Group(UItem('main_view', style='custom',
         #                        editor=InstanceEditor()), label='Main')
         #
-        # teditor = myTabularEditor(adapter=self.isotope_adapter,
-        #                           drag_enabled=False,
-        #                           stretch_last_section=False,
-        #                           editable=False,
-        #                           multi_select=True,
-        #                           selected='selected',
-        #                           dclicked='dclicked',
-        #                           refresh='refresh_needed')
-        # ieditor = myTabularEditor(adapter=self.intermediate_adapter,
-        #                           editable=False,
-        #                           drag_enabled=False,
-        #                           stretch_last_section=False,
-        #                           refresh='refresh_needed')
-        # isotope_grp = Group(UItem('isotopes',
-        #                           editor=teditor, ),
-        #                     UItem('isotopes',
-        #                           editor=ieditor,
-        #                           visible_when='show_intermediate'),
-        #                     label='Isotopes')
+
         #
         # history_grp = Group(UItem('history_view', style='custom',
         #                           editor=InstanceEditor()), label='History')
@@ -264,25 +296,25 @@ class AnalysisView(HasTraits):
         #                               editor=InstanceEditor()),
         #                         defined_when='peak_center_view', label='Peak_center')
         v = View(VGroup(
-                # spring,
-                        HGroup(spring, UItem('analysis_id', style='readonly'), spring),
-                        UItem('groups', style='custom',
-                              editor=ListEditor(use_notebook=True,
-                                                page_name='.name',
-                                                selected='selected_tab'))
-                        # Tabbed(main_grp,
-                        #        isotope_grp,
-                        #        # history_grp,
-                        #        experiment_grp,
-                        #        extraction_grp,
-                        #        measurement_grp,
-                        #        peak_center_grp,
-                        #        interference_grp,
-                        #        spectrometer_grp,
-                        #        detector_ic_grp,
-                        #        snapshot_grp)),
-                        ),
-                 handler=AnalysisViewHandler())
+            # spring,
+            HGroup(spring, UItem('analysis_id', style='readonly'), spring),
+            UItem('groups', style='custom',
+                  editor=ListEditor(use_notebook=True,
+                                    page_name='.name',
+                                    selected='selected_tab'))
+            # Tabbed(main_grp,
+            #        isotope_grp,
+            #        # history_grp,
+            #        experiment_grp,
+            #        extraction_grp,
+            #        measurement_grp,
+            #        peak_center_grp,
+            #        interference_grp,
+            #        spectrometer_grp,
+            #        detector_ic_grp,
+            #        snapshot_grp)),
+        ),
+            handler=AnalysisViewHandler())
         return v
 
 

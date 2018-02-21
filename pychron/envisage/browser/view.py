@@ -70,16 +70,15 @@ class BaseBrowserView(HasTraits):
         hgrp = HGroup(icon_button_editor('filter_by_button',
                                          'find',
                                          tooltip='Search for analyses using defined criteria'),
-                      icon_button_editor('advanced_filter_button', '', tooltip='Advanced Search. e.g. search '
-                                                                               'by intensity'),
-                      icon_button_editor('load_recent_button', 'time-go', tooltip='Load recent analyses'),
-
+                      icon_button_editor('advanced_filter_button', 'magnifier',
+                                         tooltip='Advanced Search. e.g. search by intensity'),
+                      icon_button_editor('load_recent_button', 'edit-history-2', tooltip='Load recent analyses'),
                       icon_button_editor('find_references_button',
                                          '3d_glasses',
                                          tooltip='Find references associated with current selection'),
-                      icon_button_editor('toggle_view',
-                                         'arrow_switch',
-                                         tooltip='Toggle between Sample and Time views'),
+                      # icon_button_editor('toggle_view',
+                      #                    'arrow_switch',
+                      #                    tooltip='Toggle between Sample and Time views'),
                       spring,
                       CustomLabel('datasource_url', color='maroon'),
                       show_border=True)

@@ -30,9 +30,9 @@ from pychron.core.helpers.formatting import format_percent_error
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
 
-vwidth = Int(70)
-ewidth = Int(60)
-eewidth = Int(70)
+vwidth = Int(80)
+ewidth = Int(70)
+eewidth = Int(80)
 pwidth = Int(50)
 
 
@@ -213,7 +213,7 @@ class IntermediateTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     # disc_corrected_error_width = Int(60)
     # disc_corrected_percent_error_width = Int(60)
 
-    name_width = Int(40)
+    name_width = Int(50)
     intercept_width = vwidth
     intercept_error_width = eewidth
     intercept_percent_error_width = pwidth
@@ -369,12 +369,12 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     baseline_percent_error_text = Property
     age_error_component_text = Property
 
-    name_width = Int(40)
+    name_width = Int(50)
     fit_abbreviation_width = Int(40)
-    error_type_width = Int(40)
+    error_type_width = Int(60)
     include_baseline_error_width = Int(40)
-    baseline_fit_abbreviation_width = Int(40)
-    detector_width = Int(40)
+    baseline_fit_abbreviation_width = Int(60)
+    detector_width = Int(60)
 
     value_width = vwidth
     error_width = ewidth
@@ -388,7 +388,8 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
     blank_percent_error_width = pwidth
     baseline_percent_error_width = pwidth
 
-    ic_factor_width = Int(50)
+    ic_factor_width = Int(60)
+    ic_factor_error_width = Int(70)
     discrimination_width = Int(50)
 
     def get_menu(self, obj, trait, row, column):

@@ -146,21 +146,21 @@ class ArArAge(IsotopeGroup):
         # for var, error in self.uage.error_components().items():
         #     print var.tag
         uage = self.uage_w_j_err
-        print('tags', [var.tag for (var,error) in  uage.error_components().items()])
         ae = 0
         if uage:
-            for var, err in uage.error_components().items():
-                if var.tag == key:
-                    # print('var', key, var.tag, var)
-                    break
-            else:
-                print('not found', key)
+            # for var, err in uage.error_components().items():
+            #     if var.tag == key:
+            #         # print('var', key, var.tag, var)
+            #         break
+            # else:
+            #     print('tags', [var.tag for (var,error) in  uage.error_components().items()])
+            #     print('not found', key)
 
             v = next((error for (var, error) in uage.error_components().items()
                       if var.tag == key), 0)
 
             ae = uage.std_dev
-            print(key, v)
+            # print(key, v)
         if ae:
             return v ** 2 / ae ** 2 * 100
         else:

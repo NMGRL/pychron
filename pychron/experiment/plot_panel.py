@@ -361,7 +361,7 @@ class PlotPanel(Loggable):
     def _update_display(self, obj, name, old, new):
         if new:
             self.analysis_view.load_computed(self.isotope_group, new_list=False)
-            self.analysis_view.refresh_needed = True
+            self.analysis_view.isotope_view.refresh_needed = True
 
     # ===============================================================================
     # defaults

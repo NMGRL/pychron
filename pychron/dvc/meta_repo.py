@@ -256,7 +256,9 @@ class Production(MetaObject):
             self.attrs = attrs
 
     def to_dict(self, keys):
-        return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
+        return {t: ufloat(getattr(self, t),
+                          getattr(self, '{}_err'.format(t)),
+                          tag=t) for t in keys}
 
     def dump(self, path=None):
         if path is None:

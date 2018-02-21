@@ -44,7 +44,7 @@ from six.moves import filter
 from six.moves import range
 from six.moves import zip
 
-N = 5000
+N = 500
 
 
 class PeakLabel(DataLabel):

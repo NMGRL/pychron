@@ -228,31 +228,19 @@ class BaseBrowserSampleView(PaneModelView):
         irrad_grp = self._get_irrad_group()
         project_grp = self._get_project_group()
 
-        # analysis_type_group = self._get_analysis_type_group()
-        # date_grp = self._get_date_group()
-        # ms_grp = self._get_mass_spectrometer_group()
-
         simple_analysis_type_grp = self._get_simple_analysis_type_group()
         simple_date_grp = self._get_simple_date_group()
         simple_mass_spectrometer_grp = self._get_simple_mass_spectrometer_group()
 
-        # ln_grp = self._get_identifier_group()
         pi_grp = self._get_pi_group()
         load_grp = self._get_load_group()
+        s_grp = HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest.'),
+                       label='Search',
+                       show_border=True)
 
-        top_level_filter_grp = VGroup(
-            # CustomLabel('filter_label',
-            #             style='custom',
-            #             width=-1.0,
-            #             visible_when='not filter_focus'),
-            HGroup(UItem('fuzzy_search_entry', tooltip='Enter a simple search, Pychron will do the rest.'),
-                   label='Search',
-                   show_border=True),
-            # HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp, ln_grp),
-            HGroup(simple_mass_spectrometer_grp, simple_analysis_type_grp, simple_date_grp),
-            HGroup(VGroup(pi_grp, project_grp), VGroup(irrad_grp, load_grp)))
-        # analysis_type_group,
-        # date_grp)
+        top_level_filter_grp = VGroup(HGroup(s_grp, simple_mass_spectrometer_grp,
+                                             simple_analysis_type_grp, simple_date_grp),
+                                      HGroup(VGroup(pi_grp, project_grp), VGroup(irrad_grp, load_grp)))
 
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90, editor=EnumEditor(name='sample_filter_parameters')),

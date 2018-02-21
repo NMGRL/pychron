@@ -250,7 +250,7 @@ class MainView(HasTraits):
             except ZeroDivisionError:
                 pass
 
-        return ufloat(0, 1e-20)
+        return ufloat(0, 0)
 
     def _get_corrected_ratio(self, niso, diso):
         """
@@ -269,7 +269,7 @@ class MainView(HasTraits):
                         diso.ic_factor / niso.ic_factor)
             except (ZeroDivisionError, TypeError):
                 pass
-        return ufloat(0, 1e-20), 1
+        return ufloat(0, 0), 1
 
     def _get_ratio(self, tag):
         def get_iso(kk):
