@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import time
+from operator import attrgetter
+
 from skimage.measure import find_contours
 from traits.api import Float
 # ============= standard library imports ========================
@@ -269,7 +271,7 @@ class Locator(Loggable):
                         targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
 
                 if targets:
-                    return targets
+                    return sorted(targets, key=attrgetter('area'), reverse=True)
                     # time.sleep(0.5)
 
     def _mask(self, src, radius=None):

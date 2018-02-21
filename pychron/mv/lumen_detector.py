@@ -29,13 +29,9 @@ from skimage.filters import gaussian
 from pychron.mv.locator import Locator
 
 
-def area(a):
+def calc_area(a):
     b = asarray(a, dtype=bool)
     return b.sum()
-
-
-def calc_pixel_depth(pixel_depth):
-    return 2. ** pixel_depth - 1
 
 
 class LumenDetector(Locator):
@@ -66,10 +62,7 @@ class LumenDetector(Locator):
         """
         pixel_depth = self.pixel_depth
 
-        mask = self._mask(src)
-
-        # if self._cached_mask_value is None:
-        #     self._cached_mask_value = 100 / float(mask.sum())
+        self._mask(src)
 
         if not len(src.shape) == 2:
             gsrc = rgb2gray(src)
@@ -85,10 +78,8 @@ class LumenDetector(Locator):
         n = tsrc.shape[0]
         v = 0
         if n:
-            # print n, self._cached_mask_value, n*self._cached_mask_value
-            # if n * self._cached_mask_value > area_threshold:
             v = tsrc.sum() / (n*pd)
-        # print('v', v)
+
         src[src <= threshold] = 0
         return src, v
 
@@ -112,18 +103,19 @@ class LumenDetector(Locator):
 
         if self.grain_measuring:
             targets = self.active_targets
-            self.debug('active targets={}'.format(len(targets)))
+            if targets:
+                self.debug('active targets={}'.format(len(targets)))
         else:
             targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
             if targets:
                 self.debug('found targets={}'.format(len(targets)))
 
-        src = gaussian(lum, blur, preserve_range=True)
+        src = gaussian(lum, blur)*pixel_depth
         mask = self._mask(lum)
 
         h, w = lum.shape[:2]
 
-        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
+        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10)
 
         pt, px, py = None, None, None
         peak_img = zeros((h, w), dtype=uint8)
@@ -162,7 +154,7 @@ class LumenDetector(Locator):
         # distance = ((x - w / 2.) ** 2 + (y - h / 2.) ** 2) ** 0.5
         distance = 1
         try:
-            score_density = v / (area(lum) * distance)
+            score_density = v / (calc_area(lum) * distance)
         except ZeroDivisionError:
             score_density = 0
 
