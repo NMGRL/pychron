@@ -21,6 +21,9 @@ from datetime import datetime
 from hashlib import md5
 import json
 # ============= enthought library imports =======================
+from itertools import groupby
+from operator import attrgetter
+
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -72,6 +75,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     suppress_load_analysis_set = False
 
     default_attr = 'identifier'
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
@@ -187,7 +191,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
-        m = ReviewStatusDetailsModel(self.selected[0])
+        record = self.selected[0]
+        self.dvc.sync_repo(record.repository_identifier)
+        m = ReviewStatusDetailsModel(record)
+
         rsd = ReviewStatusDetailsView(model=m)
         rsd.edit_traits()
 
@@ -199,8 +206,12 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def load_review_status(self):
         records = self.get_analysis_records()
         if records:
-            for ri in records:
-                get_review_status(ri)
+            for repoid, rs in groupby(sorted(records, key=attrgetter('repository_identifier')),
+                                      key=attrgetter('repository_identifier')):
+
+                self.dvc.sync_repo(repoid)
+                for ri in rs:
+                    get_review_status(ri)
             self.refresh_needed = True
 
     def get_analysis_records(self):

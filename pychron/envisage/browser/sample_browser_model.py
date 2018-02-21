@@ -382,7 +382,7 @@ class SampleBrowserModel(BrowserModel):
         return TimeViewModel(db=self.db)
 
     def _analysis_table_default(self):
-        at = AnalysisTable()
+        at = AnalysisTable(dvc=self.dvc)
         at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
         bind_preference(at, 'max_history', 'pychron.browser.max_history')
