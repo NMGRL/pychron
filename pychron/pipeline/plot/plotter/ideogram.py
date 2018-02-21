@@ -509,12 +509,12 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
 
-        we *= self.options.nsigma
+        we = self.options.nsigma
         text = ''
         if self.options.display_mean:
             n = self.xs.shape[0]
             mswd_args = (mswd, valid_mswd, n)
-            text = self._make_mean_label(wm, we, n, n, mswd_args)
+            text = self._make_mean_label(wm, we*self.options.nsigma, n, n, mswd_args)
 
         group = self.options.get_group(self.group_id)
         color = group.color
@@ -630,7 +630,7 @@ class Ideogram(BaseArArFigure):
                 ov.error = we
                 if ov.label:
                     mswd_args = mswd, valid_mswd, n
-                    text = self._make_mean_label(wm, we, n, total_n, mswd_args)
+                    text = self._make_mean_label(wm, we*self.options.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
