@@ -171,7 +171,7 @@ class StageControlPane(TraitsDockPane):
                                    enabled_when='tray_calibration.isCalibrating()'),
                              UItem('tray_calibration.set_center_button'))
             tc_grp = VGroup(cal_grp,
-                            holes_grp,
+                            # holes_grp,
                             HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 

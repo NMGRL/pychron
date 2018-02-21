@@ -22,6 +22,8 @@ import codecs
 import time
 from threading import Lock, RLock
 # ============= local library imports  ==========================
+import binascii
+
 from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
@@ -48,7 +50,11 @@ def remove_eol_func(re):
             try:
                 re = re.decode('utf-8')
             except UnicodeDecodeError:
-                re = codecs.decode(re, 'hex')
+                try:
+                    re = codecs.decode(re, 'hex')
+                except binascii.Error:
+                    return
+
         return re.rstrip()
 
 

@@ -103,14 +103,16 @@ class LumenDetector(Locator):
 
         if self.grain_measuring:
             targets = self.active_targets
-            if targets:
+            if targets is not None:
                 self.debug('active targets={}'.format(len(targets)))
+            else:
+                self.debug('no active targets')
         else:
             targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
             if targets:
                 self.debug('found targets={}'.format(len(targets)))
 
-        src = gaussian(lum, blur)*pixel_depth
+        src = gaussian(lum, blur) * pixel_depth
         mask = self._mask(lum)
 
         h, w = lum.shape[:2]
