@@ -40,6 +40,9 @@ class ErrorComponent(HasTraits):
     name = Str
     value = Float
 
+    def get_percent_value(self):
+        return self.value/100
+
 
 class ErrorComponentsView(HasTraits):
     name = 'Error Components'
@@ -60,7 +63,7 @@ class ErrorComponentsView(HasTraits):
             es.append(ErrorComponent(name=k,
                                      value=iso.age_error_component))
         for k in an.isotope_keys:
-            d = '{} D'.format(k)
+            d = '{} IC'.format(k)
             es.append(ErrorComponent(name=d,
                                      value=an.get_error_component(d)))
         for k in an.isotope_keys:
@@ -96,11 +99,11 @@ class ErrorComponentsView(HasTraits):
             # HGroup(Item('pie_enabled', label='Show Pie Chart')),
             VGroup(
                 UItem('error_components', editor=editor),
-                visible_when='not pie_enabled'),
+                defined_when='not pie_enabled'),
             VSplit(
                 UItem('error_components', editor=editor),
                 UItem('pie_canvas', editor=ComponentEditor()),
-                visible_when='pie_enabled')))
+                defined_when='pie_enabled')))
         return v
         # def traits_view(self):
         #     v = View(UItem('error_components',
@@ -109,4 +112,3 @@ class ErrorComponentsView(HasTraits):
         #     return v
 
 # ============= EOF =============================================
-

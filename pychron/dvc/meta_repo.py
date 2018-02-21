@@ -693,10 +693,10 @@ class MetaRepo(GitRepoManager):
                     standard_name = mon.get('name', DEFAULT_MONITOR_NAME)
                     sa = mon.get('age', 28.201)
                     se = mon.get('error', 0)
-                    standard_age = ufloat(sa, se)
+                    standard_age = ufloat(sa, se, tag='standard_age')
                     standard_material = mon.get('material', 'sanidine')
 
-        fd = {'j': ufloat(j, je), 'lambda_k': lambda_k,
+        fd = {'j': ufloat(j, je, tag='J'), 'lambda_k': lambda_k,
               'standard_name': standard_name,
               'standard_material': standard_material,
               'standard_age': standard_age}

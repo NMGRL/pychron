@@ -145,13 +145,22 @@ class ArArAge(IsotopeGroup):
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
         #     print var.tag
+        uage = self.uage_w_j_err
+        print('tags', [var.tag for (var,error) in  uage.error_components().items()])
         ae = 0
-        if self.uage:
-            v = next((error for (var, error) in self.uage.error_components().items()
+        if uage:
+            for var, err in uage.error_components().items():
+                if var.tag == key:
+                    # print('var', key, var.tag, var)
+                    break
+            else:
+                print('not found', key)
+
+            v = next((error for (var, error) in uage.error_components().items()
                       if var.tag == key), 0)
 
-            ae = self.uage.std_dev
-
+            ae = uage.std_dev
+            print(key, v)
         if ae:
             return v ** 2 / ae ** 2 * 100
         else:
@@ -186,7 +195,7 @@ class ArArAge(IsotopeGroup):
                 b.fit = f
 
     def set_j(self, s, e):
-        self.j = ufloat(s, std_dev=e)
+        self.j = ufloat(s, std_dev=e, tag='J')
 
     def get_corrected_ratio(self, n, d):
         isos = self.isotopes
@@ -451,11 +460,13 @@ class ArArAge(IsotopeGroup):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            # lambda_k=self.lambda_k,
                            arar_constants=arc)
+        self.uage = age
 
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
         self.age_err_wo_j = float(age.std_dev)
-        self.uage = ufloat(self.age, self.age_err)
+
+        # self.uage = ufloat(self.age, self.age_err)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
         # if self.j is not None:

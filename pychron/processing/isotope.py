@@ -506,7 +506,7 @@ class BaseIsotope(IsotopicMeasurement):
 
     def __init__(self, name, detector):
         IsotopicMeasurement.__init__(self, name, detector)
-        self.baseline = Baseline(name, detector)
+        self.baseline = Baseline('{} bs'.format(name), detector)
 
     def get_baseline_corrected_value(self, include_baseline_error=None):
         if include_baseline_error is None:
@@ -550,10 +550,9 @@ class Isotope(BaseIsotope):
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)
-        self.blank = Blank(name, detector)
+        self.blank = Blank('{} bk'.format(name), detector)
         self.sniff = Sniff(name, detector)
-        self.background = Background(name, detector)
-        self.baseline = Baseline(name, detector)
+        self.background = Background('{} bg'.format(name), detector)
         self.whiff = Whiff(name, detector)
 
     def get_filtered_data(self):
@@ -619,14 +618,14 @@ class Isotope(BaseIsotope):
         return v
 
     def set_ublank(self, v):
-        self.blank = Blank(self.name, self.detector)
+        self.blank = Blank('{} bk'.format(self.name), self.detector)
         self.blank.set_uvalue(v)
 
     def set_blank(self, v, e):
         self.set_ublank((v, e))
 
     def set_baseline(self, v, e):
-        self.baseline = Baseline(self.name, self.detector)
+        self.baseline = Baseline('{} bs'.format(self.name), self.detector)
         self.baseline.set_uvalue((v, e))
 
     def _whiff_default(self):

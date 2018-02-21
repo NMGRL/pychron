@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
-from traits.api import HasTraits, Instance, Event, Str, Bool, List
-from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Group, Handler, spring, HGroup
+from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any
+from traitsui.api import View, UItem, InstanceEditor, VGroup, Tabbed, Group, Handler, spring, HGroup, ListEditor
 
 from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -58,7 +58,7 @@ class AnalysisViewHandler(Handler):
 
 class ExtractionView(HasTraits):
     graph = Instance(StackedGraph)
-
+    name = 'Extraction'
     def setup_graph(self, response_data, request_data):
         self.graph = g = StackedGraph()
 
@@ -87,6 +87,7 @@ class AnalysisView(HasTraits):
     refresh_needed = Event
     analysis_id = Str
     dclicked = Event
+    selected_tab = Any
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     history_view = Instance(HistoryView)
@@ -107,6 +108,8 @@ class AnalysisView(HasTraits):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     show_intermediate = Bool(True)
 
+    groups = List
+
     def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False):
         isotopes = self.selected
         self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
@@ -124,6 +127,7 @@ class AnalysisView(HasTraits):
                 v.fontsize = size
 
     def load(self, an):
+        self.groups = []
         self.model = an
         analysis_type = an.analysis_type
         analysis_id = an.record_id
@@ -131,6 +135,8 @@ class AnalysisView(HasTraits):
 
         main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view = main_view
+
+        self.groups.append(main_view)
         self._make_subviews(an)
 
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
@@ -139,6 +145,11 @@ class AnalysisView(HasTraits):
         self.refresh_needed = True
         self.main_view.load_computed(self.model, new_list=False)
         self.main_view.refresh_needed = True
+
+    def _selected_tab_changed(self, new):
+        print('selasdf', new)
+        if isinstance(new, HistoryView):
+            new.initialize(self.model)
 
     def _make_subviews(self, an):
         for args in (
@@ -161,31 +172,38 @@ class AnalysisView(HasTraits):
                 if not getattr(an, tattr):
                     continue
 
-            name = '{}_view'.format(vname)
+            # name = '{}_view'.format(vname)
             # view = getattr(self, name)
             # if view is None:
             view = klass(an)
-            setattr(self, name, view)
+            # setattr(self, name, view)
+            self.groups.append(view)
 
         if an.measured_response_stream:
             ev = ExtractionView()
             ev.setup_graph(an.measured_response_stream, an.requested_output_stream)
-            self.extraction_view = ev
+            self.groups.append(ev)
+            # self.extraction_view = ev
 
         if an.snapshots:
             snapshot_view = SnapshotView(an.snapshots)
-            self.snapshot_view = snapshot_view
+            # self.snapshot_view = snapshot_view
+            self.groups.append(snapshot_view)
 
         if an.analysis_type == DETECTOR_IC:
             det_view = DetectorICView(an)
-            self.detector_ic_view = det_view
+            # self.detector_ic_view = det_view
+            self.groups.append(det_view)
 
         if an.analysis_type in (UNKNOWN, COCKTAIL):
-            self.error_comp_view = ErrorComponentsView(an)
+            # self.error_comp_view = ErrorComponentsView(an)
+            ecv = ErrorComponentsView(an)
+            self.groups.append(ecv)
 
         pch = PeakCenterView()
         if pch.load(an):
-            self.peak_center_view = pch
+            # self.peak_center_view = pch
+            self.groups.append(pch)
 
     def _dclicked_fired(self, new):
         if new:
@@ -193,71 +211,77 @@ class AnalysisView(HasTraits):
             self.model.show_isotope_evolutions((item,))
 
     def traits_view(self):
-        main_grp = Group(UItem('main_view', style='custom',
-                               editor=InstanceEditor()), label='Main')
-
-        teditor = myTabularEditor(adapter=self.isotope_adapter,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  multi_select=True,
-                                  selected='selected',
-                                  dclicked='dclicked',
-                                  refresh='refresh_needed')
-        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
-                                  editable=False,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  refresh='refresh_needed')
-        isotope_grp = Group(UItem('isotopes',
-                                  editor=teditor, ),
-                            UItem('isotopes',
-                                  editor=ieditor,
-                                  visible_when='show_intermediate'),
-                            label='Isotopes')
-
-        history_grp = Group(UItem('history_view', style='custom',
-                                  editor=InstanceEditor()), label='History')
-
-        experiment_grp = Group(UItem('experiment_view', style='custom',
-                                     editor=InstanceEditor()), defined_when='experiment_view', label='Experiment')
-        interference_grp = Group(UItem('interference_view', style='custom',
-                                       editor=InstanceEditor()), defined_when='interference_view', label='Interference')
-        measurement_grp = Group(UItem('measurement_view', style='custom',
-                                      editor=InstanceEditor()),
-                                defined_when='measurement_view',
-                                label='Measurement')
-        extraction_grp = Group(UItem('extraction_view', style='custom',
-                                     editor=InstanceEditor()),
-                               defined_when='extraction_view',
-                               label='Extraction')
-        snapshot_grp = Group(UItem('snapshot_view', style='custom',
-                                   editor=InstanceEditor()),
-                             defined_when='snapshot_view',
-                             label='Snapshot')
-        detector_ic_grp = Group(UItem('detector_ic_view', style='custom',
-                                      editor=InstanceEditor()),
-                                defined_when='detector_ic_view',
-                                label='DetectorIC')
-        spectrometer_grp = Group(UItem('spectrometer_view', style='custom',
-                                       editor=InstanceEditor()), defined_when='spectrometer_view', label='Spectrometer')
-
-        peak_center_grp = Group(UItem('peak_center_view', style='custom',
-                                      editor=InstanceEditor()),
-                                defined_when='peak_center_view', label='Peak_center')
-        v = View(VGroup(spring,
+        # main_grp = Group(UItem('main_view', style='custom',
+        #                        editor=InstanceEditor()), label='Main')
+        #
+        # teditor = myTabularEditor(adapter=self.isotope_adapter,
+        #                           drag_enabled=False,
+        #                           stretch_last_section=False,
+        #                           editable=False,
+        #                           multi_select=True,
+        #                           selected='selected',
+        #                           dclicked='dclicked',
+        #                           refresh='refresh_needed')
+        # ieditor = myTabularEditor(adapter=self.intermediate_adapter,
+        #                           editable=False,
+        #                           drag_enabled=False,
+        #                           stretch_last_section=False,
+        #                           refresh='refresh_needed')
+        # isotope_grp = Group(UItem('isotopes',
+        #                           editor=teditor, ),
+        #                     UItem('isotopes',
+        #                           editor=ieditor,
+        #                           visible_when='show_intermediate'),
+        #                     label='Isotopes')
+        #
+        # history_grp = Group(UItem('history_view', style='custom',
+        #                           editor=InstanceEditor()), label='History')
+        #
+        # experiment_grp = Group(UItem('experiment_view', style='custom',
+        #                              editor=InstanceEditor()), defined_when='experiment_view', label='Experiment')
+        # interference_grp = Group(UItem('interference_view', style='custom',
+        #                                editor=InstanceEditor()), defined_when='interference_view', label='Interference')
+        # measurement_grp = Group(UItem('measurement_view', style='custom',
+        #                               editor=InstanceEditor()),
+        #                         defined_when='measurement_view',
+        #                         label='Measurement')
+        # extraction_grp = Group(UItem('extraction_view', style='custom',
+        #                              editor=InstanceEditor()),
+        #                        defined_when='extraction_view',
+        #                        label='Extraction')
+        # snapshot_grp = Group(UItem('snapshot_view', style='custom',
+        #                            editor=InstanceEditor()),
+        #                      defined_when='snapshot_view',
+        #                      label='Snapshot')
+        # detector_ic_grp = Group(UItem('detector_ic_view', style='custom',
+        #                               editor=InstanceEditor()),
+        #                         defined_when='detector_ic_view',
+        #                         label='DetectorIC')
+        # spectrometer_grp = Group(UItem('spectrometer_view', style='custom',
+        #                                editor=InstanceEditor()), defined_when='spectrometer_view', label='Spectrometer')
+        #
+        # peak_center_grp = Group(UItem('peak_center_view', style='custom',
+        #                               editor=InstanceEditor()),
+        #                         defined_when='peak_center_view', label='Peak_center')
+        v = View(VGroup(
+                # spring,
                         HGroup(spring, UItem('analysis_id', style='readonly'), spring),
-                        Tabbed(main_grp,
-                               isotope_grp,
-                               history_grp,
-                               experiment_grp,
-                               extraction_grp,
-                               measurement_grp,
-                               peak_center_grp,
-                               interference_grp,
-                               spectrometer_grp,
-                               detector_ic_grp,
-                               snapshot_grp)),
+                        UItem('groups', style='custom',
+                              editor=ListEditor(use_notebook=True,
+                                                page_name='.name',
+                                                selected='selected_tab'))
+                        # Tabbed(main_grp,
+                        #        isotope_grp,
+                        #        # history_grp,
+                        #        experiment_grp,
+                        #        extraction_grp,
+                        #        measurement_grp,
+                        #        peak_center_grp,
+                        #        interference_grp,
+                        #        spectrometer_grp,
+                        #        detector_ic_grp,
+                        #        snapshot_grp)),
+                        ),
                  handler=AnalysisViewHandler())
         return v
 

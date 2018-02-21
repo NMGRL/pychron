@@ -473,7 +473,7 @@ class DVCAnalysis(Analysis):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')
                 for iso in self.get_isotopes(key):
-                    iso.ic_factor = ufloat(vv, ee, tag='icfactor')
+                    iso.ic_factor = ufloat(vv, ee, tag='{} IC'.format(iso.name))
                     iso.ic_factor_reviewed = r
             # self.set_ic_factor(key, v['value'] or 0, v['error'] or 0)
             # for iso in self.get_isotopes(det):
