@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, BLOB, DateTime
+from sqlalchemy import Column, Integer, String, TEXT, DateTime
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
@@ -81,7 +81,7 @@ class PathMixin(BaseMixin):
 
 class ScriptTable(BaseMixin):
     script_name = Column(String(80))
-    script_blob = Column(BLOB)
+    script_blob = Column(TEXT)
     hash = Column(String(32))
 
 

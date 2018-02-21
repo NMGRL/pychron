@@ -332,6 +332,9 @@ class SampleEntry(DVCAble):
                         dvc.commit()
 
                         dbproject.name = p.name = '{}{}'.format(p.name[1:-2], dbproject.id)
+                        if self.project.startswith('?'):
+                            self.project = p.name
+
                         dvc.commit()
 
                 else:
