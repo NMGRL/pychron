@@ -153,9 +153,9 @@ class SampleEditorPane(TraitsDockPane):
                             # editor=ComboboxEditor(name='materials', use_filter=False)),
                       UItem('grainsize',
                             editor=ComboboxEditor(name='grainsizes', use_filter=False)),
-                      icon_button_editor('add_material_button', 'add',
-                                         enabled_when='material',
-                                         tooltip='Add a material'),
+                      # icon_button_editor('add_material_button', 'add',
+                      #                    enabled_when='material',
+                      #                    tooltip='Add a material'),
                       label='Material',
                       show_border=True)
 
