@@ -458,9 +458,10 @@ class VideoStageManager(StageManager):
 
         offx, offy = self.canvas.get_screen_offset()
         cropdim = dim * 2.5
-
-        src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
-        return src
+        if src is not None:
+            if len(src.shape):
+                src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
+                return src
 
     def _stage_map_changed_hook(self):
         self.lumen_detector.hole_radius = self.stage_map.g_dimension
@@ -558,7 +559,12 @@ class VideoStageManager(StageManager):
 
         def renderer(p):
             # cw, ch = self.get_frame_size()
-            frame = copy(video.get_cached_frame())
+            frame = video.get_cached_frame()
+            if frame is not None:
+                if len(frame.shape):
+                    return
+
+            frame = copy(frame)
             # ch, cw, _ = frame.shape
             # ch, cw = int(ch), int(cw)
 
