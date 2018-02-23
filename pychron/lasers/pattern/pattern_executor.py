@@ -378,7 +378,11 @@ class PatternExecutor(Patternable):
             npt = None
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat, src = find_lum_peak(min_distance, blur)
+                args = find_lum_peak(min_distance, blur)
+                if args is None:
+                    continue
+
+                pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
                 if peak is None:

@@ -42,7 +42,6 @@ from pychron.paths import paths
 from .stage_manager import StageManager
 from pychron.core.ui.thread import Thread as QThread
 
-
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import \
         VideoLaserTrayCanvas
@@ -185,7 +184,7 @@ class VideoStageManager(StageManager):
             a = pack('ff', ((t, md),))
             b = pack('HH', p)
 
-            return encode_blob(a+b)
+            return encode_blob(a + b)
 
         except (StopIteration, TypeError) as e:
             self.debug('No more grain polygons. {}'.format(e))
@@ -419,10 +418,10 @@ class VideoStageManager(StageManager):
         dim = self.stage_map.g_dimension
         mask_dim = dim * 1.05
         # mask_dim_mm = mask_dim * self.pxpermm
-
-        return ld.find_lum_peak(src, dim, mask_dim,
-                                blur=blur,
-                                min_distance=min_distance)
+        if src is not None and src.ndim >= 2:
+            return ld.find_lum_peak(src, dim, mask_dim,
+                                    blur=blur,
+                                    min_distance=min_distance)
 
     def get_brightness(self, **kw):
         ld = self.lumen_detector
@@ -553,6 +552,7 @@ class VideoStageManager(StageManager):
         color = self.canvas.crosshairs_color.getRgb()[:3]
 
         r = int(self.canvas.get_crosshairs_radius() * self.pxpermm)
+
         # offx, offy = self.canvas.get_screen_offset()
 
         def renderer(p):
@@ -571,7 +571,7 @@ class VideoStageManager(StageManager):
 
             if self.render_with_markup:
                 # draw crosshairs
-                if len(frame.shape)==2:
+                if len(frame.shape) == 2:
                     frame = gray2rgb(frame)
 
                 ch, cw, _ = frame.shape
@@ -584,9 +584,9 @@ class VideoStageManager(StageManager):
                 frame[cp] = color
 
                 frame[line(y, 0, y, x - r)] = color  # left
-                frame[line(y, x + r, y, int(cw)-1)] = color  # right
-                frame[line(0, x, y - r, x)] = color # bottom
-                frame[line(y + r, x, int(ch)-1, x)] = color  # top
+                frame[line(y, x + r, y, int(cw) - 1)] = color  # right
+                frame[line(0, x, y - r, x)] = color  # bottom
+                frame[line(y + r, x, int(ch) - 1, x)] = color  # top
 
             if frame is not None:
                 pil_save(frame, p)
@@ -835,7 +835,7 @@ class VideoStageManager(StageManager):
 
         # vid = self.video
         # if vid:
-            # swap red blue channels True or False
+        # swap red blue channels True or False
         # vid.swap_rb = camera.swap_rb
         #
         # vid.vflip = camera.vflip
