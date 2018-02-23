@@ -64,32 +64,25 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     subprocess.call(call_args)
 
 
-def pil_save(src, p):
-    # head, ext = os.path.splitext(p)
-    if src.dtype == uint16:
-        # src = src.astype('uint32')
-        src = src / 4095 * 255
-        src = src.astype('uint8')
+BIT_8 = 2**8-1
+BIT_16 = 2**16-1
 
-    # if len(src.shape) == 2:
-    #     src = gray2rgb(src)
+
+def pil_save(src, p):
+    head, ext = os.path.splitext(p)
+    if src.dtype == uint16:
+        # assume its a pylon mono12 frame
+        # for tiff need to rescale image to 16bit
+        # for jpg need to rescale to 8bit and change dtype
+        src = src/4095
+
+        if ext == '.jpg':
+            src = (src * BIT_8).astype('uint8')
+
+        else:
+            src = (src * BIT_16).astype('uint16')
 
     imsave(p, src)
-    # if ext == '.tif':
-    #     # from cv2 import imwrite
-    #     # print('asdf', src.dtype, src)
-    #     # imwrite(p, src)
-    #     # src = src.astype('uint8')
-    #     from skimage.io import imsave
-    #     imsave(p, src)
-    #
-    # else:
-    #     print('src', src.shape)
-    #     print('dtype', src.dtype)
-    #     im = PImage.fromarray(src)
-    #     print('p', p, ext)
-    #     p = add_extension(p, ext=ext)
-    #     im.save(p)
 
 
 class Video(Image):
