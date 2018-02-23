@@ -258,7 +258,7 @@ class PatternExecutor(Patternable):
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
-        except (TargetPositionError,PositionError) as e:
+        except (TargetPositionError, PositionError) as e:
             self.finish()
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))
@@ -419,16 +419,24 @@ class PatternExecutor(Patternable):
                 else:
                     continue
 
+            # if npt is None:
+            #     if not point_gen:
+            #         point_gen = pattern.point_generator()
+            #     # wait = False
+            #     npt = next(point_gen)
+            #     self.debug('generating new point={}'.format(npt))
+            #
+            # else:
+            #     point_gen = None
+            # wait = True
             if npt is None:
-                if not point_gen:
-                    point_gen = pattern.point_generator()
-                # wait = False
-                npt = next(point_gen)
-                self.debug('generating new point={}'.format(npt))
+                block = total_duration - (time.time() - st) < duration
+                linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
+                            use_calibration=False)
+                pattern.position_str = 'Return to Center'
+                px, py = cx, cy
+                continue
 
-            else:
-                point_gen = None
-                # wait = True
             try:
                 scalar = npt[2]
             except IndexError:

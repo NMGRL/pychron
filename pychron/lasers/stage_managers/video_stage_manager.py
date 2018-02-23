@@ -212,17 +212,15 @@ class VideoStageManager(StageManager):
             mask_dim_mm = mask_dim * self.pxpermm
             ld.grain_measuring = True
             while not evt.is_set():
-                # src = copy(self.video.get_cached_frame())
-                # src = self.video.get_cached_frame()
-                # src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
                 src = self._get_preprocessed_src()
                 if src is not None:
-                    targets = ld.find_targets(display_image, src, dim, mask=mask_dim)
+                    targets = ld.find_targets(display_image, src, dim, mask=mask_dim,
+                                              search={'start_offset_scalar': 1.5})
                     if targets:
                         t = time.time()
                         targets = [(t, mask_dim_mm, ti.poly_points.tolist()) for ti in targets]
                         masks.extend(targets)
-                sleep(0.25)
+                sleep(0.1)
             ld.grain_measuring = False
 
             self.grain_polygons = (m for m in masks)

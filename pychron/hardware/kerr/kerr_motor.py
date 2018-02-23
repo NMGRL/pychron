@@ -399,9 +399,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
             6,7=not used- clear to 0
         """
         if self.home_limit == 1:
-            bs = '00010001'
+            bs = '00100001'
         else:
-            bs = '00010010'
+            bs = '00100010'
 
         return int(bs, 2)
 

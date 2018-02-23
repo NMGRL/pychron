@@ -25,7 +25,7 @@ from threading import Thread, Lock, Event
 import yaml
 from PIL import Image as PImage
 from numpy import asarray, uint16
-from traits.api import Any, Bool, Float, List, Str, Int
+from traits.api import Any, Bool, Float, List, Str, Int, Enum
 
 from .cv_wrapper import get_capture_device
 from pychron.core.helpers.filetools import add_extension
@@ -63,9 +63,9 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
 
 
 def pil_save(src, p, ext='.jpg'):
-    if src.dtype == uint16:
+    if src.dtype == uint16 and ext == '.jpg':
         src = src.astype('uint32')
-        src = src*255/4095
+        src = src * 255 / 4095
         src = src.astype('uint8')
     # print('src', src.shape)
     # print('dtype', src.dtype)
@@ -94,7 +94,7 @@ class Video(Image):
     _last_get = None
 
     output_path = Str
-    # output_mode = Str('MPEG')
+    output_pic_mode = Enum('jpg', 'tif')
     ffmpeg_path = Str
     fps = Int
     identifier = 0
@@ -126,7 +126,7 @@ class Video(Image):
 
                 vid = cfg.get('Video')
                 if vid:
-                    # self.output_mode = vid.get('output_mode', 'MPEG')
+                    self.output_mode = vid.get('output_pic_mode', 'jpg')
                     self.ffmpeg_path = vid.get('ffmpeg_path', '')
                     self.fps = vid.get('fps')
 
@@ -234,7 +234,7 @@ class Video(Image):
             st = time.time()
             while not self._save_ok_event.is_set():
                 time.sleep(0.5)
-                if timeout and time.time()-st>timeout:
+                if timeout and time.time() - st > timeout:
                     return
 
             return True
@@ -265,27 +265,14 @@ class Video(Image):
                 if frame is not None:
                     pil_save(frame, p)
 
-                    # self.save(p, frame)
-        # else:
-        #     save = lambda x: renderer(x)
+        fps_1 = 1 / fps
 
-        fps_1 = 1 / float(fps)
-        # with consumable(func=save) as con:
-        #     while not stop.is_set():
-        #         st = time.time()
-        #         pn = os.path.join(image_dir, 'image_{:05d}.jpg'.format(cnt))
-        #         con.add_consumable(pn)
-        #         cnt += 1
-        #         dur = time.time() - st
-        #         time.sleep(max(0, fps_1 - dur))
-        ext = 'tif'
-        ext='jpg'
+        ext = self.output_pic_mode
         while not stop.is_set():
             st = time.time()
             pn = os.path.join(image_dir, 'image_{:05d}.{}'.format(cnt, ext))
 
             renderer(pn)
-            # con.add_consumable(pn)
             cnt += 1
             dur = time.time() - st
             time.sleep(max(0, fps_1 - dur))

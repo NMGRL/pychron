@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
-    Enum, List, File
+    Enum, List, File, Int
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants
@@ -127,7 +127,10 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
     crosshairs_line_width = Float(1.0)
-    show_hole = Bool(True)
+
+    show_hole_label = Bool(True)
+    hole_label_color = Color
+    hole_label_size = Int
 
     show_bounds_rect = Bool(True)
     transects = List

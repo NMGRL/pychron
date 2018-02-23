@@ -22,6 +22,7 @@ from traits.api import Bool, Str, Enum, File, Directory, \
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from pychron.pychron_constants import SIZES
 
 
 class LaserPreferences(BasePreferencesHelper):
@@ -69,7 +70,10 @@ class FusionsLaserPreferences(LaserPreferences):
     crosshairs_offsety = Float(0)
     crosshairs_offset_color = Color('blue')
     crosshairs_line_width = Float(1.0)
-    show_hole = Bool
+
+    show_hole_label = Bool
+    hole_label_color = Color
+    hole_label_size = Enum(*SIZES)
 
     show_patterning = Bool(True)
     video_directory = Directory
@@ -182,7 +186,11 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                            Item('show_grids', label='Display Grids'),
                            Item('show_laser_position', label='Display Current Position'),
                            Item('show_desired_position', label='Display Desired Position'),
-                           Item('show_hole', label='Display Hole Label'),
+                           Item('show_hole_label', label='Display Hole Label'),
+
+                           Item('hole_label_color'),
+                           Item('hole_label_size'),
+
                            UItem('desired_position_color', enabled_when='show_desired_position'),
                            Item('crosshairs_kind', label='Crosshairs',
                                 enabled_when='show_laser_position'),

@@ -89,12 +89,11 @@ class StageControlPane(TraitsDockPane):
                                   VGroup(Item('degasser.threshold'),
                                          show_border=True, label='Preprocess'),
                                          icon_button_editor('degasser.edit_pid_button','cog'),
-                                         VGroup(Item('degasser.pid.kp'), Item('degasser.pid.ki'),
+                                         icon_button_editor('degasser.save_button', 'save'),
+                                         VGroup(Item('degasser.pid.kp'),
+                                                Item('degasser.pid.ki'),
                                                 Item('degasser.pid.kd')),
-
-                                         ),
-                                  # VGroup(UItem('degasser.pid', style='custom'),
-                                  #        show_border=True, label='PID'),
+                                         show_border=True, label='PID'),
                                   UItem('degasser.plot_container', style='custom', editor=ComponentEditor()),
                                   label='Degas', show_border=True)
 

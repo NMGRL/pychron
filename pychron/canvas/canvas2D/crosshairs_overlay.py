@@ -138,12 +138,13 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                     self._draw_radius_ch(gc, component, (mx, my), radius,
                                          color=component.crosshairs_color)
 
-            if component.show_hole:
+            if component.show_hole_label:
                 h = component.get_current_hole()
                 if h is not None:
                     x, y = mx + ox + radius, my + oy + radius
+                    gc.set_stroke_color(component.hole_label_color)
                     gc.set_text_position(x, y)
-                    gc.set_font(self.font)
+                    gc.set_font('modern {}'.format(component.hole_label_size))
                     gc.show_text(h.id)
 
 # ============= EOF ============================================

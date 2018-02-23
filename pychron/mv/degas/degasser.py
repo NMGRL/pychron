@@ -67,6 +67,7 @@ class Degasser(Loggable):
     threshold = Range(0,100, 25)
     test = Button
     edit_pid_button = Button
+    save_button = Button
 
     _lum_thread = None
     _lum_evt = None
@@ -134,6 +135,9 @@ class Degasser(Loggable):
         info = self.pid.edit_traits(kind='livemodal')
         if info.result:
             self.dump()
+
+    def _save_button_fired(self):
+        self.dump()
 
     def _test_fired(self):
         if self._testing:

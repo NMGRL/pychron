@@ -166,7 +166,11 @@ class StageManager(BaseStageManager):
         bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
-        bind_preference(self.canvas, 'show_hole', '{}.show_hole'.format(pref_id))
+
+        bind_preference(self.canvas, 'show_hole_label', '{}.show_hole_label'.format(pref_id))
+        bind_preference(self.canvas, 'hole_label_color', '{}.hole_label_color'.format(pref_id))
+        bind_preference(self.canvas, 'hole_label_size', '{}.hole_label_size'.format(pref_id))
+
         bind_preference(self.canvas, 'scaling', '{}.scaling'.format(pref_id))
         bind_preference(self.canvas, 'show_bounds_rect',
                         '{}.show_bounds_rect'.format(pref_id))
