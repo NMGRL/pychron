@@ -25,6 +25,8 @@ from threading import Thread, Lock, Event
 import yaml
 from PIL import Image as PImage
 from numpy import asarray, uint16
+from skimage.color import gray2rgb
+from skimage.io import imsave
 from traits.api import Any, Bool, Float, List, Str, Int, Enum
 
 from .cv_wrapper import get_capture_device
@@ -62,17 +64,32 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
     subprocess.call(call_args)
 
 
-def pil_save(src, p, ext='.jpg'):
-    if src.dtype == uint16 and ext == '.jpg':
-        src = src.astype('uint32')
-        src = src * 255 / 4095
+def pil_save(src, p):
+    # head, ext = os.path.splitext(p)
+    if src.dtype == uint16:
+        # src = src.astype('uint32')
+        src = src / 4095 * 255
         src = src.astype('uint8')
-    # print('src', src.shape)
-    # print('dtype', src.dtype)
-    im = PImage.fromarray(src)
-    # print('p', p, ext)
-    p = add_extension(p, ext=ext)
-    im.save(p)
+
+    # if len(src.shape) == 2:
+    #     src = gray2rgb(src)
+
+    imsave(p, src)
+    # if ext == '.tif':
+    #     # from cv2 import imwrite
+    #     # print('asdf', src.dtype, src)
+    #     # imwrite(p, src)
+    #     # src = src.astype('uint8')
+    #     from skimage.io import imsave
+    #     imsave(p, src)
+    #
+    # else:
+    #     print('src', src.shape)
+    #     print('dtype', src.dtype)
+    #     im = PImage.fromarray(src)
+    #     print('p', p, ext)
+    #     p = add_extension(p, ext=ext)
+    #     im.save(p)
 
 
 class Video(Image):
@@ -126,7 +143,7 @@ class Video(Image):
 
                 vid = cfg.get('Video')
                 if vid:
-                    self.output_mode = vid.get('output_pic_mode', 'jpg')
+                    self.output_pic_mode = vid.get('output_pic_mode', 'jpg')
                     self.ffmpeg_path = vid.get('ffmpeg_path', '')
                     self.fps = vid.get('fps')
 
@@ -155,7 +172,7 @@ class Video(Image):
                     elif identifier.startswith('pylon'):
                         _, i = identifier.split(':')
                         self.cap = self._get_pylon_device(int(i))
-                    # identifier is a url
+                        # identifier is a url
                 else:
 
                     # ideally an identifier is passed in
@@ -244,7 +261,6 @@ class Video(Image):
             use ffmpeg to stitch a directory of jpegs into a video
 
         """
-        remove_images = False
         root = os.path.dirname(path)
         name = os.path.basename(path)
         name, _ext = os.path.splitext(name)
@@ -278,9 +294,6 @@ class Video(Image):
             time.sleep(max(0, fps_1 - dur))
 
         self._convert_to_video(image_dir, fps, name_filter='image_%05d.{}'.format(ext), output=path)
-
-        if remove_images:
-            shutil.rmtree(image_dir)
 
         if self._save_ok_event:
             self._save_ok_event.set()

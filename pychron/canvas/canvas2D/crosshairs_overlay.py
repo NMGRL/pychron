@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
+from kiva import Font
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Float, Enum, Bool
 
@@ -59,15 +60,25 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
         gc.line_to(mx, my + length)
         gc.stroke_path()
 
-    def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
+    def set_color(self, gc, color, stroke=True, fill=False):
         if color is not None:
             if not isinstance(color, (list, tuple)):
                 color = color.red(), color.green(), color.blue(), color.alpha()
 
             if not all([0 <= xx <= 1. for xx in color]):
                 color = [xx / 255. for xx in color]
+            if stroke:
+                gc.set_stroke_color(color)
 
-            gc.set_stroke_color(color)
+            if fill:
+                gc.set_fill_color(color)
+
+        return color
+
+    def _draw_radius_ch(self, gc, component, pt, radius, color=None, circle_only=False):
+        if color:
+            color = self.set_color(gc, color)
+
 
         mx, my = pt
         if self.constrain == 'x':
@@ -142,9 +153,11 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 h = component.get_current_hole()
                 if h is not None:
                     x, y = mx + ox + radius, my + oy + radius
-                    gc.set_stroke_color(component.hole_label_color)
+                    color = component.hole_label_color
+                    self.set_color(gc, color, fill=True)
+
                     gc.set_text_position(x, y)
-                    gc.set_font('modern {}'.format(component.hole_label_size))
+                    gc.set_font(self.component.hole_label_font)
                     gc.show_text(h.id)
 
 # ============= EOF ============================================

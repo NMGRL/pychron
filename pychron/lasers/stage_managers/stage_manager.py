@@ -170,6 +170,7 @@ class StageManager(BaseStageManager):
         bind_preference(self.canvas, 'show_hole_label', '{}.show_hole_label'.format(pref_id))
         bind_preference(self.canvas, 'hole_label_color', '{}.hole_label_color'.format(pref_id))
         bind_preference(self.canvas, 'hole_label_size', '{}.hole_label_size'.format(pref_id))
+        self.canvas.handle_hole_label_size(self.canvas.hole_label_size)
 
         bind_preference(self.canvas, 'scaling', '{}.scaling'.format(pref_id))
         bind_preference(self.canvas, 'show_bounds_rect',

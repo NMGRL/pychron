@@ -224,7 +224,7 @@ class Locator(Loggable):
         if start is None:
             # n=20, w=10, start=None, step=2
             w = search.get('width', 10)
-            start = int(median(src)) - search.get('start_offset_scalar') * w
+            start = int(median(src)) - search.get('start_offset_scalar', 3) * w
             # start = 2*w
             # start = 20
 

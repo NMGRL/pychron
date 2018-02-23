@@ -64,7 +64,7 @@ class StageControlPane(TraitsDockPane):
                             VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
                                           UItem('canvas.crosshairs_color'),
                                           Item('canvas.crosshairs_line_width', label='Line Wt.')),
-                                   Item('canvas.show_hole', label='Display Hole Label'),
+                                   Item('canvas.show_hole_label', label='Display Hole Label'),
                                    HGroup(
                                        Item('canvas.show_desired_position',
                                             label='Show Desired'),

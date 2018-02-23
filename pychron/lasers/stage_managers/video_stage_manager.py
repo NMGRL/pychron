@@ -559,7 +559,7 @@ class VideoStageManager(StageManager):
             # cw, ch = self.get_frame_size()
             frame = video.get_cached_frame()
             if frame is not None:
-                if len(frame.shape):
+                if not len(frame.shape):
                     return
 
             frame = copy(frame)

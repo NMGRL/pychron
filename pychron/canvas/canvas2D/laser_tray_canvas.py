@@ -21,7 +21,7 @@ from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
     Enum, List, File, Int
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
-from kiva import constants
+from kiva import constants, Font
 from kiva.agg.agg import GraphicsContextArray
 # =============standard library imports ========================
 from numpy import array
@@ -85,7 +85,7 @@ class ImageOverlay(AbstractOverlay):
             kiva_depth = "rgba32"
         else:
             raise RuntimeError(
-                    "Unknown colormap depth value: %i".format(data.value_depth))
+                "Unknown colormap depth value: %i".format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
@@ -131,6 +131,7 @@ class LaserTrayCanvas(StageCanvas):
     show_hole_label = Bool(True)
     hole_label_color = Color
     hole_label_size = Int
+    hole_label_font = Font('Consolas')
 
     show_bounds_rect = Bool(True)
     transects = List
@@ -183,7 +184,7 @@ class LaserTrayCanvas(StageCanvas):
     def point_exists(self, x, y, z, tol=1e-5):
         pt = next((pts for pts in self.get_points()
                    if abs(pts.x - x) < tol and abs(pts.y - y) < tol and abs(
-                pts.z - z) < tol), None)
+            pts.z - z) < tol), None)
 
         return True if pt else False
 
@@ -486,6 +487,10 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.remove(bo)
 
         self.request_redraw()
+
+    @on_trait_change('hole_label_size')
+    def handle_hole_label_size(self, new):
+        self.hole_label_font = Font('Consolas', size=new)
 
     # ===============================================================================
     # property get/set
