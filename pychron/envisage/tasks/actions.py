@@ -212,11 +212,11 @@ class WebAction(PAction):
     def _open_url(self, url):
 
         import webbrowser
-        import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+        import requests
 
         try:
-            six.moves.urllib.request.urlopen(url)
-        except (six.moves.urllib.error.HTTPError, six.moves.urllib.error.URLError) as e:
+            requests.get(url)
+        except BaseException as e:
             print('web action url:{} exception:{}'.format(url, e))
             return
 
