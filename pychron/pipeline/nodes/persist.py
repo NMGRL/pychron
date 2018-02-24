@@ -326,7 +326,7 @@ class CSVAnalysesExportNode(BaseNode):
             # else:
             #     ref = self.references[0]
         temps = ('lab_temperature', 'east_diffuser_temperature', 'east_return_temperature', 'outside_temperature')
-        self.available_meta_attributes = list(META_ATTRS + EXTRACTION_ATTRS + temps)
+        self.available_meta_attributes = list(('rundate', 'timestamp')+META_ATTRS + EXTRACTION_ATTRS + temps)
         self._select_all_meta_fired()
 
     def _unselect_all_meta_fired(self):

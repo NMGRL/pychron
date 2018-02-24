@@ -52,10 +52,10 @@ class GraphEditor(BaseTraitsEditor):
 
         _, tail = os.path.splitext(path)
         if tail == '.pdf':
-            from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+            from pychron.core.pdf.save_pdf_dialog import myPdfPlotGraphicsContext
 
-            gc = PdfPlotGraphicsContext(filename=path,
-                                        dest_box=dest_box)
+            gc = myPdfPlotGraphicsContext(filename=path,
+                                          dest_box=dest_box)
             gc.render_component(c, valign='center')
             gc.save()
 
@@ -113,8 +113,8 @@ class GraphEditor(BaseTraitsEditor):
         if self.figure_container:
             self.figure_container.model_changed(False)
         # if self.figure_model:
-            # self.figure_model.refresh_panels()
-            # self.
+        # self.figure_model.refresh_panels()
+        # self.
         # self.figure_model = None
         return self._component_factory()
 

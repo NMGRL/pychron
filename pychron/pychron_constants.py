@@ -25,7 +25,13 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-FONTS = ['Helvetica', 'Consolas', 'Cambria', 'Verdana', 'Impact', 'Georgia']
+FONTS = ['Andale Mono', 'Arial',
+         'Calibri', 'Cambria', 'Consolas', 'Courier New',
+         'Georgia',
+         'Impact',
+         'Helvetica',
+         'Trebuchet MS',
+         'Verdana']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = u'\u00b1'

@@ -22,6 +22,8 @@ import os
 from kiva.fonttools.font_manager import findfont, FontProperties
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
+
+from reportlab.pdfbase import _fontdata
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from traitsui.handler import Controller
@@ -31,12 +33,38 @@ from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
-# register helvetica.
 # Enable sets the font name to lowercase but Reportlab fonts are case-sensitive
+from pychron.pychron_constants import FONTS
 
-pdfmetrics.registerFont(TTFont('helvetica', findfont(FontProperties(family='Helvetica',
-                                                                    style='normal',
-                                                                    weight='normal'))))
+for name in FONTS:
+    f = findfont(FontProperties(family=name, style='normal', weight='normal'))
+    tf = TTFont(name, f)
+    pdfmetrics.registerFont(tf)
+
+
+class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
+
+    def get_full_text_extent(self, textstring):
+        fontname = self.gc._fontname
+        fontsize = self.gc._fontsize
+
+        try:
+            ascent, descent = _fontdata.ascent_descent[fontname]
+        except KeyError:
+            ascent, descent = (718, -207)
+
+        # get the AGG extent (we just care about the descent)
+        aw, ah, ad, al = self._agg_gc.get_full_text_extent(textstring)
+
+        # ignore the descent returned by reportlab if AGG returned 0.0 descent
+        descent = 0.0 if ad == 0.0 else descent * fontsize / 1000.0
+        ascent = ascent * fontsize / 1000.0
+        height = ascent + abs(descent)
+        width = self.gc.stringWidth(textstring, fontname, fontsize)
+
+        # the final return value is defined as leading. do not know
+        # how to get that number so returning zero
+        return width, height, descent, 0
 
 
 class FigurePDFOptions(BasePDFOptions):
@@ -72,9 +100,9 @@ def save_pdf(component, path=None, default_directory=None, view=False, options=N
 
         if path:
             path = add_extension(path, '.pdf')
-            gc = PdfPlotGraphicsContext(filename=path,
-                                        dest_box=options.dest_box,
-                                        pagesize=options.page_size)
+            gc = myPdfPlotGraphicsContext(filename=path,
+                                          dest_box=options.dest_box,
+                                          pagesize=options.page_size)
             # component.inset_border = False
             # component.padding = 0
             # component.border_visible = True
