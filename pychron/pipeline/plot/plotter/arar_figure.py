@@ -225,6 +225,7 @@ class BaseArArFigure(SelectionFigure):
 
             if po.y_axis_right:
                 pp.y_axis.orientation = 'right'
+                pp.y_axis.axis_line_visible = False
 
         if self.use_sparse_ticks:
             if pp.value_scale == 'log':
