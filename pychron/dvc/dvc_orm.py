@@ -121,7 +121,7 @@ class AnalysisTbl(Base, BaseMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-
+    simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
@@ -328,11 +328,12 @@ class SampleTbl(Base, NameMixin):
     id = primary_key()
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
-    positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
     igsn = stringcolumn(140)
     lat = Column(Float)
     lon = Column(Float)
+
+    positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class ProductionTbl(Base, NameMixin):
@@ -582,5 +583,28 @@ class MediaTbl(Base, BaseMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
+
+
+# ======================= Simple Idenifier ================================
+class SimpleIdentifierTbl(Base, BaseMixin):
+    identifier = Column(Integer, primary_key=True)
+    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
+
+    sample = relationship('SampleTbl', uselist=False)
+
+    @property
+    def sample_name(self):
+        if self.sample:
+            return self.sample.name
+
+    @property
+    def project_name(self):
+        if self.sample and self.sample.project:
+            return self.sample.project.name
+
+    @property
+    def principal_investigator_name(self):
+        if self.sample and self.sample.project and self.sample.project.principal_investigator:
+            return self.sample.project.principal_investigator.name
 
 # ============= EOF =============================================

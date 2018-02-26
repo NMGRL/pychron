@@ -246,6 +246,30 @@ class DVCDatabase(DatabaseAdapter):
 
             return ret
 
+    def add_simple_identifier(self, sid):
+        with self.session_ctx():
+            obj = SimpleIdentifierTbl()
+            obj.sampleID = sid
+            self._add_item(obj)
+
+    def get_simple_identifier(self, sid):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            q = q.join(SampleTbl)
+            q = q.filter(SampleTbl.id == sid)
+            return self._query_one(q)
+
+    def get_sample_simple_identifiers(self, sid):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            q = q.filter(SampleTbl.id == sid)
+            return self._query_all(q)
+
+    def get_simple_identifiers(self):
+        with self.session_ctx() as sess:
+            q = sess.query(SimpleIdentifierTbl)
+            return self._query_all(q)
+
     def get_repository_analyses(self, repo):
         with self.session_ctx():
             r = self.get_repository(repo)

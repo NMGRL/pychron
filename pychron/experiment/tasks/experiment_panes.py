@@ -34,9 +34,8 @@ from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
-    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
+    TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR, SPECIAL_IDENTIFIER
 import six
-
 
 # ===============================================================================
 # editing
@@ -166,20 +165,30 @@ class ExperimentFactoryPane(TraitsDockPane):
         v = View(VGroup(button_bar,
                         button_bar2,
                         UItem('pane.info_label', style='readonly'),
-                        edit_grp,
-                        # style_sheet=load_stylesheet('experiment_factory')
-                        ),
+                        edit_grp),
                  kind='live',
                  width=225)
         return v
 
     def _get_info_group(self):
-        grp = Group(HGroup(run_factory_item('selected_irradiation',
-                                            show_label=False,
-                                            editor=myEnumEditor(name=run_factory_name('irradiations'))),
-                           run_factory_item('selected_level',
-                                            show_label=False,
-                                            editor=myEnumEditor(name=run_factory_name('levels')))),
+        a = HGroup(run_factory_item('selected_irradiation',
+                                    show_label=False,
+                                    editor=myEnumEditor(name=run_factory_name('irradiations'))),
+                   run_factory_item('selected_level',
+                                    show_label=False,
+                                    editor=myEnumEditor(name=run_factory_name('levels'))),
+                   defined_when='not object.run_factory.simple_identifier_manager')
+
+        b = HGroup(run_factory_item('simple_identifier_manager.project_filter'),
+                   run_factory_item('simple_identifier_manager.selected_project',
+                                    show_label=False,
+                                    editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.projects'))),
+                   run_factory_item('simple_identifier_manager.selected_sample',
+                                    label='Sample',
+                                    editor=myEnumEditor(name=run_factory_name('simple_identifier_manager.samples'))),
+                   defined_when='object.run_factory.simple_identifier_manager')
+
+        grp = Group(a, b,
                     HGroup(run_factory_item('special_labnumber',
                                             show_label=False,
                                             editor=myEnumEditor(values=SPECIAL_NAMES)),
@@ -193,9 +202,11 @@ class ExperimentFactoryPane(TraitsDockPane):
                            spring),
 
                     HGroup(run_factory_item('labnumber',
-                                            tooltip='Enter a Labnumber',
+                                            tooltip='Enter a Identifier, aka L#',
                                             width=100,
-                                            enabled_when='object.run_factory.special_labnumber == "Special Labnumber"',
+                                            label='Identifier',
+                                            enabled_when='object.run_factory.special_labnumber == "{}"'.format(
+                                                SPECIAL_IDENTIFIER),
                                             editor=myEnumEditor(name=run_factory_name('labnumbers'))),
                            run_factory_item('aliquot',
                                             width=50),
