@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later, do_after

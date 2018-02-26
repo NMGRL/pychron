@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 
 from numpy import loadtxt, polyfit, polyval, poly1d
@@ -69,7 +70,7 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
                 else:
                     self._deflection = float(r)
 
-            except (ValueError, TypeError), e:
+            except (ValueError, TypeError) as e:
                 self.warning('Failed reading {} deflection. Error={}. '
                              'Using previous value {}'.format(self.name, e,
                                                               self._deflection))

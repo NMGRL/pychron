@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 
 import yaml
@@ -26,6 +27,8 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.paths import paths
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph
+from six.moves import map
+from six.moves import zip
 
 
 class YieldEditor(BaseTraitsEditor):
@@ -105,8 +108,8 @@ class YieldEditor(BaseTraitsEditor):
         vs = [getattr(ai, r) for ai in self.analyses]
         if scalar:
             vs = [vi/scalar for vi in vs]
-        ys = map(nominal_value, vs)
-        es = map(std_dev, vs)
+        ys = list(map(nominal_value, vs))
+        es = list(map(std_dev, vs))
 
         return ys, es
 

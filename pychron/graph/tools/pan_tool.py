@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.tools.api import PanTool
 # ============= standard library imports ========================
 

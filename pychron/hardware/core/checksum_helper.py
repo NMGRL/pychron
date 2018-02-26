@@ -16,6 +16,9 @@
 
 
 
+from __future__ import print_function
+from __future__ import absolute_import
+from six.moves import range
 def computeBCC(data_str):
     """
         data str= ASCII string
@@ -134,5 +137,5 @@ if __name__ == '__main__':
     # s = '000204B0001' + chr(3)
     # print chr(computeBCC(s))
 
-    print computeCRC('A1,B0')
+    print(computeCRC('A1,B0'))
 # ============= EOF ====================================

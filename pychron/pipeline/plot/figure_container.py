@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.plot_containers import GridPlotContainer
-from traits.api import HasTraits, Any
-
-
+from traits.api import HasTraits, Any, Int
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 
 
 class FigureContainer(HasTraits):
@@ -30,12 +30,14 @@ class FigureContainer(HasTraits):
 
     # nrows = Int(1)
     # ncols = Int(2)
+    rows = Int
+    cols = Int
 
-    # @caller
+    @caller
     def refresh(self, clear=False):
         comp = self.component
-        for i in xrange(self.rows):
-            for j in xrange(self.cols):
+        for i in range(self.rows):
+            for j in range(self.cols):
                 try:
                     p = self.model.next_panel()
                 except StopIteration:
@@ -47,7 +49,7 @@ class FigureContainer(HasTraits):
                         ap.clear_ylimits()
                         ap.clear_xlimits()
 
-    def _model_changed(self):
+    def model_changed(self, clear=True):
         layout = self.model.plot_options.layout
         self.model.refresh_panels()
         n = self.model.npanels
@@ -56,7 +58,10 @@ class FigureContainer(HasTraits):
         self.component = comp
         self.rows, self.cols = r, c
 
-        self.refresh(clear=True)
+        self.refresh(clear=clear)
+
+    def _model_changed(self):
+        self.model_changed(True)
 
     def _component_factory(self, ngraphs, layout):
         r, c = layout.calculate(ngraphs)

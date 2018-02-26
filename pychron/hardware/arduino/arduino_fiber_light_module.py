@@ -22,6 +22,8 @@
 
 # ============= local library imports  ==========================
 
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
 '''
 Arduino Sketch fiberlightbox
@@ -76,8 +78,8 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
 
                 if cmd == '1':
                     return int(v)
-            except Exception, err:
-                print 'parse_response {}'.format(resp), err
+            except Exception as err:
+                print('parse_response {}'.format(resp), err)
 
     def _build_command(self, cmd, value=None):
         if value is not None:

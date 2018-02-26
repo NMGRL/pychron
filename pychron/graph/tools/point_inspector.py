@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import where, vstack
 from traits.api import Callable
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 from pychron.pychron_constants import PLUSMINUS
+from six.moves import zip
 
 
 class PointInspector(InfoInspector):

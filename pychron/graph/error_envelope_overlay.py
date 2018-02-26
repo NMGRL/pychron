@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.lineplot import LinePlot
 from traits.api import Array, Tuple

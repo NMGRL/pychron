@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import  Any, Str, Int, Float, \
     Bool, Property, on_trait_change, CInt
 from traitsui.api import View, Item

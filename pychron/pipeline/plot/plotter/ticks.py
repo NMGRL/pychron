@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.ticks import AbstractTickGenerator
 from numpy import array
 # ============= standard library imports ========================
@@ -30,7 +31,7 @@ class StaticTickGenerator(AbstractTickGenerator):
         return TICKS
 
 
-KEYS = [v[0] for v in sorted(ANALYSIS_MAPPING_INTS.items(), key=lambda x: x[1])]
+KEYS = [v[0] for v in sorted(list(ANALYSIS_MAPPING_INTS.items()), key=lambda x: x[1])]
 TICK_KEYS = [ANALYSIS_MAPPING_UNDERSCORE_KEY[v] for v in KEYS]
 
 

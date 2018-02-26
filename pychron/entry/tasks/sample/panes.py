@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
@@ -156,12 +157,12 @@ class SampleEditorPane(TraitsDockPane):
 
         mgrp = HGroup(UItem('material',
                             editor=EnumEditor(name='materials')),
-                            # editor=ComboboxEditor(name='materials', use_filter=False)),
+                      # editor=ComboboxEditor(name='materials', use_filter=False)),
                       UItem('grainsize',
                             editor=ComboboxEditor(name='grainsizes', use_filter=False)),
-                      icon_button_editor('add_material_button', 'add',
-                                         enabled_when='material',
-                                         tooltip='Add a material'),
+                      # icon_button_editor('add_material_button', 'add',
+                      #                    enabled_when='material',
+                      #                    tooltip='Add a material'),
                       label='Material',
                       show_border=True)
 

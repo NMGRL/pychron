@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Bool, HasTraits, Instance
 # from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, VSplit
 # ============= standard library imports ========================
@@ -177,7 +179,7 @@ class PowerMapProcessor(HasTraits):
                                                   'MajorAxisLength', 'MinorAxisLength',
                                                   'Orientation'
                                                   ])
-        except TypeError, e:
+        except TypeError as e:
             pass
         return props, nim
 
@@ -211,22 +213,22 @@ class PowerMapProcessor(HasTraits):
         metadata = dict()
         try:
             b = tab._v_attrs['bounds']
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
             b = 1
 
         metadata['bounds'] = -float(b), float(b)
 
         try:
             bd = tab._v_attrs['beam_diameter']
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
             bd = 0
 
         try:
             po = tab._v_attrs['power']
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
             po = 0
 
         metadata['beam_diameter'] = bd

@@ -16,6 +16,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.api import HPlotContainer, ArrayPlotData, Plot
 from chaco.default_colormaps import color_map_name_dict
 from chaco.tools.api import ZoomTool

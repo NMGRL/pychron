@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from __future__ import absolute_import
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
     InterpretedAgeNode, CalendarUnknownNode
 from pychron.pipeline.nodes.detector_yield import YieldNode

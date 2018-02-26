@@ -19,11 +19,12 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import socket
-from SocketServer import ThreadingUDPServer
+from six.moves.socketserver import ThreadingUDPServer
 
 # ============= local library imports  ==========================
-from messaging_server import MessagingServer
+from .messaging_server import MessagingServer
 from pychron.messaging.handlers.udp_handler import UDPHandler
 
 class UDPServer(ThreadingUDPServer, MessagingServer):
@@ -44,7 +45,7 @@ class UDPServer(ThreadingUDPServer, MessagingServer):
         try:
             args += (UDPHandler,)
             super(UDPServer, self).__init__(*args, **kw)
-        except socket.error, e:
+        except socket.error as e:
             self.warning(e)
             self.connected = False
 

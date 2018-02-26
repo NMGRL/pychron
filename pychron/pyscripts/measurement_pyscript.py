@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import ast
 import os
 import time
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 
 import yaml
 
@@ -84,7 +86,7 @@ class MeasurementPyScript(ValvePyScript):
 
     def get_command_register(self):
         cs = super(MeasurementPyScript, self).get_command_register()
-        return cs + command_register.commands.items()
+        return cs + list(command_register.commands.items())
 
     def truncate(self, style=None):
         if style == 'quick':
@@ -617,8 +619,8 @@ class MeasurementPyScript(ValvePyScript):
         try:
             ncounts = int(ncounts)
             self.ncounts = ncounts
-        except Exception, e:
-            print 'set_ncounts', e
+        except Exception as e:
+            print('set_ncounts', e)
 
     @verbose_skip
     @command_register
@@ -935,7 +937,7 @@ class MeasurementPyScript(ValvePyScript):
                     mx.create(yd)
                     self._ctx['mx'] = mx
 
-            except yaml.YAMLError, e:
+            except yaml.YAMLError as e:
                 self.debug('failed loading docstring context. {}'.format(e))
         except AttributeError:
             pass

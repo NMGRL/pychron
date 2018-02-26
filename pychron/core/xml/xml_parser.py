@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # from xml.etree.ElementTree import ElementTree, Element, ParseError
+from __future__ import absolute_import
 import os
 
 from lxml import etree
@@ -42,6 +43,7 @@ from lxml.etree import ElementTree, Element, ParseError, XML
 #
 #     return ntxt
 import re
+import six
 
 # xml tokenizer pattern
 xml = re.compile("<([/?!]?\w+)|&(#?\w+);|([^<>&'\"=\s]+)|(\s+)|(.)")
@@ -65,7 +67,7 @@ def scan(txt, target):
             yield gettoken()
     except EOFError:
         pass
-    except SyntaxError, v:
+    except SyntaxError as v:
         raise
 
 
@@ -134,7 +136,7 @@ class XMLParser(object):
             self.path = path
             try:
                 self._parse_file(path)
-            except ParseError, e:
+            except ParseError as e:
                 from pyface.message_dialog import warning
 
                 warning(None, str(e))
@@ -143,9 +145,9 @@ class XMLParser(object):
 
     def _parse_file(self, p):
         txt = None
-        if isinstance(p, (str, unicode)):
+        if isinstance(p, (str, six.text_type)):
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
+                with open(p, 'rb') as rfile:
                     txt = rfile.read()
 
         if txt is None:

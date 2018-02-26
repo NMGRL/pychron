@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.lineplot import LinePlot
 from numpy import linspace
 from traits.api import List, Any, Event, Callable, Dict
@@ -29,6 +31,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
+from six.moves import zip
 
 
 class NoRegressionCTX(object):
@@ -222,8 +225,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
         # print 'set fit', fi, plotid, key, plot.plots.keys()
-        print 'a', key, plot.plots
-        print 'b', key in plot.plots
+        print('a', key, plot.plots)
+        print('b', key in plot.plots)
 
         if key in plot.plots:
             scatter = plot.plots[key][0]
@@ -257,8 +260,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
                 # print self, 'fit for {}={}, {}'.format(key, fi, scatter)
                 scatter.fit = fi
-                scatter.index.metadata['selections'] = []
-                scatter.index.metadata['filtered'] = None
+                # scatter.index.metadata['selections'] = []
+                # scatter.index.metadata['filtered'] = None
 
                 # if redraw:
                 #     self.redraw()
@@ -275,7 +278,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     _outside_regressor = False
 
     def set_regressor(self, reg, plotid=0):
-        print 'setting regressor to {} {}'.format(plotid, id(reg))
+        print('setting regressor to {} {}'.format(plotid, id(reg)))
         self._outside_regressor = True
         plot = self.plots[plotid]
         for pp in plot.plots.values():
@@ -319,9 +322,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         regs = []
         for i, plot in enumerate(self.plots):
             ps = plot.plots
-            ks = ps.keys()
+            ks = list(ps.keys())
             try:
-                scatters, idxes = zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')])
+                scatters, idxes = list(zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')]))
 
                 fls = [ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
@@ -329,7 +332,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         r = self._plot_regression(plot, si, fl)
                         regs.append((plot, r))
 
-            except ValueError, e:
+            except ValueError as e:
                 # add a float instead of regressor to regs
                 try:
                     si = ps[ks[0]][0]
@@ -356,7 +359,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         fit, err = convert_fit(scatter.fit)
 
         if fit is None:
-            print 'fit is none, {}'.format(scatter.fit)
+            print('fit is none, {}'.format(scatter.fit))
             return
 
         r = None
@@ -400,8 +403,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 try:
                     line.index.set_data(fx)
                     line.value.set_data(fy)
-                except BaseException, e:
-                    print 'Regerssion Exception, {}'.format(e)
+                except BaseException as e:
+                    print('Regerssion Exception, {}'.format(e))
                     return
 
                 if hasattr(line, 'error_envelope'):

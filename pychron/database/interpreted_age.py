@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from traits.trait_types import Date as TDate, Long, Str, Float, Int, Bool
 from traits.traits import Property
 from traitsui.group import HGroup

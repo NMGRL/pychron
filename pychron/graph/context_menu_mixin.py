@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
 

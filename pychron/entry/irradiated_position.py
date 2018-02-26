@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float, Bool, Int, Property, CStr
 from traitsui.tabular_adapter import TabularAdapter
 

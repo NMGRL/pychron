@@ -16,6 +16,8 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Float
 from traitsui.api import View, VGroup
 
@@ -73,7 +75,7 @@ class TerraNovaIonPumpController(CoreDevice):
         return qry
 
     def _parse_response(self, r, kind='float'):
-        print r
+        print(r)
 
         args = r.split(':')
         if args[0] == 'OK':

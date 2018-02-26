@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
+from __future__ import absolute_import
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, BLOB, Float, DateTime, func
@@ -24,7 +25,7 @@ from sqlalchemy.orm import relationship
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-from util import Base
+from .util import Base
 
 
 class irrad_HolderTable(Base, NameMixin):

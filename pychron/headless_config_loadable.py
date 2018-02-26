@@ -18,6 +18,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.base_config_loadable import BaseConfigLoadable
 from pychron.headless_loggable import HeadlessLoggable
 

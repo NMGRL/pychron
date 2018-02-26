@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from traitsui.api import View, Item, TabularEditor, HGroup, Controller
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

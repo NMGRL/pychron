@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
@@ -36,7 +37,7 @@ class GitHubService(GitHostService):
         ret, err = True, ''
         try:
             self._get(paths.github_api_url)
-        except BaseException, e:
+        except BaseException as e:
             ret = False
             err = e
 
@@ -66,7 +67,7 @@ class GitHubService(GitHostService):
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
                     return resp.status_code == 201
-            except SSLError, e:
+            except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
                 self._has_access = False
         else:
@@ -81,7 +82,7 @@ class GitHubService(GitHostService):
             try:
                 cmd = '{}/orgs/{}/repos'.format(paths.github_api_url, organization)
                 return self._get(cmd)
-            except SSLError, e:
+            except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
                 self._has_access = False
                 return []

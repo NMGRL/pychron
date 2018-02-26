@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 
 from traits.api import List, Float, Bool
@@ -22,6 +23,7 @@ from traits.api import List, Float, Bool
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware import get_float
 from pychron.spectrometer.base_magnet import BaseMagnet
+from six.moves import range
 
 
 class ThermoMagnet(BaseMagnet):
@@ -99,7 +101,7 @@ class ThermoMagnet(BaseMagnet):
 
             if unprotect or unblank:
                 self.debug('Wait for magnet to stop moving')
-                for i in xrange(50):
+                for i in range(50):
                     if not to_bool(self.ask('GetMagnetMoving', verbose=verbose)):
                         break
                     time.sleep(0.25)

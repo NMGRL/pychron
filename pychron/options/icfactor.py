@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Float, Property, List
 
 from pychron.options.fit import FitAuxPlot
 from pychron.options.views.icfactor_views import VIEWS
 from pychron.options.series import SeriesOptions
 from pychron.pychron_constants import FIT_TYPES_INTERPOLATE, NULL_STR
+from six.moves import range
 
 
 class ICFactorAuxPlot(FitAuxPlot):
@@ -36,7 +38,7 @@ class ICFactorAuxPlot(FitAuxPlot):
     def _analysis_types_default(self):
         from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING
 
-        return ANALYSIS_MAPPING.values()
+        return list(ANALYSIS_MAPPING.values())
 
     def _get_name(self):
         if self.denominator and self.denominator != NULL_STR:
@@ -79,7 +81,7 @@ class ICFactorOptions(SeriesOptions):
 
         n = 5 - len(pp)
         if n:
-            pp.extend((self.aux_plot_klass() for i in xrange(n)))
+            pp.extend((self.aux_plot_klass() for i in range(n)))
 
         self.aux_plots = pp
         self.selected = []

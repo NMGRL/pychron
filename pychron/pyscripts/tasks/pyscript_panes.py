@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -241,8 +242,8 @@ class ScriptBrowserPane(TraitsDockPane):
         root = self.root
         if root:
             ps = [p for p in os.listdir(root)]
-            self.items = filter(lambda x: not (x.startswith('.') or os.path.isdir(os.path.join(root, x))), ps)
-            self.directories = filter(lambda x: os.path.isdir(os.path.join(root, x)), ps)
+            self.items = [x for x in ps if not (x.startswith('.') or os.path.isdir(os.path.join(root, x)))]
+            self.directories = [x for x in ps if os.path.isdir(os.path.join(root, x))]
             self.selected_directory = self.root
         else:
             self.directories = []

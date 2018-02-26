@@ -21,6 +21,7 @@
 # from pychron.entry.dvc_import.view import DVCImporterView
 
 
+from __future__ import absolute_import
 def do_import_irradiation(dvc, sources, default_source=None):
     from pychron.data_mapper.view import DVCIrradiationImporterView, DVCAnalysisImporterView
     from pychron.data_mapper.model import DVCIrradiationImporterModel, DVCAnalysisImporterModel

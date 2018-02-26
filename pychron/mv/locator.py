@@ -14,6 +14,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Float
 # ============= standard library imports ========================
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
@@ -39,6 +41,8 @@ from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
 from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
+from six.moves import range
+from six.moves import zip
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -198,7 +202,7 @@ class Locator(Loggable):
             src = grayspace(frame)
 
         if src is None:
-            print 'Locator: src is None'
+            print('Locator: src is None')
             return
 
         if mask:
@@ -213,7 +217,7 @@ class Locator(Loggable):
         seg = RegionSegmenter(use_adaptive_threshold=False)
         fa = self._get_filter_target_area(dim)
 
-        for i in xrange(n):
+        for i in range(n):
             seg.threshold_low = max((0, start + i * step - w))
             seg.threshold_high = max((1, min((255, start + i * step + w))))
 
@@ -463,7 +467,7 @@ class Locator(Loggable):
             i = len(f) if argmax(f) == len(f) - 1 else argmax(f)
             return v[i]
 
-        devxs, devys = zip(*[r.dev_centroid for r in targets])
+        devxs, devys = list(zip(*[r.dev_centroid for r in targets]))
 
         if len(targets) > 2 and self.use_histogram:
             dx = hist(devxs)

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from math import isnan, isinf
 
 from chaco.array_data_source import ArrayDataSource
@@ -31,6 +33,9 @@ from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.pipeline.plot.plotter.series import BaseSeries
 from pychron.pychron_constants import PLUSMINUS
+import six
+from six.moves import map
+from six.moves import zip
 
 
 def calc_limits(ys, ye, n):
@@ -51,8 +56,8 @@ class ReferenceLegend(Legend):
         if len(self.plots) == 0:
             return [0, 0]
 
-        plot_names, visible_plots = map(list, zip(*sorted(self.plots.items())))
-        label_names, names = zip(*self.labels)
+        plot_names, visible_plots = list(map(list, list(zip(*sorted(self.plots.items())))))
+        label_names, names = list(zip(*self.labels))
         if len(label_names) == 0:
             if len(self.plots) > 0:
                 label_names = plot_names
@@ -259,7 +264,7 @@ class ReferencesSeries(BaseSeries):
             self.xmi, self.xma = (mi - ma) / 3600., 0
             self.xpad = '0.1'
 
-            print self.graph.plots[0].plots
+            print(self.graph.plots[0].plots)
             legend = ReferenceLegend(plots=self.graph.plots[0].plots,
                                      labels=[('plot1', 'Reference'),
                                              ('data0', 'Reference'),
@@ -282,7 +287,7 @@ class ReferencesSeries(BaseSeries):
                 self._set_values(plotobj, reg, key)
 
     def _get_isotope(self, po, analysis):
-        iso = next((iso for iso in analysis.isotopes.itervalues() if iso.name == po.name), None)
+        iso = next((iso for iso in analysis.itervalues() if iso.name == po.name), None)
         return iso
 
     def _calc_limits(self, ys, ye):
@@ -339,16 +344,16 @@ class ReferencesSeries(BaseSeries):
     def reference_data(self, po):
         try:
             rs = self._get_reference_data(po)
-            return array(map(nominal_value, rs)), array(map(std_dev, rs))
-        except ValueError, e:
-            print e
+            return array(list(map(nominal_value, rs))), array(list(map(std_dev, rs)))
+        except ValueError as e:
+            print(e)
 
     def current_data(self, po):
         try:
             cs = self._get_current_data(po)
-            return array(map(nominal_value, cs)), array(map(std_dev, cs))
-        except ValueError, e:
-            print e
+            return array(list(map(nominal_value, cs))), array(list(map(std_dev, cs)))
+        except ValueError as e:
+            print(e)
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)

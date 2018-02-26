@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from cStringIO import StringIO
 from datetime import datetime
@@ -336,7 +338,7 @@ class IGSNService(Loggable):
                     igsns = igsns[0]
         else:
             error = tree.find('error')
-            print error.text
+            print(error.text)
             self.warning_dialog('Failed Getting a new IGSN.\nError={}'.format(error.text))
 
         return igsns
@@ -356,6 +358,6 @@ if __name__ == '__main__':
                        password=os.environ.get('GeoPassPassword'))
     name = 'foo'
     # material = 'Bar'
-    print igsn.get_new_igsn(name)
+    print(igsn.get_new_igsn(name))
     # print igsn._assemble_content(sample)
 # ============= EOF =============================================

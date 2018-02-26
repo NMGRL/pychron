@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from PIL import Image
@@ -181,7 +183,7 @@ class RegisteredImage(HasTraits):
         if new:
             sx, sy = new
             dx, dy = self.affine.transform(sx, sy)
-            print 'goto {}, {}'.format(new, (dx, dy))
+            print('goto {}, {}'.format(new, (dx, dy)))
             self.stage_manager.linear_move(dx, dy)
 
 
@@ -198,7 +200,7 @@ class RegisteredImageViewer(Controller):
 if __name__ == '__main__':
     class SM:
         def linear_move(self, dx, dy):
-            print 'moving to {}, {}'.format(dx, dy)
+            print('moving to {}, {}'.format(dx, dy))
 
 
     r = RegisteredImage(stage_manager=SM())

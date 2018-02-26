@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import time
 
@@ -175,13 +177,13 @@ class Series(BaseSeries):
                                                               match.group('dd'),
                                                               match.group('di'))
             if match.group('rem'):
-                ytitle = '{}{}'.format(match.group('rem'))
+                ytitle = '{}{}'.format(ytitle, match.group('rem'))
         else:
             match = ISOTOPE_RE.match(ytitle)
             if match:
                 ytitle = '<sup>{}</sup>{}'.format(match.group('nd'), match.group('ni'))
                 if match.group('rem'):
-                    ytitle = '{}{}'.format(match.group('rem'))
+                    ytitle = '{}{}'.format(ytitle, match.group('rem'))
 
         super(Series, self)._setup_plot(pid, pp, po)
         if '<sup>' in ytitle or '<sub>' in ytitle:
@@ -281,11 +283,11 @@ class Series(BaseSeries):
                 mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
                 graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
-        except (KeyError, ZeroDivisionError, AttributeError), e:
+        except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
 
             traceback.print_exc()
-            print 'Series', e
+            print('Series', e)
 
     def update_graph_metadata(self, obj, name, old, new):
         sorted_ans = self.sorted_analyses
@@ -304,6 +306,7 @@ class Series(BaseSeries):
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
+                                       font=self.options.error_info_font,
                                        component=plot)
                     plot.overlays.append(pl)
 

@@ -16,9 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from numpy import asarray, convolve, exp, linspace, where
 from pylab import plot, show, axvline, legend, \
     xlabel, ylabel, polyval, axhline, ylim, xlim, array
+from six.moves import range
 # ============= local library imports  ==========================
 def calc_optimal_eqtime(xs, ys):
 
@@ -32,9 +35,9 @@ def calc_optimal_eqtime(xs, ys):
     try:
         idx = min(rm)
         xx, yy = xs[idx], ys[idx]
-    except Exception, e:
+    except Exception as e:
         xx, yy = None, None
-        print 'calc optimal eqtime', e
+        print('calc optimal eqtime', e)
 
     return rise_rates, xx, yy
 
@@ -135,7 +138,7 @@ def equil():
     evo = polyval((m, b), ts)
     plot(ts, evo, ls='-.', color='red', label='Static Evo. B')
 
-    print polyval((m, b), 200)
+    print(polyval((m, b), 200))
     ee = where(evo > mag)[0]
 #     to_FG = ts[max(ee)]
 #     print 'FG', rollover_FG, b, to_FG
@@ -162,7 +165,7 @@ if __name__ == '__main__':
     ti, ts1, bs1 = ratio_change(1000)
     ti, ts2, bs2 = ratio_change(10, ti)
     rr = bs1 / bs2
-    print rr
+    print(rr)
     rr = (rr - 100) / 100.*100
 
     plot(ts1 - ti, rr)

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 
@@ -25,6 +26,7 @@ from numpy import array
 from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from six.moves import range
 
 
 class Result(HasTraits):
@@ -84,7 +86,7 @@ class CorrectionFactorsEditor(BaseTraitsEditor):
                 self.results.append(Result(array(rs), tag))
                 plot = self.graph.new_plot()
                 plot.x_axis.title = tag
-                self.graph.new_series([nominal_value(ri) for ri in rs], range(len(rs)), type='scatter')
+                self.graph.new_series([nominal_value(ri) for ri in rs], list(range(len(rs))), type='scatter')
                 plot = self.graph.new_plot()
             except ZeroDivisionError:
                 pass

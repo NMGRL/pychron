@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.stacked_graph import StackedGraph
 

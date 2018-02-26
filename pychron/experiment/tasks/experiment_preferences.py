@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -158,16 +159,13 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        system_health_grp = VGroup(Item('use_system_health'),
-                                   label='System Health')
-
-        notification_grp = VGroup(
-            Item('use_autoplot'),
-            Item('use_notifications'),
-            Item('notifications_port',
-                 enabled_when='use_notifications',
-                 label='Port'),
-            label='Notifications')
+        # notification_grp = VGroup(
+        #     Item('use_autoplot'),
+        #     Item('use_notifications'),
+        #     Item('notifications_port',
+        #          enabled_when='use_notifications',
+        #          label='Port'),
+        #     label='Notifications')
 
         editor_grp = VGroup(
             Item('automated_runs_editable',
@@ -199,26 +197,29 @@ class ExperimentPreferencesPane(PreferencesPane):
                                     show_border=True,
                                     label='State Colors'),
                              label='Colors')
-        analysis_grouping_grp = Group(Item('use_analysis_grouping',
-                                           label='Auto group analyses',
-                                           tooltip=''),
-                                      Item('grouping_suffix',
-                                           label='Suffix',
-                                           tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
-                                                   'where Suffix=autogen'),
-                                      Item('grouping_threshold',
-                                           label='Grouping Threshold (hrs)',
-                                           tooltip='Associate Reference analyses with the project of an analysis that '
-                                                   'is within X hours of the current run',
-                                           enabled_when='use_analysis_grouping'),
-                                      label='Analysis Grouping')
 
-        memory_grp = Group(Item('use_memory_check', label='Check Memory',
-                                tooltip='Ensure enough memory is available during experiment execution'),
-                           Item('memory_threshold', label='Threshold',
-                                enabled_when='use_memory_check',
-                                tooltip='Do not continue experiment if available memory less than "Threshold"'),
-                           label='Memory')
+        # system_health_grp = VGroup(Item('use_system_health'),
+        #                            label='System Health')
+        # analysis_grouping_grp = Group(Item('use_analysis_grouping',
+        #                                    label='Auto group analyses',
+        #                                    tooltip=''),
+        #                               Item('grouping_suffix',
+        #                                    label='Suffix',
+        #                                    tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
+        #                                            'where Suffix=autogen'),
+        #                               Item('grouping_threshold',
+        #                                    label='Grouping Threshold (hrs)',
+        #                                    tooltip='Associate Reference analyses with the project of an analysis that '
+        #                                            'is within X hours of the current run',
+        #                                    enabled_when='use_analysis_grouping'),
+        #                               label='Analysis Grouping')
+
+        # memory_grp = Group(Item('use_memory_check', label='Check Memory',
+        #                         tooltip='Ensure enough memory is available during experiment execution'),
+        #                    Item('memory_threshold', label='Threshold',
+        #                         enabled_when='use_memory_check',
+        #                         tooltip='Do not continue experiment if available memory less than "Threshold"'),
+        #                    label='Memory')
 
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',
@@ -265,9 +266,8 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group,
                     automated_grp,
-                    notification_grp,
-                    editor_grp,
-                    analysis_grouping_grp, memory_grp, system_health_grp)
+                    # notification_grp,
+                    editor_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

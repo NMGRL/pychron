@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 from datetime import datetime, timedelta
 
@@ -27,6 +29,7 @@ from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
+from six.moves import zip
 
 NCHARS = 60
 REG = re.compile(r'.' * NCHARS)
@@ -168,7 +171,6 @@ class SampleBrowserModel(BrowserModel):
             attrs = self.dvc.get_search_attributes()
             if attrs:
                 attrs = list(zip(*attrs)[0])
-
             m = AdvancedFilterView(attributes=attrs)
             # m.demo()
             self._afilter = m
@@ -193,7 +195,7 @@ class SampleBrowserModel(BrowserModel):
             a = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p.name) for i, p in enumerate(self.oprojects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-            print 'asfasfasfasf', project, pp
+            print('asfasfasfasf', project, pp)
 
             project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
             a.project = project
@@ -271,7 +273,7 @@ class SampleBrowserModel(BrowserModel):
             v.dump()
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
-            ls = self.db.get_labnumbers(mass_spectrometers=[v.mass_spectrometer],
+            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometer,
                                         analysis_types=v.analysis_types,
                                         high_post=now,
                                         low_post=lp,
@@ -300,7 +302,6 @@ class SampleBrowserModel(BrowserModel):
                                       available_mass_spectrometers=ms,
                                       extract_devices=es[:],
                                       available_extract_devices=es,
-                                      irradiations=irs[:],
                                       monitor_samples=list(set(samples)),
                                       available_irradiations=irs)
 
@@ -311,6 +312,9 @@ class SampleBrowserModel(BrowserModel):
                 self.warning_dialog('No Mass Spectrometer selected. Cannot find references. Select one or more Mass '
                                     'Spectrometers from the "Configure Find References" window')
                 return
+            if m.replace:
+                self.analysis_table.clear()
+
             atypes = m.formatted_analysis_types
             if atypes:
                 refs = self.db.find_references(ans, atypes,
@@ -344,7 +348,7 @@ class SampleBrowserModel(BrowserModel):
         hours = self.search_criteria.reference_hours_padding
         for pp in self.selected_projects:
             bins = db.get_project_date_bins(identifier, pp.name, hours)
-            print bins
+            print(bins)
             if bins:
                 for li, hi in bins:
                     yield li, hi
@@ -378,7 +382,7 @@ class SampleBrowserModel(BrowserModel):
         return TimeViewModel(db=self.db)
 
     def _analysis_table_default(self):
-        at = AnalysisTable()
+        at = AnalysisTable(dvc=self.dvc)
         at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
         bind_preference(at, 'max_history', 'pychron.browser.max_history')

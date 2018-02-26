@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import hstack, array, Inf
 from traits.api import DelegatesTo, List, Bool, Any, Float
 # ============= standard library imports ========================

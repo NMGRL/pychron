@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports========================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, Enum, Float, Event, Property, Int, Button, Bool, Str, Any, on_trait_change, String
 # =============standard library imports ========================
 # =============local library imports  ==========================
@@ -26,6 +28,7 @@ from pychron.hardware.meter_calibration import MeterCalibration
 from pychron.core.helpers.filetools import parse_file
 from pychron.hardware.watlow import sensor_map, tc_map, itc_map, isensor_map, heat_algorithm_map, truefalse_map, \
     yesno_map, autotune_aggressive_map, baudmap, ibaudmap
+from six.moves import zip
 
 
 class BaseWatlowEZZone(HasTraits):
@@ -404,8 +407,8 @@ class BaseWatlowEZZone(HasTraits):
                 self.process_value = t
                 #                self.process_value_flag = True
                 return t
-            except (ValueError, TypeError), e:
-                print 'watlow gettemperature', e
+            except (ValueError, TypeError) as e:
+                print('watlow gettemperature', e)
 
     def disable(self):
         self.info('disable')
@@ -448,7 +451,7 @@ class BaseWatlowEZZone(HasTraits):
 
     def read_nonvolative_save(self):
         r = self.read(2494, response_type='int')
-        print 'nonvolative save', r
+        print('nonvolative save', r)
 
     def set_assembly_definition_address(self, working_address, target_address, **kw):
         ada = working_address - 160
@@ -474,7 +477,7 @@ class BaseWatlowEZZone(HasTraits):
         if r:
             try:
                 return ibaudmap[str(r)]
-            except KeyError, e:
+            except KeyError as e:
                 self.debug('read_baudrate keyerror {}'.format(e))
 
     def set_baudrate(self, v, port=1):
@@ -487,7 +490,7 @@ class BaseWatlowEZZone(HasTraits):
             value = baudmap[v]
             self.write(register, value)
 
-        except KeyError, e:
+        except KeyError as e:
             self.debug('set_baudrate keyerror {}'.format(e))
 
     def set_closed_loop_setpoint(self, setpoint, set_pid=True, **kw):
@@ -525,7 +528,7 @@ class BaseWatlowEZZone(HasTraits):
         sp = self.read_closed_loop_setpoint()
         try:
             e = abs(sp - setpoint) > 0.01
-        except Exception, _ee:
+        except Exception as _ee:
             e = True
 
         time.sleep(0.025)

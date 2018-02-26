@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import on_trait_change
 # ============= standard library imports ========================
 from numpy import Inf
 
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.ideogram import Ideogram
+from six.moves import zip
 
 
 # ============= local library imports  ==========================
@@ -31,10 +33,10 @@ class IdeogramPanel(FigurePanel):
 
     # _index_attr = 'uage'
 
-    @on_trait_change('figures:xlimits_updated')
-    def _handle_limits(self, obj, name, new):
-        for f in self.figures:
-            f.replot()
+    # @on_trait_change('figures:xlimits_updated')
+    # def _handle_limits(self, obj, name, new):
+    #     for f in self.figures:
+    #         f.replot()
 
     def _handle_rescale(self, obj, name, new):
         if new == 'y':
@@ -71,8 +73,8 @@ class IdeogramPanel(FigurePanel):
             if po.use_static_limits:
                 mi, ma = po.xlow, po.xhigh
             else:
-                xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                                   for i in self.figures])
+                xmas, xmis = list(zip(*[(i.max_x(attr), i.min_x(attr))
+                                   for i in self.figures]))
                 mi, ma = min(xmis), max(xmas)
 
                 cs = [i.mean_x(attr) for i in self.figures]

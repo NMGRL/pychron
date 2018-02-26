@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
@@ -92,7 +94,7 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
     def __init__(self, *args, **kw):
         super(UpdatePreferencesHelper, self).__init__(*args, **kw)
-        print 'asdfsfsfsadf', self.remote
+        print('asdfsfsfsadf', self.remote)
         if self.remote:
             self._connection_hook()
 
@@ -116,7 +118,7 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
             tags = [t for t in get_tags(new) if t.startswith('rc')]
             return remotes, tags
 
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             return [], []

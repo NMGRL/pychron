@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 import datetime
 import os
 
@@ -29,6 +30,8 @@ from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, LINE_STR
+from six.moves import map
+from six.moves import zip
 
 
 def extract_meta(line_gen):
@@ -363,7 +366,7 @@ class BaseExperimentQueue(RunBlock):
             seq.extend(('reprate', 'mask', 'attenuator', 'image'))
 
         seq = [(v, v) if not isinstance(v, tuple) else v for v in seq]
-        header, attrs = zip(*seq)
+        header, attrs = list(zip(*seq))
         return header, attrs
 
     def _meta_dumper(self, wfile):

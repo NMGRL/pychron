@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pygments.lexers.agile import PythonLexer
 from pygments.token import Name
 

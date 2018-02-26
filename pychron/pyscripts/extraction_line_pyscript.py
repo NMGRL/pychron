@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import inspect
 import re
 import time
@@ -191,7 +193,7 @@ class ExtractionPyScript(ValvePyScript):
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
-        return command_register.commands.items() + cm
+        return list(command_register.commands.items()) + cm
 
     def set_default_context(self):
         """
@@ -220,7 +222,7 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def set_cryo(self, value):
         result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
-        print 'asfdasdf', result
+        print('asfdasdf', result)
         return result
 
     @verbose_skip
@@ -518,7 +520,7 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def get_value(self, name):
         try:
-            print name, self.get_context()[name]
+            print(name, self.get_context()[name])
             return self.get_context()[name]
         except KeyError:
             self.warning('no name {} in context'.format(name))
@@ -610,7 +612,7 @@ class ExtractionPyScript(ValvePyScript):
                                            protocol=IPipetteManager)
 
             return rets[0]
-        except InvalidPipetteError, e:
+        except InvalidPipetteError as e:
             self.cancel(protocol=IPipetteManager)
             e = str(e)
             self.warning(e)
@@ -637,7 +639,7 @@ class ExtractionPyScript(ValvePyScript):
                                            protocol=IPipetteManager)
 
             return rets[0]
-        except (TimeoutError, InvalidPipetteError), e:
+        except (TimeoutError, InvalidPipetteError) as e:
             self.cancel(protocol=IPipetteManager)
             e = str(e)
             self.warning(e)

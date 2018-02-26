@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Array
 from chaco.abstract_overlay import AbstractOverlay
 from uncertainties import std_dev, nominal_value
@@ -20,6 +22,7 @@ from numpy import array
 
 from pychron.core.stats import calculate_weighted_mean
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
+from six.moves import zip
 
 
 class RadialOverlay(AbstractOverlay):
@@ -31,7 +34,7 @@ class RadialOverlay(AbstractOverlay):
         self._xs, self._ys = xs, ys
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        print self.component.datasources
+        print(self.component.datasources)
 
 
 class Radial(BaseArArFigure):
@@ -44,7 +47,7 @@ class Radial(BaseArArFigure):
         g = self.graph
         for i, p in enumerate(g.plots):
             l, h = self.ymis[i], self.ymas[i]
-            print i, p, l, h
+            print(i, p, l, h)
             g.set_y_limits(l, h, pad='0.1', plotid=i)
 
     def _plot_radial(self, po, plot, pid):

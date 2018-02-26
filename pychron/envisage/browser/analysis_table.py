@@ -14,12 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
 import json
 # ============= enthought library imports =======================
+from itertools import groupby
+from operator import attrgetter
+
 from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
     CStr, Int, Button
 
@@ -30,6 +34,7 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
+import six
 
 
 def sort_items(ans):
@@ -70,6 +75,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     suppress_load_analysis_set = False
 
     default_attr = 'identifier'
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
@@ -109,7 +115,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 else:
                     name = aset[0][1]
 
-            h = md5(''.join(sorted((ai[0] for ai in aset)))).hexdigest()
+            h = md5(''.join(sorted((ai[0] for ai in aset))).encode('utf-8')).hexdigest()
             if h not in self._analysis_sets:
                 name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
                 self._analysis_sets[h] = (name, aset)
@@ -120,7 +126,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             return name
 
     def get_analysis_set(self, name):
-        return next((a[1] for a in self._analysis_sets.itervalues() if a[0] == name))
+        return next((a[1] for a in self._analysis_sets.values() if a[0] == name))
 
     def set_tags(self, tag, items):
         for i in items:
@@ -141,6 +147,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.calculate_dts(self.analyses)
         self.scroll_to_row = len(self.analyses) - 1
 
+    def clear(self):
+        self.analyses = []
+        self.oanalyses = []
+        self.selected = []
+
     def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
         if selected_identifiers:
             aa = self.analyses
@@ -155,6 +166,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         new_items = [ai for ai in new_items if ai not in items]
         items.extend(new_items)
 
+        self.selected = []
         self.oanalyses = self.analyses = items
 
         self.calculate_dts(self.analyses)
@@ -179,7 +191,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
-        m = ReviewStatusDetailsModel(self.selected[0])
+        record = self.selected[0]
+        self.dvc.sync_repo(record.repository_identifier)
+        m = ReviewStatusDetailsModel(record)
+
         rsd = ReviewStatusDetailsView(model=m)
         rsd.edit_traits()
 
@@ -191,8 +206,12 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def load_review_status(self):
         records = self.get_analysis_records()
         if records:
-            for ri in records:
-                get_review_status(ri)
+            for repoid, rs in groupby(sorted(records, key=attrgetter('repository_identifier')),
+                                      key=attrgetter('repository_identifier')):
+
+                self.dvc.sync_repo(repoid)
+                for ri in rs:
+                    get_review_status(ri)
             self.refresh_needed = True
 
     def get_analysis_records(self):

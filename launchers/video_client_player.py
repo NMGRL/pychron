@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import wx
 from threading import Thread, Lock
 from numpy import fromstring
 import time
-from Queue import Queue
+from six.moves.queue import Queue
 from scipy.misc.pilutil import toimage
 # Demonstrates how to use wxPython and OpenCV to create a video player
 #

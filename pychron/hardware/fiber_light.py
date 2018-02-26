@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from threading import Timer
 
 from traits.api import Range, Event, Bool, on_trait_change, Property, Float, Int

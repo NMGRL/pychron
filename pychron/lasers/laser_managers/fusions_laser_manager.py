@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import DelegatesTo, Property, Instance, Str, List, Dict, \
     on_trait_change, Event, Bool, Any
 from traitsui.api import VGroup, Item, HGroup, spring
 
-from laser_manager import LaserManager
+from .laser_manager import LaserManager
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.thread import Thread
 from pychron.hardware.fiber_light import FiberLight
@@ -173,7 +175,7 @@ class FusionsLaserManager(LaserManager):
 
     @on_trait_change('laser_controller:refresh_canvas')
     def refresh_canvas(self):
-        print 'frefasdfeasdfasd'
+        print('frefasdfeasdfasd')
         if self.stage_manager:
             self.stage_manager.canvas.request_redraw()
 

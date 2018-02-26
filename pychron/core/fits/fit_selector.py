@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.has_traits import HasTraits, on_trait_change
 from traits.trait_types import List, Event, Bool, Button, Str, Any
 from traits.traits import Property
@@ -29,6 +30,7 @@ from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.core.fits.fit import Fit
 from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
+from six.moves import zip
 
 
 class ColumnMixin(object):

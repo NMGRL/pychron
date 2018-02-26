@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 import yaml
 from traits.api import Enum
@@ -21,6 +22,7 @@ from traitsui.api import View, UItem, Item, InstanceEditor, ListEditor
 import time
 from pychron.managers.manager import Manager
 from pychron.paths import paths
+from six.moves import map
 
 
 class CryoManager(Manager):
@@ -111,7 +113,7 @@ class CryoManager(Manager):
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
-                return map(float, yd[v].split(','))
+                return list(map(float, yd[v].split(',')))
         else:
             self.warning('File {} does not exist. Cryostat setpoint can not be set')
 

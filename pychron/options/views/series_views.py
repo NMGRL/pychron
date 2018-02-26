@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, EnumEditor, Item, Group
+from __future__ import absolute_import
+from traitsui.api import View, UItem, VGroup, EnumEditor, Item, Group, HGroup
 
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
 
@@ -31,9 +32,13 @@ class SeriesSubOptions(SubOptions):
 
 class SeriesAppearance(AppearanceSubOptions):
     def traits_view(self):
+        ee = HGroup(Item('error_info_fontname', label='Error Info'),
+                    Item('error_info_fontsize', show_label=False))
+
         fgrp = VGroup(UItem('fontname'),
                       self._get_xfont_group(),
                       self._get_yfont_group(),
+                      ee,
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),

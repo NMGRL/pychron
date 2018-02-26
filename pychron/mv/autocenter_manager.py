@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Button, Bool, Any, Instance, Event
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil

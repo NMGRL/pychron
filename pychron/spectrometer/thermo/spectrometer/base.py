@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import random
 import time
@@ -30,6 +31,8 @@ from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
 from pychron.spectrometer import get_spectrometer_config_path, \
     set_spectrometer_config_name
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+from six.moves import map
+from six.moves import zip
 
 
 def normalize_integration_time(it):
@@ -84,12 +87,12 @@ class ThermoSpectrometer(BaseSpectrometer):
     def make_deflection_dict(self):
         names = self.detector_names
         values = self.read_deflection_word(names)
-        return dict(zip(names, values))
+        return dict(list(zip(names, values)))
 
     def make_configuration_dict(self):
-        keys = self.get_command_map().values()
+        keys = list(self.get_command_map().values())
         values = self.get_parameter_word(keys)
-        return dict(zip(keys, values))
+        return dict(list(zip(keys, values)))
 
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
@@ -332,7 +335,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
                     signals = data
 
-            signals = map(float, signals)
+            signals = list(map(float, signals))
 
         # if not keys and globalv.communication_simulation:
         #     keys, signals = self._get_simulation_data()

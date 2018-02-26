@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 import pickle
 from datetime import datetime, timedelta

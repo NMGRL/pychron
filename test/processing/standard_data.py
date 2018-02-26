@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 
 
@@ -14,7 +15,7 @@ def pearson(expected=False):
                                mswd=1.4832))
     if expected:
         if not expected in solutions:
-            v = ','.join(solutions.keys())
+            v = ','.join(list(solutions.keys()))
             raise AttributeError('invalid expected value {}. use "{}"'.format(expected, v))
             return
         return solutions[expected]

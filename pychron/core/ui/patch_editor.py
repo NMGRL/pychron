@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
 PatchEditor = toolkit_factory('patch_editor', 'PatchEditor')

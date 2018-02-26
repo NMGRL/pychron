@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import base64
 import hashlib
 import os
@@ -27,11 +28,11 @@ from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
 from pychron.dvc import dvc_dump, analysis_path
-from pychron.dvc.dvc_analysis import META_ATTRS, EXTRACTION_ATTRS, PATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
 # from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
 
 
@@ -258,7 +259,7 @@ class DVCPersister(BasePersister):
 
                     # push commit
                     dvc.meta_push()
-                except GitCommandError, e:
+                except GitCommandError as e:
                     self.warning(e)
                     if self.confirmation_dialog('NON FATAL\n\n'
                                                 'DVC/Git upload of analysis not successful.'
@@ -589,7 +590,7 @@ class DVCPersister(BasePersister):
                 obj = self.per_spec.run_spec
             try:
                 return getattr(obj, ki)
-            except AttributeError, e:
+            except AttributeError as e:
                 self.warning('Attribute error: attr={}, error={}'.format(ki, e))
 
         d = {k: get(k) for k in keys}

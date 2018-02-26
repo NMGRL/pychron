@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.globals import globalv
 
 # ============= standard library imports ========================

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_extension import TaskExtension

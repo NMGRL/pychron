@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Any
 from traitsui.api import View, Item
@@ -75,7 +77,7 @@ class ExtractionLineCanvas(HasTraits):
         if c:
             getattr(c, func)(*args, **kw)
         else:
-            print 'canvas2D not available'
+            print('canvas2D not available')
 
     def _canvas_factory(self):
         from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D

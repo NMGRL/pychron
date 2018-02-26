@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from mayavi.core.ui.mayavi_scene import MayaviScene
 from mayavi.tools.mlab_scene_model import MlabSceneModel
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 from tvtk.pyface.api import Scene
 from tvtk.pyface.scene_editor import SceneEditor
+from six.moves import range
 
 
 # ============= standard library imports ========================

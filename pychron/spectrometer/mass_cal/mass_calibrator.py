@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import HasTraits, Float, Int, List, Str, Any, Event, Property, on_trait_change, Range
 from traitsui.api import View, Item, HGroup, spring, EnumEditor, ButtonEditor, Group, TextEditor
 
@@ -32,6 +33,8 @@ from pychron.paths import paths
 from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
 from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
+import six
+from six.moves import zip
 
 DELTA_TOOLTIP = """The minimum difference between a peak and
 the following points, before a peak may be considered a peak"""
@@ -179,7 +182,7 @@ class MassCalibratorSweep(MagnetSweep):
             self.info('new peak center. {} nominal={} dx={}'.format(cp.isotope, cp.dac, cx))
             cp.dac += cx
             self._redraw()
-        except PeakCenterError, e:
+        except PeakCenterError as e:
             self.warning(e)
             # else:
             #     self.warning(center)
@@ -216,7 +219,7 @@ class MassCalibratorSweep(MagnetSweep):
 
         _R = -Inf
         # get the max range and normalize all series
-        for p in plot.plots.itervalues():
+        for p in six.itervalues(plot.plots):
             p = p[0]
             high, low = max(p.odata), min(p.odata)
             tR = high - low
@@ -224,7 +227,7 @@ class MassCalibratorSweep(MagnetSweep):
                 _R = tR
                 miR = low
 
-        for p in plot.plots.itervalues():
+        for p in six.itervalues(plot.plots):
             p = p[0]
             oys = p.odata
             high, low = max(p.odata), min(p.odata)
@@ -279,7 +282,7 @@ class MassCalibratorSweep(MagnetSweep):
                                       delta=self.delta)
 
                 pks = []
-                isos = self.spectrometer.molecular_weights.keys()
+                isos = list(self.spectrometer.molecular_weights.keys())
                 isos = sort_isotopes(isos)
 
                 for dac, v in mxp:

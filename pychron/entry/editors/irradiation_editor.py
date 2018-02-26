@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.constant import YES, NO
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, Group, VGroup
@@ -109,7 +111,7 @@ class IrradiationEditor(Loggable):
                                                return_retval=True,
                                                cancel=True)
                 if ret == YES:
-                    print 'asdfadfasd'
+                    print('asdfadfasd')
                     # irrad.name = self.name
                 elif ret == NO:
                     self._add_irradiation()

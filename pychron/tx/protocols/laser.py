@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.core.helpers.strtools import to_bool
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.tx.errors import EnableErrorCode
@@ -465,7 +466,7 @@ class LaserProtocol(ServiceProtocol):
     def _set_axis(self, axis, value):
         try:
             d = float(value)
-        except (ValueError, TypeError), err:
+        except (ValueError, TypeError) as err:
             return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
 
         err = self._manager.stage_manager.single_axis_move(axis, d)

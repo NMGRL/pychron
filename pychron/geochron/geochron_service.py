@@ -16,6 +16,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from lxml import etree
@@ -32,7 +34,7 @@ class GeochronService(Loggable):
         p = os.path.join(paths.data_dir, 'geochron_arar_schema.xsd')
         self._schema = etree.XMLSchema(file=p)
 
-        print self._schema
+        print(self._schema)
 
     def assemble_xml(self, analysis_group):
         root = etree.Element('ArArModel', nsmap=NSMAP)
@@ -186,7 +188,7 @@ class GeochronService(Loggable):
         val = None
         try:
             val = str(getattr(obj, iattr))
-        except AttributeError, e:
+        except AttributeError as e:
             if required:
                 self.warning_dialog('Required attribute "{}" not supplied. Contact developer'.format(attr))
         self.debug('get value {:<38s} {:<38s}={}'.format(attr, iattr, val))

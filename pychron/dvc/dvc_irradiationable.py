@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Property, cached_property, Instance, Event, Any
 
 from pychron.loggable import Loggable

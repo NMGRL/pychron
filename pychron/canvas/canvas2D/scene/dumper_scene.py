@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.dumper_primitives import Gate, Funnel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle

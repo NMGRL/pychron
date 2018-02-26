@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import DataLabel
 from chaco.tools.scatter_inspector import ScatterInspector
@@ -30,6 +31,8 @@ import numpy as np
 from pychron.viewable import Viewable
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 from pychron.graph.stacked_graph import StackedGraph
+from six.moves import range
+from six.moves import zip
 
 
 class LegendOverlay(AbstractOverlay):
@@ -139,14 +142,14 @@ class SelectionView(Viewable):
 
                         ]
                 if dd:
-                    ni, xi = zip(*dd)
+                    ni, xi = list(zip(*dd))
                 else:
                     xi = []
                     ni = []
                 xi = np.array(xi)
                 n = len(xi)
                 xs.append(xi)
-                ys.append(np.array(range(n)) + 1 + 3 * i)
+                ys.append(np.array(list(range(n))) + 1 + 3 * i)
                 rids.append(ni)
 
         mm = [min(xj) for xj in xs if len(xj)]

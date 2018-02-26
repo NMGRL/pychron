@@ -23,7 +23,8 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from base_mks_gauge import BaseMKSGauge
+from __future__ import absolute_import
+from .base_mks_gauge import BaseMKSGauge
 class MicroPirani1S(BaseMKSGauge):
     '''
         G{classtree}

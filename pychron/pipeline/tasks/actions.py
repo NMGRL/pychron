@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -40,15 +41,15 @@ class RunAction(TaskAction):
     name = 'Run'
     method = 'run'
     image = icon('start')
-    visible_name = 'run_enabled'
+    visible_name = 'engine.run_enabled'
     accelerator = 'Ctrl+R'
 
 
 class ResumeAction(TaskAction):
     name = 'Resume'
     method = 'resume'
-    image = icon('resume')
-    visible_name = 'resume_enabled'
+    image = icon('edit-redo-3')
+    visible_name = 'engine.resume_enabled'
 
 
 class RunFromAction(TaskAction):

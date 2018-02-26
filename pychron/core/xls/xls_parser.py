@@ -18,9 +18,13 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import xlrd
 
 from pychron.core.csv.csv_parser import BaseColumnParser
+from six.moves import map
+import six
+from six.moves import range
 
 
 
@@ -47,10 +51,10 @@ class XLSParser(BaseColumnParser):
         wb = self.workbook
         if isinstance(sheet, int):
             sheet = wb.sheet_by_index(sheet)
-        elif isinstance(sheet, (str, unicode)):
+        elif isinstance(sheet, (str, six.text_type)):
             sheet = wb.sheet_by_name(sheet)
         self.sheet = sheet
-        self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+        self._header = list(map(str.strip, list(map(str, sheet.row_values(header_idx)))))
     # def has_key(self, key):
     #     """
     #         if key is an int return true if key valid index
@@ -82,7 +86,7 @@ class XLSParser(BaseColumnParser):
 
     def iterblock(self, col, attr):
         ci = self._get_index(col)
-        for i in xrange(self.nrows):
+        for i in range(self.nrows):
             if self.get_value(i, ci) == attr:
                 yield self.sheet.row(i)
 

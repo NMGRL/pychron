@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float
 # ============= standard library imports ========================
 from reportlab.lib import colors

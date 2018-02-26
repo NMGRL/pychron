@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Bool, Float, Property, List, Color, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

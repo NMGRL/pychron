@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
@@ -39,6 +40,8 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
+import six
+from six.moves import map
 
 
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
@@ -186,7 +189,8 @@ class BaseArArFigure(SelectionFigure):
         pass
 
     def replot(self, *args, **kw):
-        self.plot(self.options.get_plotable_aux_plots())
+        if self.options:
+            self.plot(self.options.get_plotable_aux_plots())
 
     def max_x(self, *args):
         return -Inf
@@ -221,6 +225,7 @@ class BaseArArFigure(SelectionFigure):
 
             if po.y_axis_right:
                 pp.y_axis.orientation = 'right'
+                pp.y_axis.axis_line_visible = False
 
         if self.use_sparse_ticks:
             if pp.value_scale == 'log':
@@ -247,7 +252,7 @@ class BaseArArFigure(SelectionFigure):
         pp.y_grid.visible = options.use_ygrid
 
     def _get_omitted_by_tag(self, ans, tags=None):
-        return [i for i, ai in enumerate(ans) if ai.is_omitted_by_tag(tags)]
+        return [i for i, ai in enumerate(ans) if ai.is_omitted(tags)]
 
     def _set_selected(self, ans, sel):
         super(BaseArArFigure, self)._set_selected(ans, sel)
@@ -273,9 +278,9 @@ class BaseArArFigure(SelectionFigure):
     def _set_y_limits(self, a, b, min_=None, max_=None,
                       pid=0, pad=None):
 
-        mi, ma = 0, 0
-        if self.group_id > 0:
-            mi, ma = self.graph.get_y_limits(plotid=pid)
+        # mi, ma = 0, 0
+        # if self.group_id > 0:
+        mi, ma = self.graph.get_y_limits(plotid=pid)
 
         # print mi, ma, a, b
         # print pid, self.group_id, mi, ma, a, b
@@ -289,14 +294,19 @@ class BaseArArFigure(SelectionFigure):
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid, pad_style='upper')
 
     def update_options_limits(self, pid):
-        if hasattr(self.options, 'aux_plots'):
-            n = len(self.options.aux_plots)
-            ap = self.options.aux_plots[n - pid - 1]
-            if not self.suppress_ylimits_update:
-                ap.ylimits = self.graph.get_y_limits(pid)
+        if not self.suppress_xlimits_update:
+            if hasattr(self.options, 'aux_plots'):
+                # n = len(self.options.aux_plots)
+                limits = self.graph.get_x_limits(pid)
+                for ap in self.options.aux_plots:
+                    ap.xlimits = limits
+                    # ap = self.options.aux_plots[n - pid - 1]
+                    # if not self.suppress_ylimits_update:
+                    #     ap.ylimits = self.graph.get_y_limits(pid)
 
-            if not self.suppress_xlimits_update:
-                ap.xlimits = self.graph.get_x_limits(pid)
+                    # if not self.suppress_xlimits_update:
+                    #     ap.xlimits = self.graph.get_x_limits(pid)
+                    #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
 
     def get_valid_xbounds(self):
         pass
@@ -305,20 +315,19 @@ class BaseArArFigure(SelectionFigure):
     # aux plots
     # ===========================================================================
     def _do_aux_plot_filtering(self, scatter, po, vs, es):
-        omits, invalids, outliers = self._get_aux_plot_filtered(po, vs, es)
-        for idx, item in enumerate(self.sorted_analyses):
-            if idx in omits:
-                s = 'omit'
-            elif idx in invalids:
-                s = 'invalid'
-            elif idx in outliers:
-                s = 'outlier'
-            else:
-                s = 'ok'
-            item.set_temp_status(s)
-
-        # if outliers:
-        #     self._add_outliers_overlay(scatter, outliers)
+        omits, invalids, outliers = [], [], []
+        if po.filter_str:
+            omits, invalids, outliers = self._get_aux_plot_filtered(po, vs, es)
+            for idx, item in enumerate(self.sorted_analyses):
+                if idx in omits:
+                    s = 'omit'
+                elif idx in invalids:
+                    s = 'invalid'
+                elif idx in outliers:
+                    s = 'outlier'
+                else:
+                    s = 'ok'
+                item.set_temp_status(s)
 
         return omits, invalids, outliers
 
@@ -637,11 +646,11 @@ class BaseArArFigure(SelectionFigure):
     def _handle_label_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in p.plots.itervalues()
+            if next((pp for pp in p.plots.values()
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = map(float, new)
+                    new = list(map(float, new))
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)
@@ -649,11 +658,11 @@ class BaseArArFigure(SelectionFigure):
     def _handle_overlay_move(self, obj, name, old, new):
         axps = [a for a in self.options.aux_plots if a.plot_enabled][::-1]
         for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in p.plots.itervalues()
+            if next((pp for pp in p.plots.values()
                      if obj.component == pp[0]), None):
                 axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new = map(float, new)
+                    new = list(map(float, new))
                 else:
                     new = float(new)
                 axp.set_overlay_position(obj.id, new)

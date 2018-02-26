@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import json
 import os
 import time
@@ -41,6 +43,7 @@ from pychron.github import Organization
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS, QTEGRA_SOURCE_KEYS
+from six.moves import filter
 
 ORG = 'NMGRLData'
 
@@ -157,7 +160,7 @@ class IsoDBTransfer(Loggable):
         self.debug('bulk import irradiation {}'.format(irradname))
         oruns = []
         ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
-        print ts
+        print(ts)
         repository_identifier = 'Irradiation-{}'.format(irradname)
 
         # add project
@@ -201,11 +204,11 @@ class IsoDBTransfer(Loggable):
                     # runs = filter(lambda x: x.labnumber.irradiation_position is None or
                     #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
 
-                    runs = filter(filterfunc, ans)
+                    runs = list(filter(filterfunc, ans))
                     if dry:
                         for ai in runs:
                             oruns.append(ai.record_id)
-                            print ms, ai.record_id
+                            print(ms, ai.record_id)
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
@@ -252,7 +255,7 @@ class IsoDBTransfer(Loggable):
                 low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
                 high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-                print '========{}, {}, {}'.format(ms, low, high)
+                print('========{}, {}, {}'.format(ms, low, high))
                 with src.session_ctx():
                     runs = src.get_analyses_date_range(low, high,
                                                        projects=('REFERENCES', source_name),
@@ -261,8 +264,8 @@ class IsoDBTransfer(Loggable):
                     if dry:
                         for ai in runs:
                             oruns.append(ai.record_id)
-                            print ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
-                                ai.analysis_timestamp
+                            print(ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
+                                ai.analysis_timestamp)
                     else:
                         self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
                         self.debug('N runs: {}'.format(len(runs)))
@@ -286,7 +289,7 @@ class IsoDBTransfer(Loggable):
                     low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
                     high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
 
-                    print '========{}, {}, {}'.format(ms, low, high)
+                    print('========{}, {}, {}'.format(ms, low, high))
                     with src.session_ctx():
                         runs = src.get_analyses_date_range(low, high,
                                                            projects=('REFERENCES',),
@@ -302,7 +305,7 @@ class IsoDBTransfer(Loggable):
                 oruns = pdict[o]
                 for ai in pruns:
                     if ai in oruns:
-                        print p, o, ai
+                        print(p, o, ai)
 
     def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
         src = self.processor.db
@@ -340,7 +343,7 @@ class IsoDBTransfer(Loggable):
                             if self._transfer_analysis(a, repository_identifier, monitor_mapping=monitor_mapping):
                                 j += 1
                                 self.debug('{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
-                        except BaseException, e:
+                        except BaseException as e:
                             import traceback
                             traceback.print_exc()
                             self.warning('failed transfering {}. {}'.format(a, e))

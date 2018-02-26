@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.ui import set_qt
+from six.moves import map
 
 set_qt()
 
@@ -144,7 +147,7 @@ class GraphicModel(HasTraits):
 
         bb = outline.find('bounding_box')
         bs = bb.find('width'), bb.find('height')
-        w, h = map(lambda b: float(b.text), bs)
+        w, h = [float(b.text) for b in bs]
 
         use_label = parser.find('use_label')
         if use_label is not None:
@@ -204,7 +207,7 @@ class GraphicModel(HasTraits):
             else:
                 fc = fc.text
 
-            x, y = map(float, (x, y))
+            x, y = list(map(float, (x, y)))
             xs = x + r * sin(thetas)
             ys = y + r * cos(thetas)
 
@@ -245,7 +248,7 @@ class GraphicModel(HasTraits):
     def _reload(self):
         if self.initialized:
             self.container = self._container_factory()
-            print os.path.isfile(self.srcpath), self.srcpath
+            print(os.path.isfile(self.srcpath), self.srcpath)
             if os.path.isfile(self.srcpath):
                 p = make_xml(self.srcpath,
                              default_bounds=(2.54, 2.54),
@@ -286,7 +289,7 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
     outline = Element('outline')
     bb = Element('bounding_box')
     width, height = Element('width'), Element('height')
-    width.text, height.text = map(str, default_bounds)
+    width.text, height.text = list(map(str, default_bounds))
     bb.append(width)
     bb.append(height)
 
@@ -312,14 +315,14 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
     if rotate:
         nwriter = csv.writer(open(path + 'rotated_{}.txt'.format(rotate), 'w'))
 
-    header = reader.next()
+    header = next(reader)
     if nwriter:
         nwriter.writerow(header)
 
     theta = math.radians(rotate)
     for k, row in enumerate(reader):
         # print k, row
-        row = map(str.strip, row)
+        row = list(map(str.strip, row))
         if row:
             e = Element('point')
             x, y, l = Element('x'), Element('y'), Element('label')

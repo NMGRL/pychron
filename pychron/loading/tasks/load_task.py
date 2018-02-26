@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Any, List
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout

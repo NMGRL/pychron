@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, HasTraits, List, Str, Bool, Event, Int
 from traitsui.api import View, VGroup, Item, EnumEditor
 from traitsui.editors import TabularEditor
@@ -31,6 +32,7 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
+from six.moves import zip
 
 
 class AnalysisAdapter(TabularAdapter):
@@ -187,7 +189,7 @@ class AnalysisModifier(Loggable):
                     self.debug('setting {} to {}'.format(ai.record_id, ni.record_id))
                     yield ai, ni
 
-        ans, nans = zip(*func(ans, nans))
+        ans, nans = list(zip(*func(ans, nans)))
 
         if self.use_main:
             self._modify_main(ans, nans)

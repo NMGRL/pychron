@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Instance
 
 # ============= standard library imports ========================
@@ -24,6 +25,7 @@ from pychron.options.options_manager import SpectrumOptionsManager
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
+import six
 
 
 # from zobs.options.plotter_options_manager import SpectrumOptionsManager

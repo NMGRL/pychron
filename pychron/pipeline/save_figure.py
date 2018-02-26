@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, Button, Instance
 from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, Tabbed
 
@@ -25,6 +27,7 @@ from pychron.core.pdf.save_pdf_dialog import FigurePDFOptions
 from pychron.core.save_model import SaveModel, SaveController
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
+from six.moves import range
 
 
 class SaveFigureModel(SaveModel):
@@ -94,7 +97,7 @@ if __name__ == '__main__':
         def _test_fired(self):
             sfv.edit_traits()
             # sfv.configure_traits()
-            print 'fff', sfm.prepare_path()
+            print('fff', sfm.prepare_path())
 
 
     Demo().configure_traits()

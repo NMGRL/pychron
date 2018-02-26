@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import Any, on_trait_change, Date, Time, Instance
+from __future__ import absolute_import
+from traits.api import Any, on_trait_change, Date, Time, Instance, Bool
 
 from pychron.core.ui.table_configurer import RecallTableConfigurer
 from pychron.envisage.browser.recall_editor import RecallEditor
@@ -25,6 +26,7 @@ from pychron.envisage.view_util import open_view
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.edit_analysis_view import AnalysisEditView
 from pychron.pychron_constants import DVC_PROTOCOL
+from six.moves import range
 
 '''
 add toolbar action to open another editor tab
@@ -68,6 +70,7 @@ class BaseBrowserTask(BaseEditorTask):
     end_time = Time
 
     browser_pane = Any
+    diff_enabled = Bool
 
     _activated = False
     _top_level_filter = None
@@ -83,12 +86,9 @@ class BaseBrowserTask(BaseEditorTask):
 
             self._destroy_browser_model()
 
-            # self.dvc.db.close_session()
-
     def activated(self):
-        self.dvc = self.application.get_service(DVC_PROTOCOL)
-
-    #     self.dvc.create_session()
+        if self.application.get_plugin('pychron.mass_spec.plugin'):
+            self.diff_enabled = True
 
     def edit_analysis(self):
         self.debug('Edit analysis data')
@@ -190,7 +190,7 @@ class BaseBrowserTask(BaseEditorTask):
         def extract_blob(blob):
             blob = base64.b64decode(blob)
             if blob != 'No Response':
-                x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in xrange(0, len(blob), 8)]).T
+                x, y = array([struct.unpack('<ff', blob[i:i + 8]) for i in range(0, len(blob), 8)]).T
                 x[0] = 0
             else:
                 x, y = [], []
@@ -328,9 +328,9 @@ class BaseBrowserTask(BaseEditorTask):
 
                 # av.application = self.application
                 # mv = av.isotopes_view
-                av.isotope_adapter = self.isotope_adapter
-                av.intermediate_adapter = self.intermediate_adapter
-                av.show_intermediate = self.recall_configurer.show_intermediate
+                av.isotope_view.isotope_adapter = self.isotope_adapter
+                av.isotope_view.intermediate_adapter = self.intermediate_adapter
+                av.isotope_view.show_intermediate = self.recall_configurer.show_intermediate
 
                 self.recall_configurer.set_fonts(av)
                 av.main_view.set_options(rec, self.recall_configurer.recall_options)
@@ -378,7 +378,7 @@ class BaseBrowserTask(BaseEditorTask):
             # if self.editor_area.control:
             try:
                 self._recall_item(new.item)
-            except BaseException, e:
+            except BaseException as e:
                 import traceback
                 traceback.print_exc()
                 self.critical('analysis_table:dclicked error {}'.format(str(e)))

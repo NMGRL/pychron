@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 from git import Repo, GitCommandError
 
@@ -103,7 +104,7 @@ class ExperimentRepoTask(BaseTask):
                 r.git.fetch()
                 line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
                 item.dirty = bool(line)
-            except GitCommandError, e:
+            except GitCommandError as e:
                 self.warning('error examining {}. {}'.format(name, e))
 
         if self.selected_local_repository_name:

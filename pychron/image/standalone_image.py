@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
 # ============= standard library imports ========================
-import Image
 from numpy import asarray, array, ndarray
 # ============= local library imports  ==========================
+from pychron.image.image import Image
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 

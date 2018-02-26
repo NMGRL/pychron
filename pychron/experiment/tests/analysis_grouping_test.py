@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+from six.moves import range
 
 __author__ = 'ross'
 
@@ -21,7 +24,7 @@ class MockDB(object):
 
     def add_analysis_group_set(self, ag, analysis):
         ag.analyses.append(analysis)
-        print 'adding {}, {}'.format(analysis.uuid, len(ag.analyses))
+        print('adding {}, {}'.format(analysis.uuid, len(ag.analyses)))
 
     def get_last_analysis(self, **kw):
         if self._cnt==0:
@@ -90,9 +93,9 @@ class MyTestCase(unittest.TestCase):
     def test_save_group(self):
         per = self.persister
         db = self.db
-        per.run_spec = self.runspecs.next()
+        per.run_spec = next(self.runspecs)
 
-        analysis = self.mock_analyses.next()
+        analysis = next(self.mock_analyses)
         per._save_analysis_group(db, analysis)
         self.assertEqual(True, True)
 
@@ -100,13 +103,13 @@ class MyTestCase(unittest.TestCase):
         per = self.persister
         db = self.db
         for i in range(3):
-            per.run_spec = self.runspecs.next()
+            per.run_spec = next(self.runspecs)
 
-            analysis = self.mock_analyses.next()
+            analysis = next(self.mock_analyses)
             per._save_analysis_group(db, analysis)
 
         for a in db.groups['A-autogen'].analyses:
-            print a.uuid
+            print(a.uuid)
 
         uuids = [a.uuid for a in db.groups['A-autogen'].analyses]
         self.assertEqual(uuids, ['u1','b1','b2'])
@@ -115,9 +118,9 @@ class MyTestCase(unittest.TestCase):
         per = self.persister
         db = self.db
         for i in range(5):
-            per.run_spec = self.runspecs.next()
+            per.run_spec = next(self.runspecs)
 
-            analysis = self.mock_analyses.next()
+            analysis = next(self.mock_analyses)
             per._save_analysis_group(db, analysis)
 
         # for a in db.groups['B-autogen'].analyses:

@@ -18,6 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 from collections import deque
 
 
@@ -28,7 +30,7 @@ def bfs(G, s, value, attr='name'):
         if not u:
             continue
 
-        print u.name, value, getattr(u, attr) == value
+        print(u.name, value, getattr(u, attr) == value)
         if getattr(u, attr) == value:
             return u
 

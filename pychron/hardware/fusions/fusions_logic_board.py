@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pychron.hardware.kerr.kerr_manager import KerrManager
+from six.moves import map
+from six.moves import range
 
 '''
 Fusions Control board

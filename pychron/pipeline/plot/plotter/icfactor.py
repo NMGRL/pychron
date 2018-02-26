@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import array
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
+from six.moves import zip
 
 
 class ICFactor(ReferencesSeries):

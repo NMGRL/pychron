@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor, QWidget, QLabel
 from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
@@ -52,7 +53,7 @@ class ButtonLED(LED):
 
 def change_intensity(color, fac):
     rgb = [color.red(), color.green(), color.blue()]
-    rgb = map(lambda c: min(int(round(c * fac, 0)), 255), rgb)
+    rgb = [min(int(round(c * fac, 0)), 255) for c in rgb]
     return QColor(*rgb)
 
 

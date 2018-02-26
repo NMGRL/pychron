@@ -19,6 +19,7 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
 def confirmation_dialog(msg, return_retval=False,
                         cancel=False, title='',
                         timeout=None, size=None,

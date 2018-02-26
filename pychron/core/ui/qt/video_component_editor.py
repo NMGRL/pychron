@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Any, Int, Str, Event
 # ============= standard library imports ========================
 from pyface.qt.QtCore import QTimer, SIGNAL
 # ============= local library imports  ==========================
-from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
+from .stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 import time
 
 class _VideoComponentEditor(_LaserComponentEditor):
@@ -64,7 +66,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
             return 1000 / float(self.value.fps)
 
     def stop(self):
-        print 'VideoComponentEditor stop'
+        print('VideoComponentEditor stop')
         self._alive = False
         # try:
         #     self.playTimer.stop()
@@ -84,7 +86,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
             QTimer.singleShot(max(1, self._get_interval()-et), lambda: self.update(pt))
 
     def _stop_timer_fired(self):
-        print 'VideoComponentEditor stopping playTimer'
+        print('VideoComponentEditor stopping playTimer')
         self._alive = False
         # self.playTimer.stop()
 

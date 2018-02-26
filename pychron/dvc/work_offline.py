@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 
@@ -285,7 +286,7 @@ class WorkOffline(Loggable):
         progress.change_message(msg)
 
         with dest.session_ctx(use_parent_session=False) as dest_sess:
-            keys = table.__table__.columns.keys()
+            keys = list(table.__table__.columns.keys())
             mappings = ({k: getattr(row, k) for k in keys} for row in records)
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
@@ -299,7 +300,7 @@ class WorkOffline(Loggable):
                 query = query.filter(filter_criterion)
 
             with dest.session_ctx(use_parent_session=False) as dest_sess:
-                keys = table.__table__.columns.keys()
+                keys = list(table.__table__.columns.keys())
                 mappings = [{k: getattr(row, k) for k in keys} for row in query]
                 dest_sess.bulk_insert_mappings(table, mappings)
                 dest_sess.commit()

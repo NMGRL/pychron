@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.spectrometer.tasks.thermo.base import ThermoSpectrometerPlugin
 from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 

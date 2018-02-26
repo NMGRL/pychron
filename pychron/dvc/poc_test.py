@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import random
 import subprocess
@@ -22,6 +24,7 @@ import subprocess
 import matplotlib.pyplot as plt
 
 from pychron.core.ui import set_qt
+from six.moves import range
 
 set_qt()
 
@@ -46,14 +49,14 @@ def get_dir_size(path):
 
 def report_irrad_stats(wfile, nirrads, nlevels, npositions):
     if nirrads == 1 and nlevels == 1:
-        print '{:<10s}{:<10s}{:<10s}{:<10s}{:<10s}'.format('irrad', 'level', 'pos', 'sizedb', 'sizegit')
+        print('{:<10s}{:<10s}{:<10s}{:<10s}{:<10s}'.format('irrad', 'level', 'pos', 'sizedb', 'sizegit'))
         wfile.write('{}\n'.format(','.join(('irrad', 'level', 'pos', 'sizedb', 'sizegit'))))
 
     size = os.path.getsize(DP)
     size2 = get_dir_size(os.path.join(dvc.meta_repo.path, '.git'))
 
-    print '{:<10}{:<10d}{:<10d}{:<10s}{:<10s}'.format(nirrads, nlevels, npositions, '{}K'.format(int(size / 1000.)),
-                                                      size2)
+    print('{:<10}{:<10d}{:<10d}{:<10s}{:<10s}'.format(nirrads, nlevels, npositions, '{}K'.format(int(size / 1000.)),
+                                                      size2))
 
     units = size2[-1]
     size2 = float(size2[:-1]) * units_map[units]
@@ -140,7 +143,7 @@ def plot_results():
         xs = []
         dbs = []
         gits = []
-        rfile.next()
+        next(rfile)
         for i, line in enumerate(rfile):
             xs.append(i)
 

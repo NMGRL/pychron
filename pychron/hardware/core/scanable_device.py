@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
@@ -30,6 +32,7 @@ from pychron.database.data_warehouse import DataWarehouse
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
+from six.moves import zip
 
 
 class ScanableDevice(ViewableDevice):
@@ -104,8 +107,8 @@ class ScanableDevice(ViewableDevice):
         if self.scan_func:
             try:
                 v = getattr(self, self.scan_func)(verbose=False)
-            except AttributeError, e:
-                print 'exception', e
+            except AttributeError as e:
+                print('exception', e)
                 return
 
             if v is not None:

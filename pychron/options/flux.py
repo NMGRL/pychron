@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Str, Int, Enum, Float, Property, Bool
 
 from pychron.options.aux_plot import AuxPlot
@@ -30,7 +31,7 @@ class FluxOptions(FigureOptions):
 
     error_kind = Enum(*ERROR_TYPES)
 
-    selected_decay = Enum(FLUX_CONSTANTS.keys())
+    selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
     monitor_age = Float(28.201)
     lambda_k = Property(depends_on='selected_decay')
 

@@ -17,6 +17,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.api import PlotAxis as ScalesPlotAxis
 from chaco.scales.api import CalendarScaleSystem, TimeScale
 from chaco.scales_tick_generator import ScalesTickGenerator
@@ -27,9 +28,9 @@ from numpy import array
 from pychron.core.time_series.time_series import smooth, \
     seasonal_subseries, autocorrelation, downsample_1d
 
-from stacked_graph import StackedGraph
-from stream_graph import StreamGraph, StreamStackedGraph
-from graph import Graph
+from .stacked_graph import StackedGraph
+from .stream_graph import StreamGraph, StreamStackedGraph
+from .graph import Graph
 
 
 HMSScales = [TimeScale(microseconds=100), TimeScale(milliseconds=10)] + \

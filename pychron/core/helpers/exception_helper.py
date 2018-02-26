@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import traits.trait_notifiers
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, List
@@ -153,7 +155,7 @@ Enter a <b>Title</b>, select a few <b>Labels</b> and add a <b>Description</b> of
         if globalv.active_analyses:
             try:
                 ret = ','.join([ai.record_id for ai in globalv.active_analyses])
-            except AttributeError, e:
+            except AttributeError as e:
                 ret = '{}\n\n{}'.format(e, str(globalv.active_analyses))
         return ret
 
@@ -223,7 +225,7 @@ def ignored_exceptions(exctype, value, tb):
     tb = traceback.extract_tb(tb)
 
     if '/pychron/' not in tb[0][0] and '/pychron/' not in tb[-1][0]:
-        print 'ignore exception'
+        print('ignore exception')
         return True
 
     if exctype in (RuntimeError, KeyboardInterrupt):

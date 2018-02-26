@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import provides
 
 # ============= standard library imports ========================
@@ -75,6 +76,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
+import six
 
 
 def binfunc(ds, hours):
@@ -241,7 +243,7 @@ class IsotopeAdapter(DatabaseAdapter):
         ia = hi.interpreted_age
         if ia:
             if ia.age_kind == 'Plateau':
-                n = len(filter(lambda x: x.plateau_step, ia.sets))
+                n = len([x for x in ia.sets if x.plateau_step])
             else:
                 n = len(ia.sets)
 
@@ -302,7 +304,7 @@ class IsotopeAdapter(DatabaseAdapter):
         obj = proc_AnalysisGroupSetTable(analysis_id=analysis.id, **kw)
         self._add_item(obj)
 
-        if isinstance(group, (int, long)):
+        if isinstance(group, six.integer_types):
             obj.group_id = group
         else:
             group.analyses.append(obj)
@@ -435,7 +437,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 # extraction.positions.append(dbpos)
             self._add_item(dbpos)
             return dbpos
-        except (ValueError, TypeError), e:
+        except (ValueError, TypeError) as e:
             pass
 
     def add_note(self, analysis, note, **kw):
@@ -482,7 +484,7 @@ class IsotopeAdapter(DatabaseAdapter):
         item = proc_BlanksSetValueTable(value=float(v), error=float(e))
         dbitem = self._add_item(item)
         dbitem.blank = blank
-        if isinstance(analysis, (int, long)):
+        if isinstance(analysis, six.integer_types):
             dbitem.analysis_id = analysis
         else:
             dbitem.analysis = analysis
@@ -684,7 +686,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
         dbirrad = self.get_irradiation(irrad)
         if dbirrad:
-            if isinstance(level, (str, unicode)):
+            if isinstance(level, (str, six.text_type)):
                 level = next((li for li in dbirrad.levels if li.name == level), None)
 
             if level:
@@ -820,7 +822,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             try:
                 sample = q.one()
-            except Exception, e:
+            except Exception as e:
                 sample = None
 
             if sample is None:
@@ -1004,7 +1006,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def make_gains_hash(self, gains):
         h = hashlib.md5()
 
-        for d, v in gains.iteritems():
+        for d, v in six.iteritems(gains):
             h.update(d)
             h.update(str(v))
 
@@ -1497,7 +1499,7 @@ class IsotopeAdapter(DatabaseAdapter):
                     q = q.order_by(loading_LoadTable.create_date.desc())
                     try:
                         lt = q.first()
-                    except Exception, e:
+                    except Exception as e:
                         import traceback
 
                         traceback.print_exc()
@@ -1540,7 +1542,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(func.abs(gen_LabTable.identifier).desc())
             try:
                 return q.first()
-            except NoResultFound, e:
+            except NoResultFound as e:
                 self.debug('get last labnumber {}'.format(e))
                 return
 
@@ -1629,7 +1631,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 r = q.one()
                 self.debug('got last analysis {}-{}'.format(r.labnumber.identifier, r.aliquot))
                 return r
-            except NoResultFound, e:
+            except NoResultFound as e:
                 if ln:
                     name = ln.identifier
                 elif spectrometer:
@@ -1654,7 +1656,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             try:
                 ai = int(ai)
-            except ValueError, e:
+            except ValueError as e:
                 self.debug('get_unique_analysis aliquot={}.  {}'.format(ai, e))
                 return
 
@@ -1893,7 +1895,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 func = 'one'
             try:
                 return getattr(q, func)()
-            except Exception, e:
+            except Exception as e:
                 pass
 
     def get_irradiation_labnumbers(self, irrad, level, low_post=None,
@@ -2031,7 +2033,7 @@ class IsotopeAdapter(DatabaseAdapter):
     """
         with self.session_ctx() as sess:
             q = self._analysis_query(sess)
-            for k, v in kw.iteritems():
+            for k, v in six.iteritems(kw):
                 if hasattr(v, '__call__'):
                     ff = v(meas_AnalysisTable, gen_LabTable)
                     q = q.filter(and_(*ff))
@@ -2545,7 +2547,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 item.history = history
                 # item.history_id = history.id
             #                 getattr(history, key).append(item)
-            except AttributeError, e:
+            except AttributeError as e:
                 self.debug('add_series_item key={}, error={}'.format(key, e))
                 setattr(history, key, item)
             self._add_item(item)
@@ -2582,7 +2584,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def _make_hash(self, txt):
         if isinstance(txt, dict):
-            txt = repr(frozenset(txt.items()))
+            txt = repr(frozenset(list(txt.items())))
 
         ha = self._hash_factory(txt)
         return ha.hexdigest()

@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import os
 
@@ -145,10 +147,10 @@ def write_analyses_to_csv(p, ms):
                     # print ai.id
                     pc = ai.peak_center.center
 
-                    print ai.analysis_timestamp, ai.record_id, t, pc
+                    print(ai.analysis_timestamp, ai.record_id, t, pc)
                     writer.writerow([t, pc])
-                except AttributeError, e:
-                    print e
+                except AttributeError as e:
+                    print(e)
 
 
 def main():

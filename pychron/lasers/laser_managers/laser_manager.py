@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Bool, Str
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from threading import Event, Thread
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import os
 # ============= local library imports  ==========================
 from pychron.core.pid import PID
@@ -334,7 +335,7 @@ class LaserManager(BaseLaserManager):
                 pul = pickle.load(f)
                 pul.manager = self
                 return pul
-            except Exception, e:
+            except Exception as e:
                 self.debug('load pulse problem {} {}'.format(p, e))
 
     def _pulse_default(self):

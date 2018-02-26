@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
 

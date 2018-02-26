@@ -13,7 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Float, Int
+from six.moves import map
+import six
+from six.moves import zip
 
 
 class BaseGauge(HasTraits):
@@ -47,7 +51,7 @@ class BaseGaugeController(HasTraits):
                      if gi.name == name or gi.display_name == name), None)
 
     def get_pressure(self, gauge, force=False, verbose=False):
-        if isinstance(gauge, (str, unicode)):
+        if isinstance(gauge, (str, six.text_type)):
             gauge = self.get_gauge(gauge)
         if gauge is not None:
             if force:
@@ -62,7 +66,7 @@ class BaseGaugeController(HasTraits):
         raise NotImplementedError
 
     def _set_gauge_pressure(self, gauge, v):
-        if isinstance(gauge, (str, unicode)):
+        if isinstance(gauge, (str, six.text_type)):
             gauge = self.get_gauge(gauge)
 
         if gauge is not None:
@@ -81,7 +85,7 @@ class BaseGaugeController(HasTraits):
         return self._read_pressure(name, verbose)
 
     def _update_pressure(self, gauge, verbose=False):
-        if isinstance(gauge, (str, unicode)):
+        if isinstance(gauge, (str, six.text_type)):
             gauge = self.get_gauge(gauge)
 
         if gauge:
@@ -101,24 +105,24 @@ class BaseGaugeController(HasTraits):
             cs = self.config_get(config, 'Gauges', 'color_scalars', optional=True, default='1, 1, 1')
             chs = self.config_get(config, 'Gauges', 'channels', optional=True, default='1, 2, 3')
 
-            for gi in zip(*map(lambda x: x.split(','), (ns, ans, lows, highs, cs, chs))):
-                ni, ai, li, hi, ci, cn = map(str.strip, gi)
+            for gi in zip(*[x.split(',') for x in (ns, ans, lows, highs, cs, chs)]):
+                ni, ai, li, hi, ci, cn = list(map(str.strip, gi))
 
                 g = self.gauge_klass(name=ni, display_name=ai, channel=cn)
                 try:
                     g.low = float(li)
-                except ValueError, e:
+                except ValueError as e:
                     self.warning_dialog('Invalid lows string. {}'.format(e), title=self.config_path)
                     continue
 
                 try:
                     g.high = float(hi)
-                except ValueError, e:
+                except ValueError as e:
                     self.warning_dialog('Invalid highs string. {}'.format(e), title=self.config_path)
                     continue
                 try:
                     g.color_scalar = int(ci)
-                except ValueError, e:
+                except ValueError as e:
                     self.warning_dialog('Invalid color_scalar string. {}'.format(e), title=self.config_path)
                     continue
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Property, cached_property, Button, HasTraits
 from traitsui.api import View
 # ============= standard library imports ========================
@@ -31,6 +32,8 @@ from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.permutator.view import PermutatorResultsView
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pychron_constants import ARGON_KEYS
+from six.moves import range
+from six.moves import zip
 
 
 # class PermutationResults(object):
@@ -149,7 +152,7 @@ class Permutator(Loggable):
         try:
             with open(self.path, 'r') as rfile:
                 return yaml.load(rfile)
-        except yaml.YAMLError, e:
+        except yaml.YAMLError as e:
             self.warning('Invalid configuration file {}. error: {}'.format(self.path, e))
 
     def get_fits(self):

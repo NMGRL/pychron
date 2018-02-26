@@ -16,6 +16,8 @@
 
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import socket
 
@@ -28,7 +30,7 @@ def server(kind, addr):
         try:
             os.remove(addr)
         except:
-            print 'remove %s' % addr
+            print('remove %s' % addr)
 
     s.bind(addr)
     s.listen(1)

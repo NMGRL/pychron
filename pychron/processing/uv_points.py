@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from chaco.abstract_overlay import AbstractOverlay
@@ -27,6 +29,7 @@ from traitsui.api import View, Item, ButtonEditor
 from pychron.core.geometry.affine import calculate_rigid_transform, AffineTransform
 from pychron.core.geometry.reference_point import ReferencePoint
 from zobs.media_server.browser import ReferencePointsTool, ReferencePointsOverlay
+from six.moves import zip
 
 # ============= local library imports  ==========================
 '''
@@ -156,14 +159,14 @@ class UVAnalysisImage(ImageViewer):
         self.plot.overlays.append(po)
 
     def _calculate_affine_transform(self, pts):
-        rps, ps = zip(*pts)
+        rps, ps = list(zip(*pts))
         s, r, t = calculate_rigid_transform(rps, ps)
         self.A = AffineTransform()
         self.A.scale(s, s)
         self.A.rotate(r)
         self.A.translate(-t[0], -t[1])
 
-        print self.A
+        print(self.A)
 
     def traits_view(self):
         image = Item('container', style='custom', show_label=False,

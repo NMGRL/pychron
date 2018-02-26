@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traitsui.api import View, Controller, VGroup, UItem, HGroup, Heading
 
 # ============= standard library imports ========================

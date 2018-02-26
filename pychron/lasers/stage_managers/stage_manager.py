@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import os
 import time
 
@@ -38,6 +39,10 @@ from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
 from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
+import six
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 
 def distance_threshold(p1, p2, tol):
@@ -410,7 +415,7 @@ class StageManager(BaseStageManager):
             self.info('moving to center')
             try:
                 self.stage_controller.linear_move(0, 0, block=True, sign_correct=False)
-            except TargetPositionError, e:
+            except TargetPositionError as e:
                 self.warning_dialog('Move Failed. {}'.format(e))
 
         self._homing = False
@@ -484,7 +489,7 @@ class StageManager(BaseStageManager):
 
         # set motors
         if motors is not None:
-            for k, v in motors.itervalues():
+            for k, v in six.itervalues(motors):
                 '''
                     motor will not set if it has been locked using set_motor_lock or
                     remotely using SetMotorLock
@@ -706,7 +711,7 @@ class StageManager(BaseStageManager):
                 if end_callback:
                     end_callback()
 
-                for k, v in setmotors.iteritems():
+                for k, v in six.iteritems(setmotors):
                     self.parent.set_motor(k, v, block=True)
 
                 if start_callback:
@@ -778,7 +783,7 @@ class StageManager(BaseStageManager):
                 try:
                     self.stage_controller.linear_move(block=True, source='move_to_hole {}'.format(pos),
                                                       raise_zero_displacement=True, *pos)
-                except TargetPositionError, e:
+                except TargetPositionError as e:
                     self.warning('(001) Move to {} failed'.format(pos))
                     self.parent.emergency_shutoff(str(e))
                     return
@@ -787,7 +792,7 @@ class StageManager(BaseStageManager):
         try:
             self._move_to_hole_hook(key, correct_position,
                                 autocentered_position)
-        except TargetPositionError, e:
+        except TargetPositionError as e:
             self.warning('(002) Move failed. {}'.format(e))
             self.parent.emergency_shutoff(str(e))
             return
@@ -855,7 +860,7 @@ class StageManager(BaseStageManager):
 
     def _move_to_calibrated_position(self, pos):
         try:
-            args = map(float, pos.split(','))
+            args = list(map(float, pos.split(',')))
         except ValueError:
             self.warning('invalid calibrated position "{}". Could not convert to floats'.format(pos))
             return

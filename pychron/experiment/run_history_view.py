@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Instance, Str, Int, on_trait_change, Any
 from traitsui.api import View, UItem, TabularEditor, Item, EnumEditor, HGroup, VGroup, InstanceEditor, Controller, \
     VSplit

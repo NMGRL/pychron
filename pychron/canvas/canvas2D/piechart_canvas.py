@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.pie_chart_scene import PieChartScene
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 

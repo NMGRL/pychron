@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Dict, on_trait_change
 # ============= standard library imports ========================
 from pychron.processing.analysis_graph import AnalysisStackedRegressionGraph

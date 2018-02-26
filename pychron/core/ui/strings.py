@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import re
 
 from traits.trait_types import BaseStr
+import six
 
 pascalcase_regex = re.compile(r'^[A-Z0-9]{1}\w*$')
 
@@ -34,7 +36,7 @@ class PascalCase(BaseStr):
 
 class SpacelessStr(BaseStr):
     def validate(self, object, name, value):
-        if isinstance(value, basestring) and ' ' not in value:
+        if isinstance(value, six.string_types) and ' ' not in value:
             return value
 
         self.error(object, name, value)

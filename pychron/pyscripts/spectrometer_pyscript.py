@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import yaml
 
 from pychron.paths import paths
@@ -24,7 +25,7 @@ command_register = makeRegistry()
 class SpectrometerPyScript(PyScript):
     def get_command_register(self):
         cs = super(SpectrometerPyScript, self).get_command_register()
-        return cs + command_register.commands.items()
+        return cs + list(command_register.commands.items())
 
     @count_verbose_skip
     @command_register

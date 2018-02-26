@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import on_trait_change, Any, Instance
 
 from pychron.displays.gdisplays import gLoggerDisplay, gWarningDisplay

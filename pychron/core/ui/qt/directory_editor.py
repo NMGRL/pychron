@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Bool, Int, File, Event
 from traitsui.api import View, Group
 # ============= standard library imports ========================
@@ -23,6 +24,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.directory_editor import CustomEditor
 from traitsui.qt4.file_editor import _TreeView, filter_trait
 from pyface.qt import QtCore, QtGui
+import six
+from six.moves import range
 
 
 class _myTreeView(_TreeView):
@@ -54,7 +57,7 @@ class _DirectoryEditor(CustomEditor):
 
         # Hide the labels at the top and only show the column for the file name
         self.control.header().hide()
-        for column in xrange(1, model.columnCount()):
+        for column in range(1, model.columnCount()):
             self.control.hideColumn(column)
 
         factory = self.factory
@@ -73,7 +76,7 @@ class _DirectoryEditor(CustomEditor):
         self.control.header().setStretchLastSection(False)
 
     def _on_select(self, idx):
-        self.selected = unicode(self._model.filePath(idx))
+        self.selected = six.text_type(self._model.filePath(idx))
 
 
 class myDirectoryEditor(BasicEditorFactory):

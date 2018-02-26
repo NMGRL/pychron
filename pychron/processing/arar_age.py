@@ -18,6 +18,8 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from copy import copy
 
 from uncertainties import ufloat, std_dev, nominal_value
@@ -29,6 +31,7 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS
+import six
 
 
 class ArArAge(IsotopeGroup):
@@ -142,13 +145,22 @@ class ArArAge(IsotopeGroup):
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
         #     print var.tag
+        uage = self.uage_w_j_err
         ae = 0
-        if self.uage:
-            v = next((error for (var, error) in self.uage.error_components().items()
+        if uage:
+            # for var, err in uage.error_components().items():
+            #     if var.tag == key:
+            #         # print('var', key, var.tag, var)
+            #         break
+            # else:
+            #     print('tags', [var.tag for (var,error) in  uage.error_components().items()])
+            #     print('not found', key)
+
+            v = next((error for (var, error) in uage.error_components().items()
                       if var.tag == key), 0)
 
-            ae = self.uage.std_dev
-
+            ae = uage.std_dev
+            # print(key, v)
         if ae:
             return v ** 2 / ae ** 2 * 100
         else:
@@ -183,7 +195,7 @@ class ArArAge(IsotopeGroup):
                 b.fit = f
 
     def set_j(self, s, e):
-        self.j = ufloat(s, std_dev=e)
+        self.j = ufloat(s, std_dev=e, tag='J')
 
     def get_corrected_ratio(self, n, d):
         isos = self.isotopes
@@ -255,7 +267,7 @@ class ArArAge(IsotopeGroup):
         return j
 
     def recalculate_age(self):
-        print 'recacl age', self
+        print('recacl age', self)
         if not self.uF:
             self._calculate_F()
 
@@ -419,7 +431,7 @@ class ArArAge(IsotopeGroup):
         self.rad40_percent = computed['rad40_percent']
 
         isotopes = self.isotopes
-        for k, v in interference_corrected.iteritems():
+        for k, v in interference_corrected.items():
             isotopes[k].interference_corrected_value = v
 
         self._set_age_values(f, include_decay_error)
@@ -448,11 +460,13 @@ class ArArAge(IsotopeGroup):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            # lambda_k=self.lambda_k,
                            arar_constants=arc)
+        self.uage = age
 
         self.age = nominal_value(age)
         self.age_err = std_dev(age)
-        self.age_err_wo_j = float(age.std_dev)
-        self.uage = ufloat(self.age, self.age_err)
+        self.age_err_wo_j = std_dev(age)
+
+        # self.uage = ufloat(self.age, self.age_err)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
         # if self.j is not None:
@@ -467,7 +481,7 @@ class ArArAge(IsotopeGroup):
         # j.std_dev = 0
         # self.age_err_wo_j_irrad = age.std_dev
         #
-        for iso in self.isotopes.itervalues():
+        for iso in self.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
 
     # def _get_isotope_keys(self):

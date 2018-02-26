@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 
 from apptools.preferences.api import PreferencesHelper
@@ -25,6 +27,9 @@ from traitsui.list_str_adapter import ListStrAdapter
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
+from six.moves import map
+import six
+from six.moves import zip
 
 
 class FavoritesAdapter(ListStrAdapter):
@@ -68,7 +73,7 @@ def test_connection_item():
 
 def remote_status_item(label=None):
     grp = HGroup(Item('remote',
-                      label='Name'),
+                      label='Name', springy=True),
                  test_connection_item(),
                  CustomLabel('_remote_status',
                              width=50,
@@ -89,27 +94,27 @@ class RepoString(BaseStr):
 
 
 class GitRepoPreferencesHelper(BasePreferencesHelper):
-    #remote = Property(String, depends_on='_remote')
-#    _remote = String
+    # remote = Property(String, depends_on='_remote')
+    #    _remote = String
     remote = RepoString
     test_connection = Button
     _remote_status = Str
     _remote_status_color = Color
 
     def _test_connection_fired(self):
-        import urllib2
+        import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
-        print 'fffff', self.remote
+        print('fffff', self.remote)
         if self.remote.strip():
             try:
                 cmd = 'https://github.com/{}.git'.format(self.remote)
-                urllib2.urlopen(cmd)
+                six.moves.urllib.request.urlopen(cmd)
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
                 self._connection_hook()
                 return
-            except BaseException, e:
-                print 'exception', e, cmd
+            except BaseException as e:
+                print('exception', e, cmd)
 
         self._remote_status_color = 'red'
         self._remote_status = 'Invalid'
@@ -141,6 +146,12 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
     selected = Any
     selected_index = Int
 
+    def _is_preference_trait(self, trait_name):
+        if trait_name == 'favorites_items':
+            return False
+        else:
+            return super(FavoritesPreferencesHelper, self)._is_preference_trait(trait_name)
+
     def _get_attrs(self):
         raise NotImplementedError
 
@@ -149,7 +160,7 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 
     def _selected_changed(self):
         sel = self.selected
-        if isinstance(sel, (str, unicode)):
+        if isinstance(sel, (str, six.text_type)):
             vs = sel.split(',')
             for v, attr in zip(vs, self._get_attrs()):
                 setattr(self, attr, str(v))

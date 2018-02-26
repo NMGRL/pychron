@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 
 from traits.api import Any
@@ -36,7 +37,7 @@ class ValvePyScript(PyScript):
     retry_actuation = True
 
     def get_command_register(self):
-        return command_register.commands.items()
+        return list(command_register.commands.items())
 
     def gosub(self, *args, **kw):
         kw['runner'] = self.runner

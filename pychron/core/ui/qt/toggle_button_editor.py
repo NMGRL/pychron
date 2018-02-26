@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.image_resource import ImageResource
 from traits.api import Int, Any, Instance, Bool, Str, Property
 
@@ -23,6 +24,7 @@ from traits.api import Int, Any, Instance, Bool, Str, Property
 
 from pyface.qt import QtGui, QtCore
 from traitsui.qt4.editor import Editor
+import six
 
 
 class _ToggleButtonEditor(Editor):
@@ -115,7 +117,7 @@ class ToggleButtonEditor(BasicEditorFactory):
 
     def _set_value(self, value):
         self._value = value
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             try:
                 self._value = int(value)
             except:

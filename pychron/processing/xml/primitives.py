@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from datetime import datetime
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem

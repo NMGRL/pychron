@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.api import FileDialog, OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import  Any, Instance, Str, \
@@ -28,7 +30,7 @@ from traitsui.table_column import ObjectColumn
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 import os
-from Queue import Queue
+from six.moves.queue import Queue
 from threading import Thread
 import time
 import sys
@@ -42,6 +44,8 @@ from pychron.modeling.model_data_directory import ModelDataDirectory
 from pychron.core.helpers.color_generators import paired_colorname_generator
 from pychron.modeling.fortran_process import FortranProcess
 from pychron.graph.diffusion_graph import GROUPNAMES
+from six.moves import range
+from six.moves import zip
 
 class DummyDirectoryDialog(object):
     path = os.path.join(paths.modeling_data_dir, '59702-43')
@@ -107,7 +111,7 @@ class Modeler(Loggable):
             self.info('loading autoupdate file {}'.format(f.path))
 
             # open a autoupdate config dialog
-            from clovera_configs import AutoUpdateParseConfig
+            from .clovera_configs import AutoUpdateParseConfig
             adlg = AutoUpdateParseConfig('', '')
             info = adlg.edit_traits()
             if info.result:
@@ -135,7 +139,7 @@ class Modeler(Loggable):
             rid, root = self._get_rid_root()
 
         if rid is not None:
-            from clovera_configs import FilesConfig
+            from .clovera_configs import FilesConfig
             # make a config obj
             f = FilesConfig(rid, root)
 
@@ -176,15 +180,15 @@ class Modeler(Loggable):
         return None, None
 
     def execute_autoarr(self):
-        from clovera_configs import AutoarrConfig
+        from .clovera_configs import AutoarrConfig
         self._execute_fortran_helper('Autoarr', 'autoarr_py', AutoarrConfig)
 
     def execute_autoagemon(self):
-        from clovera_configs import AutoagemonConfig
+        from .clovera_configs import AutoagemonConfig
         self._execute_fortran_helper('Autoagemon', 'autoagemon_py', AutoagemonConfig)
 
     def execute_autoagefree(self):
-        from clovera_configs import AutoagefreeConfig
+        from .clovera_configs import AutoagefreeConfig
         self._execute_fortran_helper('Autoagefree',
                                      'autoagefree_py',
                                       AutoagefreeConfig)
@@ -195,15 +199,15 @@ class Modeler(Loggable):
 #                                    ConfidenceIntervalConfig)
 
     def execute_correlation(self):
-        from clovera_configs import CorrelationConfig
+        from .clovera_configs import CorrelationConfig
         self._execute_fortran_helper('Correlation', 'corrfft_py', CorrelationConfig)
 
     def execute_arrme(self):
-        from clovera_configs import ArrmeConfig
+        from .clovera_configs import ArrmeConfig
         self._execute_fortran_helper('Arrme', 'arrme_py', ArrmeConfig)
 
     def execute_agesme(self):
-        from clovera_configs import AgesmeConfig
+        from .clovera_configs import AgesmeConfig
         self._execute_fortran_helper('Agesme', 'agesme_py', AgesmeConfig)
 
     def _execute_fortran_helper(self, name, fortan, config_klass):
@@ -547,7 +551,7 @@ class Modeler(Loggable):
             # set visiblity after
 #            c = color_gen.next()
 #            d.primary_color = c
-            pc, sc = color_gen.next()
+            pc, sc = next(color_gen)
 
             self._load_graph(d, gid, pc, sc)
 
@@ -571,7 +575,7 @@ class Modeler(Loggable):
         if data is not None:
             try:
                 func(data)
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 traceback.print_exc()
                 self.info(e)
@@ -721,7 +725,7 @@ class Modeler(Loggable):
 
         if data_directory.inverse_model_spectrum_enabled:
             def build(data):
-                color = g.color_generators[-1].next()
+                color = next(g.color_generators[-1])
                 for i, (ar39, age) in enumerate(zip(*data)):
                     g.build_spectrum(ar39, age,
                                          ngroup='inverse_model_spectrum',
@@ -763,9 +767,9 @@ def runfortran():
     while t.isAlive() or not q.empty():
         l = q.get().rstrip()
 
-        print l
+        print(l)
 
-    print t.get_remaining_stdout()
+    print(t.get_remaining_stdout())
 
 
 if __name__ == '__main__':

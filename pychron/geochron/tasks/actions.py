@@ -16,6 +16,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.message_dialog import information
 from pyface.tasks.action.task_action import TaskAction
 
@@ -39,6 +41,6 @@ class UploadAction(TaskAction):
 
             ag = AnalysisGroup()
             ag.analyses = ans
-            print geochron_service.assemble_xml(ag)
+            print(geochron_service.assemble_xml(ag))
 
 # ============= EOF =============================================

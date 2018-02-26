@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from numpy import array
 # ============= local library imports  ==========================
 from unittest import TestCase
@@ -38,10 +40,10 @@ class StatsTests(TestCase):
         ys = [ 12.69424305, 15.67507165, 15.9631792, 16.28923218, 16.60528924, 16.86075035]
         self.regressor = PolynomialRegressor(xs=xs, ys=ys, degree=1)
         self.regressor.calculate()
-        print self.regressor.coefficients
+        print(self.regressor.coefficients)
 
     def testLinearIntercept(self):
-        print self.regressor.coefficients
+        print(self.regressor.coefficients)
 #        b = self.regressor.calculate_y(0)
 #        self.assertAlmostEqual(b, self.b, places=10)
 #

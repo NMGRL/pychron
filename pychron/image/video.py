@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import time
@@ -24,7 +26,7 @@ from PIL import Image as PImage
 from numpy import asarray
 from traits.api import Any, Bool, Float, List, Str, Int
 
-from cv_wrapper import get_capture_device
+from .cv_wrapper import get_capture_device
 from pychron.core.helpers.filetools import add_extension
 from pychron.globals import globalv
 from pychron.image.image import Image
@@ -56,7 +58,7 @@ def convert_to_video(path, fps, name_filter='snapshot%03d.jpg',
 
     # print 'calling {}, frame_rate={} '.format(ffmpeg, frame_rate)
     call_args = [ffmpeg, '-r', frame_rate, '-i', path, output]
-    print ' '.join(call_args)
+    print(' '.join(call_args))
 
     subprocess.call(call_args)
 
@@ -149,8 +151,8 @@ class Video(Image):
                     try:
                         self.cap = get_capture_device()
                         self.cap.open(int(identifier) if identifier else 0)
-                    except Exception, e:
-                        print 'video.open', e
+                    except Exception as e:
+                        print('video.open', e)
                         self.cap = None
 
         if user not in self.users:
@@ -285,8 +287,8 @@ class Video(Image):
             self._save_ok_event.set()
 
     def _get_pylon_device(self, identifier):
-        print 'identifiqe', identifier
-        from pylon_camera import PylonCamera
+        print('identifiqe', identifier)
+        from .pylon_camera import PylonCamera
         cam = PylonCamera(identifier)
         if cam.open():
             return cam
@@ -300,7 +302,7 @@ class Video(Image):
         return vs
 
     def _update_fps(self, fps):
-        print 'update fps', fps
+        print('update fps', fps)
         self.fps = fps
 
     def _get_frame(self, lock=True, **kw):
@@ -318,7 +320,7 @@ class Video(Image):
                 return img
 
     def _convert_to_video(self, path, fps, name_filter='snapshot%03d.jpg', output=None):
-        print 'convert to video. FFmpeg={}'.format(self.ffmpeg_path)
+        print('convert to video. FFmpeg={}'.format(self.ffmpeg_path))
 
         ffmpeg = self.ffmpeg_path
         convert_to_video(path, fps, name_filter, ffmpeg, output)

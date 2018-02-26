@@ -1,4 +1,5 @@
-from actuator import Actuator
+from __future__ import absolute_import
+from .actuator import Actuator
 
 
 class DummyController(Actuator):

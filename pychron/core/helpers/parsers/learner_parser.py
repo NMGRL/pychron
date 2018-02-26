@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from xml_parser import XMLParser
 class LearnerParser(XMLParser):
     def get_getters(self, element=True):

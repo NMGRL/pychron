@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from pyface.timer.do_later import do_later
@@ -36,6 +37,7 @@ from pychron.pychron_constants import FIT_TYPES, NULL_STR, DELIMITERS
 from pychron.paths import paths
 from pychron.loggable import Loggable
 from pychron.core.time_series.time_series import smooth
+from six.moves import map
 
 
 class DataSelector(HasTraits):
@@ -159,7 +161,7 @@ class CSVGrapher(Loggable):
         with open(p, 'r') as rfile:
             # gather data
             reader = csv.reader(rfile)
-            header = reader.next()
+            header = next(reader)
             groups = self._parse_data(reader)
             '''
                 groups= [data,]
@@ -220,7 +222,7 @@ class CSVGrapher(Loggable):
 
 
             reader = csv.reader(rfile, delimiter=self.delimiter)
-            self.column_names = names = reader.next()
+            self.column_names = names = next(reader)
             try:
                 cs = DataSelector(column_names=names,
                                   index=names[0],
@@ -242,7 +244,7 @@ class CSVGrapher(Loggable):
             for l in reader:
                 l = [li.strip() for li in l]
                 if not l or not any(l):
-                    data = np.array([map(float, l) for l in lines])
+                    data = np.array([list(map(float, l)) for l in lines])
                     data = data.transpose()
                     groups.append(data)
                     break
@@ -253,7 +255,7 @@ class CSVGrapher(Loggable):
                 #                    print l
                 #                    print map(float, l)
                 #
-                data = np.array([map(float, l) for l in lines])
+                data = np.array([list(map(float, l)) for l in lines])
                 data = data.transpose()
                 groups.append(data)
                 break
@@ -263,7 +265,7 @@ class CSVGrapher(Loggable):
     def _plot_button_fired(self):
         with open(self._path, 'U') as rfile:
             reader = csv.reader(rfile, delimiter=self.delimiter)
-            _header = reader.next()
+            _header = next(reader)
             groups = self._parse_data(reader)
             #            print groups
             for data in groups:

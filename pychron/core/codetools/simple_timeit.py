@@ -18,6 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 
 
@@ -34,7 +36,7 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
 
     if msg is None:
         if hasattr(func, 'func_name'):
-            msg = func.func_name
+            msg = func.__name__
         else:
             msg = ''
     # if msg:
@@ -45,7 +47,7 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
     if log:
         log(s)
     else:
-        print 'timethis', s
+        print('timethis', s)
     if rettime:
         return et
     return r
@@ -61,7 +63,7 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
 def simple_timer(msg=None):
     def _timer(func):
         def dec(*args, **kw):
-            with TimerCTX(msg, func.func_name):
+            with TimerCTX(msg, func.__name__):
                 return func(*args, **kw)
 
         return dec
@@ -83,6 +85,6 @@ class TimerCTX(object):
         s = '{} {}'.format(self._funcname, dur)
         if msg:
             s = '{} - {}'.format(s, msg)
-        print s
+        print(s)
 
 # ============= EOF =============================================

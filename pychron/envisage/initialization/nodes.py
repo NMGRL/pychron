@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import hashlib
 
 from traits.api import HasTraits, Str, Bool, List, Instance
@@ -98,7 +99,7 @@ class InitializationModel(BaseNode):
         self._hash = self._current_hash()
 
     def _current_hash(self):
-        with open(self.parser.path) as rfile:
+        with open(self.parser.path, 'rb') as rfile:
             return hashlib.md5(rfile.read()).hexdigest()
 
     def is_dirty(self):

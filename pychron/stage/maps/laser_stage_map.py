@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Button, on_trait_change
 
 import os
@@ -64,7 +65,7 @@ class LaserStageMap(BaseStageMap):
             with open(p, 'rb') as f:
                 try:
                     cors = pickle.load(f)
-                except (ValueError, pickle.PickleError), e:
+                except (ValueError, pickle.PickleError) as e:
                     self.warning_dialog('Failed to load the correction file:\n{}\n'
                                         'If you are relying on SemiAuto or Auto calibration a'
                                         'recalibration is required'.format(p))
@@ -204,7 +205,7 @@ class LaserStageMap(BaseStageMap):
             return holes[0][0]
 
     def traits_view(self):
-        from stage_map_view import StageMapView
+        from .stage_map_view import StageMapView
         return StageMapView(model=self).traits_view()
 
 

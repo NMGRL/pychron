@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Dict
 # ============= standard library imports ========================
 from numpy.random import random
@@ -22,6 +23,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import map
 
 
 def write_txt_file(p, out):
@@ -82,7 +84,7 @@ class AutomatedRunDurationTracker(Loggable):
                         if h == rh:
                             exists = True
 
-                            ds = map(float, ds)
+                            ds = list(map(float, ds))
                             ds.append(t)
                             ds = ds[-10:]
                             if len(ds):

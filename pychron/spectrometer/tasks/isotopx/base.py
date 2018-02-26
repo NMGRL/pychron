@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometerPlugin
 
 

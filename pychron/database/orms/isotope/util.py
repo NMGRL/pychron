@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.types import Integer, String, Float

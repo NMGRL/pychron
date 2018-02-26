@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import shelve
 
@@ -25,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
+import six
 
 
 # ============= standard library imports ========================
@@ -53,7 +55,7 @@ class LayoutManager(Loggable):
         super(LayoutManager, self).__init__(*args, **kw)
         d = self._open_shelve()
         if d:
-            for k, v in d.iteritems():
+            for k, v in six.iteritems(d):
                 layout = UserLayout(name=k, layouts=v)
                 self.layouts.append(layout)
 
@@ -105,7 +107,7 @@ class LayoutManager(Loggable):
         p = os.path.join(paths.hidden_dir, 'window_positions')
         d = shelve.open(p)
         if remove is not None:
-            if d.has_key(remove):
+            if remove in d:
                 d.pop(remove)
 
         for li in self.layouts:

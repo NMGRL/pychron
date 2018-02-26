@@ -16,8 +16,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.base_config_loadable import BaseConfigLoadable
-from loggable import Loggable
+from .loggable import Loggable
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

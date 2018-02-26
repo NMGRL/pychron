@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.orms.isotope.dash import dash_TimeTable, dash_DeviceTable
 

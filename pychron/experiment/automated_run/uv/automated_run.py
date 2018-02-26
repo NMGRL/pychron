@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

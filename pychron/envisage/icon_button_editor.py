@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # from traitsui.editors import ButtonEditor
+from __future__ import absolute_import
 from traitsui.item import Item
 
 from pychron.core.helpers.filetools import add_extension

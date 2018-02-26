@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.tools.api import DragTool
 from enable.enable_traits import Pointer
 from traits.api import Enum, CArray

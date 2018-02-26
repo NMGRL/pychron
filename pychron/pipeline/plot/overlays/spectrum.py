@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.data_label import draw_arrow
 from chaco.label import Label
@@ -31,6 +32,7 @@ from numpy import where, array
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 from pychron.pychron_constants import PLUSMINUS, SIGMA
+from six.moves import zip
 
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -184,7 +186,7 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 func = gc.stroke_path
 
             color = self.user_color
-            color = map(lambda x: x / 255., (color.red(), color.green(), color.blue(), color.alpha()))
+            color = [x / 255. for x in (color.red(), color.green(), color.blue(), color.alpha())]
 
             color = color[0], color[1], color[2], alpha
             if abs(alpha - 0.3) < 0.1:

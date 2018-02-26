@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from uncertainties import nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui import set_qt
 from pychron.pychron_constants import ARGON_KEYS
+from six.moves import map
 
 
 set_qt()
@@ -42,15 +44,15 @@ class CalculationView(HasTraits):
         for isok in ARGON_KEYS:
             iso = isos[isok]
 
-            vs = map(floatfmt, (isok, iso.value, iso.blank.value, iso.baseline.value))
+            vs = list(map(floatfmt, (isok, iso.value, iso.blank.value, iso.baseline.value)))
             lines.append('{} = {} - {} - {}'.format(*vs))
 
         lines.append(' ')
         lines.append('Ar40* = Ar40 - Ar40atm - K40')
 
-        vs = map(floatfmt, map(nominal_value, (a.corrected_intensities['Ar40'],
+        vs = list(map(floatfmt, list(map(nominal_value, (a.corrected_intensities['Ar40'],
                                                a.computed['atm40'],
-                                               a.non_ar_isotopes['k40'])))
+                                               a.non_ar_isotopes['k40'])))))
         lines.append('Ar40* = {} - {} - {}'.format(*vs))
 
         self.text = '\n'.join(lines)

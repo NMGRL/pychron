@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Any, Long, Date, Str, on_trait_change
 from traits.api import HasTraits
 from traitsui.api import View, UItem, VGroup
@@ -44,8 +46,8 @@ class ImageModel(HasTraits):
             try:
                 img = Image.open(buf)
                 self.image = img.convert('RGBA')
-            except IOError, e:
-                print 'snapshot view {}'.format(e)
+            except IOError as e:
+                print('snapshot view {}'.format(e))
                 pass
 
         self.original_note = self.note

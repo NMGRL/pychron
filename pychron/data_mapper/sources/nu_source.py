@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 from traits.api import File
 
@@ -23,6 +24,8 @@ from pychron.data_mapper.sources.file_source import FileSource, get_next, get_in
 from pychron.data_mapper.sources.nice_parser import NiceParser
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
+from six.moves import map
+from six.moves import range
 
 
 class NuFileSource(FileSource):
@@ -51,7 +54,7 @@ class NuFileSource(FileSource):
 
         collector_gains = next(f)
 
-        int_posts = [next(f) for i in xrange(41)]
+        int_posts = [next(f) for i in range(41)]
         npeakscentered = next(f)
         ndeflectors = next(f)[1]
         source_ht = next(f)
@@ -86,15 +89,15 @@ class NuFileSource(FileSource):
         ics = next(f)
         discs = next(f)
 
-        [_ for _ in xrange(9)]
+        [_ for _ in range(9)]
 
         signals = []
-        for _ in xrange(total_analysis_time):
+        for _ in range(total_analysis_time):
             line = next(f)
             _type = int(line[-1])
 
             if _type:
-                signals.append(map(float, line))
+                signals.append(list(map(float, line)))
 
         signals = array(signals)
 
@@ -104,7 +107,7 @@ class NuFileSource(FileSource):
             parser = NiceParser(signals)
             for line in nice:
                 try:
-                    lhs, rhs = map(str.strip, line.split('='))
+                    lhs, rhs = list(map(str.strip, line.split('=')))
                 except ValueError:
                     continue
 

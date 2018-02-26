@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 import time
 import numpy as np
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 from pychron.graph.graph import Graph
@@ -54,7 +55,7 @@ class CDDOperatingVoltageScan(SpectrometerTask):
         scan_gen = scan_generator(steps[0], steps[-1], len(steps))
         for opv in steps:
             if globalv.spectrometer_debug:
-                v = scan_gen.next()
+                v = next(scan_gen)
                 settle_time = 0.001
             else:
                 spec.set_cdd_operating_voltage(opv)

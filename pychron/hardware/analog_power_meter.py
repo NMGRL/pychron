@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Int
 from traitsui.api import View, Item
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
-from adc.adc_device import ADCDevice
+from .adc.adc_device import ADCDevice
 
 class AnalogPowerMeter(ADCDevice):
     '''

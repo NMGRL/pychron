@@ -15,10 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Tuple
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.axis import Axis
+import six
+from six.moves import map
 
 MAPPING = dict(acceleration='HA',
                deceleration='HD',
@@ -72,7 +75,7 @@ class NewportGroup(Axis):
 
     def build_command(self, new_group):
         cmds = []
-        for key, value in MAPPING.iteritems():
+        for key, value in six.iteritems(MAPPING):
             if key is not 'axes':
                 cmds.append(
                         '{}{}{:0.5f}'.format(self.id, value,

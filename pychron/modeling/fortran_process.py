@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import  Str
 # from pyface.timer.do_later import do_later
 from pyface.message_dialog import warning
@@ -88,7 +90,7 @@ class FortranProcess(Loggable):
 
             return True
 
-        except OSError, e:
+        except OSError as e:
             self.warning_dialog('Clovera programs are not executable. Check Default Clovera Directory.\n{}'.format(e))
             import traceback
             traceback.print_exc()
@@ -101,7 +103,7 @@ class FortranProcess(Loggable):
                 txt = self._process.communicate()[0]
                 if txt:
                     return txt.split('\n')
-            except Exception, e:
+            except Exception as e:
                 pass
                 # print 'get remaining stdout',e
         return []
@@ -109,11 +111,11 @@ class FortranProcess(Loggable):
 
 
 if __name__ == '__main__':
-    import Queue
-    q = Queue.Queue()
+    import six.moves.queue
+    q = six.moves.queue.Queue()
     d = '/Users/Ross/Desktop'
     f = FortranProcess('hello_world', d, q)
-    print os.getcwd()
+    print(os.getcwd())
     os.chdir(d)
     f.start()
     time.clock()
@@ -122,6 +124,6 @@ if __name__ == '__main__':
         # print l
 
     # print f.get_remaining_stdout()
-    print time.clock()
+    print(time.clock())
 # ============= EOF =====================================
 

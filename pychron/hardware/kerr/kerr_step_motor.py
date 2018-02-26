@@ -15,10 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import CInt, Str, Bool, Dict, Float, HasTraits, Any
 from traitsui.api import View, Item, EnumEditor, RangeEditor
 # from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.hardware.core.data_helper import make_bitarray
+from six.moves import map
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -139,7 +142,7 @@ class KerrStepMotor(KerrMotor):
                 dp = self.get_discrete_position(value)
                 if dp:
                     value = int(dp.position)
-                print 'disc ', value
+                print('disc ', value)
             return value
 
     def get_discrete_position(self, name):
@@ -296,7 +299,7 @@ class KerrStepMotor(KerrMotor):
         if status_byte == 'simulation':
             status_byte = 'DFDF'
 
-        status_register = map(int, make_bitarray(int(status_byte[:2], 16)))
+        status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
         return status_register[7]
 
     def control_view(self):

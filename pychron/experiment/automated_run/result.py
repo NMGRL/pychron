@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Property, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -23,6 +24,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import uformat_percent_error, floatfmt, errorfmt
 from pychron.experiment.conditional.conditional import AutomatedRunConditional
 from pychron.processing.isotope_group import IsotopeGroup
+from six.moves import map
 
 
 class AutomatedRunResult(HasTraits):
@@ -63,10 +65,10 @@ RUN TIME= {}
                     'Blank (fA)', '%Err'
 
             colwidths = 6, 8, 25, 8, 25, 8, 25, 8, 25, 8
-            cols = map('{{:<{}s}}'.format, colwidths)
+            cols = list(map('{{:<{}s}}'.format, colwidths))
             colstr = ''.join(cols)
 
-            divider = ''.join(map(lambda x: '{} '.format('-' * (x - 1)), colwidths))
+            divider = ''.join(['{} '.format('-' * (x - 1)) for x in colwidths])
             table_header = colstr.format(*names)
             lines = [self._make_header('Isotopes'), table_header, divider]
             for k in self.isotope_group.isotope_keys:

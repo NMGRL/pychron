@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # from pyface.api import ProgressDialog
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import time
 
@@ -104,23 +106,23 @@ class myProgressDialog(ProgressDialog):
         control.setWindowFlags(Qt.WindowStaysOnTopHint)
         return control
 
-    def _create_buttons(self, dialog, layout):
-        """ Creates the buttons. """
-
-        if not (self.can_cancel or self.can_ok):
-            return
-
-        # Create the button.
-        buttons = QDialogButtonBox()
-
-        if self.can_cancel:
-            cancel_button = buttons.addButton(self.cancel_button_label, QDialogButtonBox.RejectRole)
-            cancel_button.clicked.connect(self.cancel)
-        if self.can_ok:
-            ok_button = buttons.addButton(QDialogButtonBox.Ok)
-            ok_button.clicked.connect(self.accept)
-
-        layout.addWidget(buttons)
+    # def _create_buttons(self, dialog, layout):
+    #     """ Creates the buttons. """
+    #
+    #     if not (self.can_cancel or self.can_ok):
+    #         return
+    #
+    #     # Create the button.
+    #     buttons = QDialogButtonBox()
+    #
+    #     if self.can_cancel:
+    #         cancel_button = buttons.addButton(self.cancel_button_label, QDialogButtonBox.RejectRole)
+    #         cancel_button.clicked.connect(self.cancel)
+    #     if self.can_ok:
+    #         ok_button = buttons.addButton(QDialogButtonBox.Ok)
+    #         ok_button.clicked.connect(self.accept)
+    #
+    #     layout.addWidget(buttons)
 
     def _get_canceled(self):
         return self._user_cancelled
@@ -130,17 +132,18 @@ class myProgressDialog(ProgressDialog):
 
     def change_message(self, message, auto_increment=True):
         try:
-            self.message_control.setText(message)
+            # self.message_control.setText(message)
+            self.message = message
             if auto_increment:
                 self.increment()
-        except RuntimeError, e:
-            print 'exception', e
+        except RuntimeError as e:
+            print('exception', e)
 
-    def _create_message(self, dialog, layout):
-        label = QLabel(self.message, dialog)
-        label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        layout.addWidget(label)
-        self.message_control = label
+    # def _create_message(self, dialog, layout):
+    #     label = QLabel(self.message, dialog)
+    #     label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+    #     layout.addWidget(label)
+    #     self.message_control = label
 
     def get_value(self):
         if self.progress_bar:
@@ -162,6 +165,7 @@ class myProgressDialog(ProgressDialog):
         the parent window will be closed
 
         """
+
         if self.progress_bar is None:
             return None, None
 

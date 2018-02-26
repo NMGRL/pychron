@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import unittest
 from pychron.paths import paths, build_directories

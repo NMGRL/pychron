@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import List
@@ -35,7 +36,7 @@ class ReferencesPanel(FigurePanel):
         gg = groupby(refs, key=key)
         for gi in gs:
             try:
-                _, refs = gg.next()
+                _, refs = next(gg)
                 gi.references = list(refs)
             except StopIteration:
                 break

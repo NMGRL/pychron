@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 
 from numpy import vstack, hstack, array
@@ -24,6 +25,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 # ============= local library imports  ==========================
 from pychron.paths import paths
+from six.moves import zip
 
 
 class BaseClassifier(object):

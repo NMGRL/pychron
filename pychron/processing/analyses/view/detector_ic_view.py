@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Button, Int
 from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter

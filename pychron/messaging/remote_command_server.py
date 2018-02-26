@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.timer.api import Timer
 from traits.api import Str, Int, Instance, Bool, Property, Event, Button, String
 from traitsui.api import View, Item, Group, HGroup, VGroup, \

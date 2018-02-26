@@ -16,6 +16,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.api import Interactor
 from traits.api import Any
 

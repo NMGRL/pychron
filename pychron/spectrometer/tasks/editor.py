@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.traits_editor import TraitsEditor
 from traits.api import Button, Instance
 from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup, TabularEditor, VSplit

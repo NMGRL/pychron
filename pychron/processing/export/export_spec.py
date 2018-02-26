@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
 
 from pychron.loggable import Loggable
+import six
+from six.moves import map
+from six.moves import range
 
 
 # ============= standard library imports ========================
@@ -124,7 +128,7 @@ class MassSpecExportSpec(Loggable):
                     v = getattr(record, run_attr)
                     self.debug('setting {} to {}'.format(exp_attr, v))
                     setattr(self, exp_attr, v)
-                except TraitError, e:
+                except TraitError as e:
                     self.debug(e)
 
         # if hasattr(record, 'cdd_ic_factor'):
@@ -156,7 +160,7 @@ class MassSpecExportSpec(Loggable):
             return ''
 
     def iter_isotopes(self):
-        return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
+        return ((iso.name, iso.detector) for iso in self.isotopes.values())
         # def _iter():
         # dm = self.data_manager
         # hfile = dm._frame
@@ -185,7 +189,7 @@ class MassSpecExportSpec(Loggable):
         try:
             b = self.isotopes[iso].blank.get_baseline_corrected_value()
         except KeyError:
-            self.debug('no blank for {} {}'.format(iso, self.isotopes.keys()))
+            self.debug('no blank for {} {}'.format(iso, list(self.isotopes.keys())))
             b = ufloat(0, 0)
 
         return b
@@ -194,9 +198,9 @@ class MassSpecExportSpec(Loggable):
         try:
             ps = self.isotopes[iso].uvalue
             # ps = self.signal_intercepts['{}signal'.format(iso)]
-        except KeyError, e:
+        except KeyError as e:
             self.debug('no key {} {}'.format(iso,
-                                             self.isotopes.keys()))
+                                             list(self.isotopes.keys())))
             ps = ufloat(0, 0)
 
         return ps

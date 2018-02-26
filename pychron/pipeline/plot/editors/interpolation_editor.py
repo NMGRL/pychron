@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, HasTraits, Tuple
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,13 +26,13 @@ def bin_analyses(ans):
     ans = iter(sorted(ans, key=lambda x: x.timestamp))
 
     def _bin():
-        ai = ans.next()
+        ai = next(ans)
         pt = ai.timestamp
         g = [ai]
         tol = 60 * 60
         while 1:
             try:
-                ai = ans.next()
+                ai = next(ans)
                 dev = ai.timestamp - pt
                 pt = ai.timestamp
                 if dev > tol:

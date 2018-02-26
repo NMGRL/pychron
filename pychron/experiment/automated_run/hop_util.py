@@ -20,6 +20,10 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 def parse_hop(args):
     if isinstance(args, dict):
         counts = args['counts']
@@ -40,7 +44,7 @@ def parse_hop(args):
         else:
             hopstr, counts, settle, pdets = args
             # for hopstr, counts, settle, pdets in hops:
-        is_baselines, isos, dets, defls = zip(*split_hopstr(hopstr))
+        is_baselines, isos, dets, defls = list(zip(*split_hopstr(hopstr)))
         active_detectors = dets
         pos = {'detector': active_detectors[0], 'isotope': isos[0]}
 
@@ -69,7 +73,7 @@ def generate_hops(hops):
                 yield d
                 # yield c, is_baselines, dets, isos, defls, settle, counts
             else:
-                for i in xrange(int(d['counts'])):
+                for i in range(int(d['counts'])):
                     d['count'] = i
                     yield d
                     # yield c, is_baselines, dets, isos, defls, settle, i, pdets
@@ -107,7 +111,7 @@ def parse_hops(hops, ret=None):
 
 def split_hopstr(hop):
     for hi in hop.split(','):
-        args = map(str.strip, hi.split(':'))
+        args = list(map(str.strip, hi.split(':')))
         defl = None
         is_baseline = False
         if len(args) == 4:

@@ -19,7 +19,9 @@ http://www.scipy.org/Cookbook/Finding_Convex_Hull
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import numpy as np
+from six.moves import zip
 
 def _angle_to_point(point, centre):
     '''calculate angle in 2-D between points and x axis'''
@@ -86,7 +88,7 @@ def convex_hull_area(pts):
     from pychron.core.codetools.simple_timeit import timethis
     hull = timethis(convex_hull, args=(pts,))
 #    hull = convex_hull(pts)
-    x, y = zip(*hull)
+    x, y = list(zip(*hull))
     ind_arr = np.arange(len(x)) - 1  # for indexing convenience
     s = np.sum([x[ii] * y[ii + 1] - x[ii + 1] * y[ii] for ii in ind_arr])
     return abs(s) * 0.5

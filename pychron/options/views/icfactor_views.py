@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.markers import marker_names
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, Label
 # ============= standard library imports ========================

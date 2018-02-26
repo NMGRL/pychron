@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, List, Instance
 from traitsui.api import View, UItem, Item, TableEditor
 from traitsui.table_column import ObjectColumn

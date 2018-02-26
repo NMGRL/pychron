@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.isotopx.spectrometer.ngx import NGXSpectrometer
 

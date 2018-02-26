@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Any, Bool
 
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor

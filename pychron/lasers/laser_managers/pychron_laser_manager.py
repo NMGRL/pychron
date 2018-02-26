@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-import cPickle as pickle
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.cPickle as pickle
 import os
 import time
 from threading import Thread
@@ -31,6 +33,8 @@ from pychron.globals import globalv
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.paths import paths
 from pychron import json
+from six.moves import map
+import six
 
 
 class PychronLaserManager(EthernetLaserManager):
@@ -283,10 +287,10 @@ class PychronLaserManager(EthernetLaserManager):
         xyz = self._ask('GetPosition')
         if xyz:
             try:
-                x, y, z = map(float, xyz.split(','))
+                x, y, z = list(map(float, xyz.split(',')))
                 return x, y, z
-            except Exception, e:
-                print 'pychron laser manager get_position', e
+            except Exception as e:
+                print('pychron laser manager get_position', e)
                 return 0, 0, 0
 
         if self.communicator.simulation:
@@ -530,7 +534,7 @@ class PychronUVLaserManager(PychronLaserManager):
         #    if not TRANSECT_REGEX[0].match(pos):
         #        cmd = None
 
-        if isinstance(pos, (str, unicode)):
+        if isinstance(pos, (str, six.text_type)):
             if not pos:
                 return
 

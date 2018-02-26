@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, Property, Str
 from traitsui.api import View, VGroup, UItem
 from traitsui.menu import Action
@@ -68,7 +69,7 @@ class BaseEntry(DVCAble):
         for a, v in (('buttons', ['OK', 'Cancel']),
                      ('resizable', True),
                      ('kind', 'livemodal')):
-            if not kw.has_key(a):
+            if a not in kw:
                 kw[a] = v
 
         v = View(*args, **kw)

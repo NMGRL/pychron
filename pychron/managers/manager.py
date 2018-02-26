@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pyface.api import FileDialog, OK, DirectoryDialog
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
 from traitsui.api import Item, HGroup, VGroup, \
@@ -337,7 +339,7 @@ class Manager(Viewable, ConfigLoadable):
 
             try:
                 package = HW_PACKAGE_MAP[klass]
-                m = __import__(package, globals(), locals(), [klass], -1)
+                m = __import__(package, globals(), locals(), [klass])
                 class_factory = getattr(m, klass)
 
             except ImportError:
@@ -390,8 +392,8 @@ class Manager(Viewable, ConfigLoadable):
                 self.add_trait(manager, m)
                 return m
 
-        except KeyError, e:
-            print 'create manager', e
+        except KeyError as e:
+            print('create manager', e)
             pass
 
     def _directory_dialog(self, new_directory, **kw):

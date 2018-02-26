@@ -24,10 +24,13 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 import struct
 # ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
+from six.moves import map
+from six.moves import range
 
 
 class ProXRADCExpansion(NCDDevice):

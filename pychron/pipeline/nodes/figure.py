@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Any, Bool, Instance, List
@@ -30,6 +31,7 @@ from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, 
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
     AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC, AR37
+import six
 
 
 class NoAnalysesError(BaseException):
@@ -67,8 +69,8 @@ class FigureNode(BaseNode):
         if not state.unknowns and self.no_analyses_warning:
             raise NoAnalysesError
 
-        self.unknowns = state.unknowns
-        self.references = state.references
+        # self.unknowns = state.unknowns
+        # self.references = state.references
 
         # oname = ''
         if use_plotting and self.use_plotting:
@@ -144,7 +146,7 @@ class FigureNode(BaseNode):
 
     def _editor_factory(self):
         klass = self.editor_klass
-        if isinstance(klass, (str, unicode)):
+        if isinstance(klass, (str, six.text_type)):
             pkg, klass = klass.split(',')
             mod = __import__(pkg, fromlist=[klass])
             klass = getattr(mod, klass)
@@ -156,9 +158,6 @@ class FigureNode(BaseNode):
 
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
-
-    def _configure_hook(self):
-        pass
 
     def _options_view_default(self):
         return view('{} Options'.format(self.name))
@@ -174,23 +173,9 @@ class XYScatterNode(FigureNode):
         if self.unknowns:
             unk = self.unknowns[0]
             # names = []
-            iso_keys = unk.isotope_keys
-            names = iso_keys
-            # if iso_keys:
-            #     names.extend(iso_keys)
-            #     names.extend(['{}bs'.format(ki) for ki in iso_keys])
-            #     names.extend(['{}ic'.format(ki) for ki in iso_keys])
-            #     if 'Ar40' in iso_keys:
-            #         if 'Ar39' in iso_keys:
-            #             names.append('Ar40/Ar39')
-            #             names.append('uAr40/Ar39')
-            #         if 'Ar36' in iso_keys:
-            #             names.append('Ar40/Ar36')
-            #             names.append('uAr40/Ar36')
-            #
-            # names.append('Peak Center')
-            # names.append('AnalysisType')
-            pom.set_names(names)
+            # iso_keys = unk.isotope_keys
+            # names = iso_keys
+            pom.set_names(unk.isotope_keys)
 
 
 class VerticalFluxNode(FigureNode):

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 
 from chaco.ticks import DefaultTickGenerator
@@ -34,7 +35,7 @@ class IntTickGenerator(DefaultTickGenerator):
                                                         bounds_high, interval, use_endpoints=use_endpoints,
                                                         scale=scale)
         # filter out non integer ticks
-        ticks = filter(lambda x: x % 1 == 0, ticks)
+        ticks = [x for x in ticks if x % 1 == 0]
         return ticks
 
 

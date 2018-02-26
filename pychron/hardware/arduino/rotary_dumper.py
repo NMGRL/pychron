@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
 import time
+from six.moves import range
 
 MAGNET = 0
 MOVE = 1
@@ -35,7 +38,7 @@ class RotaryDumper(HeadlessCoreDevice):
             self.energize(325)
             for i in range(100):
                 if not self.is_moving():
-                    print 'not moving'
+                    print('not moving')
                     break
                 time.sleep(1)
         self.denergize()

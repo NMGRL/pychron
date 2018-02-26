@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import binascii
 import os
 import pickle
@@ -35,7 +36,10 @@ from pychron.hardware.switch import Switch, ManualSwitch
 from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from switch_parser import SwitchParser
+from .switch_parser import SwitchParser
+import six
+from six.moves import range
+from six.moves import zip
 
 
 def add_checksum(func):
@@ -139,7 +143,7 @@ class SwitchManager(Manager):
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
         # elm = self.extraction_line_manager
-        for k, v in self.switches.iteritems():
+        for k, v in six.iteritems(self.switches):
             if v.parent == name:
                 v.set_state(state)
                 self.refresh_state = (k, state)
@@ -150,11 +154,11 @@ class SwitchManager(Manager):
         return binascii.crc32(''.join((vs[k].state_str() for k in vkeys)))
 
     def get_valve_names(self):
-        return self.switches.keys()
+        return list(self.switches.keys())
 
     def refresh_network(self):
         self.debug('refresh network')
-        for k, v in self.switches.iteritems():
+        for k, v in six.iteritems(self.switches):
             self.refresh_state = (k, v.state, False)
 
         self.refresh_canvas_needed = True
@@ -181,13 +185,13 @@ class SwitchManager(Manager):
         # self.valves['C'].owner = '129.138.12.135'
         # self.valves['X'].owner = '129.138.12.135'
 
-        vs = [(v.name.split('-')[1], v.owner) for v in self.switches.itervalues()]
+        vs = [(v.name.split('-')[1], v.owner) for v in self.switches.values()]
         key = lambda x: x[1]
         vs = sorted(vs, key=key)
 
         owners = []
         for owner, valves in groupby(vs, key=key):
-            valves, _ = zip(*valves)
+            valves, _ = list(zip(*valves))
             v = ','.join(valves)
             if owner:
                 t = '{}-{}'.format(owner, v)
@@ -198,12 +202,12 @@ class SwitchManager(Manager):
         return ':'.join(owners)
 
     def get_locked(self):
-        return [v.name for v in self.switches.itervalues() if v.software_lock and not v.ignore_lock_warning]
+        return [v.name for v in self.switches.values() if v.software_lock and not v.ignore_lock_warning]
 
     @add_checksum
     def get_software_locks(self):
         return ','.join(['{}{}'.format(k, int(v.software_lock))
-                         for k, v in self.switches.iteritems()])
+                         for k, v in self.switches.items()])
 
     @add_checksum
     def get_states(self, query=False, timeout=0.25):
@@ -224,7 +228,7 @@ class SwitchManager(Manager):
             clear_prev_keys = True
             prev_keys = self._prev_keys
 
-        for k, v in self.switches.iteritems():
+        for k, v in six.iteritems(self.switches):
             '''
                 querying a lot of valves can add up hence timeout.
                 
@@ -267,7 +271,7 @@ class SwitchManager(Manager):
             return self.switches[n]
         elif globalv.valve_debug:
             self.debug('Invalid switch name {}'.format(n))
-            self.debug(','.join(self.switches.keys()))
+            self.debug(','.join(list(self.switches.keys())))
 
     def get_name_by_address(self, k):
         """
@@ -472,7 +476,7 @@ class SwitchManager(Manager):
         return state
 
     def _get_valve_by(self, a, attr):
-        return next((valve for valve in self.switches.itervalues() if getattr(valve, attr) == a), None)
+        return next((valve for valve in self.switches.values() if getattr(valve, attr) == a), None)
 
     def _validate_checksum(self, word):
         if word is not None:
@@ -503,7 +507,7 @@ class SwitchManager(Manager):
                         d[key] = bool(int(state))
 
                 else:
-                    for i in xrange(0, len(word), 2):
+                    for i in range(0, len(word), 2):
                         packet = word[i:i + 2]
                         try:
                             key, state = packet[0], packet[1]
@@ -528,7 +532,7 @@ class SwitchManager(Manager):
         self.debug('load hardware states')
         update = False
         states = []
-        for k, v in self.switches.iteritems():
+        for k, v in six.iteritems(self.switches):
             if v.query_state:
                 ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
@@ -549,7 +553,7 @@ class SwitchManager(Manager):
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         update = False
-        for k, v in self.switches.iteritems():
+        for k, v in six.iteritems(self.switches):
             ostate = v.state
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
@@ -571,7 +575,7 @@ class SwitchManager(Manager):
                 except PickleError:
                     return
 
-                for k, s in self.switches.iteritems():
+                for k, s in six.iteritems(self.switches):
                     if k in ms:
                         s.state = ms[k]
 
@@ -597,14 +601,14 @@ class SwitchManager(Manager):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
         self.info('saving manual states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.state for k, v in self.switches.iteritems() if isinstance(v, ManualSwitch)}
+            obj = {k: v.state for k, v in six.iteritems(self.switches) if isinstance(v, ManualSwitch)}
             pickle.dump(obj, f)
 
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.software_lock for k, v in self.switches.iteritems()}
+            obj = {k: v.software_lock for k, v in six.iteritems(self.switches)}
             # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)

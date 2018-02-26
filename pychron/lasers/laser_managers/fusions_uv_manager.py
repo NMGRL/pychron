@@ -16,12 +16,14 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from threading import Thread
 
 from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
-from fusions_laser_manager import FusionsLaserManager
+from .fusions_laser_manager import FusionsLaserManager
 from pychron.core.geometry.geometry import calc_point_along_line
 from pychron.hardware.fusions.atl_laser_control_unit import ATLLaserControlUnit
 from pychron.hardware.fusions.fusions_uv_logic_board import FusionsUVLogicBoard
@@ -154,7 +156,7 @@ class FusionsUVManager(FusionsLaserManager):
         smap = sm.stage_map
         poly = smap.get_polygon(name)
 
-        print poly
+        print(poly)
         sm._move_polygon(poly['points'], velocity=poly['velocity'],
                          motors=poly['motors'],
                          use_outline=poly['use_outline'],

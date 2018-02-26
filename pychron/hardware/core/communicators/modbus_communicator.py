@@ -18,13 +18,16 @@
 
 # =============enthought library imports=======================
 # =============standard library imports =======================
+from __future__ import absolute_import
 import binascii
 import struct
 
 # =============local library imports  =========================
 from pychron.hardware.core.exceptions import CRCError
-from serial_communicator import SerialCommunicator
+from .serial_communicator import SerialCommunicator
 from pychron.hardware.core.checksum_helper import computeCRC
+from six.moves import map
+from six.moves import range
 
 
 class ModbusCommunicator(SerialCommunicator):
@@ -65,7 +68,7 @@ class ModbusCommunicator(SerialCommunicator):
     def read(self, register, response_type='float', nregisters=1, **kw):
         '''
         '''
-        if not kw.has_key('nbytes'):
+        if 'nbytes' not in kw:
             if response_type == 'int':
                 kw['nbytes'] = 7
             elif response_type == 'float':
@@ -100,7 +103,7 @@ class ModbusCommunicator(SerialCommunicator):
     def _parse_hexstr(self, hexstr, return_type='hex'):
         '''
         '''
-        gen = range(0, len(hexstr), 2)
+        gen = list(range(0, len(hexstr), 2))
         if return_type == 'int':
             return [int(hexstr[i:i + 2], 16) for i in gen]
         else:

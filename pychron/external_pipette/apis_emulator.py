@@ -1,4 +1,5 @@
-from SocketServer import BaseRequestHandler
+from __future__ import absolute_import
+from six.moves.socketserver import BaseRequestHandler
 
 __author__ = 'ross'
 

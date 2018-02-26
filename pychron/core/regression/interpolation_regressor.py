@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import where, polyval, polyfit
 # ============= enthought library imports =======================
 from traits.api import Str

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int, Str, Property
 from traitsui.api import View, Item, VGroup
@@ -66,7 +67,7 @@ class GeneralPreferencesPane(PreferencesPane):
         #                    Item('multi_user', label='Multi User'),
         #                    label='Login', show_border=True)
 
-        o_grp = VGroup(Item('organization', label='Name'),
+        o_grp = VGroup(Item('organization', resizable=True, label='Name'),
                        remote_status_item('Laboratory Repo'),
                        show_border=True,
                        label='Organization')
@@ -75,7 +76,7 @@ class GeneralPreferencesPane(PreferencesPane):
                              tooltip='Ask user for confirmation when quitting application'),
                         Item('show_random_tip', label='Random Tip',
                              tooltip='Display a Random Tip whe the application starts'),
-                        Item('default_principal_investigator', label='Default PI'),
+                        Item('default_principal_investigator', resizable=True, label='Default PI'),
                         # Item('use_advanced_ui', label='Advanced UI',
                         #      tooltip='Display the advanced UI'),
                         # root_grp,

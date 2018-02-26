@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from traits.trait_types import List
 # ============= standard library imports ========================

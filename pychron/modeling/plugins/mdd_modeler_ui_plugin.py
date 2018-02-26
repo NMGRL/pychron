@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import  on_trait_change
 # ============= standard library imports ========================
 
@@ -32,19 +33,19 @@ class MDDModelerUIPlugin(CoreUIPlugin):
 #
 #        elm = self.application.get_service(EL_PROTOCOL)
 #        bind_preference(elm, 'managers', 'pychron.extraction_line')
-        from mdd_preferences_page import MDDPreferencesPage
+        from .mdd_preferences_page import MDDPreferencesPage
         return [MDDPreferencesPage]
 
     def _action_sets_default(self):
         '''
         '''
-        from mdd_modeler_action_set import MDDModelerActionSet
+        from .mdd_modeler_action_set import MDDModelerActionSet
         return [MDDModelerActionSet]
 
     def _perspectives_default(self):
         '''
         '''
-        from mdd_modeler_perspective import MDDModelerPerspective
+        from .mdd_modeler_perspective import MDDModelerPerspective
         p = [MDDModelerPerspective]
         return p
 
@@ -65,7 +66,7 @@ class MDDModelerUIPlugin(CoreUIPlugin):
         return rv
 
     def _create_process_view(self, **kw):
-        from process_view import ProcessView
+        from .process_view import ProcessView
         obj = ProcessView()
         manager = self._get_manager()
         if manager is not None:
@@ -82,7 +83,7 @@ class MDDModelerUIPlugin(CoreUIPlugin):
         return self.traitsuiview_factory(args, kw)
 
     def _create_summary_view(self, **kw):
-        from summary_view import SummaryView
+        from .summary_view import SummaryView
         obj = SummaryView()
         obj._build_summary()
         manager = self._get_manager()
@@ -99,7 +100,7 @@ class MDDModelerUIPlugin(CoreUIPlugin):
         return self.traitsuiview_factory(args, kw)
 
     def _create_notes_view(self, **kw):
-        from notes_view import NotesView
+        from .notes_view import NotesView
         obj = NotesView()
         manager = self._get_manager()
         if manager is not None:
@@ -112,7 +113,7 @@ class MDDModelerUIPlugin(CoreUIPlugin):
         return self.traitsuiview_factory(args, kw)
 
     def _create_info_view(self, **kw):
-        from info_view import InfoView
+        from .info_view import InfoView
         obj = InfoView()
         manager = self._get_manager()
         if manager is not None:

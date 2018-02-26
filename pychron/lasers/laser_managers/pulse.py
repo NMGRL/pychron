@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Any, Instance, Float, Event, \
     Property, Bool, on_trait_change
 from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup, Spring, UItem, RangeEditor

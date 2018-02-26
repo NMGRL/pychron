@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 import apptools.sweet_pickle as pickle
@@ -119,7 +121,7 @@ class OptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            with open(self.selected_options_path, 'w') as wfile:
+            with open(self.selected_options_path, 'wb') as wfile:
                 pickle.dump(self.selected, wfile)
 
     def save(self, name=None, obj=None):
@@ -131,7 +133,7 @@ class OptionsManager(Loggable):
                 obj = self.selected_options
                 name = self.selected
 
-        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'w') as wfile:
+        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
             pickle.dump(obj, wfile)
 
     def add(self, name):
@@ -177,7 +179,7 @@ class OptionsManager(Loggable):
         p = self.selected_options_path
         n = 'Default'
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     n = pickle.load(rfile)
                 except (pickle.PickleError, EOFError):
@@ -212,7 +214,7 @@ class OptionsManager(Loggable):
             p = os.path.join(self.persistence_root, '{}.p'.format(new.lower()))
             if os.path.isfile(p):
                 try:
-                    with open(p, 'r') as rfile:
+                    with open(p, 'rb') as rfile:
                         obj = pickle.load(rfile)
                 except BaseException:
                     pass
@@ -358,7 +360,7 @@ class OptionsController(Controller):
             self.model.save_selection()
 
     def controller_delete_options_changed(self, info):
-        print 'delete'
+        print('delete')
 
     def controller_add_options_changed(self, info):
         info = self.edit_traits(view=View(Item('new_name', label='Name'),

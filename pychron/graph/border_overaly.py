@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 
 # ============= standard library imports ========================

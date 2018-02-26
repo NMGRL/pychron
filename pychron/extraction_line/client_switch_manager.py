@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from socket import gethostbyname, gethostname
 
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.globals import globalv
+import six
 
 
 class ClientSwitchManager(SwitchManager):
@@ -30,7 +32,7 @@ class ClientSwitchManager(SwitchManager):
             # self.debug('Get Checksum: {}'.format(word))
             try:
                 return int(word)
-            except (ValueError, TypeError), e:
+            except (ValueError, TypeError) as e:
                 self.warning('invalid checksum "{}". error={}'.format(word, e))
 
     def load_valve_states(self, refresh=True, force_network_change=False):
@@ -39,7 +41,7 @@ class ClientSwitchManager(SwitchManager):
         # changed = False
         states = []
         if word:
-            for k, v in self.switches.iteritems():
+            for k, v in six.iteritems(self.switches):
                 try:
                     s = word[k]
                     if s != v.state or force_network_change:
@@ -54,7 +56,7 @@ class ClientSwitchManager(SwitchManager):
 
         elif force_network_change:
             # changed = True
-            for k, v in self.switches.iteritems():
+            for k, v in six.iteritems(self.switches):
                 states.append(k, v.state)
                 # self.refresh_state = (k, v.state)
                 # elm.update_valve_state(k, v.state)

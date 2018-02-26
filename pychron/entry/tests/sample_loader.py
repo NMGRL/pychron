@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 
 from pychron.core.test_helpers import get_data_dir, isotope_db_factory

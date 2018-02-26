@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import average, ones, asarray, where, ones_like
 
-from base_regressor import BaseRegressor
+from .base_regressor import BaseRegressor
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pychron_constants import SEM, MSEM
 

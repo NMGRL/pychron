@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 
 from traits.has_traits import HasTraits
@@ -70,7 +72,7 @@ class CalibrationObject(HasTraits):
             return calc_rotation(self.cx, self.cy, a, b)
 
         if sense == 'west':
-            print 'x={}, y={}, cx={}, cy={}'.format(x, y, self.cx, self.cy)
+            print('x={}, y={}, cx={}, cy={}'.format(x, y, self.cx, self.cy))
             if y > self.cy:
                 rot = calc_rotation(self.cx, self.cy, x, y) - 180
             else:

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Enum, Int, Float, Str
 from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
@@ -23,6 +24,7 @@ from chaco.default_colormaps import hot
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
+from six.moves import range
 
 
 def outward_square_spiral(base):
@@ -31,7 +33,7 @@ def outward_square_spiral(base):
         b = base
         prevx, prevy = b, 0
         while 1:
-            for cnt in xrange(4):
+            for cnt in range(4):
                 if cnt == 0:
                     x, y = b, prevy
                 elif cnt == 1:

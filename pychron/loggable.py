@@ -16,6 +16,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Any, String
 
 # ============= standard library imports ========================
@@ -25,6 +26,7 @@ from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
 from threading import current_thread
+from six.moves import map
 
 # from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
 # from pychron.core.ui.gui import invoke_in_main_thread
@@ -192,9 +194,9 @@ class Loggable(HasTraits):
             self.logger = new_logger(name)
             __gloggers__[name] = self.logger
 
-        c = color_name_gen.next()
+        c = next(color_name_gen)
         if c in ['gray', 'silver', 'greenyellow']:
-            c = color_name_gen.next()
+            c = next(color_name_gen)
         self.logcolor = c
 
     def _log_(self, func, msg):

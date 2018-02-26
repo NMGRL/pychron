@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.file_dialog import FileDialog
 from traits.api import List, Any, Event, Bool
 
@@ -60,8 +61,7 @@ class BaseTableEditor(BaseTraitsEditor):
         return self._clean_items()
 
     def _clean_items(self):
-        return filter(lambda x: not isinstance(x, (TableBlank, TableSeparator)),
-                      self.items)
+        return [x for x in self.items if not isinstance(x, (TableBlank, TableSeparator))]
 
     def _get_save_path(self, path, ext='.pdf'):
         if path is None:

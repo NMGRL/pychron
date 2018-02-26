@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from functools import partial
 
 # ============= local library imports  ==========================
@@ -35,7 +36,7 @@ class memoized(object):
         except AttributeError:
             cache = obj.__cache = {}
 
-        key = (self.func, args[1:], frozenset(kw.items()))[0]
+        key = (self.func, args[1:], frozenset(list(kw.items())))[0]
 
         try:
             res = cache[key]

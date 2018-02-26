@@ -21,6 +21,8 @@ add a path verification function
 make sure directory exists and build if not
 """
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pickle
 import shutil
@@ -36,7 +38,7 @@ def get_file_text(d):
     try:
         mod = __import__('pychron.file_defaults', fromlist=[d])
         txt = getattr(mod, d)
-    except BaseException, e:
+    except BaseException as e:
         pass
     return txt
 
@@ -163,6 +165,7 @@ class Paths(object):
     # data
     # ==============================================================================
     data_dir = None
+    csv_data_dir = None
     report_dir = None
     modeling_data_dir = None
     argus_data_dir = None
@@ -386,6 +389,7 @@ class Paths(object):
         # data
         # ==============================================================================
         self.data_dir = data_dir = join(root, 'data')
+        self.csv_data_dir = join(data_dir, 'csv')
         self.report_dir = join(data_dir, 'reports')
         self.spectrometer_scans_dir = join(data_dir, 'spectrometer_scans')
         self.furnace_scans_dir = join(data_dir, 'furnace_scans')
@@ -540,8 +544,8 @@ class Paths(object):
             if p is not None:
                 try:
                     p = getattr(paths, p)
-                except AttributeError, e:
-                    print 'write_file_defaults', e
+                except AttributeError as e:
+                    print('write_file_defaults', e)
 
             self._write_default_file(p, txt, o or force)
 
@@ -607,7 +611,7 @@ def migrate_hidden():
                 src = os.path.join(root, f)
                 dst = os.path.join(droot, f)
                 if not os.path.isfile(dst):
-                    print 'moving {} to {}'.format(src, dst)
+                    print('moving {} to {}'.format(src, dst))
                     shutil.move(src, dst)
 
 

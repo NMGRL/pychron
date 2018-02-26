@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ConfigParser
+from __future__ import absolute_import
+import six.moves.configparser
 import os
 
 from traits.api import Any
@@ -84,7 +85,7 @@ class RelativeDetectorPositions(SpectrometerTask):
             else:
                 self.info('finished calculating relative detector positions')
 
-                config = ConfigParser.ConfigParser()
+                config = six.moves.configparser.ConfigParser()
                 p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
                 config.read(p)
                 for name, rp in rps:
