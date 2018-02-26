@@ -330,7 +330,10 @@ class PatternExecutor(Patternable):
         self.debug('dwell duration {}'.format(duration))
 
         if pattern.kind == 'DragonFlyPeakPattern':
-            self._dragonfly_peak(st, pattern, lm, controller)
+            try:
+                self._dragonfly_peak(st, pattern, lm, controller)
+            except BaseException as e:
+                self.critical('Dragonfly exception. {}'.format(e))
         else:
             self._hill_climber(st, controller, pattern)
 

@@ -134,12 +134,17 @@ class LumenDetector(Locator):
         if pts.shape[0]:
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
-            x, y = average(pts, axis=0, weights=intensities)
-            if pt is None:
-                pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
-                px, py = x, y
 
-            peak_img[circle(y, x, min_distance)] = 255
+            try:
+                x, y = average(pts, axis=0, weights=intensities)
+                if pt is None:
+                    pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
+                    px, py = x, y
+
+                peak_img[circle(y, x, min_distance)] = 255
+
+            except ZeroDivisionError:
+                pass
 
         sat = lum.sum() / (area * pixel_depth)
         return pt, px, py, peak_img, sat, src

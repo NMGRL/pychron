@@ -50,11 +50,11 @@ class LaserStageMap(BaseStageMap):
         previous = []
         p = self.center_guess_path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 previous = [l if l[0] == '#' else '#{}'.format(l) for l in rfile.readlines()]
 
         previous.append('{},{}\n'.format(x, y))
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             wfile.writelines(previous)
 
     def load_correction_file(self):
@@ -65,7 +65,7 @@ class LaserStageMap(BaseStageMap):
             with open(p, 'rb') as f:
                 try:
                     cors = pickle.load(f)
-                except (ValueError, pickle.PickleError) as e:
+                except (ValueError, pickle.PickleError, EOFError) as e:
                     self.warning_dialog('Failed to load the correction file:\n{}\n'
                                         'If you are relying on SemiAuto or Auto calibration a '
                                         'recalibration is required'.format(p))
