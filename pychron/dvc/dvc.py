@@ -1018,11 +1018,11 @@ class DVC(Loggable):
             db.add_sample(name, project, pi, material, grainsize, note=note, **kw)
         return added
 
-    def add_principal_investigator(self, name):
+    def add_principal_investigator(self, name, **kw):
         added = False
         db = self.db
         if not db.get_principal_investigator(name):
-            db.add_principal_investigator(name)
+            db.add_principal_investigator(name, **kw)
             added = True
         return added
 

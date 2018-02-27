@@ -23,6 +23,8 @@ import yaml
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List, Float, BaseFloat
 from traitsui.api import View, UItem, Item, VGroup
+
+from pychron.core.pychron_traits import EmailStr
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 
@@ -58,18 +60,24 @@ class PIStr(String):
 
 class LatFloat(BaseFloat):
     def validate(self, obj, name, value):
-        if value > 90 or value < -90:
+        if not isinstance(value, (float, int)):
             return self.error(obj, name, value)
         else:
-            return value
+            if value > 90 or value < -90:
+                return self.error(obj, name, value)
+            else:
+                return value
 
 
 class LonFloat(BaseFloat):
     def validate(self, obj, name, value):
-        if value > 180 or value < -180:
+        if not isinstance(value, (float, int)):
             return self.error(obj, name, value)
         else:
-            return value
+            if value > 180 or value < -180:
+                return self.error(obj, name, value)
+            else:
+                return value
 
 
 class ProjectStr(String):
@@ -82,13 +90,20 @@ class Spec(HasTraits):
 
 
 class PISpec(Spec):
+    affiliation = Str
+    email = EmailStr
+
     def todump(self):
-        return {'name': str(self.name)}
+        return {'name': str(self.name),
+                'affiliation': str(self.affiliation),
+                'email': str(self.email)}
 
     @classmethod
     def fromdump(cls, d):
         obj = cls()
         obj.name = d['name']
+        obj.email = d.get('email', '')
+        obj.affiliation = d.get('affiliation', '')
         return obj
 
 
@@ -139,11 +154,13 @@ class SampleSpec(Spec):
     lat = Float
     lon = Float
     igsn = Str
+    lithology = Str
 
     def todump(self):
         return {'name': str(self.name), 'project': self.project.todump(),
                 'lat': self.lat, 'lon': self.lon,
                 'igsn': self.igsn,
+                'lithology': self.lithology,
                 'material': self.material.todump(),
                 'note': self.note}
 
@@ -179,6 +196,9 @@ class SampleSpec(Spec):
 class SampleEntry(DVCAble):
     principal_investigator = PIStr(enter_set=True, auto_set=False)
     principal_investigators = Property(depends_on='refresh_pis')
+    email = EmailStr
+    affiliation = Str
+
     refresh_pis = Event
 
     project = ProjectStr(enter_set=True, auto_set=False)
@@ -197,8 +217,10 @@ class SampleEntry(DVCAble):
     lat = LatFloat
     lon = LonFloat
     igsn = Str
+    lithology = Str
 
     configure_sample_button = Button
+    configure_pi_button = Button
     add_principal_investigator_button = Button
     add_project_button = Button
     add_sample_button = Button
@@ -236,11 +258,11 @@ class SampleEntry(DVCAble):
         self.refresh_materials = True
         self.refresh_projects = True
         self.refresh_grainsizes = True
-        self.dvc.create_session()
+        # self.dvc.create_session()
 
     def prepare_destroy(self):
         self._backup()
-        self.dvc.close_session()
+        # self.dvc.close_session()
 
     def clear(self):
         if self.selected_principal_investigators:
@@ -317,7 +339,7 @@ class SampleEntry(DVCAble):
         dvc = self.dvc
         with dvc.session_ctx(use_parent_session=False):
             for p in self._principal_investigators:
-                if dvc.add_principal_investigator(p.name):
+                if dvc.add_principal_investigator(p.name, email=p.email, affiliation=p.affiliation):
                     p.added = True
                     dvc.commit()
 
@@ -368,13 +390,20 @@ class SampleEntry(DVCAble):
 
         self.refresh_table = True
 
+    def _principal_investigator_factory(self):
+        p = PISpec(name=self.principal_investigator,
+                   email=self.email,
+                   affiliation=self.affiliation)
+
+        self._principal_investigators.append(p)
+        return p
+
     def _get_principal_investigator_spec(self):
         for p in self._principal_investigators:
             if p.name == self.principal_investigator:
                 return p
         else:
-            p = PISpec(name=self.principal_investigator)
-            self._principal_investigators.append(p)
+            p = self._principal_investigator_factory()
             return p
 
     def _get_project_spec(self):
@@ -413,12 +442,23 @@ class SampleEntry(DVCAble):
                 return m
 
     # handlers
+    def _configure_pi_button_fired(self):
+        v = View(VGroup(VGroup(UItem('principal_investigator'),
+                               label='Name', show_border=True),
+                        VGroup(Item('affiliation', label='Affiliation'),
+                               Item('email', label='Email'),
+                               label='Optional', show_border=True)),
+                 kind='livemodal', title='Set Principal Investigator Attributes',
+                 buttons=['OK', 'Cancel'])
+        self.edit_traits(view=v)
+
     def _configure_sample_button_fired(self):
         v = View(VGroup(VGroup(UItem('sample'),
                                label='Name', show_border=True),
                         VGroup(Item('lat', label='Latitude'),
                                Item('lon', label='Longitude'),
-                               label='Location', show_border=True)),
+                               label='Location', show_border=True),
+                        VGroup(Item('lithology'), show_border=True)),
                  kind='livemodal', title='Set Sample Attributes',
                  buttons=['OK', 'Cancel'])
         self.edit_traits(view=v)
@@ -481,7 +521,7 @@ class SampleEntry(DVCAble):
                 if p.name == self.principal_investigator:
                     break
             else:
-                self._principal_investigators.append(PISpec(name=self.principal_investigator))
+                self._principal_investigator_factory()
                 self._backup()
 
     def _generate_project_button_fired(self):
