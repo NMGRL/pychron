@@ -679,7 +679,6 @@ class MetaRepo(GitRepoManager):
         standard_name, standard_material, standard_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
         # positions = self._get_level_positions(irradiation, level)
         if positions:
-            print('poss', positions)
             pos = next((p for p in positions if p['position'] == position), None)
             if pos:
                 j, je = pos.get('j', 0), pos.get('j_err', 0)
