@@ -711,15 +711,15 @@ class DVCDatabase(DatabaseAdapter):
                 dblevel = self._add_item(a)
             return dblevel
 
-    def add_principal_investigator(self, name):
+    def add_principal_investigator(self, name, **kw):
         with self.session_ctx():
             pi = self.get_principal_investigator(name)
             if pi is None:
                 if ',' in name:
                     last_name, fi = name.split(',')
-                    pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip())
+                    pi = PrincipalInvestigatorTbl(last_name=last_name.strip(), first_initial=fi.strip(), **kw)
                 else:
-                    pi = PrincipalInvestigatorTbl(last_name=name)
+                    pi = PrincipalInvestigatorTbl(last_name=name, **kw)
                 pi = self._add_item(pi)
                 print('adding', pi)
             return pi
@@ -2103,7 +2103,7 @@ class DVCDatabase(DatabaseAdapter):
             if isinstance(order, str):
                 order = getattr(tbl.name, order)()
 
-            ret = None
+            ret = []
             names = self._retrieve_items(tbl, order=order, distinct_=use_distinct, **kw)
             if names:
                 if use_distinct:

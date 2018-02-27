@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from cStringIO import StringIO
+from io import StringIO
 from datetime import datetime
 
 import pytz

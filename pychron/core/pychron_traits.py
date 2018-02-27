@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import BaseStr, Int
+from traits.api import BaseStr, Int, String
 # ============= standard library imports ========================
 import re
 # ============= local library imports  ==========================
@@ -50,5 +50,12 @@ class FilterPredicate(BaseStr):
 
     def _validate(self, value):
         return validate_filter_predicate(value)
+
+
+EMAIL_REGEX = re.compile(r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)')
+
+
+class EmailStr(String):
+    regex = EMAIL_REGEX
 
 # ============= EOF =============================================

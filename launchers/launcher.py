@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import os
 from helpers import entry_point
 
-appname = os.environ.get('PYCHRON_APPNAME', 'pyexperiment')
+appname = os.environ.get('PYCHRON_APPNAME', 'pysampleprep')
 debug = os.environ.get('PYCHRON_DEBUG', False)
 
 entry_point(appname, debug=debug)

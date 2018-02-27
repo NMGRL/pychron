@@ -36,6 +36,7 @@ class BaseAdapter(TabularAdapter):
     added_image = Property
     added_text = Property
     added_width = Int(50)
+    name_width = Int(200)
 
     def _get_added_text(self):
         return ''
@@ -45,7 +46,9 @@ class BaseAdapter(TabularAdapter):
 
 
 class PIAdapter(BaseAdapter):
-    pass
+    columns = [('Added', 'added'), ('Name', 'name'), ('Affiliation', 'affiliation'), ('Email', 'email')]
+    email_width = Int(100)
+    affiliation_width = Int(200)
 
 
 class MaterialAdapter(BaseAdapter):
@@ -57,6 +60,10 @@ class ProjectAdapter(BaseAdapter):
                ('Contact', 'lab_contact'), ('Institution', 'institution'), ('Comment', 'comment')]
     principal_investigator_text = Property
 
+    lab_contact_width = Int(100)
+    institution_width = Int(100)
+    principal_investigator_width = Int(100)
+
     def _get_principal_investigator_text(self):
         return self.item.principal_investigator.name
 
@@ -67,6 +74,10 @@ class SampleAdapter(ProjectAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize'),
                ('PI', 'principal_investigator')]
+
+    project_width = Int(100)
+    material_width = Int(100)
+    grainsize_width = Int(100)
 
     project_text = Property
     material_text = Property
@@ -137,9 +148,13 @@ class SampleEditorPane(TraitsDockPane):
         pigrp = HGroup(UItem('principal_investigator',
                              editor=ComboboxEditor(name='principal_investigators',
                                                    use_filter=False)),
+                       icon_button_editor('configure_pi_button', 'cog',
+                                          tooltip='Set optional values for Principal Investigator'),
+
                        icon_button_editor('add_principal_investigator_button', 'add',
                                           enabled_when='principal_investigator',
                                           tooltip='Add a principal investigator'),
+
                        label='PrincipalInvestigator',
                        show_border=True)
 
