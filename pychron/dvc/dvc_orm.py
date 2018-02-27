@@ -121,7 +121,7 @@ class AnalysisTbl(Base, BaseMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-    simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
+    # simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
