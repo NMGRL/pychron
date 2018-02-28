@@ -17,12 +17,14 @@ from __future__ import absolute_import
 from __future__ import print_function
 import re
 
-from traits.api import HasTraits, Instance, List, Str, Long
-from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Controller
+from traits.api import HasTraits, Instance, List, Str, Long, Float
+from traitsui.api import View, UItem, Item, VGroup, TableEditor, EnumEditor, Controller, HGroup
 from traitsui.menu import Action
 from traitsui.table_column import ObjectColumn
 
-EN = re.compile(r'(?P<a>\w*) \((?P<b>\w+, {0,1}\w+)\)')
+from pychron.entry.tasks.sample.sample_entry import LatFloat, LonFloat, SAMPLE_ATTRS
+
+EN = re.compile(r'(?P<a>[\w\W]+) \((?P<b>[\w\W]+, ?[\w\W]+)\)')
 
 
 def extract_names(s):
@@ -49,26 +51,54 @@ class SampleEditItem(HasTraits):
     id = Long
     note = Str
 
+    lat = LatFloat
+    lon = LonFloat
+    igsn = Str
+    lithology = Str
+    location = Str
+    storage_location = Str
+    approximate_age = Float
+    elevation = Float
+
     _projects = List
     _materials = List
 
     _project = Str
     _material = Str
     _note = Str
+    _lat = LatFloat
+    _lon = LonFloat
+    _igsn = Str
+    _lithology = Str
+    _location = Str
+    _storage_location = Str
+    _approximate_age = Float
+    _elevation = Float
 
     def __init__(self, rec, *args, **kw):
         super(SampleEditItem, self).__init__(*args, **kw)
         self.id = rec.id
 
         self.name = self._name = rec.name
-        self.note = self._note = rec.note or ''
+        # self.note = self._note = rec.note or ''
 
         self.project = self._project = rec.project.pname if rec.project else ''
         self.material = self._material = rec.material.gname if rec.material else ''
+        # self.project_name = rec.project.name
+        # self.principal_investigator = rec.project.principal_investigator
+        for attr in SAMPLE_ATTRS:
+            v = getattr(rec, attr)
+            if v is not None:
+                try:
+                    setattr(self, attr, v)
+                    setattr(self, '_{}'.format(attr), v)
+                except ValueError:
+                    pass
 
     @property
     def altered(self):
-        attrs = 'name', 'project', 'material', 'note'
+        attrs = ('name', 'project', 'material') + SAMPLE_ATTRS
+
         return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
 
     @property
@@ -97,9 +127,13 @@ class SampleEditModel(HasTraits):
             if si.altered:
                 dbsam = db.get_sample_id(si.id)
                 dbsam.name = si.name
-                dbsam.note = si.note
-                print(extract_names(si.project), si.project)
-                dbproj = db.get_project(*extract_names(si.project))
+                # dbsam.note = si.note
+                # dbsam.lat = si.lat
+                for attr in SAMPLE_ATTRS:
+                    setattr(dbsam, attr, getattr(si, attr))
+
+                print('a', si.project_pi, 'b', si.project)
+                dbproj = db.get_project(*si.project_pi)
                 if dbproj:
                     dbsam.projectID = dbproj.id
 
@@ -133,6 +167,15 @@ class SampleEditView(Controller):
         vv = View(VGroup(Item('name', label='Sample Name'),
                          Item('project', editor=EnumEditor(name='_projects')),
                          Item('material', editor=EnumEditor(name='_materials')),
+                         HGroup(VGroup(Item('lat', label='Latitude'),
+                                Item('lon', label='Longitude'),
+                                Item('location'),
+                                Item('elevation'),
+                                label='Location', show_border=True),
+                         VGroup(Item('lithology'),
+                                Item('approximate_age', label='Approx. Age (Ma)'),
+                                Item('storage_location'),
+                                show_border=True)),
                          VGroup(UItem('note', style='custom'), show_border=True, label='Note')))
 
         cols = [ObjectColumn(name='id', editable=False, text_font='arial 10'),
