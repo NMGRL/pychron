@@ -21,16 +21,21 @@ import re
 import yaml
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
-    Button, String, Instance, List, Float, BaseFloat
-from traitsui.api import View, UItem, Item, VGroup
+    Button, String, Instance, List, Float, BaseFloat, on_trait_change
+from traitsui.api import View, UItem, Item, VGroup, HGroup
 
 from pychron.core.pychron_traits import EmailStr
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
 PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
 # MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 PROJECT_REGEX = re.compile(r'^[a-zA-Z]+[\-\d_\w]*$')
+
+SAMPLE_ATTRS = ('lat', 'lon', 'igsn', 'storage_location',
+                'lithology', 'location', 'approximate_age', 'elevation',
+                'note')
 
 
 class RString(String):
@@ -154,22 +159,22 @@ class SampleSpec(Spec):
     lat = Float
     lon = Float
     igsn = Str
+    storage_location = Str
     lithology = Str
+    location = Str
+    approximate_age = Float
+    elevation = Float
 
     def todump(self):
-        return {'name': str(self.name), 'project': self.project.todump(),
-                'lat': self.lat, 'lon': self.lon,
-                'igsn': self.igsn,
-                'lithology': self.lithology,
-                'material': self.material.todump(),
-                'note': self.note}
+        d = {'name': str(self.name), 'project': self.project.todump(),
+             'material': self.material.todump()}
+        for attr in SAMPLE_ATTRS:
+            d[attr] = getattr(self, attr)
 
     @classmethod
     def fromdump(cls, d, pps, ms):
         obj = cls()
-        obj.note = d.get('note', '')
-
-        for attr in ('name', 'lat', 'lon', 'igsn'):
+        for attr in SAMPLE_ATTRS:
             try:
                 setattr(obj, attr, d[attr])
             except KeyError:
@@ -179,17 +184,18 @@ class SampleSpec(Spec):
         pname = project['name']
         piname = project['principal_investigator']['name']
         for pp in pps:
-            print(pname, pp.name, piname, pp.principal_investigator.name)
+            # print(pname, pp.name, piname, pp.principal_investigator.name)
             if pp.name == pname and pp.principal_investigator.name == piname:
                 obj.project = pp
                 break
 
-        m = d['material']
-        mname, grainsize = m['name'], m['grainsize']
-        for mi in ms:
-            if mi.name == mname and mi.grainsize == grainsize:
-                obj.material = mi
-                break
+            m = d['material']
+            mname, grainsize = m['name'], m['grainsize']
+            for mi in ms:
+                if mi.name == mname and mi.grainsize == grainsize:
+                    obj.material = mi
+                    break
+
         return obj
 
 
@@ -218,7 +224,12 @@ class SampleEntry(DVCAble):
     lon = LonFloat
     igsn = Str
     lithology = Str
+    location = Str
+    storage_location = Str
+    approximate_age = Float
+    elevation = Float
 
+    clear_sample_attributes_button = Button
     configure_sample_button = Button
     configure_pi_button = Button
     add_principal_investigator_button = Button
@@ -243,6 +254,11 @@ class SampleEntry(DVCAble):
 
     refresh_table = Event
 
+    db_samples = List
+    sample_filter = Str(enter_set=True, auto_set=False)
+    sample_filter_attr = Str
+    sample_filter_attrs = List(('name', 'project', 'material', 'principal_investigator')+SAMPLE_ATTRS)
+
     _samples = List
     _projects = List
     _materials = List
@@ -252,17 +268,18 @@ class SampleEntry(DVCAble):
     selected_samples = List
     selected_projects = List
     selected_principal_investigators = List
+    selected_materials = List
 
     def activated(self):
         self.refresh_pis = True
         self.refresh_materials = True
         self.refresh_projects = True
         self.refresh_grainsizes = True
-        # self.dvc.create_session()
+        self.dvc.create_session()
 
     def prepare_destroy(self):
         self._backup()
-        # self.dvc.close_session()
+        self.dvc.close_session()
 
     def clear(self):
         if self.selected_principal_investigators:
@@ -280,15 +297,32 @@ class SampleEntry(DVCAble):
         if self.selected_projects:
             for p in self.selected_projects:
                 if not p.added:
-                    self._projects.remove(p)
+                    try:
+                        self._projects.remove(p)
+                    except ValueError:
+                        pass
 
             self._samples = [s for s in self._samples if s.project not in self.selected_projects]
             self.selected_projects = []
 
+        if self.selected_materials:
+            for mi in self.selected_materials:
+                if not mi.added:
+                    try:
+                        self._materials.remove(mi)
+                    except ValueError:
+                        pass
+
+            self._samples = [s for s in self._samples if s.material not in self.selected_materials]
+            self.selected_materials = []
+
         if self.selected_samples:
             for ri in self.selected_samples:
                 if not ri.added:
-                    self._samples.remove(ri)
+                    try:
+                        self._samples.remove(ri)
+                    except ValueError:
+                        pass
 
             self.selected_samples = []
 
@@ -299,11 +333,12 @@ class SampleEntry(DVCAble):
     def load(self, p):
         with open(p, 'r') as rfile:
             obj = yaml.load(rfile)
-            self._principal_investigators = ps = [PISpec.fromdump(p) for p in obj['principal_investigators']]
-            self._materials = ms = [MaterialSpec.fromdump(p) for p in obj['materials']]
+            self._principal_investigators = ps = [PISpec.fromdump(p) for p in obj['principal_investigators'] if
+                                                  p is not None]
+            self._materials = ms = [MaterialSpec.fromdump(p) for p in obj['materials'] if p is not None]
 
-            self._projects = pps = [ProjectSpec.fromdump(p, ps) for p in obj['projects']]
-            self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj['samples']]
+            self._projects = pps = [ProjectSpec.fromdump(p, ps) for p in obj['projects'] if p is not None]
+            self._samples = [SampleSpec.fromdump(p, pps, ms) for p in obj['samples'] if p is not None]
 
     def dump(self, p):
         """
@@ -317,6 +352,12 @@ class SampleEntry(DVCAble):
                 yaml.dump(obj, wfile)
 
     # private
+    @on_trait_change('sample_filter_attr, sample_filter')
+    def _handle_sample_filter(self):
+        if self.sample_filter:
+            sams = self.dvc.get_samples_filter(self.sample_filter_attr, self.sample_filter)
+            self.db_samples = sams
+
     def _backup(self):
         p = os.path.join(paths.sample_dir, '.last.yaml')
         self.dump(p)
@@ -383,6 +424,12 @@ class SampleEntry(DVCAble):
                 if dvc.add_sample(s.name, s.project.name, s.project.principal_investigator.name,
                                   s.material.name,
                                   s.material.grainsize or None,
+                                  igsn=s.igsn,
+                                  storage_location=s.storage_location,
+                                  lithology=s.lithology,
+                                  location=s.location,
+                                  approximate_age=s.approximate_age,
+                                  elevation=s.elevation,
                                   lat=s.lat, lon=s.lon,
                                   note=s.note):
                     s.added = True
@@ -442,6 +489,17 @@ class SampleEntry(DVCAble):
                 return m
 
     # handlers
+    def _clear_sample_attributes_button_fired(self):
+        self.storage_location = ''
+        self.lithology = ''
+        self.lat = 0
+        self.lon = 0
+        self.location = ''
+        self.elevation = 0
+        self.igsn = ''
+        self.note = ''
+        self.approximate_age = 0
+
     def _configure_pi_button_fired(self):
         v = View(VGroup(VGroup(UItem('principal_investigator'),
                                label='Name', show_border=True),
@@ -453,12 +511,19 @@ class SampleEntry(DVCAble):
         self.edit_traits(view=v)
 
     def _configure_sample_button_fired(self):
-        v = View(VGroup(VGroup(UItem('sample'),
+        v = View(VGroup(HGroup(icon_button_editor('clear_sample_attributes_button', 'clear')),
+                        VGroup(UItem('sample'),
                                label='Name', show_border=True),
                         VGroup(Item('lat', label='Latitude'),
                                Item('lon', label='Longitude'),
+                               Item('location'),
+                               Item('elevation'),
                                label='Location', show_border=True),
-                        VGroup(Item('lithology'), show_border=True)),
+                        VGroup(Item('lithology'),
+                               Item('approximate_age', label='Approx. Age (Ma)'),
+                               Item('storage_location'),
+                               show_border=True),
+                        ),
                  kind='livemodal', title='Set Sample Attributes',
                  buttons=['OK', 'Cancel'])
         self.edit_traits(view=v)

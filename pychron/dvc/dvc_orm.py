@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
+    DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import object_session
 from sqlalchemy.orm import relationship
@@ -332,6 +333,13 @@ class SampleTbl(Base, NameMixin):
     igsn = stringcolumn(140)
     lat = Column(Float)
     lon = Column(Float)
+    storage_location = stringcolumn(140)
+    lithology = stringcolumn(140)
+    location = stringcolumn(140)
+    approximate_age = Column(Float)
+    elevation = Column(Float)
+    create_date = Column(DateTime, default=func.now())
+    update_date = Column(DateTime, onupdate=func.now(), default=func.now())
 
     positions = relationship('IrradiationPositionTbl', backref='sample')
 

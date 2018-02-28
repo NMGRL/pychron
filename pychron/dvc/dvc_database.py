@@ -656,14 +656,13 @@ class DVCDatabase(DatabaseAdapter):
                 a = self._add_item(a)
             return a
 
-    def add_sample(self, name, project, pi, material, grainsize=None, note='',
-                   igsn='', lat=0, lon=0):
+    def add_sample(self, name, project, pi, material, grainsize=None, **kw):
         with self.session_ctx():
             ret = self.get_sample(name, project, pi, material, grainsize)
             if ret is None:
                 self.debug('Adding sample {},{},{},{}'.format(name, project, pi, material))
                 p = self.get_project(project, pi)
-                a = SampleTbl(name=name, note=note, lat=lat, lon=lon, igsn=igsn)
+                a = SampleTbl(name=name, **kw)
                 if p is not None:
                     a.project = p
                     m = self.get_material(material, grainsize)
@@ -1743,7 +1742,30 @@ class DVCDatabase(DatabaseAdapter):
             records = self._query_all(q, verbose_query=False)
             return [r[0] for r in records]
 
-    def get_samples(self, projects=None, principal_investigators=None, name_like=None, **kw):
+    def get_samples_filter(self, attr, value, **kw):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            if attr == 'project':
+                q = q.join(ProjectTbl)
+            elif attr == 'material':
+                q = q.join(MaterialTbl)
+            elif attr == 'principal_investigator':
+                q = q.join(ProjectTbl, PrincipalInvestigatorTbl)
+
+            value = '{}%'.format(value)
+            if attr == 'project':
+                q = q.filter(ProjectTbl.name.like(value))
+            elif attr == 'material':
+                q = q.filter(MaterialTbl.name.like(value))
+            elif attr == 'principal_investigator':
+                q = q.filter(PrincipalInvestigatorTbl.last_name.like(value))
+
+            else:
+                q = q.filter(getattr(SampleTbl, attr).like(value))
+
+            return self._query_all(q, **kw)
+
+    def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None, **kw):
         # if projects:
         #     if hasattr(projects, '__iter__'):
         #         kw = self._append_filters(ProjectTbl.name.in_(projects), kw)
@@ -1756,20 +1778,23 @@ class DVCDatabase(DatabaseAdapter):
         # return self._retrieve_items(SampleTbl, verbose_query=False, **kw)
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
-            if projects:
+            if projects or project_like:
                 q = q.join(ProjectTbl)
 
             if principal_investigators:
                 q = q.join(PrincipalInvestigatorTbl)
 
             if projects:
-                if hasattr(projects, '__iter__'):
+                if isinstance(projects, (list, tuple)):
                     q = q.filter(ProjectTbl.name.in_(projects))
                 else:
                     q = q.filter(ProjectTbl.name == projects)
 
+            if project_like:
+                q = q.filter(ProjectTbl.name.like('{}%'.format(project_like)))
+
             if principal_investigators:
-                if not hasattr(principal_investigators, '__iter__'):
+                if not isinstance(principal_investigators, (list, tuple)):
                     principal_investigators = (principal_investigators,)
 
                 for p in principal_investigators:

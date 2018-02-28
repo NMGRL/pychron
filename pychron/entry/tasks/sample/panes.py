@@ -68,6 +68,35 @@ class ProjectAdapter(BaseAdapter):
         return self.item.principal_investigator.name
 
 
+class DBSampleAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Project', 'project'),
+               ('Material', 'material'),
+               ('Grainsize', 'grainsize'),
+               ('PI', 'principal_investigator'),
+               ('Lat', 'lat'),
+               ('Lon', 'lon'),
+               ('Elevation', 'elevation'),
+               ('Lithology', 'lithology'),
+               ('Location', 'location')]
+    principal_investigator_text = Property
+    project_text = Property
+    material_text = Property
+    grainsize_text = Property
+
+    def _get_material_text(self):
+        return self.item.material.name
+
+    def _get_grainsize_text(self):
+        return self.item.material.grainsize
+
+    def _get_project_text(self):
+        return self.item.project.name
+
+    def _get_principal_investigator_text(self):
+        return self.item.project.principal_investigator.name
+
+
 class SampleAdapter(ProjectAdapter):
     columns = [('Added', 'added'), ('Name', 'name'),
                ('Project', 'project'),
@@ -107,6 +136,8 @@ class SampleEntryPane(TraitsTaskPane):
                      label='PrincipalInvestigators')
 
         ms = VGroup(UItem('_materials', editor=TabularEditor(adapter=MaterialAdapter(),
+                                                             multi_select=True,
+                                                             selected='selected_materials',
                                                              editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Materials')
@@ -123,7 +154,16 @@ class SampleEntryPane(TraitsTaskPane):
                                                            editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Samples')
-        return View(VGroup(pis, ps, ms, ss))
+
+        entry = VGroup(pis, ps, ms, ss, label='Entry')
+
+        current = VGroup(HGroup(UItem('sample_filter_attr',
+                                      editor=EnumEditor(name='sample_filter_attrs')),
+                                UItem('sample_filter')),
+                         UItem('db_samples', editor=TabularEditor(adapter=DBSampleAdapter(),
+                                                                  editable=False)),
+                         label='Samples')
+        return View(entry, current)
 
 
 class SampleEditorPane(TraitsDockPane):
