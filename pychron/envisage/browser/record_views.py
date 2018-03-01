@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from sqlalchemy.exc import InternalError
 from traits.api import HasTraits, Str, Date, Long, Bool
 
 from pychron.experiment.utilities.identifier import get_analysis_type
@@ -157,9 +159,13 @@ class LabnumberRecordView(RecordView):
             else:
                 dbattr = attr
             try:
-                v = getattr(sample, dbattr)
-                if v is not None:
-                    setattr(self, attr, v)
+                try:
+                    v = getattr(sample, dbattr)
+                    if v is not None:
+                        setattr(self, attr, v)
+                except InternalError:
+                    pass
+
             except AttributeError:
                 pass
 

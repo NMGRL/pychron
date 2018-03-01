@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import object_session
+from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
@@ -333,13 +333,14 @@ class SampleTbl(Base, NameMixin):
     igsn = stringcolumn(140)
     lat = Column(Float)
     lon = Column(Float)
-    storage_location = stringcolumn(140)
-    lithology = stringcolumn(140)
-    location = stringcolumn(140)
-    approximate_age = Column(Float)
-    elevation = Column(Float)
-    create_date = Column(DateTime, default=func.now())
-    update_date = Column(DateTime, onupdate=func.now(), default=func.now())
+
+    storage_location = deferred(stringcolumn(140))
+    lithology = deferred(stringcolumn(140))
+    location = deferred(stringcolumn(140))
+    approximate_age = deferred(Column(Float))
+    elevation = deferred(Column(Float))
+    create_date = deferred(Column(DateTime, default=func.now()))
+    update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
 
     positions = relationship('IrradiationPositionTbl', backref='sample')
 
