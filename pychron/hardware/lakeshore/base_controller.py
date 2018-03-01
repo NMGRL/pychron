@@ -17,6 +17,7 @@ from traits.api import Enum, Float, Property
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
+from time import sleep
 
 IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
 
@@ -70,6 +71,13 @@ class BaseLakeShoreController(CoreDevice):
             self.setpoint2 = v2
 
     def set_setpoint(self, v, output=1):
+        if v <= 10:
+            self.tell('RANGE {},{}'.format(output, 1))
+        elif 10 < v <= 30:
+            self.tell('RANGE {},{}'.format(output, 2))
+        else:
+            self.tell('RANGE {},{}'.format(output, 3))
+        sleep(1)
         self.tell('SETP {},{}'.format(output, v))
 
     def read_input(self, v, **kw):
@@ -91,5 +99,5 @@ class BaseLakeShoreController(CoreDevice):
         self.set_setpoint(self.setpoint1, 1)
 
     def _setpoint2_changed(self):
-        self.set_setpoint(2, self.setpoint2)
+        self.set_setpoint(self.setpoint2, 2)
 # ============= EOF =============================================
