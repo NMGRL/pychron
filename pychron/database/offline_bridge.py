@@ -17,6 +17,7 @@
 # set_toolkit('qt4')
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 from traits.api import Any
@@ -81,7 +82,7 @@ class BaseDatabaseBridge(Loggable):
 
             table = Table(tn, meta, autoload=True)
             nrec = quick_mapper(table)
-            columns = table.columns.keys()
+            columns = list(table.columns.keys())
 
             if verbose:
                 msg = 'Transferring records {}'.format(tn)

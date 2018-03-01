@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from itertools import groupby
 
@@ -48,6 +50,7 @@ from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactory
     InterpretedAgeFactoryModel, set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
+import six
 
 
 class DataMenu(SMenu):
@@ -73,33 +76,34 @@ class PipelineTask(BaseBrowserTask):
         #               SpectrumAction(),
         #               InverseIsochronAction()),
 
-                 SToolBar(ConfigureRecallAction()),
-                 SToolBar(RunAction(),
-                          ResumeAction(),
-                          RunFromAction(),
-                          ResetAction(),
-                          ClearAction(),
-                          # SavePipelineTemplateAction(),
-                          name='Pipeline'),
-                 SToolBar(SavePDFAction(),
-                          # SaveFigureAction(),
-                          name='Save'),
-                 SToolBar(EditAnalysisAction(),
-                          name='Edit'),
-                 SToolBar(LoadReviewStatusAction(),
-                          DiffViewAction(),
-                          name='View'),
-                 # SToolBar(GitRollbackAction(), label='Git Toolbar'),
-                 SToolBar(TagAction(),
-                          SetInvalidAction(),
-                          SetFilteringTagAction(),
-                          SetInterpretedAgeAction(),
-                          # TabularViewAction(),
-                          name='Misc')]
+        SToolBar(PipelineRecallAction(),
+                 ConfigureRecallAction()),
+        SToolBar(RunAction(),
+                 ResumeAction(),
+                 RunFromAction(),
+                 ResetAction(),
+                 ClearAction(),
+                 # SavePipelineTemplateAction(),
+                 name='Pipeline'),
+        SToolBar(SavePDFAction(),
+                 # SaveFigureAction(),
+                 name='Save'),
+        SToolBar(EditAnalysisAction(),
+                 name='Edit'),
+        SToolBar(LoadReviewStatusAction(),
+                 DiffViewAction(),
+                 name='View'),
+        # SToolBar(GitRollbackAction(), label='Git Toolbar'),
+        SToolBar(TagAction(),
+                 SetInvalidAction(),
+                 SetFilteringTagAction(),
+                 SetInterpretedAgeAction(),
+                 # TabularViewAction(),
+                 name='Misc')]
 
     state = Instance(EngineState)
-    resume_enabled = Bool(False)
-    run_enabled = Bool(True)
+    # resume_enabled = Bool(False)
+    # run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
     # run_to = None
 
@@ -109,17 +113,15 @@ class PipelineTask(BaseBrowserTask):
     diff_enabled = Bool
 
     def activated(self):
+        self.debug('activating pipeline')
         super(PipelineTask, self).activated()
-
-        if self.application.get_plugin('pychron.mass_spec.plugin'):
-            self.diff_enabled = True
 
         self.engine.dvc = self.dvc
         self.browser_model.dvc = self.dvc
+        self.browser_model.analysis_table.dvc = self.dvc
+
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
-
-        # self.engine.add_data()
 
     def _debug(self):
         self.engine.add_data()
@@ -193,6 +195,8 @@ class PipelineTask(BaseBrowserTask):
             if self._browser_info.control:
                 self._browser_info.control.raise_()
                 return
+
+        self.dvc.create_session(force=True)
 
         self.browser_model.activated()
         browser_view = BrowserView(show_append_replace_buttons=False,
@@ -348,8 +352,8 @@ class PipelineTask(BaseBrowserTask):
         self.close_all()
 
     def reset(self):
-        self.run_enabled = True
-        self.resume_enabled = False
+        self.engine.run_enabled = True
+        self.engine.resume_enabled = False
         # self._temp_state = None
         # self.state = None
         self.engine.reset()
@@ -453,21 +457,18 @@ class PipelineTask(BaseBrowserTask):
             self.run()
 
     def _set_action_template(self, name):
+        self.activated()
         self.engine.selected_pipeline_template = name
         self.run()
 
     def _make_save_figure_object(self, editor):
         po = editor.plotter_options
         plotter_options = po.to_dict()
-
-        for k, v in plotter_options.iteritems():
-            print k, v
-        obj = {}
-        obj['plotter_options'] = plotter_options
-        obj['analyses'] = [{'record_id': ai.record_id,
-                            'uuid': ai.uuid,
-                            # 'status': ai.temp_status,
-                            'group_id': ai.group_id} for ai in editor.analyses]
+        obj = {'plotter_options': plotter_options,
+               'analyses': [{'record_id': ai.record_id,
+                             'uuid': ai.uuid,
+                             # 'status': ai.temp_status,
+                             'group_id': ai.group_id} for ai in editor.analyses]}
         return obj
 
     def _close_editor(self, editor):
@@ -485,12 +486,12 @@ class PipelineTask(BaseBrowserTask):
         self.dvc.create_session()
 
         if not getattr(self.engine, func)():
-            self.resume_enabled = True
-            self.run_enabled = False
+            self.engine.resume_enabled = True
+            self.engine.run_enabled = False
             self.debug('false {} {}'.format(message, func))
         else:
-            self.run_enabled = True
-            self.resume_enabled = False
+            self.engine.run_enabled = True
+            self.engine.resume_enabled = False
             self.debug('true {} {}'.format(message, func))
 
         for editor in self.engine.state.editors:
@@ -508,8 +509,8 @@ class PipelineTask(BaseBrowserTask):
         self._run('run pipeline', 'run_pipeline')
 
     def _toggle_run(self, v):
-        self.resume_enabled = v
-        self.run_enabled = not v
+        self.engine.resume_enabled = v
+        self.engine.run_enabled = not v
 
     def _sa_factory(self, path, factory, **kw):
         return SchemaAddition(path=path, factory=factory, **kw)
@@ -523,9 +524,9 @@ class PipelineTask(BaseBrowserTask):
     # defaults
     def _default_layout_default(self):
         return TaskLayout(left=Splitter(Splitter(PaneItem('pychron.pipeline.pane',
-                                                 width=200),
-                                        PaneItem('pychron.pipeline.analyses',
-                                                 width=200)),
+                                                          width=200),
+                                                 PaneItem('pychron.pipeline.analyses',
+                                                          width=200)),
                                         PaneItem('pychron.pipeline.repository'),
                                         orientation='vertical'))
 

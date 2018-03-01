@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.api import LinePlot, LinearMapper, DataView, ArrayDataSource
 from chaco.tools.api import ZoomTool, PanTool
 from enable.api import Pointer

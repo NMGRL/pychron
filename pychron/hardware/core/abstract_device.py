@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Property, DelegatesTo, Instance, provides, CStr
 # =============standard library imports ========================
 # =============local library imports  ==========================
@@ -71,7 +72,7 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
             if hasattr(module, klass):
                 factory = getattr(module, klass)
                 return factory
-        except ImportError, e:
+        except ImportError as e:
             self.warning(e)
 
     def close(self):

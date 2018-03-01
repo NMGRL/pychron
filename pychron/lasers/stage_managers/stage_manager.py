@@ -15,10 +15,12 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import os
 import time
 
 from numpy import array, asarray
+from pyface.timer.do_later import do_later
 from traits.api import DelegatesTo, Instance, \
     Button, List, String, Event, Bool
 
@@ -37,6 +39,10 @@ from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
 from pychron.paths import paths
 from pychron.stage.stage_manager import BaseStageManager
+import six
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 
 def distance_threshold(p1, p2, tol):
@@ -84,14 +90,13 @@ class StageManager(BaseStageManager):
     back_button = Button
     stop_button = Button('Stop')
 
-    linear_move_history = List
-
     use_autocenter = Bool
     keep_images_open = Bool(False)
 
     _default_z = 0
     _cached_position = None
     _cached_current_hole = None
+    _homing = False
 
     def __init__(self, *args, **kw):
         """
@@ -170,7 +175,6 @@ class StageManager(BaseStageManager):
 
     def load(self):
         super(StageManager, self).load()
-
         config = self.get_configuration()
         if config:
             self._default_z = self.config_get(config, 'Defaults', 'z', default=13, cast='float')
@@ -210,8 +214,7 @@ class StageManager(BaseStageManager):
     def single_axis_move(self, *args, **kw):
         return self.stage_controller.single_axis_move(*args, **kw)
 
-    def linear_move(self, x, y, use_calibration=True,
-                    check_moving=False, abort_if_moving=False, **kw):
+    def linear_move(self, x, y, use_calibration=True, check_moving=False, abort_if_moving=False, **kw):
 
         if check_moving:
             if self.moving():
@@ -223,8 +226,6 @@ class StageManager(BaseStageManager):
                     self.stop()
                     self.debug('Motion stopped. moving to {},{}'.format(x, y))
 
-        cpos = self.get_uncalibrated_xy()
-        self.linear_move_history.append((cpos, {}))
         pos = (x, y)
         if use_calibration:
             pos = self.get_calibrated_position(pos)
@@ -364,7 +365,11 @@ class StageManager(BaseStageManager):
     def _home(self):
         """
         """
-        #        define_home = True
+        if self._homing:
+            return
+
+        self._homing = True
+
         if self.home_option == 'Home All':
 
             msg = 'homing all motors'
@@ -397,8 +402,7 @@ class StageManager(BaseStageManager):
 
             time.sleep(1)
             self.info('setting z to nominal position. {} mm '.format(self._default_z))
-            self.stage_controller.single_axis_move('z', self._default_z,
-                                                   block=True)
+            self.stage_controller.single_axis_move('z', self._default_z, block=True)
             self.stage_controller._z_position = self._default_z
 
         if self.home_option in ['XY', 'Home All']:
@@ -409,8 +413,12 @@ class StageManager(BaseStageManager):
             self.stage_controller._y_position = -25
 
             self.info('moving to center')
-            self.stage_controller.linear_move(0, 0, block=True,
-                                              sign_correct=False)
+            try:
+                self.stage_controller.linear_move(0, 0, block=True, sign_correct=False)
+            except TargetPositionError as e:
+                self.warning_dialog('Move Failed. {}'.format(e))
+
+        self._homing = False
 
     def _get_hole_by_position(self, x, y):
         if self.stage_map:
@@ -481,7 +489,7 @@ class StageManager(BaseStageManager):
 
         # set motors
         if motors is not None:
-            for k, v in motors.itervalues():
+            for k, v in six.itervalues(motors):
                 '''
                     motor will not set if it has been locked using set_motor_lock or
                     remotely using SetMotorLock
@@ -703,7 +711,7 @@ class StageManager(BaseStageManager):
                 if end_callback:
                     end_callback()
 
-                for k, v in setmotors.iteritems():
+                for k, v in six.iteritems(setmotors):
                     self.parent.set_motor(k, v, block=True)
 
                 if start_callback:
@@ -773,8 +781,9 @@ class StageManager(BaseStageManager):
                         self.info('using previously calculated corrected position')
                         autocentered_position = True
                 try:
-                    self.stage_controller.linear_move(block=True, raise_zero_displacement=True, *pos)
-                except TargetPositionError, e:
+                    self.stage_controller.linear_move(block=True, source='move_to_hole {}'.format(pos),
+                                                      raise_zero_displacement=True, *pos)
+                except TargetPositionError as e:
                     self.warning('(001) Move to {} failed'.format(pos))
                     self.parent.emergency_shutoff(str(e))
                     return
@@ -783,7 +792,7 @@ class StageManager(BaseStageManager):
         try:
             self._move_to_hole_hook(key, correct_position,
                                 autocentered_position)
-        except TargetPositionError, e:
+        except TargetPositionError as e:
             self.warning('(002) Move failed. {}'.format(e))
             self.parent.emergency_shutoff(str(e))
             return
@@ -851,7 +860,7 @@ class StageManager(BaseStageManager):
 
     def _move_to_calibrated_position(self, pos):
         try:
-            args = map(float, pos.split(','))
+            args = list(map(float, pos.split(',')))
         except ValueError:
             self.warning('invalid calibrated position "{}". Could not convert to floats'.format(pos))
             return
@@ -925,17 +934,6 @@ class StageManager(BaseStageManager):
     def _stop_button_fired(self):
         self._stop()
 
-    def _back_button_fired(self):
-        pos, kw = self.linear_move_history.pop(-1)
-        t = Thread(target=self.stage_controller.linear_move, args=pos, kwargs=kw)
-        t.start()
-        self.move_thread = t
-
-        # def __stage_map_changed(self):
-        # self.canvas.set_map(self._stage_map)
-        # self.tray_calibration_manager.load_calibration(stage_map=self.stage_map)
-        # self.canvas.request_redraw()
-
     def _ejoystick_fired(self):
         self.joystick = not self.joystick
         if self.joystick:
@@ -953,12 +951,11 @@ class StageManager(BaseStageManager):
     def _home_fired(self):
         """
         """
-        t = Thread(
-            name='stage.home',
-            target=self._home)
-        t.start()
+        # t = Thread(name='stage.home', target=self._home)
+        # t.start()
         # need to store a reference to thread so it is not garbage collected
-        self.move_thread = t
+        # self.move_thread = t
+        do_later(self._home)
 
     def _test_fired(self):
         #        self.do_pattern('testpattern')

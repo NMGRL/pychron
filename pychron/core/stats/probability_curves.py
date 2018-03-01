@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from math import pi
 
 from numpy import linspace, zeros, ones, exp
+from six.moves import zip
 
 
 # ============= local library imports  ==========================

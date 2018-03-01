@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 import re
 
@@ -30,6 +31,8 @@ from pychron.persistence_loggable import dumpable
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+import six
+from six.moves import range
 
 subreg = re.compile(r'^<sub>(?P<item>\w+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>\w+)</sup>')
@@ -595,7 +598,7 @@ class XLSXTableWriter(BaseTableWriter):
             for i, ci in enumerate(cols):
                 try:
                     txt = self._get_txt(ug.analyses[0], ci)
-                except AttributeError, e:
+                except AttributeError as e:
                     txt = self._get_txt(ug, ci)
 
                 sh.write(self._current_row, i, txt)
@@ -676,7 +679,7 @@ class XLSXTableWriter(BaseTableWriter):
             self._current_row += 1
             sh.write_rich_string(self._current_row, 0, title)
 
-        for i in xrange(1, len(cols)):
+        for i in range(1, len(cols)):
             sh.write_blank(self._current_row, i, '', cell_format=fmt)
         self._current_row += 1
 
@@ -826,14 +829,14 @@ class XLSXTableWriter(BaseTableWriter):
     def _make_notes(self, sh, ncols, name):
         top = self._workbook.add_format({'top': 1})
         sh.write_rich_string(self._current_row, 0, self._bold, 'Notes:', top)
-        for i in xrange(1, ncols):
+        for i in range(1, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
         self._current_row += 1
 
         func = getattr(self, '_make_{}_notes'.format(name.lower()))
         func(sh)
 
-        for i in xrange(0, ncols):
+        for i in range(0, ncols):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
 
     def _make_summary_notes(self, sh):
@@ -853,7 +856,7 @@ class XLSXTableWriter(BaseTableWriter):
     def _make_unknowns_notes(self, sh):
         monitor_age = 28.201
         decay_ref = u'Steiger and J\u00E4ger (1977)'
-        notes = unicode(self._options.unknown_notes)
+        notes = six.text_type(self._options.unknown_notes)
         notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
 
         sh.write_rich_string(self._current_row, 0, self._superscript, '1', DEFAULT_UNKNOWN_NOTES[0])
@@ -870,15 +873,15 @@ class XLSXTableWriter(BaseTableWriter):
         self._write_notes(sh, notes)
 
     def _make_blanks_notes(self, sh):
-        notes = unicode(self._options.blank_notes)
+        notes = six.text_type(self._options.blank_notes)
         self._write_notes(sh, notes)
 
     def _make_airs_notes(self, sh):
-        notes = unicode(self._options.air_notes)
+        notes = six.text_type(self._options.air_notes)
         self._write_notes(sh, notes)
 
     def _make_monitor_notes(self, sh):
-        notes = unicode(self._options.monitor_notes)
+        notes = six.text_type(self._options.monitor_notes)
         self._write_notes(sh, notes)
 
     def _write_notes(self, sh, notes):

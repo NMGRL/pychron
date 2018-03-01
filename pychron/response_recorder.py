@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 from threading import Thread
 
@@ -106,7 +107,7 @@ class ResponseRecorder(Loggable):
                 else:
                     datum = (t, out, sp, r)
 
-                datum = map(lambda x: floatfmt(x, n=3), datum)
+                datum = [floatfmt(x, n=3) for x in datum]
 
                 dm.write_to_frame(datum)
 

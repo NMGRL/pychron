@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
-import StringIO
+from __future__ import absolute_import
+from io import StringIO, BytesIO
 import struct
 
 from uncertainties import ufloat
@@ -26,11 +27,14 @@ from uncertainties import ufloat
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
+import six
+from six.moves import range
 
 
 def get_fn(blob):
     fn = None
     if blob is not None:
+        blob = blob.decode('utf-8')
         ps = blob.strip().split('\n')
         fn = len(ps)
         if fn == 1 and ps[0] == '':
@@ -41,7 +45,7 @@ def get_fn(blob):
 
 class Blob:
     def __init__(self, v):
-        self._buf = StringIO.StringIO(v)
+        self._buf = BytesIO(v)
 
     def short(self):
         return struct.unpack('>h', self._buf.read(2))[0]
@@ -82,9 +86,10 @@ class MassSpecAnalysis(Analysis):
                 self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
 
         prefs = obj.changeable.preferences_set
+        # prefs = None
         fo, fi, fs = 0, 0, 0
         if prefs:
-            fo = prefs.DelOutliersAfterFit == 'true'
+            # fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
             self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
@@ -192,7 +197,7 @@ class MassSpecAnalysis(Analysis):
         # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
-        for iso in self.isotopes.itervalues():
+        for iso in six.itervalues(self.isotopes):
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
                 if fn is not None:
@@ -203,15 +208,15 @@ class MassSpecAnalysis(Analysis):
         mb = Blob(blob)
         n_r_pts = mb.short()
         n_pos = mb.short()
-        ps = [mb.single() for i in xrange(n_pos)]
+        ps = [mb.single() for i in range(n_pos)]
 
         n_seg = mb.short()
         seg_end = []
         params = []
         seg_err = []
-        for i in xrange(n_seg):
+        for i in range(n_seg):
             seg_end.append(mb.single())
-            params.append([mb.double() for i in xrange(4)])
+            params.append([mb.double() for i in range(4)])
             seg_err.append(mb.single())
 
         v = params[0][0]

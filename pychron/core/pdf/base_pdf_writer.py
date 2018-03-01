@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
@@ -30,6 +31,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.items import Anchor
 from pychron.core.pdf.options import BasePDFOptions
 from pychron.loggable import Loggable
+import six
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -130,7 +132,7 @@ class BasePDFWriter(Loggable):
             klass = Paragraph
 
         style = getSampleStyleSheet()[s]
-        for k, v in skw.iteritems():
+        for k, v in six.iteritems(skw):
             setattr(style, k, v)
 
         p = klass(t, style)

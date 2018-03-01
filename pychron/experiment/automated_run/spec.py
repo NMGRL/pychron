@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import hashlib
 import uuid
 from datetime import datetime
@@ -30,6 +32,8 @@ from pychron.experiment.utilities.identifier import get_analysis_type, make_rid,
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
+import six
+from six.moves import map
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -337,11 +341,11 @@ class AutomatedRunSpec(HasTraits):
         return d
 
     def load(self, script_info, params):
-        for k, v in script_info.iteritems():
+        for k, v in six.iteritems(script_info):
             k = k if k == 'script_options' else '{}_script'.format(k)
             setattr(self, k, v)
 
-        for k, v in params.iteritems():
+        for k, v in six.iteritems(params):
             # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)
@@ -370,7 +374,7 @@ class AutomatedRunSpec(HasTraits):
             else:
                 try:
                     v = getattr(self, attrname)
-                except AttributeError, e:
+                except AttributeError as e:
                     v = ''
 
             return v
@@ -432,7 +436,7 @@ class AutomatedRunSpec(HasTraits):
 
         if verbose:
             for t in traits:
-                print '{} ==> {}'.format(t, getattr(self, t))
+                print('{} ==> {}'.format(t, getattr(self, t)))
 
         return self.clone_traits(traits)
 
@@ -498,7 +502,7 @@ post_equilibration_script, extraction_script, script_options, position, duration
             args = v
         else:
             try:
-                args = map(int, v.split(','))
+                args = list(map(int, v.split(',')))
             except ValueError:
                 logger.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
                 return

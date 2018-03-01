@@ -15,20 +15,23 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Enum, Instance
 # import apptools.sweet_pickle as pickle
 # =============standard library imports ========================
 import os
 import time
 import math
-import cPickle as pickle
+import six.moves.cPickle as pickle
 # =============local library imports  ==========================
 from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.motion_controller import MotionController, \
     TargetPositionError, ZeroDisplacementException
-from newport_axis import NewportAxis
-from newport_joystick import Joystick
-from newport_group import NewportGroup
+from .newport_axis import NewportAxis
+from .newport_joystick import Joystick
+from .newport_group import NewportGroup
+import six
+from six.moves import map
 
 GROUP_MSG = '''NEWPORT GROUP PARAMETERS NOT SPECIFIED. YOU WILL NOT BE ABLE
 TO PERFORM GROUPED MOVES I.E. LINEAR OR CIRCULAR'''
@@ -121,7 +124,7 @@ class NewportMotionController(MotionController):
         """
         """
         if axis is None:
-            axes = self.axes.itervalues()
+            axes = six.itervalues(self.axes)
         else:
             axes = [axis]
 
@@ -274,7 +277,9 @@ class NewportMotionController(MotionController):
             if not points:
                 break
 
-    def linear_move(self, x, y, raise_zero_displacement=False, **kw):
+    def linear_move(self, x, y, raise_zero_displacement=False, source=None, **kw):
+        if source is not None:
+            self.debug('linear move source ={}'.format(source))
 
         # calc the displacement
         dx = self._x_position - x
@@ -400,7 +405,7 @@ class NewportMotionController(MotionController):
         #            cmd = ';'.join(['{}OR{{}}'.format(k.id) for k in self.axes.itervalues()])
         cmd = ';'.join([self._build_command('OR', a.id,
                                             nn=search_mode if a.name.lower() != 'z' else 3)
-                        for a in self.axes.itervalues() if a.name in axes])
+                        for a in six.itervalues(self.axes) if a.name in axes])
         # force z axis home positive
         # cmd = '1OR{};2OR{};3OR{}' .format(search_mode, search_mode, 3)
         #        cmd = cmd.format(*[search_mode if v.id != 3 else 3 for k, v in self.axes.iteritems()])
@@ -688,12 +693,12 @@ class NewportMotionController(MotionController):
         try:
             ax = self.axes[key]
         except KeyError:
-            self.debug('No axes key. {} keys={}'.format(key, self.axes.keys()))
+            self.debug('No axes key. {} keys={}'.format(key, list(self.axes.keys())))
             return
 
         aid = ax.id
         if self.groupobj is not None:
-            if aid in map(int, self.groupobj.axes):
+            if aid in list(map(int, self.groupobj.axes)):
                 self.destroy_group()
 
         if mode == 'absolute':

@@ -15,10 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import json
 import time
 
-from gp_actuator import GPActuator
+from .gp_actuator import GPActuator
 from pychron.core.communication_helper import trim_bool
 from pychron.core.helpers.strtools import to_bool
 from pychron.hardware.actuators import get_valve_address

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 from itertools import groupby
 
@@ -40,6 +41,7 @@ from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPD
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS
+from six.moves import zip
 
 
 class NeutronDose(HasTraits):
@@ -189,7 +191,7 @@ class LabnumberEntry(DVCIrradiationable):
         def key(x):
             return (x.sample, x.material, x.project)
 
-        items = filter(lambda x: not x.igsn, items)
+        items = [x for x in items if not x.igsn]
 
         no_save = False
         for (sample, material, project), poss in groupby(sorted(items, key=key), key=key):
@@ -286,7 +288,7 @@ class LabnumberEntry(DVCIrradiationable):
     def import_sample_metadata(self, p):
         try:
             from pychron.entry.loaders.mb_sample_loader import SampleLoader
-        except ImportError, e:
+        except ImportError as e:
             self.warning_dialog(str(e))
             SampleLoader = None
 
@@ -662,7 +664,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             if positions:
                 with dirty_ctx(self):
                     self._make_positions(n, positions)
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             self.warning_dialog('Failed loading Irradiation level="{}"'.format(name))

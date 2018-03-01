@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
 from traits.api import Str, Bool, Event, List
@@ -25,6 +26,7 @@ from traitsui.qt4.enum_editor import SimpleEditor
 
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.envisage.resources import icon
+import six
 
 
 class ComboBoxWidget(QWidget):
@@ -123,14 +125,14 @@ class _ComboboxEditor(SimpleEditor):
         """ Handles the user typing text into the combo box text entry field.
         """
         if self._no_enum_update == 0:
-            value = unicode(text)
+            value = six.text_type(text)
             if self.factory.use_strict_values:
                 try:
                     value = self.mapping[value]
                 except:
                     try:
                         value = self.factory.evaluate(value)
-                    except Exception, excp:
+                    except Exception as excp:
                         self.error(excp)
                         return
 
@@ -157,7 +159,7 @@ class _ComboboxEditor(SimpleEditor):
                     except:
                         self.control.setEditText('')
 
-            except TraitError, excp:
+            except TraitError as excp:
                 if self.factory.addable:
                     self.control.button.setEnabled(False)
                 self._set_background(ErrorColor)
@@ -175,7 +177,7 @@ class _ComboboxEditor(SimpleEditor):
                     index = self.names.index(self.inverse_mapping[self.value])
 
                     self.control.setCurrentIndex(index)
-                except BaseException, e:
+                except BaseException as e:
                     self.control.setEditText(str(self.value))
             else:
                 try:

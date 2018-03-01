@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from threading import Thread
 
 from traits.api import HasTraits, Event, Property, Bool

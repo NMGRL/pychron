@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from envisage.ui.tasks.task_extension import TaskExtension
@@ -119,10 +121,10 @@ class BaseLaserPlugin(BaseTaskPlugin):
                             params[attr] = v
                         else:
                             self.debug('No communications attribute {}'.format(attr))
-                    except Exception, e:
-                        print 'client comms fail a', attr, e
-            except Exception, e:
-                print 'client comms fail b', e
+                    except Exception as e:
+                        print('client comms fail a', attr, e)
+            except Exception as e:
+                print('client comms fail b', e)
 
         m = klassfactory(**params)
         m.mode = mode

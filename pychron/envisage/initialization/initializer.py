@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Any, List
 
 # ============= standard library imports ========================
@@ -67,7 +68,7 @@ class Initializer(Loggable):
             self.info('Initialization {}'.format(msg))
 
             pd.close()
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             self.debug('Initializer Exception: {}'.format(e))
@@ -291,7 +292,7 @@ class Initializer(Loggable):
                 man = getattr(manager, mi)
                 if man is None:
                     man = manager.create_manager(mi)
-            except AttributeError, e:
+            except AttributeError as e:
                 self.warning(e)
                 try:
                     man = manager.create_manager(mi)

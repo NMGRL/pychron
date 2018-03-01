@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import os
 import shutil
@@ -6,6 +7,7 @@ import sys
 from pychron.core.test_helpers import isotope_db_factory, get_data_dir as mget_data_dir, massspec_db_factory
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analysis_modifier import AnalysisModifier
+from six.moves import range
 
 __author__ = 'ross'
 

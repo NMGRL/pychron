@@ -1,6 +1,9 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from uncertainties import ufloat, umath
 
 from pychron.processing.arar_constants import ArArConstants
+from six.moves import zip
 
 
 def mcalc_fractional_error(*args):
@@ -121,7 +124,7 @@ if __name__ == '__main__':
                       args,
                       (s40, s39, s38, s37, s36, J, ufloat(1, 0))
                       ):
-        print '{:<10s}'.format(ni), \
+        print('{:<10s}'.format(ni), \
             '{:<10s}'.format('{:0.2f}'.format(vi.std_dev / vi.nominal_value * 100)), \
-                ai * 100
+                ai * 100)
 

@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from numpy import ones, vstack, zeros, hstack
 from numpy.random import random
 
@@ -69,7 +71,7 @@ class IsotopeClassifier(BaseClassifier):
 
         klass = None
         prob = 0
-        print x
+        print(x)
         if self._clf:
             klass = int(self._clf.predict(x)[0])
             prob = self._clf.predict_proba(x)[0][klass]
@@ -101,7 +103,7 @@ if __name__ == '__main__':
 
     for pt in ([100, 0.11], [100, 11], [10, 1], [75, 0.5]):
         k = ic.predict(pt)
-        print pt, k
+        print(pt, k)
         # print pt, ic.classify(pt)
 
         # ax = plt.subplot(1, 1, 1)

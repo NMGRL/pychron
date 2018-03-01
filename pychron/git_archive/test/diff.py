@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import unittest
 
 from pychron.git_archive.diff_util import extract_line_numbers  # extract_line_changes, extract_line_changes2

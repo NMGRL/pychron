@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import array
 # ============= local library imports  ==========================
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
@@ -27,6 +28,7 @@ from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
+import six
 
 
 class AnalysisRecoverer(Loggable):
@@ -98,7 +100,7 @@ class AnalysisRecoverer(Loggable):
 
         # add sniffs
         group = man.get_group('sniff')
-        for k, iso in arar_age.isotopes.iteritems():
+        for k, iso in six.iteritems(arar_age.isotopes):
             grp = man.get_group(k, group)
             tbl = man.get_tables(grp)[0]
 
@@ -116,7 +118,7 @@ class AnalysisRecoverer(Loggable):
             xs = array([x['time'] for x in dettbl.iterrows()])
             ys = array([x['value'] for x in dettbl.iterrows()])
 
-            for iso in arar_age.isotopes.itervalues():
+            for iso in six.itervalues(arar_age.isotopes):
                 if iso.detector == detname:
                     iso.baseline.xs = xs
                     iso.baseline.ys = ys

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 from datetime import datetime
@@ -60,6 +61,7 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, LINE_STR, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME
 from pychron.wait.wait_group import WaitGroup
+from six.moves import zip
 
 
 def remove_backup(uuid_str):
@@ -294,7 +296,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         pre_execute_result = False
         try:
             pre_execute_result = self._pre_execute_check(prog)
-        except PreExecuteCheckException, e:
+        except PreExecuteCheckException as e:
             self.warning_dialog(str(e))
 
         # if self._pre_execute_check(prog):
@@ -392,7 +394,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if evt.level == level:
                 try:
                     evt.do(ctx)
-                except BaseException, e:
+                except BaseException as e:
                     self.warning('Event {} failed. exception: {}'.format(evt.id, e))
                     import traceback
                     self.debug(traceback.format_exc())
@@ -572,7 +574,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.queue_modified = False
 
                 try:
-                    spec = rgen.next()
+                    spec = next(rgen)
                 except StopIteration:
                     self.debug('stop iteration')
                     break
@@ -706,7 +708,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 items = [(i['name'], i['email']) for i in yl if i['enabled'] and i['email'] != email]
             if items:
-                names, addrs = zip(*items)
+                names, addrs = list(zip(*items))
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):

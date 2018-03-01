@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Property, cached_property, Int, \
     Any, String, Event, Bool, Dict, List, Button
 # ============= standard library imports ========================
 import os
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.dvc.dvc_irradiationable import DVCAble

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay, BaseTool
 from traits.api import Any, Str
 

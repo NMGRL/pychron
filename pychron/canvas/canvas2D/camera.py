@@ -15,17 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import  Bool, Any, Float, Tuple, Int, Str
+from __future__ import absolute_import
+import yaml
+from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
 # ============= standard library imports ========================
 from numpy import polyval, exp
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+from pychron.loggable import Loggable
+from six.moves import map
 
 
-class Camera(ConfigLoadable):
-    """
-    """
-    parent = Any
+class BaseCamera(HasTraits):
     ratio = Float
     current_position = Tuple
     fit_degree = Int
@@ -33,12 +34,117 @@ class Camera(ConfigLoadable):
     height = Float(1)
     pxpercm = Float
 
-    swap_rb = Bool(True)
-    vflip = Bool(False)
-    hflip = Bool(False)
+    # swap_rb = Bool(True)
+    # vflip = Bool(False)
+    # hflip = Bool(False)
     focus_z = Float
-    fps = Int
+    # fps = Int
     zoom_coefficients = Str
+    config_path = Str
+
+    def save_calibration(self):
+        raise NotImplementedError
+
+    def load(self, p):
+        """
+        """
+        self.config_path = p
+        config = self.get_configuration(self.config_path)
+        # self.set_attribute(config, 'swap_rb', 'General', 'swap_rb', cast='boolean')
+        # self.set_attribute(config, 'vflip', 'General', 'vflip', cast='boolean')
+        # self.set_attribute(config, 'hflip', 'General', 'hflip', cast='boolean')
+
+        self.set_attribute(config, 'width', 'General', 'width', cast='int')
+        self.set_attribute(config, 'height', 'General', 'height', cast='int')
+        self.set_attribute(config, 'focus_z', 'General', 'focus', cast='float')
+
+        # self.set_attribute(config, 'fps', 'Video', 'fps', cast='int', default=12)
+
+        self.set_attribute(config, 'zoom_coefficients', 'Zoom', 'coefficients',
+                           default='0,0,23')
+        self.set_attribute(config, 'zoom_fitfunc', 'Zoom', 'fitfunc',
+                           default='polynomial')
+
+    def set_attribute(self, config, name, section, option, **kw):
+        raise NotImplementedError
+
+    def get_configuration(self, path):
+        raise NotImplementedError
+
+    def write_configuration(self, obj, path):
+        raise NotImplementedError
+
+    def calculate_pxpermm(self, zoom):
+        if self.zoom_fitfunc == 'polynomial':
+            func = polyval
+        else:
+            ff = 'lambda p,x: {}'.format(self.zoom_fitfunc)
+            func = eval(ff, {'exp': exp})
+
+        if self.zoom_coefficients:
+            pxpermm = func(list(map(float, self.zoom_coefficients.split(','))), zoom)
+        else:
+            pxpermm = 1
+
+        return pxpermm
+
+    def set_limits_by_zoom(self, zoom, cx, cy, canvas=None):
+        """
+        """
+
+        def _set_limits(axis_key, px_per_mm, cur_pos, canvas):
+
+            if axis_key == 'x':
+                d = self.width
+            else:
+                d = self.height
+
+            # scale to mm
+            # if canvas is None:
+            #     canvas = self.parent
+
+            if canvas:
+                d /= 2.0 * px_per_mm
+                lim = (-d + cur_pos, d + cur_pos)
+                canvas.set_mapper_limits(axis_key, lim)
+
+        pxpermm = self.calculate_pxpermm(zoom)
+        if cx is not None:
+            _set_limits('x', pxpermm, cx, canvas)
+        if cy is not None:
+            _set_limits('y', pxpermm, cy, canvas)
+        return pxpermm
+
+
+class YamlCamera(Loggable, BaseCamera):
+    def save_calibration(self):
+        self.info('saving px per mm calibration to {}'.format(self.config_path))
+        config = self.get_configuration(self.config_path)
+        zoom = config.get('Zoom', {})
+        zoom['coefficients'] = self.zoom_coefficients
+        config['Zoom'] = zoom
+        self.write_configuration(config, self.config_path)
+
+    def set_attribute(self, config, name, section, option, default=None, **kw):
+        sec = config.get(section)
+        if sec:
+            opt = sec.get(option, default)
+
+            if opt is not None:
+                setattr(self, name, opt)
+
+    def get_configuration(self, path):
+        with open(path, 'r') as rfile:
+            return yaml.load(rfile)
+
+    def write_configuration(self, obj, path):
+        with open(path, 'w') as wfile:
+            yaml.dump(obj, wfile, default_flow_style=False)
+
+
+class Camera(ConfigLoadable, BaseCamera):
+    """
+    """
 
     def save_calibration(self):
         """
@@ -51,65 +157,6 @@ class Camera(ConfigLoadable):
             config.add_section('Zoom')
         config.set('Zoom', 'coefficients', self.zoom_coefficients)
         self.write_configuration(config, self.config_path)
-
-    def load(self, p):
-        """
-        """
-        self.config_path = p
-        config = self.get_configuration(self.config_path)
-        self.set_attribute(config, 'swap_rb', 'General', 'swap_rb', cast='boolean')
-        self.set_attribute(config, 'vflip', 'General', 'vflip', cast='boolean')
-        self.set_attribute(config, 'hflip', 'General', 'hflip', cast='boolean')
-
-        self.set_attribute(config, 'width', 'General', 'width', cast='int')
-        self.set_attribute(config, 'height', 'General', 'height', cast='int')
-        self.set_attribute(config, 'focus_z', 'General', 'focus', cast='float')
-
-        self.set_attribute(config, 'fps', 'General', 'fps', cast='int', default=12)
-
-        self.set_attribute(config, 'zoom_coefficients', 'Zoom', 'coefficients',
-                           default='0,0,23')
-        self.set_attribute(config, 'zoom_fitfunc', 'Zoom', 'fitfunc',
-                           default='polynomial')
-
-    def calculate_pxpermm(self, zoom):
-        if self.zoom_fitfunc == 'polynomial':
-            func = polyval
-        else:
-            ff = 'lambda p,x: {}'.format(self.zoom_fitfunc)
-            func = eval(ff, {'exp': exp})
-
-        if self.zoom_coefficients:
-            pxpermm = func(map(float, self.zoom_coefficients.split(',')), zoom)
-        else:
-            pxpermm = 1
-
-        return pxpermm
-
-    def set_limits_by_zoom(self, zoom, cx, cy, canvas=None):
-        """
-        """
-        def _set_limits(axis_key, px_per_mm, cur_pos, canvas):
-
-            if axis_key == 'x':
-                d = self.width
-            else:
-                d = self.height
-
-            # scale to mm
-            if canvas is None:
-                canvas = self.parent
-
-            if canvas:
-                d /= 2.0 * px_per_mm
-                lim = (-d + cur_pos, d + cur_pos)
-                canvas.set_mapper_limits(axis_key, lim)
-
-        pxpermm = self.calculate_pxpermm(zoom)
-        _set_limits('x', pxpermm, cx, canvas)
-        _set_limits('y', pxpermm, cy, canvas)
-        return pxpermm
-
 # if __name__ == '__main__':
 #    c = Camera()
 #    p = '/Users/fargo2/Pychrondata_beta/setupfiles/canvas2D/camera.txt'
@@ -118,4 +165,3 @@ class Camera(ConfigLoadable):
 #     c.configure_traits()
 
 # ============= EOF ====================================
-

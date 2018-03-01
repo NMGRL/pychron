@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
+from six.moves import map
+import six
 
 
 # ============= standard library imports ========================
@@ -54,7 +57,7 @@ class RegressionInspectorTool(InfoInspector):
             lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
                                                                floatfmt(reg.sem), reg.n))
 
-            lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
+            lines.extend(list(map(six.text_type.strip, list(map(six.text_type, reg.tostring().split(','))))))
 
         return lines
 

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from traits.api import HasTraits, Button, String, List, Any, Instance
@@ -31,6 +33,8 @@ from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import map
+import six
 
 
 class RunBlock(Loggable):
@@ -47,7 +51,7 @@ class RunBlock(Loggable):
             return self._load_runs(line_gen)
 
     def _get_line_generator(self, txt):
-        if isinstance(txt, (str, unicode)):
+        if isinstance(txt, (str, six.text_type)):
             return (l for l in txt.split('\n'))
         else:
             return txt
@@ -55,7 +59,7 @@ class RunBlock(Loggable):
     def _runs_gen(self, line_gen):
         delim = '\t'
 
-        header = map(str.strip, line_gen.next().split(delim))
+        header = list(map(str.strip, line_gen.next().split(delim)))
 
         pklass = RunParser
         if self.extract_device == 'Fusions UV':
@@ -93,10 +97,10 @@ class RunBlock(Loggable):
 
                 yield arun
 
-            except Exception, e:
+            except Exception as e:
                 import traceback
 
-                print traceback.print_exc()
+                print(traceback.print_exc())
                 self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
 
                 break

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pickle
 
@@ -51,6 +53,7 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL
+import six
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -353,7 +356,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._end_after = run.end_after
 
     def set_mass_spectrometer(self, new):
-        print 'asdfasdf', new, type(new), id(self)
+        print('asdfasdf', new, type(new), id(self))
         new = new.lower()
         self.debug('setting mass spec to={}'.format(new))
         self.mass_spectrometer = new
@@ -559,7 +562,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 v = getattr(run, attr)
                 # self.debug('setting {}={}'.format(attr, v))
                 setattr(self, attr, v)
-            except TraitError, e:
+            except TraitError as e:
                 self.debug(e)
 
         for si in SCRIPT_KEYS:
@@ -649,13 +652,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if '##' in self.labnumber:
             mod = script.get_parameter('modifier')
-            print 'masodfasdf', mod, script
+            print('masodfasdf', mod, script)
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
-                print 'asdfasfasf', self.labnumber
+                print('asdfasfasf', self.labnumber)
 
     def _clear_labnumber(self):
         self.debug('clear labnumber')
@@ -834,7 +837,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             defaults = yaml.load(rfile)
 
         # convert keys to lowercase
-        defaults = dict([(k.lower(), v) for k, v in defaults.iteritems()])
+        defaults = dict([(k.lower(), v) for k, v in six.iteritems(defaults)])
         return defaults
 
     def _load_labnumber_meta(self, labnumber):
@@ -888,7 +891,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         try:
                             pi_name = project.principal_investigator.name
                         except (AttributeError, TypeError):
-                            print 'project has pi issue. {}'.format(project_name)
+                            print('project has pi issue. {}'.format(project_name))
                             pass
 
                         ipp = self.irradiation_project_prefix
@@ -920,8 +923,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                             self.warning_dialog('Failed to add {}.'
                                                                 '\nResolve issue before proceeding!!'.format(m))
 
-                    except AttributeError, e:
-                        print e
+                    except AttributeError as e:
+                        print(e)
 
                     d['repository_identifier'] = self.repository_identifier
 
@@ -1091,7 +1094,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         """
         p = os.path.join(paths.hidden_dir, 'iht_counts.{}'.format(self.username))
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
             cs = [(ti, ucounts.get(ti, 0)) for ti in temps]
@@ -1152,14 +1155,14 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        print attr, identifier, self.suppress_meta, self.irrad_hole
+        print(attr, identifier, self.suppress_meta, self.irrad_hole)
         if not (self.suppress_meta or '-##-' in identifier):
             if identifier and self.irrad_hole:
 
-                print identifier, self.selected_irradiation, self.selected_level, self.irrad_hole
+                print(identifier, self.selected_irradiation, self.selected_level, self.irrad_hole)
 
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
-                print j
+                print(j)
                 if attr == 'err':
                     j = std_dev(j)
                 else:
@@ -1449,14 +1452,14 @@ post_equilibration_script:name''')
             if ln:
                 if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-                    print 'asdfasdfasdf', self.mass_spectrometer, msname, id(self)
+                    print('asdfasdfasdf', self.mass_spectrometer, msname, id(self))
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
                         edname = ''
                         ed = self.extract_device
                         if ed not in ('Extract Device', LINE_STR):
-                            edname = ''.join(map(lambda x: x[0].capitalize(), ed.split(' ')))
+                            edname = ''.join([x[0].capitalize() for x in ed.split(' ')])
                         ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln
@@ -1520,7 +1523,7 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
-        print 'script factory', self.mass_spectrometer
+        print('script factory', self.mass_spectrometer)
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,

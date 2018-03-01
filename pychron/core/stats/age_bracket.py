@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import print_function
 def get_data_test():
     h = [20, 0]
     t = [2, 12]
@@ -113,29 +114,29 @@ y, t, e = get_data_test()
 # print interpolate(y, t, e, .75)
 # print interpolate(y, t, e, .5)
 # print interpolate(y, t, e, .25)
-print 'from above'
-print 'height=0',
-print interpolate(y, t, e, 0)
-print 'height=10',
-print interpolate(y, t, e, 10)
-print 'height=20',
-print interpolate(y, t, e, 20)
+print('from above')
+print('height=0', end=' ')
+print(interpolate(y, t, e, 0))
+print('height=10', end=' ')
+print(interpolate(y, t, e, 10))
+print('height=20', end=' ')
+print(interpolate(y, t, e, 20))
 
-print 'from below'
-print 'height=0',
-print interpolate2(y, t, e, 0)
-print 'height=10',
-print interpolate2(y, t, e, 10)
-print 'height=20',
-print interpolate2(y, t, e, 20)
+print('from below')
+print('height=0', end=' ')
+print(interpolate2(y, t, e, 0))
+print('height=10', end=' ')
+print(interpolate2(y, t, e, 10))
+print('height=20', end=' ')
+print(interpolate2(y, t, e, 20))
 
 # y, t, e = get_data1()
 # print interpolate(y, t, e, 147)
 # #
 y, t, e = get_data2()
-print interpolate(y, t, e, 56)
+print(interpolate(y, t, e, 56))
 y, t, e = get_data2()
-print interpolate2(y, t, e, 56)
+print(interpolate2(y, t, e, 56))
 # print interpolate(y, t, e, 35)
 #
 # y, t, e = get_data3()

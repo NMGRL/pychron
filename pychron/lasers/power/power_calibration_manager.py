@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traits.etsconfig.etsconfig import ETSConfig
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 ETSConfig.toolkit = 'qt4'
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Float, Button, Instance, Int, \
     Event, Property, Bool, Any, Enum, on_trait_change, List
 from traitsui.api import View, Item, VGroup, Group
-import cPickle as pickle
+import six.moves.cPickle as pickle
 from pyface.timer.do_later import do_later
 # ============= standard library imports ========================
 from numpy import polyfit, linspace, polyval
@@ -378,7 +382,7 @@ class PowerCalibrationManager(Manager):
     def _regress(self, xs, ys, deg):
 
         if xs is not None and ys is not None:
-            xs, ys = zip(*zip(xs, ys))
+            xs, ys = list(zip(*list(zip(xs, ys))))
 
         coeffs = polyfit(xs, ys, deg)
         #        print coeffs
@@ -433,7 +437,7 @@ class PowerCalibrationManager(Manager):
 
     def _parse_coefficient_string(self, cs, warn=True):
         try:
-            return map(float, cs.split(','))
+            return list(map(float, cs.split(',')))
         except ValueError:
             if warn:
                 self.warning_dialog('Invalid coefficient string {}'.format(cs))
@@ -529,7 +533,7 @@ class PowerCalibrationManager(Manager):
 
     def _validate_coefficients(self, v):
         try:
-            return map(float, [c for c in v.split(',')])
+            return list(map(float, [c for c in v.split(',')]))
 
         except (ValueError, AttributeError):
             pass
@@ -684,8 +688,8 @@ class FusionsCO2PowerCalibrationManager(PowerCalibrationManager):
 
         #        print xf
         #        print yf
-        x, y = zip(*zip(x, y))
-        xf, yf = zip(*zip(xf, yf))
+        x, y = list(zip(*list(zip(x, y))))
+        xf, yf = list(zip(*list(zip(xf, yf))))
         g.new_series(x, y)
         g.new_series(xf, yf)
 

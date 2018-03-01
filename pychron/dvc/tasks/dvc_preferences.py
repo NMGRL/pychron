@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Bool
 from traitsui.api import View, Item, VGroup, UItem
@@ -49,7 +50,7 @@ class DVCPreferencesPane(PreferencesPane):
     category = 'DVC'
 
     def traits_view(self):
-        org = VGroup(UItem('organization'),
+        org = VGroup(UItem('organization', resizable=True),
                      Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
                      label='Organization', show_border=True)
         meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)

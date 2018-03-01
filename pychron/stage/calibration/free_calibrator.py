@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
 # from pychron.core.ui.custom_label_editor import CustomLabel
@@ -23,6 +24,7 @@ from traitsui.view import View
 from pychron.stage.calibration.calibrator import TrayCalibrator
 from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.core.geometry.affine import calculate_rigid_transform, calculate_rigid_itransform
+from six.moves import zip
 
 
 # ============= standard library imports ========================
@@ -80,7 +82,7 @@ class FreeCalibrator(TrayCalibrator):
             d = dict(calibration_step='Calibrate')
             self.calibrating = False
 
-            refpoints, points = zip(*self.points)
+            refpoints, points = list(zip(*self.points))
 
             # scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
             #                                                         points)

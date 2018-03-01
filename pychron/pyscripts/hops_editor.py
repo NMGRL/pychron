@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 import yaml
@@ -200,7 +202,7 @@ class HopSequence(HasTraits):
     def _label_hops(self):
         for i, hi in enumerate(self.hops):
             hi.name = str(i + 1)
-            print hi.name
+            print(hi.name)
             for j, pi in enumerate(hi.positions):
                 pi.name = str(j + 1)
 

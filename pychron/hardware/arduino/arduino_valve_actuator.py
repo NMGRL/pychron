@@ -21,7 +21,8 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from arduino_gp_actuator import ArduinoGPActuator
+from __future__ import absolute_import
+from .arduino_gp_actuator import ArduinoGPActuator
 
 
 class ArduinoValveActuator(ArduinoGPActuator):

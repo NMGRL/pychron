@@ -17,6 +17,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import subprocess
 from os import path
@@ -29,7 +31,7 @@ def ifort_build(name, out):
     if path.isfile(name):
         subprocess.call(['Ifort', name, out, '-save'])
     else:
-        print 'invalid source file {}'.format(name)
+        print('invalid source file {}'.format(name))
 
 
 def gfort_build(name, out):
@@ -38,7 +40,7 @@ def gfort_build(name, out):
         pass
         subprocess.call(['gfortran', name, '-o', out])
     else:
-        print 'invalid source file {}'.format(name)
+        print('invalid source file {}'.format(name))
 
 
 def build(files, is_pychron):
@@ -54,8 +56,8 @@ def build(files, is_pychron):
 
         f = os.path.join(srcroot, f)
         f = '{}.f'.format(f)
-        print 'src:     ', f
-        print 'building:', out
+        print('src:     ', f)
+        print('building:', out)
 
         gfort_build(f, out)
 

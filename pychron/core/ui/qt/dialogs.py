@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QMessageBox
 from pyface.qt.QtGui import QSizePolicy, QCheckBox

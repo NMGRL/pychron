@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.trait_types import Bool, Instance, Event, Int
 from traits.traits import Color
 # ============= standard library imports ========================

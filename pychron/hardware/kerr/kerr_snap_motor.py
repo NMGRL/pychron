@@ -17,7 +17,8 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 # =============local library imports  ==========================
-from kerr_motor import KerrMotor
+from __future__ import absolute_import
+from .kerr_motor import KerrMotor
 
 
 class KerrSnapMotor(KerrMotor):

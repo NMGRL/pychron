@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import object_session
@@ -207,6 +208,10 @@ class AnalysisTbl(Base, BaseMixin):
         return self.irradiation_position.position
 
     @property
+    def material(self):
+        return self.irradiation_position.sample.material.name
+
+    @property
     def tag(self):
         return self.change.tag
 
@@ -299,7 +304,7 @@ class ProjectTbl(Base, NameMixin):
     samples = relationship('SampleTbl', backref='project')
     analysis_groups = relationship('AnalysisGroupTbl', backref='project')
     checkin_date = Column(DATE)
-    comment = Column(BLOB)
+    comment = Column(TEXT)
     lab_contact = stringcolumn(80)
     institution = stringcolumn(80)
 
@@ -344,7 +349,7 @@ class LevelTbl(Base, NameMixin):
 
     positions = relationship('IrradiationPositionTbl', backref='level')
 
-    note = Column(BLOB)
+    note = Column(TEXT)
 
     @property
     def projects(self):
@@ -373,7 +378,7 @@ class IrradiationPositionTbl(Base, BaseMixin):
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
     levelID = Column(Integer, ForeignKey('LevelTbl.id'))
     position = Column(Integer)
-    note = Column(BLOB)
+    note = Column(TEXT)
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
@@ -465,7 +470,7 @@ class LoadPositionTbl(Base, BaseMixin):
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
     weight = Column(Float)
-    note = Column(BLOB)
+    note = Column(TEXT)
 
 
 class MeasuredPositionTbl(Base, BaseMixin):
@@ -527,7 +532,7 @@ class SamplePrepImageTbl(Base, BaseMixin):
     host = Column(String(45))
     path = Column(String(45))
     timestamp = Column(DATETIME, default=func.now())
-    note = Column(BLOB)
+    note = Column(TEXT)
 
 
 class RestrictedNameTbl(Base, BaseMixin):
@@ -543,7 +548,7 @@ class IRTbl(Base, BaseMixin):
     institution = Column(String(140))
     checkin_date = Column(DATE)
     lab_contact = Column(String(140), ForeignKey('UserTbl.name'))
-    comment = Column(BLOB)
+    comment = Column(TEXT)
 
     @property
     def principal_investigator_name(self):

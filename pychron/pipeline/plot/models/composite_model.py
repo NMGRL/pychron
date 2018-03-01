@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.pipeline.plot.models.figure_model import FigureModel
 from pychron.pipeline.plot.panels.isochron_panel import InverseIsochronPanel
 from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel

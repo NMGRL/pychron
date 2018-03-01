@@ -18,6 +18,8 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from PySide import QtCore, QtGui
 from traits.api import Bool, Int, Color, Dict
 
@@ -78,7 +80,7 @@ class _KeywordEditor(SimpleEditor):
 
     def update_cursor_position(self):
         user_object = self.context_object
-        print 'uasdf', user_object
+        print('uasdf', user_object)
 
 
 class KeywordEditor(BasicEditorFactory):

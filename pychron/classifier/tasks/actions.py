@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from traitsui.menu import Action
 
 from pychron.classifier.isotope_trainer import IsotopeTrainer
@@ -24,7 +26,7 @@ class TrainIsotopeClassifierAction(Action):
     def perform(self, event):
         app = event.task.application
         dvc = app.get_service('pychron.dvc.dvc.DVC')
-        print 'asdfasd', dvc
+        print('asdfasd', dvc)
         trainer = IsotopeTrainer(dvc=dvc)
         trainer.train()
         # trainer.edit_traits(view=View('test'))

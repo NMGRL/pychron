@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int, on_trait_change, Str, Property, cached_property, \
     Float, Bool, HasTraits, Instance, TraitError, Button, List, Enum
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, CheckListEditor
@@ -31,6 +32,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
+import six
 
 
 class YamlObject(HasTraits):
@@ -48,7 +50,7 @@ class YamlObject(HasTraits):
     def dump(self):
         def get(k):
             v = getattr(self, k)
-            if isinstance(v, unicode):
+            if isinstance(v, six.text_type):
                 v = str(v)
             elif hasattr(v, '__iter__'):
                 v = list(v)

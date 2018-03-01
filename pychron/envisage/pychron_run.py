@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 import logging
 
 from envisage.core_plugin import CorePlugin
@@ -128,10 +129,10 @@ def get_hardware_plugins():
 
 def get_klass(package, name):
     try:
-        m = __import__(package, globals(), locals(), [name], -1)
+        m = __import__(package, globals(), locals(), [name])
         klass = getattr(m, name)
 
-    except ImportError, e:
+    except ImportError as e:
         import traceback
 
         traceback.print_exc()

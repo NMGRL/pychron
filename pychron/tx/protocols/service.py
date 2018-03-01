@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 import traceback
 
@@ -29,7 +31,7 @@ from pychron import json
 
 
 def default_err(failure):
-    print failure.getTraceback()
+    print(failure.getTraceback())
     failure.trap(BaseException)
     return failure
 
@@ -142,7 +144,7 @@ class ServiceProtocol(LineReceiver):
         try:
             service = self._services[name]
             return service, jd
-        except KeyError, e:
+        except KeyError as e:
             traceback.print_exc()
             raise ServiceNameError(name, data)
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 
 from traits.api import Any, Int, Instance, Event
@@ -33,6 +34,7 @@ from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.graph import Graph
 from chaco.plot_containers import HPlotContainer
 from pychron.paths import paths
+from six.moves import range
 # from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -185,7 +187,7 @@ class PowerMapper(Loggable, ConsumerMixin):
             zd = rot90(zd, k=2)
 #             zd = zd.T
 #             print zd
-            if not cg.plots[0].plots.keys():
+            if not list(cg.plots[0].plots.keys()):
                 cg.new_series(z=zd,
                               xbounds=(-self._padding, self._padding),
                               ybounds=(-self._padding, self._padding),
@@ -215,12 +217,12 @@ class PowerMapper(Loggable, ConsumerMixin):
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%% not alive')
                 break
             try:
-                row, ny = row_gen.next()
+                row, ny = next(row_gen)
             except StopIteration:
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%% Stop iteration1')
                 break
             try:
-                sx, ex = endpt_gen.next()
+                sx, ex = next(endpt_gen)
             except StopIteration:
                 self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%% Stop iteration2')
                 break
@@ -288,7 +290,7 @@ class PowerMapper(Loggable, ConsumerMixin):
     def _row_generator(self, cx, cy, padding, step_len):
         nsteps = int(padding / step_len)
 #        ysteps = xrange(-nsteps, nsteps + 1)
-        ysteps = xrange(nsteps + 1, -nsteps, -1)
+        ysteps = range(nsteps + 1, -nsteps, -1)
 
         self.graph.set_x_limits(-padding, padding, pad='0.1')
         def gen():
@@ -299,8 +301,8 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     def _step_generator(self, cx, cy, padding, step_len):
         nsteps = int(padding / step_len)
-        xsteps = xrange(-nsteps, nsteps + 1)
-        ysteps = xrange(-nsteps, nsteps + 1)
+        xsteps = range(-nsteps, nsteps + 1)
+        ysteps = range(-nsteps, nsteps + 1)
 
         self.canvas.set_parameters(xsteps, ysteps)
         self.canvas.request_redraw()
@@ -364,12 +366,12 @@ def _discrete_scan(self, cx, cy, padding, step_len):
             if not self._alive:
                 break
             try:
-                col, nx, row, ny = step_gen.next()
+                col, nx, row, ny = next(step_gen)
             except StopIteration:
                 break
 
             if lm.simulation:
-                mag = pgen.next()
+                mag = next(pgen)
             else:
                 sm.linear_move(nx, ny)
                 if col == 0:

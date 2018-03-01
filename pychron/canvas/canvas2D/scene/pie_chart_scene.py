@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 
 from chaco.default_colormaps import jet
@@ -22,6 +23,7 @@ from enable.base import str_to_font
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import QPrimitive
 from pychron.canvas.canvas2D.scene.scene import Scene
+from six.moves import zip
 
 
 class PieChart(QPrimitive):

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -27,10 +28,12 @@ from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGrou
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, K_DECAY_CONSTANTS, PLUSMINUS_ONE_SIGMA
+import six
+from six.moves import zip
 
 LAMBDA_K_ATTRS = ('lambda_e', 'lambda_e_error', 'lambda_b', 'lambda_b_error')
-ATM_ATTRS = ('Ar40_Ar36_atm', 'Ar40_Ar36_atm_error', 'Ar40_Ar36_atm_citation',
-             'Ar40_Ar38_atm', 'Ar40_Ar38_atm_error', 'Ar40_Ar38_atm_citation')
+ATM_ATTRS = ('ar40_ar36_atm', 'ar40_ar36_atm_error', 'ar40_ar36_atm_citation',
+             'ar40_ar38_atm', 'ar40_ar38_atm_error', 'ar40_ar38_atm_citation')
 
 
 class DecayConstantEntry(HasTraits):
@@ -85,10 +88,10 @@ class AtmConstantsEntry(HasTraits):
 class ArArConstantsPreferences(BasePreferencesHelper):
     name = 'Constants'
     preferences_path = 'pychron.arar.constants'
-    Ar40_Ar36_atm = Float(295.5)
-    Ar40_Ar36_atm_error = Float(0)
-    Ar40_Ar38_atm = Float(1575)
-    Ar40_Ar38_atm_error = Float(2)
+    ar40_ar36_atm = Float(295.5)
+    ar40_ar36_atm_error = Float(0)
+    ar40_ar38_atm = Float(1575)
+    ar40_ar38_atm_error = Float(2)
     lambda_e = Float(5.81e-11)
     lambda_e_error = Float(0)
     lambda_b = Float(4.962e-10)
@@ -99,9 +102,9 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     lambda_Ar37_error = Float(0)
     lambda_Ar39 = Float(7.068e-6)
     lambda_Ar39_error = Float(0)
-    Ar37_Ar39_mode = Enum('Normal', 'Fixed')
-    Ar37_Ar39 = Float(0.01)
-    Ar37_Ar39_error = Float(0.01)
+    ar37_ar39_mode = Enum('Normal', 'Fixed')
+    ar37_ar39 = Float(0.01)
+    ar37_ar39_error = Float(0.01)
     allow_negative_ca_correction = Bool
 
     # ===========================================================================
@@ -115,8 +118,8 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     age_units = Enum('Ma', 'ka', 'Ga')
 
     #citations
-    Ar40_Ar36_atm_citation = Str
-    Ar40_Ar38_atm_citation = Str
+    ar40_ar36_atm_citation = Str
+    ar40_ar38_atm_citation = Str
     lambda_e_citation = Str
     lambda_b_citation = Str
     lambda_Cl36_citation = Str
@@ -128,7 +131,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     delete_decay_constant = Button
     decay_constant_name = Str(NULL_STR)
     decay_constant_names = List([NULL_STR, 'Min et al., 2000', 'Steiger & Jager 1977'])
-    decay_constant_entry_deletable = Property(depends_on='decay_constant_name')
+    decay_constant_entry_deletable = Property(depends_on='decay_constant_name', transient=True)
     total_k_decay = Property(depends_on='lambda_e, lambda_b')
 
     atm_constant_entries = Dict({'Nier 1950': (295.5, 0.5, 'Nier 1950', 1575.0, 2.0, 'Nier 1950'),
@@ -138,7 +141,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     atm_constant_names = List([NULL_STR, 'Nier 1950', 'Lee et al., 2006'])
     add_atm_constant = Button
     delete_atm_constant = Button
-    atm_constant_entry_deletable = Property(depends_on='atm_constant_name')
+    atm_constant_entry_deletable = Property(depends_on='atm_constant_name', transient=True)
 
     def _update_entries(self, new, entries, attrs):
         if new in entries:
@@ -152,7 +155,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
             return all([getattr(self, attr) == pvalue
                         for attr, pvalue in zip(attrs, v)])
 
-        return next((k for k, v in entries.iteritems() if test_entry(v)), NULL_STR)
+        return next((k for k, v in six.iteritems(entries) if test_entry(v)), NULL_STR)
 
     def _find_decay_constant_entry(self):
         return self._find_entry(self.decay_constant_entries, LAMBDA_K_ATTRS)
@@ -187,7 +190,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.atm_constant_names:
                 nv = e.totuple()
-                exists = next((k for k, v in self.atm_constant_entries.iteritems() if nv == v), None)
+                exists = next((k for k, v in six.iteritems(self.atm_constant_entries) if nv == v), None)
                 if exists:
                     warning(None,
                             'Atm constant entry with those values already exists.\nExisting entry named "{}"'.format(
@@ -209,7 +212,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
         if info.result and name:
             if name not in self.decay_constant_names:
                 nv = e.totuple()
-                exists = next((k for k, v in self.decay_constant_entries.iteritems() if nv == v), None)
+                exists = next((k for k, v in six.iteritems(self.decay_constant_entries) if nv == v), None)
                 if exists:
                     warning(None,
                             'Decay constant entry with those values already exists.\nExisting entry named "{}"'.format(
@@ -227,12 +230,12 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     def _atm_constant_name_changed(self, new):
         self._update_entries(new, self.atm_constant_entries, ATM_ATTRS)
 
-    @on_trait_change('Ar40_Ar36_atm,Ar40_Ar36_atm_error,Ar40_Ar38_atm, Ar40_Ar38_atm_error')
+    @on_trait_change('ar40_ar36_atm,ar40_ar36_atm_error, ar40_ar38_atm,ar40_ar38_atm_error')
     def _decay_constants_change(self):
         d = self._find_atm_constant_entry()
         self.atm_constant_name = d
 
-    @on_trait_change('lambda_e,lambda_e_error,lambda_b,lambda_b_error')
+    @on_trait_change('lambda_e,lambda_e_error, lambda_b,lambda_b_error')
     def _decay_constants_change(self):
         d = self._find_decay_constant_entry()
         self.decay_constant_name = d
@@ -318,17 +321,17 @@ class ArArConstantsPreferencesPane(PreferencesPane):
                    Label(PLUSMINUS_ONE_SIGMA),
                    Spring(springy=False, width=55),
                    Label('Citation')),
-            HGroup(Item('Ar40_Ar36_atm', label='(40Ar/36Ar)atm'),
-                   Item('Ar40_Ar36_atm_error', show_label=False),
-                   Item('Ar40_Ar36_atm_citation', show_label=False)),
-            HGroup(Item('Ar40_Ar38_atm', label='(40Ar/38Ar)atm'),
-                   Item('Ar40_Ar38_atm_error', show_label=False),
-                   Item('Ar40_Ar38_atm_citation', show_label=False)),
+            HGroup(Item('ar40_ar36_atm', label='(40Ar/36Ar)atm'),
+                   Item('ar40_ar36_atm_error', show_label=False),
+                   Item('ar40_ar36_atm_citation', show_label=False)),
+            HGroup(Item('ar40_ar38_atm', label='(40Ar/38Ar)atm'),
+                   Item('ar40_ar38_atm_error', show_label=False),
+                   Item('ar40_ar38_atm_citation', show_label=False)),
             Item('_'),
             HGroup(
-                Item('Ar37_Ar39_mode', label='(37Ar/39Ar)K'),
-                Item('Ar37_Ar39', show_label=False),
-                Item('Ar37_Ar39_error', show_label=False)),
+                Item('ar37_ar39_mode', label='(37Ar/39Ar)K'),
+                Item('ar37_ar39', show_label=False),
+                Item('ar37_ar39_error', show_label=False)),
             label='Ratios')
         return ratios
 
@@ -349,4 +352,4 @@ class ArArConstantsPreferencesPane(PreferencesPane):
 
         v = View(general, decay, ratios, spectrometer)
         return v
-        # ============= EOF =============================================
+# ============= EOF =============================================

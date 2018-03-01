@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Event, Str, List, Instance, String
 # ============= standard library imports ========================
 import os
@@ -37,7 +39,7 @@ def get_stage_map_names(root=None):
         root = paths.map_dir
 
     sms = list_directory2(root, '.txt', remove_extension=True)
-    print root, sms
+    print(root, sms)
     sms = [si for si in sms if not si.endswith('.center')]
     us = list_directory2(paths.user_points_dir, '.yaml', remove_extension=True)
     if us:
@@ -153,7 +155,7 @@ class BaseStageManager(Manager):
             self._stop()
 
         if name is None:
-            name = func.func_name
+            name = func.__name__
 
         self.move_thread = Thread(name='stage.{}'.format(name),
                                   target=func, args=(pos,) + args, kwargs=kw)

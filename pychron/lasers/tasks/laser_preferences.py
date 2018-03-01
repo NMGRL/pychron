@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Str, Enum, File, Directory, \
     Color, Range, Float
@@ -29,10 +30,9 @@ class LaserPreferences(BasePreferencesHelper):
 
 class FusionsLaserPreferences(LaserPreferences):
     use_video = Bool(False)
-    video_output_mode = Enum('MPEG', 'Raw')
-    ffmpeg_path = File
-
-    video_identifier = Str
+    # video_output_mode = Enum('MPEG', 'Raw')
+    # ffmpeg_path = File
+    # video_identifier = Str
 
     use_media_storage = Bool
     keep_local_copy = Bool
@@ -134,10 +134,11 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                    Item('auto_upload'))
 
         videogrp = VGroup(Item('use_video'),
-                          VGroup(Item('video_identifier', label='ID',
-                                      enabled_when='use_video'),
-                                 Item('video_output_mode', label='Output Mode'),
-                                 Item('ffmpeg_path', label='FFmpeg Location'),
+                          VGroup(
+                              # Item('video_identifier', label='ID',
+                              #      enabled_when='use_video'),
+                              # Item('video_output_mode', label='Output Mode'),
+                              # Item('ffmpeg_path', label='FFmpeg Location'),
                                  Item('use_autocenter', label='Auto Center'),
                                  Item('render_with_markup', label='Render Snapshot with markup'),
                                  recgrp,

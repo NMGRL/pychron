@@ -21,7 +21,8 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from graph import Graph
+from __future__ import absolute_import
+from .graph import Graph
 
 
 class BarGraph(Graph):

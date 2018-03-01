@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import sqlalchemy
 
 from pychron.deprecate import  deprecated_message
+import six
 
 
 # ============= enthought library imports =======================
@@ -29,7 +31,7 @@ def add(func):
 
         kwargs = kw.copy()
         for key in ('unique', 'commit', 'flush'):
-            if kwargs.has_key(key):
+            if key in kwargs:
                 kwargs.pop(key)
 
 
@@ -40,9 +42,9 @@ def add(func):
             if dbr and add:
                 sess.add(dbr)
 
-                if kw.has_key('flush'):
+                if 'flush' in kw:
                     sess.flush()
-                elif kw.has_key('commit'):
+                elif 'commit' in kw:
                     sess.commit()
 
         return dbr
@@ -66,7 +68,7 @@ def _get_one(*args, **kw):
 def _getter(getfunc, func, obj, name,
             *args, **kw):
 
-    if name is not None and not isinstance(name, (str, int, unicode, long, float)):
+    if name is not None and not isinstance(name, (str, int, six.text_type, int, float)):
         return name
 
     order_by = None
@@ -91,12 +93,12 @@ def _getter(getfunc, func, obj, name,
 #    return getattr(q, getfunc)()
     try:
         return getattr(q, getfunc)()
-    except sqlalchemy.exc.SQLAlchemyError, e:
+    except sqlalchemy.exc.SQLAlchemyError as e:
 #        print 'get_one, e1', e
         try:
             q = q.order_by(table.id.desc())
             return q.limit(1).all()[-1]
-        except (sqlalchemy.exc.SQLAlchemyError, IndexError, AttributeError), e:
+        except (sqlalchemy.exc.SQLAlchemyError, IndexError, AttributeError) as e:
             pass
 #            print 'get_one, e2', e
 #            pass
@@ -113,6 +115,6 @@ def delete_one(func):
 def sql_retrieve(func):
     try:
         return func()
-    except sqlalchemy.exc.SQLAlchemyError, e:
+    except sqlalchemy.exc.SQLAlchemyError as e:
         pass
 # ============= EOF =============================================

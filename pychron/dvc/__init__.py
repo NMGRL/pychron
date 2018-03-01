@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from pychron import json
 from pprint import pformat
@@ -39,8 +41,8 @@ def dvc_dump(obj, path):
     with open(path, 'w') as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)
-        except TypeError, e:
-            print 'dvc dump exception. error:{}, {}'.format(e, pformat(obj))
+        except TypeError as e:
+            print('dvc dump exception. error:{}, {}'.format(e, pformat(obj)))
 
 
 def dvc_load(path):

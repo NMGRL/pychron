@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Float, Property, Bool, Int, CInt, Button
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
     spring
@@ -24,13 +26,14 @@ from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, RangeEditor, \
 import struct
 import binascii
 # =============local library imports  ==========================
-from kerr_device import KerrDevice
+from .kerr_device import KerrDevice
 from pychron.hardware.base_linear_drive import BaseLinearDrive
 from pychron.hardware.core.data_helper import make_bitarray
 import time
 from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.progress_editor import ProgressEditor
+from six.moves import map
 # from pyface.progress_dialog import ProgressDialog
 
 SIGN = ['negative', 'positive']
@@ -113,9 +116,9 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         if self.nominal_position is not None:
             move_to_nominal = True
             if not globalv.ignore_initialization_questions:
-                move_to_nominal = self.confirmation_dialog(
-                    'Would you like to set the {} motor to its nominal pos of {}'.format(self.name.upper(),
-                                                                                         self.nominal_position))
+                msg = 'Would you like to set the {} motor to its nominal pos of {}'.format(self.name.upper(),
+                                                                                           self.nominal_position)
+                move_to_nominal = self.confirmation_dialog(msg)
 
             if move_to_nominal:
                 # move to the home position
@@ -169,7 +172,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         cmds.append((addr, cmd, 100, msg))
         if motor_off:
-            cmds.append((addr, '1707', 100, 'Moto ON'))
+            cmds.append((addr, '1707', 100, 'Motor ON'))
 
             # if motor_off:
             # cmds = [(addr, '', 100, )]
@@ -318,7 +321,8 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         psteps = None
         while 1:
             steps = self.load_data_position(set_pos=False)
-            invoke_in_main_thread(self.trait_set, homing_position=steps)
+            # invoke_in_main_thread(self.trait_set, homing_position=steps)
+            self.homing_position = steps
             status = self.read_defined_status()
 
             if not self._test_status_byte(status, setbits=[7]):
@@ -355,7 +359,7 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
 
         if status_byte in ('simulation', None):
             status_byte = 'DFDF'
-        status_register = map(int, make_bitarray(int(status_byte[:2], 16)))
+        status_register = list(map(int, make_bitarray(int(status_byte[:2], 16))))
         return not status_register[7]
 
     def _clear_bits(self):
@@ -517,8 +521,8 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         fmt = '<i' if endianness == 'little' else '>i'
         try:
             return struct.unpack(fmt, h.decode('hex'))[0]
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
 
     def _build_hexstr(self, *hxlist):
         ss = []

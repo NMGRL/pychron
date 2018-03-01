@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.plot_containers import HPlotContainer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

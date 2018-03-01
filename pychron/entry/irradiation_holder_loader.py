@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.file_dialog import FileDialog
 # ============= standard library imports ========================
 import os

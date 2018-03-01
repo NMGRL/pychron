@@ -14,11 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from traits.api import File
 # ============= standard library imports ========================
 from uncertainties import ufloat
 # ============= local library imports  ==========================
 from pychron.data_mapper.sources.dvc_source import DVCSource
+from six.moves import map
 
 
 def get_next(f, idx=0):
@@ -34,7 +36,7 @@ def get_float(f, idx=0):
 
 
 def get_ufloat(f):
-    return ufloat(*map(float, next(f)))
+    return ufloat(*list(map(float, next(f))))
 
 
 class FileSource(DVCSource):

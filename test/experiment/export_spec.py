@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
+from six.moves import zip
 
 set_toolkit('qt4')
 
@@ -55,23 +57,23 @@ class ExportSpecTestCase(unittest.TestCase):
         with self.spec.open_file():
             e = self.spec
             gen = e.iter_isotopes()
-            iso, det = gen.next()
+            iso, det = next(gen)
             self.assertEqual(iso, 'Ar36')
             self.assertEqual(det, 'CDD')
 
-            iso, det = gen.next()
+            iso, det = next(gen)
             self.assertEqual(iso, 'Ar37')
             self.assertEqual(det, 'CDD')
 
-            iso, det = gen.next()
+            iso, det = next(gen)
             self.assertEqual(iso, 'Ar38')
             self.assertEqual(det, 'CDD')
 
-            iso, det = gen.next()
+            iso, det = next(gen)
             self.assertEqual(iso, 'Ar39')
             self.assertEqual(det, 'CDD')
 
-            iso, det = gen.next()
+            iso, det = next(gen)
             self.assertEqual(iso, 'Ar40')
             self.assertEqual(det, 'CDD')
 

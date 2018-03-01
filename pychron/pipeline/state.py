@@ -15,13 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str, Dict
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
+import six
 
 
 def get_detector_set(ans):
-    return {iso.detector for ai in ans if ai.isotopes for iso in ai.isotopes.itervalues()}
+    return {iso.detector for ai in ans for iso in ai.itervalues()}
+    # return {iso.detector for ai in ans if ai.isotopes for iso in six.itervalues(ai.isotopes)}
+
+
+def get_isotope_set(ans):
+    return {iso.name for ai in ans for iso in ai.itervalues()}
 
 
 class EngineState(HasTraits):
@@ -42,9 +49,9 @@ class EngineState(HasTraits):
     # user_review = Bool
     veto = Any
     canceled = Bool
-    udetectors = Property(depends_on='unknowns[]')
-    rdetectors = Property(depends_on='references[]')
-    union_detectors = Property(depends_on='udetectors, rdetectors')
+    # udetectors = Property(depends_on='unknowns[]')
+    # rdetectors = Property(depends_on='references[]')
+    # union_detectors = Property(depends_on='udetectors, rdetectors')
     iso_evo_results = List
 
     modified_projects = Set
@@ -57,17 +64,17 @@ class EngineState(HasTraits):
 
     report_path = None
 
-    @cached_property
-    def _get_udetectors(self):
-        return get_detector_set(self.unknowns)
-
-    @cached_property
-    def _get_rdetectors(self):
-        return get_detector_set(self.references)
-
-    @cached_property
-    def _get_union_detectors(self):
-        x = set(self.udetectors).union(self.rdetectors)
-        return sort_isotopes(x)
+    # @cached_property
+    # def _get_udetectors(self):
+    #     return get_detector_set(self.unknowns)
+    #
+    # @cached_property
+    # def _get_rdetectors(self):
+    #     return get_detector_set(self.references)
+    #
+    # @cached_property
+    # def _get_union_detectors(self):
+    #     x = set(self.udetectors).union(self.rdetectors)
+    #     return sort_isotopes(x)
 
 # ============= EOF =============================================

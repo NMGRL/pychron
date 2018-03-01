@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, List, Dict
 # from traitsui.api import View, Item
 
@@ -65,7 +67,7 @@ class AutoupdateParser(Loggable):
         with open(p, 'U') as f:
             reader = csv.reader(f, delimiter='\t')
 
-            header = reader.next()
+            header = next(reader)
 
             sampleObj = None
             samples = dict()
@@ -181,7 +183,7 @@ if __name__ == '__main__':
     pa = '/Users/ross/Antarctica/MinnaBluff/data/gm-06.csv'
     samples = p.parse(pa)
 
-    print samples[0].get_isotopic_recombination_age()
+    print(samples[0].get_isotopic_recombination_age())
 
 # ============= EOF =====================================
 #    def finish(self):

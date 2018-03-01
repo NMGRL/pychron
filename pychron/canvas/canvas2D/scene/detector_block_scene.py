@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.primitives.detector_block import Detector
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.core.xml.xml_parser import XMLParser

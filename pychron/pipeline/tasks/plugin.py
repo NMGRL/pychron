@@ -15,22 +15,22 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
 from pyface.tasks.action.schema_addition import SchemaAddition
 
+from pychron.dvc.dvc import DVC
 from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAgeBrowserModel
 from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.paths import paths
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
     LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
-from pychron.pipeline.tasks.task import PipelineTask
 
 
 class PipelinePlugin(BaseTaskPlugin):
@@ -69,7 +69,12 @@ class PipelinePlugin(BaseTaskPlugin):
     def _pipeline_factory(self):
         model = self.application.get_service(SampleBrowserModel)
         iamodel = self.application.get_service(InterpretedAgeBrowserModel)
+        dvc = self.application.get_service(DVC)
+
+        from pychron.pipeline.tasks.task import PipelineTask
+
         t = PipelineTask(browser_model=model,
+                         dvc=dvc,
                          interpreted_age_browser_model=iamodel,
                          application=self.application)
         return t

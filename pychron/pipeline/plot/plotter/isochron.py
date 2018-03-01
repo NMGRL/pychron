@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.plot_label import PlotLabel
@@ -32,6 +33,7 @@ from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsI
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.pychron_constants import PLUSMINUS
+from six.moves import zip
 
 
 class OffsetPlotLabel(PlotLabel):

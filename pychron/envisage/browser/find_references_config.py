@@ -15,14 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
-from traits.api import HasTraits, Int, List, Str
+from traits.api import HasTraits, Int, List, Str, Bool
 from traitsui.api import View, UItem, Item, VGroup, Controller, EnumEditor, CheckListEditor
 
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
+from six.moves import map
 
 
 def formatter(x):
@@ -40,7 +42,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     irradiations = List
     monitor_sample = Str(DEFAULT_MONITOR_NAME)
     monitor_samples = List
-
+    replace = Bool(False)
     pattributes = ('analysis_types', 'threshold')
 
     @property
@@ -49,7 +51,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
 
     @property
     def formatted_analysis_types(self):
-        return map(formatter, self.analysis_types)
+        return list(map(formatter, self.analysis_types))
 
 
 class FindReferencesConfigView(Controller):
@@ -82,7 +84,9 @@ class FindReferencesConfigView(Controller):
                                     editor=EnumEditor(name='monitor_samples')),
                                show_border=True,
                                label='Monitors'),
+                        Item('replace', label='Replace analyses used to find the references with the references'),
                         Item('threshold', label='Threshold (hrs)')),
+
                  title='Configure Find References',
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')

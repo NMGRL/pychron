@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import base64
 from datetime import datetime
 import requests
@@ -81,8 +83,8 @@ def create_organization_repository(org, name, usr, pwd, **kw):
     auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
     headers = {"Authorization": "Basic {}".format(auth)}
     r = requests.post(cmd, data=json.dumps(payload), headers=headers)
-    print cmd, payload, usr, pwd
-    print r
+    print(cmd, payload, usr, pwd)
+    print(r)
     return r
 
 
@@ -101,7 +103,7 @@ class GithubObject(object):
                 auth = base64.encodestring('{}:{}'.format(self._usr, self._pwd)).replace('\n', '')
                 auth = 'Basic {}'.format(auth)
             headers['Authorization'] = auth
-        print headers
+        print(headers)
         return headers
 
     def _process_post(self, po):
@@ -174,7 +176,7 @@ if __name__ == '__main__':
         pwd = rfile.readline().strip()
     # print get_organization_repositiories('NMGRL')
     org = Organization('NMGRLData', usr, pwd)
-    print org.repo_names, len(org.repo_names)
+    print(org.repo_names, len(org.repo_names))
     # print org.create_repo('test2', auto_init=True)
     # print org.repos, len(org.repos)
 # ============= EOF =============================================

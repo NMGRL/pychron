@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import array
 # ============= local library imports  ==========================
 from uncertainties import nominal_value

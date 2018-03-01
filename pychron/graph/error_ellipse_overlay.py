@@ -16,12 +16,15 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from chaco.api import AbstractOverlay
 from traits.api import Bool
 # ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
+from six.moves import zip
 
 # ============= local library imports  ==========================
 
@@ -103,8 +106,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
                 with gc:
                     self._draw_ellipse(gc, component, cx, cy, a, b, rot)
 
-        except Exception, e:
-            print 'exception', e
+        except Exception as e:
+            print('exception', e)
 
     def _draw_ellipse(self, gc, component, cx, cy, a, b, rot):
         scx, scy = component.map_screen([(cx, cy)])[0]

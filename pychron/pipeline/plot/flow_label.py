@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.data_label import DataLabel
 from chaco.plot_label import PlotLabel
 from traits.api import Bool, Str

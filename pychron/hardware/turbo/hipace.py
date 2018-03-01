@@ -22,6 +22,7 @@ TC 110 Electronic Drive Unit
 http://mmrc.caltech.edu/Optical%20Furnace/Manuals/Pfeiffer%20TC%20110%20Elec.%20Drive%20Unt.pdf
 """
 
+from __future__ import absolute_import
 from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 import re

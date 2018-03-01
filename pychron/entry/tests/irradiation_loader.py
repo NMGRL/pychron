@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pychron.core.test_helpers import get_data_dir as mget_data_dir, dvc_db_factory
 
 __author__ = 'ross'
@@ -138,7 +139,7 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.irradiation_offset = 1000
         gen = self.loader.identifier_generator()
 
-        self.assertEqual((gen.next(), gen.next()), (1000, 1001))
+        self.assertEqual((next(gen), next(gen)), (1000, 1001))
 
     @unittest.skipIf(DEBUGGING, 'Debugging tests')
     def test_generate_labnumber2(self):
@@ -150,7 +151,7 @@ class XLSIrradiationLoaderLoadTestCase(unittest.TestCase):
         self.loader.irradiation_offset = 100
         gen = self.loader.identifier_generator()
 
-        self.assertEqual((gen.next(), gen.next()), (2600, 2601))
+        self.assertEqual((next(gen), next(gen)), (2600, 2601))
 
         # @unittest.skipIf(DEBUGGING, 'Debugging tests')
         # def test_generate_offsets2(self):
@@ -229,8 +230,8 @@ class XLSIrradiationLoaderParseTestCase(unittest.TestCase):
 
         airrad = irrads[0]
         birrad = irrads[1]
-        aheader = airrad.next()
-        bheader = birrad.next()
+        aheader = next(airrad)
+        bheader = next(birrad)
 
         self.assertEqual('NM-1000', aheader[0].value)
         self.assertEqual('NM-1001', bheader[0].value)

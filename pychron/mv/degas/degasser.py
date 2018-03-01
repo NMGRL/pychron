@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, Int, Float, Instance, Range, on_trait_change, Button
@@ -22,7 +23,7 @@ from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 # ============= standard library imports ========================
 from numpy import uint8, zeros, random
-from Queue import Queue
+from six.moves.queue import Queue
 from skimage.color import gray2rgb
 from threading import Event, Thread
 import yaml

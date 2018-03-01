@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import datetime
 import re
 
@@ -25,6 +26,7 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
+from six.moves import filter
 
 COMP_RE = re.compile(r'<=|>=|>|<|==|between|not between')
 
@@ -226,7 +228,7 @@ class FilterNode(BaseNode):
             return flag
 
         if self.remove:
-            vs = filter(filterfunc, getattr(state, self.analysis_kind))
+            vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
             setattr(state, self.analysis_kind, vs)
         else:
             ans = getattr(state, self.analysis_kind)

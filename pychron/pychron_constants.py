@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
@@ -24,7 +25,13 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-FONTS = ['Helvetica', 'Courier', 'Menlo', 'Consolas']  # 'Courier','Times-Roman']#['modern', 'arial']
+FONTS = ['Andale Mono', 'Arial',
+         'Calibri', 'Cambria', 'Consolas', 'Courier New',
+         'Georgia',
+         'Impact',
+         'Helvetica',
+         'Trebuchet MS',
+         'Verdana']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = u'\u00b1'

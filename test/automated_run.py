@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 import unittest

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pickle
 
@@ -112,7 +114,7 @@ if __name__ == '__main__':
     fm = FrequencyModel()
     fev = FrequencyEditView(model=fm)
     fev.configure_traits()
-    print fm.frequency
+    print(fm.frequency)
 # ============= EOF =============================================
 
 

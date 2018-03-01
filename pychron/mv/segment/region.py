@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Bool
 # ============= standard library imports ========================
 from numpy import zeros_like, invert

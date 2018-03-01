@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 from traits.api import Event, Instance
 
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+import six
+from six.moves import range
+from six.moves import zip
 
 
 def intersperse(m, delim):
@@ -89,7 +93,7 @@ class InfoInspector(BaseTool):
         else:
             txt = ''
             if self.event_queue:
-                if not any((v for v in self.event_queue.itervalues())):
+                if not any((v for v in self.event_queue.values())):
                     txt = ''
                 else:
                     txt = None
@@ -142,7 +146,7 @@ class InfoOverlay(AbstractOverlay):
         gc.set_font(Font('Arial', size=size))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
-        lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
+        lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines]))
 
         rect_width = max(lws) + 4
         rect_height = (max(lhs) + 2) * len(lhs)
@@ -185,7 +189,7 @@ class InfoOverlay(AbstractOverlay):
 
         if multi_column:
             gen = (li for li in lines)
-            for col in xrange(multi_column):
+            for col in range(multi_column):
                 i = 0
                 for mi in gen:
                     if i == 0 and mi == '--------':

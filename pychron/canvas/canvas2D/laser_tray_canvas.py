@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
     Enum, List, File
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
@@ -146,6 +148,16 @@ class LaserTrayCanvas(StageCanvas):
         self._add_bounds_rect()
         self._add_crosshairs()
         self.border_visible = False
+
+    def get_crosshairs_radius(self, screen=False):
+        if self.crosshairs_kind == 'UserRadius':
+            radius = self.crosshairs_radius
+        else:
+            radius = self.beam_radius
+
+        if screen:
+            radius = self.get_wh(radius, 0)[0]
+        return radius
 
     def add_image_underlay(self, p, alpha=1.0):
         im = ImageOverlay(path=p, alpha=alpha)
@@ -333,8 +345,8 @@ class LaserTrayCanvas(StageCanvas):
                     if between(p.xaxes_min, x, p.xaxes_max) and \
                             between(p.yaxes_min, y, p.yaxes_max):
                         return x, y
-                except AttributeError, e:
-                    print e
+                except AttributeError as e:
+                    print(e)
 
     def map_offset_position(self, pos):
         """
@@ -406,6 +418,7 @@ class LaserTrayCanvas(StageCanvas):
 
         if pos:
             self.stage_manager.linear_move(*pos,
+                                           source='laser_canvas',
                                            start_timer=True,
                                            check_moving=True,
                                            use_calibration=False)

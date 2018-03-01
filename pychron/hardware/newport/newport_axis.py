@@ -18,6 +18,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Property, Str, Float, Int, Button
 from traitsui.api import View, Item, Group, EnumEditor, HGroup, VGroup, spring
 
@@ -27,6 +28,7 @@ from pychron.hardware.axis import Axis
 from pychron.core.helpers.filetools import parse_file
 
 from pychron.hardware.results_report import ResultsReport
+import six
 
 KINDS = ['Undefined',
          'DC servo motor',
@@ -173,7 +175,7 @@ def int_binstr(n):
     #
     bStr = ''
     #
-    if n < 0: raise ValueError, "must be a positive integer"
+    if n < 0: raise ValueError("must be a positive integer")
     if n == 0: return '000000000000'
 
     i = 0
@@ -540,7 +542,7 @@ class NewportAxis(Axis):
 
     def _read_parameters_fired(self):
         results = ResultsReport(axis=self)
-        for name, c in COMMAND_MAP.iteritems():
+        for name, c in six.iteritems(COMMAND_MAP):
             cmd = self.parent._build_query(c, xx=self.id)
             result = self.parent.ask(cmd)
             results.add(name, c, result)
@@ -560,7 +562,7 @@ class NewportAxis(Axis):
                 cmd = self.parent._build_command(attr, xx=self.id, nn=new)
                 self.parent.tell(cmd)
 
-            except KeyError, e:
+            except KeyError as e:
                 pass
 
     def save(self):

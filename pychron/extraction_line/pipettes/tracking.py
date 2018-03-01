@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
+from __future__ import absolute_import
+import six.moves.cPickle as pickle
 
 from traits.api import Str, Int
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from numpy import polyfit, linspace
 from traits.api import HasTraits, Float, Any, Button, Bool, List, Color
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, \
@@ -23,7 +24,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.graph.guide_overlay import GuideOverlay
-from spectrometer_task import SpectrometerTask
+from .spectrometer_task import SpectrometerTask
 
 
 class ResultsAdapter(TabularAdapter):

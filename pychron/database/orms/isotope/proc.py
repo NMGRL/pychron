@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, \
     BLOB, Float, Boolean, DateTime, TIMESTAMP, ForeignKey
 from sqlalchemy.ext.declarative import declared_attr
@@ -26,7 +27,7 @@ from pychron.database.core.base_orm import BaseMixin, NameMixin
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.pychron_constants import INTERPOLATE_TYPES
-from util import Base
+from .util import Base
 
 
 class History(object):

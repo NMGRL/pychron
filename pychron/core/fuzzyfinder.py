@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import re
 # ============= local library imports  ==========================
 """
@@ -45,7 +47,7 @@ def fuzzyfinder(user_input, collection, attr=None):
     #     if match:
     #         suggestions.append((len(match.group()), match.start(), item))
 
-    suggestions = filter(lambda x: x is not None, map(lambda item: func(regex, item, attr), collection))
+    suggestions = [x for x in [func(regex, item, attr) for item in collection] if x is not None]
     return [x for _, _, x in sorted(suggestions)]
 
 
@@ -58,7 +60,7 @@ if __name__ == '__main__':
                   'user_group.doc',
                   'accounts.txt']
 
-    print fuzzyfinder('djm', collection)
-    print fuzzyfinder('mig', collection)
-    print fuzzyfinder('user', collection)
+    print(fuzzyfinder('djm', collection))
+    print(fuzzyfinder('mig', collection))
+    print(fuzzyfinder('user', collection))
 # ============= EOF =============================================

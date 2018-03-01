@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import yaml
 
 from pychron.canvas.canvas2D.scene.scene import Scene

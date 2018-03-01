@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
 
@@ -44,7 +46,7 @@ class ModifiedPath(HasTraits):
 
 class CommitDialogHandler(Handler):
     def close(self, info, is_ok):
-        print 'asdf', info.object, info.object.commit_message
+        print('asdf', info.object, info.object.commit_message)
 
         if is_ok and not info.object.commit_message:
             information(None, 'Please enter a commit message')

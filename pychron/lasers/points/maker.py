@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import math
 
 from enable.abstract_overlay import AbstractOverlay
@@ -23,6 +24,8 @@ from traits.api import Any, Button, Enum, Float, Int, Color, \
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
+from six.moves import map
+from six.moves import range
 
 
 # ============= standard library imports ========================
@@ -147,14 +150,14 @@ class BaseMaker(Loggable):
         x, y = self.canvas.get_stage_position()
         cx, cy = sm.get_uncalibrated_xy((x, y))
 
-        x, y = map(float, (x, y))
-        cx, cy = map(float, (cx, cy))
+        x, y = list(map(float, (x, y)))
+        cx, cy = list(map(float, (cx, cy)))
 
-        x, y = map('{:0.3f}'.format, (x, y))
-        cx, cy = map('{:0.3f}'.format, (cx, cy))
+        x, y = list(map('{:0.3f}'.format, (x, y)))
+        cx, cy = list(map('{:0.3f}'.format, (cx, cy)))
 
-        x, y = map(float, (x, y))
-        cx, cy = map(float, (cx, cy))
+        x, y = list(map(float, (x, y)))
+        cx, cy = list(map(float, (cx, cy)))
         z = sm.get_z()
 
         ox, oy = self.canvas.get_screen_offset()

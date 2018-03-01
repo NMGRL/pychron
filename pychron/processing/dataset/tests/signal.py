@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from pychron.processing.dataset.tests.mixin import IntensityMixin
+import six
 
 class SignalsMeta(type):
     def __new__(mcs, name, bases, d):
@@ -25,8 +27,7 @@ class SignalsMeta(type):
         return type.__new__(mcs, name, bases, d)
 
 
-class SignalsTest(IntensityMixin):
-    __metaclass__=SignalsMeta
+class SignalsTest(six.with_metaclass(SignalsMeta, IntensityMixin)):
     def _signal(self, k):
         an = self.analysis
         v = an.isotopes[k].get_non_detector_corrected_value()

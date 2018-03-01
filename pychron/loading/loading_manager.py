@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from datetime import datetime
 from itertools import groupby
@@ -37,6 +39,9 @@ from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
+from six.moves import map
+import six
+from six.moves import range
 
 
 def make_bound(st):
@@ -96,7 +101,7 @@ class LoadPosition(HasTraits):
                                 self.irrad_position)
 
 
-maps = color_map_name_dict.keys()
+maps = list(color_map_name_dict.keys())
 
 
 class LoadingManager(DVCIrradiationable):
@@ -203,7 +208,7 @@ class LoadingManager(DVCIrradiationable):
 
         self.canvas = self.make_canvas(loadtable)
 
-        if isinstance(loadtable, (str, unicode)):
+        if isinstance(loadtable, (str, six.text_type)):
             loadtable = self.dvc.db.get_loadtable(loadtable)
 
         self.positions = []
@@ -578,7 +583,7 @@ class LoadingManager(DVCIrradiationable):
                         self.labnumber = self.labnumbers[0]
                         self.refresh_irradiation = True
                     except IndexError:
-                        print 'lm autoincrement', self.level, self.levels, self.level in self.levels, self.labnumber
+                        print('lm autoincrement', self.level, self.levels, self.level in self.levels, self.labnumber)
 
     def _set_position(self, canvas_hole):
 
@@ -590,7 +595,7 @@ class LoadingManager(DVCIrradiationable):
 
     def _add_position(self, pos, identifier, sample, project, irradiation,
                       level, ipos):
-        pos = map(int, pos)
+        pos = list(map(int, pos))
         lp = LoadPosition(labnumber=identifier,
                           sample=sample,
                           project=project,
@@ -732,8 +737,8 @@ class LoadingManager(DVCIrradiationable):
         try:
             ln = ln.name
             nv = int(ln) + 1
-        except (ValueError, IndexError, AttributeError), e:
-            print 'lm add button exception', e
+        except (ValueError, IndexError, AttributeError) as e:
+            print('lm add button exception', e)
             nv = 1
 
         self.new_load_name = nv
@@ -924,6 +929,6 @@ class LoadingManager(DVCIrradiationable):
             p.color = color
             for pp in p.positions:
                 pp = scene.get_item(str(pp), klass=LoadIndicator)
-                pp.fill_color = ','.join(map(lambda x: str(int(x * 255)), color))
+                pp.fill_color = ','.join([str(int(x * 255)) for x in color])
 
 # ============= EOF =============================================

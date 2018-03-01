@@ -15,11 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Property, List, String, Bool
 # ============= standard library imports ========================
 from numpy import poly1d, polyval
 from scipy import optimize
 from pychron.core.helpers.formatting import floatfmt
+from six.moves import map
+from six.moves import zip
+
 
 # ============= local library imports  ==========================
 
@@ -32,6 +36,7 @@ class MeterCalibration(HasTraits):
     output_high = 100
 
     normal_mapping = Bool(False)
+
     # this flag determines if the coefficients are defined as X==Response, Y==Input
     # or X==Input and Y==Response
     # for example if mapping from watts to percent
@@ -51,7 +56,7 @@ class MeterCalibration(HasTraits):
 
     def _parse_coeff_string(self, coeffs):
         try:
-            return map(float, coeffs.split(','))
+            return list(map(float, coeffs.split(',')))
         except:
             pass
 
@@ -65,8 +70,7 @@ class MeterCalibration(HasTraits):
     def _get_coeff_string(self):
         c = ''
         if self.coefficients:
-
-            c = ', '.join(map(lambda x: floatfmt(x, 3), self.coefficients))
+            c = ', '.join([floatfmt(x, 3) for x in self.coefficients])
         return c
 
     def dump_coeffs(self):
@@ -105,8 +109,7 @@ class MeterCalibration(HasTraits):
 
             if c is not None and len(c):
                 c[-1] -= response
-                power = optimize.brentq(poly1d(c), self.output_low,
-                                                   self.output_high)
+                power = optimize.brentq(poly1d(c), self.output_low, self.output_high)
                 c[-1] += response
             else:
                 power = response

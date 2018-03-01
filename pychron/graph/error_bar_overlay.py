@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
 from traits.api import Enum, Bool, Float, on_trait_change

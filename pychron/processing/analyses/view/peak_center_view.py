@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from chaco.tools.cursor_tool import CursorTool
 # ============= enthought library imports =======================
 from numpy import array, where
@@ -22,8 +23,6 @@ from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
-
-from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.tools.cursor_tool_overlay import CursorToolOverlay
 
@@ -36,6 +35,7 @@ class PeakCenterView(HasTraits):
 
         if an.peak_center_data:
             g = self.graph
+            g.plotcontainer.spacing = 10
             g.equi_stack = False
             p = g.new_plot(xtitle='DAC', ytitle='Intensity', padding_left=70,
                            padding_right=5)
@@ -43,7 +43,7 @@ class PeakCenterView(HasTraits):
             g.add_axis_tool(p, p.x_axis)
             g.add_axis_tool(p, p.y_axis)
 
-            ref_xs, ref_ys = map(array, an.peak_center_data)
+            ref_xs, ref_ys = list(map(array, an.peak_center_data))
             ref_k = an.peak_center_reference_detector
             s, p = g.new_series(ref_xs, ref_ys)
             s.index.sort_order = 'ascending'
@@ -86,7 +86,7 @@ class PeakCenterView(HasTraits):
                 g.add_axis_tool(p, p.x_axis)
                 g.add_axis_tool(p, p.y_axis)
 
-                for k, (xs, ys) in an.additional_peak_center_data.iteritems():
+                for k, (xs, ys) in an.additional_peak_center_data.items():
                     ys = array(ys)
                     mir = ys.min()
                     r = ys.max() - mir
@@ -100,13 +100,18 @@ class PeakCenterView(HasTraits):
                     ys2 = ref_ys[zid] / ys[zid]
                     xs = array(xs)[zid]
 
+                    # plot ratios
                     g.new_series(xs, ys2, plotid=1)
+                    # g.set_y_limits(0, 10, plotid=1)
                     g.set_series_label('{}/{}'.format(ref_k, k), plotid=1)
 
                     ref = ref_ys[idx] / ys[idx]
                     ys3 = (ys2 - ref) / ref * 100
+
+                    # plot delta ratios
                     g.new_series(xs, ys3, plotid=2)
                     g.set_series_label('{}/{}'.format(ref_k, k), plotid=2)
+                    g.set_y_limits(-200, 200, plotid=2)
 
             return True
 

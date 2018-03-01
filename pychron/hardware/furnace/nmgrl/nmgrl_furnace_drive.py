@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Str, Int, Float
 # ============= standard library imports ========================
 import time
@@ -22,6 +23,7 @@ import json
 # ============= local library imports  ==========================
 from pychron.core.communication_helper import trim_bool
 from pychron.hardware.core.core_device import CoreDevice
+from six.moves import range
 
 
 class NMGRLFurnaceDrive(CoreDevice):

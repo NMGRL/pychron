@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import os
 import re
 
@@ -24,6 +25,8 @@ import yaml
 from pychron.file_defaults import IDENTIFIERS_DEFAULT
 from pychron.pychron_constants import LINE_STR, ALPHAS
 from pychron.paths import paths
+import six
+from six.moves import map
 
 IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\d+)-(?P<aliquot>\d+)(?P<step>\w*)')
 SPECIAL_IDENTIFIER_REGEX = re.compile(r'(?P<identifier>\w{1,2}-[\d\w]+-\w{1})-(?P<aliquot>\d+)')
@@ -185,7 +188,7 @@ def get_analysis_type(idn):
         idn: str like 'a-...' or '43513'
     """
     idn = idn.lower()
-    for atype, tag in SPECIAL_MAPPING.iteritems():
+    for atype, tag in six.iteritems(SPECIAL_MAPPING):
         if idn.startswith(tag):
             return atype
     else:
@@ -235,7 +238,7 @@ def strip_runid(r):
 
 
 def make_step(s):
-    if isinstance(s, (float, int, long)):
+    if isinstance(s, (float, int, int)):
         s = ALPHAS[int(s)]
     return s or ''
 

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import hashlib
 import os
@@ -29,10 +31,13 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer import set_mftable_name, get_mftable_name
+import six
+from six.moves import map
+from six.moves import zip
 
 
 def get_detector_name(det):
-    if not isinstance(det, (str, unicode)):
+    if not isinstance(det, (str, six.text_type)):
         det = det.name
     return det
 
@@ -120,7 +125,7 @@ class FieldTable(Loggable):
             try:
                 mass = brentq(func, 0, 200)
                 return mass
-            except ValueError, e:
+            except ValueError as e:
                 self.debug('DAC does not map to an isotope. DAC={}, Detector={}'.format(dac, detname))
         else:
             try:
@@ -189,7 +194,7 @@ class FieldTable(Loggable):
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
-            for k, (isoks, mws, dacs, _) in d.iteritems():
+            for k, (isoks, mws, dacs, _) in six.iteritems(d):
                 if not update_others and k != det:
                     continue
 
@@ -212,7 +217,7 @@ class FieldTable(Loggable):
             import traceback
 
             e = traceback.format_exc()
-            print e
+            print(e)
             self.debug('Magnet update field table {}'.format(e))
 
     def set_path_name(self, name):
@@ -277,7 +282,7 @@ class FieldTable(Loggable):
 
                 a.append(format_dac(ys[i]))
 
-            print a
+            print(a)
 
     @property
     def mftable_archive_path(self):
@@ -319,7 +324,7 @@ class FieldTable(Loggable):
             else:
                 mass_func = line0[0].strip()
                 detline = next(reader)
-            detectors = map(str.strip, detline[1:])
+            detectors = list(map(str.strip, detline[1:]))
 
             if mass_func is None:
                 self.warning('Using default ')
@@ -328,7 +333,7 @@ class FieldTable(Loggable):
                 iso = line[0]
                 try:
                     mw = mws[iso]
-                except KeyError, e:
+                except KeyError as e:
                     self.warning('"{}" not in molweights {}'.format(iso, mws))
                     continue
 
@@ -354,7 +359,7 @@ class FieldTable(Loggable):
                 self._report_mftable(detectors, items)
                 self.items = items
 
-            table = zip(*table)
+            table = list(zip(*table))
             isos, mws = list(table[0]), list(table[1])
 
             d = {}
@@ -367,7 +372,7 @@ class FieldTable(Loggable):
                 if initial_guess:
                     try:
                         c = least_squares(polyval, xs, dacs, initial_guess=initial_guess)
-                    except TypeError, e:
+                    except TypeError as e:
                         self.warning('load mftable {}'.format(e))
                         c = (0, 0, ys[0])
                 else:
@@ -386,7 +391,7 @@ class FieldTable(Loggable):
         @param dacs:
         @return:
         """
-        xs, dacs = zip(*((xx[i], y) for i, y in enumerate(dacs) if y != NULL_STR))
+        xs, dacs = list(zip(*((xx[i], y) for i, y in enumerate(dacs) if y != NULL_STR)))
         return xs, dacs
 
     def _get_initial_guess(self, y, x):
@@ -426,7 +431,7 @@ class FieldTable(Loggable):
         return self._mftable_hash != current_hash
 
     def _make_hash(self, p):
-        with open(p, 'U') as rfile:
+        with open(p, 'rb') as rfile:
             return hashlib.md5(rfile.read())
 
     def _set_mftable_hash(self, p):

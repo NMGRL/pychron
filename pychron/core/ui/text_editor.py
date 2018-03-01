@@ -18,7 +18,8 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from factory import toolkit_factory
+from __future__ import absolute_import
+from .factory import toolkit_factory
 
 myTextEditor = toolkit_factory('text_editor', 'myTextEditor')
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property, Str
 from traitsui.menu import Action
@@ -121,6 +122,8 @@ REVIEW_STATUS_ICONS = {'Default': icon('gray_ball'),
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Review', 'review_status'),
                    ('Run ID', 'record_id'),
+                   ('Sample', 'sample'),
+                   ('Project', 'project'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
                    ('Dt', 'delta_time'),
@@ -155,6 +158,8 @@ class AnalysisAdapter(BrowserAdapter):
 
     def run_history_columns(self):
         self.columns = [('Run ID', 'record_id'),
+                        ('Sample', 'sample'),
+                        ('Project', 'project'),
                         ('Tag', 'tag'),
                         ('RunDate', 'rundate'),
                         ('Comment', 'comment'),

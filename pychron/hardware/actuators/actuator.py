@@ -26,6 +26,7 @@
 # from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
 # from argus_gp_actuator import ArgusGPActuator
 
+from __future__ import absolute_import
 import time
 
 from pychron.hardware.core.abstract_device import AbstractDevice

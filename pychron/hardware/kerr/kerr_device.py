@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import Any, Str
 
 # =============standard library imports ========================
-import ConfigParser
+import six.moves.configparser
 import time
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+from six.moves import range
 
 
 class KerrDevice(ConfigLoadable):
@@ -47,7 +49,7 @@ class KerrDevice(ConfigLoadable):
         """
         """
 
-        config = ConfigParser.ConfigParser()
+        config = six.moves.configparser.ConfigParser()
         config.read(path)
 
         self.set_attribute(config, 'address', 'General', 'address')

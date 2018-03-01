@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from pychron.processing.dataset.tests.mixin import IntensityMixin
+import six
 
 
 class BlankMeta(type):
@@ -22,9 +24,7 @@ class BlankMeta(type):
         return type.__new__(mcs, name, bases, d)
 
 
-class BlankTest(IntensityMixin):
-    __metaclass__ = BlankMeta
-
+class BlankTest(six.with_metaclass(BlankMeta, IntensityMixin)):
     def _blank_err(self, k):
         an = self.analysis
         v = an.isotopes[k].blank.error

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Range, Bool, Str, HasTraits
 # ============= standard library imports ========================
 import os
@@ -137,7 +138,7 @@ class Archiver(HasTraits):
         self.info('Archiving {:15s} to ./archive/{}/{}'.format(p, year, mname))
         try:
             shutil.move(src, dst)
-        except Exception, e:
+        except Exception as e:
             self.warning('Archiving failed')
             self.warning(e)
 

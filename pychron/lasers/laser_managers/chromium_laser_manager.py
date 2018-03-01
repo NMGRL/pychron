@@ -15,12 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, provides, Float
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
 from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserManager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from six.moves import map
+from six.moves import zip
 
 
 class ChromiumLaserManager(EthernetLaserManager):
@@ -84,7 +88,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         x, y, z = self._x, self._y, self._z
         xyz_microns = self.ask('stage.pos?\n')
         if xyz_microns:
-            x, y, z = map(lambda v: float(v) / 1000., xyz_microns.split(','))
+            x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
         return x, y, z
 
     def ask(self, cmd, **kw):
@@ -142,8 +146,8 @@ class ChromiumLaserManager(EthernetLaserManager):
                 # return not all(map(lambda ab: abs(ab[0] - ab[1]) <= 2,
                 #                    zip(map(float, xyz.split(',')),
                 #                        (xm, ym, zm))))
-            except ValueError, e:
-                print '_moving exception {}'.format(e)
+            except ValueError as e:
+                print('_moving exception {}'.format(e))
 
         r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
         time.sleep(0.25)
@@ -182,11 +186,10 @@ class ChromiumLaserManager(EthernetLaserManager):
                 if not self._alive:
                     return True
 
-                return not all(map(lambda ab: abs(ab[0] - ab[1]) <= 2,
-                                   zip(map(float, xyz.split(',')),
-                                       (xm, ym, zm))))
-            except ValueError, e:
-                print '_moving exception {}'.format(e)
+                return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
+                                       (xm, ym, zm))])
+            except ValueError as e:
+                print('_moving exception {}'.format(e))
 
         r = self._block(cmd='stage.pos?\n', cmpfunc=cmpfunc)
         self._alive = False

@@ -15,6 +15,8 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import logging
 
 from numpy import asarray, column_stack, ones, \
@@ -25,11 +27,12 @@ from traits.api import Int, Property
 from pychron.core.helpers.fits import FITS
 from pychron.pychron_constants import MSEM
 from pychron.pychron_constants import SEM
+from six.moves import range
 
 logger = logging.getLogger('Regressor')
 
 # ============= local library imports  ==========================
-from base_regressor import BaseRegressor
+from .base_regressor import BaseRegressor
 
 
 class OLSRegressor(BaseRegressor):
@@ -116,7 +119,7 @@ class OLSRegressor(BaseRegressor):
                 ols = self._engine_factory(fy, X, check_integrity=integrity_check)
                 self._ols = ols
                 self._result = ols.fit()
-            except Exception, e:
+            except Exception as e:
                 import traceback
 
                 traceback.print_exc()
@@ -337,7 +340,7 @@ class OLSRegressor(BaseRegressor):
         if xs is None:
             xs = self.clean_xs
 
-        cols = [pow(xs, i) for i in xrange(self.degree + 1)]
+        cols = [pow(xs, i) for i in range(self.degree + 1)]
         return column_stack(cols)
 
 
@@ -381,9 +384,9 @@ if __name__ == '__main__':
     xs = [(0, 0), (1, 0), (2, 0)]
     ys = [0, 1, 2.01]
     r = MultipleLinearRegressor(xs=xs, ys=ys, fit='linear')
-    print r.predict([(0, 1)])
-    print r.predict_error([(0, 2)])
-    print r.predict_error([(0.1, 1)])
+    print(r.predict([(0, 1)]))
+    print(r.predict_error([(0, 2)]))
+    print(r.predict_error([(0.1, 1)]))
 # ============= EOF =============================================
 # def predict_error_al(self, x, error_calc='sem'):
 #        result = self._result

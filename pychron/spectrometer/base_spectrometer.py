@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import os
 from random import random
 
@@ -27,6 +28,8 @@ from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_
     set_spectrometer_config_name
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+import six
+from six.moves import zip
 
 
 class NoIntensityChange(BaseException):
@@ -260,7 +263,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         found = None
         mi = 1
-        for k, v in molweights.iteritems():
+        for k, v in six.iteritems(molweights):
             d = abs(v - mass)
             if d < 0.15 and d < mi:
                 found = k
@@ -313,7 +316,7 @@ class BaseSpectrometer(SpectrometerDevice):
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
                         di.isotope = isotope
 
-                except BaseException, e:
+                except BaseException as e:
                     self.warning(
                         'Cannot update isotopes. isotope={}, detector={}. error:{}'.format(isotope, detector, e))
 
@@ -409,7 +412,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
             with open(p, 'U' if os.path.isfile(p) else 'w') as f:
                 writer = csv.writer(f, delimiter='\t')
-                data = [a for a in mws.itervalues()]
+                # data = [a for a in six.itervalues(mws)]
+                data = [a for a in mws.values()]
                 data = sorted(data, key=lambda x: x[1])
                 for row in data:
                     writer.writerow(row)

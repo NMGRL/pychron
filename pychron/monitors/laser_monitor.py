@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Float, Int
 
 # ============= standard library imports ========================
 import time
 # ============= local library imports  ==========================
-from monitor import Monitor
+from .monitor import Monitor
 
 
 class LaserMonitor(Monitor):

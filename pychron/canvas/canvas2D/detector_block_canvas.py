@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.detector_block_scene import \
     DetectorBlockScene
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas

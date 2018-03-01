@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 import uuid
@@ -107,7 +108,7 @@ class SynExtractionCollector(Loggable):
         starttime = time.time()
         while self._alive:
             et = time.time() - starttime
-            spec = gen.next()
+            spec = next(gen)
             if not spec:
                 self.warning('Failed getting a syn extraction spec')
                 break

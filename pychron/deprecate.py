@@ -21,6 +21,7 @@
     http://code.activestate.com/recipes/391367-deprecated/
 '''
 
+from __future__ import absolute_import
 import inspect
 import warnings
 

@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 from traits.api import Float, Property, Bool, Button, String, Enum
 
 from pychron.core.ui.thread import Thread
 from pychron.globals import globalv
 from pychron.hardware.pychron_device import EthernetDeviceMixin
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
+from six.moves import zip
 
 
 class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
@@ -43,7 +45,7 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
     def update_position(self):
         pos = super(EthernetLaserManager, self).update_position()
         if pos:
-            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
+            self.trait_set(**dict(list(zip(('_x', '_y', '_z'), pos))))
             return True
 
     # private

@@ -21,6 +21,7 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from apptools.preferences.preference_binding import bind_preference
 from pychron.envisage.core.core_plugin import CorePlugin
 

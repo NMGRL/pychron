@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Dict
 # ============= standard library imports ========================
 import os
@@ -31,6 +32,7 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
+from six.moves import map
 
 KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
 
@@ -170,7 +172,7 @@ class ExtractionLineScene(Scene):
             offset = elem.get('offset')
             ox, oy = 0, 0
             if offset:
-                ox, oy = map(float, offset.split(','))
+                ox, oy = list(map(float, offset.split(',')))
 
             return item.x + ox, item.y + oy
 
@@ -200,7 +202,7 @@ class ExtractionLineScene(Scene):
         if sanchor:
             x, y = sanchor.x, sanchor.y
             try:
-                ox, oy = map(float, start.get('offset').split(','))
+                ox, oy = list(map(float, start.get('offset').split(',')))
             except AttributeError:
                 ox = sanchor.width / 2.0
                 oy = sanchor.height / 2.0
@@ -214,7 +216,7 @@ class ExtractionLineScene(Scene):
             x1, y1 = eanchor.x, eanchor.y
 
             try:
-                ox, oy = map(float, end.get('offset').split(','))
+                ox, oy = list(map(float, end.get('offset').split(',')))
             except AttributeError:
                 ox = eanchor.width / 2.0
                 oy = eanchor.height / 2.0
@@ -254,8 +256,8 @@ class ExtractionLineScene(Scene):
         if start is not None:
             end = line.find('end')
             if end is not None:
-                x, y = map(float, start.text.split(','))
-                x1, y1 = map(float, end.text.split(','))
+                x, y = list(map(float, start.text.split(',')))
+                x1, y1 = list(map(float, end.text.split(',')))
 
                 l = Line((x + ox, y + oy), (x1 + ox, y1 + oy),
                          default_color=color,
@@ -332,7 +334,7 @@ class ExtractionLineScene(Scene):
             if l is not None:
                 label = l.text.strip()
                 if l.get('offset'):
-                    x, y = map(float, l.get('offset').split(','))
+                    x, y = list(map(float, l.get('offset').split(',')))
                 else:
                     x = 0
                     y = 22
@@ -539,7 +541,7 @@ class ExtractionLineScene(Scene):
                 canvas.view_y_range = yv
                 dim = tree.find('valve_dimension')
                 if dim is not None:
-                    self.valve_dimension = map(float, dim.text.split(','))
+                    self.valve_dimension = list(map(float, dim.text.split(',')))
 
                 # get label font
                 font = tree.find('font')
@@ -551,7 +553,7 @@ class ExtractionLineScene(Scene):
                     t = c.text.strip()
                     k = c.get('tag')
 
-                    t = map(float, t.split(',')) if ',' in t else t
+                    t = list(map(float, t.split(','))) if ',' in t else t
 
                     if k == 'bgcolor':
                         canvas.bgcolor = t
@@ -562,7 +564,7 @@ class ExtractionLineScene(Scene):
 
                 o = tree.find('origin')
                 if o is not None:
-                    ox, oy = map(float, o.text.split(','))
+                    ox, oy = list(map(float, o.text.split(',')))
 
                 for i, image in enumerate(cp.get_elements('image')):
                     self._new_image(cp, image)

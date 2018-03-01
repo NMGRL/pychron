@@ -20,7 +20,8 @@
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
-from actuator import Actuator
+from __future__ import absolute_import
+from .actuator import Actuator
 
 
 class SwitchController(Actuator):

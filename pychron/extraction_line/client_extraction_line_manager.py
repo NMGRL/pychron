@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from traits.api import Bool, Any
 
 from pychron.core.ui.preference_binding import bind_preference

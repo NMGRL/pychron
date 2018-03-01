@@ -15,8 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+
+import os
+
+import pickle
 from envisage.extension_point import ExtensionPoint
-from envisage.ui.tasks.tasks_application import TasksApplication
+from envisage.ui.tasks.tasks_application import TasksApplication, TasksApplicationState, logger
 from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import List, Instance
@@ -139,5 +144,43 @@ class BaseTasksApplication(TasksApplication, Loggable):
         for si in self.get_services(ICoreDevice):
             si.close()
 
+    def _load_state(self):
+        """ Loads saved application state, if possible.
+        """
+        state = TasksApplicationState()
+        filename = os.path.join(self.state_location, 'application_memento')
+        if os.path.exists(filename):
+            # Attempt to unpickle the saved application state.
+            try:
+                with open(filename, 'rb') as f:
+                    try:
+                        restored_state = pickle.load(f)
+                        if state.version == restored_state.version:
+                            state = restored_state
+                        else:
+                            logger.warn('Discarding outdated application layout')
+                    except EOFError:
+                        logger.exception('EOFerror: Restoring application layout from %s',
+                                         filename)
+            except:
+                # If anything goes wrong, log the error and continue.
+                logger.exception('Restoring application layout from %s',
+                                 filename)
+        self._state = state
 
+    def _save_state(self):
+        """ Saves the application state.
+        """
+        # Grab the current window layouts.
+        window_layouts = [w.get_window_layout() for w in self.windows]
+        self._state.previous_window_layouts = window_layouts
+
+        # Attempt to pickle the application state.
+        filename = os.path.join(self.state_location, 'application_memento')
+        try:
+            with open(filename, 'wb') as f:
+                pickle.dump(self._state, f)
+        except:
+            # If anything goes wrong, log the error and continue.
+            logger.exception('Saving application layout')
 # ============= EOF =============================================

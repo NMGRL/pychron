@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Int, Str, Bool, List, Event, Property, Enum, Float
 from traitsui.api import Item, CheckListEditor, VGroup, HGroup, ButtonEditor, EnumEditor
 # ============= standard library imports ========================

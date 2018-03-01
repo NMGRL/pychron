@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import date, time, timedelta, datetime
 
 from traits.api import HasTraits, List, Date, Time, Float, Button
@@ -22,6 +24,7 @@ from traitsui.api import View, UItem, HGroup, VGroup, TableEditor, Item
 from traitsui.table_column import ObjectColumn
 
 from pychron.envisage.icon_button_editor import icon_button_editor
+from six.moves import map
 
 
 class IrradiationDosage(HasTraits):
@@ -56,7 +59,7 @@ class IrradiationDosage(HasTraits):
                                        self.end_date, self.end_time)
 
     def to_tuple(self):
-        print 'tooo', str(self.power), self.start(), self.end()
+        print('tooo', str(self.power), self.start(), self.end())
         return str(self.power), self.start(), self.end()
 
         # def validate_dosage(self, prev_dose):
@@ -102,7 +105,7 @@ class IrradiationChronology(HasTraits):
                                      end_date=e.date(),
                                      end_time=e.time(), power=p)
 
-        self.dosages = map(dose_factory, ds)
+        self.dosages = list(map(dose_factory, ds))
 
     def get_doses(self):
         """

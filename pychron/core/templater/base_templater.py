@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.has_traits import HasTraits
 from traits.trait_types import Button, List, String, Any, Str, Dict
 from traits.traits import Property

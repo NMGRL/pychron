@@ -21,7 +21,8 @@
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
-from kerr_device import KerrDevice
+from __future__ import absolute_import
+from .kerr_device import KerrDevice
 class KerrMicrocontroller(KerrDevice):
     """
         Provides access to a `Kerr Controller board <http://www.jrkerr.com/boards.html>`_.

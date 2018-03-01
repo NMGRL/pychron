@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Instance, Button, Str
 from traitsui.api import View, Item
 
@@ -22,6 +24,7 @@ from pychron.hardware.kerr.kerr_motor import KerrMotor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from six.moves import zip
 
 class KerrManager(Loggable):
 
@@ -37,7 +40,7 @@ class KerrManager(Loggable):
         cb.reverse()
 
         result = motor.read_status(controlbyte)[2:-2]
-        print result, len(result)
+        print(result, len(result))
         pi = 0
         for (n, l), controlbit in zip([('posbyte', 4), ('cursence', 1), ('velocity', 2),
                                        ('aux', 1), ('homepos', 4), ('devicetype', 2),
@@ -47,7 +50,7 @@ class KerrManager(Loggable):
             if not int(controlbit):
                 continue
             l *= 2
-            print n, result[pi:pi + l]
+            print(n, result[pi:pi + l])
             pi = pi + l
 
 #        sb = result[2:]

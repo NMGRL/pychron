@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
@@ -28,7 +29,7 @@ class UVExtractionPyScript(ExtractionPyScript):
 
     def get_command_register(self):
         cm = super(UVExtractionPyScript, self).get_command_register()
-        return command_register.commands.items() + cm
+        return list(command_register.commands.items()) + cm
 
     def set_default_context(self):
         super(UVExtractionPyScript, self).set_default_context()

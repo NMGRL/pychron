@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import ConfigParser
+from __future__ import absolute_import
+import six.moves.configparser
 import os
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -29,7 +30,7 @@ class ConfigMixin:
     config_path = None
 
     def configparser_factory(self):
-        return ConfigParser.ConfigParser()
+        return six.moves.configparser.ConfigParser()
 
     def config_get_options(self, config, section):
         r = []
@@ -110,7 +111,7 @@ class ConfigMixin:
             self.warning_dialog(msg)
 
     def get_configuration_writer(self, p=None):
-        config = ConfigParser.RawConfigParser()
+        config = six.moves.configparser.RawConfigParser()
         if p:
             config.read(p)
 

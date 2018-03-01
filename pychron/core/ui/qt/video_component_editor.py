@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Any, Int, Str, Event
 # ============= standard library imports ========================
 from pyface.qt.QtCore import QTimer, SIGNAL
 # ============= local library imports  ==========================
-from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
-
+from .stage_component_editor import _LaserComponentEditor, LaserComponentEditor
+import time
 
 class _VideoComponentEditor(_LaserComponentEditor):
     """
@@ -50,9 +52,9 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
         # self.value.on_trait_change(self._update_fps, 'fps')
         self.sync_value('stop_timer', 'stop_timer', mode='from')
-
+        # self._prev_time = time.time()
         self._alive = True
-        QTimer.singleShot(self._get_interval(), self.update)
+        QTimer.singleShot(self._get_interval(), lambda: self.update(-1))
 
     # def _update_fps(self):
     #     pass
@@ -64,20 +66,27 @@ class _VideoComponentEditor(_LaserComponentEditor):
             return 1000 / float(self.value.fps)
 
     def stop(self):
-        print 'VideoComponentEditor stop'
+        print('VideoComponentEditor stop')
         self._alive = False
         # try:
         #     self.playTimer.stop()
         # except RuntimeError:
         #     pass
 
-    def update(self):
+    def update(self, pt):
         if self.control and self._alive:
-            self.value.invalidate_and_redraw()
-            QTimer.singleShot(self._get_interval(), self.update)
+            self.value.request_redraw()
+            # self.value.invalidate_and_redraw()
+            st = time.time()
+            et = time.time() - pt
+            pt = st
+            # print et
+            #  = time.time()
+            # self.value.invalidate_and_redraw()
+            QTimer.singleShot(max(1, self._get_interval()-et), lambda: self.update(pt))
 
     def _stop_timer_fired(self):
-        print 'VideoComponentEditor stopping playTimer'
+        print('VideoComponentEditor stopping playTimer')
         self._alive = False
         # self.playTimer.stop()
 

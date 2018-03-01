@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, \
     Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any
 # ============= standard library imports ========================
@@ -82,8 +83,16 @@ class AuxPlot(HasTraits):
     #     self.ymax = new[1]
     #     self._suppress = False
 
+    @on_trait_change('xmin, xmax')
+    def _handle_xmin_max(self):
+        if self._suppress:
+            return
+
+        self._has_xlimits = True
+        self.xlimits = (self.xmin, self.xmax)
+
     @on_trait_change('ymin, ymax')
-    def _handle_ymin_max(self, name, new):
+    def _handle_ymin_max(self):
         if self._suppress:
             return
 

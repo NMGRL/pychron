@@ -17,12 +17,13 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance, Property, DelegatesTo, Event, Bool
 from traitsui.api import View, Item, InstanceEditor, ButtonEditor
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from canvas_designer import CanvasDesigner
+from .canvas_designer import CanvasDesigner
 from pychron.envisage.core.envisage_editor import EnvisageEditor
 from pychron.envisage.core.envisage_manager import EnvisageManager
 from pychron.paths import paths

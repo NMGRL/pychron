@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import json
 
 from traits.api import HasTraits, String, Button, Int, Str, Enum, \
@@ -37,6 +39,8 @@ import time
 # from datetime import timedelta
 from threading import Thread
 import random
+from six.moves import range
+from six.moves import input
 
 
 # import struct
@@ -98,9 +102,9 @@ class Client(HasTraits):
                 self.periods_completed += 1
 
                 time.sleep(max(0, self.period / 1000.0 - (time.time() - t)))
-            except Exception, e:
-                print 'exception', e
-        print 'looping complete'
+            except Exception as e:
+                print('exception', e)
+        print('looping complete')
         self._alive = False
 
     def _get_periodic_label(self):
@@ -134,7 +138,7 @@ class Client(HasTraits):
         self.response = sock.recv(1024)
         #        print self.response, 'foo'
         if 'ERROR' in self.response:
-            print time.strftime('%H:%M:%S'), self.response
+            print(time.strftime('%H:%M:%S'), self.response)
         return sock
 
     def get_connection(self, port=None):
@@ -166,9 +170,9 @@ class Client(HasTraits):
             r = conn.recv(4096)
             r = r.strip()
             if verbose:
-                print '{} -----ask----- {} ==> {}'.format(self.ask_id, command, r)
-        except socket.error, e:
-            print 'exception', e
+                print('{} -----ask----- {} ==> {}'.format(self.ask_id, command, r))
+        except socket.error as e:
+            print('exception', e)
 
         return r
 
@@ -179,10 +183,10 @@ class Client(HasTraits):
             if self.test_response:
                 if response != self.test_response:
                     ecount += 1
-                    print '&&&&&&&&&&&&&&&&& ERROR &&&&&&&&&&&&'
+                    print('&&&&&&&&&&&&&&&&& ERROR &&&&&&&&&&&&')
             time.sleep(random.randint(0, 100) / 10000.)
-        print '=====test {} complete======'.format(self.ask_id)
-        print '{} error count= {}'.format(self.ask_id, ecount)
+        print('=====test {} complete======'.format(self.ask_id))
+        print('{} error count= {}'.format(self.ask_id, ecount))
 
     #        self.ask('StartMultRuns Foo')
     #        time.sleep(2)
@@ -246,7 +250,7 @@ def send_command(addr, cmd, kind='UDP'):
 
 def client(kind, port):
     while 1:
-        data = raw_input('    >> ')
+        data = input('    >> ')
         if kind == 'inet':
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('127.0.0.1', port))
@@ -256,7 +260,7 @@ def client(kind, port):
 
         s.send(data)
         datad = s.recv(1024)
-        print 'Received', repr(datad)
+        print('Received', repr(datad))
         s.close()
 
 
@@ -392,12 +396,12 @@ def video_test():
 
     ask = c.ask
     for i in range(10):
-        print 'executing run', i
+        print('executing run', i)
         ask('Enable')
 
         time.sleep(5)
         ask('Disable')
-        print 'finish run', i
+        print('finish run', i)
 
         time.sleep(7)
 

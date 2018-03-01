@@ -15,9 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
-from Queue import Queue, Empty
+from six.moves.queue import Queue, Empty
 from threading import Thread
 
 import yaml
@@ -30,6 +31,8 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.experiment.automated_run.hop_util import parse_hop
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
+from six.moves import range
+from six.moves import zip
 
 
 class ShowMotionConfigureAction(TaskAction):
@@ -123,7 +126,7 @@ class HopsAction(ListAction):
     def _perform(self, app, ncycles, hops, msg_queue):
         ion = app.get_service('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
         spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
-        for cycle in xrange(ncycles):
+        for cycle in range(ncycles):
             for hop in hops:
                 if not self._alive:
                     break
@@ -146,7 +149,7 @@ class HopsAction(ListAction):
 
                 use_af_demag = positioning.get('use_af_demag', False)
 
-                zd = zip(dets, defls)
+                zd = list(zip(dets, defls))
 
                 # set deflections
                 deflect = len([d for d in defls if d is not None])
@@ -163,7 +166,7 @@ class HopsAction(ListAction):
                 for pd in pdets:
                     spec.protect_detector(pd, False)
 
-                for i in xrange(settle):
+                for i in range(settle):
                     msg_queue.put('Position {} {}. Settle {}'.format(pos, detector, settle - i))
                     time.sleep(1)
 

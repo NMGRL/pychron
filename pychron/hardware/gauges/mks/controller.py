@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
 import re
+import six
 
 ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
 LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
@@ -65,7 +67,7 @@ class MKSController(BaseGaugeController, CoreDevice):
     def _read_pressure(self, name=None, verbose=False):
         if name is not None:
             gauge = name
-            if isinstance(gauge, (str, unicode)):
+            if isinstance(gauge, (str, six.text_type)):
                 gauge = self.get_gauge(name)
             channel = gauge.channel
         else:

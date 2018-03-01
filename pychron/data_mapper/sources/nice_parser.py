@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 import re
 
 from numpy import where
@@ -67,12 +68,12 @@ class NiceParser():
         result = self.term()
         while self._current in ('+', '-'):
             if self._current == '+':
-                self.next()
+                next(self)
 
                 result += self.term()
 
             if self._current == '-':
-                self.next()
+                next(self)
                 result -= self.term()
 
         return result, mt.group('idx')
@@ -81,19 +82,19 @@ class NiceParser():
         result = None
         if self._current[0].isdigit() or self._current[-1].isdigit():
             result = float(self._current)
-            self.next()
+            next(self)
         elif self._current is '(':
-            self.next()
+            next(self)
             result = self.exp()
-            self.next()
+            next(self)
         elif self._current[:4] == 'Mass':
             result = generate_mass(*eval(self._current[4:]))(self._signals)
             result = Mass(*result)
-            self.next()
+            next(self)
         elif self._current[:4] == 'Zero':
             result = generate_zero(*eval(self._current[4:]))(self._signals)
             result = Zero(*result)
-            self.next()
+            next(self)
 
         return result
 
@@ -105,10 +106,10 @@ class NiceParser():
         result = self.factor()
         while self._current in ('*', '/'):
             if self._current == '*':
-                self.next()
+                next(self)
                 result *= self.term()
             if self._current == '/':
-                self.next()
+                next(self)
                 result /= self.term()
         return result
 

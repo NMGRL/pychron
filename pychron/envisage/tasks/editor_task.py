@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.api import IEditor, IEditorAreaPane
 from pyface.tasks.task_layout import PaneItem, Splitter
 from traits.api import Property, Instance

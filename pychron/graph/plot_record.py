@@ -19,6 +19,8 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
+from six.moves import zip
 class PlotRecord(object):
     data = None
     plotids = None

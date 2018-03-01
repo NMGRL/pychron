@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 
 import os
@@ -107,7 +108,7 @@ class DVCPlugin(BaseTaskPlugin):
                 r = Repo(os.path.join(paths.repository_dataset_dir, name))
                 try:
                     r.git.fetch()
-                except GitCommandError, e:
+                except GitCommandError as e:
                     self.warning('error examining {}. {}'.format(name, e))
                 time.sleep(1)
 

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from numpy import asarray, average, vectorize, ones_like, count_nonzero
 
 

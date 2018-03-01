@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
 myProgressDialog = toolkit_factory('progress_dialog', 'myProgressDialog')

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import io
 import os
 
@@ -46,7 +47,7 @@ class TxServer:
         endpoint = TCP4ServerEndpoint(reactor, port)
         try:
             endpoint.listen(factory)
-        except CannotListenError, e:
+        except CannotListenError as e:
             return e
 
     def start(self):

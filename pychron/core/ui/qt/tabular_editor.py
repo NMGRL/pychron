@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from pickle import dumps
 
 from pyface.qt import QtCore, QtGui
@@ -28,6 +30,8 @@ from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
 from traitsui.qt4.tabular_model import TabularModel, alignment_map
 
 from pychron.core.helpers.ctx_managers import no_update
+import six
+from six.moves import range
 
 
 class myTabularEditor(TabularEditor):
@@ -317,14 +321,14 @@ class _TableView(TableView):
         mt = self._editor.factory.mime_type
         try:
             pdata = dumps(copy_object)
-        except BaseException, e:
-            print 'tabular editor copy failed'
+        except BaseException as e:
+            print('tabular editor copy failed')
             self._editor.value[rows[0]].tocopy(verbose=True)
             return
 
         qmd = PyMimeData()
         qmd.MIME_TYPE = mt
-        qmd.setData(unicode(mt), dumps(copy_object.__class__) + pdata)
+        qmd.setData(six.text_type(mt), dumps(copy_object.__class__) + pdata)
 
         clipboard = QApplication.clipboard()
         clipboard.setMimeData(qmd)
@@ -596,7 +600,7 @@ class _TabularEditor(qtTabularEditor):
     def _on_column_resize(self, idx, old, new):
         control = self.control
         header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in xrange(header.count())]
+        cs = [header.sectionSize(i) for i in range(header.count())]
         self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 from pyface.image_resource import ImageResource
@@ -29,7 +31,7 @@ def image(name):
         if si and os.path.isfile(os.path.join(si, name)):
             break
     else:
-        print 'no image for "{}"'.format(name)
+        print('no image for "{}"'.format(name))
 
     return ImageResource(name=name, search_path=paths.image_search_path)
 
@@ -41,7 +43,7 @@ def icon(name):
             if si and os.path.isfile(os.path.join(si, name)):
                 break
         else:
-            print 'no icon for "{}"'.format(name)
+            print('no icon for "{}"'.format(name))
 
     # if name=='.png':
     #     raise RuntimeError
@@ -53,7 +55,7 @@ def splash_icon(appname):
     ps = icon_search_path
     for si in icon_search_path:
         if si and os.path.isfile(os.path.join(si, name)):
-            print 'found splash', os.path.isfile(os.path.join(si, name))
+            print('found splash', os.path.isfile(os.path.join(si, name)))
             break
     else:
         if appname:

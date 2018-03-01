@@ -18,9 +18,11 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 # from pychron.pipeline.plot. import ReferencesSeries
+from __future__ import absolute_import
 from uncertainties import ufloat
 
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
+from six.moves import zip
 
 
 class Blanks(ReferencesSeries):

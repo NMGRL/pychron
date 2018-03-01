@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import View, UItem, TableEditor
 # ============= standard library imports ========================
 from random import random
-from ConfigParser import ConfigParser
+from six.moves.configparser import ConfigParser
 import time
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -115,7 +117,7 @@ class Coincidence(BasePeakCenter, MagnetSweep):
         spec = self.spectrometer
 
         centers = {d: get_peak_center(d) for d in self.active_detectors}
-        print centers
+        print(centers)
         ref = self.reference_detector
         post = centers[ref]
         if post is None:

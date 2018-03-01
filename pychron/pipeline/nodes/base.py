@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Bool, Any, List
 from traitsui.api import View
+import six
 
 
 # ============= standard library imports ========================
@@ -53,7 +55,7 @@ class BaseNode(HasTraits):
         self.active = False
 
     def pre_load(self, nodedict):
-        for k, v in nodedict.iteritems():
+        for k, v in six.iteritems(nodedict):
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -115,15 +117,19 @@ class BaseNode(HasTraits):
                 else:
                     obj = self
 
+            self._configure_hook()
             info = obj.edit_traits(kind='livemodal')
             if info.result:
-                self.finish_configure()
+                self._finish_configure()
                 self.refresh()
                 return True
         else:
             return True
 
-    def finish_configure(self):
+    def _configure_hook(self):
+        pass
+
+    def _finish_configure(self):
         pass
 
     def to_template(self):

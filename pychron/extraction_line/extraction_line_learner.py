@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, Str, Instance
 # ============= standard library imports ========================
 import time
@@ -109,7 +111,7 @@ class ExtractionLineLearner(Loggable):
     def _getter_factory(self, gi):
         valve = gi.find('valve')
         vname = valve.text.strip()
-        if self.valves.has_key(vname):
+        if vname in self.valves:
             v = self.valves[vname]
         else:
             v = self._valve_factory(valve)
@@ -191,7 +193,7 @@ class ExtractionLineLearner(Loggable):
         data += signals + deltas
         # write the results info
 
-        print data
+        print(data)
         return data
 
 
@@ -207,10 +209,10 @@ class ELLearnerTestCase(TestCase):
 
     def testLoadConfig(self):
         g = self.learner.getters
-        self.assertEqual(len(g.keys()), 3)
+        self.assertEqual(len(list(g.keys())), 3)
 
         v = self.learner.valves
-        self.assertEqual(len(v.keys()), 3)
+        self.assertEqual(len(list(v.keys())), 3)
 
     def testOpen(self):
         n = 0.25

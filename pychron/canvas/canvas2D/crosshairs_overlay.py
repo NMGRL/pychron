@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Float, Enum, Bool
@@ -63,8 +64,8 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             if not isinstance(color, (list, tuple)):
                 color = color.red(), color.green(), color.blue(), color.alpha()
 
-            if not all(map(lambda xx: 0 <= xx <= 1., color)):
-                color = map(lambda xx: xx / 255., color)
+            if not all([0 <= xx <= 1. for xx in color]):
+                color = [xx / 255. for xx in color]
 
             gc.set_stroke_color(color)
 
@@ -109,13 +110,13 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
         with gc:
             gc.clip_to_rect(component.x, component.y,
                             component.width, component.height)
-            if component.crosshairs_kind == 'UserRadius':
-                radius = component.crosshairs_radius
-            else:
-                radius = component.beam_radius
-
-            radius = component.get_wh(radius, 0)[0]
-
+            # if component.crosshairs_kind == 'UserRadius':
+            #     radius = component.crosshairs_radius
+            # else:
+            #     radius = component.beam_radius
+            #
+            # radius = component.get_wh(radius, 0)[0]
+            radius = component.get_crosshairs_radius(screen=True)
             sdp = component.show_desired_position
             dp = component.desired_position
 

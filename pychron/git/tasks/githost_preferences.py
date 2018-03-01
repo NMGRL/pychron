@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import requests
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Button, Color
@@ -49,8 +51,8 @@ class GitHostPreferences(BasePreferencesHelper):
             if resp.status_code == 200:
                 self._remote_status = 'Valid'
                 self._remote_status_color = 'green'
-        except BaseException, e:
-            print 'exception', e, self._url
+        except BaseException as e:
+            print('exception', e, self._url)
 
 
 class GitHubPreferences(GitHostPreferences):
@@ -85,7 +87,8 @@ class GitHostPreferencesPane(PreferencesPane):
         g = VGroup(VGroup(Item('username'),
                           Item('password'),
                           show_border=True, label='Basic'),
-                   VGroup(Item('oauth_token', label='Token'),
+                   VGroup(Item('oauth_token',
+                               resizable= True, label='Token'),
                           show_border=True, label='OAuth'),
                    HGroup(test_connection_item(),
                           CustomLabel('_remote_status',

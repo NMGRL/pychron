@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import Any
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor

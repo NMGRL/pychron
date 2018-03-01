@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.tasks.isotopx.base import IsotopxSpectrometerPlugin

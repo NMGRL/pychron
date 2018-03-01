@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from datetime import datetime, timedelta
 
@@ -54,7 +56,7 @@ class GoogleCalendarClient(Loggable):
     def test_api(self):
         try:
             return bool(self.get_calendars()), ''
-        except BaseException, e:
+        except BaseException as e:
             self.warning('test_api {}'.format(e))
             return False, str(e)
 
@@ -75,7 +77,7 @@ class GoogleCalendarClient(Loggable):
         request = events.insert(calendarId=cal['id'], body=body)
         try:
             event = request.execute()
-        except HttpError, e:
+        except HttpError as e:
             self.warning_dialog('Failed to post event. Exception: {}'.format(e))
             return
 
@@ -97,7 +99,7 @@ class GoogleCalendarClient(Loggable):
 
             try:
                 body = request.execute()
-            except HttpError, e:
+            except HttpError as e:
                 self.warning_dialog('Failed to get event. Exception: {}'.format(e))
                 return
 
@@ -111,7 +113,7 @@ class GoogleCalendarClient(Loggable):
 
             try:
                 resp = request.execute()
-            except HttpError, e:
+            except HttpError as e:
                 self.warning_dialog('Failed to edit event. Exception: {}'.format(e))
                 return
 
@@ -143,7 +145,7 @@ class GoogleCalendarClient(Loggable):
 
     def print_calendar_names(self):
         for c in self.get_calendars():
-            print c['summary']
+            print(c['summary'])
 
     def get_calendar_names(self):
         return [c['summary'] for c in self.get_calendars()]

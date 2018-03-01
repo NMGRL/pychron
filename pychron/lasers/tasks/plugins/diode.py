@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition

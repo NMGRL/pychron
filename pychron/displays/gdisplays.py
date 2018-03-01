@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.displays.display import ErrorDisplay, DisplayController
 from pychron.utils import get_display_size
 
@@ -50,7 +51,7 @@ gMessageDisplay = DisplayController(
 gTraceDisplay = ErrorDisplay(
     title='Error Stack',
     width=825,
-    x=(ds.width - 825) / 2,
+    x=int((ds.width - 825) / 2),
     y=100,
     default_color='black')
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
 from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
@@ -249,7 +250,7 @@ class MainView(HasTraits):
             except ZeroDivisionError:
                 pass
 
-        return ufloat(0, 1e-20)
+        return ufloat(0, 0)
 
     def _get_corrected_ratio(self, niso, diso):
         """
@@ -268,7 +269,7 @@ class MainView(HasTraits):
                         diso.ic_factor / niso.ic_factor)
             except (ZeroDivisionError, TypeError):
                 pass
-        return ufloat(0, 1e-20), 1
+        return ufloat(0, 0), 1
 
     def _get_ratio(self, tag):
         def get_iso(kk):
@@ -420,7 +421,7 @@ class MainView(HasTraits):
                 ci.error = std_dev(v)
 
     def _load_unknown_computed(self, an, new_list):
-        attrs = (('Age', 'uage'),
+        attrs = (('Age', 'uage_w_j_err'),
                  # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),

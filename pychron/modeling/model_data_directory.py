@@ -17,11 +17,14 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits, Bool, List, \
  Property, Str, Any, Color
 from traitsui.api import View, Item
 # ============= standard library imports ========================
 import os
+import six
 # ============= local library imports  ==========================
 
 # ============= views ===================================
@@ -106,7 +109,7 @@ class ModelDataDirectory(HasTraits):
             plotids = modeler.get_panel_plotids('spectrum')
             for plotid in plotids:
                 p = modeler.graph.plots[plotid]
-                for key, plot in p.plots.iteritems():
+                for key, plot in six.iteritems(p.plots):
                     if key.startswith('{}.inverse_spec'.format(self.name)):
                         modeler.graph.set_plot_visibility(plot[0], self.inverse_model_spectrum_enabled)
 
@@ -132,10 +135,10 @@ class ModelDataDirectory(HasTraits):
         try:
             if self.modeler:
                 func(self.modeler)
-        except KeyError, e:
-            print func.__name__, e
-        except Exception, e:
-            print func.__name__, e
+        except KeyError as e:
+            print(func.__name__, e)
+        except Exception as e:
+            print(func.__name__, e)
 #    @on_trait_change('primary_color, secondary_color')
 #    def _color_changed(self):
 #

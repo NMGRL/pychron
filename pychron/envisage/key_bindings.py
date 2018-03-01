@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
 from pyface.message_dialog import information
 from traits.trait_types import List
 
 from pychron.core.ui import set_qt
+import six
 
 set_qt()
 # ============= enthought library imports =======================
@@ -68,13 +70,13 @@ def dump_key_bindings(obj):
 
 
 def keybinding_exists(key):
-    for k, (b, d) in user_key_map.iteritems():
+    for k, (b, d) in six.iteritems(user_key_map):
         if b == key:
             return d
 
 
 def clear_keybinding(desc):
-    for k, (b, d) in user_key_map.iteritems():
+    for k, (b, d) in six.iteritems(user_key_map):
         if d == desc:
             user_key_map[k] = ('', d)
             dump_key_bindings(user_key_map)

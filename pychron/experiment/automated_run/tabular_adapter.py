@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports=======================
+from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int, Dict
 from traitsui.menu import Action

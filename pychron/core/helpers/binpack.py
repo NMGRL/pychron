@@ -17,8 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 import base64
 import struct
+from six.moves import range
+from six.moves import zip
 
 
 def format_blob(blob):
@@ -48,16 +51,16 @@ def unpack(blob, fmt='>ff', step=8, decode=False):
 
     if blob:
         try:
-            return zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+            return list(zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)]))
         except struct.error:
             ret = []
-            for i in xrange(0, len(blob), step):
+            for i in range(0, len(blob), step):
                 try:
                     args = struct.unpack(fmt, blob[i:i+step])
                 except struct.error:
                     break
                 ret.append(args)
-            return zip(*ret)
+            return list(zip(*ret))
 
     else:
         return [[] for _ in fmt.count('f')]

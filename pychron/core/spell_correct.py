@@ -23,6 +23,8 @@ Adapted from
 http://norvig.com/spell-correct.html
 '''
 
+from __future__ import absolute_import
+from six.moves import range
 alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
 

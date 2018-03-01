@@ -21,6 +21,7 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from tables import Float32Col, StringCol, IsDescription
 # ============= local library imports  ==========================
 

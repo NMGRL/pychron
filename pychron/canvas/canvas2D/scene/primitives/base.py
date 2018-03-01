@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from kiva.fonttools import str_to_font
 from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
 
@@ -253,7 +254,7 @@ class Primitive(HasTraits):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
             c = c.red, c.green, c.blue
-        c = map(lambda x: x / 255., c)
+        c = [x / 255. for x in c]
         return c
 
     # handlers
@@ -274,7 +275,7 @@ class QPrimitive(Primitive):
         if not isinstance(c, (list, tuple)):
             c = c.red(), c.green(), c.blue(), c.alpha()
 
-        c = map(lambda x: x / 255., c)
+        c = [x / 255. for x in c]
         return c
 
     def is_in(self, x, y):

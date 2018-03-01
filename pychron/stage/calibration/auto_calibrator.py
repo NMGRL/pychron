@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 from threading import Thread
@@ -27,6 +28,8 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.stage.calibration.calibrator import TrayCalibrator
+from six.moves import map
+from six.moves import range
 
 
 class Result(HasTraits):
@@ -110,7 +113,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 center = smap.get_calibration_hole('center')
                 if center is not None:
                     self.debug('walk out to locate east')
-                    for hid in xrange(int(center.id) + 1, int(east.id), 2):
+                    for hid in range(int(center.id) + 1, int(east.id), 2):
                         if not self._alive:
                             break
                         hole = smap.get_hole(hid)
@@ -343,8 +346,8 @@ class AutoCalibrator(SemiAutoCalibrator):
         if os.path.isfile(path):
             try:
                 guess = pathtolist(path)
-                return map(float, guess[0].split(','))
-            except BaseException, e:
+                return list(map(float, guess[0].split(',')))
+            except BaseException as e:
                 self.debug('Failed parsing center guess file {}. error={}'.format(path, e))
 
 # ============= EOF =============================================

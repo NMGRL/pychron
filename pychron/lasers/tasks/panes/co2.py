@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, ControlPane, AxesPane, SupplementalPane
 

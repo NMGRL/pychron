@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -41,6 +42,8 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.processing.argon_calculations import calculate_flux, age_equation
 from pychron.pychron_constants import MSEM, SD
+from six.moves import range
+from six.moves import zip
 
 
 def mean_j(ans, error_kind, monitor_age, lambda_k):
@@ -289,7 +292,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                                  for pos in self.monitor_positions
                                  if pos.use]).T
 
-        except ValueError, e:
+        except ValueError as e:
             self.debug('no monitor positions to fit, {}'.format(e))
             return
 
@@ -528,9 +531,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         yy = [nominal_value(a) for a in ys]
         es = [std_dev(a) for a in ys]
 
-        data = zip(p.analyses, xx, yy, es)
+        data = list(zip(p.analyses, xx, yy, es))
         data = sorted(data, key=lambda x: x[2], reverse=not slope)
-        return zip(*data)
+        return list(zip(*data))
 
     def _update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old, new
@@ -577,7 +580,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         nz = zeros((n, n))
         ne = zeros((n, n))
-        for i in xrange(n):
+        for i in range(n):
             pts = vstack((gx[i], gy[i])).T
             # nz[i] = reg.predict(pts)
             # print 'asdfasfasfasdfasdfasdfsafadsfasdfsadfadsfasfas'

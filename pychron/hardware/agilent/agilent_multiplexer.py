@@ -15,11 +15,13 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, List, Float, Property, Tuple, Bool, Instance
 from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor
 # =============standard library imports ========================
 from numpy import polyval
 from pychron.hardware.agilent.agilent_unit import AgilentUnit
+from six.moves import map
 # =============local library imports  ==========================
 # from pychron.hardware.adc.analog_digital_converter import AnalogDigitalConverter
 
@@ -99,7 +101,7 @@ class AgilentMultiplexer(AgilentUnit):
                 else:
                     cs = self.config_get(config, section, 'coefficients', default='1,0')
                     try:
-                        cs = map(float, cs.split(','))
+                        cs = list(map(float, cs.split(',')))
                     except ValueError:
                         self.warning('invalid coefficients for {}. {}'.format(section, cs))
                         cs = 1, 0

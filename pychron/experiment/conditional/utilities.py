@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from uncertainties import ufloat
 
 from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
@@ -225,7 +226,7 @@ def remove_comp(s):
         if s.startswith('not '):
             s = s[4:]
         return s
-    except IndexError, e:
+    except IndexError as e:
         return s
 
 

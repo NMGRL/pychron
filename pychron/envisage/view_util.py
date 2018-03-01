@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from __future__ import print_function
 __views__ = []
 
 
@@ -46,17 +47,17 @@ def close_views():
             # print 'dispose {}'.format(v)
             try:
                 v.dispose(abort=True)
-            except BaseException, e:
-                print v, e
+            except BaseException as e:
+                print(v, e)
     __views__ = None
 
 
 def report_view_stats():
     if __views__:
-        print 'report view stats'
-        print '-------------------------'
+        print('report view stats')
+        print('-------------------------')
         for v in __views__:
-            print v
-        print '-------------------------'
+            print(v)
+        print('-------------------------')
 
 # ============= EOF =============================================

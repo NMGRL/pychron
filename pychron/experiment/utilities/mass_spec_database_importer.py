@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import struct
 import time
@@ -32,6 +33,7 @@ from pychron.experiment.utilities.info_blob import encode_infoblob
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.pychron_constants import ALPHAS
+from six.moves import zip
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
 
@@ -222,7 +224,7 @@ class MassSpecDatabaseImporter(Loggable):
                 ret = self._add_analysis(session, spec, irradpos, rid, runtype)
                 db.commit()
                 return ret
-            except Exception, e:
+            except Exception as e:
                 import traceback
                 self.debug('Mass Spec save exception. {}'.format(e))
                 tb = traceback.format_exc()

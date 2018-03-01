@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import hot
 from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros, uint8, average, ravel_multi_index
@@ -23,11 +24,6 @@ from skimage.color import rgb2gray, gray2rgb
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
-from skimage.filters import canny, threshold_adaptive
-from skimage.measure import find_contours, approximate_polygon, regionprops, label
-from skimage.morphology import watershed
-
-from pychron.image.cv_wrapper import grayspace
 from pychron.mv.locator import Locator
 
 
@@ -123,7 +119,7 @@ class LumenDetector(Locator):
             peak_img[circle(py, px, min_distance)] = 255
 
         sat = lum.sum() / (mask.sum() * pd)
-        return pt, px, py, peak_img, sat, lum
+        return pt, px, py, peak_img, sat
 
     def get_scores(self, lum, pixel_depth=8):
         mask = self._mask(lum)

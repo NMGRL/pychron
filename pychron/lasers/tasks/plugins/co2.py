@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 

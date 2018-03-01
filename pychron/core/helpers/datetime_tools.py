@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 import time
 from datetime import datetime
@@ -122,4 +124,4 @@ if __name__ == '__main__':
     times = [1, 2, 3, 4, 7, 20, 21, 22]
 
     for l, h in bin_datetimes(times, 5):
-        print l, h
+        print(l, h)

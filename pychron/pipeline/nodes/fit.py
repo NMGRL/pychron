@@ -15,11 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from itertools import groupby
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import NO, YES
-from traits.api import Bool, List, HasTraits, Str, Float, Instance
+from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
 
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -29,7 +30,10 @@ from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
+from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
+import six
+from six.moves import zip
 
 
 class FitNode(FigureNode):
@@ -79,7 +83,7 @@ class FitReferencesNode(FitNode):
         if state.canceled:
             return
 
-        self.plotter_options.set_detectors(state.union_detectors)
+        # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
             key = lambda x: x.group_id
             for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
@@ -156,8 +160,14 @@ class FitICFactorNode(FitReferencesNode):
     def _options_view_default(self):
         return view('ICFactor Options')
 
-    def set_detectors(self, dets):
+    def _configure_hook(self):
+        udets = get_detector_set(self.unknowns)
+        rdets = get_detector_set(self.references)
+        dets = list(udets.union(rdets))
         self.plotter_options_manager.set_detectors(dets)
+
+    # def set_detectors(self, dets):
+    #     self.plotter_options_manager.set_detectors(dets)
 
     def _set_saveable(self, state):
         super(FitICFactorNode, self)._set_saveable(state)
@@ -169,14 +179,15 @@ class FitICFactorNode(FitReferencesNode):
 
     def _check_refit(self, ai):
         for k in self._keys:
-            i = ai.get_isotope(k)
+            num, dem = k.split('/')
+            i = ai.get_isotope(detector=dem)
             if not i.ic_factor_reviewed:
                 return True
 
     def load(self, nodedict):
         try:
             fits = nodedict['fits']
-        except KeyError, e:
+        except KeyError as e:
             return
 
         pom = self.plotter_options_manager
@@ -198,6 +209,7 @@ GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
 class IsoEvoResult(HasTraits):
     # record_id = Str
     isotope = Str
+    n = Str
     fit = Str
     intercept_value = Float
     intercept_error = Float
@@ -329,7 +341,8 @@ class FitIsotopeEvolutionNode(FitNode):
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = next((i.baseline for i in isotopes.itervalues() if i.detector == k), None)
+                iso = xi.get_isotope(detector=k, kind='baseline')
+                # iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error
@@ -365,7 +378,12 @@ class FitIsotopeEvolutionNode(FitNode):
                     curvature_threshold = f.curvature_goodness
                     curvature_goodness = curvature < curvature_threshold
 
+                nstr = str(iso.n)
+                if iso.noutliers():
+                    nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
+
                 yield IsoEvoResult(analysis=xi,
+                                   nstr=nstr,
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
@@ -385,7 +403,7 @@ class FitIsotopeEvolutionNode(FitNode):
                                    curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
                                    regression_str=iso.regressor.tostring(),
-                                   fit=f.fit,
+                                   fit=iso.fit,
                                    isotope=k)
 
 

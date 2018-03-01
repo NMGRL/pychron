@@ -17,6 +17,8 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Str
 
 # ============= standard library imports ========================
@@ -25,6 +27,9 @@ import csv
 from numpy import array, loadtxt
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 TAB = chr(9)
 # labtable = {"temp":21, "time":27, "39Armol":34, "er39Ar":35, "Age":109, "erAge":110, "terAge":21, "SenseMol":26} # autoupdate column numbers for each header of interest
@@ -111,9 +116,9 @@ class DataLoader(Loggable):
         if reader is None:
             return
 
-        keys = reader.next()
-        values = range(len(keys))
-        labtable = dict(zip(keys, values))
+        keys = next(reader)
+        values = list(range(len(keys)))
+        labtable = dict(list(zip(keys, values)))
 
         path, _ext = os.path.splitext(path)
         path += '_data'
@@ -135,8 +140,8 @@ class DataLoader(Loggable):
                 if age < 0:
                     self.info('Skipping negative age {}'.format(age))
                     continue
-            except ValueError, e:
-                print 'exception', e
+            except ValueError as e:
+                print('exception', e)
                 self.info('Invalid age {}'.format(a))
                 continue
             except IndexError:
@@ -254,11 +259,11 @@ class DataLoader(Loggable):
 #        low_conf = []
 #        high_conf = []
         try:
-            data = zip(*[map(float, row) for row in reader])
+            data = list(zip(*[list(map(float, row)) for row in reader]))
             f.close()
             return data
-        except Exception, e:
-            print 'load_cooling_history', e
+        except Exception as e:
+            print('load_cooling_history', e)
 
 #        for row in reader:
 #            try:
@@ -378,7 +383,7 @@ class DataLoader(Loggable):
                         # xy.append(row)
                     except ValueError:
                         pass
-                    xy.append(map(float, [row[0].strip(), row[1].strip()]))
+                    xy.append(list(map(float, [row[0].strip(), row[1].strip()])))
 
                 except IndexError:
                     pass

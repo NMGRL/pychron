@@ -20,6 +20,7 @@
 # ============= local library imports  ==========================
 
 
+from __future__ import absolute_import
 from traits.trait_types import Event
 
 from pychron.core.ui.qt.toggle_button_editor import ToggleButtonEditor

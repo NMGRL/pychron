@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 from apptools import sweet_pickle as pickle
@@ -27,6 +28,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.saveable import SaveButton, Saveable, SaveableHandler
+from six.moves import range
 
 
 class PeakCenterConfigHandler(SaveableHandler):

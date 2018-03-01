@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Any, Property, List
 from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 # ============= standard library imports ========================
@@ -22,6 +23,7 @@ from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
+import six
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -54,12 +56,12 @@ class SpectrometerView(HasTraits):
 
         # source
         sp = an.source_parameters
-        sd = [DValue(k, v) for k, v in sp.iteritems()]
+        sd = [DValue(k, v) for k, v in six.iteritems(sp)]
         self.source_parameters = sd
 
         # deflections
         defls = an.deflections
-        names = sort_detectors(defls.keys())
+        names = sort_detectors(list(defls.keys()))
         ds = [DValue(ni, defls[ni]) for ni in names]
         self.deflections = ds
 

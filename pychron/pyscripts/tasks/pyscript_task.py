@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
 from traits.api import String, List, Instance, Any, \
@@ -234,7 +235,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 script.set_default_context()
             try:
                 script.test()
-            except Exception, e:
+            except Exception as e:
                 return
             self._current_script = script
             script.setup_context(extract_device='fusions_diode')

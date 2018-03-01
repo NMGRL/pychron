@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from PySide import QtCore
 from pyface.qt.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
 from traits.api import Str

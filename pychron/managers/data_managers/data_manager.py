@@ -17,6 +17,7 @@
 
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Dict
 
 # ============= standard library imports ========================
@@ -91,7 +92,7 @@ class DataManager(Manager):
                     self.time_gen = time_generator()
                     t = 0
                 else:
-                    t = self.time_gen.next()
+                    t = next(self.time_gen)
             else:
                 t = generate_datetimestamp()
             datum = (t, value)

@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 from traits.api import HasTraits, Str, Int, Enum
+from six.moves import range
 
 
 # ============= standard library imports ========================
@@ -75,5 +78,5 @@ class FigureLayout(HasTraits):
 if __name__ == '__main__':
     f = FigureLayout(rows=4, columns=1, fixed='square')
     for i in range(20):
-        print i + 1, f(i + 1)
+        print(i + 1, f(i + 1))
 # ============= EOF =============================================

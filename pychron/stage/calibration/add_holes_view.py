@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 
+from __future__ import absolute_import
 from hashlib import md5
 
 from traits.api import HasTraits, BaseStr
 from traitsui.api import View, UItem
+from six.moves import range
 
 
 # ============= standard library imports ========================
@@ -31,7 +33,7 @@ def parse_holestr(hstr):
         if '-' in sublist:
             s, e = sublist.split('-')
             s, e = int(s.strip()), int(e.strip())
-            for i in xrange(s, e + 1):
+            for i in range(s, e + 1):
                 hs.append(i)
         else:
             hs.append(int(sublist))

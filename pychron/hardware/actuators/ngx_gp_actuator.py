@@ -17,7 +17,9 @@
 # ========== standard library imports ==========
 
 # ========== local library imports =============
-from gp_actuator import GPActuator
+from __future__ import absolute_import
+from __future__ import print_function
+from .gp_actuator import GPActuator
 from pychron.globals import globalv
 
 
@@ -42,7 +44,7 @@ class NGXGPActuator(GPActuator):
         cmd = 'GetValveStatus {}'.format(obj.address)
 
         s = self.ask(cmd, verbose=verbose)
-        print 'get cna state cmd={}, resp={}'.format(cmd, s)
+        print('get cna state cmd={}, resp={}'.format(cmd, s))
         if s is not None:
             if s.strip() in 'OPEN':
                 return True

@@ -15,13 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import random
-
 from traits.api import Bool, Any, Float, \
-    Button, Instance
+    Button, Instance, List
 # ============= standard library imports ========================
 from threading import Thread, Event
-from numpy import hstack
+from numpy import hstack, array
 import time
 import os
 # ============= local library imports  ==========================
@@ -65,11 +63,15 @@ class BaseScanner(PersistenceLoggable):
         """
         # if self.plotid>0:
         # self.graph.new_series()
+        self.set_plot_visiblity()
 
         self._cancel_event = Event()
 
         t = Thread(target=self._scan)
         t.start()
+
+    def set_plot_visibility(self):
+        pass
 
     def reset(self):
         self._clear_graph_button_fired()
@@ -84,8 +86,8 @@ class BaseScanner(PersistenceLoggable):
             line = plot.plots['plot{}'.format(self.plotid)][0]
         except KeyError:
             line, _ = graph.new_series()
-        xs = line.index.get_data()
-        ys = line.index.get_data()
+        # xs = line.index.get_data()
+        # ys = line.index.get_data()
 
         spec = self.spectrometer
         magnet = spec.magnet
@@ -96,6 +98,7 @@ class BaseScanner(PersistenceLoggable):
 
         limits = self._get_limits()
         graph.set_x_limits(*limits, pad='0.1')
+        refdet = self.spectrometer.reference_detector
 
         for i, si in enumerate(self._calculate_steps(*limits)):
             if self._cancel_event.is_set():
@@ -107,14 +110,46 @@ class BaseScanner(PersistenceLoggable):
             if i == 0:
                 time.sleep(3)
 
-            v = spec.get_intensity(self.spectrometer.reference_detector)
-            if self.spectrometer.simulation:
-                v += random.random()
+            ks, ss = spec.get_intensities()
 
-            xs = hstack((xs, [si]))
-            ys = hstack((ys, [v]))
-            plot.data.update_data({'x{}'.format(self.plotid): xs,
-                                   'y{}'.format(self.plotid): ys})
+            refsig = refdet.intensity
+            refk = '{}y{}'.format(refdet, self.plotid)
+            rys = plot.data.get_data(refk)
+            if i == 0:
+                rys = array([refsig])
+                xs = array([si])
+            else:
+                rys = hstack((rys, refsig))
+                xs = hstack((xs, si))
+
+            plot.data.update_data({'x{}'.format(self.plotid): xs})
+            plot.data.set_data(refk, rys)
+
+            ref_mi, ref_ma = mi, ma = rys.min(), rys.max()
+            ref_r = rys.max() - ref_mi
+            for det, sig in zip(ks, ss):
+                if det == refdet.name:
+                    continue
+
+                oys = None
+                k = 'odata{}_{}'.format(i, self.plotid)
+                if hasattr(plot, k):
+                    oys = getattr(plot, k)
+
+                oys = array([sig]) if oys is None else hstack((oys, sig))
+                setattr(plot, k, oys)
+
+                mir = oys.min()
+                r = oys.max() - mir
+                oys = (oys - mir) * ref_r / r + ref_mi
+
+                plot.data.update_data({'{}y{}'.format(det, self.plotid): oys})
+                det = self.spectrometer.get_detector(det)
+                if det.active:
+                    mi, ma = min(mi, min(oys)), max(ma, max(oys))
+
+            self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
+                                    pad_style='upper')
 
         self.plotid += 1
         self.debug('duration={:0.3f}'.format(time.time() - st))
@@ -151,7 +186,7 @@ class BaseScanner(PersistenceLoggable):
 
     # handlers
     def _start_scanner_fired(self):
-        print 'start scanner'
+        print('start scanner')
         self.info('starting scanner')
         self.new_scanner_enabled = False
         self.start_scanner_enabled = False
@@ -164,7 +199,7 @@ class BaseScanner(PersistenceLoggable):
         self.new_scanner_enabled = True
 
     def _new_scanner_fired(self):
-        print 'new scanner'
+        print('new scanner')
         self.info('new scanner')
         self.new_scanner_enabled = False
         self.start_scanner_enabled = True

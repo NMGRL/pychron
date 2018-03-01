@@ -15,15 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 import numpy as np
+from six.moves import range
+from six.moves import zip
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 def unmix(ages, errors, initial_guess):
-    ages_errors = zip(ages, errors)
+    ages_errors = list(zip(ages, errors))
 
     ts = initial_guess[0]
     pis = initial_guess[1]
@@ -87,5 +91,5 @@ if __name__ == '__main__':
         initial_guess = [[ai, aj, ak], ps]
 #        print 'initial', initial_guess
 #    initial_guess = [[30, 40], [0.9, 0.1]]
-        print unmix(ages, errors, initial_guess)
+        print(unmix(ages, errors, initial_guess))
 # ============= EOF =============================================

@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 # ============= standard library imports ========================
@@ -80,7 +82,7 @@ def make_egg(root, dest, pkg_name, version):
         setup(name=pkg_name,
               script_args=('bdist_egg',),
               packages=pkgs)
-    except BaseException, e:
+    except BaseException as e:
         import traceback
         traceback.print_exc()
 
@@ -102,11 +104,11 @@ def make_egg(root, dest, pkg_name, version):
         # remove build dir
         for di in ('build', 'dist','pychron.egg-info'):
             p = os.path.join(root, di)
-            print 'removing entire {} dir {}'.format(di, p)
+            print('removing entire {} dir {}'.format(di, p))
             if os.path.isdir(p):
                 shutil.rmtree(p)
             else:
-                print 'not a directory {}'.format(p)
+                print('not a directory {}'.format(p))
 
 
 def resource_path(dest, name):
@@ -122,7 +124,7 @@ def copy_resource_dir(dest, src, name=None):
         if not os.path.exists(rd):
             shutil.copytree(src, rd)
     else:
-        print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+        print('++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src))
 
 
 def copy_resource(dest, src, name=None):
@@ -131,7 +133,7 @@ def copy_resource(dest, src, name=None):
             name = os.path.basename(src)
         shutil.copyfile(src, resource_path(dest, name))
     else:
-        print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+        print('++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src))
 # ============= EOF =============================================
 
 

@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from PySide import QtGui, QtCore
 from traits.trait_types import Event
 from traitsui.api import View, UItem

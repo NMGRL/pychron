@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Enum, Str, Float, Int, List
@@ -59,7 +61,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return {}
 
     def convert_to_axial(self, det, v):
-        print 'asdfsadf', det, det.index, v
+        print('asdfsadf', det, det.index, v)
         v = v-(det.index-2)
         return v
 

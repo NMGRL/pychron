@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from enable.component_editor import ComponentEditor
 from traits.api import Int, Property, List, Instance, Event, Bool, Button, List
 from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item
@@ -32,7 +33,7 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'),
+    columns = [('RunID', 'record_id'), ('Isotope', 'isotope'), ('Fit', 'fit'), ('N', 'nstr'),
                ('Intercept', 'intercept_value'),
                (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
                ('%', 'percent_error'),

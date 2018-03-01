@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 import os
 import shutil
 import time
@@ -43,6 +44,8 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
+from six.moves import map
+from six.moves import range
 
 
 class ExperimentEditorTask(EditorTask):
@@ -282,17 +285,17 @@ class ExperimentEditorTask(EditorTask):
             if hasattr(fi, '__call__'):
                 try:
                     fi()
-                except BaseException, e:
+                except BaseException as e:
                     import traceback
                     traceback.print_exc()
-                    self.debug('Callable {} failed. exception={}'.format(fi.func_name, str(e)))
+                    self.debug('Callable {} failed. exception={}'.format(fi.__name__, str(e)))
             else:
                 self.debug('{} not callable'.format(fi))
 
     def _open_abort(self):
         try:
             self.notifier.close()
-        except (AttributeError, TraitError), e:
+        except (AttributeError, TraitError) as e:
             pass
 
     def _open_file(self, path, **kw):

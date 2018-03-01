@@ -17,6 +17,8 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
+from __future__ import print_function
 from threading import Thread
 
 from traits.api import Instance, Enum, DelegatesTo, Property, Button, Any, Float
@@ -30,6 +32,7 @@ from pychron.managers.manager import Manager
 from pychron.hardware.motion_controller import MotionController
 from pychron.paths import paths
 from pychron.core.helpers.filetools import parse_file
+import six
 
 
 class MotionControllerManager(Manager):
@@ -60,10 +63,10 @@ class MotionControllerManager(Manager):
         self.motion_controller.save_axes_parameters()
 
     def _get_axis_by_id(self, aid):
-        return next((a for a in self._axes.itervalues() if a.id == int(aid)), None)
+        return next((a for a in six.itervalues(self._axes) if a.id == int(aid)), None)
 
     def _get_axes(self):
-        keys = self._axes.keys()
+        keys = list(self._axes.keys())
         keys.sort()
         axs = [self._axes[k] for k in keys]
         if self.motion_group:
@@ -101,7 +104,7 @@ class MotionControllerManager(Manager):
 
     def _apply_button_fired(self):
         ax = self._get_selected()
-        print ax, ax.id
+        print(ax, ax.id)
         if ax is not None:
             ax.upload_parameters_to_device()
 

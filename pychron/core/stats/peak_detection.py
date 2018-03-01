@@ -22,16 +22,18 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
+from __future__ import absolute_import
 from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack
+from six.moves import range
+from six.moves import zip
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
     if x_axis is None:
-        x_axis = range(len(y_axis))
+        x_axis = list(range(len(y_axis)))
 
     if len(y_axis) != len(x_axis):
-        raise (ValueError,
-               'Input vectors y_axis and x_axis must have same length')
+        raise ValueError
 
     # needs to be a numpy array
     y_axis = array(y_axis)
@@ -83,9 +85,9 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
 
     # perform some checks
     if lookahead < 1:
-        raise ValueError, "Lookahead must be '1' or above in value"
+        raise ValueError("Lookahead must be '1' or above in value")
     if not (isscalar(delta) and delta >= 0):
-        raise ValueError, "delta must be a positive number"
+        raise ValueError("delta must be a positive number")
 
     # maxima and minima candidates are temporarily stored in
     # mx and mn respectively
@@ -186,7 +188,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     my = ma
 
     # look backward for point that is peak_percent% of max
-    for i in xrange(max_i, 0, -1):
+    for i in range(max_i, 0, -1):
         # this prevent looping around to the end of the list
         if i < 1:
             raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
@@ -202,7 +204,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     ly = y[i] - (y[i] - y[i - 1]) / 2.
 
     # look forward for point that is 80% of max
-    for i in xrange(max_i, x.shape[0], 1):
+    for i in range(max_i, x.shape[0], 1):
         try:
             if y[i] < (ma * (1 - percent / 100.)):
                 break
@@ -226,7 +228,7 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         # check to see if were on a plateau
         yppts = y[ccx - 2:ccx + 2]
 
-        slope, _ = polyfit(range(len(yppts)), yppts, 1)
+        slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
 
         if std > 5 and abs(slope) < 1:

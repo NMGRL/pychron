@@ -18,6 +18,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from chaco.polygon_plot import PolygonPlot
 from traits.api import HasTraits, Property, Any, Str, Int, Float, List
 from traitsui.api import View, Item, VGroup, Group, \
@@ -25,7 +26,7 @@ from traitsui.api import View, Item, VGroup, Group, \
 
 # =============standard library imports ========================
 # =============local library imports  ==========================
-from series_editor import SeriesEditor, PolygonPlotEditor
+from .series_editor import SeriesEditor, PolygonPlotEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
 from kiva.trait_defs.kiva_font_trait import KivaFontFunc
@@ -34,6 +35,7 @@ from pychron.graph.editors.series_editor import ContourPolyPlotEditor
 from chaco.base_2d_plot import Base2DPlot
 from chaco.cmap_image_plot import CMapImagePlot
 from chaco.base_contour_plot import BaseContourPlot
+import six
 
 
 class PlotEditorHandler(Handler):
@@ -139,7 +141,7 @@ class PlotEditor(HasTraits):
 
         series_filter = True if len(plots) > 10 else False
 
-        for i, (key, plot) in enumerate(plots.iteritems()):
+        for i, (key, plot) in enumerate(six.iteritems(plots)):
 #        for i, key in enumerate(plots):
 #            plot = plots[key][0]i
             plot = plot[0]

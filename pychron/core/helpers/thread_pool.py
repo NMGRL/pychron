@@ -18,8 +18,11 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-from Queue import Queue
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves.queue import Queue
 from threading import Thread
+from six.moves import range
 
 class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
@@ -34,8 +37,8 @@ class Worker(Thread):
             func, args, kargs = self.tasks.get()
             try:
                 func(*args, **kargs)
-            except Exception, e:
-                print 'exception', e
+            except Exception as e:
+                print('exception', e)
             finally:
                 self.tasks.task_done()
 

@@ -15,12 +15,14 @@
 # ==============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import CInt
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.kerr.kerr_step_motor import KerrStepMotor
 import time
 from pychron.hardware.core.data_helper import make_bitarray
+from six.moves import range
 '''
     status byte
     0 1 2 3 4 5 6 7

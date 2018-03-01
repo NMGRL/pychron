@@ -17,12 +17,16 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import math
 import random
 
 from numpy import linspace, cos, sin, hstack
 # ============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 
 def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
@@ -38,12 +42,12 @@ def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
         dx = (l+2*offset)/float(n+1)
         n = int((l + 2 * offset) / dx)
 
-    for i in xrange(0, n+1):
+    for i in range(0, n+1):
         y = cy - offset if i % 2 else cy + offset
         yield a.transform(cx - offset + dx * i, y)
 
     if not single_pass:
-        for i in xrange(0, n+1):
+        for i in range(0, n+1):
             y = cy - offset if i % 2 else cy + offset
             yield a.transform(cx +l+offset - dx * i, y)
         yield a.transform(cx-offset, cy+offset)
@@ -94,7 +98,7 @@ def line_pattern(cx, cy, length, rotation, n):
     p1 = (cx, cy)
     p2 = (cx + length, cy)
 
-    for i in xrange(n):
+    for i in range(n):
         a = AffineTransform()
         a.translate(cx, cy)
         a.rotate(rotation)
@@ -132,8 +136,8 @@ def arc_pattern(cx, cy, degrees, radius):
          only used for drawing
     '''
 
-    x = radius * cos(map(math.radians, linspace(0, degrees, degrees / 10.0))) + cx
-    y = radius * sin(map(math.radians, linspace(0, degrees, degrees / 10.0))) + cy
+    x = radius * cos(list(map(math.radians, linspace(0, degrees, degrees / 10.0)))) + cx
+    y = radius * sin(list(map(math.radians, linspace(0, degrees, degrees / 10.0)))) + cy
 
     xs = hstack(([cx], x))
     xs = hstack((xs, [cx]))
@@ -211,7 +215,7 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
 
     rfunc = lambda i: R * (1 + (i) * p)
     ns = 4 * ns + 1
-    steps = xrange(ns)
+    steps = range(ns)
     funclist = [lambda x, y, r: (x + r, y),
                 lambda x, y, r: (x, y + r),
                 lambda x, y, r: (x - r, y),
@@ -253,7 +257,7 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
         stepfunc = lambda i: 2 * (ns - i) + ss
         rfunc = lambda i, j: R * (1 + ((ns - i - 1) + (360 - j) / 360.) * p)
 
-    for ni in xrange(ns):
+    for ni in range(ns):
         nstep = stepfunc(ni)
         for t in linspace(0, 360, nstep):
             if t == 360 and ni != ns - 1:

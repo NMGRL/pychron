@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import HasTraits, List, Any, \
     Enum, Float, on_trait_change, Str, Int, Property, Button, Bool, CStr
 from traitsui.api import View, UItem, \

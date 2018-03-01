@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from traits.api import List, Str, Dict, Button, Int, String, Event
 
 from pychron.core.fuzzyfinder import fuzzyfinder

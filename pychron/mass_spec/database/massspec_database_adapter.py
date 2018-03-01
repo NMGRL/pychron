@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 import binascii
 import math
 
@@ -36,6 +37,7 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.pychron_constants import INTERFERENCE_KEYS
+import six
 
 
 class MissingAliquotPychronException(BaseException):
@@ -461,7 +463,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}
-        for k, v in ifc.iteritems():
+        for k, v in six.iteritems(ifc):
             if k == 'cl3638':
                 k = 'P36Cl38Cl'
             else:
@@ -474,7 +476,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         kw['ClOverKMultiplierEr'] = 0
         kw['CaOverKMultiplier'] = pr['Ca_K']
         kw['CaOverKMultiplierEr'] = 0
-        v = binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
+        v = binascii.crc32(''.join([str(v) for v in six.itervalues(kw)]))
         q = self.session.query(IrradiationProductionTable)
         q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
         if not self._query_one(q):

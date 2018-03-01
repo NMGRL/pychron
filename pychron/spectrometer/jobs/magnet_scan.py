@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import Any, Float, DelegatesTo, List, Bool, Property
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
@@ -26,7 +27,7 @@ import random
 import time
 from threading import Event
 # ============= local library imports  ==========================
-from spectrometer_task import SpectrometerTask
+from .spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -82,7 +83,7 @@ class MagnetScan(SpectrometerTask):
         evt = Event()
         intensities = []
 
-        invoke_in_main_thread(self._iter_dac, gen.next(),
+        invoke_in_main_thread(self._iter_dac, next(gen),
                               gen, evt, intensities)
 
         while not evt.isSet():
@@ -105,7 +106,7 @@ class MagnetScan(SpectrometerTask):
         intensities.append(d)
 
         try:
-            di = gen.next()
+            di = next(gen)
         except StopIteration:
             di = None
 

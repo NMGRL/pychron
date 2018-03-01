@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum
@@ -31,6 +32,7 @@ from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from six.moves import range
 
 
 def dictgetter(d, attrs, default=None):
@@ -245,7 +247,7 @@ class AutomatedRunConditional(BaseConditional):
     def _hash_id(self, d=None):
         if d is None:
             d = self._attr_dict()
-        return hash(frozenset(d.items()))
+        return hash(frozenset(list(d.items())))
 
     def _attr_dict(self):
         return {'teststr': self.teststr, 'start_count': self.start_count,
@@ -461,7 +463,7 @@ class QueueModificationConditional(AutomatedRunConditional):
         if n is None:
             n = self.nskip
 
-        for i in xrange(n):
+        for i in range(n):
             r = runs[i]
             r.skip = True
 
@@ -511,7 +513,7 @@ class QueueModificationConditional(AutomatedRunConditional):
                 break
 
             try:
-                nstep = steps_gen.next()
+                nstep = next(steps_gen)
                 if use_percent:
                     r.extract_value *= (1 + nstep / 100.)
                 else:

@@ -23,6 +23,7 @@ http://docs.cython.org/pychron/quickstart/build.html
 python setup.py build_ext --inplace
 '''
 
+from __future__ import absolute_import
 from distutils.core import setup
 from distutils.extension import Extension
 

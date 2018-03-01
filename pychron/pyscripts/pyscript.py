@@ -15,13 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import hashlib
 import inspect
 import os
 import sys
 import time
 import traceback
-from Queue import Empty, LifoQueue
+from six.moves.queue import Empty, LifoQueue
 from threading import Event, Thread, Lock
 
 import yaml
@@ -299,8 +301,8 @@ class PyScript(Loggable):
             if r is not None:
                 self.console_info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
-                print 'invalid pyscript', self.text
-                print 'error', r
+                print('invalid pyscript', self.text)
+                print('error', r)
                 raise ee
 
             elif not self._interval_stack.empty():
@@ -326,14 +328,14 @@ class PyScript(Loggable):
 
             try:
                 script = imp.load_source('script', snippet)
-            except Exception, e:
+            except Exception as e:
                 return e
             script.__dict__.update(safe_dict)
             try:
                 script.main(*argv)
             except TypeError:
                 script.main()
-            except AttributeError, e:
+            except AttributeError as e:
                 self.debug('{} {}'.format(e, traceback.format_exc()))
                 return MainError
 
@@ -341,15 +343,15 @@ class PyScript(Loggable):
 
             try:
                 code = compile(snippet, '<string>', 'exec')
-            except BaseException, e:
+            except BaseException as e:
                 self.debug(traceback.format_exc())
                 return e
 
             try:
-                exec code in safe_dict
+                exec(code, safe_dict)
                 func = safe_dict['main']
-            except KeyError, e:
-                print 'exception', e, safe_dict.keys()
+            except KeyError as e:
+                print('exception', e, list(safe_dict.keys()))
                 self.debug('{} {}'.format(e, traceback.format_exc()))
                 return MainError()
 
@@ -361,13 +363,13 @@ class PyScript(Loggable):
                 func(*argv)
                 self.debug('executed snippet estimated_duration={}, duration={}'.format(self._estimated_duration,
                                                                                         time.time() - st))
-            except Exception, e:
+            except Exception as e:
                 return traceback.format_exc()
 
     def syntax_ok(self, warn=True):
         try:
             self.test()
-        except PyscriptError, e:
+        except PyscriptError as e:
             if warn:
                 self.warning_dialog(traceback.format_exc())
             return False
@@ -437,7 +439,7 @@ class PyScript(Loggable):
         return []
 
     def get_commands(self):
-        cmds = self.get_command_register() + command_register.commands.items()
+        cmds = self.get_command_register() + list(command_register.commands.items())
         return cmds
 
     def get_command_register(self):
@@ -493,7 +495,7 @@ class PyScript(Loggable):
     # ===============================================================================
     def load_interpolation_context(self):
         ctx = self._get_interpolation_context()
-        return ctx.keys()
+        return list(ctx.keys())
 
     # ==============================================================================
     # commands
@@ -669,10 +671,10 @@ class PyScript(Loggable):
                 if self.info_color:
                     self.manager.info(message, color=self.info_color, log=False)
                 else:
-                    print self.manager
+                    print(self.manager)
                     self.manager.info(message, log=False)
 
-        except AttributeError, e:
+        except AttributeError as e:
             self.debug('m_info {}'.format(e))
 
     # ===============================================================================
@@ -879,7 +881,7 @@ class PyScript(Loggable):
                 try:
                     with open(self.interpolation_path, 'r') as rfile:
                         d = yaml.load(rfile)
-                except yaml.YAMLError, e:
+                except yaml.YAMLError as e:
                     self.debug(e)
             else:
                 self.debug('not a file. {}'.format(self.interpolation_path))
@@ -890,7 +892,7 @@ class PyScript(Loggable):
 
     def _tracer(self, frame, event, arg):
         if event == 'line':
-            print frame.f_code.co_filename, frame.f_lineno
+            print(frame.f_code.co_filename, frame.f_lineno)
 
         return self._tracer
 

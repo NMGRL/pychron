@@ -20,6 +20,8 @@
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import Str, HasTraits
 # ============= local library imports  ==========================
 from apptools.preferences.preference_binding import bind_preference
@@ -32,7 +34,7 @@ class NGXController(CoreDevice):
     password = Str('')
 
     def set(self, *args, **kw):
-        print 'nacsd', args, kw
+        print('nacsd', args, kw)
         return HasTraits.set(self, *args, **kw)
 
     def initialize(self, *args, **kw):

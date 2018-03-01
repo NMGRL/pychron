@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from traits.api import HasTraits, provides
@@ -23,6 +25,8 @@ from traits.api import HasTraits, provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.i_column_parser import IColumnParser
+from six.moves import map
+from six.moves import range
 
 
 @provides(IColumnParser)
@@ -73,7 +77,7 @@ class BaseColumnParser(HasTraits):
                 for ri in self.iternrows())
 
     def iternrows(self):
-        return xrange(self._header_offset, self.nrows, 1)
+        return range(self._header_offset, self.nrows, 1)
 
     def get_index(self, ks):
         return self._get_index(ks)
@@ -89,8 +93,8 @@ class BaseColumnParser(HasTraits):
             for ki in (k, k.upper(), k.lower(), k.capitalize(), k.replace('_', '')):
                 try:
                     return self._header.index(ki)
-                except ValueError, e:
-                    print 'exep', e
+                except ValueError as e:
+                    print('exep', e)
 
 
 class CSVColumnParser(BaseColumnParser):
@@ -100,7 +104,7 @@ class CSVColumnParser(BaseColumnParser):
         with open(p, 'U') as rfile:
             reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
-            self._header = map(str.strip, self._lines[header_idx])
+            self._header = list(map(str.strip, self._lines[header_idx]))
             self._nrows = len(self._lines)
 
     def get_value(self, ri, ci):

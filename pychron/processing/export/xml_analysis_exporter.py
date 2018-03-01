@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Instance
 # ============= standard library imports ========================
 import base64
@@ -25,6 +26,8 @@ from uncertainties import nominal_value, std_dev
 from pychron.processing.export.destinations import XMLDestination
 from pychron.processing.export.export_spec import XMLExportSpec
 from pychron.processing.export.exporter import Exporter
+import six
+from six.moves import zip
 
 
 class XMLAnalysisExporter(Exporter):
@@ -112,13 +115,13 @@ class XMLAnalysisExporter(Exporter):
         pr = xmlp.add('production_ratios', '', irrad)
         xmlp.add('production_name', spec.production_name, pr)
         for d in (spec.production_ratios, spec.interference_corrections):
-            for pname, pv in d.iteritems():
+            for pname, pv in six.iteritems(d):
                 pp = xmlp.add(pname, '', pr)
                 xmlp.add('value', nominal_value(pv), pp)
                 xmlp.add('error', std_dev(pv), pp)
 
         isostag = xmlp.add('isotopes', '', an)
-        for isotope in spec.isotopes.itervalues():
+        for isotope in six.itervalues(spec.isotopes):
             isok = isotope.name
             det = isotope.detector
             sfit = isotope.fit

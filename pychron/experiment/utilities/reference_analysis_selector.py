@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 from traits.api import HasTraits, Instance, List, Str, Any, Property, Int
 from traitsui.api import View, UItem, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter

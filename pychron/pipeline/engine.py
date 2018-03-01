@@ -15,16 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 import time
 
 import yaml
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any
-
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc.tasks.repo_task import RepoItem
-from pychron.git_archive.utils import ahead_behind
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -46,10 +45,9 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
-from pychron.pipeline.state import EngineState
+from pychron.pipeline.state import EngineState, get_detector_set
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
-from pychron.pychron_constants import LINE_STR
 
 
 class ActiveCTX(object):
@@ -204,6 +202,9 @@ class PipelineEngine(Loggable):
     active_inspector_item = Instance(BaseInspectorItem, ())
     selected_editor = Any
 
+    resume_enabled = Bool(False)
+    run_enabled = Bool(True)
+
     # unknowns = List
     # references = List
     add_pipeline = Event
@@ -256,19 +257,23 @@ class PipelineEngine(Loggable):
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
 
-    def update_detectors(self):
-        """
-        set valid detectors for FitICFactorNodes
-
-        """
-        if self.state:
-            for p in self.pipeline.nodes:
-                if isinstance(p, FitICFactorNode):
-                    udets = {iso.detector for ai in self.state.unknowns
-                             for iso in ai.isotopes.itervalues()}
-                    rdets = {iso.detector for ai in self.state.references
-                             for iso in ai.isotopes.itervalues()}
-                    p.set_detectors(list(udets.union(rdets)))
+    # def update_detectors(self):
+    #     """
+    #     set valid detectors for FitICFactorNodes
+    #
+    #     """
+    #     if self.state:
+    #         for p in self.pipeline.nodes:
+    #             if isinstance(p, FitICFactorNode):
+    #                 # udets = {iso.detector for ai in self.state.unknowns
+    #                 #          for iso in six.itervalues(ai.isotopes)}
+    #                 # udets = get_detector_set(self.state.unknowns)
+    #                 # rdets = get_detector_set(self.state.references)
+    #
+    #                 # rdets = {iso.detector for ai in self.state.references
+    #                 #          for iso in six.itervalues(ai.isotopes)}
+    #                 # p.set_detectors(list(udets.union(rdets)))
+    #                 p.set_detectors(self.state.union_detectors)
 
     def get_unknowns_node(self):
         nodes = self.get_nodes(UnknownNode)
@@ -659,6 +664,8 @@ class PipelineEngine(Loggable):
 
         ost = time.time()
 
+        self.dvc.create_session(force=True)
+
         start_node = run_from or state.veto
         self.debug('pipeline run started')
         if start_node:
@@ -685,7 +692,7 @@ class PipelineEngine(Loggable):
                         node.run(state)
                         node.visited = True
                         self.selected = node
-                        self.update_detectors()
+                        # self.update_detectors()
                     except NoAnalysesError:
                         self.information_dialog('No Analyses in Pipeline!')
                         self.pipeline.reset()
@@ -728,18 +735,20 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
         reponames = list({a.repository_identifier for items in (state.unknowns, state.references) for a in items})
-        if self.repositories:
-            enames = [r.name for r in self.repositories]
-            reponames = [n for n in reponames if n not in enames]
+        # print reponames
+        # if self.repositories:
+        #     enames = [r.name for r in self.repositories]
+        #     reponames = [n for n in reponames if n not in enames]
 
         if reponames:
             repos = [RepoItem(name=n) for n in reponames]
-            if self.repositories:
-                self.repositories.extend(repos)
-            else:
-                self.repositories = repos
+            self.repositories = repos
+            # if self.repositories:
+            #     self.repositories.extend(repos)
+            # else:
+            #     self.repositories = repos
 
-        self._update_repository_status()
+            self._update_repository_status()
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
@@ -806,14 +815,14 @@ class PipelineEngine(Loggable):
                       self.dvc,
                       clear=clear,
                       exclude_klass=exclude_klass)
-        except BaseException, e:
+        except BaseException as e:
             import traceback
             traceback.print_exc()
             self.debug('Invalid Template: {}'.format(e))
             self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
             return
 
-        self.update_detectors()
+        # self.update_detectors()
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
 

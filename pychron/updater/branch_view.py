@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traitsui.api import View, UItem, HGroup, VGroup
 from traitsui.editors import EnumEditor
 from traitsui.handler import Controller

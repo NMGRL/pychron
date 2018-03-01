@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import socket
-from SocketServer import ThreadingUnixStreamServer
+from six.moves.socketserver import ThreadingUnixStreamServer
 
 # from threading import Thread
 # import select
 # ============= local library imports  ==========================
-from messaging_server import MessagingServer
+from .messaging_server import MessagingServer
 from pychron.messaging.handlers.ipc_handler import IPCHandler
 
 class IPCServer(ThreadingUnixStreamServer, MessagingServer):
@@ -46,7 +47,7 @@ class IPCServer(ThreadingUnixStreamServer, MessagingServer):
         try:
             args += (IPCHandler,)
             super(IPCServer, self).__init__(*args, **kw)
-        except socket.error, e:
+        except socket.error as e:
             self.warning(e)
             self.connected = False
 

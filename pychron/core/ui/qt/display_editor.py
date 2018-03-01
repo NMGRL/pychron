@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from Queue import Empty
+from __future__ import absolute_import
+from six.moves.queue import Empty
 
 from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 from traits.api import Color, Str, Event, Int

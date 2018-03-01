@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
 from envisage.ui.tasks.task_factory import TaskFactory
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin

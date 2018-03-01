@@ -16,9 +16,13 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 
 from numpy import array, vstack, mean, average, hstack, zeros, gradient
+from six.moves import range
+from six.moves import zip
 
 
 # from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
@@ -40,7 +44,7 @@ def sort_clockwise(pts, xy, reverse=False):
 
     angles = [(math.atan2(y - cy, x - cx), pi) for pi, x, y in zip(pts, xs, ys)]
     angles = sorted(angles, key=lambda x: x[0], reverse=reverse)
-    _, pts = zip(*angles)
+    _, pts = list(zip(*angles))
 
     return list(pts)
 
@@ -108,7 +112,7 @@ def calculate_reference_frame_center(r1, r2, R1, R2):
     # calculate delta rotation for r1 in R2
     a1 = calc_angle(R1, R2)
     a2 = calc_angle(r1, r2)
-    print a1, a2
+    print(a1, a2)
     rot = 0
     #     rot = a1 - a2
 
@@ -120,8 +124,8 @@ def calculate_reference_frame_center(r1, r2, R1, R2):
     RL = calc_length(R1, R2)
     rperR = abs(RL / rL)
 
-    print 'rrrr', rL, RL
-    print r1, r2, R1, R2
+    print('rrrr', rL, RL)
+    print(r1, r2, R1, R2)
     # calculate center
     cx = R1[0] - r1Rx * rperR
     cy = R1[1] - r1Ry * rperR

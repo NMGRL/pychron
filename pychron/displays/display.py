@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from Queue import Queue
+from __future__ import absolute_import
+from six.moves.queue import Queue
 # ============= standard library imports ========================
 from threading import Lock
 

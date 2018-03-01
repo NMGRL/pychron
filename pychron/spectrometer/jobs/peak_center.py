@@ -15,17 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import time
 
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
 from traits.api import Float, Str, Int, List, Enum, HasTraits
 
-from magnet_sweep import MagnetSweep, AccelVoltageSweep
+from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
+from six.moves import range
 
 
 class PeakCenterResult:
@@ -360,7 +362,7 @@ class BasePeakCenter(HasTraits):
             f = interpolate.interp1d(x, y, kind=self.interpolation_kind)
             fx = linspace(x.min(), x.max(), 500)
             fy = f(fx)
-        except ValueError, e:
+        except ValueError as e:
             self.warning('interpolation failed: error={}. x.shape={}, y.shape={}'.format(e, x.shape, y.shape))
 
         return fx, fy
@@ -399,7 +401,7 @@ class BasePeakCenter(HasTraits):
                                            min_peak_height=self.min_peak_height,
                                            percent=self.percent)
             return result
-        except PeakCenterError, e:
+        except PeakCenterError as e:
             self.warning('Failed to find a valid peak. {}'.format(e))
 
     # ===============================================================================

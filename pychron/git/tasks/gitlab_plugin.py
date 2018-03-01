@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
 from pychron.git.hosts.gitlab import GitLabService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
 from pychron.git.tasks.githost_preferences import GitLabPreferencesPane

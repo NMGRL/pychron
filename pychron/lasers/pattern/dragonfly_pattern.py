@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import Enum, Int, Float, Str
 from traitsui.api import View, Item, UItem, HGroup, VGroup
 # ============= standard library imports ========================
@@ -23,6 +24,7 @@ from chaco.default_colormaps import hot
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.pattern_generators import line_spiral_pattern
 from pychron.lasers.pattern.seek_pattern import SeekPattern
+from six.moves import range
 
 
 def outward_square_spiral(base):
@@ -31,7 +33,7 @@ def outward_square_spiral(base):
         b = base
         prevx, prevy = b, 0
         while 1:
-            for cnt in xrange(4):
+            for cnt in range(4):
                 if cnt == 0:
                     x, y = b, prevy
                 elif cnt == 1:
@@ -64,10 +66,10 @@ class DragonFlyPeakPattern(SeekPattern):
                         UItem('execution_graph', style='custom')),
                  x=100,
                  y=100,
-                 width=1000, title='Executing {}'.format(self.name))
+                 width=500, title='Executing {}'.format(self.name))
         return v
 
-    def setup_execution_graph(self):
+    def setup_execution_graph(self, nplots=1):
         g = self.execution_graph
 
         def new_plot():
@@ -83,10 +85,12 @@ class DragonFlyPeakPattern(SeekPattern):
             imgplot.img_plot('imagedata', colormap=hot, origin='top left')
             return imgplot
 
-        img = new_plot()
-        peaks = new_plot()
+        return [new_plot() for _ in range(nplots)]
 
-        return img, peaks
+        # img = new_plot()
+        # peaks = new_plot()
+
+        # return img, peaks
 
     def point_generator(self):
         if self.spiral_kind.lower() == 'square':

@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import yaml
 
@@ -116,7 +118,7 @@ class DataReductionScript:
         func(step)
 
     def _do_fitiso(self, step):
-        print 'fitiso', step
+        print('fitiso', step)
 
         ans = self.dataset.get_analyses(step['analysis_types'])
         fits = step['fits']
@@ -127,7 +129,7 @@ class DataReductionScript:
             a.set_fits(fits)
 
     def _do_fitblank(self, step):
-        print 'fitblank', step
+        print('fitblank', step)
 
         ans = self.dataset.get_analyses(step['analysis_types'])
         refs = self.dataset.get_analyses(step['reference_types'])
@@ -139,7 +141,7 @@ class DataReductionScript:
             pass
 
     def _do_dataset(self, step):
-        print 'dodataset', step
+        print('dodataset', step)
 
         self.dataset = DataSet()
         for k, v in step.items():
@@ -157,7 +159,7 @@ class DataReductionScript:
                 self._load_analyses_irradiation(v)
 
         associated = step.get('associated', [])
-        print 'asdf', associated
+        print('asdf', associated)
 
     def _load_analyses_load(self, v):
         pass
@@ -187,7 +189,7 @@ class DataReductionScript:
                     level = None
                     irradiation = args[0]
 
-            print 'asdf', irradiation, level, sample
+            print('asdf', irradiation, level, sample)
 
 
 if __name__ == '__main__':

@@ -17,8 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from __future__ import absolute_import
+from __future__ import print_function
 from pychron.core.stats import calculate_weighted_mean
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
+from six.moves import zip
 
 
 class InterpretedAgeXLSTableWriter(XLSXTableWriter):
@@ -91,10 +94,10 @@ class InterpretedAgeXLSTableWriter(XLSXTableWriter):
             self._add_summary_row(sh, ia, r, cols, adapter)
 
         if options.include_weighted_mean:
-            vs, es = zip(*((ia.age, ia.age_err) for ia in ias if not ia.is_omitted()))
+            vs, es = list(zip(*((ia.age, ia.age_err) for ia in ias if not ia.is_omitted())))
 
             wm, we = calculate_weighted_mean(vs, es)
-            print wm, we
+            print(wm, we)
             sh.write(r + 2, 0, 'Weighted Mean')
             sh.write(r + 2, 2, wm)
             sh.write(r + 2, 3, we)

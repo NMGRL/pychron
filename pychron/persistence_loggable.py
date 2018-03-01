@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import pickle
 
@@ -64,8 +66,8 @@ class PersistenceMixin(object):
                 attrs += dattrs
             else:
                 attrs = dattrs
-        except AttributeError, e:
-            print 'ddddd', e
+        except AttributeError as e:
+            print('ddddd', e)
             pass
 
         return attrs
@@ -73,8 +75,8 @@ class PersistenceMixin(object):
     def get_persistence_path(self):
         try:
             return self._make_persistence_path(self.persistence_path)
-        except (AttributeError, NotImplementedError),e:
-            print e
+        except (AttributeError, NotImplementedError) as e:
+            print(e)
             self.warning('persistence path not implemented')
 
     def load(self, verbose=False):
@@ -90,7 +92,7 @@ class PersistenceMixin(object):
         if p and os.path.isfile(p):
             self.debug('loading {}'.format(p))
             d = None
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 try:
                     d = pickle.load(rfile)
                 except (pickle.PickleError, EOFError, BaseException):
@@ -125,7 +127,7 @@ class PersistenceMixin(object):
                     d[a] = v
             else:
                 d = {a: getattr(self, a) for a in attrs}
-            with open(p, 'w') as wfile:
+            with open(p, 'wb') as wfile:
                 pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):

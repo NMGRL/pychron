@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import os
 
 import yaml
@@ -32,6 +33,7 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+import six
 
 DIFF_TOLERANCE_PERCENT = 0.01
 
@@ -387,12 +389,12 @@ class DiffEditor(BaseTraitsEditor):
                                 rvalue=riso.blank.error))
 
             rpr = right.production_ratios
-            for k, v in left.production_ratios.iteritems():
+            for k, v in six.iteritems(left.production_ratios):
                 vs.append(Value(name=k, lvalue=nominal_value(v),
                                 rvalue=nominal_value(rpr.get(k, 0))))
 
             rifc = right.interference_corrections
-            for k, v in left.interference_corrections.iteritems():
+            for k, v in six.iteritems(left.interference_corrections):
                 vs.append(Value(name=k, lvalue=nominal_value(v),
                                 rvalue=nominal_value(rifc.get(k.lower(), 0))))
 

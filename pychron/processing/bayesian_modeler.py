@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
+from __future__ import print_function
 from traits.api import HasTraits
 
 # ============= standard library imports ========================
@@ -29,6 +31,7 @@ from numpy.core.fromnumeric import argmax
 # from scipy.stats.stats import mode
 # from numpy.lib.function_base import median
 from pychron.core.time_series.time_series import smooth
+from six.moves import zip
 
 
 # ============= local library imports  ==========================
@@ -110,11 +113,11 @@ class BayesianModeler2(HasTraits):
         age_gen = age_generator(ages, n)
         st = time.time()
         results = pool.map(_monte_carlo_step, age_gen)
-        print 'a', time.time() - st
+        print('a', time.time() - st)
 
         st = time.time()
         results = vstack((ri for ri in results if ri is not None))
-        print 'b', time.time() - st
+        print('b', time.time() - st)
 
         for xx, (ai, ei)in zip(results.T, ages):
 #             print 'dev ', abs(xx.mean() - ai) / ai * 100, abs(xx.std() - ei) / ei * 100

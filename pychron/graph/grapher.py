@@ -17,6 +17,7 @@
 
 
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 
@@ -26,6 +27,7 @@ import sys
 import os
 from numpy import loadtxt, histogram, zeros, ma
 from pyface.timer.do_later import do_later
+from six.moves import range
 p = os.path.join(os.path.expanduser('~'), 'Programming', 'mercurial', 'pychron_beta1')
 
 sys.path.append(p)

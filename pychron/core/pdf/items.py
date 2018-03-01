@@ -15,9 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus.paragraph import Paragraph
 from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
+import six
+from six.moves import range
 
 # ============= local library imports  ==========================
 
@@ -76,7 +79,7 @@ class BaseItem(HasTraits):
             fmt = self.fmt
             if fmt is None:
                 fmt = u'{}'
-            if isinstance(fmt, (str, unicode)):
+            if isinstance(fmt, (str, six.text_type)):
                 v = fmt.format(v)
             else:
                 v = fmt(v)

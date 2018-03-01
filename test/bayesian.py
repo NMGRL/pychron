@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 import unittest
 
 from pychron.processing.bayesian_modeler import BayesianModeler

@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+from __future__ import absolute_import
 from pychron.core.ui.progress_dialog import myProgressDialog
 
 
@@ -29,7 +30,7 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
     if busy:
         mi, ma = 0, 0
     else:
-        mi, ma = 0, n - 1
+        mi, ma = 0, int(max(1, n - 1))
 
     pd = myProgressDialog(min=mi, max=ma,
                           close_at_end=close_at_end,
@@ -63,11 +64,11 @@ def progress_loader(xs, func, threshold=50, progress=None,
     if not progress and use_progress and n >= threshold:
         progress = open_progress(n / step, busy=busy)
 
-    n /= step
+    # n /= step
 
     def gen():
-        if use_progress and (n > threshold or progress):
-
+        # if use_progress and (n > threshold or progress):
+        if progress:
             for i, x in enumerate(xs):
                 if progress.canceled:
                     raise CancelLoadingError

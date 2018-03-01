@@ -15,7 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import cPickle as pickle
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.cPickle as pickle
 import os
 import re
 from datetime import timedelta, datetime
@@ -37,6 +39,8 @@ from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRe
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
+from six.moves import filter
+from six.moves import map
 
 
 class IdentifierStr(BaseStr):
@@ -210,7 +214,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.dump_browser_selection()
 
     def load_browser_options(self):
-        self.load(verbose=True)
+        self.load(verbose=False)
 
     def load_browser_selection(self):
         obj = self._get_browser_persistence()
@@ -257,7 +261,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         try:
             with open(self.selection_persistence_path, 'wb') as wfile:
                 pickle.dump(obj, wfile)
-        except (pickle.PickleError, EOFError, OSError), e:
+        except (pickle.PickleError, EOFError, OSError) as e:
             # self.debug('Failed dumping previous browser selection. {}'.format(e))
             return
 
@@ -536,7 +540,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return pss + recents
 
     def _make_records(self, ans):
-        self.debug('make records')
+        n = len(ans)
+        self.debug('make records {}'.format(n))
         import time
         st = time.time()
 
@@ -552,7 +557,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
             return xi.record_views
 
-        ret = progress_loader(ans, func, threshold=25, step=50)
+        ret = progress_loader(ans, func, threshold=100, step=20)
         self.debug('make records {}'.format(time.time() - st))
         return ret
 
@@ -568,8 +573,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             def get(n):
                 try:
                     return next((p for p in values if p.id == n), None)
-                except AttributeError, e:
-                    print e
+                except AttributeError as e:
+                    print(e)
                     return
 
             try:
@@ -729,7 +734,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if comp == 'fuzzy':
             self.samples = fuzzyfinder(new, self.osamples, name)
         else:
-            self.samples = filter(filter_func(new, name, comp), self.osamples)
+            self.samples = list(filter(filter_func(new, name, comp), self.osamples))
 
     # property get/set
     def _set_low_post(self, v):
@@ -797,7 +802,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _get_analysis_include_types(self):
         if self.use_analysis_type_filtering:
             ats = self._analysis_include_types
-            return map(str.lower, ats)
+            return list(map(str.lower, ats))
 
     _warned = False
 
@@ -839,7 +844,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             try:
                 with open(p, 'rb') as rfile:
                     return pickle.load(rfile)
-            except (pickle.PickleError, EOFError, OSError), e:
+            except (pickle.PickleError, EOFError, OSError) as e:
                 self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
         else:

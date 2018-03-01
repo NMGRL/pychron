@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from traits.api import List, HasTraits, Bool, Str, Instance, on_trait_change
 from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn

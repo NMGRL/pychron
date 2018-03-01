@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
@@ -34,6 +35,7 @@ from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
+import six
 
 
 # ===============================================================================
@@ -409,7 +411,7 @@ class ExplanationPane(TraitsDockPane):
     end_after = Color(END_AFTER_COLOR)
 
     def set_colors(self, cd):
-        for k, v in cd.iteritems():
+        for k, v in six.iteritems(cd):
             if hasattr(self, k):
                 setattr(self, k, v)
 

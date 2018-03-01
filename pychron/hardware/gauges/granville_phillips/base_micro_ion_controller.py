@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 # =============enthought library imports=======================
+from __future__ import absolute_import
 from traits.api import List, Str, HasTraits, Float, Int
 # =============standard library imports ========================
 from numpy import random, char
