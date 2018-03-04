@@ -114,7 +114,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     username = Str
     password = Password
     host = IPAddress
-    kind = Enum('---', 'mysql', 'sqlite')
+    kind = Enum('---', 'mysql', 'sqlite', 'mssql')
     path = File
 
     _progress_icon = Str('process-working-2')

@@ -293,7 +293,7 @@ class DatabaseAdapter(Loggable):
 
     @property
     def enabled(self):
-        return self.kind in ['mysql', 'sqlite', 'postgresql']
+        return self.kind in ['mysql', 'sqlite', 'postgresql', 'mssql']
 
     @property
     def save_username(self):
@@ -463,7 +463,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         user = self.username
         host = self.host
         name = self.name
-        if kind in ('mysql', 'postgresql'):
+        if kind in ('mysql', 'postgresql', 'mssql'):
             if kind == 'mysql':
                 # add support for different mysql drivers
                 driver = self._import_mysql_driver()
