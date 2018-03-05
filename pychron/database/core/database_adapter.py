@@ -469,18 +469,33 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = self._import_mysql_driver()
                 if driver is None:
                     return
+            elif kind=='mssql':
+                driver = self._import_mssql_driver()
+                if driver is None:
+                    return
             else:
                 driver = 'pg8000'
 
             if password:
-                url = '{}+{}://{}:{}@{}/{}?connect_timeout=5'.format(kind, driver, user, password, host, name)
+                url = '{}+{}://{}:{}@{}/{}'.format(kind, driver, user, password, host, name)
             else:
-                url = '{}+{}://{}@{}/{}?connect_timeout=5'.format(kind, driver, user, host, name)
+                url = '{}+{}://{}@{}/{}'.format(kind, driver, user, host, name)
+
+            if kind=='mysql':
+                url='{}?connect_timeout=5'.format(url)
+            #elif kind == 'mssql':
+            #    url='{}?timeout=5'.format(url)
         else:
             url = 'sqlite:///{}'.format(self.path)
-
+        print('fffasdfasdf', url)
         return url
 
+    def _import_mssql_driver(self):
+        try:
+            import pymssql
+            return 'pymssql'
+        except ImportError:
+            pass
     def _import_mysql_driver(self):
         try:
             '''

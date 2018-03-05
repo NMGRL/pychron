@@ -25,6 +25,13 @@ from pychron.core.filtering import validate_filter_predicate
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
+class HostStr(BaseStr):
+    def validate(self, obj, name, value):
+        if not value or value == 'localhost' or IPREGEX.match(value) or '\\' in value:
+            return value
+        else:
+            self.error(obj, name, value)
+
 class IPAddress(BaseStr):
     def validate(self, obj, name, value):
         if not value or value == 'localhost' or IPREGEX.match(value):

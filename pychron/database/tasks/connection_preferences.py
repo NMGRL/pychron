@@ -25,7 +25,7 @@ from traitsui.editors import TextEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.core.pychron_traits import IPAddress
+from pychron.core.pychron_traits import HostStr
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -113,7 +113,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     username = Str
     password = Password
-    host = IPAddress
+    host = HostStr
     kind = Enum('---', 'mysql', 'sqlite', 'mssql')
     path = File
 
@@ -200,7 +200,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                  editor=TextEditor(enter_set=True, auto_set=False)),
             Item('password', label='Password',
                  editor=TextEditor(enter_set=True, auto_set=False, password=True)),
-            enabled_when='kind=="mysql"',
+            enabled_when='kind in ("mysql", "mssql")',
             show_border=True,
             label='Authentication')
 
