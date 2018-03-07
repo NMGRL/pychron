@@ -227,6 +227,8 @@ class StatsGroup(ExperimentStats):
     # @caller
     def reset(self):
         self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
+        self.debug('resetting experiment stats. nruns={}, '
+                   'nqueues={}'.format(self.nruns, len(self.experiment_queues)))
         self.calculate(force=True)
         super(StatsGroup, self).reset()
 

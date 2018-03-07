@@ -50,7 +50,6 @@ class Experimentor(DVCIrradiationable):
     # ===========================================================================
     # task events
     # ===========================================================================
-    execute_event = Event
 
     activate_editor_event = Event
     save_event = Event
@@ -95,14 +94,6 @@ class Experimentor(DVCIrradiationable):
     # ===============================================================================
     # info update
     # ===============================================================================
-    def _get_all_runs(self, queues=None):
-        if queues is None:
-            queues = self.experiment_queues
-
-        return [ai for ei in queues
-                for ai in ei.executed_runs + ei.automated_runs
-                if ai.executable and not ai.skip]
-
     def _get_all_automated_runs(self, qs=None):
         if qs is None:
             qs = self.experiment_queues
@@ -124,17 +115,9 @@ class Experimentor(DVCIrradiationable):
         self.debug('executor executable {}'.format(self.executor.executable))
         self.debug('stats calculated')
 
-        # ans = self._get_all_runs(queues)
-        # self.stats.nruns = len(ans)
-        # self.debug('get all runs n={}'.format(len(ans)))
-
         self.debug('updating stats')
         self.stats.calculate()
         self.refresh_executable(queues)
-
-        # for qi in self.experiment_queues:
-        # aruns = self._get_all_automated_runs([qi])
-        # renumber_aliquots(aruns)
 
         self._set_analysis_metadata()
 
@@ -190,9 +173,6 @@ class Experimentor(DVCIrradiationable):
 
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
-
-        # ans = self._get_all_runs(queues)
-        # self.stats.nruns = len(ans)
 
         self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0], stats=self.stats)
 
@@ -258,17 +238,6 @@ class Experimentor(DVCIrradiationable):
     @on_trait_change('executor:experiment_queue')
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
-
-    @on_trait_change('executor:start_button')
-    def _execute(self):
-        """
-            trigger the experiment task to assemble current queues.
-            the queues are then passed back to execute_queues()
-        """
-        self.info('Start Executor')
-        if not self.executor.is_alive():
-            self.debug('execute_event fired')
-            self.execute_event = True
 
     @on_trait_change('experiment_queues[]')
     def _update_queues(self):

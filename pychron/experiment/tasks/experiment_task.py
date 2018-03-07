@@ -55,15 +55,7 @@ class ExperimentEditorTask(EditorTask):
     default_open_action = 'open files'
     wildcard = '*.txt'
 
-    use_notifications = Bool
-    use_syslogger = Bool
-    notifications_port = Int
-    notifier = Instance('pychron.messaging.notify.notifier.Notifier', ())
-
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
-
-    # use_syslogger = Bool
-    # syslogger = Instance('pychron.experiment.sys_log.SysLogger')
 
     # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
@@ -103,18 +95,6 @@ class ExperimentEditorTask(EditorTask):
         pm = self._pattern_maker_view_factory()
         if pm.load_pattern():
             open_view(pm)
-
-    def send_test_notification(self):
-        self.debug('sending test notification')
-        db = self.manager.db
-        # an=db.get_last_analysis('bu-FD-o')
-        an = db.get_last_analysis('ba-01-o')
-        an = self.manager.make_analysis(an)
-        if an:
-            self.debug('test push {}'.format(an.record_id))
-            self._publish_notification(an)
-        else:
-            self.debug('problem recalling last analysis')
 
     def deselect(self):
         if self.active_editor:
@@ -190,18 +170,7 @@ class ExperimentEditorTask(EditorTask):
         # notifications
 
         self._preference_binder('pychron.experiment',
-                                ('use_notifications',
-                                 'notifications_port',
-                                 'automated_runs_editable'))
-
-        # force notifier setup
-        if self.use_notifications:
-            self.notifier.setup(self.notifications_port)
-
-        # sys logger
-        # bind_preference(self, 'use_syslogger', 'pychron.use_syslogger')
-        # if self.use_syslogger:
-        # self._use_syslogger_changed()
+                                ('automated_runs_editable',))
 
         color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
         color_bind_preference(self, 'even_bgcolor', 'pychron.experiment.even_bg_color')
@@ -220,9 +189,6 @@ class ExperimentEditorTask(EditorTask):
 
         self.manager.experiment_factory.destroy()
         self.manager.executor.notification_manager.parent = None
-
-        if self.use_notifications:
-            self.notifier.close()
 
         self._do_callables(self.deactivations)
 
@@ -243,7 +209,7 @@ class ExperimentEditorTask(EditorTask):
 
         ex = self.manager.executor
         panes = [StatsPane(model=self.manager.stats),
-                 ControlsPane(model=ex),
+                 ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),
                  # AnalysisHealthPane(model=self.analysis_health),
@@ -291,12 +257,6 @@ class ExperimentEditorTask(EditorTask):
                     self.debug('Callable {} failed. exception={}'.format(fi.__name__, str(e)))
             else:
                 self.debug('{} not callable'.format(fi))
-
-    def _open_abort(self):
-        try:
-            self.notifier.close()
-        except (AttributeError, TraitError) as e:
-            pass
 
     def _open_file(self, path, **kw):
         if not isinstance(path, (tuple, list)):
@@ -435,12 +395,6 @@ class ExperimentEditorTask(EditorTask):
             name = name.replace(' ', '_')
 
             return 'Load{}'.format(name)
-
-    def _publish_notification(self, run):
-        if self.use_notifications:
-            # msg = 'RunAdded {}'.format(run.uuid)
-            # self.info('pushing notification {}'.format(msg))
-            self.notifier.send_notification(run.uuid)
 
     def _prompt_for_save(self):
         """
@@ -612,18 +566,9 @@ class ExperimentEditorTask(EditorTask):
         if new is not None:
             self.isotope_evolution_pane.plot_panel = new
 
-    @on_trait_change('manager:executor:console_updated')
-    def _update_console(self, new):
-        if self.use_notifications:
-            self.notifier.send_console_message(new)
-
-            # if self.use_syslogger:
-            # self.syslogger.executor = self.manager.executor
-            #     self.syslogger.trigger(new)
-
     @on_trait_change('manager:executor:run_completed')
     def _update_run_completed(self, new):
-        self._publish_notification(new)
+        # self._publish_notification(new)
 
         load_name = self.manager.executor.experiment_queue.load_name
         if load_name:
@@ -645,9 +590,8 @@ class ExperimentEditorTask(EditorTask):
                     pass
                 break
 
-    @on_trait_change('manager:execute_event')
-    def _execute(self, obj, name, old, new):
-        self.debug('execute event {} {}'.format(id(self), id(obj)))
+    def execute(self):
+        # self.debug('execute event {} {}'.format(id(self), id(obj)))
 
         if self.editor_area.editors:
             try:

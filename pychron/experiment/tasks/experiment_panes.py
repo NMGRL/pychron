@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button
+from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, VFold, Label, InstanceEditor, \
     VSplit, TabularEditor, UReadonly, ListEditor, Readonly
@@ -353,6 +353,33 @@ class ControlsPane(TraitsDockPane):
     closable = False
     floatable = False
 
+    start_button = Event
+    stop_button = Event
+    configure_scheduled_button = Event
+    abort_run_button = Button('Abort Run')
+    truncate_button = Button('Truncate Run')
+    show_conditionals_button = Button('Show Conditionals')
+
+    def _start_button_fired(self):
+        self.task.execute()
+
+    def _stop_button_fired(self):
+        self.model.stop_run()
+
+    def _abort_run_button_fired(self):
+        self.model.abort_run()
+
+    def _truncate_button_fired(self):
+        if self.model.measuring_run:
+            self.model.measuring_run.truncate_run(self.truncate_style)
+
+    def _show_conditionals_button_fired(self):
+        self.model.show_conditionals(main_thread=False)
+
+    def _configure_scheduled_button_fired(self):
+        self.model.scheduler.setup()
+        self.model.scheduler.edit_traits(kind='livemodal')
+
     def traits_view(self):
         cancel_tt = '''Cancel current run and continue to next run'''
         stop_tt = '''Cancel current run and stop queue'''
@@ -370,16 +397,16 @@ Quick=   measure_iteration stopped at current step
 
         v = View(HGroup(UItem('alive', editor=LEDEditor(colors=['red', 'green'], radius=30)),
                         spacer(-20),
-                        icon_button_editor('start_button',
+                        icon_button_editor('pane.start_button',
                                            'start',
                                            enabled_when='can_start',
                                            tooltip=start_tt),
 
-                        icon_button_editor('configure_scheduled_button', 'calendar',
+                        icon_button_editor('pane.configure_scheduled_button', 'calendar',
                                            enabled_when='can_start',
                                            tooltip=schedule_tt),
 
-                        icon_button_editor('stop_button', 'stop',
+                        icon_button_editor('pane.stop_button', 'stop',
                                            enabled_when='not can_start',
                                            tooltip=stop_tt),
 
@@ -388,18 +415,18 @@ Quick=   measure_iteration stopped at current step
                              label='Stop at Completion',
                              tooltip=end_tt),
                         spacer(-20),
-                        icon_button_editor('abort_run_button', 'cancel',
+                        icon_button_editor('pane.abort_run_button', 'cancel',
                                            # enabled_when='can_cancel',
                                            tooltip=cancel_tt),
                         spacer(-20),
-                        icon_button_editor('truncate_button',
+                        icon_button_editor('pane.truncate_button',
                                            'lightning',
                                            enabled_when='measuring',
                                            tooltip=truncate_tt),
                         UItem('truncate_style',
                               enabled_when='measuring',
                               tooltip=truncate_style_tt),
-                        UItem('show_conditionals_button'),
+                        UItem('pane.show_conditionals_button'),
                         spacer(-75),
                         CustomLabel('object.experiment_status.label',
                                     color_name='object.experiment_status.color',

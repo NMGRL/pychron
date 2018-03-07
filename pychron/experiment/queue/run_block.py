@@ -59,7 +59,7 @@ class RunBlock(Loggable):
     def _runs_gen(self, line_gen):
         delim = '\t'
 
-        header = list(map(str.strip, line_gen.next().split(delim)))
+        header = list(map(str.strip, next(line_gen).split(delim)))
 
         pklass = RunParser
         if self.extract_device == 'Fusions UV':

@@ -28,8 +28,6 @@ import six
 
 
 class RegressionInspectorTool(InfoInspector):
-    hittest_threshold = 7
-
     def assemble_lines(self):
         lines = []
         if self.current_position:
@@ -53,14 +51,13 @@ class RegressionInspectorTool(InfoInspector):
                                                        floatfmt(reg.mswd, n=3), reg.n))
 
             mi, ma = reg.min, reg.max
-            lines.append(
-                'Min={}, Max={}, D={}%'.format(floatfmt(mi), floatfmt(ma), floatfmt((ma - mi) / float(ma) * 100)))
+            lines.append('Min={}, Max={}, D={}%'.format(floatfmt(mi),
+                                                        floatfmt(ma), floatfmt((ma - mi) / ma * 100)))
 
             lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
                                                                floatfmt(reg.sem), reg.n))
 
-            lines.extend(list(map(six.text_type.strip, list(map(six.text_type, reg.tostring().split(','))))))
-
+            lines.extend(map(str.strip, reg.tostring().split(',')))
         return lines
 
 

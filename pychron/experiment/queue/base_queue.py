@@ -68,7 +68,7 @@ class BaseExperimentQueue(RunBlock):
     selected = List
 
     automated_runs = List
-    cleaned_automated_runs = Property(depends_on='automated_runs[]')
+    cleaned_automated_runs = Property  # (depends_on='automated_runs[]')
 
     username = String
     email = String

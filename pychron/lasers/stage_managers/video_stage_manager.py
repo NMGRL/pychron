@@ -277,6 +277,7 @@ class VideoStageManager(StageManager):
 
     @property
     def video_configuration_path(self):
+
         return os.path.join(self.configuration_dir_path, 'camera.yaml')
 
     def initialize_video(self):
@@ -801,25 +802,20 @@ class VideoStageManager(StageManager):
         # p = os.path.join(self.configuration_dir_path, 'camera.yaml')
 
         p = self.video_configuration_path
-        if not os.path.isfile(p):
-            klass = Camera
-            pp = os.path.join(self.configuration_dir_path, 'camera.cfg')
-            if not os.path.isfile(pp):
-                self.warning_dialog('No Camera configuration file a {} or {}'.format(p, pp))
-            p = pp
+        if p is not None:
+            if not os.path.isfile(p):
+                klass = Camera
+                pp = os.path.join(self.configuration_dir_path, 'camera.cfg')
+                if not os.path.isfile(pp):
+                    self.warning_dialog('No Camera configuration file a {} or {}'.format(p, pp))
+                p = pp
 
-        camera = klass()
-        camera.load(p)
+            camera = klass()
+            camera.load(p)
+        else:
+            camera = Camera()
+
         camera.set_limits_by_zoom(0, 0, 0, self.canvas)
-
-        # vid = self.video
-        # if vid:
-            # swap red blue channels True or False
-        # vid.swap_rb = camera.swap_rb
-        #
-        # vid.vflip = camera.vflip
-        # vid.hflip = camera.hflip
-
         self._camera_zoom_coefficients = camera.zoom_coefficients
         return camera
 
