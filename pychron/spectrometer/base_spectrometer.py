@@ -398,7 +398,7 @@ class BaseSpectrometer(SpectrometerDevice):
             with open(p, 'r') as f:
                 reader = csv.reader(f, delimiter='\t')
                 mws = {l[0]: float(l[1]) for l in reader}
-        elif os.path.isfille(yp):
+        elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             with open(p, 'r') as f:
                 mws = yaml.load(f)
