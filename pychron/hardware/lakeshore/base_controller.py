@@ -59,7 +59,7 @@ class BaseLakeShoreController(CoreDevice):
         # 3=v>30
 
         if config.has_section('Range'):
-            items = config.items()
+            items = config.items('Range')
 
         else:
             items = [(1, 'v<10'), (2, '10<v<30'), (3, 'v>30')]
