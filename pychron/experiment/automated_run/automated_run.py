@@ -29,7 +29,7 @@ from threading import Thread, Event as TEvent
 import yaml
 from numpy import Inf, polyfit, linspace, polyval, array
 from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple
+    Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.helpers.color_generators import colornames, colorname_generator
@@ -182,7 +182,7 @@ class AutomatedRun(Loggable):
     ms_pumptime_start = None
 
     previous_blanks = Tuple
-    previous_baselines = Tuple
+    previous_baselines = Dict
 
     _active_detectors = List
     _peak_center_detectors = List
@@ -465,7 +465,7 @@ class AutomatedRun(Loggable):
             bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
                        self.isotope_group.values()])
             # self.set_previous_baselines(bs)
-            self.executor_event = dict(kind='baselines', baselines=bs)
+            self.executor_event = {'kind': 'baselines', 'baselines': bs}
             self.plot_panel.is_baseline = False
 
         self.multi_collector.is_baseline = False
@@ -511,8 +511,8 @@ class AutomatedRun(Loggable):
                 name = iso
                 diso = '{}{}'.format(iso, di)
 
-                print(iso, diso)
-                print(a.pairs())
+                # print(iso, diso)
+                # print(a.pairs())
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
                     ii.detector = di
@@ -523,7 +523,7 @@ class AutomatedRun(Loggable):
                     ii.detector = di
                     a.isotopes.pop(diso)
                 else:
-                    print('new isotope', iso, di)
+                    # print('new isotope', iso, di)
                     ii = a.isotope_factory(name=iso, detector=di)
                     # if correct_for_blank:
                     #     if iso in pb:
@@ -539,7 +539,9 @@ class AutomatedRun(Loggable):
                     plots = self.plot_panel.new_isotope_plot()
                     plot = plots['isotope']
                     pid = g.plots.index(plot)
-                    g.new_series(type='scatter', fit='linear', plotid=pid)
+
+                    # this line causes and issue when trying to plot the sniff on the isotope graph
+                    # g.new_series(type='scatter', fit='linear', plotid=pid)
 
                 g.set_regressor(ii.regressor, pid)
                 # if add_detector:
@@ -799,7 +801,7 @@ class AutomatedRun(Loggable):
 
         self.tripped_conditional = tripped
 
-        self.executor_event = dict(kind='show_conditionals', tripped=tripped)
+        self.executor_event = {'kind': 'show_conditionals', 'tripped': tripped}
 
     def teardown(self):
         self.debug('tear down')
@@ -894,7 +896,7 @@ class AutomatedRun(Loggable):
         if color is None:
             color = 'light green'
 
-        self.executor_event = dict(kind='heading', message=msg, color=color, log=False)
+        self.executor_event = {'kind': 'heading', 'message': msg, 'color': color, 'log': False}
 
     def info(self, msg, color=None, *args, **kw):
         super(AutomatedRun, self).info(msg, *args, **kw)
@@ -904,7 +906,7 @@ class AutomatedRun(Loggable):
         if color is None:
             color = 'light green'
 
-        self.executor_event = dict(kind='info', message=msg, color=color, log=False)
+        self.executor_event = {'kind': 'info', 'message': msg, 'color': color, 'log': False}
 
     def get_interpolation_value(self, value):
         """
@@ -971,7 +973,7 @@ class AutomatedRun(Loggable):
         self.spectrometer_manager.protect_detector(det, protect)
 
     def wait(self, t, msg=''):
-        self.executor_event = dict(duration=t, message=msg)
+        self.executor_event = {'kind': 'wait', 'duration': t, 'message': msg}
 
     def wait_for_overlap(self):
         """
@@ -1354,7 +1356,7 @@ class AutomatedRun(Loggable):
 
         if script.execute():
             self.debug('setting _ms_pumptime')
-            self.executor_event = dict(kind='ms_pumptime_start', time=time.time())
+            self.executor_event = {'kind': 'ms_pumptime_start', 'time': time.time()}
             self.heading('Post Measurement Finished')
             return True
         else:
@@ -1512,7 +1514,7 @@ anaylsis_type={}
         self.multi_collector.for_peak_hop = False
 
         self._equilibration_done = False
-        self._refresh_scripts()
+        # self._refresh_scripts()
 
         # setup the scripts
         ip = self.spec.script_options
@@ -2312,11 +2314,13 @@ anaylsis_type={}
             # elif grpname == 'baseline':
             #     invoke_in_main_thread(self._setup_baseline_graph, starttime_offset, color)
 
-            self._setup_isotope_graph(starttime_offset, color, grpname)
             if grpname == 'sniff':
+                self._setup_isotope_graph(starttime_offset, color, grpname)
                 self._setup_sniff_graph(starttime_offset, color)
             elif grpname == 'baseline':
                 self._setup_baseline_graph(starttime_offset, color)
+            else:
+                self._setup_isotope_graph(starttime_offset, color, grpname)
 
         # time.sleep(0.5)
         with self.persister.writer_ctx():
@@ -2329,7 +2333,7 @@ anaylsis_type={}
         if m.canceled:
             self.debug('measurement collection canceled')
             self.cancel_run()
-            self.executor_event = dict(kind='cancel', confirm=False, err=m.err_message)
+            self.executor_event = {'kind': 'cancel', 'confirm': False, 'err': m.err_message}
 
         return not m.canceled
 
@@ -2348,8 +2352,9 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_ * 1.1)
         series = 0
-        for k, iso in six.iteritems(self.isotope_group):
-            idx = graph.get_plotid_by_ytitle(iso.detector)
+        # for k, iso in se:
+        for det in self._active_detectors:
+            idx = graph.get_plotid_by_ytitle(det.name)
             if idx is not None:
                 try:
                     graph.series[idx][series]
@@ -2379,8 +2384,7 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_)
 
-        # series = self.collector.series_idx
-        series = 0
+        series = self.collector.series_idx
         for k, iso in six.iteritems(self.isotope_group):
 
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
@@ -2431,7 +2435,7 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
         regressing = grpname != 'sniff'
         series = self.collector.series_idx
-        for k, iso in six.iteritems(self.isotope_group):
+        for k, iso in self.isotope_group.iteritems():
             idx = self._get_plot_id_by_ytitle(graph, iso.name, k)
             if idx is not None:
                 try:

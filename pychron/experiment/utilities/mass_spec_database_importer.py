@@ -426,7 +426,7 @@ class MassSpecDatabaseImporter(Loggable):
         cvb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, cvb)
 
-        blob2 = ''.join([struct.pack('>f', v) for v in vb])
+        blob2 = b''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         # @todo: add filtered points blob
@@ -495,7 +495,7 @@ class MassSpecDatabaseImporter(Loggable):
     def _build_timeblob(self, t, v):
         """
         """
-        blob = ''
+        blob = b''
         for ti, vi in zip(t, v):
             blob += struct.pack('>ff', vi, ti)
         return blob

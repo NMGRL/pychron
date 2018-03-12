@@ -22,7 +22,7 @@ from traitsui.qt4.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
 
-ETSConfig.toolkit = "qt4"
+# ETSConfig.toolkit = "qt4"
 
 from six.moves.configparser import NoSectionError
 

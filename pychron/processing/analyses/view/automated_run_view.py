@@ -34,7 +34,7 @@ class AutomatedRunAnalysisView(MainView):
         isotope_group = automated_run.isotope_group
 
         self.isotopes = isotope_group.sorted_values()  # [isotope_group.isotopes[k] for k in isotope_group.isotope_keys]
-        print('load automated run view {}'.format(isotope_group.pairs()))
+        # print('load automated run view {}'.format(isotope_group.pairs()))
 
         self._load_hook(automated_run, isotope_group)
 

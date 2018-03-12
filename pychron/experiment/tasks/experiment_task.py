@@ -188,7 +188,7 @@ class ExperimentEditorTask(EditorTask):
         super(ExperimentEditorTask, self).prepare_destroy()
 
         self.manager.experiment_factory.destroy()
-        self.manager.executor.notification_manager.parent = None
+        # self.manager.executor.notification_manager.parent = None
 
         self._do_callables(self.deactivations)
 

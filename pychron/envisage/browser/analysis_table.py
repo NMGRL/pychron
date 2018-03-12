@@ -281,8 +281,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def _tabular_adapter_default(self):
         adapter = AnalysisAdapter()
-        self.table_configurer.adapter = adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(adapter)
         return adapter
 
 # ============= EOF =============================================

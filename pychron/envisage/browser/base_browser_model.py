@@ -704,8 +704,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.osamples = []
 
     def _labnumber_tabular_adapter_changed(self):
-        self.table_configurer.adapter = self.labnumber_tabular_adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(self.labnumber_tabular_adapter)
 
     def _clear_selection_button_fired(self):
         self.selected_projects = []
@@ -856,8 +855,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _labnumber_tabular_adapter_default(self):
         adapter = LabnumberAdapter()
-        self.table_configurer.adapter = adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(adapter)
         return adapter
 
 # ============= EOF =============================================

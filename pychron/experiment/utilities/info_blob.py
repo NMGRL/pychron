@@ -22,7 +22,7 @@ from six.moves import range
 # ============= local library imports  ==========================
 
 class MemoryBlock(object):
-    def __init__(self, blob=''):
+    def __init__(self, blob=b''):
         self._blob = blob
         self._start = 0
 

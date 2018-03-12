@@ -289,10 +289,11 @@ class Graph(ContextMenuMixin):
         else:
             is_equal = lambda x: x.__eq__(txt)
 
-        # print 'plot titles {}'.format([po.y_axis.title for po in self.plots])
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
+        else:
+            print('plot titles txt={} {}'.format(txt, [po.y_axis.title for po in self.plots]))
 
     def get_num_plots(self):
         """

@@ -248,7 +248,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         plot = self.plots[plotid]
         # for idx in range(series, -1, -1):
         key = 'data{}'.format(series)
-        # print 'set fit', fi, plotid, key, plot.plots.keys()
         if key in plot.plots:
             scatter = plot.plots[key][0]
             # print key
@@ -258,7 +257,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     line = plot.plots[lkey][0]
                     line.regressor = None
 
-                # print self, 'fit for {}={}, {}'.format(key, fi, scatter)
+                print('fit for {}={}, {}'.format(key, fi, scatter))
                 scatter.fit = fi
                 # scatter.index.metadata['selections'] = []
                 # scatter.index.metadata['filtered'] = None
@@ -266,6 +265,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 # if redraw:
                 #     self.redraw()
                 # break
+        else:
+            print('invalid key', fi, plotid, key, plot.plots.keys())
 
     def get_fit(self, plotid=0, series=0):
         try:
@@ -278,7 +279,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     _outside_regressor = False
 
     def set_regressor(self, reg, plotid=0):
-        print('setting regressor to {} {}'.format(plotid, id(reg)))
+        # print('setting regressor to {} {}'.format(plotid, id(reg)))
         self._outside_regressor = True
         plot = self.plots[plotid]
         for pp in plot.plots.values():

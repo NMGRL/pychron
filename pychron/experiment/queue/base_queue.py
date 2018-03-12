@@ -381,7 +381,7 @@ class BaseExperimentQueue(RunBlock):
             use_group_email=self.use_group_email,
             date=datetime.datetime.today(),
             queue_conditionals=self.queue_conditionals_name,
-            mass_spectrometer="{}".format(ms),
+            mass_spectrometer=ms,
             delay_before_analyses=self.delay_before_analyses,
             delay_between_analyses=self.delay_between_analyses,
             delay_after_blank=self.delay_after_blank,

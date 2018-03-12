@@ -126,13 +126,13 @@ class ExperimentEditor(BaseTraitsEditor):
         self.tabular_adapter.even_bg_color = ec
         self.executed_tabular_adapter.even_bg_color = ec
 
-        v = ExperimentTableConfigurer(adapter=self.tabular_adapter,
-                                      children=[self.executed_tabular_adapter],
+        v = ExperimentTableConfigurer(children=[self.executed_tabular_adapter],
                                       auto_set=True,
                                       refresh_func=self.refresh,
                                       id='experiment.table')
 
         self.table_configurer = v
+        v.set_adapter(self.tabular_adapter)
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -304,7 +304,7 @@ class ExperimentEditor(BaseTraitsEditor):
         p = add_extension(p)
 
         self.info('saving experiment to {}'.format(p))
-        with open(p, 'wb') as wfile:
+        with open(p, 'w') as wfile:
             n = len(queues)
             for i, exp in enumerate(queues):
                 exp.path = p

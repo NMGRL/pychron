@@ -280,7 +280,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 self.invalidate_and_redraw()
 
     def iter_valves(self):
-        return self.scene.valves.items()
+        return self.scene.valves.values()
         # return (i for i in six.itervalues(self.scene.valves))
 
     # private

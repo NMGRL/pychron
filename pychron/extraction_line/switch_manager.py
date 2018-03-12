@@ -143,7 +143,7 @@ class SwitchManager(Manager):
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
         # elm = self.extraction_line_manager
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             if v.parent == name:
                 v.set_state(state)
                 self.refresh_state = (k, state)
@@ -151,14 +151,16 @@ class SwitchManager(Manager):
 
     def calculate_checksum(self, vkeys):
         vs = self.switches
-        return binascii.crc32(''.join((vs[k].state_str() for k in vkeys)))
+
+        val = b''.join((vs[k].state_str().encode('utf-8') for k in vkeys))
+        return binascii.crc32(val)
 
     def get_valve_names(self):
         return list(self.switches.keys())
 
     def refresh_network(self):
         self.debug('refresh network')
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             self.refresh_state = (k, v.state, False)
 
         self.refresh_canvas_needed = True

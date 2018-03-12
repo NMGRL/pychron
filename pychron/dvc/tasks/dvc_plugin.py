@@ -83,9 +83,9 @@ class DVCPlugin(BaseTaskPlugin):
     def test_dvc_fetch_meta(self):
         ret, err = False, ''
         dvc = self.application.get_service(DVC)
-        dvc.open_meta_repo()
-        dvc.meta_pull()
-        ret = self._fetched = True
+        if dvc.open_meta_repo():
+            dvc.meta_pull()
+            ret = self._fetched = True
 
         return ret, err
 

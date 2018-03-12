@@ -1207,8 +1207,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         '''
         self._add_backup(arun.uuid)
 
-        arun.set_preferences(self.application.preferences)
-
         arun.integration_time = 1.04
 
         arun.labspy_client = self.application.get_service('pychron.labspy.client.LabspyClient')
@@ -1225,11 +1223,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.experiment_queue = self.experiment_queue
         arun.on_trait_change(self._handle_executor_event, 'executor_event')
 
+        arun.set_preferences(self.application.preferences)
+
+        arun.refresh_scripts()
         for script in (arun.extraction_script,
                        arun.measurement_script,
                        arun.post_measurement_script,
                        arun.post_equilibration_script):
             if script:
+                script.application = self.application
                 script.manager = self
                 script.runner = self.pyscript_runner
 

@@ -80,7 +80,7 @@ class BaseMeasurement(object):
             endianness = self.endianness
 
         fmt = '{}ff'.format(endianness)
-        txt = ''.join((struct.pack(fmt, x, y) for x, y in zip(self.xs, self.ys)))
+        txt = b''.join((struct.pack(fmt, x, y) for x, y in zip(self.xs, self.ys)))
         if as_hex:
             txt = hexlify(txt)
         return txt
