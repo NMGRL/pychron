@@ -1,4 +1,4 @@
-name: pychrontest
+name: pychronco2
 channels:
 - defaults
 dependencies:
@@ -85,7 +85,6 @@ dependencies:
   - future==0.16.0
   - modernize==0.6
   - qimage2ndarray==1.6
-  - tables==3.3.0
   - uncertainties==3.0.2
 prefix: //anaconda/envs/pychrontest
 

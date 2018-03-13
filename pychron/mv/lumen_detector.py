@@ -24,16 +24,14 @@ from skimage.color import rgb2gray, gray2rgb
 from skimage.draw import circle, polygon
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
+from skimage.filters import gaussian
+
 from pychron.mv.locator import Locator
 
 
-def area(a):
+def calc_area(a):
     b = asarray(a, dtype=bool)
     return b.sum()
-
-
-def calc_pixel_depth(pixel_depth):
-    return 2. ** pixel_depth - 1
 
 
 class LumenDetector(Locator):
@@ -45,12 +43,14 @@ class LumenDetector(Locator):
     custom_mask_radius = 0
     hole_radius = 0
     _cached_mask_value = None
+    grain_measuring = False
+    active_targets = None
 
     def __init__(self, *args, **kw):
         super(LumenDetector, self).__init__(*args, **kw)
         self._color_mapper = hot(DataRange1D(low=0, high=1))
 
-    def get_value(self, src, scaled=True, threshold=50, area_threshold=10, pixel_depth=8):
+    def get_value(self, src, threshold=10, area_threshold=10):
         """
 
         if scaled is True
@@ -60,68 +60,99 @@ class LumenDetector(Locator):
         @param scaled:
         @return:
         """
-        mask = self._mask(src)
+        pixel_depth = self.pixel_depth
 
-        if self._cached_mask_value is None:
-            self._cached_mask_value = 100 / float(mask.sum())
+        self._mask(src)
 
-        gsrc = rgb2gray(src)
+        if not len(src.shape) == 2:
+            gsrc = rgb2gray(src)
+            tt = threshold / pixel_depth
+            pd = 1
+        else:
+            gsrc = src
+            tt = threshold / 100*pixel_depth
+            pd = pixel_depth
 
-        tt = threshold / self.calc_pixel_depth(pixel_depth)
         tsrc = gsrc[gsrc > tt]
-        tsrc = (tsrc - tt) / (1 - tt)
 
         n = tsrc.shape[0]
         v = 0
         if n:
-            # print n, self._cached_mask_value, n*self._cached_mask_value
-            if n * self._cached_mask_value > area_threshold:
-                if scaled:
-                    pixel_area = float(n)
-                    v /= pixel_area
+            v = tsrc.sum() / (n*pd)
+
         src[src <= threshold] = 0
         return src, v
 
-    def find_targets(self, image, src, dim, mask=False):
-        targets = self._find_targets(image, src, dim, step=2,
+    def find_targets(self, image, src, dim, mask=False, search=None):
+        targets = self._find_targets(image, src, dim,
                                      filter_targets=False,
-                                     preprocess=True,
                                      inverted=True,
                                      convexity_filter=0.75,
-                                     mask=mask)
+                                     mask=mask, search=search)
+        self.active_targets = None
         if targets:
             targets = self._filter(targets, self._target_near_center, src)
             if targets:
-                self._draw_targets(image.source_frame, targets, dim)
+                self.active_targets = targets
+                if image is not None:
+                    self._draw_targets(image.source_frame, targets, dim)
                 return targets
 
-    def find_lum_peak(self, lum, pixel_depth=8, min_distance=5):
+    def find_lum_peak(self, lum, dim, mask_dim, min_distance=5, blur=1):
+        pixel_depth = self.pixel_depth
+
+        if self.grain_measuring:
+            targets = self.active_targets
+            if targets is not None:
+                self.debug('active targets={}'.format(len(targets)))
+            else:
+                self.debug('no active targets')
+        else:
+            targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
+            if targets:
+                self.debug('found targets={}'.format(len(targets)))
+
+        src = gaussian(lum, blur) * pixel_depth
         mask = self._mask(lum)
+
         h, w = lum.shape[:2]
-        src = rgb2gray(lum)
-        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10, threshold_abs=0.5)
-        peak_img = zeros((h, w), dtype=uint8)
-        # cum_peaks = zeros((h, w), dtype=uint8)
+
+        pts = peak_local_max(src, min_distance=min_distance, num_peaks=10)
+
         pt, px, py = None, None, None
-        pd = calc_pixel_depth(pixel_depth)
+        peak_img = zeros((h, w), dtype=uint8)
+
+        if targets:
+            target = targets[0]
+            px, py = target.centroid
+            pt = px - w / 2, py - h / 2, 1
+            area = target.area
+            self._draw_targets(src, targets, dim)
+        else:
+            area = mask.sum()
+
         if pts.shape[0]:
             idx = tuple(pts.T)
             intensities = src.flat[ravel_multi_index(idx, src.shape)]
-            py, px = average(pts, axis=0, weights=intensities)
-            # mi, ma = intensities.min(), intensities.max()
-            # ix = (intensities - mi) / (ma - mi) * pd
-            # peak_img[idx] = pd
-            # cum_peaks[idx] = 50
 
-            # c = circle(py, px, 5)
-            # peaks[c] = pd
-            pt = px - w / 2., py - h / 2, sorted(intensities)[-1]
-            peak_img[circle(py, px, min_distance)] = 255
+            try:
+                x, y = average(pts, axis=0, weights=intensities)
+                if pt is None:
+                    pt = x - w / 2, y - h / 2, sorted(intensities)[-1]
+                    px, py = x, y
 
-        sat = lum.sum() / (mask.sum() * pd)
-        return pt, px, py, peak_img, sat
+                peak_img[circle(y, x, min_distance)] = 255
 
-    def get_scores(self, lum, pixel_depth=8):
+            except ZeroDivisionError:
+                pass
+
+        sat = lum.sum() / (area * pixel_depth)
+        return pt, px, py, peak_img, sat, src
+
+    def get_scores(self, lum, pixel_depth=None):
+        if pixel_depth is None:
+            pixel_depth = self.pixel_depth
+
         mask = self._mask(lum)
         v = lum.sum()
         # x, y = peak_local_max(lum, min_distance=5, num_peaks=1)[0]
@@ -130,12 +161,11 @@ class LumenDetector(Locator):
         # distance = ((x - w / 2.) ** 2 + (y - h / 2.) ** 2) ** 0.5
         distance = 1
         try:
-            score_density = v / (area(lum) * distance)
+            score_density = v / (calc_area(lum) * distance)
         except ZeroDivisionError:
             score_density = 0
 
-        pd = calc_pixel_depth(pixel_depth)
-        score_saturation = v / (mask.sum() * pd)
+        score_saturation = v / (mask.sum() * pixel_depth)
 
         return score_density, score_saturation, lum
 

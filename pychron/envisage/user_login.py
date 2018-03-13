@@ -48,7 +48,7 @@ def load_user_file():
         with open(path, 'rb') as rfile:
             try:
                 users, last_login = pickle.load(rfile)
-            except (UnicodeDecodeError, EOFError):
+            except (UnicodeDecodeError, EOFError, ValueError):
                 pass
 
     # return users, last_login, isfile
@@ -63,7 +63,7 @@ def load_environments_file():
         with open(path, 'rb') as rfile:
             try:
                 last_env, envs = pickle.load(rfile)
-            except (UnicodeDecodeError, EOFError):
+            except (UnicodeDecodeError, EOFError, ValueError):
                 pass
     return last_env, envs
 

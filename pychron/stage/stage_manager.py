@@ -215,7 +215,7 @@ class BaseStageManager(Manager):
                     sm = pickle.load(f)
                     if not sm.endswith('.center'):
                         return sm
-                except pickle.PickleError:
+                except (pickle.PickleError, ValueError):
                     pass
                     # def traits_view(self):
                     # self.initialize_stage()

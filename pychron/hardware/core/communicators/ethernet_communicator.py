@@ -106,12 +106,9 @@ class Handler(object):
 
             sum += len(s)
             data += s
-            # ss.append(s)
             if sum >= msg_len:
                 break
 
-        # data = ''.join(ss)
-        data = data.strip()
         if frame.message_len:
             # trim off header
             data = data[nm:]

@@ -40,6 +40,8 @@ def pack(fmt, data):
     """
     # if len(args) > 1:
     #     args = zip(args)
+    # b = b''
+
     return b''.join([struct.pack(fmt, *datum) for datum in data])
 
 

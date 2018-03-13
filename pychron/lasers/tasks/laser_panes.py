@@ -64,7 +64,7 @@ class StageControlPane(TraitsDockPane):
                             VGroup(HGroup(Item('canvas.show_laser_position', label='Display Current'),
                                           UItem('canvas.crosshairs_color'),
                                           Item('canvas.crosshairs_line_width', label='Line Wt.')),
-                                   Item('canvas.show_hole', label='Display Hole Label'),
+                                   Item('canvas.show_hole_label', label='Display Hole Label'),
                                    HGroup(
                                        Item('canvas.show_desired_position',
                                             label='Show Desired'),
@@ -84,10 +84,17 @@ class StageControlPane(TraitsDockPane):
                      layout='tabbed')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
-            degasser_grp = VGroup(VGroup(Item('degasser.threshold'),
+            degasser_grp = VGroup(HGroup(VGroup(UItem('degas_test_button'),
+                                         show_border=True, label='Testing'),
+                                  VGroup(Item('degasser.threshold'),
                                          show_border=True, label='Preprocess'),
-                                  VGroup(UItem('degasser.pid', style='custom'),
+                                         icon_button_editor('degasser.edit_pid_button','cog'),
+                                         icon_button_editor('degasser.save_button', 'save'),
+                                         VGroup(Item('degasser.pid.kp'),
+                                                Item('degasser.pid.ki'),
+                                                Item('degasser.pid.kd')),
                                          show_border=True, label='PID'),
+                                  UItem('degasser.plot_container', style='custom', editor=ComponentEditor()),
                                   label='Degas', show_border=True)
 
             mvgrp = VGroup(VGroup(UItem('stage_manager.autocenter_manager.display_image',
@@ -163,7 +170,7 @@ class StageControlPane(TraitsDockPane):
                                    enabled_when='tray_calibration.isCalibrating()'),
                              UItem('tray_calibration.set_center_button'))
             tc_grp = VGroup(cal_grp,
-                            holes_grp,
+                            # holes_grp,
                             HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 
