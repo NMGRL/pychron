@@ -20,7 +20,6 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from pychron.config_mixin import ConfigMixin
-import six
 
 
 class BaseConfigLoadable(ConfigMixin):
@@ -29,11 +28,11 @@ class BaseConfigLoadable(ConfigMixin):
 
     def update_configuration(self, **kw):
         config = self.get_configuration()
-        for section, options in six.iteritems(kw):
+        for section, options in kw.items():
             if not config.has_section(section):
                 config.add_section(section)
 
-            for option, value in six.iteritems(options):
+            for option, value in options.items():
                 config.set(section, option, value)
         self.write_configuration(config)
 

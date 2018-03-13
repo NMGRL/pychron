@@ -24,9 +24,6 @@ import collections
 # =============local library imports  ==========================
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import PointIndicator
-import six
-from six.moves import range
-# from pychron.canvas.canvas2D.markup.markup_items import PointIndicator
 
 
 class MarkupContainer(collections.MutableMapping):
@@ -58,7 +55,7 @@ class MarkupContainer(collections.MutableMapping):
 
     def __getitem__(self, k):
         for l in self.layers:
-            item = next((v for key, v in six.iteritems(l) if key == k), None)
+            item = next((v for key, v in l.items() if key == k), None)
             if item is not None:
                 return item
 
@@ -121,7 +118,7 @@ class MarkupCanvas(BaseDataCanvas):
 
     def get_item(self, base, key):
         key = '{}{}'.format(base, key)
-        return next((v for k, v in six.iteritems(self.markupcontainer) if k == key), None)
+        return next((v for k, v in self.markupcontainer.items() if k == key), None)
 
     def _draw_hook(self, gc, *args, **kw):
         """
@@ -650,7 +647,7 @@ class InteractionMarkupCanvas(MarkupCanvas):
 
         md = self.markupcontainer
         key = None
-        for k, v in six.iteritems(md):
+        for k, v in md.items():
             if 'line' in k:
                 if isinstance(v[0], list):
                     # this is a multi segment line

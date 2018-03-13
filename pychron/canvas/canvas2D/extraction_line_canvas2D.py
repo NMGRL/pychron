@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from pyface.action.menu_manager import MenuManager
@@ -32,9 +31,7 @@ from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve, Switch, ManualSwitch
 from pychron.canvas.scene_viewer import SceneCanvas
-from pychron.core.codetools.inspection import caller
 from pychron.globals import globalv
-import six
 
 W = 2
 H = 2

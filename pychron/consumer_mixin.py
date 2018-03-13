@@ -21,7 +21,7 @@ from traits.has_traits import HasTraits
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
-from six.moves.queue import Queue, Empty
+from queue import Queue, Empty
 from threading import Thread
 
 

@@ -22,8 +22,6 @@ from traits.api import HasTraits, List, on_trait_change, Any, Event
 from pychron.canvas.canvas2D.scene.primitives.primitives import Primitive
 from pychron.canvas.canvas2D.scene.layer import Layer
 from .canvas_parser import CanvasParser
-import six
-from six.moves import map
 
 
 class Scene(HasTraits):
