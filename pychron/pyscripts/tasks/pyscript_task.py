@@ -229,16 +229,15 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                        runner=self._runner)
 
         if script.bootstrap():
-            if context:
-                script.setup_context(**context)
-            else:
-                script.set_default_context()
+            script.set_default_context(**context)
             try:
                 script.test()
             except Exception as e:
                 return
             self._current_script = script
-            script.setup_context(extract_device='fusions_diode')
+
+            # script.setup_context(extract_device='fusions_diode')
+
             if self.use_trace:
                 self.active_editor.trace_delay = self.trace_delay
 
