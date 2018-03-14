@@ -99,11 +99,11 @@ class ProXRADC(NCDDevice):
             bank = EIGHT_BIT_SINGLE
             nbytes = 1
 
-        bank_idx = bank[channel / 16]
+        bank_idx = bank[channel // 16]
         channel_idx = channel % 16
 
         cmdstr = self._make_cmdstr(254, bank_idx, channel_idx)
-        resp = self.ask(cmdstr, nchars=nbytes, remove_eol=False, verbose=verbose)
+        resp = self.ask(cmdstr, nchars=nbytes, verbose=verbose)
         if resp:
             volts = self._map_to_voltage(resp, nbits, nbytes)[0]
         else:
@@ -126,6 +126,8 @@ class ProXRADC(NCDDevice):
         if resp is None:
             return (0,)
 
+        resp = resp.encode()
+
         f, s = '>B', 1
         if nbits == 12:
             f, s = '<h', 2
@@ -136,8 +138,7 @@ class ProXRADC(NCDDevice):
             nd = int(math.log10(m))
             return round(v / float(m) * self.max_voltage, nd)
 
-        return [vfunc(struct.unpack(f, resp[i:i + s])[0])
-                for i in range(0, nbytes, s)]
+        return [vfunc(struct.unpack(f, resp[i:i + s])[0]) for i in range(0, nbytes, s)]
 
 
 if __name__ == '__main__':

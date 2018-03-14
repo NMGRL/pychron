@@ -147,14 +147,18 @@ class DPi32TemperatureMonitor(ISeriesDevice):
     def read_temperature(self, **kw):
         """
         """
-        cmd = 'V', '01'
-        x = self.repeat_command(cmd, check_type=float, **kw)
+        idx = '01'
+        cmd = 'V', idx
+        x = self.repeat_command(cmd, check_type=float, break_val='{} ?+999'.format(idx), **kw)
         if x is not None:
             try:
                 self.process_value = x
             except TraitError:
                 self.process_value = 0
-            return x
+        else:
+            self.process_value = 0
+
+        return self.process_value
 
     def set_busformat(self):
         commandindex = '1F'

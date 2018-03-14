@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-from __future__ import print_function
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
 # ============= standard library imports ========================
@@ -34,8 +32,6 @@ from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from six.moves import range
-from six.moves import zip
 
 
 class DashboardDevice(Loggable):
@@ -97,9 +93,9 @@ class DashboardDevice(Loggable):
         try:
             self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
                                                                             value.name,
-                                                                            value.__name__))
+                                                                            value.func_name))
             nv = None
-            func = getattr(self.hardware_device, value.__name__)
+            func = getattr(self.hardware_device, value.func_name)
             if func is not None:
                 nv = func(**kw)
 
@@ -110,7 +106,7 @@ class DashboardDevice(Loggable):
         except BaseException:
             import traceback
 
-            print(self.hardware_device, self.hardware_device.name, value.__name__)
+            print(self.hardware_device, self.hardware_device.name, value.func_name)
             self.debug(traceback.format_exc())
             # value.use_pv = False
 

@@ -85,7 +85,8 @@ class BaseGaugeController(HasTraits):
         return self._read_pressure(name, verbose)
 
     def _update_pressure(self, gauge, verbose=False):
-        if isinstance(gauge, (str, six.text_type)):
+        print(gauge, type(gauge))
+        if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
 
         if gauge:

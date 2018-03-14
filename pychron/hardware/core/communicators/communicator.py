@@ -53,7 +53,8 @@ def remove_eol_func(re):
                 try:
                     re = codecs.decode(re, 'hex')
                 except binascii.Error:
-                    return
+                    re = ''.join(('[{}]'.format(str(b)) for b in re))
+
 
         return re.rstrip()
 

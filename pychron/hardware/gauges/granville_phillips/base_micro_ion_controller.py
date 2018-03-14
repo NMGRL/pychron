@@ -103,7 +103,11 @@ class BaseMicroIonController(BaseGaugeController):
         return r
 
     def _read_pressure(self, gauge, verbose=False):
-        name = gauge.name
+        if isinstance(gauge, str):
+            name = gauge
+        else:
+            name = gauge.name
+
         key = 'DS'
         cmd = self._build_command(key, name)
 

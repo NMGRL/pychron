@@ -39,8 +39,8 @@ class NCDDevice(CoreDevice):
         return True
 
     def _make_cmdstr(self, *args):
-#        formatter = lambda x:'{:02X}'.format
-        formatter = lambda x:chr(x)
-        return ''.join(map(formatter, args))
+        return bytes(args)
+        # formatter = lambda x:chr(x)
+        # return b''.join(map(chr, args))
 
 # ============= EOF =============================================
