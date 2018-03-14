@@ -32,7 +32,7 @@ class Experimentor(DVCIrradiationable):
     experiment_queue = Instance(ExperimentQueue)
     executor = Instance(ExperimentExecutor)
     experiment_queues = List
-    stats = Instance(StatsGroup, ())
+    # stats = Instance(StatsGroup, ())
 
     mode = None
     # unique_executor_db = False
@@ -113,10 +113,9 @@ class Experimentor(DVCIrradiationable):
             return
 
         self.debug('executor executable {}'.format(self.executor.executable))
-        self.debug('stats calculated')
+        self.debug('updating stats, ')
+        self.executor.stats.calculate()
 
-        self.debug('updating stats')
-        self.stats.calculate()
         self.refresh_executable(queues)
 
         self._set_analysis_metadata()
@@ -174,7 +173,7 @@ class Experimentor(DVCIrradiationable):
         names = ','.join([e.name for e in queues])
         self.debug('queues: n={}, names={}'.format(len(queues), names))
 
-        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0], stats=self.stats)
+        self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0])
 
         return self.executor.execute()
 
@@ -242,7 +241,7 @@ class Experimentor(DVCIrradiationable):
     @on_trait_change('experiment_queues[]')
     def _update_queues(self):
         qs = self.experiment_queues
-        self.stats.experiment_queues = qs
+        self.executor.stats.experiment_queues = qs
 
     @on_trait_change('experiment_factory:run_factory:changed')
     def _queue_dirty(self):
@@ -290,7 +289,7 @@ class Experimentor(DVCIrradiationable):
             # if self.executor.is_alive():
             a = new[-1]
             if not a.skip:
-                self.stats.calculate_at(a, at_times=self.executor.is_alive())
+                self.executor.stats.calculate_at(a, at_times=self.executor.is_alive())
                 # self.stats.calculate()
 
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')

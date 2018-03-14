@@ -298,8 +298,8 @@ class DataCollector(Consoleable):
     def _set_plot_data(self, cnt, iso, det, x, signal):
 
         if self.collection_kind == SNIFF:
-            gs = [(self.plot_panel.sniff_graph, iso, None, 0),
-                  (self.plot_panel.isotope_graph, iso, None, 0)]
+            gs = [(self.plot_panel.sniff_graph, iso, None, 0, 0),
+                  (self.plot_panel.isotope_graph, iso, None, 0, 0)]
 
         elif self.collection_kind == BASELINE:
             iso = self.isotope_group.get_isotope(detector=det, kind='baseline')
@@ -307,13 +307,13 @@ class DataCollector(Consoleable):
                 fit = iso.get_fit(cnt)
             else:
                 fit = 'average'
-            gs = [(self.plot_panel.baseline_graph, det, fit, 0)]
+            gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
             iso = self.isotope_group.get_isotope(name=iso, detector=det)
             fit = iso.get_fit(cnt)
-            gs = [(self.plot_panel.isotope_graph, iso.name, fit, self.series_idx)]
+            gs = [(self.plot_panel.isotope_graph, iso.name, fit, self.series_idx, self.fit_series_idx)]
 
-        for g, name, fit, series in gs:
+        for g, name, fit, series, fit_series in gs:
 
             pid = g.get_plotid_by_ytitle(name)
             g.add_datum((x, signal),
@@ -322,7 +322,7 @@ class DataCollector(Consoleable):
                         update_y_limits=True,
                         ypadding='0.1')
             if fit:
-                g.set_fit(fit, plotid=pid, series=series)
+                g.set_fit(fit, plotid=pid, series=fit_series)
 
     # ===============================================================================
     #
