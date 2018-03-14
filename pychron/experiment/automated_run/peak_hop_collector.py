@@ -162,21 +162,21 @@ class PeakHopCollector(DataCollector):
 
                 arun.update_detector_isotope_pairing(active_dets, isos)
                 if change:
-
                     g = self.plot_panel.isotope_graph
-                    for d in active_dets:
-                        det = arun.get_detector(d)
+                    if hop_idx:
+                        for d in active_dets:
+                            det = arun.get_detector(d)
 
-                        plot = g.get_plot_by_ytitle('{}{}'.format(det.isotope, det.name))
-                        if not plot:
-                            plot = g.get_plot_by_ytitle(det.isotope)
+                            plot = g.get_plot_by_ytitle('{}{}'.format(det.isotope, det.name))
+                            if not plot:
+                                plot = g.get_plot_by_ytitle(det.isotope)
 
-                        if plot:
-                            scatter = plot.plots['data{}'.format(self.series_idx)][0]
-                            scatter.color = current_color
-                            scatter.outline_color = current_color
-                        else:
-                            self.debug('could not locate det={} iso={}'.format(d, det.isotope))
+                            if plot:
+                                scatter = plot.plots['data{}'.format(self.fit_series_idx)][0]
+                                scatter.color = current_color
+                                scatter.outline_color = current_color
+                            else:
+                                self.debug('could not locate det={} iso={}'.format(d, det.isotope))
 
                     try:
                         arun.plot_panel.counts += int(settle)

@@ -20,8 +20,6 @@
 from __future__ import absolute_import
 import base64
 import struct
-from six.moves import range
-from six.moves import zip
 
 
 def format_blob(blob):
@@ -42,7 +40,9 @@ def pack(fmt, data):
     """
     # if len(args) > 1:
     #     args = zip(args)
-    return ''.join([struct.pack(fmt, *datum) for datum in data])
+    # b = b''
+
+    return b''.join([struct.pack(fmt, *datum) for datum in data])
 
 
 def unpack(blob, fmt='>ff', step=8, decode=False):

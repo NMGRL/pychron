@@ -612,8 +612,8 @@ post_equilibration_script, extraction_script, script_options, position, duration
 
         md5 = hashlib.md5()
         for k, v in sorted(ctx.items()):
-            md5.update(str(k))
-            md5.update(str(v))
+            md5.update(str(k).encode('utf-8'))
+            md5.update(str(v).encode('utf-8'))
         return md5
 
 # ============= EOF =============================================

@@ -107,13 +107,6 @@ class NewPatternAction(BasePatternAction):
     method = 'new_pattern'
 
 
-class SendTestNotificationAction(TaskAction):
-    name = 'Send Test Notification'
-    dname = 'Send Test Notification'
-    method = 'send_test_notification'
-    # accelerator = 'Ctrl+Shift+N'
-
-
 class DeselectAction(TaskAction):
     name = 'Deselect'
     dname = 'Deselect'

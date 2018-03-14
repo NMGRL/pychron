@@ -16,14 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import yaml
-from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
-# ============= standard library imports ========================
 from numpy import polyval, exp
-# ============= local library imports  ==========================
+from traits.api import Float, Tuple, Int, Str, HasTraits
+
 from pychron.config_loadable import ConfigLoadable
 from pychron.loggable import Loggable
-from six.moves import map
 
 
 class BaseCamera(HasTraits):
@@ -34,11 +33,7 @@ class BaseCamera(HasTraits):
     height = Float(1)
     pxpercm = Float
 
-    # swap_rb = Bool(True)
-    # vflip = Bool(False)
-    # hflip = Bool(False)
     focus_z = Float
-    # fps = Int
     zoom_coefficients = Str
     config_path = Str
 
@@ -50,15 +45,10 @@ class BaseCamera(HasTraits):
         """
         self.config_path = p
         config = self.get_configuration(self.config_path)
-        # self.set_attribute(config, 'swap_rb', 'General', 'swap_rb', cast='boolean')
-        # self.set_attribute(config, 'vflip', 'General', 'vflip', cast='boolean')
-        # self.set_attribute(config, 'hflip', 'General', 'hflip', cast='boolean')
 
         self.set_attribute(config, 'width', 'General', 'width', cast='int')
         self.set_attribute(config, 'height', 'General', 'height', cast='int')
         self.set_attribute(config, 'focus_z', 'General', 'focus', cast='float')
-
-        # self.set_attribute(config, 'fps', 'Video', 'fps', cast='int', default=12)
 
         self.set_attribute(config, 'zoom_coefficients', 'Zoom', 'coefficients',
                            default='0,0,23')

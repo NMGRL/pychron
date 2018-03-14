@@ -16,17 +16,22 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import time
+from operator import attrgetter
+
+from skimage.measure import find_contours
 from traits.api import Float
 # ============= standard library imports ========================
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert
+    nonzero, max, arange, argsort, invert, median
 from skimage.feature import peak_local_max
 from skimage.transform import hough_circle
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian_filter
+from skimage.filters import gaussian
 from skimage import feature
 from skimage.feature import canny
 # ============= local library imports  ==========================
@@ -41,8 +46,10 @@ from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
 from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
-from six.moves import range
-from six.moves import zip
+
+
+# from six.moves import range
+# from six.moves import zip
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -67,6 +74,7 @@ class Locator(Loggable):
     use_histogram = False
     use_circle_minimization = True
     step_signal = None
+    pixel_depth = 255
 
     def wait(self):
         if self.step_signal:
@@ -159,10 +167,7 @@ class Locator(Loggable):
         """
         dx, dy = None, None
 
-        targets = self._find_targets(image, frame, dim, step=2,
-                                     preprocess=True,
-                                     filter_targets=True,
-                                     **kw)
+        targets = self._find_targets(image, frame, dim, **kw)
 
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
@@ -185,19 +190,23 @@ class Locator(Loggable):
         self.info('dx={}, dy={}'.format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim, n=20, w=10, start=None, step=1,
-                      preprocess=False,
+    def _find_targets(self, image, frame, dim,
+                      search=None, preprocess=True,
                       filter_targets=True,
                       convexity_filter=False,
                       mask=False,
-                      depth=0,
                       set_image=True, inverted=False):
         """
             use a segmentor to segment the image
         """
 
+        if search is None:
+            search = {}
+
         if preprocess:
-            src = self._preprocess(frame)
+            if not isinstance(preprocess, dict):
+                preprocess = {}
+            src = self._preprocess(frame, **preprocess)
         else:
             src = grayspace(frame)
 
@@ -211,38 +220,59 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
+        start = search.get('start')
         if start is None:
-            start = int(array(src).mean()) - 3 * w
+            # n=20, w=10, start=None, step=2
+            w = search.get('width', 10)
+            start = int(median(src)) - search.get('start_offset_scalar', 3) * w
+            # start = 2*w
+            # start = 20
 
-        seg = RegionSegmenter(use_adaptive_threshold=False)
+        step = search.get('step', 2)
+        n = search.get('n', 20)
+
+        blocksize_step = search.get('blocksize_step', 5)
+        seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
+                              blocksize=search.get('blocksize', 20))
         fa = self._get_filter_target_area(dim)
+        phigh, plow = None, None
 
-        for i in range(n):
-            seg.threshold_low = max((0, start + i * step - w))
-            seg.threshold_high = max((1, min((255, start + i * step + w))))
+        for j in range(n):
+            ww = w * (j + 1)
 
-            seg.block_size += 5
-            nsrc = seg.segment(src)
+            for i in range(n):
+                seg.threshold_low = max((0, start + i * step - ww))
+                seg.threshold_high = max((1, min((255, start + i * step + ww))))
+                if seg.threshold_low == plow and seg.threshold_high == phigh:
+                    break
 
-            nf = colorspace(nsrc)
+                plow = seg.threshold_low
+                phigh = seg.threshold_high
 
-            # draw contours
-            targets = self._find_polygon_targets(nsrc, frame=nf)
-            if set_image and image is not None:
-                image.set_frame(nf)
+                nsrc = seg.segment(src)
+                seg.blocksize += blocksize_step
 
-            if targets:
+                nf = colorspace(nsrc)
+                # print(i, seg.threshold_high, seg.threshold_low)
+                # draw contours
+                targets = self._find_polygon_targets(nsrc, frame=nf)
+                # print('tasfdas', targets)
+                if set_image and image is not None:
+                    image.set_frame(nf)
 
-                # filter targets
-                if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
-                elif convexity_filter:
-                    # for t in targets:
-                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+                if targets:
 
-            if targets:
-                return targets
+                    # filter targets
+                    if filter_targets:
+                        targets = self._filter_targets(image, frame, dim, targets, fa)
+                    elif convexity_filter:
+                        # for t in targets:
+                        #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
+                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+
+                if targets:
+                    return sorted(targets, key=attrgetter('area'), reverse=True)
+                    # time.sleep(0.5)
 
     def _mask(self, src, radius=None):
 
@@ -281,6 +311,7 @@ class Locator(Loggable):
         """
         ctest, centtest, atest = self._test_target(frame, target,
                                                    cthreshold, mi, ma)
+        # print('ctest', ctest, 'centtest', centtest, 'atereat', atest)
         result = ctest and atest and centtest
         if not ctest and (atest and centtest):
             target = self._segment_polygon(image, frame,
@@ -299,7 +330,9 @@ class Locator(Loggable):
         return ctest, centtest, atest
 
     def _find_polygon_targets(self, src, frame=None):
-        contours, hieararchy = contour(src)
+        src, contours, hieararchy = contour(src)
+        # contours, hieararchy = find_contours(src)
+
         # convert to color for display
         if frame is not None:
             draw_contour_list(frame, contours, hieararchy)
@@ -368,36 +401,38 @@ class Locator(Loggable):
                                          ti, ct, mi, ma)):
                     return ti
 
-                    # ===============================================================================
-                    # preprocessing
-                    # ===============================================================================
-
-    def _preprocess(self, frame,
-                    contrast=True, blur=1, denoise=0):
+    # ===============================================================================
+    # preprocessing
+    # ===============================================================================
+    def _preprocess(self, frame, stretch_intensity=True, blur=1, denoise=0):
         """
             1. convert frame to grayscale
             2. remove noise from frame. increase denoise value for more noise filtering
             3. stretch contrast
         """
-        frm = grayspace(frame) * 255
+        if len(frame.shape) != 2:
+            frm = grayspace(frame)
+        else:
+            frm = frame / self.pixel_depth * 255
+
         frm = frm.astype('uint8')
 
-        self.preprocessed_frame = frame
+        # self.preprocessed_frame = frame
         # if denoise:
         #     frm = self._denoise(frm, weight=denoise)
         # print 'gray', frm.shape
         if blur:
-            frm = gaussian_filter(frm, blur) * 255
+            frm = gaussian(frm, blur) * 255
             frm = frm.astype('uint8')
 
-            frm1 = gaussian_filter(self.preprocessed_frame, blur,
-                                   multichannel=True) * 255
-            self.preprocessed_frame = frm1.astype('uint8')
+            # frm1 = gaussian(self.preprocessed_frame, blur,
+            #                 multichannel=True) * 255
+            # self.preprocessed_frame = frm1.astype('uint8')
 
-        if contrast:
-            frm = self._contrast_equalization(frm)
-            self.preprocessed_frame = self._contrast_equalization(
-                self.preprocessed_frame)
+        if stretch_intensity:
+            frm = rescale_intensity(frm)
+            # frm = self._contrast_equalization(frm)
+            # self.preprocessed_frame = self._contrast_equalization(self.preprocessed_frame)
 
         return frm
 
@@ -415,16 +450,16 @@ class Locator(Loggable):
 
         return img.astype('uint8')
 
-    def _contrast_equalization(self, img):
-        """
-            rescale intensities to maximize contrast
-        """
-        #        from numpy import percentile
-        # Contrast stretching
-        #        p2 = percentile(img, 2)
-        #        p98 = percentile(img, 98)
-
-        return rescale_intensity(asarray(img))
+    # def _contrast_equalization(self, img):
+    #     """
+    #         rescale intensities to maximize contrast
+    #     """
+    #     #        from numpy import percentile
+    #     # Contrast stretching
+    #     #        p2 = percentile(img, 2)
+    #     #        p98 = percentile(img, 98)
+    #
+    #     return rescale_intensity(asarray(img))
 
     # ===============================================================================
     # deviation calc
@@ -538,8 +573,8 @@ class Locator(Loggable):
             convenience function for geting center of image in c,r from
         """
         w, h = get_size(src)
-        x = float(w / 2)
-        y = float(h / 2)
+        x = w / 2
+        y = h / 2
 
         return x, y
 
@@ -561,7 +596,7 @@ class Locator(Loggable):
             #             color=(0,255,0),
             #             radius=int(dim))
 
-            draw_polygons(src, [ta.poly_points])
+            draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
                                size=10, radius=1):

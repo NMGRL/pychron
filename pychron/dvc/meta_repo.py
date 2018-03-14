@@ -669,7 +669,7 @@ class MetaRepo(GitRepoManager):
         return positions
 
     def get_flux(self, irradiation, level, position):
-        positions = self.get_flux_from_positions(irradiation, level)
+        positions = self.get_flux_positions(irradiation, level)
         return self.get_flux_from_positions(position, positions)
 
     def get_flux_from_positions(self, position, positions):

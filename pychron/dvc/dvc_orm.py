@@ -17,9 +17,10 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
+    DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import object_session
+from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
@@ -121,7 +122,7 @@ class AnalysisTbl(Base, BaseMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-
+    # simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
@@ -328,11 +329,20 @@ class SampleTbl(Base, NameMixin):
     id = primary_key()
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
-    positions = relationship('IrradiationPositionTbl', backref='sample')
     note = stringcolumn(140)
     igsn = stringcolumn(140)
     lat = Column(Float)
     lon = Column(Float)
+
+    storage_location = deferred(stringcolumn(140))
+    lithology = deferred(stringcolumn(140))
+    location = deferred(stringcolumn(140))
+    approximate_age = deferred(Column(Float))
+    elevation = deferred(Column(Float))
+    create_date = deferred(Column(DateTime, default=func.now()))
+    update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
+
+    positions = relationship('IrradiationPositionTbl', backref='sample')
 
 
 class ProductionTbl(Base, NameMixin):
@@ -582,5 +592,28 @@ class MediaTbl(Base, BaseMixin):
 
     username = Column(String(140), ForeignKey('UserTbl.name'))
     create_date = Column(TIMESTAMP, default=func.now())
+
+
+# ======================= Simple Idenifier ================================
+class SimpleIdentifierTbl(Base, BaseMixin):
+    identifier = Column(Integer, primary_key=True)
+    sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
+
+    sample = relationship('SampleTbl', uselist=False)
+
+    @property
+    def sample_name(self):
+        if self.sample:
+            return self.sample.name
+
+    @property
+    def project_name(self):
+        if self.sample and self.sample.project:
+            return self.sample.project.name
+
+    @property
+    def principal_investigator_name(self):
+        if self.sample and self.sample.project and self.sample.project.principal_investigator:
+            return self.sample.project.principal_investigator.name
 
 # ============= EOF =============================================

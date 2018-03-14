@@ -176,9 +176,9 @@ class BasePeakCenter(HasTraits):
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
-        time.sleep(1)
+        time.sleep(spec.integration_time)
 
-        tol = cur_intensity * (1 - self.percent / 100.)
+        tol = min(0, cur_intensity * (1 - self.percent / 100.))
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
         # spec.save_integration()
@@ -187,7 +187,7 @@ class BasePeakCenter(HasTraits):
         st = time.time()
         while 1:
             signal = get_reference_intensity()
-            if signal < tol:
+            if signal <= tol:
                 self.info('Peak center baseline intensity achieved')
                 break
 
@@ -195,23 +195,17 @@ class BasePeakCenter(HasTraits):
             if et > timeout:
                 self.warning('Peak center failed to move to a baseline position')
                 break
-            time.sleep(0.5)
+            time.sleep(spec.integration_time)
 
         # spec.restore_integration()
 
         center, smart_shift, success = None, False, False
-        # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
-        # check if cdd is still active
-        # if not spec.get_detector_active('CDD'):
-        #     self.warning('CDD has tripped!')
-        #     self.cancel()
-        # else:
 
         ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
         self.debug('result of _do_sweep={}'.format(ok))
 
         # wait for graph to fully update
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
         if ok and self.directions != 'Oscillate':
             if not self.canceled:

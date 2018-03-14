@@ -51,6 +51,7 @@ class Target:
 
     @property
     def convexity(self):
+        # return True
         return self.area / self.min_enclose_area
 
     @property

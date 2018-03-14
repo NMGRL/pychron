@@ -130,7 +130,7 @@ class BaseLaserManager(Manager):
         patterns = list_directory(p, extension)
         return ['', ] + patterns
 
-    def execute_pattern(self, name=None, duration=None, block=False, lase=False):
+    def execute_pattern(self, name=None, duration=None, block=False, lase=False, thread_safe=True):
         # if not self.stage_manager.temp_hole:
         #     self.information_dialog('Need to specify a hole')
         #     return
@@ -147,7 +147,7 @@ class BaseLaserManager(Manager):
                     return
                 self.set_laser_power(self.pulse.power, verbose=True)
 
-            pm.execute(block, duration)
+            pm.execute(block, duration, thread_safe=thread_safe)
 
     def get_brightness(self, **kw):
         return 0

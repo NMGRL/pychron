@@ -130,7 +130,7 @@ class ViewModel(HasTraits):
         h = hashlib.md5()
         for te in self.task_extensions:
             for a in te.additions:
-                h.update('{}{}'.format(a.model.id, a.enabled))
+                h.update('{}{}'.format(a.model.id, a.enabled).encode('utf-8'))
         return h.hexdigest()
 
 

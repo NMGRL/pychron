@@ -105,7 +105,7 @@ class MapView(Viewable):
             xs, ys, states, labns = list(zip(*[(h.x, h.y, -1, '') for h in self.stage_map.sample_holes]))
             g = self.graph
             states = list(states)
-            states[len(states) / 2] = -1.2
+            states[len(states) // 2] = -1.2
             s, _p = g.new_series(xs, ys,
                                  colors=states,
                                  type='cmap_scatter',

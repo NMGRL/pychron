@@ -36,6 +36,7 @@ class BaseAdapter(TabularAdapter):
     added_image = Property
     added_text = Property
     added_width = Int(50)
+    name_width = Int(200)
 
     def _get_added_text(self):
         return ''
@@ -45,7 +46,9 @@ class BaseAdapter(TabularAdapter):
 
 
 class PIAdapter(BaseAdapter):
-    pass
+    columns = [('Added', 'added'), ('Name', 'name'), ('Affiliation', 'affiliation'), ('Email', 'email')]
+    email_width = Int(100)
+    affiliation_width = Int(200)
 
 
 class MaterialAdapter(BaseAdapter):
@@ -57,8 +60,41 @@ class ProjectAdapter(BaseAdapter):
                ('Contact', 'lab_contact'), ('Institution', 'institution'), ('Comment', 'comment')]
     principal_investigator_text = Property
 
+    lab_contact_width = Int(100)
+    institution_width = Int(100)
+    principal_investigator_width = Int(100)
+
     def _get_principal_investigator_text(self):
         return self.item.principal_investigator.name
+
+
+class DBSampleAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Project', 'project'),
+               ('Material', 'material'),
+               ('Grainsize', 'grainsize'),
+               ('PI', 'principal_investigator'),
+               ('Lat', 'lat'),
+               ('Lon', 'lon'),
+               ('Elevation', 'elevation'),
+               ('Lithology', 'lithology'),
+               ('Location', 'location')]
+    principal_investigator_text = Property
+    project_text = Property
+    material_text = Property
+    grainsize_text = Property
+
+    def _get_material_text(self):
+        return self.item.material.name
+
+    def _get_grainsize_text(self):
+        return self.item.material.grainsize
+
+    def _get_project_text(self):
+        return self.item.project.name
+
+    def _get_principal_investigator_text(self):
+        return self.item.project.principal_investigator.name
 
 
 class SampleAdapter(ProjectAdapter):
@@ -67,6 +103,10 @@ class SampleAdapter(ProjectAdapter):
                ('Material', 'material'),
                ('Grainsize', 'grainsize'),
                ('PI', 'principal_investigator')]
+
+    project_width = Int(100)
+    material_width = Int(100)
+    grainsize_width = Int(100)
 
     project_text = Property
     material_text = Property
@@ -96,6 +136,8 @@ class SampleEntryPane(TraitsTaskPane):
                      label='PrincipalInvestigators')
 
         ms = VGroup(UItem('_materials', editor=TabularEditor(adapter=MaterialAdapter(),
+                                                             multi_select=True,
+                                                             selected='selected_materials',
                                                              editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Materials')
@@ -112,7 +154,16 @@ class SampleEntryPane(TraitsTaskPane):
                                                            editable=False, refresh='refresh_table')),
                     show_border=True,
                     label='Samples')
-        return View(VGroup(pis, ps, ms, ss))
+
+        entry = VGroup(pis, ps, ms, ss, label='Entry')
+
+        current = VGroup(HGroup(UItem('sample_filter_attr',
+                                      editor=EnumEditor(name='sample_filter_attrs')),
+                                UItem('sample_filter')),
+                         UItem('db_samples', editor=TabularEditor(adapter=DBSampleAdapter(),
+                                                                  editable=False)),
+                         label='Samples')
+        return View(entry, current)
 
 
 class SampleEditorPane(TraitsDockPane):
@@ -137,9 +188,13 @@ class SampleEditorPane(TraitsDockPane):
         pigrp = HGroup(UItem('principal_investigator',
                              editor=ComboboxEditor(name='principal_investigators',
                                                    use_filter=False)),
+                       icon_button_editor('configure_pi_button', 'cog',
+                                          tooltip='Set optional values for Principal Investigator'),
+
                        icon_button_editor('add_principal_investigator_button', 'add',
                                           enabled_when='principal_investigator',
                                           tooltip='Add a principal investigator'),
+
                        label='PrincipalInvestigator',
                        show_border=True)
 

@@ -44,8 +44,8 @@ def spectrometer_sha(src, defl, gains):
     sha = hashlib.sha1()
     for d in (src, defl, gains):
         for k, v in sorted(d.items()):
-            sha.update(k)
-            sha.update(str(v))
+            sha.update(k.encode('utf-8'))
+            sha.update(str(v).encode('utf-8'))
 
     return sha.hexdigest()
 
@@ -108,11 +108,11 @@ class DVCPersister(BasePersister):
         sblob = per_spec.setpoint_blob  # time vs requested
 
         if rblob:
-            rblob = base64.b64encode(rblob)
+            rblob = base64.b64encode(rblob.encode('utf-8')).decode('utf-8')
         if oblob:
-            oblob = base64.b64encode(oblob)
+            oblob = base64.b64encode(oblob.encode('utf-8')).decode('utf-8')
         if sblob:
-            sblob = base64.b64encode(sblob)
+            sblob = base64.b64encode(sblob.encode('utf-8')).decode('utf-8')
 
         obj = {'measured_response': rblob,  # time vs
                'requested_output': oblob,
@@ -393,7 +393,7 @@ class DVCPersister(BasePersister):
             sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
             snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
             for ss, blob in ((signals, sblob), (sniffs, snblob)):
-                d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
+                d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob.decode('utf-8')}
                 ss.append(d)
 
             isod = {'detector': iso.detector, 'name': iso.name}

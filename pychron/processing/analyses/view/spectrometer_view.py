@@ -23,7 +23,6 @@ from traitsui.api import View, UItem, VGroup, TabularEditor, Group, HGroup
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-import six
 
 
 class DictTabularAdapter(TabularAdapter):
@@ -56,7 +55,7 @@ class SpectrometerView(HasTraits):
 
         # source
         sp = an.source_parameters
-        sd = [DValue(k, v) for k, v in six.iteritems(sp)]
+        sd = [DValue(k, v) for k, v in sp.items()]
         self.source_parameters = sd
 
         # deflections
@@ -67,7 +66,7 @@ class SpectrometerView(HasTraits):
 
         # gains
         gains = an.gains
-        gs = [DValue(ni, gains[ni]) for ni in names]
+        gs = [DValue(ni, gains.get(ni, 0)) for ni in names]
         self.gains = gs
 
     def traits_view(self):

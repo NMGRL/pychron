@@ -20,8 +20,8 @@ from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
 # ============= standard library imports ========================
 from numpy import asarray, array, ndarray
+from PIL import Image
 # ============= local library imports  ==========================
-from pychron.image.image import Image
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 

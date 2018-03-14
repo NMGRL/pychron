@@ -42,7 +42,7 @@ def update_launch_history(path):
                         t += 1
                         l = time.time()
                         exists = True
-                    out.append((l, t, p))
+                    out.append((float(l), t, p))
 
     if not exists:
         out.append((time.time(), 1, path))

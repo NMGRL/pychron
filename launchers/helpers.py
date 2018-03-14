@@ -16,16 +16,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-from pyface.util.guisupport import get_app_qt4
 from traits.etsconfig.api import ETSConfig
 from traitsui.qt4.ui_panel import heading_text
 
 from pychron.environment.util import set_application_home
-
-ETSConfig.toolkit = "qt4"
-
-from six.moves.configparser import NoSectionError
-
 from pyface.confirmation_dialog import confirm
 from pyface.message_dialog import warning
 
@@ -327,7 +321,8 @@ KLASS_MAP = {'pyexperiment': 'PyExperiment',
              'pyview': 'PyView',
              'pyvalve': 'PyValve',
              'pyco2': 'PyCO2',
-             'pydiode': 'PyDiode'}
+             'pydiode': 'PyDiode',
+             'pysampleprep': 'PySamplePrep'}
 
 
 def entry_point(appname, debug=False):
@@ -340,9 +335,9 @@ def entry_point(appname, debug=False):
     monkey_patch_checkbox_render()
     monkey_patch_panel()
 
+    # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)
     if env:
-
         # set_stylesheet(None)
 
         if debug:
@@ -482,7 +477,7 @@ def initialize_version(appname, debug):
     logger.debug('using Pychron environment: {}'.format(env))
     paths.build(env)
 
-    from six.moves.configparser import ConfigParser
+    from configparser import ConfigParser, NoSectionError
     cp = ConfigParser()
     pref_path = os.path.join(ETSConfig.application_home, 'preferences.ini')
     cp.read(pref_path)

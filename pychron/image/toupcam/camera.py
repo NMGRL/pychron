@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 import ctypes
 import os
-from cStringIO import StringIO
+from io import StringIO
 from PIL import Image
 from numpy import zeros, uint8, uint32
 # ============= enthought library imports =======================

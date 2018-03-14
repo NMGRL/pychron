@@ -29,7 +29,7 @@ from pychron.experiment.run_history_view import RunHistoryView, RunHistoryModel
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
-    DeselectAction, SendTestNotificationAction, \
+    DeselectAction, \
     NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction, \
     QueueConditionalsAction, ConfigureEditorTableAction, SystemConditionalsAction, ResetSystemHealthAction, \
     OpenExperimentHistoryAction, LastAnalysisRecoveryAction, OpenCurrentExperimentQueueAction, \
@@ -145,8 +145,6 @@ class ExperimentPlugin(BaseTaskPlugin):
                                  path='MenuBar/file.menu/Open'),
                   SchemaAddition(id='pychron.experiment.launch_history', factory=OpenExperimentHistoryAction,
                                  path='MenuBar/file.menu/Open'),
-                  SchemaAddition(id='pychron.experiment.test_notify', factory=SendTestNotificationAction,
-                                 path='MenuBar/file.menu'),
                   SchemaAddition(id='pychron.experiment.new_experiment', factory=NewExperimentQueueAction,
                                  path='MenuBar/file.menu/New'),
                   SchemaAddition(id='pychron.experiment.signal_calculator', factory=SignalCalculatorAction,
