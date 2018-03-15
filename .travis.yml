@@ -5,14 +5,13 @@ notifications:
   email:
     on_failure: change
 
+python:
+  - 3.5
 
 env:
   # Default values for common packages, override as needed
   global:
     - PYTHON=3.5
-
-python:
-  - ${PYTHON}
 
 before_install:
   - export TZ=America/Denver
