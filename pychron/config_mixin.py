@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from configparser import ConfigParser, RawConfigParser
 import os
 # ============= standard library imports ========================

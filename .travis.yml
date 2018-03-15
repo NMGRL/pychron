@@ -39,8 +39,8 @@ install:
   - conda create --yes --quiet -n pychron-test python=${PYTHON}
   - source activate pychron-test
 
-  - conda install --yes statsmodels PyYAML chaco xlrd xlwt lxml apptools
-  - pip install uncertainties pint codecov coverage
+  - conda install --yes statsmodels PyYAML traits traitsui xlrd xlwt lxml apptools
+  - pip install uncertainties codecov coverage chaco
 
 #script: python setup.py test
 script: coverage run setup.py test
