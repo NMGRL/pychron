@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Any
-from traitsui.api import View, UItem, InstanceEditor, ListEditor
-
+from traits.api import Any, Int
+from traitsui.api import View, UItem, InstanceEditor, ListEditor, TabularEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 
 
 class CanvasPane(TraitsTaskPane):
@@ -88,6 +87,27 @@ class ExplanationPane(TraitsDockPane):
     def traits_view(self):
         v = View(UItem('explanation',
                        style='custom'))
+        return v
+
+
+class ReadbackAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Cmd', 'command'),
+               ('Value', 'value'), ('Timestamp', 'timestamp')]
+    font = 'arial 10'
+    name_width = Int(75)
+    cmd_width = Int(50)
+    value_width = Int(100)
+
+
+class ReadbackPane(TraitsDockPane):
+    name = 'Readback'
+
+    def traits_view(self):
+        v = View(UItem('readback_items',
+                       editor=TabularEditor(adapter=ReadbackAdapter(),
+                                            auto_update=True,
+                                            editable=False)))
         return v
 
 # ============= EOF =============================================

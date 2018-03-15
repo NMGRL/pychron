@@ -52,6 +52,7 @@ class ThermoRack(CoreDevice):
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
         tx_register_functions(self)
+        self.auto_handle_response = False
 
     # ===========================================================================
     # icore device interface
@@ -129,7 +130,7 @@ class ThermoRack(CoreDevice):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, force=False, verbose=False, **kw):
+    def get_coolant_out_temperature(self, force=False, verbose=True, **kw):
         """
         """
         cmd = self._get_read_command_str(COOLANT_BITS)
@@ -139,6 +140,9 @@ class ThermoRack(CoreDevice):
             temp = self._parse_response(resp, scale=0.1)
         else:
             temp = self.get_random_value(0, 40)
+
+        temp = round(temp, 1)
+        self.response_updated = {'value': temp, 'command': self.last_command}
 
         return temp
 
@@ -160,12 +164,14 @@ class ThermoRack(CoreDevice):
         # flip to high byte low byte
         # split the response into high and low bytes
         if resp is not None:
-            h = resp[2:]
-            l = resp[:2]
-            try:
-                resp = int(h + l, 16) * scale
-            except ValueError:
-                return 0
+            # h = resp[1:]
+            # l = resp[:1]
+            resp = int.from_bytes(resp, 'little') * scale
+            # try:
+            #     resp = int(h + l, 16) * scale
+            # except ValueError as e:
+            #     print('pasdfasdf', e)
+            #     return -1
 
             if self.convert_to_C:
                 resp = 5.0 * (resp - 32) / 9.0

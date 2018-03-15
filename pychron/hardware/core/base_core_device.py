@@ -178,7 +178,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                                             kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
-            self._communicate_hook(cmd, r)
+
+            if hasattr(self, '_communicate_hook'):
+                self._communicate_hook(cmd, r)
             return r
         else:
             self.info('no communicator for this device {}'.format(self.name))
@@ -309,13 +311,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def _parse_response(self, v):
         return v
-
-    def _communicate_hook(self, cmd, r):
-        if isinstance(cmd, bytes):
-            cmd = ''.join(('[{}]'.format(str(b)) for b in cmd))
-
-        self.last_command = cmd
-        self.last_response = str(r) if r else ''
 
     def _load_hook(self, config):
         pass

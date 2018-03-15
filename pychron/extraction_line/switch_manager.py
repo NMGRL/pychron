@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
 import binascii
 import os
 import pickle
@@ -37,9 +36,6 @@ from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from .switch_parser import SwitchParser
-import six
-from six.moves import range
-from six.moves import zip
 
 
 def add_checksum(func):
@@ -193,7 +189,7 @@ class SwitchManager(Manager):
 
         owners = []
         for owner, valves in groupby(vs, key=key):
-            valves, _ = list(zip(*valves))
+            valves, _ = zip(*valves)
             v = ','.join(valves)
             if owner:
                 t = '{}-{}'.format(owner, v)
@@ -208,8 +204,7 @@ class SwitchManager(Manager):
 
     @add_checksum
     def get_software_locks(self):
-        return ','.join(['{}{}'.format(k, int(v.software_lock))
-                         for k, v in self.switches.items()])
+        return ','.join(['{}{}'.format(k, int(v.software_lock)) for k, v in self.switches.items()])
 
     @add_checksum
     def get_states(self, query=False, timeout=0.25):
@@ -230,7 +225,7 @@ class SwitchManager(Manager):
             clear_prev_keys = True
             prev_keys = self._prev_keys
 
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             '''
                 querying a lot of valves can add up hence timeout.
                 
@@ -243,7 +238,7 @@ class SwitchManager(Manager):
 
             keys.append(k)
 
-            states.append(int(v.state))
+            states.append('{}{}'.format(k, int(v.state)))
             if time.time() - st > timeout:
                 self.debug('get states timeout. timeout={}'.format(timeout))
                 break
@@ -534,7 +529,7 @@ class SwitchManager(Manager):
         self.debug('load hardware states')
         update = False
         states = []
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             if v.query_state:
                 ostate = v.state
                 s = v.get_hardware_indicator_state(verbose=False)
@@ -555,7 +550,7 @@ class SwitchManager(Manager):
     def _load_states(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Load states')
         update = False
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             ostate = v.state
             s = v.get_hardware_state()
             self.debug('hardware state {},{},{}'.format(k, v, s))
@@ -577,7 +572,7 @@ class SwitchManager(Manager):
                 except PickleError:
                     return
 
-                for k, s in six.iteritems(self.switches):
+                for k, s in self.switches.items():
                     if k in ms:
                         s.state = ms[k]
 
@@ -603,14 +598,14 @@ class SwitchManager(Manager):
         p = os.path.join(paths.hidden_dir, '{}_manual_states'.format(self.name))
         self.info('saving manual states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.state for k, v in six.iteritems(self.switches) if isinstance(v, ManualSwitch)}
+            obj = {k: v.state for k, v in self.switches.items() if isinstance(v, ManualSwitch)}
             pickle.dump(obj, f)
 
     def _save_soft_lock_states(self):
         p = os.path.join(paths.hidden_dir, '{}_soft_lock_state'.format(self.name))
         self.info('saving soft lock states to {}'.format(p))
         with open(p, 'wb') as f:
-            obj = {k: v.software_lock for k, v in six.iteritems(self.switches)}
+            obj = {k: v.software_lock for k, v in self.switches.items()}
             # obj = dict([(k, v.software_lock) for k, v in self.switches.iteritems()])
 
             pickle.dump(obj, f)

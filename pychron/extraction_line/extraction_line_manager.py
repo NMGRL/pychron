@@ -31,8 +31,10 @@ from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
+from pychron.extraction_line.readback import Readback
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
@@ -58,9 +60,9 @@ class ExtractionLineManager(Manager, Consoleable):
     switch_manager = Any
     gauge_manager = Any
     cryo_manager = Any
-
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
+    readback = Any
 
     runscript = None
     learner = None
@@ -107,6 +109,8 @@ class ExtractionLineManager(Manager, Consoleable):
         self.reload_canvas()
 
         self._activate_hook()
+
+        self.readback.load(self.application.get_services(ICoreDevice))
 
     def deactivate(self):
         if self.gauge_manager:
@@ -308,7 +312,7 @@ class ExtractionLineManager(Manager, Consoleable):
                         vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+        # self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
 
         if self.use_network:
             self.network.set_valve_state(name, state)
@@ -867,6 +871,10 @@ class ExtractionLineManager(Manager, Consoleable):
     def _network_default(self):
         return ExtractionLineGraph()
 
+    def _readback_default(self):
+        r = Readback()
+
+        return r
 
 if __name__ == '__main__':
     elm = ExtractionLineManager()

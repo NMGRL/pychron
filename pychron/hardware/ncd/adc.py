@@ -24,13 +24,10 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import math
 import struct
 # ============= local library imports  ==========================
 from pychron.hardware.ncd.ncd_device import NCDDevice
-from six.moves import map
-from six.moves import range
 
 
 class ProXRADCExpansion(NCDDevice):
@@ -59,7 +56,7 @@ class ProXRADC(NCDDevice):
 
     def read_device_info(self):
         cmdstr = self._make_cmdstr(254, 246)
-        resp = self.ask(cmdstr, nchars=5)
+        resp = self.ask(cmdstr, nchars=5, remove_eol=False)
         return resp
 
     def read_bank(self, bank=0, nbits=8, verbose=True):
@@ -78,7 +75,7 @@ class ProXRADC(NCDDevice):
 
         idx = bank_idxs[bank]
         cmdstr = self._make_cmdstr(254, idx)
-        resp = self.ask(cmdstr, nchars=nbytes, verbose=False)
+        resp = self.ask(cmdstr, nchars=nbytes, verbose=verbose, remove_eol=False)
         vs = self._map_to_voltage(resp, nbits, nbytes)
         if verbose:
             self.debug('bank={} nbits={} values={}'.format(bank, nbits, ','.join(map(str, vs))))
@@ -103,7 +100,7 @@ class ProXRADC(NCDDevice):
         channel_idx = channel % 16
 
         cmdstr = self._make_cmdstr(254, bank_idx, channel_idx)
-        resp = self.ask(cmdstr, nchars=nbytes, verbose=verbose)
+        resp = self.ask(cmdstr, nchars=nbytes, verbose=verbose, remove_eol=False)
         if resp:
             volts = self._map_to_voltage(resp, nbits, nbytes)[0]
         else:
@@ -125,8 +122,6 @@ class ProXRADC(NCDDevice):
     def _map_to_voltage(self, resp, nbits, nbytes):
         if resp is None:
             return (0,)
-
-        resp = resp.encode()
 
         f, s = '>B', 1
         if nbits == 12:
@@ -150,23 +145,33 @@ if __name__ == '__main__':
     logging_setup('adc', use_archiver=False)
 
     # paths.build('_dev')
-
+    #[254][199][0]
     a = ProXRADC(name='ProXRADC')
     # a = MultiBankADCExpansion(name='proxr_adc')
     # a.bootstrap()
     a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
+    a.initialize()
     a.open()
     # print 'read bank', a.read_bank()
-    a.read_bank(nbits=12)
-    a.read_bank(1, nbits=12)
-    a.read_bank(2, nbits=12)
+    # a.read_bank(nbits=12)
+    # a.read_bank(1, nbits=12)
+    # a.read_bank(2, nbits=12)
 
     import time
 
     for i in range(100):
-        # a.read_channel(0)
-        a.read_bank()
+        # for j in range(8):
+        #     a.read_channel(j, nbits=8)
+            # time.sleep(0.5)
+        a.read_bank(0, nbits=12)
+        a.read_bank(1, nbits=12)
+        a.read_bank(2, nbits=12)
+        a.read_channel(0, nbits=12)
+        a.read_channel(0, nbits=8)
+        a.read_channel(2, nbits=12)
+        a.read_channel(2, nbits=8)
         time.sleep(0.5)
+        # a.read_bank()
 
         # print a._communicator.handle
         # a.read_device_info()
