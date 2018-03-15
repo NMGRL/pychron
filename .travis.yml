@@ -5,17 +5,14 @@ notifications:
   email:
     on_failure: change
 
+
+env:
+  # Default values for common packages, override as needed
+  global:
+    - PYTHON=3.5
+
 python:
-  - "2.7"
-#env:
-#  # Default values for common packages, override as needed
-#  global:
-#    - CYTHON=0.20
-#    - PATSY=0.2
-#    - PANDAS=0.12
-#    - OPTIONAL=
-#    - COVERAGE=false
-#    - PYTHON=2.7
+  - ${PYTHON}
 
 before_install:
   - export TZ=America/Denver
@@ -40,10 +37,13 @@ before_install:
 
 install:
 #  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
-  - conda create --yes --quiet -n pychron-test python=2.7
+  - conda create --yes --quiet -n pychron-test python=${PYTHON}
   - source activate pychron-test
-  - conda install --yes qt=4.8.5 pyside statsmodels PyYAML traits pyface traitsui enable chaco xlrd xlwt lxml sqlalchemy apptools
-  - pip install uncertainties pint codecov coverage
+
+  - CONDA_PKGS=statsmodels PyYAML chaco xlrd xlwt lxml apptools
+  - conda install --yes ${CONDA_PKGS}
+  - PIP_PKGS=uncertainties pint codecov coverage
+  - pip install ${PIP_PKGS}
 
 #script: python setup.py test
 script: coverage run setup.py test

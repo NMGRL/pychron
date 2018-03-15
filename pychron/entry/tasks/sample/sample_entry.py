@@ -26,16 +26,13 @@ from traitsui.api import View, UItem, Item, VGroup, HGroup
 
 from pychron.core.pychron_traits import EmailStr
 from pychron.dvc.dvc_irradiationable import DVCAble
+from pychron.entry.tasks.sample.sample_edit_view import SampleEditModel, LatFloat, LonFloat, SAMPLE_ATTRS
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 
 PI_REGEX = re.compile(r'^[A-Z]+\w+(, ?[A-Z]{1})*$')
 # MATERIAL_REGEX = re.compile(r'^[A-Z]+[\w%/\+-_]+$')
 PROJECT_REGEX = re.compile(r'^[a-zA-Z]+[\-\d_\w]*$')
-
-SAMPLE_ATTRS = ('lat', 'lon', 'igsn', 'storage_location',
-                'lithology', 'location', 'approximate_age', 'elevation',
-                'note')
 
 
 class RString(String):
@@ -63,26 +60,6 @@ class PIStr(String):
 # class MaterialStr(RString):
 #     regex = MATERIAL_REGEX
 
-class LatFloat(BaseFloat):
-    def validate(self, obj, name, value):
-        if not isinstance(value, (float, int)):
-            return self.error(obj, name, value)
-        else:
-            if value > 90 or value < -90:
-                return self.error(obj, name, value)
-            else:
-                return value
-
-
-class LonFloat(BaseFloat):
-    def validate(self, obj, name, value):
-        if not isinstance(value, (float, int)):
-            return self.error(obj, name, value)
-        else:
-            if value > 180 or value < -180:
-                return self.error(obj, name, value)
-            else:
-                return value
 
 
 class ProjectStr(String):
@@ -256,8 +233,9 @@ class SampleEntry(DVCAble):
 
     db_samples = List
     sample_filter = Str(enter_set=True, auto_set=False)
-    sample_filter_attr = Str
+    sample_filter_attr = Str('name')
     sample_filter_attrs = List(('name', 'project', 'material', 'principal_investigator')+SAMPLE_ATTRS)
+    selected_db_samples = List
 
     _samples = List
     _projects = List
@@ -270,12 +248,15 @@ class SampleEntry(DVCAble):
     selected_principal_investigators = List
     selected_materials = List
 
+    sample_edit_model = Instance(SampleEditModel, ())
+
     def activated(self):
         self.refresh_pis = True
         self.refresh_materials = True
         self.refresh_projects = True
         self.refresh_grainsizes = True
         self.dvc.create_session()
+        self.sample_edit_model.dvc = self.dvc
 
     def prepare_destroy(self):
         self._backup()
@@ -327,8 +308,16 @@ class SampleEntry(DVCAble):
             self.selected_samples = []
 
     def save(self):
-        self._backup()
-        self._save()
+        msg = None
+        if not self.sample_edit_model.save():
+            self._backup()
+            if self._save():
+                msg = 'Samples added to database'
+        else:
+            msg = 'Changes saved to database'
+
+        if msg:
+            self.information_dialog(msg)
 
     def load(self, p):
         with open(p, 'r') as rfile:
@@ -352,9 +341,14 @@ class SampleEntry(DVCAble):
                 yaml.dump(obj, wfile)
 
     # private
+    def _selected_db_samples_changed(self, new):
+        if new:
+            self.sample_edit_model.init()
+            self.sample_edit_model.set_sample(new[0])
+
     @on_trait_change('sample_filter_attr, sample_filter')
     def _handle_sample_filter(self):
-        if self.sample_filter:
+        if self.sample_filter and self.sample_filter_attr:
             sams = self.dvc.get_samples_filter(self.sample_filter_attr, self.sample_filter)
             self.db_samples = sams
 
@@ -376,6 +370,9 @@ class SampleEntry(DVCAble):
             return obj
 
     def _save(self):
+        if not any((getattr(self, attr) for attr in ('_principal_investigators','_materials', '_projects', '_samples'))):
+            return
+
         self.debug('saving sample info')
         dvc = self.dvc
         with dvc.session_ctx(use_parent_session=False):
@@ -436,6 +433,7 @@ class SampleEntry(DVCAble):
                     dvc.commit()
 
         self.refresh_table = True
+        return True
 
     def _principal_investigator_factory(self):
         p = PISpec(name=self.principal_investigator,

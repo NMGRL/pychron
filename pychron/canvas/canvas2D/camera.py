@@ -36,6 +36,7 @@ class BaseCamera(HasTraits):
     focus_z = Float
     zoom_coefficients = Str
     config_path = Str
+    zoom_fitfunc = 'polynominal'
 
     def save_calibration(self):
         raise NotImplementedError
@@ -142,11 +143,11 @@ class Camera(ConfigLoadable, BaseCamera):
         """
         self.info('saving px per mm calibration to {}'.format(self.config_path))
         config = self.get_configuration(self.config_path)
-
-        if not config.has_section('Zoom'):
-            config.add_section('Zoom')
-        config.set('Zoom', 'coefficients', self.zoom_coefficients)
-        self.write_configuration(config, self.config_path)
+        if config:
+            if not config.has_section('Zoom'):
+                config.add_section('Zoom')
+            config.set('Zoom', 'coefficients', self.zoom_coefficients)
+            self.write_configuration(config, self.config_path)
 # if __name__ == '__main__':
 #    c = Camera()
 #    p = '/Users/fargo2/Pychrondata_beta/setupfiles/canvas2D/camera.txt'
