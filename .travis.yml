@@ -39,10 +39,8 @@ install:
   - conda create --yes --quiet -n pychron-test python=${PYTHON}
   - source activate pychron-test
 
-  - CONDA_PKGS=statsmodels PyYAML chaco xlrd xlwt lxml apptools
-  - conda install --yes ${CONDA_PKGS}
-  - PIP_PKGS=uncertainties pint codecov coverage
-  - pip install ${PIP_PKGS}
+  - conda install --yes statsmodels PyYAML chaco xlrd xlwt lxml apptools
+  - pip install uncertainties pint codecov coverage
 
 #script: python setup.py test
 script: coverage run setup.py test
