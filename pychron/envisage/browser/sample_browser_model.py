@@ -21,7 +21,7 @@ import re
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Button, Instance
+from traits.api import Button, Instance, Str
 
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
@@ -29,7 +29,6 @@ from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
-from six.moves import zip
 
 NCHARS = 60
 REG = re.compile(r'.' * NCHARS)
@@ -45,6 +44,8 @@ class SampleBrowserModel(BrowserModel):
     analysis_table = Instance(AnalysisTable)
     time_view_model = Instance(TimeViewModel)
 
+    monitor_sample_name = Str
+
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
         prefid = 'pychron.browser'
@@ -52,6 +53,8 @@ class SampleBrowserModel(BrowserModel):
                         '{}.recent_hours'.format(prefid))
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
+
+        bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
         self.debug('reattach')
@@ -170,7 +173,7 @@ class SampleBrowserModel(BrowserModel):
         if self._afilter is None:
             attrs = self.dvc.get_search_attributes()
             if attrs:
-                attrs = list(zip(*attrs)[0])
+                attrs = list(zip(*attrs))[0]
             m = AdvancedFilterView(attributes=attrs)
             # m.demo()
             self._afilter = m

@@ -402,7 +402,7 @@ class BaseBrowserTask(BaseEditorTask):
     def _recall_configurer_default(self):
         rc = RecallTableConfigurer()
         rc.intermediate_table_configurer.set_adapter(self.intermediate_adapter)
-        rc.isotope_table_configurer.adapter.set_adapter(self.isotope_adapter)
+        rc.isotope_table_configurer.set_adapter(self.isotope_adapter)
         rc.load()
         return rc
 

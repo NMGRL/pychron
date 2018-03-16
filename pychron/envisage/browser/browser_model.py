@@ -316,13 +316,27 @@ class BrowserModel(BaseBrowserModel):
         hp = self.high_post  # if self.use_high_post or self.use_named_date_range else None
         lp = self.low_post  # if self.use_low_post or self.use_named_date_range else None
 
+        ats = []
+        samples = None
+        if at:
+            for a in at:
+                if a == 'monitors':
+                    if not self.monitor_sample_name:
+                        self.warning_dialog('Please Set Monitor name in preferences. Defaulting to FC-2')
+                        self.monitor_sample_name = 'FC-2'
+
+                    samples = [self.monitor_sample_name, ]
+                else:
+                    ats.append(a)
+
         lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
                                      projects=ps,
                                      # repositories=es,
+                                     samples=samples,
                                      mass_spectrometers=ms,
                                      irradiation=self.irradiation if self.irradiation_enabled else None,
                                      level=self.level if self.irradiation_enabled else None,
-                                     analysis_types=at,
+                                     analysis_types=ats,
                                      high_post=hp,
                                      low_post=lp,
                                      loads=ls,

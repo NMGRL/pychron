@@ -105,6 +105,26 @@ def principal_investigator_filter(q, principal_investigator):
 
     return q
 
+def make_at_filter(analysis_types):
+    if hasattr(analysis_types, '__iter__'):
+        analysis_types = list(map(str.lower, analysis_types))
+    else:
+        analysis_types = (analysis_types.lower(),)
+
+    # q = in_func(q, AnalysisTbl.analysis_type, analysis_types)
+    # if 'blank' in analysis_types or any(ai.startswith('blank') for ai in analysis_types):
+    #     q = q.filter(AnalysisTbl.analysis_type.like('blank_%'))
+    analysis_types = [xi.replace(' ', '_') for xi in analysis_types]
+
+    if 'blank' in analysis_types:
+        analysis_types.remove('blank')
+        ret = or_(AnalysisTbl.analysis_type.startswith('blank'),
+                AnalysisTbl.analysis_type.in_(analysis_types))
+    else:
+        ret = AnalysisTbl.analysis_type.in_(analysis_types)
+
+    return ret
+
 
 def analysis_type_filter(q, analysis_types):
     if hasattr(analysis_types, '__iter__'):
@@ -1291,6 +1311,7 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q)
 
     def get_labnumbers(self, principal_investigators=None,
+                       samples=None,
                        projects=None, repositories=None,
                        mass_spectrometers=None,
                        irradiation=None, level=None,
@@ -1301,6 +1322,7 @@ class DVCDatabase(DatabaseAdapter):
                        filter_non_run=False):
 
         self.debug('------- Get Labnumbers -------')
+        self.debug('------- samples: {}'.format(samples))
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
         self.debug('------- experiments: {}'.format(repositories))
@@ -1323,7 +1345,7 @@ class DVCDatabase(DatabaseAdapter):
                 at = True
                 q = q.join(AnalysisTbl, RepositoryAssociationTbl, RepositoryTbl)
 
-            if projects or principal_investigators:
+            if samples or projects or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
                 if principal_investigators:
                     q = q.join(PrincipalInvestigatorTbl)
@@ -1366,6 +1388,8 @@ class DVCDatabase(DatabaseAdapter):
                 for p in principal_investigators:
                     q = principal_investigator_filter(q, p)
 
+
+
             if projects:
                 has_filter = True
                 q = q.filter(ProjectTbl.name.in_(projects))
@@ -1379,16 +1403,18 @@ class DVCDatabase(DatabaseAdapter):
             if high_post:
                 has_filter = True
                 q = q.filter(AnalysisTbl.timestamp <= high_post)
-            if analysis_types:
+
+            if samples:
+                has_filter = True
+                if analysis_types:
+                    q = q.filter(or_(SampleTbl.name.in_(samples), make_at_filter(analysis_types)))
+                else:
+                    q = q.filter(SampleTbl.name.in_(samples))
+
+            if analysis_types and not samples:
                 has_filter = True
                 q = analysis_type_filter(q, analysis_types)
-                # if 'blank' in analysis_types:
-                #     analysis_types.remove('blank')
-                #     q = q.filter(
-                #         or_(AnalysisTbl.analysis_type.startswith('blank'),
-                #             AnalysisTbl.analysis_type.in_(analysis_types)))
-                # else:
-                #     q = q.filter(AnalysisTbl.analysis_type.in_(analysis_types))
+
             if irradiation:
                 has_filter = True
                 q = q.filter(IrradiationTbl.name == irradiation)

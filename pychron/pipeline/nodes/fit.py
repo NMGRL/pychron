@@ -279,7 +279,15 @@ class FitIsotopeEvolutionNode(FitNode):
 
     def _check_refit(self, analysis):
         for k in self._keys:
+
             i = analysis.get_isotope(k)
+            if i is None:
+                i = analysis.get_isotope(detector=k)
+
+            if i is None:
+                print('invalid isotope "{}"'.format(k), analysis.isotope_keys)
+                continue
+
             if not i.reviewed:
                 return True
 
