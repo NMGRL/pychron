@@ -92,8 +92,10 @@ class ExplanationPane(TraitsDockPane):
 
 class ReadbackAdapter(TabularAdapter):
     columns = [('Name', 'name'),
-               ('Cmd', 'command'),
-               ('Value', 'value'), ('Timestamp', 'timestamp')]
+               ('Cmd', 'last_command'),
+               ('Value', 'last_response'),
+               ('Scan', 'current_scan_value'),
+               ('Timestamp', 'timestamp')]
     font = 'arial 10'
     name_width = Int(75)
     cmd_width = Int(50)

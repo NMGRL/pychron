@@ -40,8 +40,9 @@ class ViewableDevice(HasTraits):
     config_short_path = Property
 
     last_command = Str
-    last_response = Str
-
+    last_response = CStr
+    _last_timestamp = None
+    timestamp = None
     # response_updated = Event
     # auto_handle_response = Bool(True)
 
