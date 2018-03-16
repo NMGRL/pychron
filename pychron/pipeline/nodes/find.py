@@ -304,7 +304,7 @@ class FindReferencesNode(FindNode):
         return v
 
     def _available_analysis_types_default(self):
-        return [' '.join(map(str.capitalize, k.split('_'))) for k in SPECIAL_MAPPING.keys()]
+        return sorted([' '.join(map(str.capitalize, k.split('_'))) for k in SPECIAL_MAPPING.keys()])
 
 #
 # class FindAirsNode(FindNode):

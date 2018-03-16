@@ -1388,8 +1388,6 @@ class DVCDatabase(DatabaseAdapter):
                 for p in principal_investigators:
                     q = principal_investigator_filter(q, p)
 
-
-
             if projects:
                 has_filter = True
                 q = q.filter(ProjectTbl.name.in_(projects))
