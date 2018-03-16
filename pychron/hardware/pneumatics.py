@@ -34,10 +34,10 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
         super(Pneumatics, self).__init__(*args, **kw)
         tx_register_functions(self)
 
-    def initialize(self, *args, **kw):
-        self._cdevice.auto_handle_response = False
+    # def initialize(self, *args, **kw):
+        # self._cdevice.auto_handle_response = False
 
-        return True
+        # return True
         # self.register_functions()
 
     def load_additional_args(self, config):
@@ -59,7 +59,7 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
                 v = self.poly_mapper.map_measured(v)
 
         v = round(v, 1)
-        self._cdevice.response_updated = {'value': v, 'command': self._cdevice.last_command}
+        self.last_response = v
         return v
 
 

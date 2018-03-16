@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from __future__ import print_function
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -31,7 +29,6 @@ from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
-from pychron.extraction_line.readback import Readback
 from pychron.extraction_line.sample_changer import SampleChanger
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -39,8 +36,7 @@ from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
 from pychron.wait.wait_group import WaitGroup
-import six
-from six.moves import range
+
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -62,7 +58,7 @@ class ExtractionLineManager(Manager, Consoleable):
     cryo_manager = Any
     multiplexer_manager = Any
     network = Instance(ExtractionLineGraph)
-    readback = Any
+    readback_items = List
 
     runscript = None
     learner = None
@@ -100,17 +96,13 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def activate(self):
-        self._load_additional_canvases()
-
         self._active = True
-
-        # need to wait until now to load the ptrackers
-        # this way our canvases are created
-        self.reload_canvas()
-
+        self._load_additional_canvases()
         self._activate_hook()
 
-        self.readback.load(self.application.get_services(ICoreDevice))
+        self.reload_canvas()
+        devs = self.application.get_services(ICoreDevice)
+        self.devices = devs
 
     def deactivate(self):
         if self.gauge_manager:
@@ -305,7 +297,7 @@ class ExtractionLineManager(Manager, Consoleable):
             # c.load_canvas_file(c.config_name)
 
             if self.switch_manager:
-                for k, v in six.iteritems(self.switch_manager.switches):
+                for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
                         vc.soft_lock = v.software_lock
@@ -788,7 +780,7 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             net = self.network
             if self.switch_manager:
-                for k, vi in six.iteritems(self.switch_manager.switches):
+                for k, vi in self.switch_manager.switches.items():
                     net.set_valve_state(k, vi.state)
             self.reload_canvas()
 
@@ -871,10 +863,6 @@ class ExtractionLineManager(Manager, Consoleable):
     def _network_default(self):
         return ExtractionLineGraph()
 
-    def _readback_default(self):
-        r = Readback()
-
-        return r
 
 if __name__ == '__main__':
     elm = ExtractionLineManager()

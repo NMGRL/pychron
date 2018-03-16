@@ -102,9 +102,10 @@ class ReadbackAdapter(TabularAdapter):
 
 class ReadbackPane(TraitsDockPane):
     name = 'Readback'
+    id = 'pychron.extraction_line.readback'
 
     def traits_view(self):
-        v = View(UItem('readback_items',
+        v = View(UItem('devices',
                        editor=TabularEditor(adapter=ReadbackAdapter(),
                                             auto_update=True,
                                             editable=False)))

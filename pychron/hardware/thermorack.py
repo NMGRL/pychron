@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import provides
 # ============= standard library imports ========================
+import binascii
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.data_helper import make_bitarray
@@ -52,7 +52,7 @@ class ThermoRack(CoreDevice):
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
         tx_register_functions(self)
-        self.auto_handle_response = False
+        # self.auto_handle_response = False
 
     # ===========================================================================
     # icore device interface
@@ -90,10 +90,12 @@ class ThermoRack(CoreDevice):
         cmd = self._get_write_command_str(SETPOINT_BITS)
         self.write(cmd)
 
-        data_bits = make_bitarray(int(v * 10), 16)
-        high_byte = '{:02x}'.format(int(data_bits[:8], 2))
-        low_byte = '{:02x}'.format(int(data_bits[8:], 2))
-
+        # data_bits = make_bitarray(int(v * 10), 16)
+        # high_byte = '{:02x}'.format(int(data_bits[:8], 2))
+        # low_byte = '{:02x}'.format(int(data_bits[8:], 2))
+        b = binascii.hexlify(int(v * 10).to_bytes(2), 'little')
+        high_byte = b[2:]
+        low_byte = b[:2]
         self.write(low_byte)
         self.write(high_byte)
 
@@ -130,7 +132,7 @@ class ThermoRack(CoreDevice):
         return faults
 
     @register(camel_case=True)
-    def get_coolant_out_temperature(self, force=False, verbose=True, **kw):
+    def get_coolant_out_temperature(self, verbose=True, **kw):
         """
         """
         cmd = self._get_read_command_str(COOLANT_BITS)
@@ -142,7 +144,8 @@ class ThermoRack(CoreDevice):
             temp = self.get_random_value(0, 40)
 
         temp = round(temp, 1)
-        self.response_updated = {'value': temp, 'command': self.last_command}
+        self.last_response = str(temp)
+        # self.response_updated = {'value': temp, 'command': self.last_command}
 
         return temp
 
@@ -160,18 +163,12 @@ class ThermoRack(CoreDevice):
     def _parse_response(self, resp, scale=1.0):
         """
         """
-        # resp low byte high byte
-        # flip to high byte low byte
-        # split the response into high and low bytes
         if resp is not None:
-            # h = resp[1:]
-            # l = resp[:1]
-            resp = int.from_bytes(resp, 'little') * scale
-            # try:
-            #     resp = int(h + l, 16) * scale
-            # except ValueError as e:
-            #     print('pasdfasdf', e)
-            #     return -1
+            try:
+                # byteorder ==little flips high and low bytes
+                resp = int.from_bytes(resp, 'little') * scale
+            except ValueError as e:
+                self.debug('parse response {}'.format(e))
 
             if self.convert_to_C:
                 resp = 5.0 * (resp - 32) / 9.0

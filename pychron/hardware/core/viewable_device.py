@@ -15,6 +15,8 @@
 # ===============================================================================
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
+from datetime import datetime
 from traits.api import Str, Property, Bool, CStr, Button, HasTraits, Event
 from traitsui.api import View, Item, Group, VGroup
 # =============standard library imports ========================
@@ -39,8 +41,9 @@ class ViewableDevice(HasTraits):
 
     last_command = Str
     last_response = Str
-    response_updated = Event
-    auto_handle_response = Bool(True)
+
+    # response_updated = Event
+    # auto_handle_response = Bool(True)
 
     current_scan_value = CStr
 
@@ -93,8 +96,8 @@ class ViewableDevice(HasTraits):
 
         return v
 
-    def setup_response_readback(self, func):
-        self.on_trait_change(func, 'response_updated')
+    # def setup_response_readback(self, func):
+    #     self.on_trait_change(func, 'response_updated')
 
     def traits_view(self):
         v = View()
@@ -147,9 +150,18 @@ class ViewableDevice(HasTraits):
         if isinstance(cmd, bytes):
             cmd = ''.join(('[{}]'.format(str(b)) for b in cmd))
 
+        now = datetime.now()
+        fmt = '%H:%M:%S'
+        if self._last_timestamp:
+            if now.day != self._last_timestamp.day:
+                fmt = '%m/%d %H:%M:%S'
+
+        self.timestamp = now.strftime(fmt)
+        self._last_timestamp = now
+
         # print(self, cmd, r)
         self.last_command = str(cmd)
         self.last_response = str(r) if r else ''
-        if self.auto_handle_response:
-            self.response_updated = {'value': self.last_response, 'command': self.last_command}
+        # if self.auto_handle_response:
+        #     self.response_updated = {'value': self.last_response, 'command': self.last_command}
 # ============= EOF =====================================

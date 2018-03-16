@@ -122,9 +122,9 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
 
         return HasCommunicator.open(self, **kw)
 
-    def setup_response_readback(self, func):
-        if self._cdevice:
-            self._cdevice.on_trait_change(func, 'response_updated')
+    # def setup_response_readback(self, func):
+    #     if self._cdevice:
+    #         self._cdevice.on_trait_change(func, 'response_updated')
 
     def __getattr__(self, attr):
         if hasattr(self._cdevice, attr):

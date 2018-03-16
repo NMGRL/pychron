@@ -50,13 +50,14 @@ class QtegraDevice(CoreDevice):
               enabled: True
               period: on_change
     """
-    auto_handle_response = False
+
+    # auto_handle_response = False
 
     def read_decabin_temperature(self, **kw):
         v = self.ask('GetParameter Temp1')
         v = self._parse_response(v)
-
-        self.response_updated = {'value': round(v, 1), 'command': self.last_command}
+        self.last_response = str(round(v, 1))
+        # self.response_updated = {'value': round(v, 1), 'command': self.last_command}
         return v
 
     def read_trap_current(self, **kw):

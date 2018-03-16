@@ -34,22 +34,6 @@ class ExtractionLineTask(BaseHardwareTask):
     name = 'Extraction Line'
     wait_pane = Instance(WaitPane)
 
-    def _tool_bars_default(self):
-        tb = SToolBar(
-            SampleLoadingAction(),
-            # IsolateChamberAction(),
-            # EvacuateChamberAction(),
-            # FinishChamberChangeAction(),
-            image_size=(16, 16))
-        tb2 = SToolBar(AutoReloadAction())
-        return [tb, tb2]
-
-    def _default_layout_default(self):
-        return TaskLayout(
-            top=PaneItem('pychron.extraction_line.gauges'),
-            left=PaneItem('pychron.extraction_line.explanation'),
-            right=PaneItem('pychron.console'))
-
     def activated(self):
         self.manager.activate()
 
@@ -67,7 +51,7 @@ class ExtractionLineTask(BaseHardwareTask):
                  CryoPane(model=self.manager),
                  ExplanationPane(model=self.manager),
                  ConsolePane(model=self.manager),
-                 ReadbackPane(model=self.manager.readback),
+                 ReadbackPane(model=self.manager),
                  self.wait_pane
                  ]
         return panes
@@ -80,4 +64,21 @@ class ExtractionLineTask(BaseHardwareTask):
 
     def enable_auto_reload(self):
         self.manager.enable_auto_reload()
+
+    # defaults
+    def _tool_bars_default(self):
+        tb = SToolBar(
+            SampleLoadingAction(),
+            # IsolateChamberAction(),
+            # EvacuateChamberAction(),
+            # FinishChamberChangeAction(),
+            image_size=(16, 16))
+        tb2 = SToolBar(AutoReloadAction())
+        return [tb, tb2]
+
+    def _default_layout_default(self):
+        return TaskLayout(
+            top=PaneItem('pychron.extraction_line.gauges'),
+            left=PaneItem('pychron.extraction_line.explanation'),
+            right=PaneItem('pychron.console'))
 # ============= EOF =============================================
