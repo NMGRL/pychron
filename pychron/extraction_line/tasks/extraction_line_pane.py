@@ -94,7 +94,6 @@ class ReadbackAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Cmd', 'last_command'),
                ('Value', 'last_response'),
-               ('Scan', 'current_scan_value'),
                ('Timestamp', 'timestamp')]
     font = 'arial 10'
     name_width = Int(75)
