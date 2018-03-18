@@ -133,7 +133,7 @@ class BaseSpectrometer(SpectrometerDevice):
             resp = self.read_integration_time()
             if resp:
                 try:
-                    self.integration_time = resp
+                    self.integration_time = float(resp)
                     self.info(
                         'Integration Time {}'.format(self.integration_time))
 
