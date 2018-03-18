@@ -70,7 +70,7 @@ class Handler(object):
         pass
 
     # private
-    def _recvall(self, recv, frame=None):
+    def _recvall(self, recv, settimeout, frame=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
@@ -93,6 +93,7 @@ class Handler(object):
             nm = frame.nmessage_len
 
         while 1:
+            settimeout(20)
             s = recv(self.datasize)  # self._sock.recv(2048)
             if not s:
                 break
@@ -134,7 +135,7 @@ class TCPHandler(Handler):
         self.sock.connect(addr)
 
     def get_packet(self, cmd, message_frame=None):
-        return self._recvall(self.sock.recv, frame=message_frame)
+        return self._recvall(self.sock.recv,self.sock.settimeout, frame=message_frame)
 
     def send_packet(self, p):
         self.sock.send(p)
