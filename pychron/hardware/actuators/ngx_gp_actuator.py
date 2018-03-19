@@ -40,17 +40,18 @@ class NGXGPActuator(GPActuator):
     def get_channel_state(self, obj, verbose=True, **kw):
         """
         """
-
         cmd = 'GetValveStatus {}'.format(obj.address)
 
         s = self.ask(cmd, verbose=verbose)
-        print('get cna state cmd={}, resp={}'.format(cmd, s))
         if s is not None:
+            if s.strip() == 'E00':
+                import time
+                time.sleep(0.25)
+                # recusively call get_channel_state
+                return self.get_channel_state(obj, verbose=verbose, **kw)
+
             return s.strip() == 'OPEN'
-            # if s.strip() in 'OPEN':
-            #     return True
-            # else:
-            #     return False
+
         else:
             return False
 

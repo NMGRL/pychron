@@ -68,12 +68,12 @@ class NiceParser():
         result = self.term()
         while self._current in ('+', '-'):
             if self._current == '+':
-                next(self)
+                self.next_value()
 
                 result += self.term()
 
             if self._current == '-':
-                next(self)
+                self.next_value()
                 result -= self.term()
 
         return result, mt.group('idx')
@@ -82,23 +82,23 @@ class NiceParser():
         result = None
         if self._current[0].isdigit() or self._current[-1].isdigit():
             result = float(self._current)
-            next(self)
+            self.next_value()
         elif self._current is '(':
-            next(self)
+            self.next_value()
             result = self.exp()
-            next(self)
+            self.next_value()
         elif self._current[:4] == 'Mass':
             result = generate_mass(*eval(self._current[4:]))(self._signals)
             result = Mass(*result)
-            next(self)
+            self.next_value()
         elif self._current[:4] == 'Zero':
             result = generate_zero(*eval(self._current[4:]))(self._signals)
             result = Zero(*result)
-            next(self)
+            self.next_value()
 
         return result
 
-    def next(self):
+    def next_value(self):
         self._tokens = self._tokens[1:]
         self._current = self._tokens[0] if len(self._tokens) > 0 else None
 
@@ -106,10 +106,10 @@ class NiceParser():
         result = self.factor()
         while self._current in ('*', '/'):
             if self._current == '*':
-                next(self)
+                self.next_value()
                 result *= self.term()
             if self._current == '/':
-                next(self)
+                self.next_value()
                 result /= self.term()
         return result
 

@@ -37,7 +37,7 @@ class RatioElement(object):
     def __mul__(self, other):
         return self.value * other
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         return self.value / other
 
     # def __radd__(self, other):
