@@ -17,10 +17,10 @@ before_install:
   - export TZ=America/Denver
   # adapted from statsmodels travis file https://github.com/statsmodels/statsmodels/blob/master/.travis.yml
   # setup anaconda
-  - wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
+  - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes --quiet conda
   # Fix for headless TravisCI
   - "export DISPLAY=:99.0"
@@ -34,7 +34,7 @@ install:
   - conda install --yes statsmodels qt=4.8.5 pyqt PyYAML traits traitsui xlrd xlwt lxml apptools swig
   - pip install uncertainties codecov coverage chaco
 
-#script: python setup.py test
+
 script: coverage run setup.py test
 after_success:
   - codecov

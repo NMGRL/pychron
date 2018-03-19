@@ -37,7 +37,7 @@ class NGXGPActuator(GPActuator):
     def get_state_checksum(self, keys):
         return 0
 
-    def get_channel_state(self, obj, verbose=False, **kw):
+    def get_channel_state(self, obj, verbose=True, **kw):
         """
         """
 
@@ -46,10 +46,11 @@ class NGXGPActuator(GPActuator):
         s = self.ask(cmd, verbose=verbose)
         print('get cna state cmd={}, resp={}'.format(cmd, s))
         if s is not None:
-            if s.strip() in 'OPEN':
-                return True
-            else:
-                return False
+            return s.strip() == 'OPEN'
+            # if s.strip() in 'OPEN':
+            #     return True
+            # else:
+            #     return False
         else:
             return False
 
