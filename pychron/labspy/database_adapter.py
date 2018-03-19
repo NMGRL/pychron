@@ -22,6 +22,7 @@ from apptools.preferences.preference_binding import bind_preference
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy import and_
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -154,10 +155,10 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._query_one(q)
 
     def get_latest_lab_temperatures(self):
-        return self._get_latest(('Temp.', 'NOAA'))
+        return self._get_latest(('Temp',))
 
     def get_latest_lab_humiditys(self):
-        return self._get_latest(('Hum.', 'NOAA'))
+        return self._get_latest(('Hum',))
 
     def get_latest_lab_pneumatics(self):
         return self._get_latest('Pressure')
@@ -169,18 +170,17 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
             if not isinstance(tag, tuple):
                 tag = (tag, )
 
-            for t in tag:
-                q = q.filter(ProcessInfo.name.contains(t))
+            q = q.filter(or_(*[ProcessInfo.name.like('%{}%'.format(t)) for t in tag]))
 
-            ps = self._query_all(q)
-
+            ps = self._query_all(q, verbose_query=True)
+            self.debug('get latest {}, ps={}'.format(tag, len(ps)))
             for p in ps:
                 q = sess.query(Measurement)
                 q = q.filter(Measurement.process_info_id == p.id)
                 q = q.filter(Measurement.pub_date > datetime.now() - timedelta(hours=24))
                 q = q.order_by(Measurement.pub_date.desc())
 
-                record = self._query_first(q)
+                record = self._query_first(q, verbose_query=True)
                 if record:
                     values.append({'name': p.name,
                                    'title': p.graph_title,

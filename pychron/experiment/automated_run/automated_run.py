@@ -1449,6 +1449,10 @@ anaylsis_type={}
         return env
 
     def _start(self):
+
+        # for testing only
+        self._get_environmentals()
+
         if self.isotope_group is None:
             # load arar_age object for age calculation
             if self.experiment_type == AR_AR:
