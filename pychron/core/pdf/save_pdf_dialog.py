@@ -25,7 +25,7 @@ from pyface.file_dialog import FileDialog
 
 from reportlab.pdfbase import _fontdata
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.ttfonts import TTFont, TTFError
 from traitsui.handler import Controller
 
 from pychron.core.helpers.filetools import view_file, add_extension
@@ -38,8 +38,11 @@ from pychron.pychron_constants import FONTS
 
 for name in FONTS:
     f = findfont(FontProperties(family=name, style='normal', weight='normal'))
-    tf = TTFont(name, f)
-    pdfmetrics.registerFont(tf)
+    try:
+        tf = TTFont(name, f)
+        pdfmetrics.registerFont(tf)
+    except TTFError as e:
+        print('font error', name, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
