@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Float
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 # ============= standard library imports ========================
@@ -24,7 +23,6 @@ from numpy.core.umath import exp
 import random
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.sweep import BaseSweep
-from six.moves import range
 
 
 def multi_peak_generator(values):

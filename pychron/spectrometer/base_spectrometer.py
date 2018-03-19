@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
 from random import random
 
@@ -388,7 +387,7 @@ class BaseSpectrometer(SpectrometerDevice):
             with open(p, 'r') as f:
                 reader = csv.reader(f, delimiter='\t')
                 mws = {l[0]: float(l[1]) for l in reader}
-        elif os.path.isfille(yp):
+        elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             with open(p, 'r') as f:
                 mws = yaml.load(f)
@@ -564,6 +563,10 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def read_parameter_word(self):
         pass
+
+    def settle(self):
+        import time
+        time.sleep(self.integration_time)
 
     # private
     def _spectrometer_configuration_changed(self, new):
