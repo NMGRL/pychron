@@ -149,13 +149,20 @@ class DataCollector(Consoleable):
         self.debug('measurement period (ms) = {}'.format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
+        # elapsed = 0
         while not evt.is_set():
-            st = time.time()
+            self.trigger()
+
+            # evt.wait(max(0, period - elapsed))
+            evt.wait(period)
+
+            # st = time.time()
             if not self._iter(i):
                 break
+            # elapsed = time.time() - st
 
             i += 1
-            evt.wait(max(0, period - time.time() + st))
+            # evt.wait(max(0, period - time.time() + st))
             # time.sleep(max(0, period - et))
 
         evt.set()

@@ -75,6 +75,7 @@ class MagnetSweep(BaseSweep):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
                                          settling_time=self.integration_time * 2,
                                          use_dac_changed=False)
+        self.spectrometer.trigger_acq()
 
     def _do_sweep(self, sm, em, stm, directions=None, map_mass=True):
         if map_mass:

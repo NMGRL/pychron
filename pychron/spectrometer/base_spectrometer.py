@@ -471,7 +471,7 @@ class BaseSpectrometer(SpectrometerDevice):
     #     for d in self.detectors:
     #         d.microcontroller = m
     #         d.load()
-    def get_intensities(self, tagged=True):
+    def get_intensities(self, tagged=True, trigger=False):
         """
         issue a GetData command to Qtegra.
 
@@ -487,7 +487,7 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals = self.read_intensities()
+            keys, signals = self.read_intensities(trigger=trigger)
 
         if not keys and globalv.communication_simulation:
             keys, signals = self._get_simulation_data()
@@ -542,12 +542,12 @@ class BaseSpectrometer(SpectrometerDevice):
 
         self._prev_signals = signals
 
-    def get_intensity(self, dkeys):
+    def get_intensity(self, dkeys, **kw):
         """
             dkeys: str or tuple of strs
 
         """
-        data = self.get_intensities()
+        data = self.get_intensities(**kw)
         if data is not None:
 
             keys, signals = data
@@ -586,6 +586,10 @@ class BaseSpectrometer(SpectrometerDevice):
 
     def read_parameter_word(self):
         pass
+
+    def settle(self):
+        import time
+        time.sleep(self.integration_time)
 
     # private
     def _spectrometer_configuration_changed(self, new):

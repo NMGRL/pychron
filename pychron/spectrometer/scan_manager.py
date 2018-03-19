@@ -349,7 +349,7 @@ class ScanManager(StreamGraphManager):
     def _update_scan_graph(self):
         if self.scan_enabled:
             try:
-                data = self.spectrometer.get_intensities()
+                data = self.spectrometer.get_intensities(trigger=True)
                 if data:
                     self._update(data)
 

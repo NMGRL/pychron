@@ -80,8 +80,15 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _send_configuration(self, **kw):
         pass
 
-    def read_intensities(self, timeout=4):
-        resp = self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
+    def trigger_acq(self):
+        return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=False)
+
+    def read_intensities(self, timeout=4, trigger=False):
+        resp = True
+        if trigger:
+            resp = self.trigger_acq()
+            if resp is not None:
+                time.sleep(self.integration_time)
 
         keys = []
         signals = []
