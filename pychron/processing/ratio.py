@@ -38,6 +38,9 @@ class RatioElement(object):
         return self.value * other
 
     def __truediv__(self, other):
+        if isinstance(other, RatioElement):
+            other = other.value
+
         return self.value / other
 
     # def __radd__(self, other):
@@ -67,6 +70,7 @@ class Ratio(object):
             return self.nom / self.den
         except ZeroDivisionError:
             return
+
 
 # ============= EOF =============================================
 
