@@ -42,9 +42,6 @@ class PeakHopCollector(DataCollector):
         self.hop_generator = generate_hops(self.hops)
 
     def _iter_hook(self, i):
-        if i % 50 == 0:
-            self.info('collecting point {}'.format(i))
-
         args = self._do_hop()
 
         if args:
@@ -56,7 +53,7 @@ class PeakHopCollector(DataCollector):
         """
             is it time for a magnet move
         """
-        from pychron.core.ui.gui import invoke_in_main_thread
+        # from pychron.core.ui.gui import invoke_in_main_thread
 
         hop = next(self.hop_generator)
         hop_idx = hop['idx']
@@ -110,8 +107,6 @@ class PeakHopCollector(DataCollector):
                                               update_isotopes=True,
                                               remove_non_active=False)
             if change:
-                # self.automated_run.update_detector_isotope_pairing(dets, isos)
-
                 msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
                 arun.wait(settle, msg)
                 self.debug(msg)
@@ -192,10 +187,13 @@ class PeakHopCollector(DataCollector):
                 isotope = '{}bs'.format(isotope)
 
             dac = arun.get_current_dac()
-            invoke_in_main_thread(self.plot_panel.trait_set,
-                                  current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
-                                                                                        cycle + 1, count + 1),
-                                  current_color=current_color)
+            # invoke_in_main_thread(self.plot_panel.trait_set,
+            #                       current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
+            #                                                                             cycle + 1, count + 1),
+            #                       current_color=current_color)
+            self.plot_panel.trait_set(current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
+                                                                                            cycle + 1, count + 1),
+                                      current_color=current_color)
         return is_baseline, active_dets, isos
 
     def _protect_detectors(self, pdets, protect=True):

@@ -14,20 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-from __future__ import absolute_import
-from __future__ import print_function
-import time
-from six.moves.queue import Queue
-from threading import Event, Thread, Timer
-
 # ============= enthought library imports =======================
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
+import time
+from threading import Event, Thread
+from queue import Queue
 from pychron.envisage.consoleable import Consoleable
-from pychron.globals import globalv
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
-import six
-from six.moves import zip
 
 
 class DataCollector(Consoleable):
@@ -69,6 +63,7 @@ class DataCollector(Consoleable):
     err_message = Str
     no_intensity_threshold = 100
     not_intensity_count = 0
+    trigger = None
 
     def wait(self):
         st = time.time()
@@ -101,22 +96,20 @@ class DataCollector(Consoleable):
             self.starttime = st
 
         et = self.ncounts * self.period_ms * 0.001
-        evt = self._evt
-        if evt:
-            evt.set()
-            # evt.wait(0.05)
-        else:
-            evt = Event()
+        # evt = self._evt
+        # if evt:
+        #     evt.set()
+        # else:
+        #     evt = Event()
 
-        self._evt = evt
-        evt.clear()
-
-        # wait for graphs to be fully constructed in the MainThread
-        # evt.wait(0.05)
+        # self._evt = evt
+        # evt = Event()
+        # evt.clear()
+        # self._evt = evt
 
         self._alive = True
 
-        self._measure(evt)
+        self._measure()
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
@@ -132,10 +125,12 @@ class DataCollector(Consoleable):
         self._temp_conds = None
 
     # private
-    def _measure(self, evt):
+    def _measure(self):
         self.debug('starting measurement')
 
         self._queue = q = Queue()
+        self._evt = Event()
+        evt = self._evt
 
         def writefunc():
             writer = self.data_writer
@@ -153,13 +148,20 @@ class DataCollector(Consoleable):
         self.debug('measurement period (ms) = {}'.format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
+        # elapsed = 0
         while not evt.is_set():
-            st = time.time()
+            self.trigger()
+
+            # evt.wait(max(0, period - elapsed))
+            evt.wait(period)
+
+            # st = time.time()
             if not self._iter(i):
                 break
+            # elapsed = time.time() - st
 
             i += 1
-            evt.wait(max(0, period - time.time() + st))
+            # evt.wait(max(0, period - time.time() + st))
             # time.sleep(max(0, period - et))
 
         evt.set()
@@ -169,21 +171,14 @@ class DataCollector(Consoleable):
         self.debug('measurement finished')
 
     def _iter(self, i):
-        # st = time.time()
+        if i % 25 == 0:
+            self.info('collecting point {}'.format(i))
+
         result = self._check_iteration(i)
-        # self.debug('check iteration duration={}'.format(time.time() - st))
 
         if not result:
-            try:
-                if i <= 1:
-                    self.automated_run.plot_panel.counts = 1
-                else:
-                    self.automated_run.plot_panel.counts += 1
-            except AttributeError:
-                pass
-
+            self.automated_run.plot_panel.counts = i
             if not self._iter_hook(i):
-                # evt.set()
                 return
 
             self._post_iter_hook(i)
@@ -193,15 +188,15 @@ class DataCollector(Consoleable):
                 self.canceled = True
             elif result == 'terminate':
                 self.terminated = True
-                # evt.set()
 
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
-            t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
-            t.start()
+            self.isotope_group.calculate_age(force=True)
+            # t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
+            # t.start()
 
     def _iter_hook(self, i):
-        return True
+        return self._iteration(i)
 
     def _iteration(self, i, detectors=None):
         try:
@@ -252,8 +247,8 @@ class DataCollector(Consoleable):
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
                 if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
-                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso,
-                                                                                                           ig.isotope_keys))
+                    self.debug('baselines - failed appending data for {}. '
+                               'not a current isotope {}'.format(iso, ig.isotope_keys))
 
     def _update_isotopes(self, x, keys, signals):
         a = self.isotope_group

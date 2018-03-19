@@ -181,8 +181,6 @@ class BasePeakCenter(HasTraits):
         tol = min(0, cur_intensity * (1 - self.percent / 100.))
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
-        # spec.save_integration()
-        # spec.set_integration_time(0.5)
 
         st = time.time()
         while 1:
@@ -197,15 +195,10 @@ class BasePeakCenter(HasTraits):
                 break
             time.sleep(spec.integration_time)
 
-        # spec.restore_integration()
-
         center, smart_shift, success = None, False, False
 
         ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
         self.debug('result of _do_sweep={}'.format(ok))
-
-        # wait for graph to fully update
-        # time.sleep(0.1)
 
         if ok and self.directions != 'Oscillate':
             if not self.canceled:

@@ -59,6 +59,7 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
     columns = [('Name', 'name'),
                ('Value', 'value'),
                (SIGMA_1, 'error'),
+               ('%', 'perror'),
                ('Calc. IC', 'calc_ic'),
                ('ICFactor', 'ic_factor'),
                ('Ref. Ratio', 'ref_ratio'),
@@ -73,6 +74,13 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
     ref_ratio_text = Property
     noncorrected_value_text = Property
     noncorrected_error_text = Property
+    perror_text = Property
+
+    def _get_perror_text(self):
+        try:
+            return floatfmt(float(self.item.error) / float(self.item.value) * 100)
+        except ZeroDivisionError:
+            return 'nan'
 
     def _get_value_text(self):
         return floatfmt(self.item.value)
