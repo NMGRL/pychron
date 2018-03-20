@@ -34,15 +34,15 @@ from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
 # Enable sets the font name to lowercase but Reportlab fonts are case-sensitive
-from pychron.pychron_constants import FONTS
+from pychron import pychron_constants
 
-for name in FONTS:
+for name in pychron_constants.FONTS:
     f = findfont(FontProperties(family=name, style='normal', weight='normal'))
     try:
         tf = TTFont(name, f)
         pdfmetrics.registerFont(tf)
     except TTFError as e:
-        print('font error', name, e)
+        print('invalid font', name, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):

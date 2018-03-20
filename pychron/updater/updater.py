@@ -15,16 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from apptools.preferences.preference_binding import bind_preference
+from traits.api import Bool, Str, Directory
+
 import os
 import sys
-
 import requests
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-
-from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError
-from traits.api import Bool, Str
 
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.loggable import Loggable
@@ -40,71 +37,25 @@ class Updater(Loggable):
     check_on_startup = Bool
     branch = Str
     remote = Str
-    _repo = None
-    #     _editable = False
-    #
-    #     all_branches = List
-    #     branches = List
-    #
-    #     new_branch_name = Str
+
     use_tag = Bool
     version_tag = Str
+    build_repo = Directory
 
-    #     # delete_enabled = Property(depends_on='edit_branch')
-    #     # edit_branch = Str
-    #     # delete_button = Button('Delete')
-    #     # build_button = Button
-    #     checkout_branch_button = Button
-    #     pull_button = Button
-    #
+    _repo = None
+
     @property
     def active_branch(self):
         repo = self._get_working_repo()
         return repo.active_branch.name
 
     def bind_preferences(self):
-        for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag'):
+        for a in ('check_on_startup', 'branch', 'remote', 'use_tag', 'version_tag', 'build_repo'):
             bind_preference(self, a, 'pychron.update.{}'.format(a))
 
     def test_origin(self):
         if self.remote:
             return self._validate_origin(self.remote)
-            #     def manage_branches(self):
-            #         self._refresh_branches()
-            #         v = ManageBranchView(model=self)
-            #         v.edit_traits(kind='livemodal')
-            #
-            #     def manage_version(self):
-            #         self.information_dialog('Manage version disabled')
-            #         return
-            #         #
-            #         # repo = self._get_working_repo()
-            #         #
-            #         # txt = ''
-            #         # try:
-            #         #     txt = repo.git.rev_list('origin/{}'.format(self.branch),
-            #         #                             since=datetime.now() - timedelta(weeks=30),
-            #         #                             branches=self.branch)
-            #         # except GitCommandError:
-            #         #     try:
-            #         #         txt = repo.git.rev_list(self.branch,
-            #         #                                 since=datetime.now() - timedelta(weeks=30),
-            #         #                                 branches=self.branch)
-            #         #     except GitCommandError:
-            #         #         pass
-            #         #
-            #         # commits = txt.split('\n')
-            #         # local_commit, remote_commit = self._get_local_remote_commits()
-            #         #
-            #         # hexsha = self._get_selected_hexsha(commits, local_commit, remote_commit,
-            #         #                                    view_klass=ManageCommitsView,
-            #         #                                    auto_select=False,
-            #         #                                    tags=[t for t in repo.tags if t.name.startswith('rc')],
-            #         #                                    # pass to model
-            #         #                                    show_behind=False, )
-            #         # if hexsha:
-            #         #     self._checkout_branch(hexsha=hexsha)
-            #
 
     def check_for_updates(self, inform=False):
         self.debug('checking for updates')
