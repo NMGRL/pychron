@@ -15,20 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import os
-
+from traits.api import Str, Bool, List, Button, Instance, Directory
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
+from pyface.message_dialog import warning
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+
+import os
 from git import Repo
 from git.exc import InvalidGitRepositoryError
-from pyface.message_dialog import warning
-from traits.api import Str, Bool, List, Button, Instance, Directory
-
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
     GitRepoPreferencesHelper
-# from pychron.paths import build_repo
 from pychron.pychron_constants import LINE_STR
 
 
@@ -142,10 +140,10 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
             self._initialized = True
 
     def _checkout_branch_button_fired(self):
-        self._updater.checkout_branch(self.branch, inform=self._initialized)
+        self._updater.checkout_branch(self.branch, inform=True)
 
     def _pull_button_fired(self):
-        self._updater.pull(self.branch, inform=self._initialized)
+        self._updater.pull(self.branch, inform=True)
 
     def _build_repo_changed(self):
         self._updater.build_repo = self.build_repo
