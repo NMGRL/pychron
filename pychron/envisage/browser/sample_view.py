@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+from pyface.action.menu_manager import MenuManager
 from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -35,6 +35,11 @@ class AnalysisGroupsAdapter(TabularAdapter):
                ('Date', 'create_date')]
 
     font = 'Arial 10'
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Delete', action='delete_analysis_group')]
+
+        return MenuManager(*actions)
 
 
 class BaseBrowserSampleView(PaneModelView):
@@ -255,6 +260,7 @@ class BaseBrowserSampleView(PaneModelView):
                                    # height=100,
                                    editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
                                                           multi_select=True,
+                                                          editable=False,
                                                           selected='selected_analysis_groups'))
 
         sample_table = VGroup(sample_tools,
@@ -347,6 +353,9 @@ class BrowserSampleView(BaseBrowserSampleView):
 
     def load_chrono_view(self, info, obj):
         obj.load_chrono_view()
+
+    def delete_analysis_group(self, info, obj):
+        obj.delete_analysis_group()
 
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):

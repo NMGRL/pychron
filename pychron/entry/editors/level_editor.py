@@ -240,7 +240,7 @@ class LevelEditor(Loggable):
         # tr = db.get_irradiation_holder(self.selected_tray)
         # n = len(tuple(iter_geom(tr.geometry)))
 
-        n = len(db.get_irradiation_holder_holdes(self.selected_tray))
+        n = len(db.get_irradiation_holder_holes(self.selected_tray))
         on = len(level.positions)
         if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
