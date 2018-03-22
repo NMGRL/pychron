@@ -17,7 +17,12 @@
 # ========== standard library imports ==========
 
 # ========== local library imports =============
-from gp_actuator import GPActuator
+from __future__ import absolute_import
+from __future__ import print_function
+
+import time
+
+from .gp_actuator import GPActuator
 from pychron.globals import globalv
 
 
@@ -25,6 +30,7 @@ class NGXGPActuator(GPActuator):
     """
 
     """
+
     def initialize(self, *args, **kw):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
         s = self.application.get_service(service)
@@ -35,15 +41,19 @@ class NGXGPActuator(GPActuator):
     def get_state_checksum(self, keys):
         return 0
 
-    def get_channel_state(self, obj, verbose=True, **kw):
+    def get_channel_state(self, obj, delay=False, verbose=True, **kw):
         """
         """
+        if delay:
+            if not isinstance(delay, (float, int)):
+                delay = 0.25
+            time.sleep(delay)
+
         cmd = 'GetValveStatus {}'.format(obj.address)
 
         s = self.ask(cmd, verbose=verbose)
         if s is not None:
             if s.strip() == 'E00':
-                import time
                 time.sleep(0.25)
                 # recusively call get_channel_state
                 return self.get_channel_state(obj, verbose=verbose, **kw)
@@ -64,7 +74,7 @@ class NGXGPActuator(GPActuator):
             return True
 
         if r is not None and r.strip() == 'E00':
-            return self.get_channel_state(obj) is False
+            return self.get_channel_state(obj, delay=True) is False
 
     def open_channel(self, obj):
         """
@@ -76,6 +86,6 @@ class NGXGPActuator(GPActuator):
             return True
 
         if r is not None and r.strip() == 'E00':
-            return self.get_channel_state(obj) is True
+            return self.get_channel_state(obj, delay=True) is True
 
 # ============= EOF =====================================
