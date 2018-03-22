@@ -220,7 +220,6 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def set_cryo(self, value):
         result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
-        print 'asfdasdf', result
         return result
 
     @verbose_skip
