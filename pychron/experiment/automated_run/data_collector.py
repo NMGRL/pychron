@@ -112,7 +112,7 @@ class DataCollector(Consoleable):
 
         self._alive = True
 
-        self._measure(evt)
+        self._measure()
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
