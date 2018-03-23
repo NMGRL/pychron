@@ -132,6 +132,7 @@ class DVC(Loggable):
     meta_repo = Instance('pychron.dvc.meta_repo.MetaRepo')
 
     meta_repo_name = Str
+    meta_repo_dirname = Str
     organization = Str
     default_team = Str
 
@@ -167,7 +168,11 @@ class DVC(Loggable):
     def open_meta_repo(self):
         mrepo = self.meta_repo
         if self.meta_repo_name:
-            root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+            name = self.meta_repo_name
+            if self.meta_repo_dirname:
+                name = self.meta_repo_dirname
+
+            root = os.path.join(paths.dvc_dir, name)
             self.debug('open meta repo {}'.format(root))
             if os.path.isdir(os.path.join(root, '.git')):
                 self.debug('Opening Meta Repo')
@@ -175,10 +180,9 @@ class DVC(Loggable):
             else:
                 url = self.make_url(self.meta_repo_name)
                 self.debug('cloning meta repo url={}'.format(url))
-                path = os.path.join(paths.dvc_dir, self.meta_repo_name)
+                path = os.path.join(paths.dvc_dir, name)
                 self.meta_repo.clone(url, path)
             return True
-
 
     def synchronize(self, pull=True):
         """
@@ -961,7 +965,7 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
-                 arar_constants=ia.arar_constants.as_dict(),
+                 arar_constants=ia.arar_constants.to_dict(),
                  analyses=[dict(uuid=ai.uuid,
                                 record_id=ai.record_id,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
@@ -1292,17 +1296,27 @@ class DVC(Loggable):
     def _bind_preferences(self):
 
         prefid = 'pychron.dvc'
-        for attr in ('meta_repo_name', 'organization', 'default_team'):
+        for attr in ('meta_repo_dirname', 'meta_repo_name', 'organization', 'default_team'):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'
         for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
             bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
 
-        self._meta_repo_name_changed()
+        self._set_meta_repo_name()
+
+    def _meta_repo_dirname_changed(self):
+        self._set_meta_repo_name()
 
     def _meta_repo_name_changed(self):
-        paths.meta_root = os.path.join(paths.dvc_dir, self.meta_repo_name)
+        self._set_meta_repo_name()
+
+    def _set_meta_repo_name(self):
+        name = self.meta_repo_name
+        if self.meta_repo_dirname:
+            name = self.meta_repo_dirname
+
+        paths.meta_root = os.path.join(paths.dvc_dir, name)
 
     def _defaults(self):
         self.debug('writing defaults')

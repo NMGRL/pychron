@@ -194,6 +194,12 @@ class WorkOffline(Loggable):
                 from pychron.dvc.dvc_orm import RepositoryAssociationTbl
                 from pychron.dvc.dvc_orm import AnalysisGroupTbl
                 from pychron.dvc.dvc_orm import AnalysisGroupSetTbl
+                from pychron.dvc.dvc_orm import MaterialTbl
+                from pychron.dvc.dvc_orm import SampleTbl
+                from pychron.dvc.dvc_orm import IrradiationTbl
+                from pychron.dvc.dvc_orm import LevelTbl
+                from pychron.dvc.dvc_orm import IrradiationPositionTbl
+                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
 
                 repos = [src.db.get_repository(reponame) for reponame in repositories]
 
@@ -205,30 +211,30 @@ class WorkOffline(Loggable):
                            for rai in ai.repository_associations]
                 else:
 
-                    at = time.time()
+                    # at = time.time()
                     ras = [ra for repo in repos for ra in repo.repository_associations]
-                    self.debug('association time={}'.format(time.time()-at))
+                    # self.debug('association time={}'.format(time.time()-at))
                     progress.change_message('Assembling Analyses 1/5')
 
-                    at = time.time()
+                    # at = time.time()
                     ans = [ri.analysis for ri in ras]
-                    self.debug('analysis time={}'.format(time.time()-at))
+                    # self.debug('analysis time={}'.format(time.time()-at))
 
                     progress.change_message('Assembling Analyses 2/5')
 
-                at = time.time()
+                # at = time.time()
                 ans_c = [ai.change for ai in ans]
-                self.debug('change time={}'.format(time.time()-at))
+                # self.debug('change time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 3/5')
 
-                at = time.time()
+                # at = time.time()
                 agss = [gi for ai in ans for gi in ai.group_sets]
-                self.debug('agss time={}'.format(time.time()-at))
+                # self.debug('agss time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 4/5')
 
-                at = time.time()
+                # at = time.time()
                 ags = {gi.group for gi in agss}
-                self.debug('ags time={}'.format(time.time()-at))
+                # self.debug('ags time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 5/5')
 
                 self.debug('total analysis assembly time={}'.format(time.time()-st))
@@ -240,7 +246,6 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, AnalysisGroupTbl, ags)
                 self._copy_records(progress, db, AnalysisGroupSetTbl, agss)
 
-                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
                 if principal_investigators:
                     pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
                 else:
@@ -255,24 +260,22 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, ProjectTbl, prjs)
 
                 ips = {ai.irradiation_position for ai in ans}
-                from pychron.dvc.dvc_orm import IrradiationPositionTbl
-                self._copy_records(progress, db, IrradiationPositionTbl, ips)
-
-                from pychron.dvc.dvc_orm import LevelTbl
-                ls = {ip.level for ip in ips}
-                self._copy_records(progress, db, LevelTbl, ls)
-
-                from pychron.dvc.dvc_orm import IrradiationTbl
-                irs = {l.irradiation for l in ls}
-                self._copy_records(progress, db, IrradiationTbl, irs)
-
-                from pychron.dvc.dvc_orm import SampleTbl
                 sams = {ip.sample for ip in ips}
+                mats = {si.material for si in sams}
+
+                self._copy_records(progress, db, MaterialTbl, mats)
+
                 self._copy_records(progress, db, SampleTbl, sams)
 
-                from pychron.dvc.dvc_orm import MaterialTbl
-                mats = {si.material for si in sams}
-                self._copy_records(progress, db, MaterialTbl, mats)
+                ls = {ip.level for ip in ips}
+                irs = {l.irradiation for l in ls}
+
+                self._copy_records(progress, db, IrradiationTbl, irs)
+
+                self._copy_records(progress, db, LevelTbl, ls)
+
+                self._copy_records(progress, db, IrradiationPositionTbl, ips)
+
                 self.debug('--------- db clone finished')
                 progress.close()
                 return True

@@ -66,6 +66,9 @@ class SampleBrowserModel(BrowserModel):
         for ni, ai in zip(nans, oans):
             ai.dbrecord = ni
 
+        if self.selected_projects:
+            self._load_associated_groups(self.selected_projects)
+
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
         self.analysis_table.dump()
@@ -156,6 +159,13 @@ class SampleBrowserModel(BrowserModel):
             xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
 
         self.analysis_table.set_analyses(xx)
+
+    def delete_analysis_group(self):
+        self.debug('delete analysis groups')
+        for g in self.selected_analysis_groups:
+            self.debug('deleting analysis group. {}'.format(g))
+            self.db.delete_analysis_group(g)
+            self.analysis_groups.remove(g)
 
     def dump(self):
         self.time_view_model.dump_filter()

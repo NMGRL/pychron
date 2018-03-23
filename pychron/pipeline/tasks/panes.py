@@ -364,7 +364,8 @@ class UnknownsAdapter(TabularAdapter):
                            Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
                            Action(name='Group Selected', action='unknowns_group_by_selected'),
                            Action(name='Clear Group', action='unknowns_clear_grouping'),
-                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'))
+                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'),
+                           Action(name='Save Analysis Group', action='save_analysis_group'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         if self.item.tag == 'invalid':
@@ -422,6 +423,10 @@ class AnalysesPaneHandler(Handler):
     def unknowns_clear_all_grouping(self, info, obj):
         obj = info.ui.context['object']
         obj.unknowns_clear_all_grouping()
+
+    def save_analysis_group(self, info, obj):
+        obj = info.ui.context['object']
+        obj.save_analysis_group()
 
     def recall_unknowns(self, info, obj):
         obj = info.ui.context['object']
