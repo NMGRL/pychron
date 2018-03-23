@@ -184,8 +184,8 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        if selection:
-            self._rebuild_ideo(selection)
+        # if selection:
+        self._rebuild_ideo(selection)
 
     def mean_x(self, attr):
         # todo: handle other attributes

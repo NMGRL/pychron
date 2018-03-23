@@ -66,6 +66,9 @@ class SampleBrowserModel(BrowserModel):
         for ni, ai in zip(nans, oans):
             ai.dbrecord = ni
 
+        if self.selected_projects:
+            self._load_associated_groups(self.selected_projects)
+
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
         self.analysis_table.dump()
