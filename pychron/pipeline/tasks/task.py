@@ -316,16 +316,17 @@ class PipelineTask(BaseBrowserTask):
             return
 
         ed = self.active_editor
-        sfm = SaveFigureModel(ed.analyses)
-        sfv = SaveFigureView(model=sfm)
-        info = sfv.edit_traits()
-        if info.result:
-            path = sfm.prepare_path(make=True)
-            save_pdf(ed.component,
-                     path=path,
-                     options=sfm.pdf_options,
-                     # path='/Users/ross/Documents/test.pdf',
-                     view=True)
+        if isinstance(ed, FigureEditor):
+            sfm = SaveFigureModel(ed.analyses)
+            sfv = SaveFigureView(model=sfm)
+            info = sfv.edit_traits()
+            if info.result:
+                path = sfm.prepare_path(make=True)
+                save_pdf(ed.component,
+                         path=path,
+                         options=sfm.pdf_options,
+                         # path='/Users/ross/Documents/test.pdf',
+                         view=True)
 
     def run(self):
         self._run_pipeline()

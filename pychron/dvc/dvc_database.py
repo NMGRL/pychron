@@ -1427,7 +1427,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.having(count(AnalysisTbl.id) > 0)
 
             if has_filter:
-                return self._query_all(q, verbose_query=False)
+                return self._query_all(q, verbose_query=True)
 
     def get_analysis_groups(self, project_ids, **kw):
         ret = []
