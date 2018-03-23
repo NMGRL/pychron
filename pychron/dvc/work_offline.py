@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import time
+from operator import attrgetter
 
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
@@ -32,7 +32,6 @@ from pychron.paths import paths
 
 
 def database_path():
-    return '/Users/ross/Desktop/index.sqlite3'
     return os.path.join(paths.dvc_dir, 'index.sqlite3')
 
 
@@ -87,7 +86,7 @@ class WorkOffline(Loggable):
                                                   pushed_at=r['pushed_at']) for r in repos]
 
                     metaname = os.path.basename(paths.meta_root)
-                    repos = sorted([ri for ri in repos if ri.name != metaname])
+                    repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
                     self.repositories = repos
                     return True
 
@@ -166,7 +165,7 @@ class WorkOffline(Loggable):
         if os.path.isfile(path):
             if not self.confirmation_dialog('The database "{}" already exists. '
                                             'Do you want to overwrite it. If "NO" you will be prompted to '
-                                            'enter and new database name'.format(path)):
+                                            'enter a new database name'.format(path)):
 
                 path = self._get_new_path()
             else:
@@ -328,42 +327,3 @@ class WorkOffline(Loggable):
         return v
 
 # ============= EOF =============================================
-# """
-# use mysql2sqlite.sh. this script requires mysqldump so maybe not the
-# best option.
-#
-# another solution is to have the server convert the database to sqlite
-# then grab the sqlite file from the server
-#
-# use ssh to run mysql2sqlite.sh
-# use ftp to grab the file
-# """
-# self.debug('clone central db')
-#
-# # dump the mysql database to sqlite
-# ssh = paramiko.SSHClient()
-# ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#
-# ssh.connect(self.work_offline_host,
-#             username=self.work_offline_user,
-#             password=self.work_offline_password,
-#             allow_agent=False,
-#             look_for_keys=False)
-#
-# cmd = '/Users/{}/workoffline/workoffline.sh'.format(self.work_offline_user)
-# stdin, stdout, stderr = ssh.exec_command(cmd)
-# self.debug('============ Output ============')
-# for line in stdout:
-#     self.debug(line)
-# self.debug('============ Output ============')
-#
-# self.debug('============ Error ============')
-# for line in stderr:
-#     self.debug('****** {}'.format(line))
-# self.debug('============ Error ============')
-#
-# # fetch the sqlite file
-# ftp = ssh.open_sftp()
-# rp = '/Users/{}/workoffline/database.sqlite3'.format(self.work_offline_user)
-#
-# ftp.get(rp, database_path())
