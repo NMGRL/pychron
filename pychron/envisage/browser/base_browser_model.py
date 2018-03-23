@@ -843,7 +843,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             try:
                 with open(p, 'rb') as rfile:
                     return pickle.load(rfile)
-            except (pickle.PickleError, EOFError, OSError) as e:
+            except (pickle.PickleError, EOFError, OSError, UnicodeDecodeError) as e:
                 self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
         else:

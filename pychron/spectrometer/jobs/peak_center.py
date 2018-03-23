@@ -166,7 +166,7 @@ class BasePeakCenter(HasTraits):
                            max_=max([start, end]))
 
         def get_reference_intensity():
-            keys, signals = spec.get_intensities()
+            keys, signals = spec.get_intensities(trigger=True)
             idx = keys.index(self.reference_detector.name)
             return signals[idx]
 

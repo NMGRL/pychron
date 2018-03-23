@@ -965,7 +965,7 @@ class DVC(Loggable):
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
-                 arar_constants=ia.arar_constants.as_dict(),
+                 arar_constants=ia.arar_constants.to_dict(),
                  analyses=[dict(uuid=ai.uuid,
                                 record_id=ai.record_id,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
