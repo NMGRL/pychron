@@ -128,6 +128,7 @@ class AutomatedRunSpec(HasTraits):
     # display only
     # ===========================================================================
     project = Str
+    principal_investigator = Str
     sample = Str
     irradiation = Str
     irradiation_level = Str

@@ -205,19 +205,18 @@ class SampleBrowserModel(BrowserModel):
         if ans:
             from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
             # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
-            a = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p.name) for i, p in enumerate(self.oprojects)})
+            agv = AddAnalysisGroupView(db=self.db,
+                                       projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
+                                                 enumerate(self.oprojects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-            print('asfasfasfasf', project, pp)
 
             project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
-            a.project = project
-            # if self.selected_projects:
-            #     a.project = self.selected_projects[0].name
+            agv.project = project
 
-            info = a.edit_traits(kind='livemodal')
+            info = agv.edit_traits(kind='livemodal')
             if info.result:
-                self.db.add_analysis_group(a.name, a.project.name, a.project.principal_investigator, ans)
+                agv.save(ans, self.db)
 
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:

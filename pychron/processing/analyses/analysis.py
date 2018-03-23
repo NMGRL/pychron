@@ -52,7 +52,8 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'cleanup_duration',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
 
-META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment', 'sample', 'project', 'material',
+META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
+              'sample', 'project', 'principal_investigator', 'material',
               'irradiation', 'irradiation_level', 'irradiation_position',
               'comment', 'mass_spectrometer',
               'username', 'queue_conditionals_name',
@@ -256,6 +257,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     sample = ''
     material = ''
     project = ''
+    principal_investigator = ''
     latitude = 0
     longitude = 0
     elevation = 0
