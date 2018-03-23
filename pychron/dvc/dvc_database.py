@@ -105,6 +105,7 @@ def principal_investigator_filter(q, principal_investigator):
 
     return q
 
+
 def make_at_filter(analysis_types):
     if hasattr(analysis_types, '__iter__'):
         analysis_types = list(map(str.lower, analysis_types))
@@ -119,7 +120,7 @@ def make_at_filter(analysis_types):
     if 'blank' in analysis_types:
         analysis_types.remove('blank')
         ret = or_(AnalysisTbl.analysis_type.startswith('blank'),
-                AnalysisTbl.analysis_type.in_(analysis_types))
+                  AnalysisTbl.analysis_type.in_(analysis_types))
     else:
         ret = AnalysisTbl.analysis_type.in_(analysis_types)
 
@@ -1426,7 +1427,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.having(count(AnalysisTbl.id) > 0)
 
             if has_filter:
-                return self._query_all(q, verbose_query=False)
+                return self._query_all(q, verbose_query=True)
 
     def get_analysis_groups(self, project_ids, **kw):
         ret = []
@@ -1782,12 +1783,21 @@ class DVCDatabase(DatabaseAdapter):
             elif attr == 'material':
                 q = q.filter(MaterialTbl.name.like(value))
             elif attr == 'principal_investigator':
-                q = q.filter(PrincipalInvestigatorTbl.last_name.like(value))
+                if ',' in value:
+                    # trim off wildcard
+                    value = value[:-1]
+                    l, f = value.split(',')
+                    lastname = l.strip()
+                    first_initial = f.strip()
+                    q = q.filter(PrincipalInvestigatorTbl.last_name == lastname)
+                    q = q.filter(PrincipalInvestigatorTbl.first_initial == first_initial)
+                else:
+                    q = q.filter(PrincipalInvestigatorTbl.last_name.like(value))
 
             else:
                 q = q.filter(getattr(SampleTbl, attr).like(value))
 
-            return self._query_all(q, **kw)
+            return self._query_all(q, verbose_query=True, **kw)
 
     def get_samples(self, projects=None, principal_investigators=None, project_like=None, name_like=None, **kw):
         # if projects:
@@ -2011,6 +2021,12 @@ class DVCDatabase(DatabaseAdapter):
 
             self._delete_item(name, name='tag')
             return True
+
+    def delete_analysis_group(self, g):
+        with self.session_ctx() as sess:
+            for si in g.sets:
+                sess.delete(si)
+            sess.delete(g)
 
     # ============================================================
     # Sample Prep

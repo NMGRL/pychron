@@ -638,13 +638,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         ucounts = {}
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
         c = ucounts.get(temp, 0) + 1
         ucounts[temp] = c
         self.debug('incrementing users step_heat template count for {}. count= {}'.format(temp, c))
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(ucounts, wfile)
 
     def _make_short_labnumber(self, labnumber=None):

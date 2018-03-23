@@ -27,6 +27,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 class DVCPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc'
     meta_repo_name = Str
+    meta_repo_dirname = Str
     organization = Str
     default_team = Str
     work_offline_user = Str
@@ -53,7 +54,14 @@ class DVCPreferencesPane(PreferencesPane):
         org = VGroup(UItem('organization', resizable=True),
                      Item('default_team', tooltip='Name of the GitHub Team to add to new repositories'),
                      label='Organization', show_border=True)
-        meta = VGroup(UItem('meta_repo_name'), label='Meta', show_border=True)
+        meta = VGroup(Item('meta_repo_name', label='MetaData Repository Name',
+                           tooltip='Name of repository on GitHub',
+                           resizable=True),
+                      Item('meta_repo_dirname',
+                           label='MetaData Directory Name',
+                           tooltip='Name of local MetaData directory that links to the MetaData repository.'
+                                   'Leave blank if you do not understand'),
+                      label='MetaData Repo', show_border=True)
         offline = VGroup(Item('work_offline_host', label='Host'),
                          Item('work_offline_user', label='Username'),
                          Item('work_offline_password', label='Password'),

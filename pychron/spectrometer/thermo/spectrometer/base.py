@@ -323,7 +323,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     # signals
     # ===============================================================================
-    def read_intensities(self, tagged=True):
+    def read_intensities(self, tagged=True, *args, **kw):
         keys = []
         signals = []
 

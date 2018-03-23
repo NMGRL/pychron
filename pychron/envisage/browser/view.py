@@ -28,15 +28,15 @@ from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-class AnalysisGroupAdapter(BrowserAdapter):
-    all_columns = [('Name', 'name'),
-                   ('Created', 'create_date'),
-                   ('Modified', 'last_modified')]
-
-    columns = [('Name', 'name'),
-               ('Create Date', 'create_date'),
-               ('Modified', 'last_modified')]
-
+# class AnalysisGroupAdapter(BrowserAdapter):
+#     all_columns = [('Name', 'name'),
+#                    ('Created', 'create_date'),
+#                    ('Modified', 'last_modified')]
+#
+#     columns = [('Name', 'name'),
+#                ('Create Date', 'create_date'),
+#                ('Modified', 'last_modified')]
+#
 
 class BrowserViewHandler(Handler):
     def pane_append_button_changed(self, info):
