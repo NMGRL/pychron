@@ -150,19 +150,22 @@ class DataCollector(Consoleable):
         i = 1
         # elapsed = 0
         while not evt.is_set():
-            self.trigger()
+            result = self._check_iteration(i)
+            if not result:
+                self.trigger()
+                evt.wait(period)
+                self.automated_run.plot_panel.counts = i
+                if not self._iter_hook(i):
+                    break
 
-            # evt.wait(max(0, period - elapsed))
-            evt.wait(period)
-
-            # st = time.time()
-            if not self._iter(i):
+                self._post_iter_hook(i)
+                i += 1
+            else:
+                if result == 'cancel':
+                    self.canceled = True
+                elif result == 'terminate':
+                    self.terminated = True
                 break
-            # elapsed = time.time() - st
-
-            i += 1
-            # evt.wait(max(0, period - time.time() + st))
-            # time.sleep(max(0, period - et))
 
         evt.set()
         self.debug('waiting for write to finish')
@@ -170,24 +173,32 @@ class DataCollector(Consoleable):
 
         self.debug('measurement finished')
 
-    def _iter(self, i):
-        if i % 25 == 0:
-            self.info('collecting point {}'.format(i))
-
-        result = self._check_iteration(i)
-
-        if not result:
-            self.automated_run.plot_panel.counts = i
-            if not self._iter_hook(i):
-                return
-
-            self._post_iter_hook(i)
-            return True
-        else:
-            if result == 'cancel':
-                self.canceled = True
-            elif result == 'terminate':
-                self.terminated = True
+    # def _iter(self, i):
+    #     # st = time.time()
+    #     result = self._check_iteration(i)
+    #     # self.debug('check iteration duration={}'.format(time.time() - st))
+    #
+    #     if not result:
+    #         try:
+    #             if i <= 1:
+    #                 self.automated_run.plot_panel.counts = 1
+    #             else:
+    #                 self.automated_run.plot_panel.counts += 1
+    #         except AttributeError:
+    #             pass
+    #
+    #         if not self._iter_hook(i):
+    #             # evt.set()
+    #             return
+    #
+    #         self._post_iter_hook(i)
+    #         return True
+    #     else:
+    #         if result == 'cancel':
+    #             self.canceled = True
+    #         elif result == 'terminate':
+    #             self.terminated = True
+    #             # evt.set()
 
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
