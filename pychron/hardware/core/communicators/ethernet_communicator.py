@@ -100,7 +100,7 @@ class Handler(object):
 
         data = b''
         while 1:
-            s = recv(datasize)  # self._sock.recv(2048)
+            s = recv(datasize)
             if not s:
                 break
 
@@ -376,7 +376,7 @@ class EthernetCommunicator(Communicator):
                 time.sleep(delay)
 
             try:
-                return handler.get_packet(cmd, message_frame=message_frame)
+                return handler.get_packet(message_frame=message_frame)
             except socket.error as e:
                 self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
                 self.error_mode = True

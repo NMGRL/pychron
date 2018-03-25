@@ -221,6 +221,7 @@ class Initializer(Loggable):
                 # register the device
                 if self.application is not None:
                     # display with the HardwareManager
+                    self.info('Regisiter device name={}, {}'.format(dev.name, dev))
                     self.application.register_service(ICoreDevice, dev,
                                                       {'display': True})
 

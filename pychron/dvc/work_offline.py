@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import time
+from operator import attrgetter
 
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
@@ -32,7 +32,6 @@ from pychron.paths import paths
 
 
 def database_path():
-    return '/Users/ross/Desktop/index.sqlite3'
     return os.path.join(paths.dvc_dir, 'index.sqlite3')
 
 
@@ -87,7 +86,7 @@ class WorkOffline(Loggable):
                                                   pushed_at=r['pushed_at']) for r in repos]
 
                     metaname = os.path.basename(paths.meta_root)
-                    repos = sorted([ri for ri in repos if ri.name != metaname])
+                    repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
                     self.repositories = repos
                     return True
 
@@ -166,7 +165,7 @@ class WorkOffline(Loggable):
         if os.path.isfile(path):
             if not self.confirmation_dialog('The database "{}" already exists. '
                                             'Do you want to overwrite it. If "NO" you will be prompted to '
-                                            'enter and new database name'.format(path)):
+                                            'enter a new database name'.format(path)):
 
                 path = self._get_new_path()
             else:
@@ -195,6 +194,12 @@ class WorkOffline(Loggable):
                 from pychron.dvc.dvc_orm import RepositoryAssociationTbl
                 from pychron.dvc.dvc_orm import AnalysisGroupTbl
                 from pychron.dvc.dvc_orm import AnalysisGroupSetTbl
+                from pychron.dvc.dvc_orm import MaterialTbl
+                from pychron.dvc.dvc_orm import SampleTbl
+                from pychron.dvc.dvc_orm import IrradiationTbl
+                from pychron.dvc.dvc_orm import LevelTbl
+                from pychron.dvc.dvc_orm import IrradiationPositionTbl
+                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
 
                 repos = [src.db.get_repository(reponame) for reponame in repositories]
 
@@ -206,30 +211,30 @@ class WorkOffline(Loggable):
                            for rai in ai.repository_associations]
                 else:
 
-                    at = time.time()
+                    # at = time.time()
                     ras = [ra for repo in repos for ra in repo.repository_associations]
-                    self.debug('association time={}'.format(time.time()-at))
+                    # self.debug('association time={}'.format(time.time()-at))
                     progress.change_message('Assembling Analyses 1/5')
 
-                    at = time.time()
+                    # at = time.time()
                     ans = [ri.analysis for ri in ras]
-                    self.debug('analysis time={}'.format(time.time()-at))
+                    # self.debug('analysis time={}'.format(time.time()-at))
 
                     progress.change_message('Assembling Analyses 2/5')
 
-                at = time.time()
+                # at = time.time()
                 ans_c = [ai.change for ai in ans]
-                self.debug('change time={}'.format(time.time()-at))
+                # self.debug('change time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 3/5')
 
-                at = time.time()
+                # at = time.time()
                 agss = [gi for ai in ans for gi in ai.group_sets]
-                self.debug('agss time={}'.format(time.time()-at))
+                # self.debug('agss time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 4/5')
 
-                at = time.time()
+                # at = time.time()
                 ags = {gi.group for gi in agss}
-                self.debug('ags time={}'.format(time.time()-at))
+                # self.debug('ags time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 5/5')
 
                 self.debug('total analysis assembly time={}'.format(time.time()-st))
@@ -241,7 +246,6 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, AnalysisGroupTbl, ags)
                 self._copy_records(progress, db, AnalysisGroupSetTbl, agss)
 
-                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
                 if principal_investigators:
                     pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
                 else:
@@ -256,24 +260,22 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, ProjectTbl, prjs)
 
                 ips = {ai.irradiation_position for ai in ans}
-                from pychron.dvc.dvc_orm import IrradiationPositionTbl
-                self._copy_records(progress, db, IrradiationPositionTbl, ips)
-
-                from pychron.dvc.dvc_orm import LevelTbl
-                ls = {ip.level for ip in ips}
-                self._copy_records(progress, db, LevelTbl, ls)
-
-                from pychron.dvc.dvc_orm import IrradiationTbl
-                irs = {l.irradiation for l in ls}
-                self._copy_records(progress, db, IrradiationTbl, irs)
-
-                from pychron.dvc.dvc_orm import SampleTbl
                 sams = {ip.sample for ip in ips}
+                mats = {si.material for si in sams}
+
+                self._copy_records(progress, db, MaterialTbl, mats)
+
                 self._copy_records(progress, db, SampleTbl, sams)
 
-                from pychron.dvc.dvc_orm import MaterialTbl
-                mats = {si.material for si in sams}
-                self._copy_records(progress, db, MaterialTbl, mats)
+                ls = {ip.level for ip in ips}
+                irs = {l.irradiation for l in ls}
+
+                self._copy_records(progress, db, IrradiationTbl, irs)
+
+                self._copy_records(progress, db, LevelTbl, ls)
+
+                self._copy_records(progress, db, IrradiationPositionTbl, ips)
+
                 self.debug('--------- db clone finished')
                 progress.close()
                 return True
@@ -328,42 +330,3 @@ class WorkOffline(Loggable):
         return v
 
 # ============= EOF =============================================
-# """
-# use mysql2sqlite.sh. this script requires mysqldump so maybe not the
-# best option.
-#
-# another solution is to have the server convert the database to sqlite
-# then grab the sqlite file from the server
-#
-# use ssh to run mysql2sqlite.sh
-# use ftp to grab the file
-# """
-# self.debug('clone central db')
-#
-# # dump the mysql database to sqlite
-# ssh = paramiko.SSHClient()
-# ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#
-# ssh.connect(self.work_offline_host,
-#             username=self.work_offline_user,
-#             password=self.work_offline_password,
-#             allow_agent=False,
-#             look_for_keys=False)
-#
-# cmd = '/Users/{}/workoffline/workoffline.sh'.format(self.work_offline_user)
-# stdin, stdout, stderr = ssh.exec_command(cmd)
-# self.debug('============ Output ============')
-# for line in stdout:
-#     self.debug(line)
-# self.debug('============ Output ============')
-#
-# self.debug('============ Error ============')
-# for line in stderr:
-#     self.debug('****** {}'.format(line))
-# self.debug('============ Error ============')
-#
-# # fetch the sqlite file
-# ftp = ssh.open_sftp()
-# rp = '/Users/{}/workoffline/database.sqlite3'.format(self.work_offline_user)
-#
-# ftp.get(rp, database_path())
