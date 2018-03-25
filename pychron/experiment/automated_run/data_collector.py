@@ -152,6 +152,9 @@ class DataCollector(Consoleable):
         while not evt.is_set():
             result = self._check_iteration(i)
             if not result:
+                if not self._pre_trigger_hook():
+                    break
+
                 self.trigger()
                 evt.wait(period)
                 self.automated_run.plot_panel.counts = i
@@ -173,30 +176,14 @@ class DataCollector(Consoleable):
 
         self.debug('measurement finished')
 
-    # def _iter(self, i):
-    #     if i % 25 == 0:
-    #         self.info('collecting point {}'.format(i))
-    #
-    #     result = self._check_iteration(i)
-    #
-    #     if not result:
-    #         self.automated_run.plot_panel.counts = i
-    #         if not self._iter_hook(i):
-    #             return
-    #
-    #         self._post_iter_hook(i)
-    #         return True
-    #     else:
-    #         if result == 'cancel':
-    #             self.canceled = True
-    #         elif result == 'terminate':
-    #             self.terminated = True
-
     def _post_iter_hook(self, i):
         if self.experiment_type == AR_AR and self.refresh_age and not i % 5:
             self.isotope_group.calculate_age(force=True)
             # t = Timer(0.05, self.isotope_group.calculate_age, kwargs={'force': True})
             # t.start()
+
+    def _pre_trigger_hook(self):
+        return True
 
     def _iter_hook(self, i):
         return self._iteration(i)

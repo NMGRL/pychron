@@ -35,19 +35,28 @@ class PeakHopCollector(DataCollector):
     hop_generator = None
 
     _was_deflected = False
+    _detectors = None
 
     def set_hops(self, hops):
         self.hops = hops
         self.debug('make new hop generatior')
         self.hop_generator = generate_hops(self.hops)
 
-    def _iter_hook(self, i):
+    def _pre_trigger_hook(self):
         args = self._do_hop()
 
         if args:
             is_baseline, dets, isos = args
-            if not is_baseline:
-                return self._iteration(i, detectors=dets)
+            self._detectors = dets
+            return True
+
+    def _iter_hook(self, i):
+        return self._iteration(i, detectors=self._detectors)
+        # args = self._do_hop()
+        # if args:
+        #     is_baseline, dets, isos = args
+        #     if not is_baseline:
+        #         return self._iteration(i, detectors=dets)
 
     def _do_hop(self):
         """

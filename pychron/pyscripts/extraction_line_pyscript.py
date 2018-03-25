@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import inspect
 import re
 import time
@@ -222,8 +220,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_cryo(self, value):
-        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
-        print('asfdasdf', result)
+        result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
         return result
 
     @verbose_skip
