@@ -464,6 +464,7 @@ class IonOpticsManager(Manager):
                 mag.mass_change(pos)
 
             # pos is mass i.e 39.962
+            print('det is',det)
             dac = mag.map_mass_to_dac(pos, det.name)
 
         dac = spec.correct_dac(det, dac)

@@ -219,7 +219,8 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_cryo(self, value):
-        result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
+        result = self._manager_action([('set_cryo', (value,), {})], protocol=ELPROTOCOL)
+        self.debug('set cyro result={}'.format(result))
         return result
 
     @verbose_skip
@@ -347,7 +348,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def waitfor(self, func_or_tuple, start_message='', end_message='',
-                check_period=1, timeout=0):
+                check_period=1, timeout=0, func_kw=None):
         """
 
         tuple format: (device_name, function_name, comparison, ...)
@@ -375,7 +376,7 @@ class ExtractionPyScript(ValvePyScript):
         include_time = False
         include_time_and_count = False
         if isinstance(func_or_tuple, tuple):
-            func = self._make_waitfor_func(*func_or_tuple)
+            func = self._make_waitfor_func(*func_or_tuple, func_kw=func_kw)
         else:
             func = func_or_tuple
             args = inspect.getargspec(func).args
@@ -952,7 +953,10 @@ class ExtractionPyScript(ValvePyScript):
         else:
             self.warning('_get_device - No application')
 
-    def _make_waitfor_func(self, name, funcname, comp, *args):
+    def _make_waitfor_func(self, name, funcname, comp, func_kw=None):
+        if func_kw is None:
+            func_kw = {}
+
         dev = self._get_device(name)
         if dev:
             devfunc = getattr(dev, funcname)
@@ -961,7 +965,9 @@ class ExtractionPyScript(ValvePyScript):
                 k = m[0]
 
                 def func(*a):
-                    return eval(comp, {k: devfunc(*args)})
+                    print('devfunc', devfunc(**func_kw))
+                    print('eval', eval(comp, {k: devfunc(**func_kw)}))
+                    return eval(comp, {k: devfunc(**func_kw)})
 
                 return func
             else:

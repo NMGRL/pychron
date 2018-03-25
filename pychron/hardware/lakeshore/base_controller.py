@@ -88,9 +88,11 @@ class BaseLakeShoreController(CoreDevice):
     def setpoints_achieved(self, tol=1):
         v1 = self.read_input_a()
         if abs(v1 - self.setpoint1) < tol:
-            v2 = self.read_input_a()
+            self.debug('setpoint 1 achieved')
+            v2 = self.read_input_b()
             if abs(v2 - self.setpoint2) < tol:
-                return self.setpoints_achieved_cnt
+                self.debug('setpoint 2 achieved')
+                return True
 
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
