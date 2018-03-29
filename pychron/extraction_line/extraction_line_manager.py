@@ -525,6 +525,7 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvases.append(c)
 
     def _activate_hook(self):
+
         self.monitor = SystemMonitor(manager=self, name='system_monitor')
         self.monitor.monitor()
 
@@ -533,19 +534,21 @@ class ExtractionLineManager(Manager, Consoleable):
             self.gauge_manager.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
-            def func():
-                t = Thread(target=self._update)
-                t.setDaemon(True)
-                t.start()
-            do_after(1000, func)
+            # def func():
+            # t = Thread(target=self._update)
+            # t.setDaemon(True)
+            # t.start()
+            do_after(1000, self._update)
 
     def _update(self):
-        p = self.hardware_update_period
-        sm = self.switch_manager
-        while 1:
-            sm.load_hardware_states()
-            # self.refresh_canvas()
-            time.sleep(p)
+        if self.use_hardware_update:
+            self.switch_manager.load_hardware_states()
+            do_after(self.hardware_update_period*1000, self._update)
+        # sm = self.switch_manager
+        # while 1:
+        #     sm.load_hardware_states()
+        #     # self.refresh_canvas()
+        #     time.sleep(self.hardware_update_period)
 
     #     self._trigger_update()
     #
@@ -794,7 +797,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if isinstance(new, tuple):
             self.update_switch_state(*new)
         else:
-            n = len(new)
+            # n = len(new)
             for i, ni in enumerate(new):
                 self.update_switch_state(*ni)
                 # self.update_switch_state(refresh=i == n - 1, *ni)

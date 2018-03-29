@@ -299,15 +299,15 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     # ===============================================================================
     # scanable interface
     # ===============================================================================
-    def _scan_hook(self, v):
-        for a in self.alarms:
-            if a.test_condition(v):
-                alarm_msg = a.get_message(v)
-                self.warning(alarm_msg)
-                manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                if manager is not None:
-                    manager.post(alarm_msg)
-                break
+    # def _scan_hook(self, v):
+    #     for a in self.alarms:
+    #         if a.test_condition(v):
+    #             alarm_msg = a.get_message(v)
+    #             self.warning(alarm_msg)
+    #             manager = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
+    #             if manager is not None:
+    #                 manager.post(alarm_msg)
+    #             break
 
     def _parse_response(self, v):
         return v

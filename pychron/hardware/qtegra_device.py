@@ -56,8 +56,9 @@ class QtegraDevice(CoreDevice):
     def read_decabin_temperature(self, **kw):
         v = self.ask('GetParameter Temp1')
         v = self._parse_response(v)
-        self.last_response = str(round(v, 1))
-        # self.response_updated = {'value': round(v, 1), 'command': self.last_command}
+        if v is not None:
+            self.last_response = str(round(v, 1))
+
         return v
 
     def read_trap_current(self, **kw):

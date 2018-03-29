@@ -48,7 +48,7 @@ class ThermoRack(CoreDevice):
     convert_to_C = True
 
     scan_func = 'get_coolant_out_temperature'
-
+    scan_func = 'get_faults'
     def __init__(self, *args, **kw):
         super(ThermoRack, self).__init__(*args, **kw)
         tx_register_functions(self)
@@ -117,12 +117,12 @@ class ThermoRack(CoreDevice):
         """
         cmd = self._get_read_command_str(FAULT_BITS)
         resp = self.ask(cmd, nbytes=1, verbose=verbose)
-
         if self.simulation:
             resp = '0'
 
         # parse the fault byte
-        fault_byte = make_bitarray(int(resp, 16))
+        fault_byte = make_bitarray(int.from_bytes(resp, 'big'))
+
         # faults = []
         # for i, fault in enumerate(FAULTS_TABLE):
         #            if fault and fault_byte[7 - i] == '1':
@@ -135,6 +135,7 @@ class ThermoRack(CoreDevice):
     def get_coolant_out_temperature(self, verbose=True, **kw):
         """
         """
+        self.debug('get coolant out temperature')
         cmd = self._get_read_command_str(COOLANT_BITS)
 
         resp = self.ask(cmd, nbytes=2, verbose=verbose, **kw)
@@ -146,7 +147,7 @@ class ThermoRack(CoreDevice):
         temp = round(temp, 1)
         self.last_response = str(temp)
         # self.response_updated = {'value': temp, 'command': self.last_command}
-
+        self.debug('coolant temp {}'.format(temp))
         return temp
 
     # private
