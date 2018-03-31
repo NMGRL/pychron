@@ -725,7 +725,8 @@ class MetaRepo(GitRepoManager):
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
-        pname = obj[level]
+
+        pname = obj.get(level, '')
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)

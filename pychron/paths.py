@@ -173,8 +173,8 @@ class Paths(object):
     snapshot_dir = None
     video_dir = None
     stage_visualizer_dir = None
-    default_workspace_dir = None
-    workspace_root_dir = None
+    # default_workspace_dir = None
+    # workspace_root_dir = None
     spectrometer_scans_dir = None
     furnace_scans_dir = None
     processed_dir = None

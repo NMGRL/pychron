@@ -19,12 +19,15 @@ import os
 import time
 from operator import attrgetter
 
+import yaml
+from pyface.constant import OK
+from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
-from pychron.core.helpers.filetools import unique_path2
+from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
 from pychron.envisage.browser.record_views import RepositoryRecordView
 from pychron.loggable import Loggable
@@ -74,37 +77,19 @@ class WorkOffline(Loggable):
             b. check github
         """
 
-        if self._load_preferences():
-            if self._check_database_connection():
-                if self._check_githost_connection():
-                    # attributes = ('name',
-                    #               'created_at',
-                    #               'pushed_at')
-                    repos = self.dvc.remote_repositories()
-                    repos = [RepositoryRecordView(name=r['name'],
-                                                  created_at=r['created_at'],
-                                                  pushed_at=r['pushed_at']) for r in repos]
+        if self._check_database_connection():
+            if self._check_githost_connection():
+                repos = self.dvc.remote_repositories()
+                repos = [RepositoryRecordView(name=r['name'],
+                                              created_at=r['created_at'],
+                                              pushed_at=r['pushed_at']) for r in repos]
 
-                    metaname = os.path.basename(paths.meta_root)
-                    repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
-                    self.repositories = repos
-                    return True
+                metaname = os.path.basename(paths.meta_root)
+                repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
+                self.repositories = repos
+                return True
 
     # private
-    def _load_preferences(self):
-        # prefs = self.application.preferences
-        # prefid = 'pychron.dvc'
-
-        # for label in ('host', 'user', 'password'):
-        #     attr = 'work_offline_{}'.format(label)
-        #     v = prefs.get('{}.{}'.format(prefid, attr))
-        #     if not v:
-        #         self.warning_dialog('No WorkOffline {} set in preferences'.format(label))
-        #         return
-        #     setattr(self, attr, v)
-
-        return True
-
     def _check_database_connection(self):
         return self.dvc.connect()
 
@@ -123,10 +108,28 @@ class WorkOffline(Loggable):
         self.dvc.meta_pull()
 
         # clone central db
-
         repos = [ri.name for ri in self.selected_repositories]
-        if not self._clone_central_db(repos):
+        path = self._clone_central_db(repos)
+        if not path:
             return
+
+        apath = None
+        # create dvc archive
+        if self.confirmation_dialog('Create shareable archive'):
+            dialog = FileDialog(action='save as', default_directory=paths.hops_dir)
+            if dialog.open() == OK:
+                apath = dialog.path
+
+        if apath:
+            apath = add_extension(apath, '.pz')
+            with open(apath,  'wb') as wfile:
+                with open(path, 'rb') as dbfile:
+
+                    ctx = {'meta_repo_name': self.dvc.meta_repo_name,
+                           'meta_repo_dirname': self.dvc.meta_repo_dirname,
+                           'organization': self.dvc.organization,
+                           'database': dbfile.read()}
+                yaml.dump(ctx, wfile, encoding='utf-8')
 
         msg = 'Would you like to switch to the offline database?'
         if self.confirmation_dialog(msg):
@@ -164,8 +167,7 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog('The database "{}" already exists. '
-                                            'Do you want to overwrite it. If "NO" you will be prompted to '
-                                            'enter a new database name'.format(path)):
+                                            'Do you want to overwrite it'.format(os.path.basename(path))):
 
                 path = self._get_new_path()
             else:
@@ -278,7 +280,8 @@ class WorkOffline(Loggable):
 
                 self.debug('--------- db clone finished')
                 progress.close()
-                return True
+                self.information_dialog('Database saved to "{}"'.format(path))
+                return path
 
     def _copy_records(self, progress, dest, table, records):
 

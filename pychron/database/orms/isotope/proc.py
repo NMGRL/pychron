@@ -461,10 +461,10 @@ class proc_NotesTable(Base, HistoryMixin):
 #    analysis_id = foreignkey('AnalysisTable')
 
 
-class proc_WorkspaceSettings(Base, BaseMixin):
-    '''
-        settings is a yaml blob
-    '''
-    settings = BLOB()
+# class proc_WorkspaceSettings(Base, BaseMixin):
+#     '''
+#         settings is a yaml blob
+#     '''
+#     settings = BLOB()
 
 # ============= EOF =============================================

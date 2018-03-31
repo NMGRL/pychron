@@ -33,6 +33,7 @@ from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
+from pychron.database.tasks.connection_preferences import ConnectionFavoriteItem
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
@@ -140,6 +141,9 @@ class DVC(Loggable):
     auto_add = True
     pulled_repositories = Set
     selected_repositories = List
+
+    data_sources = List
+    favorites = List
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -1300,10 +1304,24 @@ class DVC(Loggable):
             bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
         prefid = 'pychron.dvc.db'
-        for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
-            bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
-
+        bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
+        self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+
+    def _favorites_changed(self, items):
+        try:
+            self.data_sources = [ConnectionFavoriteItem(attrs=f) for f in items]
+        except BaseException:
+            pass
+
+        if self.data_sources:
+            dd = next((d for d in self.data_sources if d.default and d.enabled), None)
+            if dd is not None:
+                for attr in ('username', 'password', 'host', 'kind', 'path'):
+                    setattr(self.db, attr, getattr(dd, attr))
+
+                self.db.name = dd.dbname
+                self.db.reset_connection()
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

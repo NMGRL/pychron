@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Password, Bool
 from traitsui.api import View, Item, VGroup, UItem
@@ -30,9 +29,6 @@ class DVCPreferences(BasePreferencesHelper):
     meta_repo_dirname = Str
     organization = Str
     default_team = Str
-    work_offline_user = Str
-    work_offline_password = Password
-    work_offline_host = Str
 
 
 class DVCDBConnectionPreferences(ConnectionPreferences):
@@ -62,15 +58,9 @@ class DVCPreferencesPane(PreferencesPane):
                            tooltip='Name of local MetaData directory that links to the MetaData repository.'
                                    'Leave blank if you do not understand'),
                       label='MetaData Repo', show_border=True)
-        offline = VGroup(Item('work_offline_host', label='Host'),
-                         Item('work_offline_user', label='Username'),
-                         Item('work_offline_password', label='Password'),
-                         label='Work Offline',
-                         show_border=True)
 
         v = View(VGroup(VGroup(org, meta), label='Git',
-                        show_border=True),
-                 offline)
+                        show_border=True))
         return v
 
 

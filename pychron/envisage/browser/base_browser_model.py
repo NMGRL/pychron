@@ -182,11 +182,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     sample_view_active = Bool(True)
 
-    use_workspace = False
-    workspace = None
-    manager = Any
+    # use_workspace = False
+    # workspace = None
+    # manager = Any
 
-    db = Property
+    db = Property(depends_on='datasource')
+    datasources = List
+    datasource = Str
+
     use_fuzzy = True
     pattributes = ('project_enabled',
                    'repository_enabled',
@@ -807,9 +810,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     @cached_property
     def _get_db(self):
-        if self.use_workspace:
-            db = self.workspace.index_db
-        elif self.dvc:
+        # if self.use_workspace:
+        #     db = self.workspace.index_db
+        if self.dvc:
             db = self.dvc
         else:
             db = self.application.get_service(DVC_PROTOCOL)
@@ -820,10 +823,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._warned = True
         else:
             return db
-            # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            # return
-            # else:
-            #     return self.manager.db
 
     # persistence
     @property

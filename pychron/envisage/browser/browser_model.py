@@ -86,6 +86,7 @@ class BrowserModel(BaseBrowserModel):
 
     def activated(self, force=False):
         self.reattach()
+
         self.activate_browser(force)
 
     def activate_browser(self, force=False):
@@ -244,12 +245,12 @@ class BrowserModel(BaseBrowserModel):
     def _selected_samples_changed_hook(self, new):
         pass
 
-    def _get_manager(self):
-        if self.use_workspace:
-            obj = self.workspace.index_db
-        else:
-            obj = self.manager
-        return obj
+    # def _get_manager(self):
+    #     if self.use_workspace:
+    #         obj = self.workspace.index_db
+    #     else:
+    #         obj = self.manager
+    #     return obj
 
     # def _selected_repositories_changed_hook(self, names):
     #     self.irradiations = []
