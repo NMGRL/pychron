@@ -58,7 +58,6 @@ where TABLE_NAME="{}"'''.format(schema_identifier)
         cur.execute(sql)
 
         names = [di[0] for di in cur if di[0] not in exclude]
-        print('asd', names)
     except BaseException as e:
         print('exception show names', e)
         pass
@@ -158,7 +157,6 @@ class ConnectionFavoriteItem(HasTraits):
             if self.schema_identifier:
                 if IPREGEX.match(self.host) or self.host == 'localhost':
                     names = show_databases(self.host, self.username, self.password, self.schema_identifier)
-                    print('ffff', names)
                     self.names = names
 
     def to_string(self):
@@ -184,7 +182,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
                 self._set_favorites()
 
     def _fav_factory(self, fav=None, **kw):
-        f = ConnectionFavoriteItem(self._schema_identifier, fav)
+        f = self._fav_klass(self._schema_identifier, fav)
         f.trait_set(**kw)
 
         return f

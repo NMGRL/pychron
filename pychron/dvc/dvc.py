@@ -40,6 +40,7 @@ from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, Production
+from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.git.hosts import IGitHost, CredentialException
@@ -1299,18 +1300,18 @@ class DVC(Loggable):
 
     def _bind_preferences(self):
 
-        prefid = 'pychron.dvc'
-        for attr in ('meta_repo_dirname', 'meta_repo_name', 'organization', 'default_team'):
-            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+        # prefid = 'pychron.dvc'
+        # for attr in ('meta_repo_dirname', 'meta_repo_name', 'organization', 'default_team'):
+        #     bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
-        prefid = 'pychron.dvc.db'
+        prefid = 'pychron.dvc.connection'
         bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
         self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
 
     def _favorites_changed(self, items):
         try:
-            self.data_sources = [ConnectionFavoriteItem(attrs=f) for f in items]
+            self.data_sources = [DVCConnectionItem(attrs=f) for f in items]
         except BaseException:
             pass
 
@@ -1321,6 +1322,10 @@ class DVC(Loggable):
                     setattr(self.db, attr, getattr(dd, attr))
 
                 self.db.name = dd.dbname
+                self.organization = dd.organization
+                self.meta_repo_name = dd.meta_repo_name
+                self.meta_repo_dirname = dd.meta_repo_dir
+
                 self.db.reset_connection()
 
     def _meta_repo_dirname_changed(self):

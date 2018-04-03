@@ -85,7 +85,11 @@ class FigureNode(BaseNode):
                 self.editor = editor
 
             if self.auto_set_items:
-                editor.set_items(state.unknowns)
+                unks = state.unknowns
+                if self.name in self.skip_meaning:
+                    unks = [u for u in unks if u.tag.lower() != 'Skip']
+
+                editor.set_items(unks)
                 # self.editors.append(editor)
                 # oname = editor.name
 
@@ -259,7 +263,7 @@ class RegressionSeriesNode(SeriesNode):
 
         progress_iterator(state.unknowns, load_raw, threshold=1)
         super(RegressionSeriesNode, self).run(state)
-    
+
     def _configure_hook(self):
         pom = self.plotter_options_manager
         if self.unknowns:

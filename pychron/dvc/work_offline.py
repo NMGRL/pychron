@@ -39,7 +39,7 @@ def database_path():
 
 
 def switch_to_offline_database(preferences):
-    prefid = 'pychron.dvc.db'
+    prefid = 'pychron.dvc.connection'
     kind = '{}.kind'.format(prefid)
     path = '{}.path'.format(prefid)
 
