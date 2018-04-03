@@ -2042,7 +2042,9 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             for si in g.sets:
                 sess.delete(si)
+
             sess.delete(g)
+            sess.commit()
 
     # ============================================================
     # Sample Prep
