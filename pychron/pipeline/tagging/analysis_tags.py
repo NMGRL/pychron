@@ -30,4 +30,11 @@ class AnalysisTagModel(BaseTagModel):
     use_filter = Bool(True)
     note = Str
 
+    def get_items(self):
+        if self.selected:
+            it = self.selected
+        else:
+            it = self.items
+        return it
+
 # ============= EOF =============================================

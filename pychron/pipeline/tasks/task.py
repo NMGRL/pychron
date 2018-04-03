@@ -635,7 +635,7 @@ class PipelineTask(BaseBrowserTask):
 
         info = tv.edit_traits()
         if info.result:
-            return model.tag, model.items, model.use_filter, model.note
+            return model.tag, model.get_items(), model.use_filter, model.note
 
     # def _get_dr_tagname(self, items):
     #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel
