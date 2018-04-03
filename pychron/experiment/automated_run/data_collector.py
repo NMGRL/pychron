@@ -155,6 +155,9 @@ class DataCollector(Consoleable):
         while not evt.is_set():
             result = self._check_iteration(i)
             if not result:
+                if not self._pre_trigger_hook():
+                    break
+
                 self.trigger()
                 evt.wait(period)
                 self.automated_run.plot_panel.counts = i
@@ -175,6 +178,9 @@ class DataCollector(Consoleable):
         t.join()
 
         self.debug('measurement finished')
+
+    def _pre_trigger_hook(self):
+        return True
 
     # def _iter(self, i):
     #     # st = time.time()
