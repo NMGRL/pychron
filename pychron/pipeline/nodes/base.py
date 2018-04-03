@@ -23,6 +23,7 @@ import six
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 
 
 class BaseNode(HasTraits):
@@ -161,4 +162,7 @@ class BaseNode(HasTraits):
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)
 
+
+class SortableNode(BaseNode, ColumnSorterMixin):
+    pass
 # ============= EOF =============================================

@@ -256,31 +256,7 @@ class PipelineTask(BaseBrowserTask):
                 # tags stored as lowercase
                 tag = tag.lower()
 
-                dvc = self.dvc
-                db = dvc.db
-                key = lambda x: x.repository_identifier
-
-                for expid, ans in groupby(sorted(items, key=key), key=key):
-                    cs = []
-                    for it in ans:
-                        self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                        if not isinstance(it, InterpretedAge):
-                            db.set_analysis_tag(it.uuid, tag)
-
-                        it.set_tag({'name': tag, 'note': note or ''})
-                        if dvc.update_tag(it):
-                            cs.append(it)
-                            # it.refresh_view()
-
-                    if cs:
-                        cc = [c.record_id for c in cs]
-                        if len(cc) > 1:
-                            cstr = '{} - {}'.format(cc[0], cc[-1])
-                        else:
-                            cstr = cc[0]
-                        dvc.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
-                        for ci in cs:
-                            ci.refresh_view()
+                self.dvc.tag_items(tag, items, note)
 
                 if use_filter:
                     for e in self.editor_area.editors:

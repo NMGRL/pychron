@@ -167,6 +167,12 @@ class SampleBrowserModel(BrowserModel):
             self.db.delete_analysis_group(g)
             self.analysis_groups.remove(g)
 
+    def set_tags(self, tagname):
+        items = self.get_analysis_records()
+        if items:
+            self.dvc.tag_items(tagname, items)
+        return items
+
     def dump(self):
         self.time_view_model.dump_filter()
         self.analysis_table.dump()

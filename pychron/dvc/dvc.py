@@ -1156,6 +1156,35 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
+    def tag_items(self, tag, items, note=''):
+        key = lambda x: x.repository_identifier
+
+        for expid, ans in groupby(sorted(items, key=key), key=key):
+            cs = []
+            for it in ans:
+                if not isinstance(it, (InterpretedAge, DVCAnalysis)):
+                    it = self.make_analysis(it)
+
+                self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                if not isinstance(it, InterpretedAge):
+                    self.set_analysis_tag(it.uuid, tag)
+
+                it.set_tag({'name': tag, 'note': note or ''})
+                if self.update_tag(it):
+                    cs.append(it)
+                    # it.refresh_view()
+
+            if cs:
+                cc = [c.record_id for c in cs]
+                if len(cc) > 1:
+                    cstr = '{} - {}'.format(cc[0], cc[-1])
+                else:
+                    cstr = cc[0]
+
+                self.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
+                for ci in cs:
+                    ci.refresh_view()
+
     # private
     def _make_macrochron(self, ia):
         m = {'material': ia.material,
