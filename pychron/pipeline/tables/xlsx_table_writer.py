@@ -293,6 +293,7 @@ class XLSXTableWriter(BaseTableWriter):
         age_units = '({})'.format(options.age_units)
         columns = [(True, '', '', 'status'),
                    (True, 'N', '', 'aliquot_step_str'),
+                   (True, 'Tag', '', 'tag'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
 
                    (ubit, 'Age', age_units, 'age', value),
@@ -388,6 +389,7 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, 'Sample', '', 'sample'),
                    (True, 'Material', '', 'material'),
                    (True, 'Project', '', 'project'),
+                   (True, 'Tag', '', 'tag'),
 
                    (True, 'N', '', 'aliquot_step_str'),
                    (ubit, 'Power', options.power_units, 'extract_value'),

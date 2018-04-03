@@ -188,7 +188,7 @@ class IdeogramPlotable(HasTraits):
 
     def is_omitted_by_tag(self, tags=None):
         if tags is None:
-            tags = ('omit', 'invalid', 'outlier')
+            tags = ('omit', 'invalid', 'outlier', 'skip')
         return self.tag in tags
 
     def set_temp_status(self, tag):
