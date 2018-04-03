@@ -163,6 +163,9 @@ class ConnectionFavoriteItem(HasTraits):
         return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
                                                                'dbname', 'password', 'enabled', 'default', 'path')])
 
+    def __repr__(self):
+        return self.name
+
 
 class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.database'

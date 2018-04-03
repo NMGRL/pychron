@@ -15,14 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Instance, Button, Bool
-from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
-from traitsui.handler import Handler
-
-from pychron.core.ui.button_editor import ButtonEditor
+from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Handler, EnumEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -79,6 +74,7 @@ class BaseBrowserView(HasTraits):
                       # icon_button_editor('toggle_view',
                       #                    'arrow_switch',
                       #                    tooltip='Toggle between Sample and Time views'),
+                      UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
                       spring,
                       CustomLabel('datasource_url', color='maroon'),
                       show_border=True)

@@ -144,6 +144,7 @@ class DVC(Loggable):
     selected_repositories = List
 
     data_sources = List
+    data_source = Instance(DVCConnectionItem)
     favorites = List
 
     def __init__(self, bind=True, *args, **kw):
@@ -1311,22 +1312,29 @@ class DVC(Loggable):
 
     def _favorites_changed(self, items):
         try:
-            self.data_sources = [DVCConnectionItem(attrs=f) for f in items]
+            ds = [DVCConnectionItem(attrs=f, load_names=False) for f in items]
+            self.data_sources = [d for d in ds if d.enabled]
+
         except BaseException:
             pass
 
         if self.data_sources:
-            dd = next((d for d in self.data_sources if d.default and d.enabled), None)
-            if dd is not None:
-                for attr in ('username', 'password', 'host', 'kind', 'path'):
-                    setattr(self.db, attr, getattr(dd, attr))
+            self.data_source = next((d for d in self.data_sources if d.default and d.enabled), None)
 
-                self.db.name = dd.dbname
-                self.organization = dd.organization
-                self.meta_repo_name = dd.meta_repo_name
-                self.meta_repo_dirname = dd.meta_repo_dir
+    def _data_source_changed(self, old, new):
+        self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
+        if new is not None:
+            for attr in ('username', 'password', 'host', 'kind', 'path'):
+                setattr(self.db, attr, getattr(new, attr))
 
-                self.db.reset_connection()
+            self.db.name = new.dbname
+            self.organization = new.organization
+            self.meta_repo_name = new.meta_repo_name
+            self.meta_repo_dirname = new.meta_repo_dir
+            self.db.reset_connection()
+            if old:
+                self.db.connect()
+                self.db.create_session()
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

@@ -1338,7 +1338,7 @@ class DVCDatabase(DatabaseAdapter):
                        loads=None,
                        filter_non_run=False):
 
-        self.debug('------- Get Labnumbers -------')
+        self.debug('------- Get Labnumbers {}-------'.format(id(self)))
         self.debug('------- samples: {}'.format(samples))
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))

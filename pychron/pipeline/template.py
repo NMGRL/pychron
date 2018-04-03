@@ -102,10 +102,6 @@ class PipelineTemplate(HasTraits):
         if exclude_klass is None:
             exclude_klass = []
 
-        sm = application.preferences.get('pychron.pipeline.skip_meaning')
-        if sm:
-            sm = sm.split(',')
-
         for i, ni in enumerate(nodes):
             # print i, ni
             klass = ni['klass']
@@ -123,13 +119,13 @@ class PipelineTemplate(HasTraits):
                     if klass in exclude_klass:
                         continue
 
-                    node = self._node_factory(klass, nii, application, bmodel, iabmodel, dvc, sm)
+                    node = self._node_factory(klass, nii, application, bmodel, iabmodel, dvc)
                     if node:
                         node.finish_load()
                         group.add_node(node)
 
             else:
-                node = self._node_factory(klass, ni, application, bmodel, iabmodel, dvc, sm)
+                node = self._node_factory(klass, ni, application, bmodel, iabmodel, dvc)
                 if node:
                     node.finish_load()
                     pipeline.add_node(node)
@@ -161,7 +157,6 @@ class PipelineTemplate(HasTraits):
 
             node.trait_set(emailer=emailer)
 
-        node.skip_meaning = self.skip_meaning
         return node
 
 # ============= EOF =============================================

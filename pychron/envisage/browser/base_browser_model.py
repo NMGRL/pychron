@@ -186,9 +186,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     # workspace = None
     # manager = Any
 
-    db = Property(depends_on='datasource')
-    datasources = List
-    datasource = Str
+    db = Property
 
     use_fuzzy = True
     pattributes = ('project_enabled',
@@ -206,6 +204,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     _suppress_load_labnumbers = False
 
     def reattach(self):
+        pass
+
+    def activate_browser(self, force=False):
         pass
 
     def make_records(self, ans):
@@ -308,8 +309,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.oprojects = ad
 
     def load_principal_investigators(self):
+        self.debug('load principal investigators')
         db = self.db
         ps = db.get_principal_investigators(order='asc', verbose_query=True)
+        self.debug('n pis={}'.format(len(ps)))
         if ps:
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
             self.principal_investigator_names = [p.name for p in ps]
@@ -806,6 +809,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return list(map(str.lower, ats))
 
+    def _handle_source_change(self, new):
+        self.activate_browser(force=True)
+
     _warned = False
 
     @cached_property
@@ -822,6 +828,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 self.warning_dialog('You need to enable the DVC plugin')
             self._warned = True
         else:
+            db.on_trait_change(self._handle_source_change, 'data_source')
             return db
 
     # persistence

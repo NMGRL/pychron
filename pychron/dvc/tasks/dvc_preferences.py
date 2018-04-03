@@ -43,7 +43,7 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     meta_repo_name = Str
     meta_repo_dir = Str
 
-    def __init__(self, schema_identifier='', attrs=None):
+    def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
         self.schema_identifier = schema_identifier
 
@@ -60,8 +60,8 @@ class DVCConnectionItem(ConnectionFavoriteItem):
 
             self.enabled = to_bool(enabled)
             self.default = to_bool(default)
-
-            self.load_names()
+            if load_names:
+                self.load_names()
 
     def to_string(self):
         return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
