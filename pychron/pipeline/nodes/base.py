@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Bool, Any, List
+from traits.api import HasTraits, Bool, Any, List, Str
 from traitsui.api import View
 import six
 
@@ -45,7 +45,7 @@ class BaseNode(HasTraits):
     required = List
     index = -1
 
-    skip_meaning = List
+    skip_meaning = Str
 
     def clear_data(self):
         self.unknowns = []

@@ -46,7 +46,7 @@ class XLSXAnalysisTableNode(TableNode):
         self.options.dump()
 
     def run(self, state):
-        bind_preference(self, 'skip_meaning', 'pychron.pipeline._skip_meaning')
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
         self._make_table(state)
 

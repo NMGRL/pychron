@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from itertools import groupby
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, List
 from traitsui.api import View
 
@@ -86,8 +87,9 @@ class FigureNode(BaseNode):
 
             if self.auto_set_items:
                 unks = state.unknowns
-                if self.name in self.skip_meaning:
-                    unks = [u for u in unks if u.tag.lower() != 'Skip']
+                bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+                if self.name in self.skip_meaning.split(','):
+                    unks = [u for u in unks if u.tag.lower() != 'skip']
 
                 editor.set_items(unks)
                 # self.editors.append(editor)
