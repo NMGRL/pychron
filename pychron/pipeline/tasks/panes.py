@@ -147,7 +147,8 @@ class PipelinePane(TraitsDockPane):
                                       visible_when='not object.enabled'),
                                Action(name='Disable Permanent',
                                       action='disable_permanent',
-                                      visible_when='object.enabled'))
+                                      visible_when='object.enabled'),
+                               name='Enable/Disable')
 
         def menu_factory(*actions):
             return MenuManager(
