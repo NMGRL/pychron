@@ -281,7 +281,7 @@ class XLSXTableWriter(BaseTableWriter):
 
         detectors = {i.detector for g in grps
                      for a in g.analyses
-                     for i in a.isotopes}
+                     for i in a.isotopes.values()}
 
         options = self._options
 
