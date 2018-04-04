@@ -354,12 +354,13 @@ class SampleBrowserModel(BrowserModel):
                 if r:
                     self.analysis_table.add_analyses(r)
 
-                refs = self.db.find_references(r, atypes,
-                                               extract_devices=m.extract_devices,
-                                               mass_spectrometers=m.mass_spectrometers,
-                                               hours=m.threshold, make_records=False)
-                if refs:
-                    self.analysis_table.add_analyses(refs)
+                if atypes:
+                    refs = self.db.find_references(r, atypes,
+                                                   extract_devices=m.extract_devices,
+                                                   mass_spectrometers=m.mass_spectrometers,
+                                                   hours=m.threshold, make_records=False)
+                    if refs:
+                        self.analysis_table.add_analyses(refs)
 
     def _project_date_bins(self, identifier):
         db = self.db
