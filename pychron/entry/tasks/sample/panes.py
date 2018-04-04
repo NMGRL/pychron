@@ -253,7 +253,7 @@ class SampleEditorPane(TraitsDockPane):
                              icon_button_editor('configure_sample_button', 'cog', tooltip='Set additional sample '
                                                                                           'attributes'),
                              icon_button_editor('add_sample_button', 'add',
-                                                enabled_when='sample',
+                                                enabled_when='add_sample_enabled',
                                                 tooltip='Add a sample')),
                       VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',

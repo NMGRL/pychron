@@ -212,6 +212,9 @@ class SampleEntry(DVCAble):
     add_principal_investigator_button = Button
     add_project_button = Button
     add_sample_button = Button
+    add_sample_enabled = Property(depends_on='sample, _add_sample_enabled')
+    _add_sample_enabled = Bool
+
     add_button = Button
     add_material_button = Button
     generate_project_button = Button('Generate Name')
@@ -547,6 +550,7 @@ class SampleEntry(DVCAble):
                                             project=project_spec,
                                             material=material_spec))
             self._backup()
+            self._add_sample_enabled = False
 
     def _add_project_button_fired(self):
         if self.project:
@@ -601,9 +605,16 @@ class SampleEntry(DVCAble):
         v = ProjectOptionalsView(model=self)
         v.edit_traits()
 
+    def _sample_changed(self):
+        self._add_sample_enabled = True
+
     @cached_property
     def _get_project_enabled(self):
         return bool(self.principal_investigator)
+
+    @cached_property
+    def _get_add_sample_enabled(self):
+        return bool(self.sample) and self._add_sample_enabled
 
     @cached_property
     def _get_sample_enabled(self):
