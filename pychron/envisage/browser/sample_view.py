@@ -364,10 +364,10 @@ class BrowserSampleView(BaseBrowserSampleView):
         self._set_tags(info.object, 'omit')
 
     def tag_invalid(self, info, obj):
-        self._set_tags(info.object, obj, 'invalid')
+        self._set_tags(info.object, 'invalid')
 
     def tag_skip(self, info, obj):
-        self._set_tags(info.object, obj, 'skip')
+        self._set_tags(info.object, 'skip')
 
     def _set_tags(self, obj, tag):
         items = obj.set_tags(tag)
