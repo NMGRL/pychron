@@ -452,9 +452,11 @@ class MetaRepo(GitRepoManager):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
         positions = self._get_level_positions(irradiation, level)
-        d = next((p for p in positions if p['position'] != pos), None)
+
+        d = next((p for p in positions if p['position'] == pos), None)
         if d:
             d['identifier'] = identifier
+            jd['positions'] = positions
 
         dvc_dump(jd, p)
         self.add(p, commit=False)

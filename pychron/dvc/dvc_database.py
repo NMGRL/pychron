@@ -332,7 +332,7 @@ class DVCDatabase(DatabaseAdapter):
             change.tag = tagname
             change.user = self.save_username
             sess.add(change)
-            sess.commit()
+            # sess.commit()
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,

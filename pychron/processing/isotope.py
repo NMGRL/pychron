@@ -128,12 +128,12 @@ class BaseMeasurement(object):
 
     def get_curvature(self, x):
         ys = self._get_curvature_ys()
+        if ys is not None and len(ys):
+            # if x is between 0-1 treat as a percentage of the total number of points
+            if 0 < x < 1:
+                x = self.xs.shape[0] * x
 
-        # if x is between 0-1 treat as a percentage of the total number of points
-        if 0 < x < 1:
-            x = self.xs.shape[0] * x
-
-        return curvature_at(ys, x)
+            return curvature_at(ys, x)
 
     def _get_curvature_ys(self):
         return self.ys
