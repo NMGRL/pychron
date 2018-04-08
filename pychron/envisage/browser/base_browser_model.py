@@ -85,7 +85,6 @@ def filter_func(new, attr=None, comp=None):
 
 
 class SearchCriteria(HasTraits):
-    recent_hours = Float
     reference_hours_padding = Float
     graphical_filtering_max_days = Int
 
@@ -387,43 +386,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self._suppress_load_labnumbers:
             return
 
-        sams = []
-        self._recent_mass_spectrometers = []
-        warned = False
-
-        if self.selected_projects:
-            if any((p.name.startswith('RECENT') for p in self.selected_projects)):
-                if not self.search_criteria.recent_hours:
-                    if not warned:
-                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
-                                            '"RECENT (hrs)" is located in the "Browser" category')
-
-        sams.extend(self._make_labnumbers())
+        sams = self._make_labnumbers()
 
         self.samples = sams
         self.osamples = sams
-
-    # def _retrieve_recent_labnumbers(self, recent_name):
-    #     ms = extract_mass_spectrometer_name(recent_name)
-    #     db = self.db
-    #     hpost = datetime.now()
-    #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-    #     self._low_post = lpost
-    #
-    #     self.use_high_post = False
-    #     self.use_low_post = True
-    #
-    #     self.trait_property_changed('low_post', self._low_post)
-    #     self._recent_mass_spectrometers.append(ms)
-    #
-    #     # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-    #     ls = db.get_labnumbers(mass_spectrometers=(ms,),
-    #                            # repositories=es,
-    #                            low_post=lpost)
-    #
-    #     sams = self._load_sample_record_views(ls)
-    #
-    #     return sams
 
     def _populate_samples(self, lns=None):
         db = self.db

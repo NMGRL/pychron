@@ -49,11 +49,8 @@ class SampleBrowserModel(BrowserModel):
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
         prefid = 'pychron.browser'
-        bind_preference(self.search_criteria, 'recent_hours',
-                        '{}.recent_hours'.format(prefid))
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
-
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
@@ -404,7 +401,18 @@ class SampleBrowserModel(BrowserModel):
         at = AnalysisTable(dvc=self.dvc)
         at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
-        bind_preference(at, 'max_history', 'pychron.browser.max_history')
+        prefid = 'pychron.browser'
+        bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
+
+        bind_preference(at.tabular_adapter,
+                        'unknown_color', '{}.unknown_color'.format(prefid))
+        bind_preference(at.tabular_adapter,
+                        'blank_color', '{}.blank_color'.format(prefid))
+        bind_preference(at.tabular_adapter,
+                        'air_color', '{}.air_color'.format(prefid))
+
+        bind_preference(at.tabular_adapter,
+                        'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
         return at
 
 # ============= EOF =============================================

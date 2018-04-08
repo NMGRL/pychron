@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Property, Str
+from traits.api import Int, Property, Str, Color, Bool
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -156,6 +155,11 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
+    unknown_color = Color
+    blank_color = Color
+    air_color = Color
+    use_analysis_colors = Bool
+
     def run_history_columns(self):
         self.columns = [('Run ID', 'record_id'),
                         ('Sample', 'sample'),
@@ -223,8 +227,18 @@ class AnalysisAdapter(BrowserAdapter):
         else:
             if item.delta_time > 1440:  # 24 hours
                 color = '#FAE900'
-            elif row % 2:
-                color = 'lightgray'
+            else:
+                if row % 2:
+                    color = 'lightgray'
+
+                if self.use_analysis_colors:
+                    if item.analysis_type == 'unknown':
+                        color = self.unknown_color
+                    elif item.analysis_type == 'air':
+                        color = self.air_color
+                    elif item.analysis_type.startswith('blank'):
+                        color = self.blank_color
+
         return color
 
 
