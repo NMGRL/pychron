@@ -325,6 +325,7 @@ class InverseIsochron(Isochron):
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
+        sample_line = u'{}({})'.format(self.analysis_group.identifier, self.analysis_group.sample)
         ratio_line = u'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
 
         u = self._ref_age_units
@@ -367,7 +368,7 @@ class InverseIsochron(Isochron):
             plot.overlays.append(label)
             self._plot_label = label
 
-        lines = u'\n'.join((ratio_line, age_line, mswd_line))
+        lines = u'\n'.join((sample_line, ratio_line, age_line, mswd_line))
         label.text = u'{}'.format(lines)
         label.request_redraw()
 
