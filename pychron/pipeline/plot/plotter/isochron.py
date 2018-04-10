@@ -188,6 +188,7 @@ class InverseIsochron(Isochron):
 
         eo = ErrorEllipseOverlay(component=scatter,
                                  reg=reg,
+                                 border_color=scatter.color,
                                  fill=self.options.fill_ellipses)
         scatter.overlays.append(eo)
 

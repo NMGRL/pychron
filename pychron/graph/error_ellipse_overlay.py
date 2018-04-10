@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from chaco.api import AbstractOverlay
+from enable.colors import ColorTrait
 from traits.api import Bool
 # ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
@@ -30,6 +31,7 @@ from six.moves import zip
 
 # http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
+from traits.traits import Color
 
 SCALE_FACTOR = 2.4477
 # SCALE_FACTOR = 1
@@ -130,6 +132,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         gc.begin_path()
         gc.lines(pts)
+
+        gc.set_stroke_color(self.border_color_)
         if self.fill:
             gc.set_fill_color((0, 0, 0, 0.5))
             gc.fill_path()
