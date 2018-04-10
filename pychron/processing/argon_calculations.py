@@ -68,7 +68,7 @@ def unpack_value_error(xx):
     return list(zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx]))
 
 
-def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
+def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=True):
     ref = analyses[0]
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -105,15 +105,21 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork'):
     xint = reg.x_intercept
 
     try:
-        r = xint ** -1
-        xint_err = regx.get_intercept_error() / r ** 2
+        r = xint
+        xint_err = regx.get_intercept_error()
         r = ufloat(r, xint_err)
+        r = 1/r
     except ZeroDivisionError:
         r = 0
 
     age = ufloat(0, 0)
     if r > 0:
-        age = age_equation((nominal_value(ref.j), 0), r, arar_constants=ref.arar_constants)
+        if include_j_err:
+            j = ref.j
+        else:
+            j = (nominal_value(ref.j), 0)
+        age = age_equation(j, r, arar_constants=ref.arar_constants)
+
     return age, reg, (xs, ys, xerrs, yerrs)
 
 

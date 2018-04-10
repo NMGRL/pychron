@@ -80,6 +80,7 @@ class AnalysisGroup(HasTraits):
     age_units = Property
 
     j_err = AGProperty()
+    j = AGProperty()
     include_j_error_in_mean = Bool(True)
     include_j_error_in_individual_analyses = Bool(False)
 
@@ -144,12 +145,17 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_j_err(self):
-        j = self.analyses[0].j
+        j = self.j
         try:
-            e = (j.std_dev / j.nominal_value) if j is not None else 0
+            e = (std_dev(j) / nominal_value(j)) if j is not None else 0
         except ZeroDivisionError:
             e = nan
         return e
+
+    @cached_property
+    def _get_j(self):
+        j = self.analyses[0].j
+        return j
 
     @cached_property
     def _get_isochron_age(self):
@@ -229,15 +235,19 @@ class AnalysisGroup(HasTraits):
         if kind == MSEM:
             e *= mswd ** 0.5 if mswd > 1 else 1
 
-        if 'age' in self.attribute:
-            if include_j_error is None:
-                include_j_error = self.include_j_error_in_mean
-
-            if include_j_error:
-                try:
-                    e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-                except ZeroDivisionError:
-                    return nan
+        # print('iiiii', kind, mswd, e, v, e/v, self.j_err)
+        # if 'age' in self.attribute:
+        #     if include_j_error is None:
+        #         include_j_error = self.include_j_error_in_mean
+        #
+        #     if include_j_error:
+        #         try:
+        #             # e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+        #             # e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+        #
+        #         except ZeroDivisionError:
+        #             return nan
+        # print('aoutasd', e)
         return e
 
     @cached_property
@@ -315,13 +325,13 @@ class AnalysisGroup(HasTraits):
         return calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
 
     def _calculate_isochron_age(self):
-        args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
+        args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,
+                                  include_j_err=self.include_j_error_in_mean)
         if args:
             age = args[0]
             reg = args[1]
             v, e = nominal_value(age), std_dev(age)
-            e = self._modify_error(v, e, self.isochron_age_error_kind,
-                                   mswd=reg.mswd)
+            e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
 
             return ufloat(v, e)
 
