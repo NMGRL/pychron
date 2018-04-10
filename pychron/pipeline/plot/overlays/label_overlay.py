@@ -99,9 +99,9 @@ class SpectrumLabelOverlay(AbstractOverlay):
             ys = comp.value.get_data()
             es = comp.errors
             n = len(xs)
-            xs = xs.reshape(n / 2, 2)
-            ys = ys.reshape(n / 2, 2)
-            es = es.reshape(n / 2, 2)
+            xs = xs.reshape(n // 2, 2)
+            ys = ys.reshape(n // 2, 2)
+            es = es.reshape(n // 2, 2)
 
             if self.use_user_color:
                 color = self.user_color
