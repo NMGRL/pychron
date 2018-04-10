@@ -86,6 +86,7 @@ class BrowserModel(BaseBrowserModel):
 
     def activated(self, force=False):
         self.reattach()
+
         self.activate_browser(force)
 
     def activate_browser(self, force=False):
@@ -244,12 +245,12 @@ class BrowserModel(BaseBrowserModel):
     def _selected_samples_changed_hook(self, new):
         pass
 
-    def _get_manager(self):
-        if self.use_workspace:
-            obj = self.workspace.index_db
-        else:
-            obj = self.manager
-        return obj
+    # def _get_manager(self):
+    #     if self.use_workspace:
+    #         obj = self.workspace.index_db
+    #     else:
+    #         obj = self.manager
+    #     return obj
 
     # def _selected_repositories_changed_hook(self, names):
     #     self.irradiations = []
@@ -294,22 +295,7 @@ class BrowserModel(BaseBrowserModel):
         #         es = [e.name for e in self.selected_repositories]
         if self.project_enabled:
             if self.selected_projects:
-                rs, ps = partition([p.name for p in self.selected_projects], lambda x: x.startswith('RECENT'))
-                ps, rs = list(ps), list(rs)
-                if rs:
-                    hpost = datetime.now()
-                    lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-                    self._low_post = lpost
-
-                    self.use_high_post = False
-                    self.use_low_post = True
-
-                    self.trait_property_changed('low_post', self._low_post)
-                    for ri in rs:
-                        mi = extract_mass_spectrometer_name(ri)
-                        if mi not in ms:
-                            ms.append(mi)
-                            #     self._recent_mass_spectrometers.append(mi)
+                ps = [p.name for p in self.selected_projects]
 
         at = self.analysis_include_types if self.use_analysis_type_filtering else None
 

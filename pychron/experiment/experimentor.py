@@ -156,9 +156,11 @@ class Experimentor(DVCIrradiationable):
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad, level, pos = info
+                        project, pi, sample, material, irrad, level, pos = info
 
-                        cache[ln] = dict(project=project or '', sample=sample or '',
+                        cache[ln] = dict(project=project or '',
+                                         principal_investigator=pi or '',
+                                         sample=sample or '',
                                          material=material or '',
                                          irradiation=irrad or '',
                                          irradiation_level=level or '',

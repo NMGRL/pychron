@@ -246,7 +246,6 @@ DEFAULT_INITIALIZATION = '''<root>
             <plugin enabled="false">Entry</plugin>
             <plugin enabled="false">ArArConstants</plugin>
             <plugin enabled="false">Loading</plugin>
-            <plugin enabled="false">Workspace</plugin>
             <plugin enabled="false">LabBook</plugin>
             <plugin enabled="false">DashboardServer</plugin>
             <plugin enabled="false">DashboardClient</plugin>

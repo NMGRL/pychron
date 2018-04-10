@@ -33,12 +33,14 @@ from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
+from pychron.database.tasks.connection_preferences import ConnectionFavoriteItem
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
 from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repositories
 from pychron.dvc.meta_repo import MetaRepo, Production
+from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.git.hosts import IGitHost, CredentialException
@@ -141,6 +143,10 @@ class DVC(Loggable):
     pulled_repositories = Set
     selected_repositories = List
 
+    data_sources = List
+    data_source = Instance(DVCConnectionItem)
+    favorites = List
+
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
 
@@ -222,67 +228,67 @@ class DVC(Loggable):
                                     timestamp=now)
         return True
 
-    def sync_metadata(self, irradiation, level, dry_run=False):
-        self.info('sync metadata {},{}'.format(irradiation, level))
-        db = self.db
-        with db.session_ctx():
-            ans = db.get_analyses_by_level(irradiation, level)
-
-            def key(x):
-                return x.repository_identifier
-
-            def ikey(x):
-                return x.identifier
-
-            for reponame, ans in groupby(ans, key=key):
-                repo = self._get_repository(reponame, as_current=False)
-                ps = []
-                for ln, anss in groupby(sorted(ans, key=ikey), key=ikey):
-                    ip = db.get_identifier(ln)
-                    dblevel = ip.level
-                    irrad = dblevel.irradiation.name
-                    level = dblevel.name
-                    pos = ip.position
-
-                    for ai in ans:
-                        p = analysis_path(ai.record_id, reponame)
-
-                        try:
-                            obj = dvc_load(p)
-                        except ValueError:
-                            print('skipping {}'.format(p))
-
-                        sample = ip.sample.name
-                        project = ip.sample.project.name
-                        material = ip.sample.material.name
-                        changed = False
-                        for attr, v in (('sample', sample),
-                                        ('project', project),
-                                        ('material', material),
-                                        ('irradiation', irrad),
-                                        ('irradiation_level', level),
-                                        ('irradiation_position', pos)):
-                            ov = obj.get(attr)
-                            if ov != v:
-                                print('{:<20s} repo={} db={}'.format(attr, ov, v))
-                                obj[attr] = v
-                                changed = True
-
-                        if changed:
-                            print('{}'.format(p))
-                            ps.append(p)
-                            if not dry_run:
-                                dvc_dump(obj, p)
-
-                if ps and not dry_run:
-                    repo.pull()
-                    self.debug('edited paths')
-                    for p in ps:
-                        self.debug(p)
-
-                    repo.add_paths(ps)
-                    repo.commit('<SYNC> Synced repository with database {}'.format(db.datasource_url))
-                    repo.push()
+    # def sync_metadata(self, irradiation, level, dry_run=False):
+    #     self.info('sync metadata {},{}'.format(irradiation, level))
+    #     db = self.db
+    #     with db.session_ctx():
+    #         ans = db.get_analyses_by_level(irradiation, level)
+    #
+    #         def key(x):
+    #             return x.repository_identifier
+    #
+    #         def ikey(x):
+    #             return x.identifier
+    #
+    #         for reponame, ans in groupby(ans, key=key):
+    #             repo = self._get_repository(reponame, as_current=False)
+    #             ps = []
+    #             for ln, anss in groupby(sorted(ans, key=ikey), key=ikey):
+    #                 ip = db.get_identifier(ln)
+    #                 dblevel = ip.level
+    #                 irrad = dblevel.irradiation.name
+    #                 level = dblevel.name
+    #                 pos = ip.position
+    #
+    #                 for ai in ans:
+    #                     p = analysis_path(ai.record_id, reponame)
+    #
+    #                     try:
+    #                         obj = dvc_load(p)
+    #                     except ValueError:
+    #                         print('skipping {}'.format(p))
+    #
+    #                     sample = ip.sample.name
+    #                     project = ip.sample.project.name
+    #                     material = ip.sample.material.name
+    #                     changed = False
+    #                     for attr, v in (('sample', sample),
+    #                                     ('project', project),
+    #                                     ('material', material),
+    #                                     ('irradiation', irrad),
+    #                                     ('irradiation_level', level),
+    #                                     ('irradiation_position', pos)):
+    #                         ov = obj.get(attr)
+    #                         if ov != v:
+    #                             print('{:<20s} repo={} db={}'.format(attr, ov, v))
+    #                             obj[attr] = v
+    #                             changed = True
+    #
+    #                     if changed:
+    #                         print('{}'.format(p))
+    #                         ps.append(p)
+    #                         if not dry_run:
+    #                             dvc_dump(obj, p)
+    #
+    #             if ps and not dry_run:
+    #                 repo.pull()
+    #                 self.debug('edited paths')
+    #                 for p in ps:
+    #                     self.debug(p)
+    #
+    #                 repo.add_paths(ps)
+    #                 repo.commit('<SYNC> Synced repository with database {}'.format(db.datasource_url))
+    #                 repo.push()
 
     def repository_db_sync(self, reponame, dry_run=False):
         self.info('sync db with repo={} dry_run={}'.format(reponame, dry_run))
@@ -771,6 +777,11 @@ class DVC(Loggable):
         repo = self._get_repository(repository)
         repo.commit(msg)
 
+    def repository_push(self, repository, *args, **kw):
+        self.debug('Pushing repository {}'.format(repository))
+        repo = self._get_repository(repository)
+        repo.push(*args, **kw)
+
     def remote_repositories(self):
         rs = []
         gs = self.application.get_services(IGitHost)
@@ -1150,6 +1161,40 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
+    def tag_items(self, tag, items, note=''):
+        key = lambda x: x.repository_identifier
+
+        with self.db.session_ctx() as sess:
+            for expid, ans in groupby(sorted(items, key=key), key=key):
+                self.sync_repo(expid)
+
+                cs = []
+                for it in ans:
+                    if not isinstance(it, (InterpretedAge, DVCAnalysis)):
+                        it = self.make_analysis(it)
+
+                    self.debug('setting {} tag= {}'.format(it.record_id, tag))
+                    if not isinstance(it, InterpretedAge):
+                        self.set_analysis_tag(it.uuid, tag)
+
+                    it.set_tag({'name': tag, 'note': note or ''})
+                    if self.update_tag(it):
+                        cs.append(it)
+                        # it.refresh_view()
+                sess.commit()
+
+                if cs:
+                    cc = [c.record_id for c in cs]
+                    if len(cc) > 1:
+                        cstr = '{} - {}'.format(cc[0], cc[-1])
+                    else:
+                        cstr = cc[0]
+
+                    self.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
+
+                    for ci in cs:
+                        ci.refresh_view()
+
     # private
     def _make_macrochron(self, ia):
         m = {'material': ia.material,
@@ -1295,15 +1340,40 @@ class DVC(Loggable):
 
     def _bind_preferences(self):
 
-        prefid = 'pychron.dvc'
-        for attr in ('meta_repo_dirname', 'meta_repo_name', 'organization', 'default_team'):
-            bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+        # prefid = 'pychron.dvc'
+        # for attr in ('meta_repo_dirname', 'meta_repo_name', 'organization', 'default_team'):
+        #     bind_preference(self, attr, '{}.{}'.format(prefid, attr))
 
-        prefid = 'pychron.dvc.db'
-        for attr in ('username', 'password', 'name', 'host', 'kind', 'path'):
-            bind_preference(self.db, attr, '{}.{}'.format(prefid, attr))
-
+        prefid = 'pychron.dvc.connection'
+        bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
+        self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+
+    def _favorites_changed(self, items):
+        try:
+            ds = [DVCConnectionItem(attrs=f, load_names=False) for f in items]
+            self.data_sources = [d for d in ds if d.enabled]
+
+        except BaseException:
+            pass
+
+        if self.data_sources:
+            self.data_source = next((d for d in self.data_sources if d.default and d.enabled), None)
+
+    def _data_source_changed(self, old, new):
+        self.debug('data source changed. {}, db={}'.format(new, id(self.db)))
+        if new is not None:
+            for attr in ('username', 'password', 'host', 'kind', 'path'):
+                setattr(self.db, attr, getattr(new, attr))
+
+            self.db.name = new.dbname
+            self.organization = new.organization
+            self.meta_repo_name = new.meta_repo_name
+            self.meta_repo_dirname = new.meta_repo_dir
+            self.db.reset_connection()
+            if old:
+                self.db.connect()
+                self.db.create_session()
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

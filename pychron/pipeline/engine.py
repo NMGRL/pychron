@@ -287,18 +287,19 @@ class PipelineEngine(Loggable):
         self.debug('save analysis group')
 
         from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
-        ans = self.selected.unknowns
+
+        ans = self.selected_unknowns
+        if not ans:
+            ans = self.selected_node.unknowns
         projects = {a.project for a in ans}
-        a = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p.name) for i, p in enumerate(projects)})
+        agv = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p) for i, p in enumerate(projects)})
 
-        project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
+        project = tuple({a.project for a in ans})[0]
+        agv.project = project
 
-        project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
-        a.project = project
-
-        info = a.edit_traits(kind='livemodal')
+        info = agv.edit_traits(kind='livemodal')
         if info.result:
-            self.db.add_analysis_group(a.name, a.project.name, a.project.principal_investigator, ans)
+            agv.save(ans, self.dvc)
 
     def unknowns_clear_all_grouping(self):
         self._set_grouping(self.selected.unknowns, 0)

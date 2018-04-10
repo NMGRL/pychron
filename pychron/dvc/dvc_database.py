@@ -39,6 +39,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl
+from pychron.globals import globalv
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
 import six
 from six.moves import map
@@ -303,11 +304,13 @@ class DVCDatabase(DatabaseAdapter):
                 self.warning('{} is not an identifier in the database'.format(li))
                 return None
             else:
-                project, sample, material, irradiation, level, pos = '', '', '', '', '', ''
+                project, pi, sample, material, irradiation, level, pos = '', '', '', '', '', '', ''
                 sample = dbpos.sample
                 if sample:
                     if sample.project:
                         project = sample.project.name
+                        if sample.project.principal_investigator:
+                            pi = sample.project.principal_investigator.name
 
                     if sample.material:
                         material = sample.material.name
@@ -319,7 +322,7 @@ class DVCDatabase(DatabaseAdapter):
                 # irradiation = '{} {}:{}'.format(level.irradiation.name,
                 #                                 level.name, dbpos.position)
 
-            return project, sample, material, irradiation, level, pos
+            return project, pi, sample, material, irradiation, level, pos
 
     def set_analysis_tag(self, uuid, tagname):
         with self.session_ctx() as sess:
@@ -329,7 +332,7 @@ class DVCDatabase(DatabaseAdapter):
             change.tag = tagname
             change.user = self.save_username
             sess.add(change)
-            sess.commit()
+            # sess.commit()
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,
@@ -533,18 +536,22 @@ class DVCDatabase(DatabaseAdapter):
             a = UserTbl(name=name, **kw)
             return self._add_item(a)
 
-    def add_analysis_group(self, name, project, pi, ans):
+    def add_analysis_group(self, ans, name, project, pi=None):
         with self.session_ctx():
             project = self.get_project(project, pi)
-            grp = AnalysisGroupTbl(name=name)
+            grp = AnalysisGroupTbl(name=name, user=globalv.username)
             grp.project = project
             self._add_item(grp)
+            self.add_analyses_to_group_set(grp, ans)
 
-            for a in ans:
-                a = self.get_analysis_uuid(a.uuid)
+    def add_analyses_to_group_set(self, grp, ans):
+        aids = [s.analysis.id for s in grp.sets]
+        for a in ans:
+            a = self.get_analysis_uuid(a.uuid)
+            if a.id not in aids:
                 s = AnalysisGroupSetTbl()
-                s.group = grp
                 s.analysis = a
+                s.group = grp
                 self._add_item(s)
 
     def add_analysis_result(self, analysis, iso):
@@ -1099,6 +1106,15 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             return self._query_first(q, verbose_query=False)
 
+    def get_analysis_groups_by_name(self, name, project):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisGroupTbl)
+            q = q.join(ProjectTbl)
+            q = q.filter(AnalysisGroupTbl.name == name)
+            q = q.filter(ProjectTbl.name == project)
+
+            return self._query_all(q)
+
     def get_database_version(self, **kw):
         with self.session_ctx() as sess:
             # q = self._retrieve_item(VersionTbl, 'version', )
@@ -1322,7 +1338,7 @@ class DVCDatabase(DatabaseAdapter):
                        loads=None,
                        filter_non_run=False):
 
-        self.debug('------- Get Labnumbers -------')
+        self.debug('------- Get Labnumbers {}-------'.format(id(self)))
         self.debug('------- samples: {}'.format(samples))
         self.debug('------- principal_investigators: {}'.format(principal_investigators))
         self.debug('------- projects: {}'.format(projects))
@@ -2026,7 +2042,9 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             for si in g.sets:
                 sess.delete(si)
+
             sess.delete(g)
+            sess.commit()
 
     # ============================================================
     # Sample Prep

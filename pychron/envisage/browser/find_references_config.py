@@ -51,7 +51,7 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
 
     @property
     def formatted_analysis_types(self):
-        return list(map(formatter, self.analysis_types))
+        return [formatter(a) for a in self.analysis_types]
 
 
 class FindReferencesConfigView(Controller):

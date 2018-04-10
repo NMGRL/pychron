@@ -147,15 +147,17 @@ class PipelinePane(TraitsDockPane):
                                       visible_when='not object.enabled'),
                                Action(name='Disable Permanent',
                                       action='disable_permanent',
-                                      visible_when='object.enabled'))
+                                      visible_when='object.enabled'),
+                               name='Enable/Disable')
 
         def menu_factory(*actions):
-            return MenuManager(Action(name='Enable',
-                                      action='enable',
-                                      visible_when='not object.enabled'),
-                               Action(name='Disable',
-                                      action='disable',
-                                      visible_when='object.enabled'),
+            return MenuManager(
+                               # Action(name='Enable',
+                               #        action='enable',
+                               #        visible_when='not object.enabled'),
+                               # Action(name='Disable',
+                               #        action='disable',
+                               #        visible_when='object.enabled'),
                                Action(name='Configure', action='configure'),
                                Action(name='Enable Auto Configure',
                                       action='toggle_skip_configure',
@@ -244,17 +246,21 @@ class PipelinePane(TraitsDockPane):
         # ------------------------------------------------
 
         def data_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory(), find_menu_factory())
+            return menu_factory(enable_disable_menu_factory(), add_menu_factory(), fit_menu_factory(),
+                                chain_menu_factory(), find_menu_factory())
 
         def filter_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory())
+            return menu_factory(enable_disable_menu_factory(), add_menu_factory(), fit_menu_factory(),
+                                chain_menu_factory())
 
         def figure_menu_factory():
-            return menu_factory(add_menu_factory(), fit_menu_factory(), chain_menu_factory(), save_menu_factory())
+            return menu_factory(enable_disable_menu_factory(), add_menu_factory(), fit_menu_factory(),
+                                chain_menu_factory(), save_menu_factory())
 
         def ffind_menu_factory():
             return menu_factory(Action(name='Review',
                                        action='review_node'),
+                                enable_disable_menu_factory(),
                                 add_menu_factory(), fit_menu_factory())
 
         # def default_menu():
@@ -447,6 +453,7 @@ class AnalysesPane(TraitsDockPane):
                               editor=TabularEditor(adapter=UnknownsAdapter(),
                                                    update='refresh_table_needed',
                                                    multi_select=True,
+                                                   column_clicked='column_clicked',
                                                    # drag_external=True,
                                                    # drop_factory=self.model.drop_factory,
                                                    dclicked='dclicked_unknowns',

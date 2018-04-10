@@ -357,6 +357,25 @@ class BrowserSampleView(BaseBrowserSampleView):
     def delete_analysis_group(self, info, obj):
         obj.delete_analysis_group()
 
+    def tag_ok(self, info, obj):
+        self._set_tags(info.object, 'ok')
+
+    def tag_omit(self, info, obj):
+        self._set_tags(info.object, 'omit')
+
+    def tag_invalid(self, info, obj):
+        self._set_tags(info.object, 'invalid')
+
+    def tag_skip(self, info, obj):
+        self._set_tags(info.object, 'skip')
+
+    def _set_tags(self, obj, tag):
+        items = obj.set_tags(tag)
+        if items:
+            obj.analysis_table.set_tags(tag, items)
+            obj.analysis_table.remove_invalid()
+            obj.analysis_table.refresh_needed = True
+
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):

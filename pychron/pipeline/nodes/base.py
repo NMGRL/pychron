@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Bool, Any, List
+from traits.api import HasTraits, Bool, Any, List, Str
 from traitsui.api import View
 import six
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.column_sorter_mixin import ColumnSorterMixin
 
 
 class BaseNode(HasTraits):
@@ -44,6 +45,8 @@ class BaseNode(HasTraits):
     references = List
     required = List
     index = -1
+
+    skip_meaning = Str
 
     def clear_data(self):
         self.unknowns = []
@@ -159,4 +162,7 @@ class BaseNode(HasTraits):
     def __str__(self):
         return '{}<{}>'.format(self.name, self.__class__.__name__)
 
+
+class SortableNode(BaseNode, ColumnSorterMixin):
+    pass
 # ============= EOF =============================================
