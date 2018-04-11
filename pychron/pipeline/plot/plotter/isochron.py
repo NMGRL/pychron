@@ -32,7 +32,6 @@ from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
-from pychron.processing.argon_calculations import extract_isochron_xy
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 from six.moves import zip
 
@@ -285,11 +284,11 @@ class InverseIsochron(Isochron):
 
         ag = self.analysis_group
 
-        mswd = ag.mswd
-        n = ag.nanalyses
-
         age = ag.isochron_age
         a = ag.isochron_4036
+
+        n = ag.nanalyses
+        mswd = ag.isochron_regressor.mswd
 
         intercept, err = nominal_value(a), std_dev(a)
 

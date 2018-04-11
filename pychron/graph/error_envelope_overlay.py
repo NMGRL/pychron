@@ -16,7 +16,6 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.lineplot import LinePlot
 from enable.colors import black_color_trait
 from traits.api import Array
 
@@ -76,8 +75,15 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
             upts, lpts = self.get_screen_points()
             gc.set_line_dash((5, 5))
             gc.set_stroke_color(self.line_color_)
-            LinePlot._render_normal(gc, upts, '')
-            LinePlot._render_normal(gc, lpts, '')
+            self._render_line(gc, upts)
+            self._render_line(gc, lpts)
+
+    def _render_line(self, gc, points):
+        for ary in points:
+            if len(ary) > 0:
+                gc.begin_path()
+                gc.lines(ary)
+                gc.stroke_path()
 
     def _downsample(self):
         if not self._screen_cache_valid:
