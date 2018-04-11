@@ -40,6 +40,8 @@ def view(title):
                        tooltip='List of available plot options'),
                   icon_button_editor('controller.save_options', 'disk',
                                      tooltip='Save changes to options'),
+                  icon_button_editor('controller.save_as_options', 'save_as',
+                                     tooltip='Save options with a new name'),
                   icon_button_editor('controller.add_options',
                                      'add',
                                      tooltip='Add new plot options'),

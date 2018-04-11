@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import os
+import shutil
 
 import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
@@ -119,8 +120,11 @@ class OptionsManager(Loggable):
         if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
             p = os.path.join(self.persistence_root, '{}.p'.format(self.selected))
             os.remove(p)
-            self._load_names()
-            self._initialize()
+            self.refresh()
+
+    def refresh(self):
+        self._load_names()
+        self._initialize()
 
     def save_selected(self):
         if not os.path.isdir(self.persistence_root):
@@ -133,6 +137,16 @@ class OptionsManager(Loggable):
         if self.selected:
             with open(self.selected_options_path, 'wb') as wfile:
                 pickle.dump(self.selected, wfile)
+
+    def save_selected_as(self):
+        name = self.new_name
+
+        with open(os.path.join(self.persistence_root, '{}.p'.format(name)), 'wb') as wfile:
+            pickle.dump(self.selected_options, wfile)
+
+        self.refresh()
+        self.selected = name
+        self.save_selected()
 
     def save(self, name=None, obj=None):
         # dump the default plotter options
@@ -363,6 +377,7 @@ class OptionsController(Controller):
     delete_options = Button
     add_options = Button
     save_options = Button
+    save_as_options = Button
     factory_default = Button
 
     def closed(self, info, is_ok):
@@ -382,6 +397,14 @@ class OptionsController(Controller):
 
     def controller_save_options_changed(self, info):
         self.model.save()
+
+    def controller_save_as_options_changed(self, info):
+        info = self.edit_traits(view=View(Item('new_name', label='Name'),
+                                          title='New Options',
+                                          kind='livemodal',
+                                          buttons=['OK', 'Cancel']))
+        if info.result:
+            self.model.save_selected_as()
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
