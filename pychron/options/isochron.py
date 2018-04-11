@@ -21,7 +21,7 @@ from traits.api import Str, Bool, Float, Property, List, Color, Enum
 # ============= local library imports  ==========================
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import FIT_ERROR_TYPES
+from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS
 
 
 class IsochronOptions(AgeOptions):
@@ -43,6 +43,9 @@ class IsochronOptions(AgeOptions):
 class InverseIsochronOptions(IsochronOptions):
     error_calc_method = Enum(*FIT_ERROR_TYPES)
     fill_ellipses = Bool(False)
+    ellipse_kind = Enum(ELLIPSE_KINDS)
+
+    show_results_info = Bool(True)
     show_nominal_intercept = Bool(False)
     nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)
     nominal_intercept_value = Property(Float, depends_on='_nominal_intercept_value')
@@ -52,14 +55,17 @@ class InverseIsochronOptions(IsochronOptions):
     inset_marker_size = Float(1.0)
     inset_marker_color = Color('black')
     regressor_kind = Enum('Reed', 'NewYork')
-    
+
     def _set_nominal_intercept_value(self, v):
+        if self.invert_nominal_intercept:
+            v = 1/v
+
         self._nominal_intercept_value = v
 
     def _get_nominal_intercept_value(self):
         v = self._nominal_intercept_value
         if self.invert_nominal_intercept:
-            v **= -1
+            v = 1/v
         return v
 
     def _get_subview(self, name):

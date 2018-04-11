@@ -16,11 +16,8 @@
 
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 from chaco.api import AbstractOverlay
-from enable.colors import ColorTrait
-from traits.api import Bool
+from traits.api import Bool, Enum
 # ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
@@ -33,11 +30,10 @@ from six.moves import zip
 # 5) To create a 95% confidence ellipse from the 1s error ellipse, we must enlarge it by a factor of 2.4477.
 from traits.traits import Color
 
-SCALE_FACTOR = 2.4477
-# SCALE_FACTOR = 1
+from pychron.pychron_constants import ELLIPSE_KINDS, ELLIPSE_KIND_SCALE_FACTORS
 
 
-def error_ellipse(sx, sy, pxy, aspectratio=1):
+def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     """
         return  a, b axes and rotation
 
@@ -57,8 +53,8 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
     # else:
     #     a = mi_w ** 0.5
     #     b = ma_w ** 0.5
-
-    a, b = a * SCALE_FACTOR, b * SCALE_FACTOR
+    sf = ELLIPSE_KIND_SCALE_FACTORS.get(kind, 1)
+    a, b = a * sf, b * sf
     #        print aspectratio, dx, dy, width, height
     rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
 
@@ -67,6 +63,7 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
 
 class ErrorEllipseOverlay(AbstractOverlay):
     fill = Bool(True)
+    kind = Enum(ELLIPSE_KINDS)
 
     def overlay(self, component, gc, view_bounds=None, mode='normal'):
         """
@@ -98,13 +95,10 @@ class ErrorEllipseOverlay(AbstractOverlay):
         width = component.width
 
         aspectratio = (dy / height) / (dx / width)
-        # aspectratio=(height/width)
-        # aspectratio=(dy/dx)
-        # aspectratio=self.component.aspect_ratio
-        # aspectratio = 1
+
         try:
             for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
-                a, b, rot = error_ellipse(sx, sy, pxyi, aspectratio=aspectratio)
+                a, b, rot = error_ellipse(sx, sy, pxyi, self.kind, aspectratio=aspectratio)
                 with gc:
                     self._draw_ellipse(gc, component, cx, cy, a, b, rot)
 
@@ -170,7 +164,6 @@ if __name__ == '__main__':
     width = 1
     aspectratio = (dy / height) / (dx / width)
     rotation = math.degrees(0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox ** 2 - oy ** 2)))
-
 
 #
 # #        gc.begin_path()

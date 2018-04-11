@@ -329,7 +329,8 @@ class AnalysisGroup(HasTraits):
                                   include_j_err=self.include_j_error_in_mean)
         if args:
             age = args[0]
-            reg = args[1]
+            self.isochron_4036 = args[1]
+            reg = args[2]
             v, e = nominal_value(age), std_dev(age)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
 

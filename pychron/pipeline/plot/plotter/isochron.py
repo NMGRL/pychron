@@ -29,10 +29,11 @@ from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format
 from pychron.core.stats import validate_mswd
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
+from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.argon_calculations import extract_isochron_xy
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, SIGMA
 from six.moves import zip
 
 
@@ -119,7 +120,7 @@ class InverseIsochron(Isochron):
     # ===============================================================================
     def _plot_aux(self, title, vk, po, pid):
         ys, es = self._get_aux_plot_data(vk)
-        scatter = self._add_aux_plot(ys, title, vk, pid)
+        self._add_aux_plot(ys, title, vk, pid)
 
     def _add_plot(self, xs, ys, es, plotid, value_scale='linear'):
         pass
@@ -135,37 +136,18 @@ class InverseIsochron(Isochron):
         self._ref_age_scalar = refiso.arar_constants.age_scalar
         self._ref_age_units = refiso.arar_constants.age_units
 
-        # try:
-        # age, reg, data = calculate_isochron(analyses)
-        # except TypeError:
-        # return
-        ec = self.options.error_calc_method
-        self.analysis_group.isochron_age_error_kind = ec
+        self.analysis_group.isochron_age_error_kind = self.options.error_calc_method
         data = self.analysis_group.get_isochron_data()
 
-        _, reg, (xs, ys, xerrs, yerrs) = data
+        _, _, reg, (xs, ys, xerrs, yerrs) = data
         self._cached_data = data
         self._cached_reg = reg
 
         graph = self.graph
 
-        # u39 = u'\u00b3\u2079'
-        # u40 = u'\u2074\u2070'
-        # u36 = u'\u00b3\u2076'
-        # xtitle = u'{}Ar/{}Ar'.format(u39, u40)
-        # ytitle = u'{}Ar/{}Ar'.format(u36, u40)
-
-        # xtitle = '39Ar/40Ar'
-        # ytitle = '36Ar/40Ar'
         xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
         ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
-        # for axis in (plot.x_axis, plot.y_axis):
-        #     axis.title_font = 'courier 15'
 
-        # graph.set_x_title(xtitle, plotid=pid)
-        # graph.set_y_title(ytitle, plotid=pid)
-
-        # if '<sup>' in title or '<sub>' in title:
         self._set_ml_title(ytitle, pid, 'y')
         self._set_ml_title(xtitle, pid, 'x')
 
@@ -180,29 +162,22 @@ class InverseIsochron(Isochron):
                                        type='scatter',
                                        marker='circle',
                                        bind_id=self.group_id,
-                                       # selection_marker_size=5,
-                                       # selection_color='green',
                                        marker_size=2)
-        # self._scatter = scatter
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
                                  reg=reg,
                                  border_color=scatter.color,
-                                 fill=self.options.fill_ellipses)
+                                 fill=self.options.fill_ellipses,
+                                 kind=self.options.ellipse_kind)
         scatter.overlays.append(eo)
 
-        # mi, ma = graph.get_x_limits()
-
-        # ma = max(ma, max(xs))
-        # mi = min(mi, min(xs))
-        mi, ma = min(xs), max(xs)
+        ma = max(xs)
         self.xma = max(self.xma, ma)
-        self.xmi = min(self.xmi, mi)
+        self.xmi = min(self.xmi, min(xs))
 
-        # print len(xs),mi,ma
         mi = 0
-        rxs = linspace(mi, ma)
+        rxs = linspace(mi, ma * 1.1)
         rys = reg.predict(rxs)
 
         graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
@@ -221,13 +196,27 @@ class InverseIsochron(Isochron):
             self.ymis.append(ymi)
             self.ymas.append(yma)
 
-        # print 'isochron regressor error type {}'.format(reg.error_calc_type)
-
         lci, uci = reg.calculate_error_envelope(l.index.get_data())
         ee = ErrorEnvelopeOverlay(component=l,
                                   upper=uci, lower=lci)
         l.underlays.append(ee)
         l.error_envelope = ee
+
+        if self.group_id == 0:
+            if self.options.display_inset:
+                self._add_inset(plot, xs, ys, reg)
+
+            if self.options.show_nominal_intercept:
+                self._add_atm_overlay(plot)
+
+        graph.add_vertical_rule(0, color='black')
+        if self.options.show_results_info:
+            self._add_results_info(plot, text_color=scatter.color)
+        if self.options.show_info:
+            self._add_info(plot)
+
+        if po.show_labels:
+            self._add_point_labels(scatter)
 
         def ad(i, x, y, ai):
             a = ai.isotopes['Ar39'].get_interference_corrected_value()
@@ -243,27 +232,31 @@ class InverseIsochron(Isochron):
 
             return u'39Ar/40Ar = {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
-        if self.group_id == 0:
-            if self.options.display_inset:
-                self._add_inset(plot, xs, ys, reg)
-
-            if self.options.show_nominal_intercept:
-                self._add_atm_overlay(plot)
-
-        graph.add_vertical_rule(0, color='black')
-        self._add_info(plot, reg, text_color=scatter.color)
-
-        if po.show_labels:
-            self._add_point_labels(scatter)
-
         self._add_scatter_inspector(scatter, additional_info=ad)
-
-        # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
     # ===============================================================================
     # overlays
     # ===============================================================================
+    def _add_info(self, plot):
+        ts = []
+        if self.options.show_info:
+            m = self.options.regressor_kind
+            s = self.options.nsigma
+            es = self.options.ellipse_kind
+            ts.append(u'{} {}{}{} Data: {}{}'.format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es))
+
+        if self.options.show_error_type_info:
+            ts.append('Error Type: {}'.format(self.options.error_calc_method))
+
+        if ts:
+            pl = FlowPlotLabel(text='\n'.join(ts),
+                               overlay_position='inside top',
+                               hjustify='left',
+                               font=self.options.error_info_font,
+                               component=plot)
+            plot.overlays.append(pl)
+
     def _add_inset(self, plot, xs, ys, reg):
         opt = self.options
         insetp = InverseIsochronPointsInset(xs, ys,
@@ -305,36 +298,41 @@ class InverseIsochron(Isochron):
                                                  label=self.options.nominal_intercept_label,
                                                  value=v))
 
-    def _add_info(self, plot, reg, label=None, text_color='black'):
+    def _add_results_info(self, plot, label=None, text_color='black'):
         # intercept = reg.predict(0)
         # err = reg.get_intercept_error()
-        intercept = reg.intercept
-        err = reg.get_intercept_error()
+        # intercept = reg.intercept
+        # err = reg.get_intercept_error()
+        #
+        # mswd = reg.mswd
+        # n = reg.n
 
-        mswd = reg.mswd
-        n = reg.n
+        ag = self.analysis_group
+        ag.dirty = True
+
+        mswd = ag.mswd
+        n = ag.nanalyses
+
+        age = ag.isochron_age
+        a = ag.isochron_4036
+
+        intercept, err = nominal_value(a), std_dev(a)
 
         try:
             inv_intercept = intercept ** -1
             p = calc_percent_error(intercept, err, scale=1)
-            # print err, p, inv_intercept, intercept
-            err = perr = inv_intercept * p
-            # print perr
+            err = inv_intercept * p * self.options.nsigma
             mse = err * mswd ** 0.5
             v, e, p, mse = floatfmt(inv_intercept, s=3), floatfmt(err, s=3), floatfmt(p * 100, n=2), floatfmt(mse, s=3)
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
-        sample_line = u'{}({})'.format(self.analysis_group.identifier, self.analysis_group.sample)
+        sample_line = u'{}({})'.format(ag.identifier, ag.sample)
         ratio_line = u'Ar40/Ar36= {} {}{} ({}%) mse= {}'.format(v, PLUSMINUS, e, p, mse)
 
-        u = self._ref_age_units
-
-        self.analysis_group.dirty = True
-        age = self.analysis_group.isochron_age
-
         v = nominal_value(age)
-        e = std_dev(age)
+        e = std_dev(age) * self.options.nsigma
+
         p = format_percent_error(v, e)
 
         mse_age = e * mswd ** 0.5
@@ -343,8 +341,8 @@ class InverseIsochron(Isochron):
         mswd = '{:0.2f}'.format(mswd)
         if not valid:
             mswd = '*{}'.format(mswd)
-            # n = len([ai for ai in self.analyses if ai.temp_status == 0])
-        # mswd = 'NaN'
+
+        u = self._ref_age_units
         age_line = u'Age= {} {}{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
                                                             PLUSMINUS,
                                                             floatfmt(e, n=4, s=3), p, u,
@@ -373,27 +371,26 @@ class InverseIsochron(Isochron):
         label.request_redraw()
 
     def replot(self):
-
         # self.suppress = True
-
         # om = self._get_omitted(self.sorted_analyses)
-
-        self._rebuild_iso([])
+        self._rebuild_iso()
         # self.suppress = False
+        pass
 
-    def _rebuild_iso(self, sel):
+    def _rebuild_iso(self, sel=None):
         # print sel
-        g = self.graph
-        ss = [p.plots[pp][0] for p in g.plots
-              for pp in p.plots
-              if pp == 'data{}'.format(self.group_id)]
+        if sel:
+            g = self.graph
+            ss = [p.plots[pp][0] for p in g.plots
+                  for pp in p.plots
+                  if pp == 'data{}'.format(self.group_id)]
 
-        self._set_renderer_selection(ss, sel)
+            self._set_renderer_selection(ss, sel)
 
         if self._cached_data:
             reg = self._cached_reg
 
-            reg.user_excluded = sel
+            # reg.user_excluded = sel
             reg.dirty = True
             reg.error_calc_type = self.options.error_calc_method
             reg.calculate()
@@ -407,7 +404,6 @@ class InverseIsochron(Isochron):
 
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
-            # print fit.value_range.low_setting, fit.value_range.high_setting
 
             fit.error_envelope.invalidate()
 
@@ -416,7 +412,7 @@ class InverseIsochron(Isochron):
             fit.error_envelope.upper = uci
 
             if self._plot_label:
-                self._add_info(self.graph.plots[0], reg, label=self._plot_label)
+                self._add_results_info(self.graph.plots[0], label=self._plot_label)
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
@@ -432,95 +428,94 @@ class InverseIsochron(Isochron):
     # ===============================================================================
     # utils
     # ===============================================================================
-    def max_x(self, *args):
-        xx, yy = extract_isochron_xy(self.analyses)
-        try:
-            return max([ai.nominal_value + ai.std_dev
-                        for ai in xx])
-        except (AttributeError, ValueError):
-            return 0
-
-    def min_x(self, *args):
-        xx, yy = extract_isochron_xy(self.analyses)
-        try:
-            return min([ai.nominal_value - ai.std_dev
-                        for ai in xx])
-        except (AttributeError, ValueError):
-            return 0
-
     def _add_aux_plot(self, ys, title, vk, pid, **kw):
         graph = self.graph
         graph.set_y_title(title,
                           plotid=pid)
 
         xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
-        s = self._add_plot(xs, ys, es, pid, **kw)
-        return s
+        self._add_plot(xs, ys, es, pid, **kw)
 
-        # def _get_age_errors(self, ans):
-        # ages, errors = zip(*[(ai.age.nominal_value,
-        # ai.age.std_dev)
-        # for ai in self.sorted_analyses])
-        # return array(ages), array(errors)
+# ============= EOF =============================================
+# def max_x(self, *args):
+#     xx, yy = extract_isochron_xy(self.analyses)
+#     try:
+#         return max([ai.nominal_value + ai.std_dev
+#                     for ai in xx])
+#     except (AttributeError, ValueError):
+#         return 0
+#
+# def min_x(self, *args):
+#     xx, yy = extract_isochron_xy(self.analyses)
+#     try:
+#         return min([ai.nominal_value - ai.std_dev
+#                     for ai in xx])
+#     except (AttributeError, ValueError):
+#         return 0
+# def _get_age_errors(self, ans):
+# ages, errors = zip(*[(ai.age.nominal_value,
+# ai.age.std_dev)
+# for ai in self.sorted_analyses])
+# return array(ages), array(errors)
 
-        # def _calculate_stats(self, ages, errors, xs, ys):
-        #    mswd, valid_mswd, n = self._get_mswd(ages, errors)
-        #    #         mswd = calculate_mswd(ages, errors)
-        #    #         valid_mswd = validate_mswd(mswd, len(ages))
-        #    if self.options.mean_calculation_kind == 'kernel':
-        #        wm, we = 0, 0
-        #        delta = 1
-        #        maxs, _mins = find_peaks(ys, delta, xs)
-        #        wm = max(maxs, axis=1)[0]
-        #    else:
-        #        wm, we = calculate_weighted_mean(ages, errors)
-        #        we = self._calc_error(we, mswd)
-        #
-        #    return wm, we, mswd, valid_mswd
+# def _calculate_stats(self, ages, errors, xs, ys):
+#    mswd, valid_mswd, n = self._get_mswd(ages, errors)
+#    #         mswd = calculate_mswd(ages, errors)
+#    #         valid_mswd = validate_mswd(mswd, len(ages))
+#    if self.options.mean_calculation_kind == 'kernel':
+#        wm, we = 0, 0
+#        delta = 1
+#        maxs, _mins = find_peaks(ys, delta, xs)
+#        wm = max(maxs, axis=1)[0]
+#    else:
+#        wm, we = calculate_weighted_mean(ages, errors)
+#        we = self._calc_error(we, mswd)
+#
+#    return wm, we, mswd, valid_mswd
 
-        # def _calc_error(self, we, mswd):
-        #    ec = self.options.error_calc_method
-        #    n = self.options.nsigma
-        #    if ec == 'SEM':
-        #        a = 1
-        #    elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-        #        a = 1
-        #        if mswd > 1:
-        #            a = mswd ** 0.5
-        #    return we * a * n
-        # def _calculate_individual_ages(self, include_j_err=False):
-        # from numpy import polyfit
-        # reg=ReedYorkRegressor()
-        # def func(ai):
-        #    a40,a39,a36=ai.Ar40, ai.Ar39, ai.Ar36
-        #    x,y=a39/a40, a36/a40
-        #
-        #    #x,y=x.nominal_value, y.nominal_value
-        #    #calculate fit with atmosphere
-        #    #x0,y0=0, 1/295.5
-        #    #m,b=polyfit([x,x0],[y,y0], 1)
-        #
-        #    xs=[0,x.nominal_value]
-        #    xserr=[0, x.std_dev]
-        #    ys=[1/295.5, y.nominal_value]
-        #    yserr=[0, y.std_dev]
-        #
-        #    print xs,ys
-        #    reg.trait_set(xs=xs, ys=ys, xserr=xserr, yserr=yserr)
-        #    reg.calculate()
-        #
-        #    R = ufloat(reg.x_intercept, reg.x_intercept_error)
-        #    print R
-        #    #inverse x_intercept
-        #    #R=(m/-b)
-        #    j=ai.j
-        #    if not include_j_err:
-        #        j=j.nominal_value
-        #
-        #    age=age_equation(j, R**-1, arar_constants=ai.arar_constants)
-        #    return age.nominal_value, age.std_dev
-        #
-        # return zip(*[func(aa) for aa in self.analyses])
+# def _calc_error(self, we, mswd):
+#    ec = self.options.error_calc_method
+#    n = self.options.nsigma
+#    if ec == 'SEM':
+#        a = 1
+#    elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+#        a = 1
+#        if mswd > 1:
+#            a = mswd ** 0.5
+#    return we * a * n
+# def _calculate_individual_ages(self, include_j_err=False):
+# from numpy import polyfit
+# reg=ReedYorkRegressor()
+# def func(ai):
+#    a40,a39,a36=ai.Ar40, ai.Ar39, ai.Ar36
+#    x,y=a39/a40, a36/a40
+#
+#    #x,y=x.nominal_value, y.nominal_value
+#    #calculate fit with atmosphere
+#    #x0,y0=0, 1/295.5
+#    #m,b=polyfit([x,x0],[y,y0], 1)
+#
+#    xs=[0,x.nominal_value]
+#    xserr=[0, x.std_dev]
+#    ys=[1/295.5, y.nominal_value]
+#    yserr=[0, y.std_dev]
+#
+#    print xs,ys
+#    reg.trait_set(xs=xs, ys=ys, xserr=xserr, yserr=yserr)
+#    reg.calculate()
+#
+#    R = ufloat(reg.x_intercept, reg.x_intercept_error)
+#    print R
+#    #inverse x_intercept
+#    #R=(m/-b)
+#    j=ai.j
+#    if not include_j_err:
+#        j=j.nominal_value
+#
+#    age=age_equation(j, R**-1, arar_constants=ai.arar_constants)
+#    return age.nominal_value, age.std_dev
+#
+# return zip(*[func(aa) for aa in self.analyses])
 
 # ===============================================================================
 # labels
@@ -530,5 +525,3 @@ class InverseIsochron(Isochron):
 # error *= self.options.nsigma
 # txt = self._build_label_text(age, error, *args)
 # return 'Integrated Age= {}'.format(txt)
-
-# ============= EOF =============================================

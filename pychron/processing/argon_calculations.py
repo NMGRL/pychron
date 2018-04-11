@@ -32,22 +32,6 @@ from six.moves import range
 from six.moves import zip
 
 
-# def calculate_F_ratio(m4039, m3739, m3639, pr):
-#     """
-#     required ratios
-#     (40/39)m
-#     (36/39)m
-#     (37/39)m
-#
-#
-#     """
-#
-#     atm4036 = 295.5
-#     n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
-#     d = 1 - pr.get('ca3937') * m3739
-#     return n / d - pr.get('k4039')
-
-
 def extract_isochron_xy(analyses):
     ans = [(ai.get_interference_corrected_value('Ar39'),
             ai.get_interference_corrected_value('Ar36'),
@@ -61,7 +45,7 @@ def extract_isochron_xy(analyses):
     except ZeroDivisionError:
         return
 
-    return xx, yy
+    return xx, yy, a39, a36, a40
 
 
 def unpack_value_error(xx):
@@ -70,24 +54,17 @@ def unpack_value_error(xx):
 
 def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=True):
     ref = analyses[0]
-    ans = [(ai.get_interference_corrected_value('Ar39'),
-            ai.get_interference_corrected_value('Ar36'),
-            ai.get_interference_corrected_value('Ar40'))
-           for ai in analyses]
-
-    a39, a36, a40 = array(ans).T
-    try:
-        xx = a39 / a40
-        yy = a36 / a40
-    except ZeroDivisionError:
+    args = extract_isochron_xy(analyses)
+    if args is None:
         return
+    xx, yy, a39, a36, a40 = args
 
-    xs, xerrs = unpack_value_error(xx)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx])
-    ys, yerrs = unpack_value_error(yy)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in yy])
+    xs, xerrs = unpack_value_error(xx)
+    ys, yerrs = unpack_value_error(yy)
 
-    xds, xdes = unpack_value_error(a40)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a40])
-    yns, ynes = unpack_value_error(a36)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a36])
-    xns, xnes = unpack_value_error(a39)  # zip(*[(nominal_value(xi), std_dev(xi)) for xi in a39])
+    xds, xdes = unpack_value_error(a40)
+    yns, ynes = unpack_value_error(a36)
+    xns, xnes = unpack_value_error(a39)
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
                               xds, xdes, yns, ynes, xns, xnes)
@@ -99,16 +76,9 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=T
     regx.error_calc_type = error_calc_kind
     reg.error_calc_type = error_calc_kind
 
-    # xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
-    # # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
-
-    xint = reg.x_intercept
-
+    yint = ufloat(reg.get_intercept(), reg.get_intercept_error())
     try:
-        r = xint
-        xint_err = regx.get_intercept_error()
-        r = ufloat(r, xint_err)
-        r = 1/r
+        r = 1 / ufloat(regx.get_intercept(), regx.get_intercept_error())
     except ZeroDivisionError:
         r = 0
 
@@ -120,7 +90,7 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=T
             j = (nominal_value(ref.j), 0)
         age = age_equation(j, r, arar_constants=ref.arar_constants)
 
-    return age, reg, (xs, ys, xerrs, yerrs)
+    return age, yint, reg, (xs, ys, xerrs, yerrs)
 
 
 def isochron_regressor(xs, xes, ys, yes,
