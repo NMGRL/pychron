@@ -91,6 +91,9 @@ class AnalysisGroup(HasTraits):
 
     arar_constants = AGProperty()
 
+    isochron_4036 = None
+    isochron_regressor = None
+
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
         mswd = calculate_mswd(vs, es, wm=w)
@@ -159,7 +162,7 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_isochron_age(self):
-        return self._calculate_isochron_age()
+        return self.calculate_isochron_age()
 
     @cached_property
     def _get_aliquot(self):
@@ -322,15 +325,18 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        return calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind)
+        exclude = [i for i, x in enumerate(self.analyses) if x.is_omitted()]
+        return calculate_isochron(self.analyses, self.isochron_age_error_kind, exclude=exclude)
 
-    def _calculate_isochron_age(self):
-        args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,
-                                  include_j_err=self.include_j_error_in_mean)
+    def calculate_isochron_age(self):
+        # args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,
+        #                           include_j_err=self.include_j_error_in_mean)
+        args = self.get_isochron_data()
         if args:
             age = args[0]
             self.isochron_4036 = args[1]
             reg = args[2]
+            self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
 

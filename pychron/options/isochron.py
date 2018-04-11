@@ -45,6 +45,7 @@ class InverseIsochronOptions(IsochronOptions):
     fill_ellipses = Bool(False)
     ellipse_kind = Enum(ELLIPSE_KINDS)
 
+    show_labels = Bool(True)
     show_results_info = Bool(True)
     show_nominal_intercept = Bool(False)
     nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)

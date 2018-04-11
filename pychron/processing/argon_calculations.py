@@ -52,7 +52,20 @@ def unpack_value_error(xx):
     return list(zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx]))
 
 
-def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=True):
+def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', include_j_err=True):
+    if exclude is None:
+        exclude = []
+
+    # exs, eys = [], []
+    # if exclude:
+    #     ans = [a for i, a in enumerate(analyses) if i in exclude]
+    #     args = extract_isochron_xy(ans)
+    #     if args:
+    #         exx, eyy = args[0], args[1]
+    #         exs, _ = unpack_value_error(exx)
+    #         eys, _ = unpack_value_error(eyy)
+
+    # analyses = [a for i, a in enumerate(analyses) if i not in exclude]
     ref = analyses[0]
     args = extract_isochron_xy(analyses)
     if args is None:
@@ -68,10 +81,12 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=T
 
     regx = isochron_regressor(ys, yerrs, xs, xerrs,
                               xds, xdes, yns, ynes, xns, xnes)
+    regx.user_excluded = exclude
 
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
                              reg)
+    reg.user_excluded = exclude
 
     regx.error_calc_type = error_calc_kind
     reg.error_calc_type = error_calc_kind
@@ -90,7 +105,7 @@ def calculate_isochron(analyses, error_calc_kind, reg='NewYork', include_j_err=T
             j = (nominal_value(ref.j), 0)
         age = age_equation(j, r, arar_constants=ref.arar_constants)
 
-    return age, yint, reg, (xs, ys, xerrs, yerrs)
+    return age, yint, reg #, #(xs, ys, xerrs, yerrs, exclude)
 
 
 def isochron_regressor(xs, xes, ys, yes,

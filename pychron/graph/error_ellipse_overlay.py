@@ -69,7 +69,6 @@ class ErrorEllipseOverlay(AbstractOverlay):
         """
 
         """
-        #        gc.save_state()
         gc.clip_to_rect(component.x, component.y, component.width, component.height)
 
         x = component.index.get_data()
@@ -79,12 +78,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         sel = component.index.metadata['selections']
 
-        x = delete(x, sel)
-        y = delete(y, sel)
-        xer = delete(xer, sel)
-        yer = delete(yer, sel)
-
-        pxy = array(self.reg.calculate_correlation_coefficients())
+        pxy = array(self.reg.calculate_correlation_coefficients(clean=False))
 
         dx = abs(component.index_mapper.range.low -
                  component.index_mapper.range.high)
@@ -97,15 +91,19 @@ class ErrorEllipseOverlay(AbstractOverlay):
         aspectratio = (dy / height) / (dx / width)
 
         try:
-            for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
+            for i, (cx, cy, sx, sy, pxyi) in enumerate(zip(x, y, xer, yer, pxy)):
+                state = i not in sel
                 a, b, rot = error_ellipse(sx, sy, pxyi, self.kind, aspectratio=aspectratio)
                 with gc:
-                    self._draw_ellipse(gc, component, cx, cy, a, b, rot)
+                    self._draw_ellipse(gc, component, cx, cy, a, b, rot, state)
 
         except Exception as e:
             print('exception', e)
 
-    def _draw_ellipse(self, gc, component, cx, cy, a, b, rot):
+    def _draw_ellipse(self, gc, component, cx, cy, a, b, rot, state):
+        if not state:
+            gc.set_line_dash((5, 5))
+
         scx, scy = component.map_screen([(cx, cy)])[0]
         ox, oy = component.map_screen([(0, 0)])[0]
 

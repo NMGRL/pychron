@@ -59,33 +59,28 @@ class AtmInterceptOverlay(AbstractOverlay):
         xo = component.x
 
         with gc:
+            txt = self.label
+            gc.set_font(self.font)
+            w, h = gc.get_full_text_extent(txt)[:2]
+
+            gc.clip_to_rect(component.x-w-5, component.y, component.width, component.height)
+
             gc.set_line_width(self.line_width)
             gc.set_line_dash(self.line_style_)
             gc.move_to(xo, y)
             gc.line_to(x, y)
             gc.draw_path()
 
-            txt = self.label
-            gc.set_font(self.font)
-            w, h = gc.get_full_text_extent(txt)[:2]
             gc.set_text_position(xo - w - 2, y)
             gc.show_text(txt)
 
 
 class Isochron(BaseArArFigure):
-    # _omit_key = 'omit_iso'
     pass
 
 
 class InverseIsochron(Isochron):
-    # xmi = Float
-    # xma = Float
-
-    xs = Array
-    _cached_data = None
     _plot_label = None
-    # suppress = False
-    # xpad = '0.1'
     xpad = None
 
     def post_make(self):
@@ -102,18 +97,8 @@ class InverseIsochron(Isochron):
         """
         graph = self.graph
 
-        # self._plot_inverse_isochron(graph.plots[0], 0)
-
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
-
-            # for si in self.sorted_analyses:
-            # print si.record_id, si.group_id
-
-            # omit = self._get_omitted(self.sorted_analyses)
-            # # print 'iso omit', omit
-            # if omit:
-            #     self._rebuild_iso(omit)
 
     # ===============================================================================
     # plotters
@@ -126,22 +111,12 @@ class InverseIsochron(Isochron):
         pass
 
     def _plot_inverse_isochron(self, po, plot, pid):
-        analyses = self.sorted_analyses
-        # plot.padding_left = 75
-
-        refiso = analyses[0]
-
-        self._ref_constants = refiso.arar_constants
-        self._ref_j = refiso.j
-        self._ref_age_scalar = refiso.arar_constants.age_scalar
-        self._ref_age_units = refiso.arar_constants.age_units
-
         self.analysis_group.isochron_age_error_kind = self.options.error_calc_method
-        data = self.analysis_group.get_isochron_data()
+        _, _, reg = self.analysis_group.get_isochron_data()
 
-        _, _, reg, (xs, ys, xerrs, yerrs) = data
-        self._cached_data = data
-        self._cached_reg = reg
+        # _, _, reg = data
+        # self._cached_data = data
+        # self._cached_reg = reg
 
         graph = self.graph
 
@@ -156,9 +131,9 @@ class InverseIsochron(Isochron):
 
         graph.set_grid_traits(visible=False)
         graph.set_grid_traits(visible=False, grid='y')
-        scatter, _p = graph.new_series(xs, ys,
-                                       xerror=ArrayDataSource(data=xerrs),
-                                       yerror=ArrayDataSource(data=yerrs),
+        scatter, _p = graph.new_series(reg.xs, reg.ys,
+                                       xerror=ArrayDataSource(data=reg.xserr),
+                                       yerror=ArrayDataSource(data=reg.yserr),
                                        type='scatter',
                                        marker='circle',
                                        bind_id=self.group_id,
@@ -172,9 +147,9 @@ class InverseIsochron(Isochron):
                                  kind=self.options.ellipse_kind)
         scatter.overlays.append(eo)
 
-        ma = max(xs)
+        ma = max(reg.xs)
         self.xma = max(self.xma, ma)
-        self.xmi = min(self.xmi, min(xs))
+        self.xmi = min(self.xmi, min(reg.xs))
 
         mi = 0
         rxs = linspace(mi, ma * 1.1)
@@ -204,7 +179,7 @@ class InverseIsochron(Isochron):
 
         if self.group_id == 0:
             if self.options.display_inset:
-                self._add_inset(plot, xs, ys, reg)
+                self._add_inset(plot, reg)
 
             if self.options.show_nominal_intercept:
                 self._add_atm_overlay(plot)
@@ -215,7 +190,7 @@ class InverseIsochron(Isochron):
         if self.options.show_info:
             self._add_info(plot)
 
-        if po.show_labels:
+        if self.options.show_labels:
             self._add_point_labels(scatter)
 
         def ad(i, x, y, ai):
@@ -235,6 +210,9 @@ class InverseIsochron(Isochron):
         self._add_scatter_inspector(scatter, additional_info=ad)
         p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
 
+        sel = self._get_omitted_by_tag(self.analyses)
+        self._rebuild_iso(sel)
+
     # ===============================================================================
     # overlays
     # ===============================================================================
@@ -253,13 +231,14 @@ class InverseIsochron(Isochron):
             pl = FlowPlotLabel(text='\n'.join(ts),
                                overlay_position='inside top',
                                hjustify='left',
+                               bgcolor=plot.bgcolor,
                                font=self.options.error_info_font,
                                component=plot)
             plot.overlays.append(pl)
 
-    def _add_inset(self, plot, xs, ys, reg):
+    def _add_inset(self, plot, reg):
         opt = self.options
-        insetp = InverseIsochronPointsInset(xs, ys,
+        insetp = InverseIsochronPointsInset(reg.xs, reg.ys,
                                             marker_size=opt.inset_marker_size,
                                             color=opt.inset_marker_color,
                                             line_width=0,
@@ -308,7 +287,6 @@ class InverseIsochron(Isochron):
         # n = reg.n
 
         ag = self.analysis_group
-        ag.dirty = True
 
         mswd = ag.mswd
         n = ag.nanalyses
@@ -342,10 +320,9 @@ class InverseIsochron(Isochron):
         if not valid:
             mswd = '*{}'.format(mswd)
 
-        u = self._ref_age_units
         age_line = u'Age= {} {}{} ({}%) {}. mse= {}'.format(floatfmt(v, n=3),
                                                             PLUSMINUS,
-                                                            floatfmt(e, n=4, s=3), p, u,
+                                                            floatfmt(e, n=4, s=3), p, ag.age_units,
                                                             floatfmt(mse_age, s=3))
         mswd_line = 'N= {} mswd= {}'.format(n, mswd)
         if label is None:
@@ -368,6 +345,7 @@ class InverseIsochron(Isochron):
 
         lines = u'\n'.join((sample_line, ratio_line, age_line, mswd_line))
         label.text = u'{}'.format(lines)
+        label.bgcolor = plot.bgcolor
         label.request_redraw()
 
     def replot(self):
@@ -378,8 +356,7 @@ class InverseIsochron(Isochron):
         pass
 
     def _rebuild_iso(self, sel=None):
-        # print sel
-        if sel:
+        if sel is not None:
             g = self.graph
             ss = [p.plots[pp][0] for p in g.plots
                   for pp in p.plots
@@ -387,32 +364,37 @@ class InverseIsochron(Isochron):
 
             self._set_renderer_selection(ss, sel)
 
-        if self._cached_data:
-            reg = self._cached_reg
+        # reg = self._cached_reg
+        #
+        # reg.user_excluded = sel
+        # reg.error_calc_type = self.options.error_calc_method
+        # reg.dirty = True
+        # reg.calculate()
+        self.analysis_group.dirty = True
+        if self._plot_label:
+            self._add_results_info(self.graph.plots[0], label=self._plot_label)
+        else:
+            self.analysis_group.calculate_isochron()
 
-            # reg.user_excluded = sel
-            reg.dirty = True
-            reg.error_calc_type = self.options.error_calc_method
-            reg.calculate()
+        reg = self.analysis_group.isochron_regressor
 
-            fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
+        fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
-            mi, ma = self.graph.get_x_limits()
-            rxs = linspace(0, ma)
+        mi, ma = self.graph.get_x_limits()
+        rxs = linspace(0, ma)
 
-            rys = reg.predict(rxs)
+        rys = reg.predict(rxs)
 
-            fit.index.set_data(rxs)
-            fit.value.set_data(rys)
+        fit.index.set_data(rxs)
+        fit.value.set_data(rys)
 
-            fit.error_envelope.invalidate()
+        fit.error_envelope.invalidate()
 
-            lci, uci = reg.calculate_error_envelope(rxs)
-            fit.error_envelope.lower = lci
-            fit.error_envelope.upper = uci
+        lci, uci = reg.calculate_error_envelope(rxs)
+        fit.error_envelope.lower = lci
+        fit.error_envelope.upper = uci
 
-            if self._plot_label:
-                self._add_results_info(self.graph.plots[0], label=self._plot_label)
+
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
