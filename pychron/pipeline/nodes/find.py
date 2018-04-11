@@ -173,7 +173,7 @@ class FindReferencesNode(FindNode):
     display_loads = Property(depends_on='limit_to_analysis_loads')
     loads = List
     analysis_loads = List
-    limit_to_analysis_loads = Bool
+    limit_to_analysis_loads = Bool(True)
 
     analysis_types = List
     available_analysis_types = List
@@ -197,6 +197,7 @@ class FindReferencesNode(FindNode):
         self.analysis_types = nodedict.get('analysis_types', [])
         if self.analysis_types:
             self.name = 'Find {}'.format(','.join(self.analysis_types))
+        self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', False)
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -211,6 +212,7 @@ class FindReferencesNode(FindNode):
     def _to_template(self, d):
         d['threshold'] = self.threshold
         d['analysis_types'] = self.analysis_types
+        d['limit_to_analysis_loads'] = self.limit_to_analysis_loads
 
     # def _analysis_types_changed(self, new):
     #     if new == 'Blank Unknown':
