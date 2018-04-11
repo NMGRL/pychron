@@ -236,7 +236,7 @@ class InverseIsochron(Isochron):
                                overlay_position='inside top',
                                hjustify='left',
                                bgcolor=plot.bgcolor,
-                               font=self.options.error_info_font,
+                               font=self.options.info_font,
                                component=plot)
             plot.overlays.append(pl)
 
@@ -334,7 +334,7 @@ class InverseIsochron(Isochron):
                 overlay_position='inside bottom',
                 hjustify='left',
                 bgcolor='white',
-
+                font=self.options.results_font,
                 color=text_color)
             plot.overlays.append(label)
             self._plot_label = label

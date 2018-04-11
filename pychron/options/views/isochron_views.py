@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traitsui.api import View, Item, HGroup, VGroup, Group
+from traitsui.api import View, Item, HGroup, VGroup, Group, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
@@ -41,16 +40,31 @@ class InverseIsochronMainOptions(SubOptions):
                   show_border=True,
                   label='Calculations')
 
-        g2 = Group(HGroup(Item('show_info', label='Calculations'),
-                          Item('show_results_info', label='Results'),
-                          Item('nsigma'),
+        info_grp = HGroup(Item('show_info', label='Calculations'),
+                          UItem('info_fontname'),
+                          UItem('info_fontsize'))
+
+        results_grp = HGroup(Item('show_results_info', label='Results'),
+                             Item('nsigma'),
+                             UItem('results_fontname'),
+                             UItem('results_fontsize'))
+        ellipse_grp = HGroup(Item('fill_ellipses', label='fill'),
+                             Item('ellipse_kind', label='Kind'),
+                             show_border=True,
+                             label='Error Ellipse')
+        label_grp = VGroup(Item('show_labels'),
+                           HGroup(Item('label_box'),
+                                  UItem('label_fontname'),
+                                  UItem('label_fontsize'),
+                                  enabled_when='show_labels'),
+                           show_border=True, label='Labels')
+        g2 = Group(VGroup(info_grp,
+                          results_grp,
                           show_border=True,
                           label='Info'),
-                   HGroup(Item('fill_ellipses'),
-                          Item('ellipse_kind'),
-                          Item('show_labels'),
-                          Item('label_box', enabled_when='show_labels'),
-                          show_border=True, label='Labels'),
+                   ellipse_grp,
+                   label_grp,
+
                    VGroup(Item('show_nominal_intercept'),
                           HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
                                  Item('nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept')),

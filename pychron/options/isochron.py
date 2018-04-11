@@ -15,14 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Str, Bool, Float, Property, List, Color, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS
+from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS, FONTS, SIZES
 
 
 class IsochronOptions(AgeOptions):
@@ -56,6 +55,20 @@ class InverseIsochronOptions(IsochronOptions):
     inset_marker_color = Color('black')
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions
+
+    results_font = Property
+    results_fontname = Enum(*FONTS)
+    results_fontsize = Enum(*SIZES)
+
+    info_font = Property
+    info_fontname = Enum(*FONTS)
+    info_fontsize = Enum(*SIZES)
+
+    def _get_results_font(self):
+        return '{} {}'.format(self.results_fontname, self.results_fontsize)
+
+    def _get_info_font(self):
+        return '{} {}'.format(self.info_fontname, self.info_fontsize)
 
     @property
     def inominal_intercept_value(self):
