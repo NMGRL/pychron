@@ -161,8 +161,11 @@ class DVC(Loggable):
         if not self.meta_repo_name:
             self.warning_dialog('Need to specify Meta Repository name in Preferences')
             return
-
-        self.open_meta_repo()
+        try:
+            self.open_meta_repo()
+        except BaseException as e:
+            self.warning('Error opening meta repo'.format(e))
+            return
 
         # update meta repo.
         self.meta_pull()
