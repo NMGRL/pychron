@@ -53,7 +53,6 @@ class GroupingNode(BaseNode):
     name = 'Grouping'
     title = 'Edit Grouping'
 
-    # auto_configure = False
     _attr = 'group_id'
 
     def load(self, nodedict):
@@ -99,11 +98,9 @@ class BinNode(BaseNode):
         unks = sorted(unks, key=key)
 
         tol_hrs = 1
-        # tol = 60 * 60 * tol_hrs
 
         ts = array([ai.timestamp for ai in unks])
-        # dts = ediff1d(ts)
-        # idxs = where(dts > tol)[0]
+
         idxs = bin_timestamps(ts, tol_hrs)
         if idxs:
             unks = array(unks)

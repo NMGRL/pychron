@@ -306,7 +306,7 @@ class XLSXTableWriter(BaseTableWriter):
                     ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
                    (ubit and options.include_F,
                     ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o'),
+                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
                    (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
                     'isochron3940',
                     value),
@@ -356,8 +356,8 @@ class XLSXTableWriter(BaseTableWriter):
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            columns.extend([(True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error),
-                            (True, ('IC', '<sup>{}</sup>'.format(det)), '', tag, icf_value)])
+            columns.extend([(True, ('IC', '<sup>{}</sup>'.format(det)), '', tag, icf_value),
+                            (True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error)])
 
         columns.extend([(options.include_rundate, 'RunDate', '', 'rundate'),
                         (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
@@ -404,7 +404,7 @@ class XLSXTableWriter(BaseTableWriter):
                     ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
                    (ubit and options.include_F,
                     ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o'),
+                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
                    (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
                     'isochron3940',
                     value),
