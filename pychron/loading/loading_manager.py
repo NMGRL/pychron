@@ -463,7 +463,7 @@ class LoadingManager(DVCIrradiationable):
 
     # private
     def _get_load_names(self):
-        return self.dvc.db.get_loads()
+        return self.dvc.db.get_load_names()
         # with self.dvc.db.session_ctx():
         # if loads:
         #         return [li.name for li in loads]
@@ -724,7 +724,7 @@ class LoadingManager(DVCIrradiationable):
         info = ls.edit_traits()
         if info.result:
             db = self.dvc.db
-            loads = db.get_loads(names=ls.selected)
+            loads = db.get_load_names(names=ls.selected)
             for li in loads:
                 li.archived = True
             db.commit()

@@ -19,14 +19,14 @@ from __future__ import absolute_import
 from itertools import groupby
 
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
-from traitsui.api import Item, EnumEditor, UItem, VGroup
+from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
-from pychron.pychron_constants import DEFAULT_MONITOR_NAME
+from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR
 from six.moves import map
 
 
@@ -168,6 +168,13 @@ class FindReferencesNode(FindNode):
     user_choice = False
     threshold = Float
 
+    loadname = Str
+
+    display_loads = Property(depends_on='limit_to_analysis_loads')
+    loads = List
+    analysis_loads = List
+    limit_to_analysis_loads = Bool
+
     analysis_types = List
     available_analysis_types = List
 
@@ -188,21 +195,27 @@ class FindReferencesNode(FindNode):
     def load(self, nodedict):
         self.threshold = nodedict.get('threshold', 10)
         self.analysis_types = nodedict.get('analysis_types', [])
+        if self.analysis_types:
+            self.name = 'Find {}'.format(','.join(self.analysis_types))
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
         self.mass_spectrometers = self.dvc.get_mass_spectrometer_names()
+        names = [NULL_STR]
+        dbnames = self.dvc.get_load_names()
+        if dbnames:
+            names += dbnames
 
-    # def dump(self, obj):
-    #     obj['threshold'] = self.threshold
+        self.loads = names
+
     def _to_template(self, d):
         d['threshold'] = self.threshold
         d['analysis_types'] = self.analysis_types
 
-    def _analysis_type_changed(self, new):
-        if new == 'Blank Unknown':
-            new = 'Blank'
-        self.name = 'Find {}s'.format(new)
+    # def _analysis_types_changed(self, new):
+    #     if new == 'Blank Unknown':
+    #         new = 'Blank'
+    #     self.name = 'Find {}s'.format(new)
 
     def pre_run(self, state, configure=True):
         if not state.unknowns:
@@ -215,6 +228,9 @@ class FindReferencesNode(FindNode):
         ms = {ai.mass_spectrometer for ai in state.unknowns}
         self.enable_mass_spectrometer = len(ms) > 1
         self.mass_spectrometer = list(ms)[0]
+
+        ls = {ai.loadname for ai in state.unknowns}
+        self.analysis_loads = list(ls)
 
         self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
@@ -244,14 +260,19 @@ class FindReferencesNode(FindNode):
                 ai.group_id = i
 
     def _run_group(self, state, gid, unknowns):
-        times = sorted((ai.rundate for ai in unknowns))
-
-        # atype = self.analysis_type.lower().replace(' ', '_')
         atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
-        refs = self.dvc.find_references(times, atypes, hours=self.threshold,
-                                        extract_devices=self.extract_device,
-                                        mass_spectrometers=self.mass_spectrometer,
-                                        make_records=False)
+        kw = dict(extract_devices=self.extract_device,
+                  mass_spectrometers=self.mass_spectrometer,
+                  make_records=False)
+
+        if self.loadname and self.loadname != NULL_STR:
+            refs = self.dvc.find_references_by_load(self.loadname, atypes, **kw)
+            if refs:
+                times = sorted((ai.rundate for ai in refs))
+        else:
+            times = sorted((ai.rundate for ai in unknowns))
+            refs = self.dvc.find_references(times, atypes, hours=self.threshold, **kw)
+
         if refs:
             unknowns.extend(refs)
             model = GraphicalFilterModel(analyses=unknowns,
@@ -284,7 +305,9 @@ class FindReferencesNode(FindNode):
                 return True
 
     def traits_view(self):
-        v = self._view_factory(Item('threshold',
+        v = self._view_factory(HGroup(Item('loadname', editor=EnumEditor(name='display_loads')),
+                                      Item('limit_to_analysis_loads', label='Analysis Loads')),
+                               Item('threshold',
                                     tooltip='Maximum difference between blank and unknowns in hours',
                                     label='Threshold (Hrs)'),
                                VGroup(UItem('analysis_types',
@@ -306,6 +329,11 @@ class FindReferencesNode(FindNode):
     def _available_analysis_types_default(self):
         return sorted([' '.join(map(str.capitalize, k.split('_'))) for k in SPECIAL_MAPPING.keys()])
 
+    def _get_display_loads(self):
+        if self.limit_to_analysis_loads:
+            return self.analysis_loads
+        else:
+            return self.loads
 #
 # class FindAirsNode(FindNode):
 #     name = 'Find Airs'

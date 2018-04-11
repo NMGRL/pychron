@@ -273,6 +273,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     measured_response_stream = None
     requested_output_stream = None
     setpoint_stream = None
+    loadname = ''
 
     experiment_queue_name = ''
 

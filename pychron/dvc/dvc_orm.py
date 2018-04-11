@@ -248,6 +248,11 @@ class AnalysisTbl(Base, BaseMixin):
             return es[0]
 
     @property
+    def loadname(self):
+        if self.measured_positions:
+            return self.measured_positions[0].loadName
+
+    @property
     def record_views(self):
         repos = self.repository_associations
         if len(repos) == 1:

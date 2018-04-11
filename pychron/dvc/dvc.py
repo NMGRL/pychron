@@ -670,8 +670,15 @@ class DVC(Loggable):
 
         return ias
 
-    def find_references(self, ans, atypes, hours, exclude=None, make_records=True, **kw):
-        records = self.db.find_references(ans, atypes, hours, exclude=exclude, **kw)
+    def find_references_by_load(self, load, atypes, make_records=True, **kw):
+        records = self.db.find_references_by_load(load, atypes, **kw)
+        if records:
+            if make_records:
+                records = self.make_analyses(records)
+            return records
+
+    def find_references(self, times, atypes, hours, exclude=None, make_records=True, **kw):
+        records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
 
         if records:
             if make_records:
@@ -1269,10 +1276,12 @@ class DVC(Loggable):
 
                 try:
                     a = DVCAnalysis(rid, expid)
+
                 except AnalysisNotAnvailableError:
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
+            a.loadname = record.loadname
             # get repository branch
             a.branch = branches.get(expid, '')
             # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))

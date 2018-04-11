@@ -162,6 +162,23 @@ class NewMassSpectrometerView(HasTraits):
         return v
 
 
+def exclude_invalid_analyses(q):
+    return q.filter(AnalysisChangeTbl.tag != 'invalid')
+
+
+def extract_devices_query(analysis_types, extract_devices, q):
+    if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
+        a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
+        if not a:
+            if not isinstance(extract_devices, (tuple, list)):
+                extract_devices = (extract_devices,)
+
+            es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
+            if es:
+                q = in_func(q, AnalysisTbl.extract_device, es)
+    return q
+
+
 class DVCDatabase(DatabaseAdapter):
     """
     mysql2sqlite
@@ -333,6 +350,27 @@ class DVCDatabase(DatabaseAdapter):
             change.user = self.save_username
             sess.add(change)
             # sess.commit()
+
+    def find_references_by_load(self, load, analysis_types, extract_devices=None, mass_spectrometers=None,
+                                exclude_invalid=True):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(AnalysisChangeTbl)
+            q = q.join(MeasuredPositionTbl)
+
+            q = q.filter(MeasuredPositionTbl.loadName == load)
+
+            if mass_spectrometers:
+                q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
+            if extract_devices:
+                q = extract_devices_query(analysis_types, extract_devices, q)
+            if analysis_types:
+                q = analysis_type_filter(q, analysis_types)
+
+            if exclude_invalid:
+                q = exclude_invalid_analyses(q)
+
+            return self._query_all(q, verbose_query=True)
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,
@@ -1235,15 +1273,7 @@ class DVCDatabase(DatabaseAdapter):
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
 
-            if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
-                a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
-                if not a:
-                    if not isinstance(extract_devices, (tuple, list)):
-                        extract_devices = (extract_devices,)
-
-                    es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
-                    if es:
-                        q = in_func(q, AnalysisTbl.extract_device, es)
+            q = extract_devices_query(analysis_types, extract_devices, q)
 
             if project:
                 q = q.filter(ProjectTbl.name == project)
@@ -1252,7 +1282,7 @@ class DVCDatabase(DatabaseAdapter):
             if hpost:
                 q = q.filter(AnalysisTbl.timestamp <= hpost)
             if exclude_invalid:
-                q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+                q = exclude_invalid_analyses(q)
             if exclude:
                 q = q.filter(not_(AnalysisTbl.id.in_(exclude)))
             if exclude_uuids:
@@ -1694,7 +1724,7 @@ class DVCDatabase(DatabaseAdapter):
             return [ni.identifier for ni in
                     self._query_all(q, verbose_query=True)]
 
-    def get_loads(self, names=None, exclude_archived=True, **kw):
+    def get_load_names(self, names=None, exclude_archived=True, **kw):
         with self.session_ctx():
             if 'order' not in kw:
                 kw['order'] = LoadTbl.create_date.desc()
