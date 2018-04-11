@@ -356,10 +356,10 @@ class XLSXTableWriter(BaseTableWriter):
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            options.extend([(True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error),
+            columns.extend([(True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error),
                             (True, ('IC', '<sup>{}</sup>'.format(det)), '', tag, icf_value)])
 
-        options.extend([(options.include_rundate, 'RunDate', '', 'rundate'),
+        columns.extend([(options.include_rundate, 'RunDate', '', 'rundate'),
                         (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
                         (ubit, 'J', '', 'j', value),
                         (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
