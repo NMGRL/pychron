@@ -589,7 +589,7 @@ class XLSXTableWriter(BaseTableWriter):
         for ug in unks:
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
-                sh.write_rich_string(self._current_row, i, str(txt), center)
+                sh.write(self._current_row, i, txt, center)
             self._current_row += 1
 
         self._make_notes(sh, len(cols), 'summary')
