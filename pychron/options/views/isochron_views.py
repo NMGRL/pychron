@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from traitsui.api import View, Item, HGroup, VGroup, Group
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.options import SubOptions, AppearanceSubOptions
+from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
 
 
 class IsochronMainOptions(SubOptions):
@@ -53,8 +53,7 @@ class InverseIsochronMainOptions(SubOptions):
                           show_border=True, label='Labels'),
                    VGroup(Item('show_nominal_intercept'),
                           HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
-                                 Item('_nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept'),
-                                 Item('invert_nominal_intercept', label='Invert')),
+                                 Item('nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept')),
                           show_border=True,
                           label='Nominal Intercept'),
                    VGroup(Item('display_inset'),
@@ -77,7 +76,10 @@ class InverseIsochronAppearance(AppearanceSubOptions):
 # ===============================================================
 # ===============================================================
 
-ISOCHRON_VIEWS = {'main': IsochronMainOptions, 'appearance': IsochronAppearance}
-INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions, 'appearance': InverseIsochronAppearance}
+ISOCHRON_VIEWS = {'main': IsochronMainOptions,
+                  'appearance': IsochronAppearance}
+INVERSE_ISOCHRON_VIEWS = {'main': InverseIsochronMainOptions,
+                          'appearance': InverseIsochronAppearance,
+                          'groups': GroupSubOptions}
 
 # ============= EOF =============================================

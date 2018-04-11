@@ -14,12 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 import apptools.sweet_pickle as pickle
-from traits.api import Str, List, Button, Instance, Tuple, Property
+from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
 from traitsui.api import Controller, View, Item
 
 from pychron.core.helpers.filetools import list_directory2
@@ -45,6 +43,7 @@ from pychron.paths import paths
 
 class OptionsManager(Loggable):
     selected = Str
+    delete_enabled = Property(depends_on='names')
     names = List
     subview_names = Tuple
     subview = Instance(SubOptions)
@@ -66,6 +65,10 @@ class OptionsManager(Loggable):
         super(OptionsManager, self).__init__(*args, **kw)
         self._populate()
         self._initialize()
+
+    @cached_property
+    def _get_delete_enabled(self):
+        return len(self.names) > 1
 
     def _get_new_name(self):
         return self._new_name
@@ -112,7 +115,14 @@ class OptionsManager(Loggable):
             if obj.name == name:
                 self.selected_options = obj
 
-    def save_selection(self):
+    def delete_selected(self):
+        if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
+            p = os.path.join(self.persistence_root, '{}.p'.format(self.selected))
+            os.remove(p)
+            self._load_names()
+            self._initialize()
+
+    def save_selected(self):
         if not os.path.isdir(self.persistence_root):
             try:
                 os.mkdir(self.persistence_root)
@@ -126,7 +136,7 @@ class OptionsManager(Loggable):
 
     def save(self, name=None, obj=None):
         # dump the default plotter options
-        self.save_selection()
+        self.save_selected()
 
         if name is None:
             if self.selected:
@@ -357,10 +367,10 @@ class OptionsController(Controller):
 
     def closed(self, info, is_ok):
         if is_ok:
-            self.model.save_selection()
+            self.model.save_selected()
 
     def controller_delete_options_changed(self, info):
-        print('delete')
+        self.model.delete_selected()
 
     def controller_add_options_changed(self, info):
         info = self.edit_traits(view=View(Item('new_name', label='Name'),
@@ -375,7 +385,6 @@ class OptionsController(Controller):
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
-
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

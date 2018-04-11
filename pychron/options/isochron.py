@@ -19,13 +19,14 @@ from __future__ import absolute_import
 from traits.api import Str, Bool, Float, Property, List, Color, Enum
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.options.options import AgeOptions
 from pychron.pychron_constants import FIT_ERROR_TYPES, ELLIPSE_KINDS
 
 
 class IsochronOptions(AgeOptions):
-    subview_names = List(['Main', 'Appearance'])
+    subview_names = List(['Main', 'Appearance', 'Groups'])
 
     def get_subview(self, name):
         name = name.lower()
@@ -49,25 +50,19 @@ class InverseIsochronOptions(IsochronOptions):
     show_results_info = Bool(True)
     show_nominal_intercept = Bool(False)
     nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)
-    nominal_intercept_value = Property(Float, depends_on='_nominal_intercept_value')
-    _nominal_intercept_value = Float(295.5, enter_set=True, auto_set=False)
+    nominal_intercept_value = Float(295.5)
 
-    invert_nominal_intercept = Bool(True)
     inset_marker_size = Float(1.0)
     inset_marker_color = Color('black')
     regressor_kind = Enum('Reed', 'NewYork')
+    group_options_klass = InverseIsochronGroupOptions
 
-    def _set_nominal_intercept_value(self, v):
-        if self.invert_nominal_intercept:
-            v = 1/v
-
-        self._nominal_intercept_value = v
-
-    def _get_nominal_intercept_value(self):
-        v = self._nominal_intercept_value
-        if self.invert_nominal_intercept:
-            v = 1/v
-        return v
+    @property
+    def inominal_intercept_value(self):
+        try:
+            return 1/self.nominal_intercept_value
+        except ZeroDivisionError:
+            return 0
 
     def _get_subview(self, name):
         return INVERSE_ISOCHRON_VIEWS[name]

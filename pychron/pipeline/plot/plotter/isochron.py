@@ -131,18 +131,22 @@ class InverseIsochron(Isochron):
 
         graph.set_grid_traits(visible=False)
         graph.set_grid_traits(visible=False, grid='y')
+        group = self.options.get_group(self.group_id)
+        color = group.color
+
         scatter, _p = graph.new_series(reg.xs, reg.ys,
                                        xerror=ArrayDataSource(data=reg.xserr),
                                        yerror=ArrayDataSource(data=reg.yserr),
                                        type='scatter',
                                        marker='circle',
                                        bind_id=self.group_id,
+                                       color=color,
                                        marker_size=2)
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
                                  reg=reg,
-                                 border_color=scatter.color,
+                                 border_color=color,
                                  fill=self.options.fill_ellipses,
                                  kind=self.options.ellipse_kind)
         scatter.overlays.append(eo)
@@ -157,7 +161,7 @@ class InverseIsochron(Isochron):
 
         graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
 
-        l, _ = graph.new_series(rxs, rys, color=scatter.color)
+        l, _ = graph.new_series(rxs, rys, color=color)
         graph.set_series_label('fit{}'.format(self.group_id))
 
         l.index.set_data(rxs)
@@ -173,7 +177,8 @@ class InverseIsochron(Isochron):
 
         lci, uci = reg.calculate_error_envelope(l.index.get_data())
         ee = ErrorEnvelopeOverlay(component=l,
-                                  upper=uci, lower=lci)
+                                  upper=uci, lower=lci,
+                                  line_color=color)
         l.underlays.append(ee)
         l.error_envelope = ee
 
@@ -186,7 +191,7 @@ class InverseIsochron(Isochron):
 
         graph.add_vertical_rule(0, color='black')
         if self.options.show_results_info:
-            self._add_results_info(plot, text_color=scatter.color)
+            self._add_results_info(plot, text_color=color)
         if self.options.show_info:
             self._add_info(plot)
 
@@ -243,7 +248,7 @@ class InverseIsochron(Isochron):
                                             color=opt.inset_marker_color,
                                             line_width=0,
                                             # regressor=reg,
-                                            nominal_intercept=opt.nominal_intercept_value,
+                                            nominal_intercept=opt.inominal_intercept_value,
                                             location=opt.inset_location,
                                             width=opt.inset_width,
                                             height=opt.inset_height,
@@ -268,23 +273,15 @@ class InverseIsochron(Isochron):
             inset.index_range.high = hx
 
             inset.value_range.low = 0
-            inset.value_range.high = max(1.1 * opt.nominal_intercept_value, yintercept * 1.1)
+            inset.value_range.high = max(1.1 * opt.inominal_intercept_value, yintercept * 1.1)
             plot.overlays.append(inset)
 
     def _add_atm_overlay(self, plot):
-        v = self.options.nominal_intercept_value
         plot.overlays.append(AtmInterceptOverlay(component=plot,
                                                  label=self.options.nominal_intercept_label,
-                                                 value=v))
+                                                 value=self.options.inominal_intercept_value))
 
     def _add_results_info(self, plot, label=None, text_color='black'):
-        # intercept = reg.predict(0)
-        # err = reg.get_intercept_error()
-        # intercept = reg.intercept
-        # err = reg.get_intercept_error()
-        #
-        # mswd = reg.mswd
-        # n = reg.n
 
         ag = self.analysis_group
 
