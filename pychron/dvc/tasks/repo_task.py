@@ -28,7 +28,7 @@ from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
 from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
-    FindChangesAction, LoadOriginAction
+    FindChangesAction, LoadOriginAction, DeleteLocalChangesAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -62,8 +62,6 @@ class ExperimentRepoTask(BaseTask):
     selected_local_repository_name = Instance(RepoItem)
 
     repository_names = List
-    organization = Str
-    oauth_token = Str
 
     local_names = List
     tool_bars = [SToolBar(CloneAction(),
@@ -72,18 +70,23 @@ class ExperimentRepoTask(BaseTask):
                           PushAction(),
                           PullAction(),
                           LoadOriginAction(),
-                          FindChangesAction())]
+                          FindChangesAction(),
+                          DeleteLocalChangesAction())]
 
     commits = List
     _repo = None
     selected_commit = Any
     branch = Str
     branches = List
+    dvc = Any
 
     def activated(self):
-        self._preference_binder('pychron.dvc', ('organization',))
-        self._preference_binder('pychron.github', ('oauth_token',))
+        # self._preference_binder('pychron.dvc.connection', ('organization',))
+        # prefid = 'pychron.dvc.connection'
 
+        # bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
+
+        # self._preference_binder('pychron.github', ('oauth_token',))
         self.refresh_local_names()
         if self.confirmation_dialog('Check all Repositories for changes'):
             self.find_changes()
@@ -131,6 +134,8 @@ class ExperimentRepoTask(BaseTask):
         else:
             self._repo.push()
 
+        self.selected_local_repository_name.dirty = False
+
     def clone(self):
         name = self.selected_repository_name
         if name == 'meta':
@@ -157,8 +162,16 @@ class ExperimentRepoTask(BaseTask):
         self._repo.checkout_branch(self.branch)
 
     def load_origin(self):
-        org = Organization(self.organization, oauth_token=self.oauth_token)
-        self.repository_names = org.repo_names
+        self.debug('load origin')
+        self.repository_names = self.dvc.remote_repository_names()
+
+    def delete_local_changes(self):
+        self.info('delete local changes')
+        name = self.selected_local_repository_name.name
+        msg = 'Are you sure you want to delete your non-shared changes in "{}"'.format(name)
+        if self.confirmation_dialog(msg):
+            self._repo.delete_local_commits()
+            self.selected_local_repository_name.dirty = False
 
     def create_central_pane(self):
         return RepoCentralPane(model=self)

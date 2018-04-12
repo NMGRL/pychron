@@ -808,6 +808,7 @@ class DVC(Loggable):
         gs = self.application.get_services(IGitHost)
         if gs:
             for gi in gs:
+                self.debug('load repositories from {}'.format(self.organization))
                 ri = gi.get_repository_names(self.organization)
                 rs.extend(ri)
         else:

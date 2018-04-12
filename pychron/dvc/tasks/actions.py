@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -43,6 +42,7 @@ class RemoteRepositoryAction(TaskAction):
 class CloneAction(RemoteRepositoryAction):
     method = 'clone'
     name = 'Clone'
+    image = icon('production_copyleft')
 
 
 class AddBranchAction(LocalRepositoryAction):
@@ -54,7 +54,7 @@ class AddBranchAction(LocalRepositoryAction):
 class CheckoutBranchAction(LocalRepositoryAction):
     name = 'Checkout Branch'
     method = 'checkout_branch'
-    image = icon('checkout')
+    image = icon('cart_put')
 
 
 class PushAction(LocalRepositoryAction):
@@ -72,11 +72,21 @@ class PullAction(LocalRepositoryAction):
 class FindChangesAction(TaskAction):
     name = 'Find Changes'
     method = 'find_changes'
+    tooltip = 'Search all local repositories for changes'
+    image = icon('find')
+
+
+class DeleteLocalChangesAction(LocalRepositoryAction):
+    name = 'Delete Local Changes'
+    method = 'delete_local_changes'
+    image = icon('clear')
 
 
 class LoadOriginAction(TaskAction):
     name = 'Load Origin'
     method = 'load_origin'
+    image = icon('arrow_refresh')
+    tooltip = 'Update the list of available repositories'
 
 
 # class SyncMetaDataAction(Action):
