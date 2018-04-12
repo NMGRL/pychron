@@ -31,8 +31,6 @@ from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, \
 from pychron.spectrometer import get_spectrometer_config_path, \
     set_spectrometer_config_name
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
-from six.moves import map
-from six.moves import zip
 
 
 def normalize_integration_time(it):

@@ -1,6 +1,5 @@
 sphinx
 pyyaml
-pint
 uncertainties
 recommonmark
 scipy
@@ -8,7 +7,11 @@ gitpython
 sqlalchemy
 requests
 traits
-mock
 apptools
 xlwt
+xlrd
+xlsxwriter
 pyface
+configparser
+pyserial
+pyvisa

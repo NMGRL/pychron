@@ -20,7 +20,6 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 from pychron.hardware.core.communicators.communicator import Communicator
 from pychron.hardware.core.communicators.visa import resource_manager
 

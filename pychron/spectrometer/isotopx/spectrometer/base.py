@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traits.api import Any, Instance
 
 from pychron.loggable import Loggable
+from pychron.spectrometer.isotopx.magnet.base import IsotopxMagnet
+from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class IsotopxSpectrometer(Loggable):
