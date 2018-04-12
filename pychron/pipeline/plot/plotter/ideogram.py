@@ -184,8 +184,7 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        if selection:
-            self._rebuild_ideo(selection)
+        self._rebuild_ideo(selection)
 
     def mean_x(self, attr):
         # todo: handle other attributes
@@ -514,7 +513,7 @@ class Ideogram(BaseArArFigure):
         if self.options.display_mean:
             n = self.xs.shape[0]
             mswd_args = (mswd, valid_mswd, n)
-            text = self._make_mean_label(wm, we*self.options.nsigma, n, n, mswd_args)
+            text = self._make_mean_label(wm, we * self.options.nsigma, n, n, mswd_args)
 
         group = self.options.get_group(self.group_id)
         color = group.color
@@ -600,17 +599,13 @@ class Ideogram(BaseArArFigure):
         lp = plot.plots['Current-{}'.format(gid)][0]
         dp = plot.plots['Original-{}'.format(gid)][0]
 
-        def f(a):
-            i, _ = a
-            return i not in sel
-
         if not self.xs.shape[0]:
             return
 
-        xx = filter(f, enumerate(self.xs))
-        if xx:
-            _, fxs = zip(*list(xx))
-            _, fxes = zip(*list(filter(f, enumerate(self.xes))))
+        fxs = [a for i, a in enumerate(self.xs) if i not in sel]
+
+        if fxs:
+            fxes = [a for i, a in enumerate(self.xes) if i not in sel]
             n = len(fxs)
             xs, ys = self._calculate_probability_curve(fxs, fxes)
             wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
@@ -630,7 +625,7 @@ class Ideogram(BaseArArFigure):
                 ov.error = we
                 if ov.label:
                     mswd_args = mswd, valid_mswd, n
-                    text = self._make_mean_label(wm, we*self.options.nsigma, n, total_n, mswd_args)
+                    text = self._make_mean_label(wm, we * self.options.nsigma, n, total_n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]

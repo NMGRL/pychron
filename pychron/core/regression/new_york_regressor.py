@@ -61,18 +61,26 @@ class YorkRegressor(OLSRegressor):
         if not len(self.yserr):
             return
 
-        self.calculate_correlation_coefficients()
+        # self.calculate_correlation_coefficients()
         self._calculate()
 
-    def calculate_correlation_coefficients(self):
+    def calculate_correlation_coefficients(self, clean=True):
 
         if len(self.xds):
-            xds = self._clean_array(self.xds)
-            xns = self._clean_array(self.xns)
-            xdes = self._clean_array(self.xdes)
-            xnes = self._clean_array(self.xnes)
-            yns = self._clean_array(self.yns)
-            ynes = self._clean_array(self.ynes)
+            xds = self.xds
+            xns = self.xns
+            xdes = self.xdes
+            xnes = self.xnes
+            yns = self.yns
+            ynes = self.ynes
+
+            if clean:
+                xds = self._clean_array(xds)
+                xns = self._clean_array(xns)
+                xdes = self._clean_array(xdes)
+                xnes = self._clean_array(xnes)
+                yns = self._clean_array(yns)
+                ynes = self._clean_array(ynes)
 
             fd = xdes / xds  # f40Ar
 
@@ -352,13 +360,13 @@ class ReedYorkRegressor(YorkRegressor):
 
     def get_intercept_variance(self):
         var_slope = self.get_slope_variance()
-        xs = self.xs
+        xs = self.clean_xs
         Wx, Wy = self._get_weights()
         W = self._calculate_W(self._slope, Wx, Wy)
         return var_slope * sum(W * xs ** 2) / sum(W)
 
     def get_slope_variance(self):
-        n = len(self.xs)
+        n = len(self.clean_xs)
 
         Wx, Wy = self._get_weights()
         slope = self._slope

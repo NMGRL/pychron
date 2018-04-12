@@ -307,6 +307,8 @@ class DatabaseAdapter(Loggable):
         Trip the ``connection_parameters_changed`` flag. Next ``connect`` call with use the new values
         """
         self.connection_parameters_changed = True
+        self.session_factory = None
+        self.session = None
 
     # @caller
     def connect(self, test=True, force=False, warn=True, version_warn=False, attribute_warn=False):
@@ -453,8 +455,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         user = self.username
         host = self.host
         name = self.name
+        if kind == 'sqlite':
+            pu = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
+                                os.path.basename(self.path))
+        else:
+            pu = '{}://{}@{}/{}'.format(kind, user, host, name)
 
-        return '{}://{}@{}/{}'.format(kind, user, host, name)
+        return pu
 
     @cached_property
     def _get_url(self):

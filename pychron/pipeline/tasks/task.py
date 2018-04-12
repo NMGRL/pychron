@@ -256,31 +256,7 @@ class PipelineTask(BaseBrowserTask):
                 # tags stored as lowercase
                 tag = tag.lower()
 
-                dvc = self.dvc
-                db = dvc.db
-                key = lambda x: x.repository_identifier
-
-                for expid, ans in groupby(sorted(items, key=key), key=key):
-                    cs = []
-                    for it in ans:
-                        self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                        if not isinstance(it, InterpretedAge):
-                            db.set_analysis_tag(it.uuid, tag)
-
-                        it.set_tag({'name': tag, 'note': note or ''})
-                        if dvc.update_tag(it):
-                            cs.append(it)
-                            # it.refresh_view()
-
-                    if cs:
-                        cc = [c.record_id for c in cs]
-                        if len(cc) > 1:
-                            cstr = '{} - {}'.format(cc[0], cc[-1])
-                        else:
-                            cstr = cc[0]
-                        dvc.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
-                        for ci in cs:
-                            ci.refresh_view()
+                self.dvc.tag_items(tag, items, note)
 
                 if use_filter:
                     for e in self.editor_area.editors:
@@ -316,16 +292,17 @@ class PipelineTask(BaseBrowserTask):
             return
 
         ed = self.active_editor
-        sfm = SaveFigureModel(ed.analyses)
-        sfv = SaveFigureView(model=sfm)
-        info = sfv.edit_traits()
-        if info.result:
-            path = sfm.prepare_path(make=True)
-            save_pdf(ed.component,
-                     path=path,
-                     options=sfm.pdf_options,
-                     # path='/Users/ross/Documents/test.pdf',
-                     view=True)
+        if isinstance(ed, FigureEditor):
+            sfm = SaveFigureModel(ed.analyses)
+            sfv = SaveFigureView(model=sfm)
+            info = sfv.edit_traits()
+            if info.result:
+                path = sfm.prepare_path(make=True)
+                save_pdf(ed.component,
+                         path=path,
+                         options=sfm.pdf_options,
+                         # path='/Users/ross/Documents/test.pdf',
+                         view=True)
 
     def run(self):
         self._run_pipeline()
@@ -398,7 +375,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Isochron')
 
     def set_inverse_isochron_template(self):
-        self._set_action_template('Inverse Isochron')
+        self._set_action_template('InverseIsochron')
 
     def set_series_template(self):
         self._set_action_template('Series')
@@ -634,7 +611,7 @@ class PipelineTask(BaseBrowserTask):
 
         info = tv.edit_traits()
         if info.result:
-            return model.tag, model.items, model.use_filter, model.note
+            return model.tag, model.get_items(), model.use_filter, model.note
 
     # def _get_dr_tagname(self, items):
     #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel

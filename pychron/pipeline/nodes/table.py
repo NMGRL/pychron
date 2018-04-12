@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import os
 from itertools import groupby
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, List, Enum, Bool, Str
 from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -45,6 +46,8 @@ class XLSXAnalysisTableNode(TableNode):
         self.options.dump()
 
     def run(self, state):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
         self._make_table(state)
 
     def _make_table(self, state):
@@ -55,8 +58,14 @@ class XLSXAnalysisTableNode(TableNode):
         key = lambda x: x.group_id
 
         options = self.options
+        skip_meaning = self.skip_meaning
+
         if self.options.table_kind == 'Step Heat':
             def factory(ans):
+                if skip_meaning:
+                    if 'Table' in skip_meaning:
+                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
                 return InterpretedAgeGroup(analyses=list(ans),
                                            plateau_nsteps=options.plateau_nsteps,
                                            plateau_gas_fraction=options.plateau_gas_fraction,
@@ -65,6 +74,10 @@ class XLSXAnalysisTableNode(TableNode):
 
         else:
             def factory(ans):
+                if self.skip_meaning:
+                    if 'Table' in skip_meaning:
+                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
                 return InterpretedAgeGroup(analyses=list(ans))
 
         unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
@@ -153,6 +166,7 @@ class InterpretedAgeTableOptions(TableOptions):
                  width=300,
                  buttons=['OK', 'Cancel'])
         return v
+
 
 #
 # # ==================================================

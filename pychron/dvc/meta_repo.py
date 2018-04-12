@@ -452,9 +452,11 @@ class MetaRepo(GitRepoManager):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
         positions = self._get_level_positions(irradiation, level)
-        d = next((p for p in positions if p['position'] != pos), None)
+
+        d = next((p for p in positions if p['position'] == pos), None)
         if d:
             d['identifier'] = identifier
+            jd['positions'] = positions
 
         dvc_dump(jd, p)
         self.add(p, commit=False)
@@ -725,7 +727,8 @@ class MetaRepo(GitRepoManager):
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
-        pname = obj[level]
+
+        pname = obj.get(level, '')
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)

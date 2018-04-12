@@ -152,6 +152,8 @@ class SelectionGraph(Graph):
         p.y_axis.tick_label_formatter = tick_formatter
         p.y_axis.tick_generator = StaticTickGenerator()
         p.y_axis.title = 'Analysis Type'
+        p.y_axis.title_font = 'modern 18'
+        p.y_axis.tick_label_font = 'modern 14'
 
         # p.y_grid.line_style='solid'
         # p.y_grid.line_color='green'
@@ -163,6 +165,8 @@ class SelectionGraph(Graph):
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
         p.x_grid.tick_generator = p.x_axis.tick_generator
         p.x_axis.title = 'Time'
+        p.x_axis.title_font = 'modern 18'
+        p.x_axis.tick_label_font = 'modern 14'
 
         t = GroupingTool(component=p)
         p.tools.append(t)

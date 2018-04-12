@@ -28,6 +28,23 @@ class AddAnalysisGroupView(HasTraits):
     project = Any
     projects = Dict
 
+    def save(self, ans, db):
+        append = False
+
+        gdb = db.get_analysis_groups_by_name(self.name, self.project)
+        ok = True
+        if gdb:
+            gdb = gdb[-1]
+            if db.confirmation_dialog('"{}" already exists? Would you like to append your selection'.format(gdb.name)):
+                append = True
+            else:
+                ok = False
+
+        if append:
+            db.append_analysis_group(gdb, ans)
+        elif ok:
+            db.add_analysis_group(ans, self.name, self.project)
+
     def traits_view(self):
         v = View(Item('name'),
                  Item('project', editor=EnumEditor(name='projects')),

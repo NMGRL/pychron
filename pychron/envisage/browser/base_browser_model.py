@@ -85,7 +85,6 @@ def filter_func(new, attr=None, comp=None):
 
 
 class SearchCriteria(HasTraits):
-    recent_hours = Float
     reference_hours_padding = Float
     graphical_filtering_max_days = Int
 
@@ -182,11 +181,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     sample_view_active = Bool(True)
 
-    use_workspace = False
-    workspace = None
-    manager = Any
+    # use_workspace = False
+    # workspace = None
+    # manager = Any
 
     db = Property
+
     use_fuzzy = True
     pattributes = ('project_enabled',
                    'repository_enabled',
@@ -203,6 +203,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     _suppress_load_labnumbers = False
 
     def reattach(self):
+        pass
+
+    def activate_browser(self, force=False):
         pass
 
     def make_records(self, ans):
@@ -305,8 +308,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.oprojects = ad
 
     def load_principal_investigators(self):
+        self.debug('load principal investigators')
         db = self.db
         ps = db.get_principal_investigators(order='asc', verbose_query=True)
+        self.debug('n pis={}'.format(len(ps)))
         if ps:
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
             self.principal_investigator_names = [p.name for p in ps]
@@ -381,43 +386,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         if self._suppress_load_labnumbers:
             return
 
-        sams = []
-        self._recent_mass_spectrometers = []
-        warned = False
-
-        if self.selected_projects:
-            if any((p.name.startswith('RECENT') for p in self.selected_projects)):
-                if not self.search_criteria.recent_hours:
-                    if not warned:
-                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
-                                            '"RECENT (hrs)" is located in the "Browser" category')
-
-        sams.extend(self._make_labnumbers())
+        sams = self._make_labnumbers()
 
         self.samples = sams
         self.osamples = sams
-
-    # def _retrieve_recent_labnumbers(self, recent_name):
-    #     ms = extract_mass_spectrometer_name(recent_name)
-    #     db = self.db
-    #     hpost = datetime.now()
-    #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-    #     self._low_post = lpost
-    #
-    #     self.use_high_post = False
-    #     self.use_low_post = True
-    #
-    #     self.trait_property_changed('low_post', self._low_post)
-    #     self._recent_mass_spectrometers.append(ms)
-    #
-    #     # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-    #     ls = db.get_labnumbers(mass_spectrometers=(ms,),
-    #                            # repositories=es,
-    #                            low_post=lpost)
-    #
-    #     sams = self._load_sample_record_views(ls)
-    #
-    #     return sams
 
     def _populate_samples(self, lns=None):
         db = self.db
@@ -803,13 +775,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return list(map(str.lower, ats))
 
+    def _handle_source_change(self, new):
+        self.activate_browser(force=True)
+
     _warned = False
 
     @cached_property
     def _get_db(self):
-        if self.use_workspace:
-            db = self.workspace.index_db
-        elif self.dvc:
+        # if self.use_workspace:
+        #     db = self.workspace.index_db
+        if self.dvc:
             db = self.dvc
         else:
             db = self.application.get_service(DVC_PROTOCOL)
@@ -819,11 +794,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 self.warning_dialog('You need to enable the DVC plugin')
             self._warned = True
         else:
+            db.on_trait_change(self._handle_source_change, 'data_source')
             return db
-            # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            # return
-            # else:
-            #     return self.manager.db
 
     # persistence
     @property
@@ -843,7 +815,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             try:
                 with open(p, 'rb') as rfile:
                     return pickle.load(rfile)
-            except (pickle.PickleError, EOFError, OSError) as e:
+            except (pickle.PickleError, EOFError, OSError, UnicodeDecodeError) as e:
                 self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
         else:

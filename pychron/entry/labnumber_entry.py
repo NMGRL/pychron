@@ -361,6 +361,7 @@ class LabnumberEntry(DVCIrradiationable):
                 if lg.setup():
                     lg.generate_identifiers()
                     for level in self.levels:
+                        self._update_level(level)
                         self._save_to_db(level, update=False)
 
                     self._update_level()

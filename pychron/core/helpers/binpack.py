@@ -27,8 +27,10 @@ def format_blob(blob):
 
 
 def encode_blob(blob):
-    # print len(blob), len(base64.b64encode(blob))
-    return base64.b64encode(blob)
+    if isinstance(blob, str):
+        blob = blob.encode('utf-8')
+
+    return base64.b64encode(blob).decode('utf-8')
 
 
 def pack(fmt, data):

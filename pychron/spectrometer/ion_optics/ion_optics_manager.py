@@ -371,11 +371,6 @@ class IonOpticsManager(Manager):
         ref = self.reference_detector
         isotope = self.reference_isotope
 
-        # if timeout:
-        #     evt = Event()
-        #     self.timeout_thread = Thread(target=self._timeout_func, args=(timeout, evt))
-        #     self.timeout_thread.start()
-
         center_value = pc.get_peak_center()
 
         self.peak_center_result = center_value
@@ -423,9 +418,6 @@ class IonOpticsManager(Manager):
             on_end()
 
         self.trait_set(alive=False)
-
-        # if timeout:
-        #     evt.set()
 
         self.spectrometer.restore_integration()
 

@@ -317,10 +317,13 @@ class ThermoSpectrometer(BaseSpectrometer):
         if self.send_config_on_startup:
             self.send_configuration(use_ramp=True)
 
+    def settle(self):
+        time.sleep(self.integration_time*2)
+
     # ===============================================================================
     # signals
     # ===============================================================================
-    def read_intensities(self, tagged=True):
+    def read_intensities(self, tagged=True, *args, **kw):
         keys = []
         signals = []
 

@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from operator import attrgetter
+
 from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor
 
@@ -24,22 +25,6 @@ from numpy import array, array_split
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
-
-
-def aliquot(x):
-    return x.aliquot
-
-
-def identifier(x):
-    return x.identifier
-
-
-def increment(x):
-    return x.increment
-
-
-def comment(x):
-    return x.comment
 
 
 def group_analyses_by_key(items, key, attr='group_id'):
@@ -51,7 +36,7 @@ def group_analyses_by_key(items, key, attr='group_id'):
     ids = []
     for it in items:
         v = keyfunc(it)
-        if not v in ids:
+        if v not in ids:
             ids.append(v)
 
     sitems = sorted(items, key=keyfunc)
@@ -63,12 +48,11 @@ def group_analyses_by_key(items, key, attr='group_id'):
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment')
+    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
 
-    # auto_configure = False
     _attr = 'group_id'
 
     def load(self, nodedict):
@@ -78,20 +62,14 @@ class GroupingNode(BaseNode):
         d['key'] = self.by_key
 
     def _generate_key(self):
-        if self.by_key == 'Aliquot':
-            key = aliquot
-        elif self.by_key == 'Identifier':
-            key = identifier
-        elif self.by_key == 'Step':
-            key = increment
-        elif self.by_key == 'Comment':
-            key = comment
-
-        return key
+        if self.by_key in ('Aliquot', 'Identifier', 'Step', 'Comment'):
+            key = attrgetter(self.by_key.lower())
+            return key
 
     def run(self, state):
-        unks = getattr(state, self.analysis_kind)
-        group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
+        if self.by_key != 'No Grouping':
+            unks = getattr(state, self.analysis_kind)
+            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
 
     def traits_view(self):
         v = View(UItem('by_key',
@@ -120,11 +98,9 @@ class BinNode(BaseNode):
         unks = sorted(unks, key=key)
 
         tol_hrs = 1
-        # tol = 60 * 60 * tol_hrs
 
         ts = array([ai.timestamp for ai in unks])
-        # dts = ediff1d(ts)
-        # idxs = where(dts > tol)[0]
+
         idxs = bin_timestamps(ts, tol_hrs)
         if idxs:
             unks = array(unks)

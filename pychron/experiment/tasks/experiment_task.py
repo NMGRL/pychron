@@ -13,18 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
-import os
-import shutil
-import time
-
-import xlrd
 from pyface.constant import CANCEL, NO
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.timer.do_later import do_after
 from traits.api import Int, on_trait_change, Bool, Instance, Event, Color
-from traits.trait_errors import TraitError
+
+import os
+import shutil
+import time
+import xlrd
 
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.core.ui.preference_binding import color_bind_preference
@@ -44,8 +41,6 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pychron_constants import SPECTROMETER_PROTOCOL, DVC_PROTOCOL
-from six.moves import map
-from six.moves import range
 
 
 class ExperimentEditorTask(EditorTask):
@@ -125,8 +120,9 @@ class ExperimentEditorTask(EditorTask):
 
         man = self.manager
         ex = man.executor
+        ex.stats.reset()
+
         man.update_info()
-        man.stats.reset()
 
         ex.end_at_run_completion = False
         ex.set_extract_state('')

@@ -230,7 +230,7 @@ class SwitchManager(Manager):
             clear_prev_keys = True
             prev_keys = self._prev_keys
 
-        for k, v in six.iteritems(self.switches):
+        for k, v in self.switches.items():
             '''
                 querying a lot of valves can add up hence timeout.
                 
@@ -516,9 +516,8 @@ class SwitchManager(Manager):
                             d[key] = bool(int(state))
                         except IndexError:
                             return d
-            except ValueError:
-                pass
-
+            except ValueError as v:
+                self.critical('switch_manager._parse_word exception. {}'.format(v))
         return d
 
     def load_valve_states(self):

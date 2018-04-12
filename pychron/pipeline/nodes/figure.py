@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from itertools import groupby
 
+from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, List
 from traitsui.api import View
 
@@ -26,7 +27,7 @@ from pychron.options.options_manager import IdeogramOptionsManager, OptionsContr
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
     RadialOptionsManager, RegressionSeriesOptionsManager
 from pychron.options.views.views import view
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.base import BaseNode, SortableNode
 from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, \
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
     AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
@@ -38,7 +39,7 @@ class NoAnalysesError(BaseException):
     pass
 
 
-class FigureNode(BaseNode):
+class FigureNode(SortableNode):
     editor = Any
     editor_klass = Any
     options_view = Instance(View)
@@ -85,7 +86,12 @@ class FigureNode(BaseNode):
                 self.editor = editor
 
             if self.auto_set_items:
-                editor.set_items(state.unknowns)
+                unks = state.unknowns
+                bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+                if self.name in self.skip_meaning.split(','):
+                    unks = [u for u in unks if u.tag.lower() != 'skip']
+
+                editor.set_items(unks)
                 # self.editors.append(editor)
                 # oname = editor.name
 
@@ -259,7 +265,7 @@ class RegressionSeriesNode(SeriesNode):
 
         progress_iterator(state.unknowns, load_raw, threshold=1)
         super(RegressionSeriesNode, self).run(state)
-    
+
     def _configure_hook(self):
         pom = self.plotter_options_manager
         if self.unknowns:

@@ -44,7 +44,7 @@ def generate_production_ratios_id(vs):
     :param vs:
     :return:
     """
-    txt = ''.join([struct.pack('>f', vi) for vi in vs])
+    txt = b''.join([struct.pack('>f', vi) for vi in vs])
     return binascii.crc32(txt)
 
 

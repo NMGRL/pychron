@@ -90,8 +90,12 @@ def report_issues():
     p = os.path.join(paths.hidden_dir, 'issues.p')
     if os.path.isfile(p):
         nonreported = []
-        with open(p, 'r') as rfile:
-            issues = pickle.load(rfile)
+        with open(p, 'rb') as rfile:
+            try:
+                issues = pickle.load(rfile)
+            except BaseException:
+                os.remove(p)
+                return
 
             for issue in issues:
                 result = create_issue(issue)
@@ -100,7 +104,7 @@ def report_issues():
                     nonreported.append(issue)
 
         if nonreported:
-            with open(p, 'w') as wfile:
+            with open(p, 'wb') as wfile:
                 pickle.dump(nonreported, wfile)
         else:
             os.remove(p)
@@ -118,11 +122,8 @@ def create_issue(issue):
                       'Pychron will quit when this window is closed'.format(usr))
         sys.exit()
 
-    auth = base64.encodestring('{}:{}'.format(usr, pwd)).replace('\n', '')
-    headers = {"Authorization": "Basic {}".format(auth)}
-
     kw = {'data': json.dumps(issue),
-          'headers': headers}
+          'auth': (usr, pwd)}
 
     if globalv.cert_file:
         kw['verify'] = globalv.cert_file
@@ -176,13 +177,13 @@ class ExceptionHandler(Controller):
         if not os.path.isfile(p):
             issues = []
         else:
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 issues = pickle.load(rfile)
 
         issue = self._make_issue()
 
         issues.append(issue)
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(issues, wfile)
 
     def _make_issue(self):

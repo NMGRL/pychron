@@ -21,7 +21,7 @@ import re
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Button, Instance
+from traits.api import Button, Instance, Str
 
 from pychron.envisage.browser.advanced_filter_view import AdvancedFilterView
 from pychron.envisage.browser.analysis_table import AnalysisTable
@@ -29,7 +29,6 @@ from pychron.envisage.browser.browser_model import BrowserModel
 from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.browser.util import get_pad
-from six.moves import zip
 
 NCHARS = 60
 REG = re.compile(r'.' * NCHARS)
@@ -45,13 +44,14 @@ class SampleBrowserModel(BrowserModel):
     analysis_table = Instance(AnalysisTable)
     time_view_model = Instance(TimeViewModel)
 
+    monitor_sample_name = Str
+
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
         prefid = 'pychron.browser'
-        bind_preference(self.search_criteria, 'recent_hours',
-                        '{}.recent_hours'.format(prefid))
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
+        bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
         self.debug('reattach')
@@ -62,6 +62,9 @@ class SampleBrowserModel(BrowserModel):
 
         for ni, ai in zip(nans, oans):
             ai.dbrecord = ni
+
+        if self.selected_projects:
+            self._load_associated_groups(self.selected_projects)
 
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
@@ -154,6 +157,19 @@ class SampleBrowserModel(BrowserModel):
 
         self.analysis_table.set_analyses(xx)
 
+    def delete_analysis_group(self):
+        self.debug('delete analysis groups')
+        for g in self.selected_analysis_groups:
+            self.debug('deleting analysis group. {}'.format(g))
+            self.db.delete_analysis_group(g)
+            self.analysis_groups.remove(g)
+
+    def set_tags(self, tagname):
+        items = self.get_analysis_records()
+        if items:
+            self.dvc.tag_items(tagname, items)
+        return items
+
     def dump(self):
         self.time_view_model.dump_filter()
         self.analysis_table.dump()
@@ -170,7 +186,7 @@ class SampleBrowserModel(BrowserModel):
         if self._afilter is None:
             attrs = self.dvc.get_search_attributes()
             if attrs:
-                attrs = list(zip(*attrs)[0])
+                attrs = list(next(zip(*attrs)))
             m = AdvancedFilterView(attributes=attrs)
             # m.demo()
             self._afilter = m
@@ -192,19 +208,18 @@ class SampleBrowserModel(BrowserModel):
         if ans:
             from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
             # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
-            a = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p.name) for i, p in enumerate(self.oprojects)})
+            agv = AddAnalysisGroupView(db=self.db,
+                                       projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
+                                                 enumerate(self.oprojects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-            print('asfasfasfasf', project, pp)
 
             project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
-            a.project = project
-            # if self.selected_projects:
-            #     a.project = self.selected_projects[0].name
+            agv.project = project
 
-            info = a.edit_traits(kind='livemodal')
+            info = agv.edit_traits(kind='livemodal')
             if info.result:
-                self.db.add_analysis_group(a.name, a.project.name, a.project.principal_investigator, ans)
+                agv.save(ans, self.db)
 
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:
@@ -336,12 +351,13 @@ class SampleBrowserModel(BrowserModel):
                 if r:
                     self.analysis_table.add_analyses(r)
 
-                refs = self.db.find_references(r, atypes,
-                                               extract_devices=m.extract_devices,
-                                               mass_spectrometers=m.mass_spectrometers,
-                                               hours=m.threshold, make_records=False)
-                if refs:
-                    self.analysis_table.add_analyses(refs)
+                if atypes:
+                    refs = self.db.find_references(r, atypes,
+                                                   extract_devices=m.extract_devices,
+                                                   mass_spectrometers=m.mass_spectrometers,
+                                                   hours=m.threshold, make_records=False)
+                    if refs:
+                        self.analysis_table.add_analyses(refs)
 
     def _project_date_bins(self, identifier):
         db = self.db
@@ -385,7 +401,18 @@ class SampleBrowserModel(BrowserModel):
         at = AnalysisTable(dvc=self.dvc)
         at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
-        bind_preference(at, 'max_history', 'pychron.browser.max_history')
+        prefid = 'pychron.browser'
+        bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
+
+        bind_preference(at.tabular_adapter,
+                        'unknown_color', '{}.unknown_color'.format(prefid))
+        bind_preference(at.tabular_adapter,
+                        'blank_color', '{}.blank_color'.format(prefid))
+        bind_preference(at.tabular_adapter,
+                        'air_color', '{}.air_color'.format(prefid))
+
+        bind_preference(at.tabular_adapter,
+                        'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
         return at
 
 # ============= EOF =============================================

@@ -284,8 +284,8 @@ class VideoStageManager(StageManager):
 
     @property
     def video_configuration_path(self):
-
-        return os.path.join(self.configuration_dir_path, 'camera.yaml')
+        if self.configuration_dir_path:
+            return os.path.join(self.configuration_dir_path, 'camera.yaml')
 
     def initialize_video(self):
         if self.video:

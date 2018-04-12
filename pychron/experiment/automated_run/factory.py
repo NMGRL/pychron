@@ -638,13 +638,13 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         ucounts = {}
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, 'rb') as rfile:
                 ucounts = pickle.load(rfile)
 
         c = ucounts.get(temp, 0) + 1
         ucounts[temp] = c
         self.debug('incrementing users step_heat template count for {}. count= {}'.format(temp, c))
-        with open(p, 'w') as wfile:
+        with open(p, 'wb') as wfile:
             pickle.dump(ucounts, wfile)
 
     def _make_short_labnumber(self, labnumber=None):
@@ -1465,7 +1465,7 @@ post_equilibration_script:name''')
             if ln:
                 if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-                    print('asdfasdfasdf', self.mass_spectrometer, msname, id(self))
+                    # print('asdfasdfasdf', self.mass_spectrometer, msname, id(self))
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:
@@ -1536,7 +1536,6 @@ post_equilibration_script:name''')
     # defaults
     # ================================================================================
     def _script_factory(self, label, name=NULL_STR, kind='ExtractionLine'):
-        print('script factory', self.mass_spectrometer)
         s = Script(label=label,
                    use_name_prefix=self.use_name_prefix,
                    name_prefix=self.name_prefix,

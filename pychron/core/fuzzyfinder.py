@@ -36,19 +36,15 @@ def func(regex, item, attr):
 
 
 def fuzzyfinder(user_input, collection, attr=None):
-    # suggestions = []
     pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     try:
         regex = re.compile(pattern, re.IGNORECASE)  # Compiles a regex.
     except re.error:
         return []
-    # for item in collection:
-    #     match = regex.search(item)   # Checks if the current item matches the regex.
-    #     if match:
-    #         suggestions.append((len(match.group()), match.start(), item))
 
     suggestions = [x for x in [func(regex, item, attr) for item in collection] if x is not None]
-    return [x for _, _, x in sorted(suggestions)]
+    return [x for _, _, x in suggestions]
+
 
 
 if __name__ == '__main__':

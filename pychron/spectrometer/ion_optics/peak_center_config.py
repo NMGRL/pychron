@@ -15,11 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import pickle
 # from apptools import sweet_pickle as pickle
-from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
+from traits.api import HasTraits, Str, Bool, Float, Either, List, Enum, Int, Any, Button
 from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
 
 from pychron.core.helpers.filetools import add_extension, list_directory2
@@ -55,7 +54,7 @@ class PeakCenterConfig(HasTraits):
     dac = Float
     use_current_dac = Bool(True)
     # integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-    integration_time = Float
+    integration_time = Either(Float, Int)
     integration_times = List(transient=True)
 
     directions = Enum('Increase', 'Decrease', 'Oscillate')

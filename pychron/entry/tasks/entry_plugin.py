@@ -34,7 +34,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
 from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane
 from pychron.entry.tasks.project.actions import ProjectAction
-from pychron.entry.tasks.sample.actions import SampleEntryAction, SampleEditAction
+from pychron.entry.tasks.sample.actions import SampleEntryAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -127,8 +127,8 @@ class EntryPlugin(BaseTaskPlugin):
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
                                  path=spath, absolute_position='first'),
-                  SchemaAddition(id='pychron.entry1.sample_edit', factory=SampleEditAction,
-                                 path=spath, after='pychron.entry1.sample_entry'),
+                  # SchemaAddition(id='pychron.entry1.sample_edit', factory=SampleEditAction,
+                  #                path=spath, after='pychron.entry1.sample_entry'),
                   SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
                                  path=spath, after='pychron.entry1.sample_edit'),
                   SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,

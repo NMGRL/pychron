@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traits.api import Enum, Float, Property, List
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
@@ -60,7 +59,7 @@ class BaseLakeShoreController(CoreDevice):
         # 3=v>30
 
         if config.has_section('Range'):
-            items = config.items()
+            items = config.items('Range')
 
         else:
             items = [(1, 'v<10'), (2, '10<v<30'), (3, 'v>30')]
@@ -89,9 +88,11 @@ class BaseLakeShoreController(CoreDevice):
     def setpoints_achieved(self, tol=1):
         v1 = self.read_input_a()
         if abs(v1 - self.setpoint1) < tol:
+            self.debug('setpoint 1 achieved')
             v2 = self.read_input_a()
             if abs(v2 - self.setpoint2) < tol:
-                return self.setpoints_achieved_cnt
+                self.debug('setpoint 2 achieved')
+                return True
 
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):

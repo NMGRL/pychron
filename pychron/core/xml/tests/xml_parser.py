@@ -47,8 +47,9 @@ INIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
       <plugin enabled="false">Entry</plugin>
       <plugin enabled="false">SystemMonitor</plugin>
       <plugin enabled="true">ArArConstants</plugin>
-
-    <plugin enabled="false">Loading</plugin><plugin enabled="false">Workspace</plugin><plugin enabled="true">LabBook</plugin></general>
+      <plugin enabled="false">Loading</plugin>
+      <plugin enabled="true">LabBook</plugin>
+    </general>
     <hardware>
       <plugin enabled="true">ArgusSpectrometer
         <device enabled="true">spectrometer_microcontroller
@@ -183,7 +184,6 @@ EINIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
             <plugin enabled="false">SystemMonitor</plugin>
             <plugin enabled="true">ArArConstants</plugin>
             <plugin enabled="false">Loading</plugin>
-            <plugin enabled="false">Workspace</plugin>
             <plugin enabled="true">LabBook</plugin>
         </general>
         <hardware>

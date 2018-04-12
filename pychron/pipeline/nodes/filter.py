@@ -37,7 +37,7 @@ class PipelineFilter(HasTraits):
     criterion = Str
     attributes = ('age', 'age error', 'kca', 'kca error',
                   'aliquot', 'step', 'run date',
-                  'extract_value', 'duration', 'cleanup')
+                  'extract_value', 'duration', 'cleanup', 'tag')
 
     chain_operator = Enum('and', 'or')
     show_chain = Bool

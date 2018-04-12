@@ -129,7 +129,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
 
         names = []
         with db.session_ctx(use_parent_session=False):
-            ts = db.get_loads()
+            ts = db.get_load_names()
             if ts:
                 names = ts
         return names

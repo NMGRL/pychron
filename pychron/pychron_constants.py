@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
@@ -163,7 +164,7 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 DEFAULT_INTEGRATION_TIME = 1
 
-ISOTOPX_INTEGRATION_TIMES = [1, 2, 3]
+ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 DEFAULT_INTEGRATION_TIME = 1
 
@@ -187,4 +188,7 @@ QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 ANALYSIS_TYPES = ['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
 
 DEFAULT_MONITOR_NAME = 'FC-2'
+
+ELLIPSE_KINDS = ('1' + SIGMA, '2' + SIGMA, '95%')
+ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 # ============= EOF =============================================

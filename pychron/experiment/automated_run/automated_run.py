@@ -1449,6 +1449,10 @@ anaylsis_type={}
         return env
 
     def _start(self):
+
+        # for testing only
+        self._get_environmentals()
+
         if self.isotope_group is None:
             # load arar_age object for age calculation
             if self.experiment_type == AR_AR:
@@ -2298,6 +2302,7 @@ anaylsis_type={}
                     period_ms=period * 1000,
                     data_generator=get_data,
                     data_writer=data_writer,
+                    trigger=self.spectrometer_manager.spectrometer.trigger_acq,
                     starttime=starttime,
                     experiment_type=self.experiment_type,
                     refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))

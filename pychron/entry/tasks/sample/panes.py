@@ -19,13 +19,14 @@ from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor
+from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
+from pychron.pychron_constants import NULL_STR
 
 GREEN_BALL = icon('green_ball')
 
@@ -83,6 +84,30 @@ class DBSampleAdapter(TabularAdapter):
     project_text = Property
     material_text = Property
     grainsize_text = Property
+
+    elevation_text = Property
+    lithology_text = Property
+    location_text = Property
+    storage_location_text = Property
+
+    def _get_elevation_text(self):
+        return self._get_value('elevation')
+
+    def _get_lithology_text(self):
+        return self._get_value('lithology')
+
+    def _get_location_text(self):
+        return self._get_value('location')
+
+    def _get_storage_location_text(self):
+        return self._get_value('storage_location')
+
+    def _get_value(self, attr):
+        v = getattr(self.item, attr)
+        return v if v is not None else NULL_STR
+
+    def get_width(self, object, trait, column):
+        return 100
 
     def _get_material_text(self):
         return self.item.material.name
@@ -160,8 +185,11 @@ class SampleEntryPane(TraitsTaskPane):
         current = VGroup(HGroup(UItem('sample_filter_attr',
                                       editor=EnumEditor(name='sample_filter_attrs')),
                                 UItem('sample_filter')),
-                         UItem('db_samples', editor=TabularEditor(adapter=DBSampleAdapter(),
-                                                                  editable=False)),
+                         VSplit(UItem('db_samples', editor=TabularEditor(adapter=DBSampleAdapter(),
+                                                                         multi_select=True,
+                                                                         selected='selected_db_samples',
+                                                                         editable=False)),
+                                UItem('sample_edit_model', style='custom')),
                          label='Samples')
         return View(entry, current)
 
@@ -225,7 +253,7 @@ class SampleEditorPane(TraitsDockPane):
                              icon_button_editor('configure_sample_button', 'cog', tooltip='Set additional sample '
                                                                                           'attributes'),
                              icon_button_editor('add_sample_button', 'add',
-                                                enabled_when='sample',
+                                                enabled_when='add_sample_enabled',
                                                 tooltip='Add a sample')),
                       VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',

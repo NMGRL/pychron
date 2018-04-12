@@ -277,7 +277,12 @@ class XLSXTableWriter(BaseTableWriter):
             view_file(path, application='Excel')
 
     # private
-    def _get_columns(self, name):
+    def _get_columns(self, name, grps):
+
+        detectors = {i.detector for g in grps
+                     for a in g.analyses
+                     for i in a.isotopes.values()}
+
         options = self._options
 
         ubit = name in ('Unknowns', 'Monitor')
@@ -288,6 +293,7 @@ class XLSXTableWriter(BaseTableWriter):
         age_units = '({})'.format(options.age_units)
         columns = [(True, '', '', 'status'),
                    (True, 'N', '', 'aliquot_step_str'),
+                   (True, 'Tag', '', 'tag'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
 
                    (ubit, 'Age', age_units, 'age', value),
@@ -300,7 +306,7 @@ class XLSXTableWriter(BaseTableWriter):
                     ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
                    (ubit and options.include_F,
                     ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o'),
+                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
                    (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
                     'isochron3940',
                     value),
@@ -345,15 +351,20 @@ class XLSXTableWriter(BaseTableWriter):
 
                    (True, 'Disc', '', 'discrimination', value),
                    (True, PLUSMINUS_ONE_SIGMA, '', 'discrimination', error),
-                   (True, ('IC', '<sup>CDD</sup>'), '', 'CDD_ic_factor', icf_value),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'CDD_ic_factor', icf_error),
 
-                   (options.include_rundate, 'RunDate', '', 'rundate'),
-                   (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
-                   (ubit, 'J', '', 'j', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
-                   (ubit, ('<sup>39</sup>', 'Ar Decay'), '', 'ar39decayfactor', value),
-                   (ubit, ('<sup>37</sup>', 'Ar Decay'), '', 'ar37decayfactor', value)]
+                   ]
+
+        for det in detectors:
+            tag = '{}_ic_factor'.format(det)
+            columns.extend([(True, ('IC', '<sup>{}</sup>'.format(det)), '', tag, icf_value),
+                            (True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error)])
+
+        columns.extend([(options.include_rundate, 'RunDate', '', 'rundate'),
+                        (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
+                        (ubit, 'J', '', 'j', value),
+                        (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
+                        (ubit, ('<sup>39</sup>', 'Ar Decay'), '', 'ar39decayfactor', value),
+                        (ubit, ('<sup>37</sup>', 'Ar Decay'), '', 'ar37decayfactor', value)])
 
         if options.include_production_ratios:
             pr = self._get_irradiation_columns(ubit)
@@ -378,6 +389,7 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, 'Sample', '', 'sample'),
                    (True, 'Material', '', 'material'),
                    (True, 'Project', '', 'project'),
+                   (True, 'Tag', '', 'tag'),
 
                    (True, 'N', '', 'aliquot_step_str'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
@@ -392,7 +404,7 @@ class XLSXTableWriter(BaseTableWriter):
                     ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
                    (ubit and options.include_F,
                     ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o'),
+                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
                    (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
                     'isochron3940',
                     value),
@@ -577,7 +589,7 @@ class XLSXTableWriter(BaseTableWriter):
         for ug in unks:
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
-                sh.write_rich_string(self._current_row, i, str(txt), center)
+                sh.write(self._current_row, i, txt, center)
             self._current_row += 1
 
         self._make_notes(sh, len(cols), 'summary')
@@ -609,7 +621,7 @@ class XLSXTableWriter(BaseTableWriter):
 
         worksheet = self._workbook.add_worksheet(name)
 
-        cols = self._get_columns(name)
+        cols = self._get_columns(name, groups)
         self._format_worksheet(worksheet, cols)
 
         self._make_title(worksheet, name, cols)
@@ -801,28 +813,28 @@ class XLSXTableWriter(BaseTableWriter):
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
         self._current_row += 1
+        if self._options.table_kind == 'Step Heat':
+            if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
+                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+                sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
+                sh.write(self._current_row, idx, nominal_value(group.plateau_age))
+                sh.write(self._current_row, idx + 1, std_dev(group.plateau_age))
 
-        if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
-            sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
-            sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
-            sh.write(self._current_row, idx, nominal_value(group.plateau_age))
-            sh.write(self._current_row, idx + 1, std_dev(group.plateau_age))
+                self._current_row += 1
 
-            self._current_row += 1
+            if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
+                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
+                                     fmt)
+                sh.write(self._current_row, idx, nominal_value(group.integrated_age))
+                sh.write(self._current_row, idx + 1, std_dev(group.integrated_age))
+
+                self._current_row += 1
 
         if self._options.include_isochron_age:
             sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
             sh.write(self._current_row, idx, nominal_value(group.isochron_age))
             sh.write(self._current_row, idx + 1, std_dev(group.isochron_age))
-
-            self._current_row += 1
-
-        if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-            sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
-                                 fmt)
-            sh.write(self._current_row, idx, nominal_value(group.integrated_age))
-            sh.write(self._current_row, idx + 1, std_dev(group.integrated_age))
 
             self._current_row += 1
 
@@ -850,7 +862,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row += 1
         if self._options.fixed_step_low or self._options.fixed_step_high:
             sh.write(self._current_row, 0, '\t\tFixed Steps= {},{}'.format(self._options.fixed_step_low,
-                                                                      self.fixed_step_high))
+                                                                           self.fixed_step_high))
             self._current_row += 1
 
     def _make_unknowns_notes(self, sh):
