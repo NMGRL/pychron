@@ -52,7 +52,6 @@ class InverseIsochronOptions(IsochronOptions):
     nominal_intercept_value = Float(295.5)
 
     inset_marker_size = Float(1.0)
-    inset_marker_color = Color('black')
     regressor_kind = Enum('Reed', 'NewYork')
     group_options_klass = InverseIsochronGroupOptions
 
