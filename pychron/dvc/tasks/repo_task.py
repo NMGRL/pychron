@@ -130,9 +130,9 @@ class ExperimentRepoTask(BaseTask):
             if info.result:
                 if a.url and a.name:
                     self._repo.create_remote(a.url, a.name)
-                    self._repo.push(remote=a.name)
+                    self._repo.push(remote=a.name, inform=True)
         else:
-            self._repo.push()
+            self._repo.push(inform=True)
 
         self.selected_local_repository_name.dirty = False
 

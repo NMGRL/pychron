@@ -593,7 +593,7 @@ class GitRepoManager(Loggable):
     def has_remote(self, remote='origin'):
         return bool(self._get_remote(remote))
 
-    def push(self, branch='master', remote=None):
+    def push(self, branch='master', remote=None, inform=False):
         if remote is None:
             remote = 'origin'
 
@@ -601,6 +601,8 @@ class GitRepoManager(Loggable):
         rr = self._get_remote(remote)
         if rr:
             self._git_command(lambda: repo.git.push(remote, branch), tag='GitRepoManager.push')
+            if inform:
+                self.information_dialog('{} push complete'.format(self.name))
         else:
             self.warning('No remote called "{}"'.format(remote))
 
