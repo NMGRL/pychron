@@ -26,11 +26,13 @@ from datetime import datetime
 
 from git import Repo, RemoteProgress
 from git.exc import GitCommandError
+from git.util import CallableRemoteProgress
 from traits.api import Any, Str, List, Event
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.commit import Commit
 from pychron.git_archive.diff_view import DiffView, DiffModel
@@ -62,27 +64,6 @@ def isoformat_date(d):
 
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
-
-
-
-class GitProgress(RemoteProgress):
-    message = None
-    _progress = None
-
-    def new_message_handler(self):
-        self._progress = open_progress(100)
-        return super(GitProgress, self).new_message_handler()
-
-    def update(self, op_code, cur_count, max_count=None, message=''):
-        if max_count:
-            self._progress.max = int(max_count) + 2
-            if message:
-                message = '{} -- {}'.format(self.message, message[2:])
-                self._progress.change_message(message, auto_increment=False)
-            self._progress.update(int(cur_count))
-
-        if op_code == 66:
-            self._progress.close()
 
 
 class GitRepoManager(Loggable):
@@ -236,15 +217,20 @@ class GitRepoManager(Loggable):
 
     @classmethod
     def clone_from(cls, url, path):
-        # n = 150
-        # from threading import Event as TE, Thread
-        # evt = TE()
-        # prog = open_progress(n=n)
-        # prog.change_message('Cloning repository {}'.format(url))
+        progress = open_progress(100)
 
-        rprogress = GitProgress()
-        rprogress.message = 'Cloning repository {}'.format(url)
-        # rprogress=None
+        def func(op_code, cur_count, max_count=None, message=''):
+            if max_count:
+                progress.max = int(max_count) + 2
+                if message:
+                    message = 'Cloning repository {} -- {}'.format(url, message[2:])
+                    progress.change_message(message, auto_increment=False)
+                progress.update(int(cur_count))
+
+            if op_code == 66:
+                progress.close()
+        rprogress = CallableRemoteProgress(func)
+
         try:
             Repo.clone_from(url, path, progress=rprogress)
         except GitCommandError as e:

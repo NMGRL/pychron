@@ -69,8 +69,8 @@ def icf_error(x, k):
     det = k.split('_')[0]
     v = std_dev(x.get_ic_factor(det))
     if v < 1e-10:
-        r = 0
-    return r
+        v = 0
+    return v
 
 
 def value(x, k):

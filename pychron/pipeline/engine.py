@@ -826,23 +826,23 @@ class PipelineEngine(Loggable):
         else:
             pt = name
 
-        try:
-            pt.render(self.application, self.pipeline,
-                      self.browser_model,
-                      self.interpreted_age_browser_model,
-                      self.dvc,
-                      clear=clear,
-                      exclude_klass=exclude_klass)
-        except BaseException as e:
-            import traceback
-            traceback.print_exc()
-            self.debug('Invalid Template: {}'.format(e))
-            self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
-            return
+            try:
+                pt.render(self.application, self.pipeline,
+                          self.browser_model,
+                          self.interpreted_age_browser_model,
+                          self.dvc,
+                          clear=clear,
+                          exclude_klass=exclude_klass)
+            except BaseException as e:
+                import traceback
+                traceback.print_exc()
+                self.debug('Invalid Template: {}'.format(e))
+                self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
+                return
 
-        # self.update_detectors()
-        if self.pipeline.nodes:
-            self.selected = self.pipeline.nodes[0]
+            # self.update_detectors()
+            if self.pipeline.nodes:
+                self.selected = self.pipeline.nodes[0]
 
     def _get_template_path(self, name):
         pname = name.replace(' ', '_').lower()
@@ -1038,8 +1038,9 @@ class PipelineEngine(Loggable):
 
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, PipelineTemplate) or isinstance(new, str):
-            self.debug('Pipeline template {} selected'.format(new))
-            self._set_template(new)
+            if self.run_enabled:
+                self.debug('Pipeline template {} selected'.format(new))
+                self._set_template(new)
 
     def _selected_changed(self, old, new):
         if isinstance(new, Pipeline):
