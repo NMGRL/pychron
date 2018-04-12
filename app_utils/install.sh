@@ -119,21 +119,33 @@ then
 fi
 
 
-default=3
+default=0
 echo -n "Application ID [$default] >> "
 read APPLICATION_ID
 [ -z "$APPLICATION_ID" ] && APPLICATION_ID=$default
+
+default=Pychron
+echo -n "Pychron Data directory [$default] >> "
+read PYCHRONDATA_NAME
+[ -z "$PYCHRONDATA_NAME" ] && PYCHRONDATA_NAME=$default
+
+
+default=pychron3
+echo -n "Conda environment name [$default] >> "
+read CONDA_ENV
+[ -z "$CONDA_ENV" ] && CONDA_ENV=$default
+
+
 
 # =========== Configuration ===============
 
 MINICONDA_URL=https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 MINICONDA_INSTALLER_SCRIPT=miniconda_installer.sh
 
-CONDA_ENV=pychron31
 CONDA_DISTRO=$HOME/miniconda3
 PYCHRON_APPNAME=pyview
 
-PYCHRONDATA_PREFIX=~/PychronInstall
+PYCHRONDATA_PREFIX=~/${PYCHRONDATA_NAME}
 LAUNCHER_SCRIPT_PATH=launcher.sh
 PYCHRON_GIT_SOURCE_URL=https://github.com/${pychron_fork}/pychron.git
 
