@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.pychron_constants import AGE_SCALARS
+from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
 
 
 # =============local library imports  ==========================
@@ -209,7 +209,7 @@ class ArArConstants(HasTraits):
 
     def _get_age_scalar(self):
         try:
-            return AGE_SCALARS[self.age_units]
+            return AGE_MA_SCALARS[self.age_units]
         except KeyError:
             return 1
 

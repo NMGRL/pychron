@@ -29,8 +29,8 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
-from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA, SIGMA
 import six
 from six.moves import range
 
@@ -110,12 +110,21 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_summary_kca = dumpable(Bool(True))
     include_summary_comments = dumpable(Bool(True))
 
+    summary_age_nsigma = dumpable(Enum(1, 2, 3))
+    summary_kca_nsigma = dumpable(Enum(1, 2, 3))
+
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
     fixed_step_low = dumpable(SingleStr)
     fixed_step_high = dumpable(SingleStr)
 
     _persistence_name = 'xlsx_table_options'
+
+    def _table_kind_changed(self):
+        if self.table_kind == 'Fusion':
+            self.include_summary_percent_ar39 = False
+        else:
+            self.include_summary_percent_ar39 = True
 
     @property
     def path(self):
@@ -158,9 +167,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_plateau_age', label='Plateau', visible_when='table_kind=="Step Heat"'),
-                              Item('include_integrated_age', label='Integrated', visible_when='table_kind=="Step '
-                                                                                              'Heat"'),
+                              Item('include_plateau_age', label='Plateau',
+                                   visible_when='table_kind=="Step Heat"'),
+                              Item('include_integrated_age', label='Integrated',
+                                   visible_when='table_kind=="Step Heat"'),
                               Item('include_isochron_age', label='Isochron'),
                               Item('include_isochron_ratios', label='Isochron Ratios'),
                               Item('include_time_delta', label='Time since Irradiation'),
@@ -187,10 +197,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  Item('include_summary_n', label='N'),
                                  Item('include_summary_percent_ar39', label='%39Ar'),
                                  Item('include_summary_mswd', label='MSWD'),
-                                 Item('include_summary_kca', label='KCA'),
-                                 Item('include_summary_age', label='Age'),
+                                 HGroup(Item('include_summary_kca', label='KCA'),
+                                        Item('summary_kca_nsigma', label=SIGMA)),
+                                 HGroup(Item('include_summary_age', label='Age'),
+                                        Item('summary_age_nsigma', label=SIGMA)),
                                  Item('include_summary_comments', label='Comments'),
-
                                  enabled_when='include_summary_sheet',
                                  label='Columns',
                                  show_border=True),
@@ -287,7 +298,7 @@ class XLSXTableWriter(BaseTableWriter):
 
         ubit = name in ('Unknowns', 'Monitor')
         bkbit = ubit and options.include_blanks
-        # ibit = options.include_intercepts
+        ibit = options.include_intercepts
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
@@ -326,16 +337,16 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('disc_ic_corrected', ve='error')),
 
                    # intercepts baseline corrected
-                   # (ibit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('intercept', ve='error')),
+                   (ibit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('intercept')),
+                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('intercept', ve='error')),
+                   (ibit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('intercept')),
+                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('intercept', ve='error')),
+                   (ibit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('intercept')),
+                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('intercept', ve='error')),
+                   (ibit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('intercept')),
+                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('intercept', ve='error')),
+                   (ibit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('intercept')),
+                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('intercept', ve='error')),
 
                    # blanks
                    (bkbit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('blank')),
@@ -394,8 +405,8 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, 'N', '', 'aliquot_step_str'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
 
-                   (ubit, 'Age', age_units, 'age', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', value),
+                   (ubit, 'Age', age_units, 'age', age_value),
+                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', age_value),
 
                    (kcabit, 'K/Ca', '', 'kca', value),
                    (ubit, PLUSMINUS_ONE_SIGMA, '', 'kca', error),
@@ -497,17 +508,25 @@ class XLSXTableWriter(BaseTableWriter):
         return cols
 
     def _get_summary_columns(self):
+        opt = self._options
+
+        def get_kca_error(ag, *args):
+            return std_dev(ag.weighted_kca) * opt.summary_kca_nsigma
+
         def get_preferred_age_kind(ag, *args):
             return ''
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.weighted_age)
+            s = ag.age_scalar
+            return nominal_value(ag.weighted_age) / s
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.weighted_age)
+            s = ag.age_scalar
+            return std_dev(ag.weighted_age) / s * opt.summary_age_nsigma
 
-        opt = self._options
         is_step_heat = opt.table_kind == 'Step Heat'
+        age_units = '({})'.format(opt.age_units)
+
         cols = [(opt.include_summary_sample, 'Sample', '', 'sample'),
                 (opt.include_summary_identifier, 'Identifier', '', 'identifier'),
                 (opt.include_summary_unit, 'Unit', '', 'unit'),
@@ -522,10 +541,15 @@ class XLSXTableWriter(BaseTableWriter):
                 (opt.include_summary_percent_ar39, ('%', '<sup>39</sup>', 'Ar'), '', 'percent_39Ar'),
                 (opt.include_summary_mswd, 'MSWD', '', 'mswd'),
                 (opt.include_summary_kca, 'K/Ca', '', 'weighted_kca', value),
-                (opt.include_summary_kca, PLUSMINUS_ONE_SIGMA, '', 'weighted_kca', error),
 
-                (opt.include_summary_age, 'Age', '', '', get_preferred_age),
-                (opt.include_summary_age, PLUSMINUS_ONE_SIGMA, '', '', get_preferred_age_error),
+                (opt.include_summary_kca, PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma), '', 'weighted_kca',
+                 get_kca_error),
+
+                (opt.include_summary_age, 'Age ({})'.format(age_units), '', '', get_preferred_age),
+
+                (opt.include_summary_age, PLUSMINUS_NSIGMA.format(opt.summary_age_nsigma), '', '',
+                 get_preferred_age_error),
+
                 (opt.include_summary_comments, 'Comments', '', None),
 
                 # Hidden Cols

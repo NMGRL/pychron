@@ -16,7 +16,6 @@
 # ============= enthought library imports =======================
 # from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import os
 
 from kiva.fonttools.font_manager import findfont, FontProperties
@@ -37,13 +36,17 @@ from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron import pychron_constants
 
 for font in pychron_constants.FONTS:
-    for name in (font, font.lower()):
-        f = findfont(FontProperties(family=name, style='normal', weight='normal'))
-        try:
-            tf = TTFont(name, f)
-            pdfmetrics.registerFont(tf)
-        except TTFError as e:
-            print('invalid font', name, e)
+    if font in ('Helvetica',):
+        continue
+
+    # for name in (font, font.lower()):
+    # f = findfont(FontProperties(family=name, style='normal', weight='normal'))
+    f = findfont(FontProperties(family=font, style='normal', weight='normal'))
+    try:
+        tf = TTFont(font, f)
+        pdfmetrics.registerFont(tf)
+    except TTFError as e:
+        print('invalid font', font, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):

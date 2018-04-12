@@ -523,7 +523,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def get_ma_scaled_age(self):
         a = self.preferred_age
-        return a * self.age_scalar
+        return a / self.age_scalar
 
     def _get_preferred_mswd(self):
         if self.preferred_age_kind == 'Plateau':

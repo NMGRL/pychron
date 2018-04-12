@@ -67,7 +67,10 @@ def icf_value(x, k):
 
 def icf_error(x, k):
     det = k.split('_')[0]
-    return std_dev(x.get_ic_factor(det))
+    v = std_dev(x.get_ic_factor(det))
+    if v < 1e-10:
+        r = 0
+    return r
 
 
 def value(x, k):
@@ -85,4 +88,10 @@ def error(x, k):
     else:
         return ''
 
+
+def age_value(x, k):
+    v = value(x, k)
+    if v:
+        v /= x.age_scalar
+    return v
 # ============= EOF =============================================

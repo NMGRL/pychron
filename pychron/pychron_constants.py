@@ -26,16 +26,17 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-FONTS = ['Andale Mono', 'Arial',
-         'Calibri', 'Cambria', 'Consolas', 'Courier New',
-         'Georgia',
-         'Impact',
-         'Helvetica',
-         'Trebuchet MS',
-         'Verdana']
+# FONTS = ['Andale Mono', 'Arial',
+#          'Calibri', 'Cambria', 'Consolas', 'Courier New',
+#          'Georgia',
+#          'Impact',
+#          'Helvetica',
+#          'Trebuchet MS',
+#          'Verdana']
+FONTS = ['Helvetica',] #'Arial','Consolas']
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-PLUSMINUS = u'\u00b1'
+PLUSMINUS = '\N{Plus-minus sign}'
 try:
     # PLUSMINUS_ERR = PLUSMINUS + 'Err.'
     PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)
@@ -43,12 +44,13 @@ except UnicodeEncodeError:
     PLUSMINUS = '+/-'
     PLUSMINUS_ERR = '{}Err.'.format(PLUSMINUS)
 
-SIGMA = u'\u03c3'
+SIGMA = '\N{Greek Small Letter Sigma}'
 
-PLUSMINUS_NSIGMA = u'{}{{}}{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
+PLUSMINUS_TWO_SIGMA = PLUSMINUS_NSIGMA.format(2)
 # PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
-PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
+PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
 
 SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
