@@ -9,3 +9,4 @@ API
   experiment
   pyscripts
   spectrometer
+  pipeline

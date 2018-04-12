@@ -56,13 +56,15 @@ class AtmInterceptOverlay(AbstractOverlay):
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         x, y = component.map_screen((0, self.value))
         xo = component.x
+        if x < xo:
+            x = xo + 5
 
         with gc:
             txt = self.label
             gc.set_font(self.font)
             w, h = gc.get_full_text_extent(txt)[:2]
 
-            gc.clip_to_rect(component.x-w-5, component.y, component.width, component.height)
+            gc.clip_to_rect(component.x - w - 5, component.y, component.width, component.height)
 
             gc.set_line_width(self.line_width)
             gc.set_line_dash(self.line_style_)
@@ -389,8 +391,6 @@ class InverseIsochron(Isochron):
         lci, uci = reg.calculate_error_envelope(rxs)
         fit.error_envelope.lower = lci
         fit.error_envelope.upper = uci
-
-
 
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
