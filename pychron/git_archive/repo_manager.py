@@ -147,20 +147,28 @@ class GitRepoManager(Loggable):
                 self.set_name(path)
 
     def add_paths(self, apaths):
-        self.debug('add paths {}'.format(apaths))
-        if not hasattr(apaths, '__iter__'):
+        if not isinstance(apaths, (list, tuple)):
             apaths = (apaths,)
 
         changes = self.get_local_changes()
-        print('aa', changes)
         changes = [os.path.join(self.path, c) for c in changes]
-        print('bb', changes)
+        if changes:
+            self.debug('-------- local changes ---------')
+            for c in changes:
+                self.debug(c)
+
         untracked = self.untracked_files()
-        print('tt', untracked)
+        if untracked:
+            self.debug('-------- untracked paths --------')
+            for t in untracked:
+                self.debug(t)
+
         changes.extend(untracked)
 
+        self.debug('add paths {}'.format(apaths))
+
         ps = [p for p in apaths if p in changes]
-        print('ps', ps)
+        self.debug('changed paths {}'.format(ps))
         changed = bool(ps)
         for p in ps:
             self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
