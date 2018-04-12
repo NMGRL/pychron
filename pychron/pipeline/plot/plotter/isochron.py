@@ -326,7 +326,7 @@ class InverseIsochron(Isochron):
             for overlay in plot.overlays:
                 if isinstance(overlay, OffsetPlotLabel):
                     w, h = overlay.get_preferred_size()
-                    th += h + 2
+                    th += h + self.options.results_info_spacing
 
             label = OffsetPlotLabel(
                 offset=(1, th),

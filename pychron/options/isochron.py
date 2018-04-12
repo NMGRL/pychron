@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Bool, Float, Property, List, Color, Enum
+from traits.api import Str, Bool, Float, Property, List, Color, Enum, Range
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
@@ -64,6 +64,8 @@ class InverseIsochronOptions(IsochronOptions):
     info_fontname = Enum(*FONTS)
     info_fontsize = Enum(*SIZES)
 
+    results_info_spacing = Range(2, 20)
+
     def _get_results_font(self):
         return '{} {}'.format(self.results_fontname, self.results_fontsize)
 
@@ -73,7 +75,7 @@ class InverseIsochronOptions(IsochronOptions):
     @property
     def inominal_intercept_value(self):
         try:
-            return 1/self.nominal_intercept_value
+            return 1 / self.nominal_intercept_value
         except ZeroDivisionError:
             return 0
 
