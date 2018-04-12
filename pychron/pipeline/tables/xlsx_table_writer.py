@@ -517,11 +517,11 @@ class XLSXTableWriter(BaseTableWriter):
             return ''
 
         def get_preferred_age(ag, *args):
-            s = ag.age_scalar
+            s = ag.ma_age_scalar
             return nominal_value(ag.weighted_age) / s
 
         def get_preferred_age_error(ag, *args):
-            s = ag.age_scalar
+            s = ag.ma_age_scalar
             return std_dev(ag.weighted_age) / s * opt.summary_age_nsigma
 
         is_step_heat = opt.table_kind == 'Step Heat'

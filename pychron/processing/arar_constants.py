@@ -87,6 +87,7 @@ class ArArConstants(HasTraits):
 
     age_units = Str('Ma')
     age_scalar = Property(depends_on='age_units')
+    ma_age_scalar = Property(depends_on='age_units')
     abundance_sensitivity = Float
 
     # ic_factors = Either(List, Str)
@@ -209,7 +210,11 @@ class ArArConstants(HasTraits):
 
     def _get_age_scalar(self):
         try:
+            return AGE_SCALARS[self.age_units]
+        except KeyError:
+            return 1
+    def _get_ma_age_scalar(self):
+        try:
             return AGE_MA_SCALARS[self.age_units]
         except KeyError:
             return 1
-

@@ -826,22 +826,22 @@ class PipelineEngine(Loggable):
         else:
             pt = name
 
-            try:
-                pt.render(self.application, self.pipeline,
-                          self.browser_model,
-                          self.interpreted_age_browser_model,
-                          self.dvc,
-                          clear=clear,
-                          exclude_klass=exclude_klass)
-            except BaseException as e:
-                import traceback
-                traceback.print_exc()
-                self.debug('Invalid Template: {}'.format(e))
-                self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
-                return
+        try:
+            pt.render(self.application, self.pipeline,
+                      self.browser_model,
+                      self.interpreted_age_browser_model,
+                      self.dvc,
+                      clear=clear,
+                      exclude_klass=exclude_klass)
+        except BaseException as e:
+            import traceback
+            traceback.print_exc()
+            self.debug('Invalid Template: {}'.format(e))
+            self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
+            return
 
-            # self.update_detectors()
-            if self.pipeline.nodes:
+        # self.update_detectors()
+        if self.pipeline.nodes:
                 self.selected = self.pipeline.nodes[0]
 
     def _get_template_path(self, name):

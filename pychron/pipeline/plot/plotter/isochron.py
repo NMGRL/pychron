@@ -88,7 +88,7 @@ class InverseIsochron(Isochron):
         g = self.graph
         for i, p in enumerate(g.plots):
             l, h = self.ymis[i], self.ymas[i]
-            g.set_y_limits(max(0, l), h, pad='0.1', plotid=i)
+            g.set_y_limits(max(0, l), h, pad='0.1', pad_style='upper', plotid=i)
 
         g.set_x_limits(0, self.xma, pad='0.1')
 
