@@ -370,7 +370,8 @@ class DVCDatabase(DatabaseAdapter):
             if exclude_invalid:
                 q = exclude_invalid_analyses(q)
 
-            return self._query_all(q, verbose_query=True)
+            records = self._query_all(q, verbose_query=True)
+            return [rii for ri in records for rii in ri.record_views]
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,

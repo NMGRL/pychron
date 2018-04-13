@@ -197,7 +197,7 @@ class FindReferencesNode(FindNode):
         self.analysis_types = nodedict.get('analysis_types', [])
         if self.analysis_types:
             self.name = 'Find {}'.format(','.join(self.analysis_types))
-        self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', False)
+        self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -270,9 +270,9 @@ class FindReferencesNode(FindNode):
         if self.loadname and self.loadname != NULL_STR:
             refs = self.dvc.find_references_by_load(self.loadname, atypes, **kw)
             if refs:
-                times = sorted((ai.rundate for ai in refs))
+                times = sorted([ai.rundate for ai in refs])
         else:
-            times = sorted((ai.rundate for ai in unknowns))
+            times = sorted([ai.rundate for ai in unknowns])
             refs = self.dvc.find_references(times, atypes, hours=self.threshold, **kw)
 
         if refs:

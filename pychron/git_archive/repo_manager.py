@@ -217,20 +217,20 @@ class GitRepoManager(Loggable):
 
     @classmethod
     def clone_from(cls, url, path):
-        progress = open_progress(100)
-
-        def func(op_code, cur_count, max_count=None, message=''):
-            if max_count:
-                progress.max = int(max_count) + 2
-                if message:
-                    message = 'Cloning repository {} -- {}'.format(url, message[2:])
-                    progress.change_message(message, auto_increment=False)
-                progress.update(int(cur_count))
-
-            if op_code == 66:
-                progress.close()
-        rprogress = CallableRemoteProgress(func)
-
+        # progress = open_progress(100)
+        #
+        # def func(op_code, cur_count, max_count=None, message=''):
+        #     if max_count:
+        #         progress.max = int(max_count) + 2
+        #         if message:
+        #             message = 'Cloning repository {} -- {}'.format(url, message[2:])
+        #             progress.change_message(message, auto_increment=False)
+        #         progress.update(int(cur_count))
+        #
+        #     if op_code == 66:
+        #         progress.close()
+        # rprogress = CallableRemoteProgress(func)
+        rprogress = None
         try:
             Repo.clone_from(url, path, progress=rprogress)
         except GitCommandError as e:
