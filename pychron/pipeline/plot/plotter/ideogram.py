@@ -639,18 +639,23 @@ class Ideogram(BaseArArFigure):
         # ov.data_point = wm, y
         # n = len(fxs)
         # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
-        mi, ma = min(ys), max(ys)
-        if sel:
-            dp.visible = True
-            xs, ys = self._calculate_probability_curve(self.xs, self.xes)
-            dp.value.set_data(ys)
-            dp.index.set_data(xs)
-            # oys = dp.value.get_data()
-            mi, ma = min(mi, min(ys)), max(mi, max(ys))
-        else:
-            dp.visible = False
+        try:
+            mi, ma = min(ys), max(ys)
 
-        self._set_y_limits(0, ma, min_=0)
+            if sel:
+                dp.visible = True
+                xs, ys = self._calculate_probability_curve(self.xs, self.xes)
+                dp.value.set_data(ys)
+                dp.index.set_data(xs)
+                # oys = dp.value.get_data()
+                mi, ma = min(mi, min(ys)), max(mi, max(ys))
+            else:
+                dp.visible = False
+
+            self._set_y_limits(0, ma, min_=0)
+        except ValueError:
+            pass
+
         graph.redraw()
 
     # ===============================================================================
