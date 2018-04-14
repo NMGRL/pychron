@@ -5,6 +5,7 @@ recommonmark
 scipy
 gitpython
 sqlalchemy
+pymysql
 requests
 traits
 apptools
@@ -15,3 +16,4 @@ pyface
 configparser
 pyserial
 pyvisa
+twisted
