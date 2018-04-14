@@ -81,6 +81,7 @@ class NodeGroup(BaseNode):
 class Pipeline(HasTraits):
     name = Str('Pipeline 1')
     nodes = List
+    active = Bool(False)
 
     def group_nodes(self):
         pass
@@ -99,6 +100,7 @@ class Pipeline(HasTraits):
                 ni.clear_data()
 
             ni.reset()
+        self.active = False
 
     # @on_trait_change('nodes[]')
     # def _handle_nodes_changed(self):
@@ -642,11 +644,12 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
+                    node.unknowns = []
+
                     if not node.pre_run(state, configure=False):
                         self.debug('Pre run failed {}'.format(node))
                         return True
 
-                    node.unknowns = []
                     st = time.time()
                     try:
                         node.run(state)
@@ -842,7 +845,7 @@ class PipelineEngine(Loggable):
 
         # self.update_detectors()
         if self.pipeline.nodes:
-                self.selected = self.pipeline.nodes[0]
+            self.selected = self.pipeline.nodes[0]
 
     def _get_template_path(self, name):
         pname = name.replace(' ', '_').lower()
@@ -1038,7 +1041,7 @@ class PipelineEngine(Loggable):
 
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, PipelineTemplate) or isinstance(new, str):
-            if self.run_enabled:
+            if self.run_enabled and not self.pipeline.active:
                 self.debug('Pipeline template {} selected'.format(new))
                 self._set_template(new)
 
@@ -1048,6 +1051,7 @@ class PipelineEngine(Loggable):
         elif isinstance(new, NodeGroup):
             pass
         else:
+            print('adsfa', new)
             self.selected_node = new
             if old:
                 old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
@@ -1108,6 +1112,7 @@ class PipelineEngine(Loggable):
     _len_references_removed = 0
 
     def _handle_len_unknowns(self, new):
+        print('hadsfasdfan', new)
         self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
 
         def func(editor):
@@ -1116,6 +1121,7 @@ class PipelineEngine(Loggable):
             self.state.unknowns = vs
             for node in self.pipeline.nodes:
                 if isinstance(node, UnknownNode) and node is not self.selected:
+                    print('afffffasfasfasfsaafasfasfsfsfsffafsfssf ', vs)
                     node.unknowns = vs
 
         self._handle_len('unknowns', func)
