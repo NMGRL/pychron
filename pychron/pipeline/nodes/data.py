@@ -364,6 +364,7 @@ class BaseAutoUnknownNode(UnknownNode):
 
             print('retrived n records={}'.format(len(records)))
             if not self._cached_unknowns:
+                updated = True
                 ans = self.dvc.make_analyses(records)
             else:
                 ans = []
@@ -501,6 +502,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         return v
 
     def run(self, state):
+        # if self._alive:
         self._low = datetime.now()
         unks, updated = self._load_analyses()
         state.unknowns = unks
@@ -520,12 +522,14 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         if not self._alive:
             return
 
-        if unks:
-            unks_ids = [id(ai) for ai in unks]
-            if self._unks_ids != unks_ids:
-                self._unks_ids = unks_ids
-                self.engine.rerun_with(unks, post_run=False)
-                self.engine.refresh_figure_editors()
+        if unks and updated:
+            # unks_ids = [id(ai) for ai in unks]
+            # if self._unks_ids != unks_ids:
+            #     self._unks_ids = unks_ids
+            # self.engine.rerun_with(unks, post_run=False)
+            self.engine.run(post_run=False)
+            self.engine.post_run_refresh()
+            self.engine.refresh_figure_editors()
                 # self.unknowns = unks
 
         if not self._alive:

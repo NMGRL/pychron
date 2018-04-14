@@ -644,7 +644,7 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
-                    node.unknowns = []
+                    # node.unknowns = []
 
                     if not node.pre_run(state, configure=False):
                         self.debug('Pre run failed {}'.format(node))
@@ -678,7 +678,7 @@ class PipelineEngine(Loggable):
                 self.post_run(state)
             return True
 
-    def run_pipeline(self, run_from=None, state=None):
+    def run_pipeline(self, run_from=None, state=None, post_run=True):
         if state is None:
             state = EngineState()
             self.state = state
@@ -733,8 +733,8 @@ class PipelineEngine(Loggable):
         else:
             self.debug('pipeline run finished')
             self.debug('pipeline runtime {}'.format(time.time() - ost))
-
-            self.post_run(state)
+            if post_run:
+                self.post_run(state)
 
             # self.state = None
             return True
@@ -751,6 +751,11 @@ class PipelineEngine(Loggable):
 
             self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
         self.debug('pipeline post run finished')
+        self.post_run_refresh(state)
+
+    def post_run_refresh(self, state=None):
+        if state is None:
+            state = self.state
 
         self.update_needed = True
         self.refresh_table_needed = True

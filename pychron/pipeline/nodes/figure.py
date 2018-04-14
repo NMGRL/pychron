@@ -91,7 +91,10 @@ class FigureNode(SortableNode):
                 if self.name in self.skip_meaning.split(','):
                     unks = [u for u in unks if u.tag.lower() != 'skip']
 
+                print('set items {}'.format(len(unks)))
                 editor.set_items(unks)
+
+                editor.component.invalidate_and_redraw()
                 # self.editors.append(editor)
                 # oname = editor.name
 
