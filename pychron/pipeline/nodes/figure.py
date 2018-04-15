@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from itertools import groupby
+from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance, List
@@ -32,7 +32,6 @@ from pychron.pipeline.plot.plotter.series import RADIOGENIC_YIELD, PEAK_CENTER, 
     ANALYSIS_TYPE, AGE, AR4036, UAR4036, AR4038, UAR4038, AR4039, UAR4039, LAB_TEMP, LAB_HUM, AR3739, AR3738, UAR4037, \
     AR4037, AR3639, UAR3839, AR3839, UAR3639, UAR3739, UAR3738, UAR3638, AR3638, UAR3637, AR3637
 from pychron.pychron_constants import COCKTAIL, UNKNOWN, AR40, AR39, AR36, AR38, DETECTOR_IC, AR37
-import six
 
 
 class NoAnalysesError(BaseException):
@@ -91,48 +90,16 @@ class FigureNode(SortableNode):
                 if self.name in self.skip_meaning.split(','):
                     unks = [u for u in unks if u.tag.lower() != 'skip']
 
-                print('set items {}'.format(len(unks)))
                 editor.set_items(unks)
 
                 editor.component.invalidate_and_redraw()
-                # self.editors.append(editor)
-                # oname = editor.name
 
-            key = lambda x: x.name
+            key = attrgetter('name')
             for name, es in groupby(sorted(state.editors, key=key), key=key):
                 for i, ei in enumerate(es):
                     ei.name = '{} {:02n}'.format(ei.name, i + 1)
-                    # else:
-                    #     a = list(set([ni.labnumber for ni in state.unknowns]))
-                    #     oname = '{} {}'.format(grouped_name(a), self.name)
-                    #
-                    #     new_name = oname
-                    #     cnt = 1
-                    #     for e in state.editors:
-                    #         print 'a={}, b={}'.format(e.name, new_name)
-                    #         if e.name == new_name:
-                    #             new_name = '{} {:02n}'.format(oname, cnt)
-                    #             cnt += 1
-                    #     self.
-
-                    # if self.editors:
-                    #     self.editor = self.editors[0]
-
-                    # cnt = 1
-                    # for e in state.editors:
-                    #     print 'a={}, b={}'.format(e.name, new_name)
-                    #     if e.name == new_name:
-                    #         new_name = '{} {:02n}'.format(oname, cnt)
-                    #         cnt += 1
-
-                    # self.name = new_name
-                    # if self.editor:
-                    #     self.editor.name = new_name
-
-                    # return self.editors
 
     def configure(self, refresh=True, pre_run=False, **kw):
-        # self._configured = True
         if not pre_run:
             self._manual_configured = True
 
@@ -155,7 +122,7 @@ class FigureNode(SortableNode):
 
     def _editor_factory(self):
         klass = self.editor_klass
-        if isinstance(klass, (str, six.text_type)):
+        if isinstance(klass, (str, bytes, bytearray)):
             pkg, klass = klass.split(',')
             mod = __import__(pkg, fromlist=[klass])
             klass = getattr(mod, klass)

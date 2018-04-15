@@ -211,9 +211,9 @@ class UnknownNode(DataNode):
         #         return
 
         # review_req = []
-        unks = self.unknowns
-        for ai in unks:
-            ai.group_id = 0
+        # unks = self.unknowns
+        # for ai in unks:
+        #     ai.group_id = 0
         #     if self.check_reviewed:
         #         for attr in ('blanks', 'iso_evo'):
         #             # check analyses to see if they have been reviewed

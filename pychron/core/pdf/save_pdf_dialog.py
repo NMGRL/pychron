@@ -14,36 +14,30 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-# from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-# ============= standard library imports ========================
-import os
-
+from chaco.plot_label import PlotLabel
 from kiva.fonttools.font_manager import findfont, FontProperties
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-
+from traitsui.handler import Controller
+# ============= standard library imports ========================
+import os
 from reportlab.pdfbase import _fontdata
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont, TTFError
-from traitsui.handler import Controller
 
-from pychron.core.helpers.filetools import view_file, add_extension
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
-
-# Enable sets the font name to lowercase but Reportlab fonts are case-sensitive
 from pychron import pychron_constants
 
-for font in pychron_constants.FONTS:
-    if font in ('Helvetica',):
-        continue
+for face_name in pychron_constants.TTF_FONTS:
+    family = face_name
+    font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
 
-    # for name in (font, font.lower()):
-    # f = findfont(FontProperties(family=name, style='normal', weight='normal'))
-    f = findfont(FontProperties(family=font, style='normal', weight='normal'))
+    # print(family, face_name, font)
     try:
-        tf = TTFont(font, f)
+        tf = TTFont(face_name, font)
         pdfmetrics.registerFont(tf)
     except TTFError as e:
         print('invalid font', font, e)
@@ -132,30 +126,47 @@ def save_pdf(component, path=None, default_directory=None, view=False, options=N
                 view_file(path)
             component.do_layout(size=obounds, force=True)
 
-# def render_pdf(component, options):
-#     pass
 
-# if __name__ == '__main__':
-#     paths.build('_dev')
-#
-#
-#     class Demo(HasTraits):
-#         test = Button('Test')
-#         graph = Instance(Graph)
-#
-#         def _graph_default(self):
-#             g = Graph()
-#             p = g.new_plot()
-#             g.new_series([1, 2, 3, 4, 5, 6], [10, 21, 34, 15, 133, 1])
-#             return g
-#
-#         def _test_fired(self):
-#             self.graph.edit_traits()
-#             # self.graph.plotcontainer.bounds = [600, 600]
-#             # self.graph.plotcontainer.do_layout(force=True)
-#             # save_pdf(self.graph.plotcontainer, path='/Users/ross/Desktop/foop.pdf')
-#
-#
-#     d = Demo()
-#     d.configure_traits(view=View('test'))
+if __name__ == '__main__':
+    from traits.api import HasTraits, Button, Instance, Unicode, Any
+    from traitsui.api import View
+    from pychron.graph.graph import Graph
+    from pychron.paths import paths
+
+    paths.build('_dev')
+
+
+    class Demo(HasTraits):
+        test = Button('Test')
+        graph = Instance(Graph)
+
+        def _graph_default(self):
+            g = Graph()
+            p = g.new_plot()
+            txt = 'gooiooi \N{Plus-minus sign} \N{Greek Small Letter Sigma} \u03AE \u00ae \u00a3'
+            txt2 = 'aaaaaa \xb1 \u00b1'
+
+            pl = PlotLabel(txt,
+                           overlay_position='inside bottom',
+                           font='Courier New 20')
+            pl2 = PlotLabel(txt2,
+                            x=100,
+                            y=100,
+                            overlay_position='inside bottom',
+                            font='Arial 20')
+
+            s, p = g.new_series([1, 2, 3, 4, 5, 6], [10, 21, 34, 15, 133, 1])
+            s.overlays.append(pl)
+            s.overlays.append(pl2)
+            return g
+
+        def _test_fired(self):
+            self.graph.edit_traits()
+            self.graph.plotcontainer.bounds = [600, 600]
+            self.graph.plotcontainer.do_layout(force=True)
+            save_pdf(self.graph.plotcontainer, path='/Users/ross/Desktop/foop.pdf')
+
+
+    d = Demo()
+    d.configure_traits(view=View('test'))
 # ============= EOF =============================================

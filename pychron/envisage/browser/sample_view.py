@@ -339,6 +339,9 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def group_selected(self, info, obj):
+        obj.group_selected()
+
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 

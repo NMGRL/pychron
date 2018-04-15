@@ -69,6 +69,9 @@ class GroupingNode(BaseNode):
     def run(self, state):
         if self.by_key != 'No Grouping':
             unks = getattr(state, self.analysis_kind)
+            for unk in unks:
+                unk.group_id = 0
+
             group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
 
     def traits_view(self):

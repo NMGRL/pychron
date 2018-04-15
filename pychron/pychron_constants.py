@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
+from kiva import pdfmetrics
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
@@ -33,23 +33,21 @@ FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 #          'Helvetica',
 #          'Trebuchet MS',
 #          'Verdana']
-FONTS = ['Helvetica',] #'Arial','Consolas']
+# FONTS = ['Helvetica',
+#          'Arial',
+#          #'Courier New', 'Consolas'
+#          ]
+TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
+# FONTS = pdfmetrics.standardFonts
+FONTS = ['Helvetica']+TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = '\N{Plus-minus sign}'
-try:
-    # PLUSMINUS_ERR = PLUSMINUS + 'Err.'
-    PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)
-except UnicodeEncodeError:
-    PLUSMINUS = '+/-'
-    PLUSMINUS_ERR = '{}Err.'.format(PLUSMINUS)
-
 SIGMA = '\N{Greek Small Letter Sigma}'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
 PLUSMINUS_TWO_SIGMA = PLUSMINUS_NSIGMA.format(2)
-# PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
 
 SPECIAL_IDENTIFIER = 'Special Identifier'

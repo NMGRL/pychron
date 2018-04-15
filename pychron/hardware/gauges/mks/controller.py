@@ -26,6 +26,7 @@ ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
 LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
 NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
 
+
 class Gauge(BaseGauge):
     def traits_view(self):
         v = View(HGroup(Item('display_name', show_label=False, style='readonly',
@@ -51,7 +52,7 @@ class MKSController(BaseGaugeController, CoreDevice):
 
     def initialize(self, *args, **kw):
         for g in self.gauges:
-            if int(g.channel) in (1,3,5):
+            if int(g.channel) in (1, 3, 5):
                 self._power_onoff(g.channel, True, verbose=True)
         return True
 

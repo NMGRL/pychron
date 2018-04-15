@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 import os
 from itertools import groupby
+from operator import attrgetter
 
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import List, Property, Event, cached_property, Any
@@ -66,8 +67,6 @@ class GraphEditor(BaseTraitsEditor):
             gc.render_component(c)
             gc.save(path)
 
-            # self.rebuild_graph()
-
     def set_items(self, ans, is_append=False, refresh=False, compress=True):
         if is_append:
             self.analyses.extend(ans)
@@ -91,31 +90,18 @@ class GraphEditor(BaseTraitsEditor):
         if not ans:
             return
 
-        key = lambda x: x.group_id
+        key = attrgetter('group_id')
         ans = sorted(ans, key=key)
         groups = groupby(ans, key)
-        # try:
-        # mgid, analyses = groups.next()
-        # except StopIteration:
-        #     return
-
-        # print 'compress groups'
-        # for ai in analyses:
-        # ai.group_id = 0
 
         for i, (gid, analyses) in enumerate(groups):
             for ai in analyses:
-                # ai.group_id = gid - mgid
                 ai.group_id = i
 
     @cached_property
     def _get_component(self):
         if self.figure_container:
             self.figure_container.model_changed(False)
-        # if self.figure_model:
-        # self.figure_model.refresh_panels()
-        # self.
-        # self.figure_model = None
         return self._component_factory()
 
     def _component_factory(self):

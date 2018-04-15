@@ -453,7 +453,7 @@ class AnalysesPane(TraitsDockPane):
                               editor=TabularEditor(adapter=UnknownsAdapter(),
                                                    update='refresh_table_needed',
                                                    multi_select=True,
-                                                   column_clicked='column_clicked',
+                                                   column_clicked='object.selected_node.column_clicked',
                                                    # drag_external=True,
                                                    # drop_factory=self.model.drop_factory,
                                                    dclicked='dclicked_unknowns',

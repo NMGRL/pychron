@@ -206,6 +206,7 @@ class AnalysisAdapter(BrowserAdapter):
                    # Action(name='Replace', action='replace_items', enabled=e),
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
+                   Action(name='Group Selected', action='group_selected'),
                    Action(name='Review Status Details', action='review_status_details'),
                    Action(name='Load Review Status', action='load_review_status'),
                    Action(name='Toggle Freeze', action='toggle_freeze'),
@@ -230,14 +231,16 @@ class AnalysisAdapter(BrowserAdapter):
             else:
                 if row % 2:
                     color = 'lightgray'
-
-                if self.use_analysis_colors:
-                    if item.analysis_type == 'unknown':
-                        color = self.unknown_color
-                    elif item.analysis_type == 'air':
-                        color = self.air_color
-                    elif item.analysis_type.startswith('blank'):
-                        color = self.blank_color
+                if item.group_id>=1:
+                    return 'red'
+                else:
+                    if self.use_analysis_colors:
+                        if item.analysis_type == 'unknown':
+                            color = self.unknown_color
+                        elif item.analysis_type == 'air':
+                            color = self.air_color
+                        elif item.analysis_type.startswith('blank'):
+                            color = self.blank_color
 
         return color
 

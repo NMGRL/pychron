@@ -189,6 +189,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
 
+    def group_selected(self):
+        max_gid = max([si.group_id for si in self.analyses]) + 1
+        for s in self.get_selected_analyses():
+            s.group_id = max_gid
+
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
         record = self.selected[0]

@@ -108,10 +108,16 @@ class PipelineFilter(HasTraits):
 
     def evaluate(self, item):
         attr = self.attribute
-        val = self._get_value(item, attr)
-        attr = attr.replace(' ', '_')
-        edict = {attr: val}
-        return self._eval_func(edict)
+        comp = self.comparator
+        crit = self.criterion
+        ret = True
+        if attr and comp and crit:
+            val = self._get_value(item, attr)
+            attr = attr.replace(' ', '_')
+            edict = {attr: val}
+            ret = self._eval_func(edict)
+
+        return ret
 
     def _convert_date(self, d):
         for s in ('%B', '%b', '%m',
@@ -232,7 +238,8 @@ class FilterNode(BaseNode):
             return flag
 
         if self.remove:
-            vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            # vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            vs = [a for a in getattr(state, self.analysis_kind) if filterfunc(a)]
             setattr(state, self.analysis_kind, vs)
         else:
             ans = getattr(state, self.analysis_kind)

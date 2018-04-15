@@ -15,12 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
+
 import os
 import time
-
 import yaml
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
+
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc.tasks.repo_task import RepoItem
@@ -916,75 +916,8 @@ class PipelineEngine(Loggable):
         groups.append(grp)
 
         self.debug('loaded {} user templates'.format(len(user_templates)))
-        # add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
-        # with open(paths.pipeline_template_file, 'r') as rfile:
-        #     tnames = yaml.load(rfile)
-        #
-        # def to_pathname(t):
-        #     return t.replace(' ', '_').lower()
-        #
-        # def add_template(nn, pp):
-        #     if os.path.isfile(pp):
-        #         with open(pp, 'r') as rfile:
-        #             yd = yaml.load(rfile)
-        #             required = yd['required']
-        #             if required:
-        #                 if all((self.application.get_service(ri) for ri in required)):
-        #                     ns.append(PipelineTemplate(nn, pp))
-        #             else:
-        #                 ns.append(PipelineTemplate(nn, pp))
-
-        # def to_name(t):
-        #     return ' '.join(map(str.capitalize, t.split('_')))
 
         root.groups = groups
-
-    # def _load_predefined_templates_old(self):
-    #     self.debug('load predefined templates')
-    #     # templates = []
-    #     # for temp in list_directory2(paths.pipeline_template_dir, extension='.yaml',
-    #     #                             remove_extension=True):
-    #     #     templates.append(temp)
-    #     # self.debug('loaded {} pychron templates'.format(len(templates)))
-    #
-    #     user_templates = []
-    #     for temp in list_directory2(paths.user_pipeline_template_dir, extension='.yaml',
-    #                                 remove_extension=True):
-    #         user_templates.append(temp)
-    #     self.debug('loaded {} user templates'.format(len(user_templates)))
-    #
-    #     with open(paths.pipeline_template_file, 'r') as rfile:
-    #         tnames = yaml.load(rfile)
-    #
-    #     ns = []
-    #
-    #     def to_pathname(t):
-    #         return t.replace(' ', '_').lower()
-    #
-    #     def add_template(nn, pp):
-    #         if os.path.isfile(pp):
-    #             with open(pp, 'r') as rfile:
-    #                 yd = yaml.load(rfile)
-    #                 required = yd['required']
-    #                 if required:
-    #                     if all((self.application.get_service(ri) for ri in required)):
-    #                         ns.append(PipelineTemplate(nn, pp))
-    #                 else:
-    #                     ns.append(PipelineTemplate(nn, pp))
-    #
-    #     for name in tnames:
-    #         p = os.path.join(paths.pipeline_template_dir, '{}.yaml'.format(to_pathname(name)))
-    #         add_template(name, p)
-    #
-    #     def to_name(t):
-    #         return ' '.join(map(str.capitalize, t.split('_')))
-    #
-    #     if user_templates:
-    #         # ns.append(LINE_STR)
-    #         for u in user_templates:
-    #             name = to_name(u)
-    #             add_template(name, os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(u)))
-    #
 
     def _add_find_node(self, node, run, analysis_type):
         newnode = FindReferencesNode(dvc=self.dvc, analysis_type=analysis_type)
@@ -1013,7 +946,6 @@ class PipelineEngine(Loggable):
         return node
 
     # handlers
-
     @on_trait_change('active_editor')
     def _handle_active_editor(self, obj, name, old, new):
         def refresh():
@@ -1026,10 +958,6 @@ class PipelineEngine(Loggable):
         if new:
             if hasattr(new, 'figure_model'):
                 new.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table')
-
-    # @on_trait_change('active_editor:figure_model:panels:figures:refresh_unknowns_table')
-    # def _handle_refresh(self, obj, name, old, new):
-    #     self.refresh_table_needed = True
 
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()
@@ -1056,7 +984,6 @@ class PipelineEngine(Loggable):
         elif isinstance(new, NodeGroup):
             pass
         else:
-            print('adsfa', new)
             self.selected_node = new
             if old:
                 old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
@@ -1067,7 +994,6 @@ class PipelineEngine(Loggable):
                 old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
                 old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
                 old.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
-                # self.pipeline = self.pipeline_group.get_pipeline_by_node(old)
 
             if new:
                 new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
@@ -1078,34 +1004,11 @@ class PipelineEngine(Loggable):
                 new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
                 new.on_trait_change(self._handle_len_references, 'references_items')
 
-                # self.pipeline = self.pipeline_group.get_pipeline_by_node(new)
-
-                # new.on_trait_change(self._handle_unknowns, 'unknowns[]')
-
-            # self.show_group_colors = False
             if isinstance(new, FigureNode):
-                # self.show_group_colors = True
                 if new.editor:
                     editor = new.editor
                     self.selected_editor = editor
                     self.active_editor = editor
-
-    # _suppress_handle_unknowns = False
-    # def _handle_unknowns(self, obj, name, new):
-    #     if self._suppress_handle_unknowns:
-    #         return
-    #
-    #     items = obj.unknowns
-    #
-    #     for i, item in enumerate(items):
-    #         if not isinstance(item, DVCAnalysis):
-    #             self._suppress_handle_unknowns = True
-    #             nitem = self.dvc.make_analyses((item,))[0]
-    #             obj.unknowns.pop(i)
-    #             obj.unknowns.insert(i, nitem)
-    #
-    #     self._suppress_handle_unknowns = False
-    #     print 'asdfasdfasfsafs', obj, new
 
     def refresh_unknowns(self, unks, refresh_editor=False):
         self.selected.unknowns = unks
@@ -1117,7 +1020,6 @@ class PipelineEngine(Loggable):
     _len_references_removed = 0
 
     def _handle_len_unknowns(self, new):
-        print('hadsfasdfan', new)
         self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
 
         def func(editor):
@@ -1126,7 +1028,6 @@ class PipelineEngine(Loggable):
             self.state.unknowns = vs
             for node in self.pipeline.nodes:
                 if isinstance(node, UnknownNode) and node is not self.selected:
-                    print('afffffasfasfasfsaafasfasfsfsfsffafsfssf ', vs)
                     node.unknowns = vs
 
         self._handle_len('unknowns', func)
@@ -1189,112 +1090,4 @@ class PipelineEngine(Loggable):
     def _pipeline_default(self):
         return self.pipeline_group.pipelines[0]
 
-        # def _selected_default(self):
-        #     return BaseNode()
-        # self.update_needed = True
-
-        # @on_trait_change('selected_editor:figure_model:panels:[figures:[inspector_event]]')
-        # def _handle_inspector_event(self, new):
-        #     self.active_inspector_item = new
-        #
-        # def _selected_editor_changed(self, old, new):
-        #     if new:
-        #         if hasattr(new, 'figure_model'):
-        #             new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]')
-        #
-        #     if old:
-        #         new.on_trait_change(self._handle_inspector_event, 'figure_model:panels:[figures:[inspector_event]]',
-        #                             remove=True)
-
 # ============= EOF =============================================
-
-# if __name__ == '__main__':
-# from traitsui.api import TreeNode, Handler
-# from pychron.core.ui.tree_editor import TreeEditor
-# from pyface.action.menu_manager import MenuManager
-# from pychron.pipeline.nodes.base import BaseNode
-# from traitsui.menu import Action
-# from pychron.envisage.resources import icon
-# from pychron.core.helpers.logger_setup import logging_setup
-# @on_trait_change('unknowns[]')
-# def _handle_unknowns(self, name, old, new):
-#     if not new:
-#         # only update if deletion
-#         for n in self.pipeline.nodes:
-#             try:
-#                 n.editor.set_items(self.unknowns)
-#                 n.refresh()
-#             except AttributeError:
-#                 pass
-#
-# @on_trait_change('references[]')
-# def _handle_unknowns(self, name, old, new):
-#     if not new:
-#         # only update if deletion
-#         for n in self.pipeline.nodes:
-#             try:
-#                 n.editor.set_references(self.references)
-#                 n.refresh()
-#             except AttributeError:
-#                 pass
-# self.show_group_colors = False
-#     if isinstance(new, (UnknownNode, FluxMonitorsNode)):
-#         self.unknowns = new.analyses
-#     elif isinstance(new, ReferenceNode):
-#         self.references = new.analyses
-#     elif isinstance(new, FigureNode):
-#         self.show_group_colors = True
-#         if new.editor:
-#             self.unknowns = new.editor.analyses
-#             self.active_editor = new.editor
-# logging_setup('pipeline')
-# class PipelineHandler(Handler):
-#         def add_data(self, info, obj):
-#             info.object.add_data()
-#
-#     class DataTreeNode(TreeNode):
-#         def get_icon( self, object, is_expanded ):
-#             return icon('table')
-#
-#     e = PipelineEngine()
-#     # e.add_data()
-#     # e.add_node('foo')
-#     # e.add_node('bar')
-#     nodes = [TreeNode(node_for=[Pipeline],
-#                       children='nodes',
-#                       icon_open='',
-#                       label='name',
-#                       auto_open=True,
-#                       menu=MenuManager(Action(name='Add Data',
-#                                                    action='add_data'))),
-#              # TreeNode(node_for=[BaseNode],
-#              #
-#              #          label='name'),
-#              DataTreeNode(node_for=[DataNode],
-#                           label='name')
-#              ]
-#     editor = TreeEditor(nodes=nodes,
-#                         editable=False,
-#                         selection_mode='extended',
-#                         selected='selected',
-#                         dclick='dclicked',
-#                         show_disabled=True,
-#                         refresh_all_icons='refresh_all_needed',
-#                         refresh_icons='refresh_needed'
-#                         )
-#     v = View(UItem('pipeline',
-#                    editor=editor),
-#              handler=PipelineHandler())
-#     e.configure_traits(view=v)
-
-# def refresh_analyses(self):
-#     unks = []
-#     refs = []
-#     for node in self.pipeline.nodes:
-#         if isinstance(node, ReferenceNode):
-#             refs.extend(node.analyses)
-#         elif isinstance(node, (UnknownNode, FluxMonitorsNode)):
-#             unks.extend(node.analyses)
-#
-#     self.unknowns = unks
-#     self.references = refs
