@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
 import re
 
@@ -31,9 +30,9 @@ from pychron.persistence_loggable import dumpable
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA, SIGMA
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA, SIGMA, AGE_MA_SCALARS
 import six
-from six.moves import range
+
 
 subreg = re.compile(r'^<sub>(?P<item>\w+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>\w+)</sup>')
@@ -126,6 +125,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             self.include_summary_percent_ar39 = False
         else:
             self.include_summary_percent_ar39 = True
+
+    @property
+    def age_scalar(self):
+        return AGE_MA_SCALARS[self.age_units]
 
     @property
     def path(self):
@@ -308,8 +311,8 @@ class XLSXTableWriter(BaseTableWriter):
                    (True, 'Tag', '', 'tag'),
                    (ubit, 'Power', options.power_units, 'extract_value'),
 
-                   (ubit, 'Age', age_units, 'age', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', value),
+                   (ubit, 'Age', age_units, 'age', age_value),
+                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', age_value),
 
                    (kcabit, 'K/Ca', '', 'kca', value),
                    (ubit, PLUSMINUS_ONE_SIGMA, '', 'kca', error),
@@ -521,21 +524,10 @@ class XLSXTableWriter(BaseTableWriter):
             return ret
 
         def get_preferred_age(ag, *args):
-            if isinstance(ag, InterpretedAgeGroup):
-                ret = ag.get_ma_scaled_age()
-            else:
-                ret = ag.weighted_age / ag.age_scalar
-
-            return nominal_value(ret)
+            return nominal_value(ag.preferred_age)
 
         def get_preferred_age_error(ag, *args):
-            if isinstance(ag, InterpretedAgeGroup):
-                s = 1
-                ret = ag.preferred_age_error
-            else:
-                s = ag.age_scalar
-                ret = std_dev(ag.weighted_age)
-            return ret / s * opt.summary_age_nsigma
+            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
 
         is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
@@ -558,7 +550,7 @@ class XLSXTableWriter(BaseTableWriter):
                 (opt.include_summary_kca, PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma), '', 'weighted_kca',
                  get_kca_error),
 
-                (opt.include_summary_age, 'Age ({})'.format(age_units), '', '', get_preferred_age),
+                (opt.include_summary_age, 'Age {}'.format(age_units), '', '', get_preferred_age),
 
                 (opt.include_summary_age, PLUSMINUS_NSIGMA.format(opt.summary_age_nsigma), '', '',
                  get_preferred_age_error),
@@ -624,10 +616,12 @@ class XLSXTableWriter(BaseTableWriter):
         self._write_header(sh, cols, include_units=False)
         center = self._workbook.add_format({'align': 'center'})
         for ug in unks:
+            ug.set_temporary_age_units(self._options.age_units)
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
                 sh.write(self._current_row, i, txt, center)
             self._current_row += 1
+            ug.set_temporary_age_units(None)
 
         self._make_notes(sh, len(cols), 'summary')
 
@@ -666,15 +660,23 @@ class XLSXTableWriter(BaseTableWriter):
         repeat_header = self._options.repeat_header
 
         for i, group in enumerate(groups):
+            group.set_temporary_age_units(self._options.age_units)
+
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
 
             n = len(group.analyses) - 1
             for i, item in enumerate(group.analyses):
+                ounits = item.arar_constants.age_units
+                item.arar_constants.age_units = self._options.age_units
                 self._make_analysis(worksheet, cols, item, i == n)
+                item.arar_constants.age_units = ounits
+
             self._make_summary(worksheet, cols, group)
             self._current_row += 1
+
+            group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
         self._current_row = 1
@@ -809,22 +811,25 @@ class XLSXTableWriter(BaseTableWriter):
         border = self._workbook.add_format({'bottom': 1})
         fmt2 = self._workbook.add_format()
         fmt3 = self._workbook.add_format()
+        fmt4 = self._workbook.add_format()
         fmt = []
         if last:
             fmt2 = self._workbook.add_format({'bottom': 1})
             fmt3 = self._workbook.add_format({'bottom': 1})
             fmt = [border]
-
+        fmt2.set_align('center')
+        fmt3.set_num_format('mm/dd/yy hh:mm')
+        fmt4.set_num_format('0.0000000')
         sh.write(row, 0, status, *fmt)
         for j, c in enumerate(cols[1:]):
             txt = self._get_txt(item, c)
 
             if c[1] in ('N', 'Power'):
-                fmt2.set_align('center')
                 sh.write(row, j + 1, txt, fmt2)
             elif c[1] == 'RunDate':
-                fmt3.set_num_format('mm/dd/yy hh:mm')
                 sh.write_datetime(row, j + 1, txt, fmt3)
+            elif c[3] == 'j':
+                sh.write_number(row, j+1, txt, fmt4)
             else:
                 sh.write(row, j + 1, txt, *fmt)
 

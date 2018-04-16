@@ -102,7 +102,6 @@ class ArArConstants(HasTraits):
     allow_negative_ca_correction = Bool(True)
 
     def __init__(self, *args, **kw):
-        #print 'init arar constants'
         try:
             from pychron.core.ui.preference_binding import bind_preference
             bind_preference(self, 'lambda_b_v', 'pychron.arar.constants.lambda_b')

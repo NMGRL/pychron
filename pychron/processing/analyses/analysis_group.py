@@ -93,6 +93,7 @@ class AnalysisGroup(HasTraits):
 
     isochron_4036 = None
     isochron_regressor = None
+    _age_units = None
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
@@ -115,7 +116,13 @@ class AnalysisGroup(HasTraits):
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
 
+    def set_temporary_age_units(self, a):
+        self._age_units = a
+
     def _get_age_units(self):
+        if self._age_units:
+            return self._age_units
+
         return self.analyses[0].arar_constants.age_units
 
     def _get_arar_constants(self):
@@ -226,7 +233,7 @@ class AnalysisGroup(HasTraits):
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
-            return ufloat(v, max(0, e))
+            return ufloat(v, max(0, e)) / self.age_scalar
         except AttributeError:
             return ufloat(0, 0)
 
@@ -268,7 +275,7 @@ class AnalysisGroup(HasTraits):
         else:
             v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
         e = self._modify_error(v, e, self.arith_age_error_kind)
-        return ufloat(v, e)
+        return ufloat(v, e) / self.age_scalar
 
     @cached_property
     def _get_total_n(self):
@@ -340,7 +347,7 @@ class AnalysisGroup(HasTraits):
             v, e = nominal_value(age), std_dev(age)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
 
-            return ufloat(v, e)
+            return ufloat(v, e) / self.age_scalar
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
@@ -377,14 +384,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     @cached_property
     def _get_integrated_age(self):
 
-        rad40, k39 = list(zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
+        rad40, k39 = list(
+            zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
         rad40 = sum(rad40)
         k39 = sum(k39)
 
         a = next(self.clean_analyses())
         j = a.j
         try:
-            return age_equation(rad40 / k39, j, a.arar_constants)
+            return age_equation(rad40 / k39, j, a.arar_constants) / self.age_scalar
         except ZeroDivisionError:
             return nan
 
@@ -450,7 +458,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             if math.isnan(e):
                 e = 0
 
-        return ufloat(v, max(0, e))
+        return ufloat(v, max(0, e)) / self.age_scalar
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):

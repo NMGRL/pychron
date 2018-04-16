@@ -92,6 +92,7 @@ def error(x, k):
 def age_value(x, k):
     v = value(x, k)
     if v:
-        v /= x.age_scalar
+        v /= x.arar_constants.ma_age_scalar
     return v
+
 # ============= EOF =============================================
