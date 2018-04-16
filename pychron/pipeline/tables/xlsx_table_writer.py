@@ -30,6 +30,7 @@ from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA, SIGMA
 import six
 from six.moves import range
@@ -514,15 +515,27 @@ class XLSXTableWriter(BaseTableWriter):
             return std_dev(ag.weighted_kca) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
-            return ''
+            ret = ''
+            if isinstance(ag, InterpretedAgeGroup):
+                ret = ag.preferred_age_kind
+            return ret
 
         def get_preferred_age(ag, *args):
-            s = ag.ma_age_scalar
-            return nominal_value(ag.weighted_age) / s
+            if isinstance(ag, InterpretedAgeGroup):
+                ret = ag.get_ma_scaled_age()
+            else:
+                ret = ag.weighted_age / ag.age_scalar
+
+            return nominal_value(ret)
 
         def get_preferred_age_error(ag, *args):
-            s = ag.ma_age_scalar
-            return std_dev(ag.weighted_age) / s * opt.summary_age_nsigma
+            if isinstance(ag, InterpretedAgeGroup):
+                s = 1
+                ret = ag.preferred_age_error
+            else:
+                s = ag.age_scalar
+                ret = ag.weighted_age
+            return std_dev(ret) / s * opt.summary_age_nsigma
 
         is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
