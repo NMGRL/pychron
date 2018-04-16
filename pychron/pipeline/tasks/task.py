@@ -455,26 +455,29 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-        self.debug('{} started'.format(message))
-        if close_all:
-            self.close_all()
 
-        self.dvc.db.session = None
-        self.dvc.create_session()
+        if self.engine.pre_run_check():
 
-        if not getattr(self.engine, func)():
-            self.engine.resume_enabled = True
-            self.engine.run_enabled = False
-            self.debug('false {} {}'.format(message, func))
-        else:
-            self.engine.run_enabled = True
-            self.engine.resume_enabled = False
-            self.debug('true {} {}'.format(message, func))
+            self.debug('{} started'.format(message))
+            if close_all:
+                self.close_all()
 
-        for editor in self.engine.state.editors:
-            self._open_editor(editor)
+            self.dvc.db.session = None
+            self.dvc.create_session()
 
-        self.debug('{} finished'.format(message))
+            if not getattr(self.engine, func)():
+                self.engine.resume_enabled = True
+                self.engine.run_enabled = False
+                self.debug('false {} {}'.format(message, func))
+            else:
+                self.engine.run_enabled = True
+                self.engine.resume_enabled = False
+                self.debug('true {} {}'.format(message, func))
+
+            for editor in self.engine.state.editors:
+                self._open_editor(editor)
+
+            self.debug('{} finished'.format(message))
 
     def _run_from_pipeline(self):
         self._run('run from', 'run_from_pipeline')

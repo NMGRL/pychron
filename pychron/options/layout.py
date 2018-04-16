@@ -45,7 +45,7 @@ class FigureLayout(HasTraits):
         r = self.rows
         c = self.columns
 
-        if n == 1:
+        if n <= 1:
             r = c = 1
         elif self.fixed == 'square':
             s = int(math.ceil(n ** 0.5))
