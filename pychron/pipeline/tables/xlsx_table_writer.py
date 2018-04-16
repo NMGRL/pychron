@@ -534,8 +534,8 @@ class XLSXTableWriter(BaseTableWriter):
                 ret = ag.preferred_age_error
             else:
                 s = ag.age_scalar
-                ret = ag.weighted_age
-            return std_dev(ret) / s * opt.summary_age_nsigma
+                ret = std_dev(ag.weighted_age)
+            return ret / s * opt.summary_age_nsigma
 
         is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
