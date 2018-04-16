@@ -34,7 +34,7 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     outlier_goodness = Int
     curvature_goodness = Float
     curvature_goodness_at = Float
-    rsquared_goodness = Range(0.0, 1.0)
+    rsquared_goodness = Range(0.0, 1.0, 0.95)
 
     n_threshold = Int
     n_true = Enum(FIT_TYPES)
