@@ -646,6 +646,8 @@ class GitRepoManager(Loggable):
                         repo.git.merge('--abort')
                         repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
                         return True
+                    else:
+                        return
 
                 # self._git_command(lambda: repo.git.rebase('--preserve-merges',
                 #                                           '{}/{}'.format(remote, branch)),
