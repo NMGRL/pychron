@@ -195,6 +195,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     clear_conditionals = Button
     edit_conditionals_button = Button
     new_conditionals_button = Button
+    apply_conditionals_button = Button
 
     # ===========================================================================
     # blocks
@@ -1346,7 +1347,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _new_conditionals_button_fired(self):
         name = edit_conditionals(self.conditionals_path,
-                                 app=self.application, root=paths.conditionals_dir,
+                                 root=paths.conditionals_dir,
                                  save_as=True,
                                  title='Edit Run Conditionals',
                                  kinds=('actions', 'cancelations', 'terminations', 'truncations'))
@@ -1356,12 +1357,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _edit_conditionals_button_fired(self):
         edit_conditionals(self.conditionals_path,
-                          app=self.application, root=paths.conditionals_dir,
+                          root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
         self.load_conditionals()
 
-    @on_trait_change('trunc_+, conditionals_path')
+    @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \

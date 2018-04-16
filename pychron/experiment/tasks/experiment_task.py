@@ -111,8 +111,7 @@ class ExperimentEditorTask(EditorTask):
                 dnames = spec.spectrometer.detector_names
 
             edit_conditionals(self.manager.experiment_factory.queue_factory.queue_conditionals_name,
-                              detectors=dnames,
-                              app=self.application)
+                              detectors=dnames)
 
     def reset_queues(self):
         for editor in self.editor_area.editors:
