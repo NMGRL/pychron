@@ -61,9 +61,9 @@ class XLSXAnalysisTableNode(TableNode):
         skip_meaning = self.skip_meaning
 
         if self.options.table_kind == 'Step Heat':
-            def factory(ans):
+            def factory(ans, tag='Human Table'):
                 if skip_meaning:
-                    if 'Table' in skip_meaning:
+                    if tag in skip_meaning:
                         ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
                 return InterpretedAgeGroup(analyses=list(ans),
@@ -73,9 +73,9 @@ class XLSXAnalysisTableNode(TableNode):
                                            fixed_step_high=options.fixed_step_high)
 
         else:
-            def factory(ans):
+            def factory(ans, tag='Human Table'):
                 if self.skip_meaning:
-                    if 'Table' in skip_meaning:
+                    if tag in skip_meaning:
                         ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
                 return InterpretedAgeGroup(analyses=list(ans))
@@ -84,10 +84,14 @@ class XLSXAnalysisTableNode(TableNode):
         blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
         air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
 
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        
         state.tables.append({'options': options,
                              'unknowns': unk_group,
                              'blanks': blank_group,
-                             'airs': air_group})
+                             'airs': air_group,
+                             'machine_unknowns': munk_group,
+                             })
 
 
 class TableOptions(HasTraits, PersistenceMixin):

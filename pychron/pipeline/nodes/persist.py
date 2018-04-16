@@ -240,9 +240,9 @@ class XLSXTablePersistNode(BaseNode):
     configurable = False
 
     def run(self, state):
-        for table in state.tables:
+        for groups in state.tables:
             writer = XLSXTableWriter()
-            writer.build(**table)
+            writer.build(groups)
 
 
 class Isot(HasTraits):

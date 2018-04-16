@@ -245,7 +245,7 @@ class XLSXTableWriter(BaseTableWriter):
     def _new_workbook(self, path):
         self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
 
-    def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
+    def build(self, groups, path=None, options=None):
         if options is None:
             options = XLSXTableWriterOptions()
 
@@ -260,19 +260,23 @@ class XLSXTableWriter(BaseTableWriter):
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})
 
+        unknowns = groups.get('unknowns')
         if unknowns:
             # make a human optimized table
             self._make_human_unknowns(unknowns)
 
             # make a machine optimized table
-            self._make_machine_unknowns(unknowns)
+            self._make_machine_unknowns(groups.get('machine_unknowns'))
 
+        airs = groups.get('airs')
         if airs:
             self._make_airs(airs)
 
+        blanks = groups.get('blanks')
         if blanks:
             self._make_blanks(blanks)
 
+        monitors = groups.get('monitors')
         if monitors:
             self._make_monitors(monitors)
 
