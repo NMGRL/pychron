@@ -584,21 +584,22 @@ class PipelineTask(BaseBrowserTask):
             self._debug()
 
     def _get_selection(self):
-        items = self.engine.selected.unknowns
-        items.extend(self.engine.selected.references)
-        items = [i for i in items if i.temp_selected]
+        if self.engine.selected:
+            items = self.engine.selected.unknowns
+            items.extend(self.engine.selected.references)
+            items = [i for i in items if i.temp_selected]
 
-        uuids = [i.uuid for i in items]
-        for ans in (self.engine.selected_unknowns,
-                    self.engine.selected_references):
-            for i in ans:
-                if i.uuid not in uuids:
-                    items.append(i)
+            uuids = [i.uuid for i in items]
+            for ans in (self.engine.selected_unknowns,
+                        self.engine.selected_references):
+                for i in ans:
+                    if i.uuid not in uuids:
+                        items.append(i)
 
-        # items.extend(self.engine.selected_unknowns)
-        # items.extend(self.engine.selected_references)
+            # items.extend(self.engine.selected_unknowns)
+            # items.extend(self.engine.selected_references)
 
-        return items
+            return items
 
     def _get_tagname(self, items):
         from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
