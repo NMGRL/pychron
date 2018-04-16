@@ -582,8 +582,12 @@ class GitRepoManager(Loggable):
             #     for i in range(100):
             #         prog.change_message('Merging {}'.format(i))
             #         time.sleep(1)
+            try:
+                repo.git.merge('FETCH_HEAD')
+            except GitCommandError:
+                self.smart_pull(branch=branch, remote=remote)
 
-            self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
+            # self._git_command(lambda: repo.git.merge('FETCH_HEAD'), 'merge')
 
             if use_progress:
                 prog.close()
