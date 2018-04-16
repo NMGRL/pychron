@@ -1367,10 +1367,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            # if name == 'truncation_path':
-            #     t = new
-            # t = add_extension(new, '.yaml') if new else None
-            # else:
             self._auto_save()
             t = self.conditionals_str
             self._set_conditionals(t)

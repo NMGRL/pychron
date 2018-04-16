@@ -56,8 +56,9 @@ class RegressionInspectorTool(InfoInspector):
 
             lines.append('Mean={}, SD={}, SEM={}, N={}'.format(floatfmt(reg.mean), floatfmt(reg.std),
                                                                floatfmt(reg.sem), reg.n))
+            lines.append('R2={}, R2-Adj.={}'.format(floatfmt(reg.rsquared), floatfmt(reg.rsquared_adj)))
+            lines.extend([l.strip() for l in reg.tostring().split(',')])
 
-            lines.extend(map(str.strip, reg.tostring().split(',')))
         return lines
 
 

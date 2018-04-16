@@ -73,19 +73,20 @@ class IsoEvoMainOptions(MainOptions):
                              label='Y Limits'),
                       label='Fits')
 
-        goodness = VGroup(Item('goodness_threshold', label='Intercept Goodness',
+        goodness = VGroup(Item('goodness_threshold', label='Intercept',
                                tooltip='If % error is greater than "Goodness Threshold" '
                                        'mark regression as "Bad"'),
-                          HGroup(Item('slope_goodness', label='Slope Goodness',
+                          HGroup(Item('slope_goodness', label='Slope',
                                       tooltip='If slope of regression is positive and the isotope '
                                               'intensity is greater than "Slope Goodness Intensity" '
                                               'then mark regression as "Bad"'),
                                  Item('slope_goodness_intensity', label='Intensity')),
-                          Item('outlier_goodness', label='Outlier Goodness',
+                          Item('outlier_goodness', label='Outlier',
                                tooltip='If more than "Outlier Goodness" points are identified as outliers'
                                        'then mark regression as "Bad"'),
-                          HGroup(Item('curvature_goodness'),
-                                 Item('curvature_goodness_at')),
+                          HGroup(Item('curvature_goodness', label='Curvature'),
+                                 Item('curvature_goodness_at', label='Curvature At')),
+                          HGroup(Item('rsquared_goodness', style='simple', label='R-Squared Adj')),
                           label='Goodness')
 
         auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),

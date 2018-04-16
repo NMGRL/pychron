@@ -202,8 +202,8 @@ class FitICFactorNode(FitReferencesNode):
                      for a in self.plotter_options.aux_plots]
 
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared')
+GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared')
 
 
 class IsoEvoResult(HasTraits):
@@ -219,15 +219,19 @@ class IsoEvoResult(HasTraits):
     slope_goodness = None
     outlier_goodness = None
     curvature_goodness = None
+    rsquared_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
     outlier_threshold = None
     curvature_threshold = None
+    rsquared_threshold = None
+
     int_err = None
     slope = None
     outlier = None
     curvature = None
+    rsquared = None
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
 
@@ -350,7 +354,6 @@ class FitIsotopeEvolutionNode(FitNode):
                 iso = isotopes[k]
             else:
                 iso = xi.get_isotope(detector=k, kind='baseline')
-                # iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error
@@ -390,6 +393,12 @@ class FitIsotopeEvolutionNode(FitNode):
                 if iso.noutliers():
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
+                rsquared_goodness = None
+                if f.rsquared_goodness:
+                    rsquared = iso.rsquared_adj
+                    rsquared_threshold = f.rsquared_goodness
+                    rsquared_goodness = rsquared < rsquared_goodness
+
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
                                    intercept_value=i,
@@ -410,6 +419,11 @@ class FitIsotopeEvolutionNode(FitNode):
                                    curvature=curvature,
                                    curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
+
+                                   rsquared=rsquared,
+                                   rsquared_threshold=rsquared_threshold,
+                                   rsquared_goodness=rsquared_goodness,
+
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)

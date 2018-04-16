@@ -166,6 +166,16 @@ class IsotopicMeasurement(BaseMeasurement):
         self.filter_outliers_dict = dict()
 
     @property
+    def rsquared(self):
+        if self._regressor:
+            return self._regressor.rsquared
+
+    @property
+    def rsquared_adj(self):
+        if self._regressor:
+            return self._regressor.rsquared_adj
+
+    @property
     def fn(self):
         if self._fn is not None:
             n = self._fn

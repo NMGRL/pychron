@@ -124,7 +124,7 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def calculate_error_envelope2(self, fx, fy):
+    def calculate_prediction_envelope(self, fx, fy):
         from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
         prstd, iv_l, iv_u = wls_prediction_std(self._result)
@@ -278,6 +278,13 @@ class OLSRegressor(BaseRegressor):
 
         # def calculate_x(self, y):
         # return 0
+    def _get_rsquared(self):
+        if self._result:
+            return self._result.rsquared
+
+    def _get_rsquared_adj(self):
+        if self._result:
+            return self._result.rsquared_adj
 
     def _calculate_coefficients(self):
         """
