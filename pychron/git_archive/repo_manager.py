@@ -631,7 +631,7 @@ class GitRepoManager(Loggable):
             if ahead:
                 if not quiet:
                     if not self.confirmation_dialog('You are {} behind and {} commits ahead. '
-                                                    'Their is potential for conflicts that you will have to resolve.'
+                                                    'There are potential conflicts that you will have to resolve.'
                                                     'Would you like to Continue?'.format(behind, ahead)):
                         return
 
