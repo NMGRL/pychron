@@ -397,7 +397,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
-                    rsquared_goodness = rsquared < rsquared_goodness
+                    rsquared_goodness = rsquared < rsquared_threshold
 
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
