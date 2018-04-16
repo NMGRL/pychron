@@ -678,7 +678,10 @@ class PipelineEngine(Loggable):
                 self.post_run(state)
             return True
 
-    def run_pipeline(self, run_from=None, state=None, post_run=True):
+    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True):
+        if pipeline is None:
+            pipeline = self.pipeline
+
         if state is None:
             state = EngineState()
             self.state = state
@@ -694,11 +697,11 @@ class PipelineEngine(Loggable):
         state.veto = None
         state.canceled = False
 
-        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
+        for idx, node in enumerate(pipeline.iternodes(start_node)):
             node.visited = False
             node.index = idx
 
-        for idx, node in enumerate(self.pipeline.iternodes(start_node)):
+        for idx, node in enumerate(pipeline.iternodes(start_node)):
 
             if node.enabled:
                 node.editor = None
@@ -716,7 +719,7 @@ class PipelineEngine(Loggable):
                         # self.update_detectors()
                     except NoAnalysesError:
                         self.information_dialog('No Analyses in Pipeline!')
-                        self.pipeline.reset()
+                        pipeline.reset()
                         return True
                     self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
 
@@ -769,11 +772,6 @@ class PipelineEngine(Loggable):
         if reponames:
             repos = [RepoItem(name=n) for n in reponames]
             self.repositories = repos
-            # if self.repositories:
-            #     self.repositories.extend(repos)
-            # else:
-            #     self.repositories = repos
-
             self._update_repository_status()
 
     def select_node_by_editor(self, editor):

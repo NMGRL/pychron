@@ -275,7 +275,7 @@ class Ideogram(BaseArArFigure):
             # if title is not visible title=='' so check tag instead
 
             if p.y_axis.tag == tag:
-                for k, rend in six.iteritems(p.plots):
+                for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
                     if k.startswith(name) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
@@ -289,18 +289,18 @@ class Ideogram(BaseArArFigure):
         ts = array([ai.timestamp for ai in ans])
         ts -= ts[0]
 
+        kw = {}
         if self.options.use_cmap_analysis_number:
-            scatter = self._add_aux_plot(xs, ys, name, po, pid,
-                                         colors=ts,
-                                         color_map_name=self.options.cmap_analysis_number,
-                                         type='cmap_scatter',
-                                         xs=xs)
+            kw = dict(colors=ts,
+                      color_map_name=self.options.cmap_analysis_number,
+                      type='cmap_scatter',
+                      xs=xs)
         else:
             if nonsorted:
                 data = sorted(zip(xs, ys), key=lambda x: x[0])
                 xs, ys = list(zip(*data))
 
-            scatter = self._add_aux_plot(ys, name, po, pid, xs=xs)
+        scatter = self._add_aux_plot(ys, name, po, pid, xs=xs, **kw)
 
         if self.options.use_latest_overlay:
             idx = argmax(ts)
