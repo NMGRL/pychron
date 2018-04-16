@@ -638,9 +638,18 @@ class GitRepoManager(Loggable):
                 # potentially conflicts
 
                 # do merge
-                self._git_command(lambda: repo.git.rebase('--preserve-merges',
-                                                          '{}/{}'.format(remote, branch)),
-                                  'GitRepoManager.smart_pull/ahead')
+                try:
+                    repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                except GitCommandError:
+                    if self.confirmation_dialog('There appears to be a problem with {}.'
+                                                '\n\nWould you like to accept the master copy'.format(self.name)):
+                        repo.git.merge('--abort')
+                        repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                        return True
+
+                # self._git_command(lambda: repo.git.rebase('--preserve-merges',
+                #                                           '{}/{}'.format(remote, branch)),
+                #                   'GitRepoManager.smart_pull/ahead')
                 # try:
                 #     repo.git.merge('FETCH_HEAD')
                 # except BaseException:
