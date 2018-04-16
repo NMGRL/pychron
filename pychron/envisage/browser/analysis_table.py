@@ -194,6 +194,18 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         for s in self.get_selected_analyses():
             s.group_id = max_gid
 
+        self.clear_selection()
+
+    def clear_grouping(self):
+        for s in self.get_selected_analyses():
+            s.group_id = 0
+
+        self.clear_selection()
+
+    def clear_selection(self):
+        self.selected = []
+        self.refresh_needed = True
+
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
         record = self.selected[0]

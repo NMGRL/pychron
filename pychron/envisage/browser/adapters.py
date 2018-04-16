@@ -21,6 +21,7 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
+from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.resources import icon
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -201,17 +202,26 @@ class AnalysisAdapter(BrowserAdapter):
                        Action(name='Invalid', action='tag_invalid'),
                        Action(name='Skip', action='tag_skip')]
 
+        group_actions = [Action(name='Group Selected', action='group_selected'),
+                         Action(name='Clear Grouping', action='clear_grouping')]
+
+        select_actions = [Action(name='Same Identifier', action='select_same'),
+                          Action(name='Same Attr', action='select_same_attr'),
+                          Action(name='Clear', action='clear_selection')]
+
         actions = [Action(name='Configure', action='configure_analysis_table'),
                    Action(name='Unselect', action='unselect_analyses'),
                    # Action(name='Replace', action='replace_items', enabled=e),
                    # Action(name='Append', action='append_items', enabled=e),
                    Action(name='Open', action='recall_items'),
-                   Action(name='Group Selected', action='group_selected'),
                    Action(name='Review Status Details', action='review_status_details'),
                    Action(name='Load Review Status', action='load_review_status'),
                    Action(name='Toggle Freeze', action='toggle_freeze'),
-                   Action(name='Select Same Identifier', action='select_same'),
-                   Action(name='Select Same Attr', action='select_same_attr'),
+
+                   MenuManager(name='Selection',
+                               *select_actions),
+                   MenuManager(name='Grouping',
+                               *group_actions),
                    MenuManager(name='Tag',
                                *tag_actions)
                    # Action(name='Open Copy', action='recall_copies'),
@@ -231,8 +241,10 @@ class AnalysisAdapter(BrowserAdapter):
             else:
                 if row % 2:
                     color = 'lightgray'
-                if item.group_id>=1:
-                    return 'red'
+                if item.group_id >= 1:
+                    gid = item.group_id % len(colornames)
+                    color = colornames[gid]
+
                 else:
                     if self.use_analysis_colors:
                         if item.analysis_type == 'unknown':
