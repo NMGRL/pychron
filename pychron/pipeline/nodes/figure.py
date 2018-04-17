@@ -91,8 +91,8 @@ class FigureNode(SortableNode):
                     unks = [u for u in unks if u.tag.lower() != 'skip']
 
                 editor.set_items(unks)
-
-                editor.component.invalidate_and_redraw()
+                if hasattr(editor, 'component'):
+                    editor.component.invalidate_and_redraw()
 
             key = attrgetter('name')
             for name, es in groupby(sorted(state.editors, key=key), key=key):
