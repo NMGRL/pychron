@@ -314,20 +314,27 @@ class BaseArArFigure(SelectionFigure):
                 xlimits = self.graph.get_x_limits(pid)
                 for ap in self.options.aux_plots:
                     ap.xlimits = xlimits
+
         if not self.suppress_ylimits_update:
             if hasattr(self.options, 'aux_plots'):
                 # n = len(self.options.aux_plots)
                 ylimits = self.graph.get_y_limits(pid)
-                for ap in self.options.aux_plots:
-                    ap.ylimits = ylimits
 
-                    # ap = self.options.aux_plots[n - pid - 1]
-                    # if not self.suppress_ylimits_update:
-                    #     ap.ylimits = self.graph.get_y_limits(pid)
+                for i, ap in enumerate(self.options.get_plotable_aux_plots()):
+                    if i == pid:
+                        ap.ylimits = ylimits
+                        break
 
-                    # if not self.suppress_xlimits_update:
-                    #     ap.xlimits = self.graph.get_x_limits(pid)
-                    #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
+                # for ap in self.options.aux_plots:
+                #     ap.ylimits = ylimits
+
+                # ap = self.options.aux_plots[n - pid - 1]
+                # if not self.suppress_ylimits_update:
+                #     ap.ylimits = self.graph.get_y_limits(pid)
+
+                # if not self.suppress_xlimits_update:
+                #     ap.xlimits = self.graph.get_x_limits(pid)
+                #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
 
     def get_valid_xbounds(self):
         pass
