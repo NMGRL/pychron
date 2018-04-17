@@ -499,6 +499,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     reference = Str
     lat_long = Str
 
+    comments = Str
+
     def _name_default(self):
         name = ''
         if self.analyses:

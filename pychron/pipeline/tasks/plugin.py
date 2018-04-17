@@ -26,10 +26,15 @@ from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAg
 from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
-    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, FluxAction, \
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, \
+    FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction
+
+    # LastNAnalysesSeriesAction,LastNHoursSeriesAction, LastMonthSeriesAction,
+    # LastWeekSeriesAction, LastDaySeriesAction, \
+
+
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -176,24 +181,24 @@ class PipelinePlugin(BaseTaskPlugin):
                                           path='MenuBar/Edit')
         # browser_actions = [configure_recall]
 
-        quick_series_actions = [SchemaAddition(factory=quick_series_group,
-                                               path='MenuBar/data.menu'),
-                                SchemaAddition(factory=LastNAnalysesSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastNHoursSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastDaySeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastWeekSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastMonthSeriesAction,
-                                               path=qsg), ]
+        # quick_series_actions = [SchemaAddition(factory=quick_series_group,
+        #                                        path='MenuBar/data.menu'),
+        #                         SchemaAddition(factory=LastNAnalysesSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastNHoursSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastDaySeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastWeekSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastMonthSeriesAction,
+        #                                        path=qsg), ]
 
         actions = recall_actions
         actions.extend(plotting_actions)
         actions.extend(reduction_actions)
         actions.extend(help_actions)
-        actions.extend(quick_series_actions)
+        # actions.extend(quick_series_actions)
 
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),

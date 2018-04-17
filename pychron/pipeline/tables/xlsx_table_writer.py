@@ -31,8 +31,8 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
 import six
 
-subreg = re.compile(r'^<sub>(?P<item>\w+)</sub>')
-supreg = re.compile(r'^<sup>(?P<item>\w+)</sup>')
+subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
+supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
 
 DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, baseline, radioactivity decay and '
                          'detector intercalibration, not for interfering reactions.',
