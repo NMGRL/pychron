@@ -28,7 +28,7 @@ from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
+from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
 from six.moves import zip
@@ -85,7 +85,7 @@ class XLSXAnalysisTableNode(TableNode):
         air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
 
         munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
-        
+
         state.tables.append({'options': options,
                              'unknowns': unk_group,
                              'blanks': blank_group,

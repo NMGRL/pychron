@@ -61,6 +61,14 @@ class EmailStr(String):
     regex = EMAIL_REGEX
 
 
+class SingleStr(BaseStr):
+    def validate(self, obj, name, value):
+        if value and len(value) > 1:
+            self.error(obj, name, value)
+        else:
+            return value
+
+
 class BorderVGroup(VGroup):
     def _show_border_default(self):
         return True
