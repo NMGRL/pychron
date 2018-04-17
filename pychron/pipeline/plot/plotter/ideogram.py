@@ -17,6 +17,9 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import math
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
@@ -217,7 +220,6 @@ class Ideogram(BaseArArFigure):
     def _plot_aux(self, title, vk, po, pid):
 
         ys, es = self._get_aux_plot_data(vk)
-
         selection = []
         invalid = []
 

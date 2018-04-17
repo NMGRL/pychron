@@ -91,6 +91,7 @@ class InverseIsochron(Isochron):
             g.set_y_limits(max(0, l), h, pad='0.1', pad_style='upper', plotid=i)
 
         g.set_x_limits(0, self.xma, pad='0.1')
+        self._fix_log_axes()
 
     def plot(self, plots, legend=None):
         """
