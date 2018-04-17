@@ -55,11 +55,11 @@ class ArArAge(IsotopeGroup):
 
     timestamp = None
 
-    kca = None
-    cak = None
-    kcl = None
-    clk = None
-    rad40_percent = None
+    kca = 0
+    cak = 0
+    kcl = 0
+    clk = 0
+    rad40_percent = 0
 
     # non_ar_isotopes = Dict
     # computed = Dict
@@ -75,14 +75,14 @@ class ArArAge(IsotopeGroup):
     uage_w_j_err = None
     uage_wo_j_err = None
 
-    age = None
-    age_err = None
-    age_err_wo_j = None
-    age_err_wo_irrad = None
-    age_err_wo_j_irrad = None
+    age = 0
+    age_err = 0
+    age_err_wo_j = 0
+    age_err_wo_irrad = 0
+    age_err_wo_j_irrad = 0
 
-    ar39decayfactor = None
-    ar37decayfactor = None
+    ar39decayfactor = 0
+    ar37decayfactor = 0
 
     # arar_constants =None
 
