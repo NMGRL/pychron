@@ -490,7 +490,6 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         self.state = state
         self.pipeline = engine.pipeline
         engine.pipeline.active = True
-        self._low = datetime.now()
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -518,6 +517,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
     def run(self, state):
         if not self._alive:
+            self._low = datetime.now()
             unks, updated = self._load_analyses()
             state.unknowns = unks
 
