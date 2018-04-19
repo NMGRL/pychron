@@ -115,11 +115,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     include_recent = False
     _suppress_load_labnumbers = True
 
-    def __init__(self, *args, **kw):
-        super(LabnumberEntryTask, self).__init__(*args, **kw)
-        self.db.create_session()
+    # def __init__(self, *args, **kw):
+    #     super(LabnumberEntryTask, self).__init__(*args, **kw)
+    #     self.db.create_session()
 
     def prepare_destroy(self):
+        self.db.close_session()
+
+    def _opened_hook(self):
+        self.db.create_session()
+
+    def _closed_hook(self):
         self.db.close_session()
 
     def activated(self):
