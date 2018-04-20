@@ -195,9 +195,10 @@ class ExceptionHandler(Controller):
 
     def _make_body(self):
         m = self.model
-        return 'active branch={}\n\nactive analyses={}\n\n{}\n\n```\n{}\n```'.format(m.active_branch,
-                                                                                     m.active_analyses,
-                                                                                     m.description, m.exctext)
+        return 'active branch={}\n\nactive analyses={}\n' \
+               '\ndescription="{}"\n\nTraceback\n```\n{}\n```'.format(m.active_branch,
+                                                                      m.active_analyses,
+                                                                      m.description, m.exctext)
 
     def traits_view(self):
         v = View(VGroup(UItem('helpstr',

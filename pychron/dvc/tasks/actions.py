@@ -82,6 +82,12 @@ class DeleteLocalChangesAction(LocalRepositoryAction):
     image = icon('clear')
 
 
+class ArchiveRepositoryAction(LocalRepositoryAction):
+    name = 'Archive Repository'
+    method = 'archive_repository'
+    image = icon('archive')
+
+
 class LoadOriginAction(TaskAction):
     name = 'Load Origin'
     method = 'load_origin'
