@@ -103,6 +103,10 @@ class BaseExperimentQueue(RunBlock):
     _no_update = False
     _frequency_group_counter = 0
 
+    @property
+    def no_update(self):
+        return self._no_update
+
     # ===============================================================================
     # persistence
     # ===============================================================================

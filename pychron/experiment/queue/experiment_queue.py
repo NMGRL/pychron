@@ -15,10 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import os
-import time
-from itertools import groupby
 
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
@@ -26,8 +22,12 @@ from traits.api import Any, on_trait_change, Int, List, Bool, \
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
+import os
+import time
+from itertools import groupby
+
 from pychron.core.helpers.ctx_managers import no_update
-from pychron.core.select_same import SelectSameMixin, SelectAttrView
+from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.envisage.view_util import open_view
@@ -72,9 +72,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_runs = List
     executed_runs_scroll_to_row = Int
     automated_runs_scroll_to_row = Int
-    # linked_copy_cache = List
     start_timestamp = Date
-    # queue_actions = List
     auto_save_detector_ic = Bool
 
     executed = Bool(False)
@@ -83,10 +81,11 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
-    _auto_save_time = 0
-    _temp_analysis = None
 
     default_attr = 'identifier'
+
+    _auto_save_time = 0
+    _temp_analysis = None
 
     def auto_save(self):
         if self._auto_save_time and time.time() - self._auto_save_time < 0.25:

@@ -145,8 +145,7 @@ class ExperimentEditorTask(EditorTask):
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
-                editor = ExperimentEditor(application=self.application)
-                editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+                editor = self._editor_facctory()
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -232,6 +231,14 @@ class ExperimentEditorTask(EditorTask):
         return panes
 
     # private
+    def _editor_factory(self, is_uv=False, **kw):
+        klass = UVExperimentEditor if is_uv else ExperimentEditor
+        editor = klass(application=self.application,
+                       automated_runs_editable=self.automated_runs_editable,
+                       **kw)
+        editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+        return editor
+
     def _assemble_state_colors(self):
         colors = {}
         for c in ('success', 'extraction', 'measurement', 'canceled', 'truncated',
@@ -298,11 +305,8 @@ class ExperimentEditorTask(EditorTask):
             else:
                 txt, is_uv = self._open_txt(path)
 
-            klass = UVExperimentEditor if is_uv else ExperimentEditor
-            editor = klass(path=path,
-                           application=self.application,
-                           automated_runs_editable=self.automated_runs_editable)
-            editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
+            editor = self._editor_factory(is_uv=is_uv, path=path)
+
             editor.new_queue(txt)
             self._open_editor(editor)
         else:
@@ -370,7 +374,7 @@ class ExperimentEditorTask(EditorTask):
     def _save_file(self, path):
         if self.active_editor.save(path):
             self.manager.refresh_executable()
-            self.debug('queues saved')
+            self.debug('queue saved')
             self.manager.reset_run_generator()
             return True
 
