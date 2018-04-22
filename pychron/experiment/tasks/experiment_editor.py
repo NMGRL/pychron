@@ -106,7 +106,7 @@ class ExperimentEditor(BaseTraitsEditor):
     automated_runs_editable = Bool
     table_configurer = Instance(ExperimentTableConfigurer)
 
-    buk_run_fixer = Instance(BulkRunFixer)
+    bulk_run_fixer = Instance(BulkRunFixer, ())
 
     def show_table_configurer(self):
         t = self.table_configurer
@@ -268,7 +268,8 @@ class ExperimentEditor(BaseTraitsEditor):
         qi.executable = True
         qi.initialized = True
 
-        self.buk_run_fixer.fix(runs)
+        self.bulk_run_fixer.patterns = qi.patterns
+        self.bulk_run_fixer.fix(runs)
 
         hec = qi.human_error_checker
         info = hec.check_runs_non_fatal(runs)

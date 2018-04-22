@@ -266,16 +266,19 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
     def _auto_save(self):
         self.queue.auto_save()
 
+    def get_patterns(self):
+        return self._get_patterns(self.extract_device)
+
     # ===============================================================================
     # private
     # ===============================================================================
     def _set_extract_device(self, ed):
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
-        self.extract_device = ed
         self.run_factory = self._run_factory_factory()
 
-        self.run_factory.remote_patterns = self._get_patterns(ed)
+        self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
         self.run_factory.setup_files()
+
         # self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
         if self._load_persistence_flag:
@@ -285,6 +288,7 @@ class ExperimentFactory(DVCAble): #, ConsumerMixin):
             self.queue.set_extract_device(ed)
             self.queue.username = self.username
             self.queue.mass_spectrometer = self.mass_spectrometer
+            self.queue.patterns = patterns
 
     def _get_patterns(self, ed):
         ps = []

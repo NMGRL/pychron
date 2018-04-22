@@ -854,11 +854,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue.refresh_table_needed = True
 
     def _close_cv(self):
+        self.debug('close cv {}'.format(self._cv_info))
         if self._cv_info:
             try:
                 invoke_in_main_thread(self._cv_info.control.close)
-            except (AttributeError, ValueError, TypeError):
-                pass
+            except (AttributeError, ValueError, TypeError) as e:
+                self.critical('Failed closing conditionals view {}'.format(e))
                 # window could already be closed
 
     def _write_rem_ex_experiment_queues(self):
@@ -1046,8 +1047,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if tripped:
                 v.select_conditional(tripped, tripped=True)
 
-            if self._cv_info:
-                self._close_cv()
+            self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
 

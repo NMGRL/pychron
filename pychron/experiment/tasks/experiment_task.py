@@ -145,7 +145,7 @@ class ExperimentEditorTask(EditorTask):
             if manager.load():
                 self.manager.experiment_factory.activate(load_persistence=True)
 
-                editor = self._editor_facctory()
+                editor = self._editor_factory()
                 editor.new_queue()
 
                 self._open_editor(editor)
@@ -236,6 +236,7 @@ class ExperimentEditorTask(EditorTask):
         editor = klass(application=self.application,
                        automated_runs_editable=self.automated_runs_editable,
                        **kw)
+
         editor.setup_tabular_adapters(self.bgcolor, self.even_bgcolor, self._assemble_state_colors())
         return editor
 
