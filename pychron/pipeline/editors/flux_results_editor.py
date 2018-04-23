@@ -417,7 +417,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         fys = reg.predict(pts)
         yserr = reg.yserr
-        l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+
+        if self.plotter_options.use_weighted_fit:
+            l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        else:
+            l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr
@@ -429,6 +433,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            # padding=[90, 5, 5, 40],
                            padding=po.paddings())
             p.bgcolor = po.plot_bgcolor
+            g.add_limit_tool(p, 'x')
+            g.add_limit_tool(p, 'y')
+            g.add_axis_tool(p, p.x_axis)
+            g.add_axis_tool(p, p.y_axis)
 
             p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
 
@@ -463,7 +471,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             ymi = min(lyy.min(), min(iys))
             yma = max(uyy.max(), max(iys))
-            g.set_x_limits(-3.2, 3.2)
+            g.set_x_limits(-3.5, 3.5)
 
         else:
             plot = g.plots[0]
@@ -516,7 +524,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 # ans.extend(p.analyses)
                 # ixs.extend(xx)
                 # iys.extend(yy)
-
         s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
         add_analysis_inspector(s, ans)
 

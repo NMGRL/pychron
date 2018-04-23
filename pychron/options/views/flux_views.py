@@ -29,26 +29,29 @@ class FluxSubOptions(SubOptions):
                                      editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
                                 Item('levels')),
                          Item('model_kind'),
-                         visible_when='plot_kind=="2D"')
+                         visible_when='plot_kind=="2D"',
+                         label='Options',
+                         show_border=True)
         onedgrp = VGroup(Item('marker_size'),
-                         visible_when='plot_kind=="1D"')
+                         visible_when='plot_kind=="1D"',
+                         label='Options',
+                         show_border=True)
 
-        # ogrp = HGroup(Item('confirm_save',
-        #                    label='Confirm Save', tooltip='Allow user to review evolutions '
-        #                                                  'before saving to file'))
+        calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
+                          Readonly('lambda_k', label=u'Total \u03BB K'),
+                          Item('monitor_age'),
+                          Item('error_kind', label='Mean J Error'),
+                          Item('predicted_j_error_type', label='Predicted J Error'),
+                          Item('use_weighted_fit'),
+                          Item('monte_carlo_ntrials'),
+                          Item('use_monte_carlo'),
+                          show_border=True,
+                          label='Calculations')
+
         grp = VGroup(Item('plot_kind'),
                      twodgrp,
                      onedgrp,
-                     Item('selected_decay', label='Decay Const.'),
-                     Readonly('lambda_k', label=u'Total \u03BB K'),
-                     Item('monitor_age'),
-                     Item('error_kind', label='Mean J Error'),
-                     Item('predicted_j_error_type', label='Predicted J Error'),
-                     Item('use_weighted_fit', ),
-                     Item('monte_carlo_ntrials', ),
-                     Item('use_monte_carlo', ),
-                     label='Fits',
-                     show_border=True)
+                     calc_grp)
 
         return self._make_view(grp)
 

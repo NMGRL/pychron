@@ -25,8 +25,15 @@ from traitsui.api import View, Item, HGroup, VGroup, Group, TextEditor, Handler
 # ============= local library imports  ==========================
 from traitsui.editors import FontEditor
 
-limit_grp = VGroup(Item("object.mapper.range.high", label="Upper", editor=TextEditor(enter_set=True, auto_set=False)),
-                   Item("object.mapper.range.low", label="Lower", editor=TextEditor(enter_set=True, auto_set=False)))
+limit_grp = VGroup(Item("object.mapper.range.high", label="Upper",
+                        springy=True,
+                        editor=TextEditor(enter_set=True, auto_set=False)),
+                   Item("object.mapper.range.low", label="Lower",
+                        springy=True,
+                        editor=TextEditor(enter_set=True, auto_set=False)),
+                   show_border=True,
+                   label='Limits')
+
 title_grp = VGroup(Item("title", label="Title", editor=TextEditor()),
                    Item("wrapper.title_font", label="Font",
                         editor=FontEditor()
