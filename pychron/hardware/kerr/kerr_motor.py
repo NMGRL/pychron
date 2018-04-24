@@ -262,6 +262,10 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                                nbytes=3,
                                verbose=verbose,
                                info='get status byte')
+
+        sb = ''
+        self.debug('status_byte = {}'.format(sb))
+
         return status_byte
 
     def read_defined_status(self, verbose=True):
@@ -274,6 +278,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
                                nbytes=2,
                                info='get defined status',
                                verbose=verbose)
+
+        status_register = map(int, make_bitarray(int(status_byte[:2], 16)))
+        self.debug('Defined Status Byte={}'.format(status_register))
         return status_byte
 
     def read_home_position(self):
