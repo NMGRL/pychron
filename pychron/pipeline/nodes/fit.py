@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from itertools import groupby
+from math import inf
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import NO, YES
@@ -357,7 +358,10 @@ class FitIsotopeEvolutionNode(FitNode):
 
             if iso:
                 i, e = iso.value, iso.error
-                pe = abs(e / i * 100)
+                try:
+                    pe = abs(e / i * 100)
+                except ZeroDivisionError:
+                    pe = inf
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
