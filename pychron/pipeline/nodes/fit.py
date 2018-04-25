@@ -15,9 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from itertools import groupby
-from math import inf
+from numpy import inf
 
 from pyface.confirmation_dialog import confirm
 from pyface.constant import NO, YES
