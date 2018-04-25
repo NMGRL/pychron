@@ -31,16 +31,16 @@ from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron import pychron_constants
 
-for face_name in pychron_constants.TTF_FONTS:
-    family = face_name
-    font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
 
-    # print(family, face_name, font)
-    try:
-        tf = TTFont(face_name, font)
-        pdfmetrics.registerFont(tf)
-    except TTFError as e:
-        print('invalid font', font, e)
+for face in pychron_constants.FONTS:
+    for face_name in (face, face.lower()):
+        family = face_name
+        font = findfont(FontProperties(family=face_name, style='normal', weight='normal'))
+        try:
+            tf = TTFont(face_name, font)
+            pdfmetrics.registerFont(tf)
+        except TTFError as e:
+            print('invalid font', font, e)
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
