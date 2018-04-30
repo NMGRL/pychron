@@ -15,6 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from itertools import groupby
+from operator import attrgetter
+
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, List, cached_property, Str, Int
 from traitsui.api import View, UItem, Item, VGroup, HGroup, Handler
@@ -122,12 +125,24 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         self._group('isochron')
 
     def _group(self, tag):
-        gs = {r.table_grouping for r in self.items if hasattr(r, 'table_grouping')}
-        gs = [int(gi.split('_')[-1]) for gi in gs]
+        gs = {r.table_group for r in self.items}
+
+        gs = [int(gi.split('_')[-1]) for gi in gs if gi]
         table_grouping_cnt = max(gs) if gs else -1
 
         for s in self.selected:
             s.table_group = '{}_{}'.format(tag, table_grouping_cnt + 1)
+
+        # compress groups
+        key = lambda x: '_'.join(x.table_group.split('_')[:-1]) if x.table_group else ''
+        for kind, ans in groupby(sorted(self.items, key=key), key=key):
+            if kind:
+                for i,(_, ais) in enumerate(groupby(ans, key=attrgetter('table_group'))):
+                    for a in ais:
+                        a.table_group = '{}_{}'.format(kind, i)
+            else:
+                for a in ans:
+                    a.table_group = ''
 
     def traits_view(self):
         v = View(VGroup(
