@@ -109,7 +109,8 @@ class XLSXTableWriter(BaseTableWriter):
             self._make_irradiations(unknowns)
 
         if self._options.include_summary_sheet:
-            self._make_summary_sheet(unknowns)
+            if unknowns:
+                self._make_summary_sheet(unknowns)
 
         self._workbook.close()
 
@@ -467,15 +468,14 @@ class XLSXTableWriter(BaseTableWriter):
             n = len(group.analyses) - 1
             nitems = []
             has_subgroups = False
-            for tg, items in groupby(group.analyses,
-                                     key=lambda x: x.table_group
-                                     if hasattr(x, 'table_group') else None):
+            key = attrgetter('table_group')
+            ans = group.analyses
+            for tg, items in groupby(ans, key=key):
                 items = list(items)
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
                     item.arar_constants.age_units = self._options.age_units
                     self._make_analysis(worksheet, cols, item, i == n)
-
                 if tg:
                     kind = '_'.join(tg.split('_')[:-1])
                     ia = self._make_intermediate_summary(worksheet, cols, items, kind)

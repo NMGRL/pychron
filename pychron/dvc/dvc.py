@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import shutil
+from operator import attrgetter
+
 import time
 from datetime import datetime
 from itertools import groupby
@@ -79,8 +81,9 @@ class Tag(object):
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
+        tag.table_group = an.table_group
 
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             setattr(tag, k, v)
 
         return tag
@@ -547,11 +550,11 @@ class DVC(Loggable):
         obj = dvc_load(path)
         # with open(path, 'r') as rfile:
         #     obj = json.load(rfile)
-        for k, v in six.iteritems(values):
+        for k, v in values.items():
             o = obj[k]
             o['manual_value'] = v
             o['use_manual_value'] = True
-        for k, v in six.iteritems(errors):
+        for k, v in errors.items():
             o = obj[k]
             o['manual_error'] = v
             o['use_manual_error'] = True
@@ -1172,9 +1175,32 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
-    def tag_items(self, tag, items, note=''):
-        key = lambda x: x.repository_identifier
+    def save_tag_table_group_items(self, items):
+        key = attrgetter('repository_identifier')
 
+        for expid, ans in groupby(sorted(items, key=key), key=key):
+            self.sync_repo(expid)
+            cs = []
+            for it in ans:
+                if self.update_tag(it):
+                    cs.append(it)
+            self._commit_tags(cs, expid, '<TABLE_GROUP>')
+
+    def _commit_tags(self, cs, expid, msg):
+        if cs:
+            cc = [c.record_id for c in cs]
+            if len(cc) > 1:
+                cstr = '{} - {}'.format(cc[0], cc[-1])
+            else:
+                cstr = cc[0]
+
+            self.repository_commit(expid, '{} {}'.format(msg, cstr))
+
+            for ci in cs:
+                ci.refresh_view()
+
+    def tag_items(self, tag, items, note=''):
+        key = attrgetter('repository_identifier')
         with self.db.session_ctx() as sess:
             for expid, ans in groupby(sorted(items, key=key), key=key):
                 self.sync_repo(expid)
@@ -1194,17 +1220,18 @@ class DVC(Loggable):
                         # it.refresh_view()
                 sess.commit()
 
-                if cs:
-                    cc = [c.record_id for c in cs]
-                    if len(cc) > 1:
-                        cstr = '{} - {}'.format(cc[0], cc[-1])
-                    else:
-                        cstr = cc[0]
-
-                    self.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
-
-                    for ci in cs:
-                        ci.refresh_view()
+                self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
+                # if cs:
+                #     cc = [c.record_id for c in cs]
+                #     if len(cc) > 1:
+                #         cstr = '{} - {}'.format(cc[0], cc[-1])
+                #     else:
+                #         cstr = cc[0]
+                #
+                #     self.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
+                #
+                #     for ci in cs:
+                #         ci.refresh_view()
 
     # private
     def _make_macrochron(self, ia):

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, List, Enum, Bool, Str
+from traits.api import HasTraits, List, Enum, Bool, Str, Instance
 from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
@@ -32,7 +32,7 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
 class TableNode(BaseNode):
-    pass
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
 
 class XLSXAnalysisTableNode(TableNode):
@@ -50,7 +50,8 @@ class XLSXAnalysisTableNode(TableNode):
 
     def _make_table(self, state):
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
-        editor = ArArTableEditor()
+
+        editor = ArArTableEditor(dvc=self.dvc)
         editor.items = unknowns
         state.editors.append(editor)
 

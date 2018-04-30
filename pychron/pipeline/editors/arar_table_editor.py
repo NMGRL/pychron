@@ -64,15 +64,14 @@ class ArArTableAdapter(BaseAdapter):
     record_id_width = Int(60)
 
     def _get_table_group_text(self):
-        ret = ''
-        if hasattr(self.item, 'table_group'):
-            ret = self.item.table_group
+        ret = self.item.table_group or ''
         return ret
 
     def get_menu(self, obj, trait, row, column):
         m = MenuManager(Action(name='Calculate Mean', action='group_as_weighted_mean'),
                         Action(name='Calculate Plateau', action='group_as_plateau'),
-                        Action(name='Calculate Isochron', action='group_as_isochron'))
+                        Action(name='Calculate Isochron', action='group_as_isochron'),
+                        Action(name='Save Grouping', action='save_grouping'))
         return m
 
 
@@ -93,18 +92,25 @@ class THandler(Handler):
         obj.group_as_isochron()
         obj.refresh_needed = True
 
+    def save_grouping(self, info, obj):
+        obj.save_grouping()
+
 
 class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
-    analysis_groups = Property(List, depends_on='items[]')
+    # analysis_groups = Property(List, depends_on='items[]')
     # pdf_writer_klass = None
     # xls_writer_klass = None
     # csv_writer_klass = None
 
-    analysis_group_klass = AnalysisGroup
+    # analysis_group_klass = AnalysisGroup
     adapter_klass = ArArTableAdapter
     analysis_groups_adapter_klass = GroupTableAdapter
 
     help_str = Str('Right-click to subgroup analyses and calculate an age')
+
+    def save_grouping(self):
+        dvc = self.dvc
+        dvc.save_tag_table_group_items(self.items)
 
     def group_as_plateau(self):
         self._group('plateau')

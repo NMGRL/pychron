@@ -33,6 +33,7 @@ from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
 from pychron.pipeline.nodes.persist import PersistNode, SetInterpretedAgeNode
+from pychron.pipeline.nodes.table import TableNode
 
 
 class PipelineTemplateSaveView(HasTraits):
@@ -141,7 +142,7 @@ class PipelineTemplate(HasTraits):
             node.trait_set(dvc=dvc)
         elif isinstance(node, (DVCNode, FindNode)):
             node.trait_set(browser_model=bmodel, dvc=dvc)
-        elif isinstance(node, (PersistNode, GainCalibrationNode, PushNode)):
+        elif isinstance(node, (TableNode, PersistNode, GainCalibrationNode, PushNode)):
             node.trait_set(dvc=dvc)
         elif isinstance(node, DiffNode):
             recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
