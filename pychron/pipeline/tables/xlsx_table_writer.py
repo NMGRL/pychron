@@ -538,7 +538,7 @@ class XLSXTableWriter(BaseTableWriter):
     def _hide_columns(self, sh, cols):
         for i, c in enumerate(cols):
             if not c.enabled:
-                sh.set_column(i, i + 1, options={'hidden': True})
+                sh.set_column(i, i, options={'hidden': True})
 
     def _make_title(self, sh, name, cols):
         try:
