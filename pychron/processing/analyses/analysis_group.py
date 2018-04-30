@@ -25,6 +25,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.experiment.utilities.identifier import make_aliquot
+from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 from six.moves import range
@@ -332,8 +333,9 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        exclude = [i for i, x in enumerate(self.analyses) if x.is_omitted()]
-        return calculate_isochron(self.analyses, self.isochron_age_error_kind, exclude=exclude)
+        ans = [a for a in self.analyses if isinstance(a, ArArAge)]
+        exclude = [i for i, x in enumerate(ans) if x.is_omitted()]
+        return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
 
     def calculate_isochron_age(self):
         # args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,

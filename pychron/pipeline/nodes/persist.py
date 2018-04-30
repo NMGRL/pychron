@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import csv
 import os
+from itertools import groupby
 
 from pyface.message_dialog import information
 from traits.api import Str, Instance, List, HasTraits, Bool, Float, Int, Button
@@ -33,6 +34,7 @@ from pychron.core.confirmation import confirmation_dialog
 from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_iterator
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
@@ -41,11 +43,13 @@ from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsV
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import get_isotope_set
+from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
 from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from six.moves import zip
 
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 
 class PersistNode(BaseNode):
@@ -236,13 +240,66 @@ class FluxPersistNode(DVCPersistNode):
 
 class XLSXTablePersistNode(BaseNode):
     name = 'Save Analysis Table'
-    auto_configure = False
-    configurable = False
+    # auto_configure = False
+    # configurable = False
+
+    options_klass = XLSXTableWriterOptions
+
+    def _finish_configure(self):
+        self.options.dump()
 
     def run(self, state):
-        for groups in state.tables:
-            writer = XLSXTableWriter()
-            writer.build(groups)
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+        key = lambda x: x.group_id
+
+        skip_meaning = self.skip_meaning
+        options = self.options
+
+        if options.table_kind == 'Step Heat':
+            def factory(ans, tag='Human Table'):
+                if skip_meaning:
+                    if tag in skip_meaning:
+                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+                return InterpretedAgeGroup(analyses=list(ans),
+                                           plateau_nsteps=options.plateau_nsteps,
+                                           plateau_gas_fraction=options.plateau_gas_fraction,
+                                           fixed_step_low=options.fixed_step_low,
+                                           fixed_step_high=options.fixed_step_high
+                                           )
+
+        else:
+            def factory(ans, tag='Human Table'):
+                if self.skip_meaning:
+                    if tag in skip_meaning:
+                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+                return InterpretedAgeGroup(analyses=list(ans))
+
+        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+        blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
+        airs = (a for a in state.unknowns if a.analysis_type == 'air')
+
+        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
+        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+
+        groups = {'unknowns': unk_group,
+                  'blanks': blank_group,
+                  'airs': air_group,
+                  'machine_unknowns': munk_group}
+        writer = XLSXTableWriter()
+
+        for gs in groups.values():
+            for gi in gs:
+                gi.trait_set(plateau_nsteps=options.plateau_nsteps,
+                             plateau_gas_fraction=options.plateau_gas_fraction,
+                             fixed_step_low=options.fixed_step_low,
+                             fixed_step_high=options.fixed_step_high)
+
+        writer.build(groups, options=options)
 
 
 class Isot(HasTraits):
@@ -326,7 +383,7 @@ class CSVAnalysesExportNode(BaseNode):
             # else:
             #     ref = self.references[0]
         temps = ('lab_temperature', 'east_diffuser_temperature', 'east_return_temperature', 'outside_temperature')
-        self.available_meta_attributes = list(('rundate', 'timestamp')+META_ATTRS + EXTRACTION_ATTRS + temps)
+        self.available_meta_attributes = list(('rundate', 'timestamp') + META_ATTRS + EXTRACTION_ATTRS + temps)
         self._select_all_meta_fired()
 
     def _unselect_all_meta_fired(self):

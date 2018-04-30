@@ -419,7 +419,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     def set_analysis_table_template(self):
-        self.engine.selected_pipeline_template = 'Analysis Table'
+        self.engine.selected_pipeline_template = 'Analysis'
         self.run()
 
     # private

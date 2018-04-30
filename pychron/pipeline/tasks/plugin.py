@@ -179,6 +179,7 @@ class PipelinePlugin(BaseTaskPlugin):
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
+
         # browser_actions = [configure_recall]
 
         # quick_series_actions = [SchemaAddition(factory=quick_series_group,

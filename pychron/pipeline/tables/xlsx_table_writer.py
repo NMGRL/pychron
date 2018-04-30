@@ -14,11 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 import re
+from itertools import groupby
+from operator import attrgetter
 
 import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Instance, BaseStr
+from traits.api import Instance, BaseStr, HasTraits
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.filetools import add_extension, view_file
@@ -27,7 +29,7 @@ from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
 from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
 import six
 
@@ -40,6 +42,18 @@ DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, b
                          'Time interval (days) between end of irradiation and beginning of analysis',
 
                          'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
+
+
+class IntermediateAnalysis(HasTraits):
+    def is_omitted(self):
+        return False
+
+    def get_value(self, attr):
+        try:
+            return getattr(self, attr)
+        except AttributeError:
+            print('sdfa', attr)
+            return 0
 
 
 class XLSXTableWriter(BaseTableWriter):
@@ -161,7 +175,7 @@ class XLSXTableWriter(BaseTableWriter):
             irr = [Column(enabled=ubit, label='Irradiation', attr='irradiation_label')]
             columns.extend(irr)
 
-        return [c for c in columns if c.enabled]
+        return columns
 
     def _run_columns(self, columns, ubit):
         options = self._options
@@ -253,7 +267,7 @@ class XLSXTableWriter(BaseTableWriter):
             c = Column(enabled=ubit, label='Irradiation', attr='irradiation_label')
             columns.append(c)
 
-        return [c for c in columns if c.enabled]
+        return columns
 
     def _get_irradiation_columns(self, ubit):
 
@@ -419,7 +433,8 @@ class XLSXTableWriter(BaseTableWriter):
         # write header
         self._write_header(sh, cols, include_units=True)
 
-        cols = [c for c in cols if c.enabled]
+        # cols = [c for c in cols if c.enabled]
+        self._hide_columns(sh, cols)
         for ug in unks:
             for i, ci in enumerate(cols):
                 try:
@@ -450,11 +465,30 @@ class XLSXTableWriter(BaseTableWriter):
                 self._make_column_header(worksheet, cols, i)
 
             n = len(group.analyses) - 1
-            for i, item in enumerate(group.analyses):
-                ounits = item.arar_constants.age_units
-                item.arar_constants.age_units = self._options.age_units
-                self._make_analysis(worksheet, cols, item, i == n)
-                item.arar_constants.age_units = ounits
+            nitems = []
+            has_subgroups = False
+            for tg, items in groupby(group.analyses,
+                                     key=lambda x: x.table_group
+                                     if hasattr(x, 'table_group') else None):
+                items = list(items)
+                for i, item in enumerate(items):
+                    ounits = item.arar_constants.age_units
+                    item.arar_constants.age_units = self._options.age_units
+                    self._make_analysis(worksheet, cols, item, i == n)
+
+                if tg:
+                    kind = '_'.join(tg.split('_')[:-1])
+                    ia = self._make_intermediate_summary(worksheet, cols, items, kind)
+                    nitems.append(ia)
+                    has_subgroups = True
+                else:
+                    nitems.extend(items)
+
+                for item in items:
+                    item.arar_constants.age_units = ounits
+
+            if has_subgroups:
+                group.analyses = nitems
 
             self._make_summary(worksheet, cols, group)
             self._current_row += 1
@@ -499,6 +533,12 @@ class XLSXTableWriter(BaseTableWriter):
         sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
             sh.freeze_panes(7, 2)
+        self._hide_columns(sh, cols)
+
+    def _hide_columns(self, sh, cols):
+        for i, c in enumerate(cols):
+            if not c.enabled:
+                sh.set_column(i, i + 1, options={'hidden': True})
 
     def _make_title(self, sh, name, cols):
         try:
@@ -585,7 +625,51 @@ class XLSXTableWriter(BaseTableWriter):
         row = self._current_row
         sh.write_rich_string(row, 1, 'Material:', fmt)
         sh.write_rich_string(row, 2, group.material, fmt)
+
         self._current_row += 1
+
+    def _make_intermediate_summary(self, sh, cols, ans, kind):
+        row = self._current_row
+        ag = StepHeatAnalysisGroup(analyses=[ai for ai in ans if not ai.is_omitted()])
+        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
+        fmt = self._get_number_format()
+        fmt.set_bottom(1)
+
+        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
+
+        if kind == 'weighted_mean':
+            a = ag.weighted_age
+            label = 'wt. mean'
+        elif kind == 'plateau':
+            a = ag.plateau_age
+            label = 'plateau'
+        elif kind == 'isochron':
+            a = ag.isochron_age
+            label = 'isochron'
+
+        for i in range(age_idx+1):
+            sh.write_blank(row, i, '', fmt)
+
+        sh.write_rich_string(row, 1, label, fmt2)
+        sh.write_number(row, age_idx, nominal_value(a), fmt)
+        sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+        self._current_row += 1
+
+        ia = IntermediateAnalysis()
+        ia.uage = a
+        ia.kca = ag.weighted_kca
+        ia.uage_wo_j_err = a
+
+        ia.irradiation_label = ans[0].irradiation_label
+        ia.irradiation = ans[0].irradiation
+        ia.material = ans[0].material
+
+        return ia
+
+    def _get_number_format(self):
+        fn = self._workbook.add_format()
+        fn.set_num_format('0.{}#'.format('0' * self._options.sig_figs))
+        return fn
 
     def _make_analysis(self, sh, cols, item, last):
         status = 'X' if item.is_omitted() else ''
@@ -594,15 +678,19 @@ class XLSXTableWriter(BaseTableWriter):
         border = self._workbook.add_format({'bottom': 1})
         fmt2 = self._workbook.add_format()
         fmt3 = self._workbook.add_format()
-        fmt4 = self._workbook.add_format()
+        fmt_j = self._workbook.add_format()
         fmt = []
+
+        fn = self._get_number_format()
         if last:
             fmt2 = self._workbook.add_format({'bottom': 1})
             fmt3 = self._workbook.add_format({'bottom': 1})
-            fmt = [border]
+            fmt.append(border)
+            fn.set_bottom(1)
+
         fmt2.set_align('center')
         fmt3.set_num_format('mm/dd/yy hh:mm')
-        fmt4.set_num_format('0.0000000')
+        fmt_j.set_num_format('0.0000000')
         sh.write(row, 0, status, *fmt)
         for j, c in enumerate(cols[1:]):
             txt = self._get_txt(item, c)
@@ -612,28 +700,33 @@ class XLSXTableWriter(BaseTableWriter):
             elif c.label == 'RunDate':
                 sh.write_datetime(row, j + 1, txt, fmt3)
             elif c.attr == 'j':
-                sh.write_number(row, j + 1, txt, fmt4)
+                sh.write_number(row, j + 1, txt, fmt_j)
             else:
-                sh.write(row, j + 1, txt, *fmt)
+
+                if isinstance(txt, float):
+                    sh.write_number(row, j+1, txt, cell_format=fn)
+                else:
+                    sh.write(row, j + 1, txt, *fmt)
 
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
+        nfmt = self._get_number_format()
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
             sh.write_rich_string(self._current_row, start_col, u'K/Ca {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
-            sh.write(self._current_row, idx, nominal_value(kca))
-            sh.write(self._current_row, idx + 1, std_dev(kca))
+            sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
             self._current_row += 1
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
         sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
-        sh.write(self._current_row, idx, nominal_value(group.weighted_age))
-        sh.write(self._current_row, idx + 1, std_dev(group.weighted_age))
+        sh.write_number(self._current_row, idx, nominal_value(group.weighted_age), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age), nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
@@ -642,24 +735,24 @@ class XLSXTableWriter(BaseTableWriter):
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
-                sh.write(self._current_row, idx, nominal_value(group.plateau_age))
-                sh.write(self._current_row, idx + 1, std_dev(group.plateau_age))
+                sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age), nfmt)
 
                 self._current_row += 1
 
             if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                      fmt)
-                sh.write(self._current_row, idx, nominal_value(group.integrated_age))
-                sh.write(self._current_row, idx + 1, std_dev(group.integrated_age))
+                sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age), nfmt)
 
                 self._current_row += 1
 
         if self._options.include_isochron_age:
             sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
-            sh.write(self._current_row, idx, nominal_value(group.isochron_age))
-            sh.write(self._current_row, idx + 1, std_dev(group.isochron_age))
+            sh.write_number(self._current_row, idx, nominal_value(group.isochron_age), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(group.isochron_age), nfmt)
 
             self._current_row += 1
 
@@ -862,7 +955,7 @@ if __name__ == '__main__':
     options = XLSXTableWriterOptions()
     options.configure_traits()
     x.build(groups={'unknowns': [g, g],
-                    'machine_unknowns': [g,g]},
+                    'machine_unknowns': [g, g]},
             path=p, options=options)
     options.dump()
     # app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'

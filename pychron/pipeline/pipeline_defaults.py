@@ -134,6 +134,7 @@ nodes:
   - klass: UnknownNode
   - klass: GroupingNode
   - klass: XLSXAnalysisTableNode
+  - klass: ReviewNode
   - klass: XLSXTablePersistNode
 """
 
