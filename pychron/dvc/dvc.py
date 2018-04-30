@@ -72,6 +72,7 @@ class Tag(object):
     name = None
     path = None
     note = ''
+    table_group = ''
 
     @classmethod
     def from_analysis(cls, an, **kw):
@@ -90,7 +91,8 @@ class Tag(object):
 
     def dump(self):
         obj = {'name': self.name,
-               'note': self.note}
+               'note': self.note,
+               'table_group': self.table_group}
         if not self.path:
             self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
 
