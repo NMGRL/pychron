@@ -335,7 +335,8 @@ class AnalysisGroup(HasTraits):
     def get_isochron_data(self):
         ans = [a for a in self.analyses if isinstance(a, ArArAge)]
         exclude = [i for i, x in enumerate(ans) if x.is_omitted()]
-        return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
+        if ans:
+            return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
 
     def calculate_isochron_age(self):
         # args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,
