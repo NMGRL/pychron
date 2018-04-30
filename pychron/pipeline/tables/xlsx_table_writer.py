@@ -140,13 +140,14 @@ class XLSXTableWriter(BaseTableWriter):
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
+        age_func = age_value(options.age_units)
 
         columns = [Column(attr='status'),
                    Column(label='N', attr='aliquot_step_str'),
                    Column(label='Tag', attr='tag'),
                    Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
-                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_value),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_value),
+                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
                    VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
                    EColumn(enabled=ubit, attr='kca'),
                    VColumn(enabled=ubit and options.include_radiogenic_yield,
@@ -224,6 +225,8 @@ class XLSXTableWriter(BaseTableWriter):
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
+        age_func = age_value(options.age_units)
+
         columns = [Column(attr='status'),
                    Column(label='Identifier', attr='identifier'),
                    Column(label='Sample', attr='sample'),
@@ -236,8 +239,8 @@ class XLSXTableWriter(BaseTableWriter):
                           units=options.power_units,
                           attr='extract_value'),
 
-                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_value),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_value),
+                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
                    VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
                    EColumn(enabled=ubit, attr='kca'),
                    VColumn(enabled=ubit and options.include_radiogenic_yield,
@@ -651,12 +654,15 @@ class XLSXTableWriter(BaseTableWriter):
             sh.write_blank(row, i, '', fmt)
 
         sh.write_rich_string(row, 1, label, fmt2)
+
         sh.write_number(row, age_idx, nominal_value(a), fmt)
         sh.write_number(row, age_idx + 1, std_dev(a), fmt)
         self._current_row += 1
 
         ia = IntermediateAnalysis()
         ia.uage = a
+        ia.age_units = ag.age_units
+        ia.age_scalar = ag.age_scalar
         ia.kca = ag.weighted_kca
         ia.uage_wo_j_err = a
 
