@@ -74,7 +74,9 @@ class ArArTableAdapter(BaseAdapter):
         m = MenuManager(Action(name='Calculate Mean', action='group_as_weighted_mean'),
                         Action(name='Calculate Plateau', action='group_as_plateau'),
                         Action(name='Calculate Isochron', action='group_as_isochron'),
-                        Action(name='Save Grouping', action='save_grouping'))
+                        Action(name='Save Grouping', action='save_grouping'),
+                        Action(name='Clear Grouping', action='clear_grouping'),
+                        Action(name='Clear and Save Grouping', action='clear_and_save_grouping'))
         return m
 
 
@@ -98,6 +100,12 @@ class THandler(Handler):
     def save_grouping(self, info, obj):
         obj.save_grouping()
 
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def clear_and_save_grouping(self, info, obj):
+        obj.clear_grouping(save=True)
+
 
 class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     # analysis_groups = Property(List, depends_on='items[]')
@@ -110,6 +118,15 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     analysis_groups_adapter_klass = GroupTableAdapter
 
     help_str = Str('Right-click to subgroup analyses and calculate an age')
+
+    def clear_grouping(self, save=False):
+        if self.selected:
+            for s in self.selected:
+                s.table_group = ''
+
+            self._compress_groups()
+            if save:
+                self.save_grouping()
 
     def save_grouping(self):
         dvc = self.dvc
@@ -125,14 +142,18 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         self._group('isochron')
 
     def _group(self, tag):
-        gs = {r.table_group for r in self.items}
+        if self.selected:
+            gs = {r.table_group for r in self.items}
 
-        gs = [int(gi.split('_')[-1]) for gi in gs if gi]
-        table_grouping_cnt = max(gs) if gs else -1
+            gs = [int(gi.split('_')[-1]) for gi in gs if gi]
+            table_grouping_cnt = max(gs) if gs else -1
 
-        for s in self.selected:
-            s.table_group = '{}_{}'.format(tag, table_grouping_cnt + 1)
+            for s in self.selected:
+                s.table_group = '{}_{}'.format(tag, table_grouping_cnt + 1)
 
+            self._compress_groups()
+
+    def _compress_groups(self):
         # compress groups
         key = lambda x: '_'.join(x.table_group.split('_')[:-1]) if x.table_group else ''
         for kind, ans in groupby(sorted(self.items, key=key), key=key):
