@@ -44,7 +44,6 @@ from pychron.experiment.queue.increment_heat_template import LaserIncrementalHea
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
-from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
@@ -79,7 +78,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     # projects = List
     # samples = List
 
-    human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
     factory_view_klass = FactoryView
 
@@ -195,6 +193,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     clear_conditionals = Button
     edit_conditionals_button = Button
     new_conditionals_button = Button
+    apply_conditionals_button = Button
 
     # ===========================================================================
     # blocks
@@ -302,21 +301,21 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     def update_selected_ctx(self):
         return UpdateSelectedCTX(self)
 
-    def check_run_addition(self, runs, load_name):
-        """
-            check if its ok to add runs to the queue.
-            ie. do they have any missing values.
-                does the labnumber match the loading
-
-            return True if ok to add runs else False
-        """
-        hec = self.human_error_checker
-        ret = hec.check_runs(runs, test_all=True)
-        if ret:
-            hec.report_errors(ret)
-            return False
-
-        return True
+    # def check_run_addition(self, runs, load_name):
+    #     """
+    #         check if its ok to add runs to the queue.
+    #         ie. do they have any missing values.
+    #             does the labnumber match the loading
+    #
+    #         return True if ok to add runs else False
+    #     """
+    #     hec = self.human_error_checker
+    #     ret = hec.check_runs(runs, test_all=True)
+    #     if ret:
+    #         hec.report_errors(ret)
+    #         return False
+    #
+    #     return True
 
     def load_run_blocks(self):
         self.run_blocks = get_run_blocks()
@@ -1346,7 +1345,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _new_conditionals_button_fired(self):
         name = edit_conditionals(self.conditionals_path,
-                                 app=self.application, root=paths.conditionals_dir,
+                                 root=paths.conditionals_dir,
                                  save_as=True,
                                  title='Edit Run Conditionals',
                                  kinds=('actions', 'cancelations', 'terminations', 'truncations'))
@@ -1356,20 +1355,16 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _edit_conditionals_button_fired(self):
         edit_conditionals(self.conditionals_path,
-                          app=self.application, root=paths.conditionals_dir,
+                          root=paths.conditionals_dir,
                           title='Edit Run Conditionals',
                           kinds=('actions', 'cancelations', 'terminations', 'truncations'))
         self.load_conditionals()
 
-    @on_trait_change('trunc_+, conditionals_path')
+    @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-            # if name == 'truncation_path':
-            #     t = new
-            # t = add_extension(new, '.yaml') if new else None
-            # else:
             self._auto_save()
             t = self.conditionals_str
             self._set_conditionals(t)

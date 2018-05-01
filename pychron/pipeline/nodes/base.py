@@ -26,7 +26,7 @@ import six
 from pychron.column_sorter_mixin import ColumnSorterMixin
 
 
-class BaseNode(HasTraits):
+class BaseNode(ColumnSorterMixin):
     name = 'Base'
     enabled = Bool(True)
     visited = Bool(False)
@@ -49,6 +49,7 @@ class BaseNode(HasTraits):
     skip_meaning = Str
 
     def clear_data(self):
+        print('clearing data')
         self.unknowns = []
         self.references = []
 
@@ -58,7 +59,7 @@ class BaseNode(HasTraits):
         self.active = False
 
     def pre_load(self, nodedict):
-        for k, v in six.iteritems(nodedict):
+        for k, v in nodedict.items():
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -77,10 +78,13 @@ class BaseNode(HasTraits):
     def pre_run(self, state, configure=True):
 
         if not self.auto_configure:
+            print('not auto configure')
             return True
 
         if self._manual_configured:
+            print('manually configured')
             return True
+
         if state.unknowns:
             self.unknowns = state.unknowns
         if state.references:

@@ -25,6 +25,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.experiment.utilities.identifier import make_aliquot
+from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
 from six.moves import range
@@ -93,6 +94,7 @@ class AnalysisGroup(HasTraits):
 
     isochron_4036 = None
     isochron_regressor = None
+    _age_units = None
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
@@ -115,7 +117,14 @@ class AnalysisGroup(HasTraits):
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
 
+    def set_temporary_age_units(self, a):
+        self._age_units = a
+        self.dirty = True
+
     def _get_age_units(self):
+        if self._age_units:
+            return self._age_units
+
         return self.analyses[0].arar_constants.age_units
 
     def _get_arar_constants(self):
@@ -226,7 +235,7 @@ class AnalysisGroup(HasTraits):
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
-            return ufloat(v, max(0, e))
+            return ufloat(v, max(0, e)) #/ self.age_scalar
         except AttributeError:
             return ufloat(0, 0)
 
@@ -268,7 +277,7 @@ class AnalysisGroup(HasTraits):
         else:
             v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
         e = self._modify_error(v, e, self.arith_age_error_kind)
-        return ufloat(v, e)
+        return ufloat(v, e) #/ self.age_scalar
 
     @cached_property
     def _get_total_n(self):
@@ -325,8 +334,10 @@ class AnalysisGroup(HasTraits):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def get_isochron_data(self):
-        exclude = [i for i, x in enumerate(self.analyses) if x.is_omitted()]
-        return calculate_isochron(self.analyses, self.isochron_age_error_kind, exclude=exclude)
+        ans = [a for a in self.analyses if isinstance(a, ArArAge)]
+        exclude = [i for i, x in enumerate(ans) if x.is_omitted()]
+        if ans:
+            return calculate_isochron(ans, self.isochron_age_error_kind, exclude=exclude)
 
     def calculate_isochron_age(self):
         # args = calculate_isochron(list(self.clean_analyses()), self.isochron_age_error_kind,
@@ -377,14 +388,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     @cached_property
     def _get_integrated_age(self):
 
-        rad40, k39 = list(zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
+        rad40, k39 = list(
+            zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
         rad40 = sum(rad40)
         k39 = sum(k39)
 
         a = next(self.clean_analyses())
         j = a.j
         try:
-            return age_equation(rad40 / k39, j, a.arar_constants)
+            return age_equation(rad40 / k39, j, a.arar_constants) #/ self.age_scalar
         except ZeroDivisionError:
             return nan
 
@@ -450,7 +462,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             if math.isnan(e):
                 e = 0
 
-        return ufloat(v, max(0, e))
+        return ufloat(v, max(0, e)) #/ self.age_scalar
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
@@ -491,6 +503,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     reference = Str
     lat_long = Str
 
+    comments = Str
+
     def _name_default(self):
         name = ''
         if self.analyses:
@@ -523,7 +537,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def get_ma_scaled_age(self):
         a = self.preferred_age
-        return a * self.age_scalar
+        return a / self.age_scalar
 
     def _get_preferred_mswd(self):
         if self.preferred_age_kind == 'Plateau':

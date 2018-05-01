@@ -43,6 +43,22 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
 
+    def _label_updated(self, obj, name, label):
+        """  Handles the label of an object being changed.
+        """
+        # Prevent the itemChanged() signal from being emitted.
+        blk = self._tree.blockSignals(True)
+
+        nids = {}
+        for name2, nid in self._map[id(obj)]:
+            if id(nid) not in nids:
+                nids[id(nid)] = None
+                node = self._get_node_data(nid)[1]
+                self._set_label(nid, node.get_label(obj), 0)
+                self._update_icon(nid)
+
+        self._tree.blockSignals(blk)
+
     def _collapse_all_fired(self):
         ctrl = self.control
         if ctrl is None:
@@ -210,6 +226,7 @@ class _PipelineEditor(SimpleEditor):
         if self._tree:
             item = PipelineDelegate(self._tree, self.factory.show_icons)
             self._tree.setItemDelegate(item)
+
 
     def _create_item(self, nid, node, obj, index=None):
         """ Create  a new TreeWidgetItem as per word_wrap policy.

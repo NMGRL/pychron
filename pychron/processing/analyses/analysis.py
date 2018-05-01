@@ -175,6 +175,7 @@ class IdeogramPlotable(HasTraits):
     aliquot = 0
     step = ''
     timestamp = 0
+    subgroup = ''
 
     def __init__(self, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
@@ -204,6 +205,7 @@ class IdeogramPlotable(HasTraits):
         if isinstance(tag, dict):
             self.tag_note = tag.get('note', '')
             self.tag = tag.get('name', '')
+            self.subgroup = tag.get('subgroup', '')
         else:
             self.tag = tag
 

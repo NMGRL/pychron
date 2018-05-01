@@ -247,9 +247,15 @@ def fast_find_peaks(ys, xs, **kw):
         return [], []
 
     ys, xs = asarray(ys), asarray(xs)
-    indexes = indexes(ys, **kw)
-    peaks_x = interpolate(xs, ys, ind=indexes)
-    return peaks_x, ys[indexes]
+    idx = indexes(ys, **kw)
+    peaks_x = interpolate(xs, ys, ind=idx)
+    try:
+
+        return peaks_x, ys[idx]
+    except IndexError:
+        from pyface.message_dialog import warning
+        warning(None, 'There was an issue finding the peaks')
+        return [], []
 
 
 def interpolate(x, y, ind=None, width=10, func=None):

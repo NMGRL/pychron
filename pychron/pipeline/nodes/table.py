@@ -15,79 +15,45 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import os
-from itertools import groupby
-
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, List, Enum, Bool, Str
+from traits.api import HasTraits, List, Enum, Bool, Str, Instance
 from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
+import os
+from itertools import groupby
+
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
+from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
-from six.moves import zip
 
 
 class TableNode(BaseNode):
-    pass
+    dvc = Instance('pychron.dvc.dvc.DVC')
 
 
 class XLSXAnalysisTableNode(TableNode):
     name = 'Analysis Table'
-    options_klass = XLSXTableWriterOptions
+    # options_klass = XLSXTableWriterOptions
 
-    def _finish_configure(self):
-        self.options.dump()
+    # def _finish_configure(self):
+    #     self.options.dump()
+    auto_configure = False
+    configurable = False
 
     def run(self, state):
-        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
         self._make_table(state)
 
     def _make_table(self, state):
-        unknowns = (a for a in state.unknowns if a.analysis_type == 'unknown')
-        blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
-        airs = (a for a in state.unknowns if a.analysis_type == 'air')
+        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
 
-        key = lambda x: x.group_id
-
-        options = self.options
-        skip_meaning = self.skip_meaning
-
-        if self.options.table_kind == 'Step Heat':
-            def factory(ans):
-                if skip_meaning:
-                    if 'Table' in skip_meaning:
-                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
-
-                return InterpretedAgeGroup(analyses=list(ans),
-                                           plateau_nsteps=options.plateau_nsteps,
-                                           plateau_gas_fraction=options.plateau_gas_fraction,
-                                           fixed_step_low=options.fixed_step_low,
-                                           fixed_step_high=options.fixed_step_high)
-
-        else:
-            def factory(ans):
-                if self.skip_meaning:
-                    if 'Table' in skip_meaning:
-                        ans = (ai for ai in ans if ai.tag.lower() != 'skip')
-
-                return InterpretedAgeGroup(analyses=list(ans))
-
-        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
-        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
-        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
-
-        state.tables.append({'options': options,
-                             'unknowns': unk_group,
-                             'blanks': blank_group,
-                             'airs': air_group})
+        editor = ArArTableEditor(dvc=self.dvc)
+        editor.items = unknowns
+        state.editors.append(editor)
 
 
 class TableOptions(HasTraits, PersistenceMixin):

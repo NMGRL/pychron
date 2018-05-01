@@ -18,12 +18,21 @@
 from __future__ import absolute_import
 import os
 from itertools import groupby
+from operator import attrgetter
 
+from chaco.plot_label import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import List, Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 
 from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
+from pychron.pipeline.plot.figure_container import FigureContainer
+
+
+class WarningLabel(PlotLabel):
+    def _layout_as_overlay(self, size=None, force=False):
+        self.x = self.component.x+self.component.width/2
+        self.y = self.component.y+self.component.height/2
 
 
 class GraphEditor(BaseTraitsEditor):
@@ -66,8 +75,6 @@ class GraphEditor(BaseTraitsEditor):
             gc.render_component(c)
             gc.save(path)
 
-            # self.rebuild_graph()
-
     def set_items(self, ans, is_append=False, refresh=False, compress=True):
         if is_append:
             self.analyses.extend(ans)
@@ -88,35 +95,38 @@ class GraphEditor(BaseTraitsEditor):
 
     def _compress_groups(self):
         ans = self.analyses
-        if not ans:
-            return
+        if ans:
+            key = attrgetter('group_id')
+            ans = sorted(ans, key=key)
+            groups = groupby(ans, key)
 
-        key = lambda x: x.group_id
-        ans = sorted(ans, key=key)
-        groups = groupby(ans, key)
-        # try:
-        # mgid, analyses = groups.next()
-        # except StopIteration:
-        #     return
-
-        # print 'compress groups'
-        # for ai in analyses:
-        # ai.group_id = 0
-
-        for i, (gid, analyses) in enumerate(groups):
-            for ai in analyses:
-                # ai.group_id = gid - mgid
-                ai.group_id = i
+            for i, (gid, analyses) in enumerate(groups):
+                for ai in analyses:
+                    ai.group_id = i
 
     @cached_property
     def _get_component(self):
-        if self.figure_container:
-            self.figure_container.model_changed(False)
-        # if self.figure_model:
-        # self.figure_model.refresh_panels()
-        # self.
-        # self.figure_model = None
-        return self._component_factory()
+        if self.analyses:
+            if self.figure_container:
+                self.figure_container.model_changed(False)
+            return self._component_factory()
+
+        else:
+            return self._no_component_factory()
+
+    def _no_component_factory(self):
+        container = self.figure_container
+        if not container:
+            container = FigureContainer()
+            self.figure_container = container
+
+        component = self.figure_container.component
+        w = WarningLabel(text='No Analyses',
+                         font='Helvetica 36',
+                         component=component)
+        component.overlays.append(w)
+
+        return component
 
     def _component_factory(self):
         raise NotImplementedError

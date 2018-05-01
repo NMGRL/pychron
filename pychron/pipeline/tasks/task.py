@@ -419,7 +419,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     def set_analysis_table_template(self):
-        self.engine.selected_pipeline_template = 'Analysis Table'
+        self.engine.selected_pipeline_template = 'Analysis'
         self.run()
 
     # private
@@ -455,26 +455,29 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-        self.debug('{} started'.format(message))
-        if close_all:
-            self.close_all()
 
-        self.dvc.db.session = None
-        self.dvc.create_session()
+        if self.engine.pre_run_check():
 
-        if not getattr(self.engine, func)():
-            self.engine.resume_enabled = True
-            self.engine.run_enabled = False
-            self.debug('false {} {}'.format(message, func))
-        else:
-            self.engine.run_enabled = True
-            self.engine.resume_enabled = False
-            self.debug('true {} {}'.format(message, func))
+            self.debug('{} started'.format(message))
+            if close_all:
+                self.close_all()
 
-        for editor in self.engine.state.editors:
-            self._open_editor(editor)
+            self.dvc.db.session = None
+            self.dvc.create_session()
 
-        self.debug('{} finished'.format(message))
+            if not getattr(self.engine, func)():
+                self.engine.resume_enabled = True
+                self.engine.run_enabled = False
+                self.debug('false {} {}'.format(message, func))
+            else:
+                self.engine.run_enabled = True
+                self.engine.resume_enabled = False
+                self.debug('true {} {}'.format(message, func))
+
+            for editor in self.engine.state.editors:
+                self._open_editor(editor)
+
+            self.debug('{} finished'.format(message))
 
     def _run_from_pipeline(self):
         self._run('run from', 'run_from_pipeline')
@@ -584,21 +587,22 @@ class PipelineTask(BaseBrowserTask):
             self._debug()
 
     def _get_selection(self):
-        items = self.engine.selected.unknowns
-        items.extend(self.engine.selected.references)
-        items = [i for i in items if i.temp_selected]
+        if self.engine.selected:
+            items = self.engine.selected.unknowns
+            items.extend(self.engine.selected.references)
+            items = [i for i in items if i.temp_selected]
 
-        uuids = [i.uuid for i in items]
-        for ans in (self.engine.selected_unknowns,
-                    self.engine.selected_references):
-            for i in ans:
-                if i.uuid not in uuids:
-                    items.append(i)
+            uuids = [i.uuid for i in items]
+            for ans in (self.engine.selected_unknowns,
+                        self.engine.selected_references):
+                for i in ans:
+                    if i.uuid not in uuids:
+                        items.append(i)
 
-        # items.extend(self.engine.selected_unknowns)
-        # items.extend(self.engine.selected_references)
+            # items.extend(self.engine.selected_unknowns)
+            # items.extend(self.engine.selected_references)
 
-        return items
+            return items
 
     def _get_tagname(self, items):
         from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel

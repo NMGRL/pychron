@@ -17,6 +17,8 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 import os
+import shutil
+
 from git import Repo, GitCommandError
 
 # ============= enthought library imports =======================
@@ -25,10 +27,11 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
-    FindChangesAction, LoadOriginAction, DeleteLocalChangesAction
+    FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -71,7 +74,8 @@ class ExperimentRepoTask(BaseTask):
                           PullAction(),
                           LoadOriginAction(),
                           FindChangesAction(),
-                          DeleteLocalChangesAction())]
+                          DeleteLocalChangesAction(),
+                          ArchiveRepositoryAction())]
 
     commits = List
     _repo = None
@@ -90,6 +94,20 @@ class ExperimentRepoTask(BaseTask):
         self.refresh_local_names()
         if self.confirmation_dialog('Check all Repositories for changes'):
             self.find_changes()
+
+    def archive_repository(self):
+        self.debug('archive repository')
+
+        root = os.path.join(paths.dvc_dir, 'archived_repositories')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        src = self._repo.path
+        name = os.path.basename(src)
+        dst = unique_dir(root, name, make=False)
+        shutil.move(self._repo.path, dst)
+        self.refresh_local_names()
+        self.information_dialog('"{}" Successfully archived to {}'.format(name, dst))
 
     def refresh_local_names(self):
         self.local_names = [RepoItem(name=i) for i in sorted(list_local_repos())]
@@ -130,9 +148,9 @@ class ExperimentRepoTask(BaseTask):
             if info.result:
                 if a.url and a.name:
                     self._repo.create_remote(a.url, a.name)
-                    self._repo.push(remote=a.name)
+                    self._repo.push(remote=a.name, inform=True)
         else:
-            self._repo.push()
+            self._repo.push(inform=True)
 
         self.selected_local_repository_name.dirty = False
 

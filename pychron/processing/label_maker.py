@@ -26,7 +26,8 @@ from six.moves import range
 
 
 class TitleTemplater(BaseTemplater):
-    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material',
+    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Step', 'Material',
+                       'RunID',
                        'AlphaCounter',
                        'NumericCounter', '<SPACE>'])
 
@@ -34,6 +35,7 @@ class TitleTemplater(BaseTemplater):
                          'identifier': '',
                          'project': '',
                          'aliquot': '02n',
+                         'step': '',
                          'material': '',
                          'numericcounter': '',
                          'alphacounter': ''}
@@ -42,12 +44,16 @@ class TitleTemplater(BaseTemplater):
                        'identifier': '20001',
                        'project': 'J-Curve',
                        'aliquot': 1,
+                       'step': 'A',
+                       'runid': '20001-01A',
                        'material': 'GMC',
                        'numericcounter': 1,
                        'alphacounter': 'A'}
 
     base_predefined_labels = List(['Sample ( Identifier )',
                                    'Sample ( Identifier - Aliquot )',
+                                   'Sample ( Identifier - Aliquot Step)',
+                                   'RunID',
                                    'Sample ( Identifier - Aliquot , Material )',
                                    'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
                                    'Sample',

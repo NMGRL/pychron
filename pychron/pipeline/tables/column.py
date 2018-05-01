@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2017 ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,18 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Any, Instance
+from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable
 
-from pychron.loggable import Loggable
-from pychron.spectrometer.isotopx.magnet.base import IsotopxMagnet
-from pychron.spectrometer.isotopx.source.base import IsotopxSource
+from pychron.pipeline.tables.util import value, error
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
-class IsotopxSpectrometer(Loggable):
-    magnet = Instance(IsotopxMagnet)
-    source = Instance(IsotopxSource)
-    magnet_klass = Any
-    source_klass = Any
-    detector_klass = Any
+class Column(HasTraits):
+    enabled = Bool
+    attr = Str
+    label = Either(Str, Tuple)
+    units = Str
+    func = Callable
 
+    def _label_default(self):
+        return ''
+
+    def _units_default(self):
+        return ''
+
+    def _enabled_default(self):
+        return True
+
+
+class VColumn(Column):
+    def _func_default(self):
+        return value
+
+
+class EColumn(Column):
+    label = PLUSMINUS_ONE_SIGMA
+
+    def _func_default(self):
+        return error
 # ============= EOF =============================================

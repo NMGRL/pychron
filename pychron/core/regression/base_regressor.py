@@ -100,6 +100,20 @@ class BaseRegressor(HasTraits):
     def sem(self):
         return self.std / self.n ** 0.5
 
+    @property
+    def rsquared(self):
+        return self._get_rsquared()
+
+    def _get_rsquared(self):
+        return 0
+
+    @property
+    def rsquared_adj(self):
+        return self._get_rsquared_adj()
+
+    def _get_rsquared_adj(self):
+        return 0
+
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
 

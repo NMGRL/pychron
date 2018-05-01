@@ -211,9 +211,9 @@ class UnknownNode(DataNode):
         #         return
 
         # review_req = []
-        unks = self.unknowns
-        for ai in unks:
-            ai.group_id = 0
+        # unks = self.unknowns
+        # for ai in unks:
+        #     ai.group_id = 0
         #     if self.check_reviewed:
         #         for attr in ('blanks', 'iso_evo'):
         #             # check analyses to see if they have been reviewed
@@ -316,12 +316,12 @@ class BaseAutoUnknownNode(UnknownNode):
             if not self.single_shot:
                 self._start_listening()
 
-            self._post_run_hook()
+            self._post_run_hook(engine, state)
 
     def reset(self):
         self._stop_listening()
 
-    def _post_run_hook(self):
+    def _post_run_hook(self, engine, state):
         pass
 
     def _finish_load_hook(self):
@@ -364,6 +364,7 @@ class BaseAutoUnknownNode(UnknownNode):
 
             print('retrived n records={}'.format(len(records)))
             if not self._cached_unknowns:
+                updated = True
                 ans = self.dvc.make_analyses(records)
             else:
                 ans = []
@@ -405,7 +406,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
     def _run_time_default(self):
         return (datetime.now() + timedelta(minutes=2)).time()
 
-    def _post_run_hook(self):
+    def _post_run_hook(self, engine, state):
         self._flash_iter(0)
 
     def _flash_iter(self, cnt):
@@ -472,6 +473,23 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
     max_period = 10
     _between_updates = None
+    pipeline = None
+    state = None
+
+    def clear_data(self):
+        super(ListenUnknownNode, self).clear_data()
+        self.pipeline = None
+        self.state = None
+
+    def reset(self):
+        super(ListenUnknownNode, self).reset()
+        self.pipeline = None
+        self.state = None
+
+    def _post_run_hook(self, engine, state):
+        self.state = state
+        self.pipeline = engine.pipeline
+        engine.pipeline.active = True
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -498,9 +516,10 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         return v
 
     def run(self, state):
-        self._low = datetime.now()
-        unks, updated = self._load_analyses()
-        state.unknowns = unks
+        if not self._alive:
+            self._low = datetime.now()
+            unks, updated = self._load_analyses()
+            state.unknowns = unks
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
@@ -516,13 +535,17 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         if not self._alive:
             return
 
-        if unks:
-            unks_ids = [id(ai) for ai in unks]
-            if self._unks_ids != unks_ids:
-                # self.unknowns = unks
-                self._unks_ids = unks_ids
-                self.engine.rerun_with(unks, post_run=False)
-                self.engine.refresh_figure_editors()
+        if updated:
+            # unks_ids = [id(ai) for ai in unks]
+            # if self._unks_ids != unks_ids:
+            #     self._unks_ids = unks_ids
+            # self.engine.rerun_with(unks, post_run=False)
+            self.state.unknowns = unks
+            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state)
+
+            self.engine.post_run_refresh(state=self.state)
+            self.engine.refresh_figure_editors()
+            # self.unknowns = unks
 
         if not self._alive:
             return

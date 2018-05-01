@@ -20,7 +20,7 @@ from __future__ import print_function
 import logging
 
 from numpy import asarray, column_stack, ones, \
-    matrix, sqrt, dot, linalg, zeros_like, hstack
+    matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
@@ -124,7 +124,7 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def calculate_error_envelope2(self, fx, fy):
+    def calculate_prediction_envelope(self, fx, fy):
         from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
         prstd, iv_l, iv_u = wls_prediction_std(self._result)
@@ -278,6 +278,13 @@ class OLSRegressor(BaseRegressor):
 
         # def calculate_x(self, y):
         # return 0
+    def _get_rsquared(self):
+        if self._result:
+            return self._result.rsquared
+
+    def _get_rsquared_adj(self):
+        if self._result:
+            return self._result.rsquared_adj
 
     def _calculate_coefficients(self):
         """
@@ -363,10 +370,10 @@ class MultipleLinearRegressor(OLSRegressor):
         if xs is None:
             xs = self.clean_xs
 
-        r, c = xs.shape
-        if c == 2:
-            xs = column_stack((xs, ones(r)))
-            return xs
+        xs = asarray(xs)
+        x1, x2 = xs.T
+        xs = column_stack((x1, x2, ones_like(x1)))
+        return xs
 
 
 if __name__ == '__main__':

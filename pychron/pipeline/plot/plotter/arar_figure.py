@@ -17,6 +17,9 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
+import math
+
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
@@ -183,7 +186,7 @@ class BaseArArFigure(SelectionFigure):
             # self._add_legend()
 
     def post_make(self):
-        pass
+        self._fix_log_axes()
 
     def plot(self, *args, **kw):
         pass
@@ -202,6 +205,14 @@ class BaseArArFigure(SelectionFigure):
         return 0
 
     # private
+    def _fix_log_axes(self):
+        for i, p in enumerate(self.graph.plots):
+            if p.value_scale == 'log':
+                if p.value_mapper.range.low < 0:
+                    ys = self.graph.get_data(plotid=i, axis=1)
+                    m = 10 ** math.floor(math.log10(min(ys)))
+                    p.value_mapper.range.low = m
+
     def _setup_plot(self, i, pp, po):
 
         # add limit tools
@@ -227,11 +238,14 @@ class BaseArArFigure(SelectionFigure):
                 pp.y_axis.orientation = 'right'
                 pp.y_axis.axis_line_visible = False
 
-        if self.use_sparse_ticks:
-            if pp.value_scale == 'log':
-                pp.value_axis.tick_generator = SparseLogTicks()
-            else:
-                pp.value_axis.tick_generator = SparseTicks()
+            pp.value_scale = po.scale
+            if self.use_sparse_ticks:
+                if po.scale == 'log':
+                    st = SparseLogTicks()
+                    pp.value_axis.tick_generator = st
+                    pp.value_grid.tick_generator = st
+                else:
+                    pp.value_axis.tick_generator = SparseTicks()
 
     def _set_options_format(self, pp):
         # print 'using options format'
@@ -297,16 +311,30 @@ class BaseArArFigure(SelectionFigure):
         if not self.suppress_xlimits_update:
             if hasattr(self.options, 'aux_plots'):
                 # n = len(self.options.aux_plots)
-                limits = self.graph.get_x_limits(pid)
+                xlimits = self.graph.get_x_limits(pid)
                 for ap in self.options.aux_plots:
-                    ap.xlimits = limits
-                    # ap = self.options.aux_plots[n - pid - 1]
-                    # if not self.suppress_ylimits_update:
-                    #     ap.ylimits = self.graph.get_y_limits(pid)
+                    ap.xlimits = xlimits
 
-                    # if not self.suppress_xlimits_update:
-                    #     ap.xlimits = self.graph.get_x_limits(pid)
-                    #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
+        if not self.suppress_ylimits_update:
+            if hasattr(self.options, 'aux_plots'):
+                # n = len(self.options.aux_plots)
+                ylimits = self.graph.get_y_limits(pid)
+
+                for i, ap in enumerate(self.options.get_plotable_aux_plots()):
+                    if i == pid:
+                        ap.ylimits = ylimits
+                        break
+
+                # for ap in self.options.aux_plots:
+                #     ap.ylimits = ylimits
+
+                # ap = self.options.aux_plots[n - pid - 1]
+                # if not self.suppress_ylimits_update:
+                #     ap.ylimits = self.graph.get_y_limits(pid)
+
+                # if not self.suppress_xlimits_update:
+                #     ap.xlimits = self.graph.get_x_limits(pid)
+                #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
 
     def get_valid_xbounds(self):
         pass

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, HGroup, VGroup, Group, UItem
+from traitsui.api import View, Item, HGroup, VGroup, Group, UItem, RangeEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions
@@ -45,9 +45,14 @@ class InverseIsochronMainOptions(SubOptions):
                           UItem('info_fontsize'))
 
         results_grp = HGroup(Item('show_results_info', label='Results'),
-                             Item('nsigma'),
-                             UItem('results_fontname'),
-                             UItem('results_fontsize'))
+                             VGroup(HGroup(Item('nsigma'),
+                                           Item('results_info_spacing',
+                                                editor=RangeEditor(mode='spinner', low=2,
+                                                                   high=20, is_float=False),
+                                                label='Spacing')),
+                                    HGroup(UItem('results_fontname'),
+                                           UItem('results_fontsize'))))
+
         ellipse_grp = HGroup(Item('fill_ellipses', label='fill'),
                              Item('ellipse_kind', label='Kind'),
                              show_border=True,
@@ -72,8 +77,7 @@ class InverseIsochronMainOptions(SubOptions):
                           label='Nominal Intercept'),
                    VGroup(Item('display_inset'),
                           Item('inset_location'),
-                          HGroup(Item('inset_marker_size', label='Marker Size'),
-                                 Item('inset_marker_color', label='Color')),
+                          HGroup(Item('inset_marker_size', label='Marker Size')),
                           HGroup(Item('inset_width', label='Width'),
                                  Item('inset_height', label='Height')),
                           show_border=True,

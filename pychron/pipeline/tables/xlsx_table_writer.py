@@ -13,29 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-import os
 import re
+from itertools import groupby
+from operator import attrgetter
 
 import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Instance, Enum, Str, Bool, Int, Float, BaseStr
-from traitsui.api import View, VGroup, Item, UItem, Tabbed, HGroup, Label
+from traits.api import Instance, BaseStr, HasTraits
 from uncertainties import nominal_value, std_dev, ufloat
 
-from pychron.core.helpers.filetools import add_extension, unique_path2, view_file
-from pychron.core.persistence_options import BasePersistenceOptions
+from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.paths import paths
-from pychron.persistence_loggable import dumpable
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
-from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pipeline.tables.column import Column, EColumn, VColumn
+from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
+from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
 import six
-from six.moves import range
 
-subreg = re.compile(r'^<sub>(?P<item>\w+)</sub>')
-supreg = re.compile(r'^<sup>(?P<item>\w+)</sup>')
+subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
+supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
 
 DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, baseline, radioactivity decay and '
                          'detector intercalibration, not for interfering reactions.',
@@ -45,177 +44,16 @@ DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, b
                          'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
 
 
-class SingleStr(BaseStr):
-    def validate(self, obj, name, value):
-        if value and len(value) > 1:
-            self.error(obj, name, value)
-        else:
-            return value
+class IntermediateAnalysis(HasTraits):
+    def is_omitted(self):
+        return False
 
-
-class XLSXTableWriterOptions(BasePersistenceOptions):
-    table_kind = dumpable(Enum('Fusion', 'Step Heat'))
-
-    power_units = dumpable(Enum('W', 'C'))
-    age_units = dumpable(Enum('Ma', 'Ga', 'ka', 'a'))
-    hide_gridlines = dumpable(Bool(False))
-    include_F = dumpable(Bool(True))
-    include_radiogenic_yield = dumpable(Bool(True))
-    include_production_ratios = dumpable(Bool(True))
-    include_plateau_age = dumpable(Bool(True))
-    include_integrated_age = dumpable(Bool(True))
-    include_isochron_age = dumpable(Bool(True))
-    include_kca = dumpable(Bool(True))
-    include_rundate = dumpable(Bool(True))
-    include_time_delta = dumpable(Bool(True))
-    include_k2o = dumpable(Bool(True))
-    include_isochron_ratios = dumpable(Bool(False))
-    include_blanks = dumpable(Bool(True))
-    include_intercepts = dumpable(Bool(True))
-
-    use_weighted_kca = dumpable(Bool(True))
-    repeat_header = dumpable(Bool(False))
-
-    name = dumpable(Str('Untitled'))
-    auto_view = dumpable(Bool(False))
-    unknown_notes = dumpable(Str('''Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
-Integrated age calculated by summing isotopic measurements of all steps.
-Plateau age is inverse-variance-weighted mean of selected steps.
-Plateau age error is inverse-variance-weighted mean error (Taylor, 1982) times root MSWD where MSWD>1.
-Plateau error is weighted error of Taylor (1982).
-Decay constants and isotopic abundances after {decay_ref:}
-Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at {monitor_age:} Ma'''))
-
-    unknown_title = dumpable(Str('Ar/Ar analytical data.'))
-    air_notes = dumpable(Str(''''''))
-    air_title = dumpable(Str(''''''))
-    blank_notes = dumpable(Str(''''''))
-    blank_title = dumpable(Str(''''''))
-    monitor_notes = dumpable(Str(''''''))
-    monitor_title = dumpable(Str(''''''))
-
-    include_summary_sheet = dumpable(Bool(True))
-    include_summary_age = dumpable(Bool(True))
-    include_summary_age_type = dumpable(Bool(True))
-    include_summary_material = dumpable(Bool(True))
-    include_summary_sample = dumpable(Bool(True))
-
-    include_summary_identifier = dumpable(Bool(True))
-    include_summary_unit = dumpable(Bool(True))
-    include_summary_location = dumpable(Bool(True))
-    include_summary_irradiation = dumpable(Bool(True))
-    include_summary_n = dumpable(Bool(True))
-    include_summary_percent_ar39 = dumpable(Bool(True))
-    include_summary_mswd = dumpable(Bool(True))
-    include_summary_kca = dumpable(Bool(True))
-    include_summary_comments = dumpable(Bool(True))
-
-    plateau_nsteps = dumpable(Int(3))
-    plateau_gas_fraction = dumpable(Float(50))
-    fixed_step_low = dumpable(SingleStr)
-    fixed_step_high = dumpable(SingleStr)
-
-    _persistence_name = 'xlsx_table_options'
-
-    @property
-    def path(self):
-        name = self.name
-        if not name or name == 'Untitled':
-            path, _ = unique_path2(paths.table_dir, 'Untitled', extension='.xlsx')
-        else:
-            path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
-        return path
-
-    def traits_view(self):
-        unknown_grp = VGroup(Item('unknown_title', label='Table Heading'),
-                             VGroup(UItem('unknown_notes', style='custom'),
-                                    show_border=True, label='Notes'), label='Unknowns')
-
-        air_grp = VGroup(Item('air_title', label='Table Heading'),
-                         VGroup(UItem('air_notes', style='custom'), show_border=True, label='Notes'), label='Airs')
-        blank_grp = VGroup(Item('blank_title', label='Table Heading'),
-                           VGroup(UItem('blank_notes', style='custom'), show_border=True, label='Notes'),
-                           label='Blanks')
-        monitor_grp = VGroup(Item('monitor_title', label='Table Heading'),
-                             VGroup(UItem('monitor_notes', style='custom'), show_border=True,
-                                    label='Notes'), label='Monitors')
-
-        grp = VGroup(Item('table_kind', label='Kind'),
-                     Item('name', label='Filename'),
-                     Item('auto_view', label='Open in Excel'),
-                     show_border=True)
-
-        appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
-                                Item('power_units', label='Power Units'),
-
-                                Item('age_units', label='Age Units'),
-                                Item('repeat_header', label='Repeat Header'),
-                                show_border=True, label='Appearance')
-
-        arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
-                              Item('include_radiogenic_yield', label='%40Ar*'),
-                              Item('include_kca', label='K/Ca'),
-                              Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
-                              Item('include_k2o', label='K2O wt. %'),
-                              Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_plateau_age', label='Plateau', visible_when='table_kind=="Step Heat"'),
-                              Item('include_integrated_age', label='Integrated', visible_when='table_kind=="Step '
-                                                                                              'Heat"'),
-                              Item('include_isochron_age', label='Isochron'),
-                              Item('include_isochron_ratios', label='Isochron Ratios'),
-                              Item('include_time_delta', label='Time since Irradiation'),
-                              label='Ar/Ar')
-
-        general_col_grp = VGroup(Item('include_rundate', label='Analysis RunDate'),
-                                 Item('include_blanks', label='Applied Blank'),
-                                 Item('include_intercepts', label='Intercepts'),
-                                 label='General')
-        columns_grp = HGroup(general_col_grp, arar_col_grp,
-                             label='Columns', show_border=True)
-        g1 = VGroup(grp, columns_grp, appearence_grp, label='Main')
-
-        summary_grp = VGroup(Item('include_summary_sheet', label='Summary Sheet'),
-                             VGroup(
-
-                                 Item('include_summary_sample', label='Sample'),
-                                 Item('include_summary_identifier', label='Identifier'),
-                                 Item('include_summary_unit', label='Unit'),
-                                 Item('include_summary_location', label='Location'),
-                                 Item('include_summary_material', label='Material'),
-                                 Item('include_summary_irradiation', label='Irradiation'),
-                                 Item('include_summary_age_type', label='Age Type'),
-                                 Item('include_summary_n', label='N'),
-                                 Item('include_summary_percent_ar39', label='%39Ar'),
-                                 Item('include_summary_mswd', label='MSWD'),
-                                 Item('include_summary_kca', label='KCA'),
-                                 Item('include_summary_age', label='Age'),
-                                 Item('include_summary_comments', label='Comments'),
-
-                                 enabled_when='include_summary_sheet',
-                                 label='Columns',
-                                 show_border=True),
-                             label='Summary')
-
-        plat_grp = VGroup(Item('plateau_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
-                          Item('plateau_gas_fraction', label='Min. Gas%',
-                               tooltip='Plateau must represent at least Min. Gas% release'),
-                          HGroup(UItem('fixed_step_low'),
-                                 Label('To'),
-                                 UItem('fixed_step_high'),
-                                 show_border=True,
-                                 label='Fixed Steps'),
-                          visible_when='table_kind=="Step Heat"',
-                          show_border=True,
-                          label='Plateau')
-
-        calc_grp = VGroup(plat_grp, label='Calc.')
-
-        v = View(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
-                 resizable=True,
-                 width=750,
-                 title='XLSX Analysis Table Options',
-                 buttons=['OK', 'Cancel'])
-        return v
+    def get_value(self, attr):
+        try:
+            return getattr(self, attr)
+        except AttributeError:
+            print('sdfa', attr)
+            return 0
 
 
 class XLSXTableWriter(BaseTableWriter):
@@ -230,7 +68,7 @@ class XLSXTableWriter(BaseTableWriter):
     def _new_workbook(self, path):
         self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
 
-    def build(self, path=None, unknowns=None, airs=None, blanks=None, monitors=None, options=None):
+    def build(self, groups, path=None, options=None):
         if options is None:
             options = XLSXTableWriterOptions()
 
@@ -245,19 +83,25 @@ class XLSXTableWriter(BaseTableWriter):
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})
 
+        unknowns = groups.get('unknowns')
         if unknowns:
             # make a human optimized table
             self._make_human_unknowns(unknowns)
 
             # make a machine optimized table
-            self._make_machine_unknowns(unknowns)
+        munknowns = groups.get('machine_unknowns')
+        if munknowns:
+            self._make_machine_unknowns(munknowns)
 
+        airs = groups.get('airs')
         if airs:
             self._make_airs(airs)
 
+        blanks = groups.get('blanks')
         if blanks:
             self._make_blanks(blanks)
 
+        monitors = groups.get('monitors')
         if monitors:
             self._make_monitors(monitors)
 
@@ -265,7 +109,8 @@ class XLSXTableWriter(BaseTableWriter):
             self._make_irradiations(unknowns)
 
         if self._options.include_summary_sheet:
-            self._make_summary_sheet(unknowns)
+            if unknowns:
+                self._make_summary_sheet(unknowns)
 
         self._workbook.close()
 
@@ -277,105 +122,16 @@ class XLSXTableWriter(BaseTableWriter):
             view_file(path, application='Excel')
 
     # private
-    def _get_columns(self, name, grps):
-
+    def _get_detectors(self, grps):
         detectors = {i.detector for g in grps
                      for a in g.analyses
                      for i in a.isotopes.values()}
+        return detectors
 
-        options = self._options
+    def _get_columns(self, name, grps):
 
-        ubit = name in ('Unknowns', 'Monitor')
-        bkbit = ubit and options.include_blanks
-        # ibit = options.include_intercepts
+        detectors = self._get_detectors(grps)
 
-        kcabit = ubit and options.include_kca
-        age_units = '({})'.format(options.age_units)
-        columns = [(True, '', '', 'status'),
-                   (True, 'N', '', 'aliquot_step_str'),
-                   (True, 'Tag', '', 'tag'),
-                   (ubit, 'Power', options.power_units, 'extract_value'),
-
-                   (ubit, 'Age', age_units, 'age', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', value),
-
-                   (kcabit, 'K/Ca', '', 'kca', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, '', 'kca', error),
-
-                   (ubit and options.include_radiogenic_yield,
-                    ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
-                   (ubit and options.include_F,
-                    ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
-                   (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
-                    'isochron3940',
-                    value),
-                   (ubit and options.include_isochron_ratios, ('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
-                    'isochron3640',
-                    value),
-                   # True, disc/ic corrected
-                   (True, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('disc_ic_corrected', ve='error')),
-
-                   # intercepts baseline corrected
-                   # (ibit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('intercept', ve='error')),
-                   # (ibit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('intercept')),
-                   # (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('intercept', ve='error')),
-
-                   # blanks
-                   (bkbit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('blank', ve='error')),
-
-                   (True, 'Disc', '', 'discrimination', value),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'discrimination', error),
-
-                   ]
-
-        for det in detectors:
-            tag = '{}_ic_factor'.format(det)
-            columns.extend([(True, ('IC', '<sup>{}</sup>'.format(det)), '', tag, icf_value),
-                            (True, PLUSMINUS_ONE_SIGMA, '', tag, icf_error)])
-
-        columns.extend([(options.include_rundate, 'RunDate', '', 'rundate'),
-                        (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
-                        (ubit, 'J', '', 'j', value),
-                        (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
-                        (ubit, ('<sup>39</sup>', 'Ar Decay'), '', 'ar39decayfactor', value),
-                        (ubit, ('<sup>37</sup>', 'Ar Decay'), '', 'ar37decayfactor', value)])
-
-        if options.include_production_ratios:
-            pr = self._get_irradiation_columns(ubit)
-            columns.extend(pr)
-        else:
-            irr = [(ubit, 'Irradiation', '', 'irradiation_label')]
-            columns.extend(irr)
-
-        return [c for c in columns if c[0]]
-
-    def _get_machine_columns(self, name):
         options = self._options
 
         ubit = name in ('Unknowns', 'Monitor')
@@ -384,162 +140,235 @@ class XLSXTableWriter(BaseTableWriter):
 
         kcabit = ubit and options.include_kca
         age_units = '({})'.format(options.age_units)
-        columns = [(True, '', '', 'status'),
-                   (True, 'Identifier', '', 'identifier'),
-                   (True, 'Sample', '', 'sample'),
-                   (True, 'Material', '', 'material'),
-                   (True, 'Project', '', 'project'),
-                   (True, 'Tag', '', 'tag'),
+        age_func = age_value(options.age_units)
 
-                   (True, 'N', '', 'aliquot_step_str'),
-                   (ubit, 'Power', options.power_units, 'extract_value'),
+        columns = [Column(attr='status'),
+                   Column(label='N', attr='aliquot_step_str'),
+                   Column(label='Tag', attr='tag'),
+                   Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
+                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
+                   VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
+                   EColumn(enabled=ubit, attr='kca'),
+                   VColumn(enabled=ubit and options.include_radiogenic_yield,
+                           label=('%', '<sup>40</sup>', 'Ar'),
+                           units='(%)', attr='rad40_percent'),
+                   VColumn(enabled=ubit and options.include_F,
+                           label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
+                           attr='uF'),
+                   VColumn(enabled=ubit and options.include_k2o,
+                           label=('K', '<sub>2</sub>', 'O'),
+                           units='(wt. %)', attr='k2o'),
+                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                           label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                           attr='isochron3940'),
+                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                           label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                           attr='isochron3640')]
 
-                   (ubit, 'Age', age_units, 'age', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, age_units, 'age_err_wo_j', value),
-
-                   (kcabit, 'K/Ca', '', 'kca', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, '', 'kca', error),
-
-                   (ubit and options.include_radiogenic_yield,
-                    ('%', '<sup>40</sup>', 'Ar'), '(%)', 'rad40_percent', value),
-                   (ubit and options.include_F,
-                    ('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'), '', 'uF', value),
-                   (ubit and options.include_k2o, ('K', '<sub>2</sub>', 'O'), '(wt. %)', 'k2o', value),
-                   (ubit and options.include_isochron_ratios, ('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
-                    'isochron3940',
-                    value),
-                   (ubit and options.include_isochron_ratios, ('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'), '',
-                    'isochron3640',
-                    value),
-                   # True, disc/ic corrected
-                   (True, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('disc_ic_corrected', ve='error')),
-                   (True, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('disc_ic_corrected')),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('disc_ic_corrected', ve='error')),
-
-                   # intercepts baseline corrected
-                   (ibit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('intercept')),
-                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('intercept', ve='error')),
-                   (ibit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('intercept')),
-                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('intercept', ve='error')),
-                   (ibit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('intercept')),
-                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('intercept', ve='error')),
-                   (ibit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('intercept')),
-                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('intercept', ve='error')),
-                   (ibit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('intercept')),
-                   (ibit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('intercept', ve='error')),
-
-                   # blanks
-                   (bkbit, ('<sup>40</sup>', 'Ar'), '(fA)', 'Ar40', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar40', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>39</sup>', 'Ar'), '(fA)', 'Ar39', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar39', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>38</sup>', 'Ar'), '(fA)', 'Ar38', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar38', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>37</sup>', 'Ar'), '(fA)', 'Ar37', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar37', iso_value('blank', ve='error')),
-                   (bkbit, ('<sup>36</sup>', 'Ar'), '(fA)', 'Ar36', iso_value('blank')),
-                   (bkbit, PLUSMINUS_ONE_SIGMA, '', 'Ar36', iso_value('blank', ve='error')),
-
-                   (True, 'Disc', '', 'discrimination', value),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'discrimination', error),
-                   (True, ('IC', '<sup>CDD</sup>'), '', 'CDD_ic_factor', icf_value),
-                   (True, PLUSMINUS_ONE_SIGMA, '', 'CDD_ic_factor', icf_error),
-
-                   (options.include_rundate, 'RunDate', '', 'rundate'),
-                   (options.include_time_delta, (u'\u0394t', '<sup>3</sup>'), '(days)', 'decay_days'),
-                   (ubit, 'J', '', 'j', value),
-                   (ubit, PLUSMINUS_ONE_SIGMA, '', 'j', error),
-                   (ubit, ('<sup>39</sup>', 'Ar Decay'), '', 'ar39decayfactor', value),
-                   (ubit, ('<sup>37</sup>', 'Ar Decay'), '', 'ar37decayfactor', value)]
+        self._signal_columns(columns, ibit, bkbit)
+        self._intercalibration_columns(columns, detectors)
+        self._run_columns(columns, ubit)
 
         if options.include_production_ratios:
             pr = self._get_irradiation_columns(ubit)
             columns.extend(pr)
         else:
-            irr = [(ubit, 'Irradiation', '', 'irradiation_label')]
+            irr = [Column(enabled=ubit, label='Irradiation', attr='irradiation_label')]
             columns.extend(irr)
 
-        return [c for c in columns if c[0]]
+        return columns
+
+    def _run_columns(self, columns, ubit):
+        options = self._options
+        columns.extend([Column(enabled=options.include_rundate, label='RunDate', attr='rundate'),
+                        Column(enabled=options.include_time_delta,
+                               label=(u'\u0394t', '<sup>3</sup>'),
+                               units='(days)',
+                               attr='decay_days'),
+                        VColumn(enabled=ubit, label='J', attr='j'),
+                        EColumn(enabled=ubit, attr='j'),
+                        VColumn(enabled=ubit, label=('<sup>39</sup>', 'Ar Decay'), attr='ar39decayfactor'),
+                        VColumn(enabled=ubit, label=('<sup>37</sup>', 'Ar Decay'), attr='ar37decayfactor')])
+
+    def _intercalibration_columns(self, columns, detectors):
+        disc = [VColumn(label='Disc', attr='discrimination'),
+                EColumn(attr='discrimination')]
+        columns.extend(disc)
+
+        for det in detectors:
+            tag = '{}_ic_factor'.format(det)
+            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)), attr=tag, func=icf_value),
+                            EColumn(attr=tag, func=icf_error)])
+
+    def _signal_columns(self, columns, ibit, bkbit):
+        isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
+        for bit, tag in ((ibit, 'intercept'), (bkbit, 'blank'), (True, 'disc_ic_corrected')):
+            cols = [c for iso, mass in isos
+                    for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
+                                     label=('<sup>{}</sup>'.format(mass), iso),
+                                     units='(fA)',
+                                     func=iso_value(tag)),
+                              EColumn(enabled=bit,
+                                      attr='{}{}'.format(iso, mass),
+                                      func=iso_value(tag, ve='error')))]
+            columns.extend(cols)
+
+    def _get_machine_columns(self, name, grps):
+        options = self._options
+
+        detectors = self._get_detectors(grps)
+
+        ubit = name in ('Unknowns', 'Monitor')
+        bkbit = ubit and options.include_blanks
+        ibit = options.include_intercepts
+
+        kcabit = ubit and options.include_kca
+        age_units = '({})'.format(options.age_units)
+        age_func = age_value(options.age_units)
+
+        columns = [Column(attr='status'),
+                   Column(label='Identifier', attr='identifier'),
+                   Column(label='Sample', attr='sample'),
+                   Column(label='Material', attr='material'),
+                   Column(label='Project', attr='project'),
+                   Column(label='Tag', attr='tag'),
+
+                   Column(label='N', attr='aliquot_step_str'),
+                   Column(enabled=ubit, label='Power',
+                          units=options.power_units,
+                          attr='extract_value'),
+
+                   Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
+                   VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
+                   EColumn(enabled=ubit, attr='kca'),
+                   VColumn(enabled=ubit and options.include_radiogenic_yield,
+                           label=('%', '<sup>40</sup>', 'Ar'),
+                           units='(%)', attr='rad40_percent'),
+                   VColumn(enabled=ubit and options.include_F,
+                           label=('<sup>40</sup>', 'Ar*/', '<sup>39</sup>', 'Ar', '<sub>K</sub>'),
+                           attr='uF'),
+                   VColumn(enabled=ubit and options.include_k2o,
+                           label=('K', '<sub>2</sub>', 'O'),
+                           units='(wt. %)',
+                           attr='k2o'),
+                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                           label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                           attr='isochron3940'),
+                   VColumn(enabled=ubit and options.include_isochron_ratios,
+                           label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
+                           attr='isochron3640')]
+
+        self._signal_columns(columns, ibit, bkbit)
+        self._intercalibration_columns(columns, detectors)
+        self._run_columns(columns, ubit)
+
+        if options.include_production_ratios:
+            pr = self._get_irradiation_columns(ubit)
+            columns.extend(pr)
+        else:
+            c = Column(enabled=ubit, label='Irradiation', attr='irradiation_label')
+            columns.append(c)
+
+        return columns
 
     def _get_irradiation_columns(self, ubit):
-        cols = [(ubit, ('(', '<sup>40</sup>', 'Ar/', '<sup>39</sup>', 'Ar)', '<sub>K</sub>'), '', 'K4039',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'K4039', correction_value(ve='error')),
-                (ubit, ('(', '<sup>38</sup>', 'Ar/', '<sup>39</sup>', 'Ar)', '<sub>K</sub>'), '', 'K3839',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'K3839', correction_value(ve='error')),
-                (ubit, ('(', '<sup>37</sup>', 'Ar/', '<sup>39</sup>', 'Ar)', '<sub>K</sub>'), '', 'K3739',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'K3739', correction_value(ve='error')),
-                (ubit, ('(', '<sup>39</sup>', 'Ar/', '<sup>37</sup>', 'Ar)', '<sub>Ca</sub>'), '', 'Ca3937',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Ca3937', correction_value(ve='error')),
-                (ubit, ('(', '<sup>38</sup>', 'Ar/', '<sup>37</sup>', 'Ar)', '<sub>Ca</sub>'), '', 'Ca3837',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Ca3837', correction_value(ve='error')),
-                (ubit, ('(', '<sup>36</sup>', 'Ar/', '<sup>37</sup>', 'Ar)', '<sub>Ca</sub>'), '', 'Ca3637',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Ca3637', correction_value(ve='error')),
-                (ubit, ('(', '<sup>36</sup>', 'Ar/', '<sup>38</sup>', 'Ar)', '<sub>Cl</sub>'), '', 'Cl3638',
-                 correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Cl3638', correction_value(ve='error')),
-                (ubit, 'Ca/K', '', 'Ca_K', correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Ca_K', correction_value(ve='error')),
-                (ubit, 'Cl/K ', '', 'Cl_K', correction_value()),
-                (ubit, PLUSMINUS_ONE_SIGMA, '', 'Cl_K', correction_value(ve='error'))]
+
+        cols = [c for (ai, am), (bi, bm), e in ((('Ar', 40), ('Ar', 39), 'K'),
+                                                (('Ar', 38), ('Ar', 39), 'K'),
+                                                (('Ar', 37), ('Ar', 39), 'K'),
+
+                                                (('Ar', 39), ('Ar', 37), 'Ca'),
+                                                (('Ar', 38), ('Ar', 37), 'Ca'),
+                                                (('Ar', 36), ('Ar', 37), 'Ca'),
+
+                                                (('Ar', 36), ('Ar', 38), 'Cl'),
+
+                                                )
+                for c in (Column(label=('(', '<sup>{}</sup>'.format(am),
+                                        '{}/'.format(ai),
+                                        '<sup>{}</sup>'.format(bm), '{})'.format(bm), '<sub>{}</sub>'.format(e)),
+                                 attr='{}{}{}'.format(e, am, bm)),
+                          EColumn(attr='{}{}{}'.format(e, am, bm)))]
+
+        cols.extend([Column(label='Ca/K', attr='Ca_K', ),
+                     EColumn(attr='Ca_K'),
+                     Column(label='Cl/K ', attr='Cl_K', ),
+                     EColumn(attr='Cl_K')])
+
+        for c in cols:
+            c.enabled = ubit
+            if isinstance(c, EColumn):
+                c.func = correction_value(ve='error')
+            else:
+                c.func = correction_value()
+
         return cols
 
     def _get_summary_columns(self):
+        opt = self._options
+
+        def get_kca_error(ag, *args):
+            return std_dev(ag.weighted_kca) * opt.summary_kca_nsigma
+
         def get_preferred_age_kind(ag, *args):
-            return ''
+            ret = ''
+            if isinstance(ag, InterpretedAgeGroup):
+                ret = ag.preferred_age_kind
+            return ret
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.weighted_age)
+            return nominal_value(ag.preferred_age)
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.weighted_age)
+            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
 
-        opt = self._options
         is_step_heat = opt.table_kind == 'Step Heat'
-        cols = [(opt.include_summary_sample, 'Sample', '', 'sample'),
-                (opt.include_summary_identifier, 'Identifier', '', 'identifier'),
-                (opt.include_summary_unit, 'Unit', '', 'unit'),
-                (opt.include_summary_location, 'Location', '', 'location'),
-                (opt.include_summary_irradiation, 'Irradiation', '', 'irradiation_label'),
-                (opt.include_summary_material, 'Material', '', 'material'),
+        age_units = '({})'.format(opt.age_units)
 
-                (opt.include_summary_age, 'Age Type', '', '', get_preferred_age_kind),
-                # (opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
+        cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
+                Column(enabled=opt.include_summary_identifier, label='Identifier', attr='identifier'),
+                Column(enabled=opt.include_summary_unit, label='Unit', attr='unit'),
+                Column(enabled=opt.include_summary_location, label='Location', attr='location'),
+                Column(enabled=opt.include_summary_irradiation, label='Irradiation', attr='irradiation_label'),
+                Column(enabled=opt.include_summary_material, label='Material', attr='material'),
 
-                (opt.include_summary_n, 'N', '', 'nanalyses'),
-                (opt.include_summary_percent_ar39, ('%', '<sup>39</sup>', 'Ar'), '', 'percent_39Ar'),
-                (opt.include_summary_mswd, 'MSWD', '', 'mswd'),
-                (opt.include_summary_kca, 'K/Ca', '', 'weighted_kca', value),
-                (opt.include_summary_kca, PLUSMINUS_ONE_SIGMA, '', 'weighted_kca', error),
+                Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
+                # Column(enabled=opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
 
-                (opt.include_summary_age, 'Age', '', '', get_preferred_age),
-                (opt.include_summary_age, PLUSMINUS_ONE_SIGMA, '', '', get_preferred_age_error),
-                (opt.include_summary_comments, 'Comments', '', None),
+                Column(enabled=opt.include_summary_n, label='N', attr='nanalyses'),
+                Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
+                       attr='percent_39Ar'),
+                Column(enabled=opt.include_summary_mswd, label='MSWD', attr='mswd'),
+                Column(enabled=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=value),
+
+                Column(enabled=opt.include_summary_kca,
+                       label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
+                       attr='weighted_kca',
+                       func=get_kca_error),
+
+                Column(enabled=opt.include_summary_age,
+                       label='Age {}'.format(age_units),
+                       func=get_preferred_age),
+
+                Column(enabled=opt.include_summary_age,
+                       label=PLUSMINUS_NSIGMA.format(opt.summary_age_nsigma),
+                       func=get_preferred_age_error),
+
+                Column(enabled=opt.include_summary_comments, label='Comments', attr='comments'),
 
                 # Hidden Cols
-                (True, 'WeightedMeanAge', '', 'weighted_age', value),
-                (True, PLUSMINUS_ONE_SIGMA, '', 'weighted_age', error),
-                (True, 'ArithmeticMeanAge', '', 'arith_age', value),
-                (True, PLUSMINUS_ONE_SIGMA, '', 'arith_age', error),
-                (True, 'IsochronAge', '', 'isochron_age', value),
-                (True, PLUSMINUS_ONE_SIGMA, '', 'isochron_age', error),
-                (is_step_heat, 'PlateauAge', '', 'plateau_age', value),
-                (is_step_heat, PLUSMINUS_ONE_SIGMA, '', 'plateau_age', error),
-                (is_step_heat, 'IntegratedAge', '', 'integrated_age', value),
-                (is_step_heat, PLUSMINUS_ONE_SIGMA, '', 'integrated_age', error),
-                ]
+                VColumn(label='WeightedMeanAge', attr='weighted_age'),
+                EColumn(attr='weighted_age'),
+                VColumn(label='ArithmeticMeanAge', attr='arith_age'),
+                EColumn(attr='arith_age'),
+                VColumn(label='IsochronAge', attr='isochron_age'),
+                EColumn(attr='isochron_age'),
+                VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
+                VColumn(enabled=is_step_heat, attr='plateau_age'),
+                VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
+                VColumn(enabled=is_step_heat, attr='integrated_age')]
         return cols
 
     def _make_human_unknowns(self, unks):
@@ -563,21 +392,21 @@ class XLSXTableWriter(BaseTableWriter):
         self._format_generic_worksheet(sh)
 
         cols = self._get_summary_columns()
-        cols = [c for c in cols if c[0]]
+        cols = [c for c in cols if c.enabled]
         self._make_title(sh, 'Summary', cols)
 
         fmt = self._workbook.add_format({'bottom': 1, 'align': 'center'})
         sh.set_row(self._current_row, 5)
         self._current_row += 1
 
-        idx = next((i for i, c in enumerate(cols) if c[1] == 'Age Type'), 6)
-        idx_e = next((i for i, c in enumerate(cols) if c[1] == 'Age'), 12) + 1
+        idx = next((i for i, c in enumerate(cols) if c.label == 'Age Type'), 6)
+        idx_e = next((i for i, c in enumerate(cols) if c.label == 'Age'), 12) + 1
         # sh.write_rich_string(self._current_row, idx, 'Preferred Age', border)
         sh.merge_range(self._current_row, idx, self._current_row, idx_e, 'Preferred Age', cell_format=fmt)
 
         # hide extra age columns
         for hidden in ('WeightedMeanAge', 'ArithmeticMeanAge', 'IsochronAge', 'PlateauAge', 'IntegratedAge'):
-            hc = next((i for i, c in enumerate(cols) if c[1] == hidden), None)
+            hc = next((i for i, c in enumerate(cols) if c.label == hidden), None)
             if hc is not None:
                 sh.set_column(hc, hc + 1, options={'hidden': True})
 
@@ -587,10 +416,12 @@ class XLSXTableWriter(BaseTableWriter):
         self._write_header(sh, cols, include_units=False)
         center = self._workbook.add_format({'align': 'center'})
         for ug in unks:
+            ug.set_temporary_age_units(self._options.age_units)
             for i, ci in enumerate(cols):
                 txt = self._get_txt(ug, ci)
                 sh.write(self._current_row, i, txt, center)
             self._current_row += 1
+            ug.set_temporary_age_units(None)
 
         self._make_notes(sh, len(cols), 'summary')
 
@@ -598,14 +429,16 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row = 1
         sh = self._workbook.add_worksheet('Irradiations')
         self._format_generic_worksheet(sh)
-        cols = [(True, 'Name', '', 'irradiation')]
+
+        cols = [Column(label='Name', attr='irradiation')]
         icols = self._get_irradiation_columns(True)
         cols.extend(icols)
 
         # write header
         self._write_header(sh, cols, include_units=True)
 
-        cols = [c for c in cols if c[0]]
+        # cols = [c for c in cols if c.enabled]
+        self._hide_columns(sh, cols)
         for ug in unks:
             for i, ci in enumerate(cols):
                 try:
@@ -629,15 +462,41 @@ class XLSXTableWriter(BaseTableWriter):
         repeat_header = self._options.repeat_header
 
         for i, group in enumerate(groups):
+            group.set_temporary_age_units(self._options.age_units)
+
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
 
             n = len(group.analyses) - 1
-            for i, item in enumerate(group.analyses):
-                self._make_analysis(worksheet, cols, item, i == n)
+            nitems = []
+            has_subgroups = False
+            key = attrgetter('subgroup')
+            ans = group.analyses
+            for tg, items in groupby(ans, key=key):
+                items = list(items)
+                for i, item in enumerate(items):
+                    ounits = item.arar_constants.age_units
+                    item.arar_constants.age_units = self._options.age_units
+                    self._make_analysis(worksheet, cols, item, i == n)
+                if tg:
+                    kind = '_'.join(tg.split('_')[:-1])
+                    ia = self._make_intermediate_summary(worksheet, cols, items, kind)
+                    nitems.append(ia)
+                    has_subgroups = True
+                else:
+                    nitems.extend(items)
+
+                for item in items:
+                    item.arar_constants.age_units = ounits
+
+            if has_subgroups:
+                group.analyses = nitems
+
             self._make_summary(worksheet, cols, group)
             self._current_row += 1
+
+            group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
         self._current_row = 1
@@ -646,7 +505,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row = 1
         worksheet = self._workbook.add_worksheet(name)
 
-        cols = self._get_machine_columns(name)
+        cols = self._get_machine_columns(name, groups)
         self._format_worksheet(worksheet, cols)
 
         self._make_title(worksheet, name, cols)
@@ -671,12 +530,18 @@ class XLSXTableWriter(BaseTableWriter):
     def _format_worksheet(self, sh, cols):
         self._format_generic_worksheet(sh)
         if self._options.include_rundate:
-            idx = next((i for i, c in enumerate(cols) if c[1] == 'RunDate'))
+            idx = next((i for i, c in enumerate(cols) if c.label == 'RunDate'))
             sh.set_column(idx, idx, 12)
 
         sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
             sh.freeze_panes(7, 2)
+        self._hide_columns(sh, cols)
+
+    def _hide_columns(self, sh, cols):
+        for i, c in enumerate(cols):
+            if not c.enabled:
+                sh.set_column(i, i, options={'hidden': True})
 
     def _make_title(self, sh, name, cols):
         try:
@@ -697,7 +562,7 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _make_column_header(self, sh, cols, it):
 
-        start = next((i for i, c in enumerate(cols) if c[3] == 'Ar40'), 9)
+        start = next((i for i, c in enumerate(cols) if c.attr == 'Ar40'), 9)
 
         if self._options.repeat_header and it > 0:
             sh.write(self._current_row, start, 'Corrected')
@@ -763,7 +628,54 @@ class XLSXTableWriter(BaseTableWriter):
         row = self._current_row
         sh.write_rich_string(row, 1, 'Material:', fmt)
         sh.write_rich_string(row, 2, group.material, fmt)
+
         self._current_row += 1
+
+    def _make_intermediate_summary(self, sh, cols, ans, kind):
+        row = self._current_row
+        ag = StepHeatAnalysisGroup(analyses=[ai for ai in ans if not ai.is_omitted()])
+        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
+        fmt = self._get_number_format()
+        fmt.set_bottom(1)
+
+        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
+
+        if kind == 'weighted_mean':
+            a = ag.weighted_age
+            label = 'wt. mean'
+        elif kind == 'plateau':
+            a = ag.plateau_age
+            label = 'plateau'
+        elif kind == 'isochron':
+            a = ag.isochron_age
+            label = 'isochron'
+
+        for i in range(age_idx+1):
+            sh.write_blank(row, i, '', fmt)
+
+        sh.write_rich_string(row, 1, label, fmt2)
+
+        sh.write_number(row, age_idx, nominal_value(a), fmt)
+        sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+        self._current_row += 1
+
+        ia = IntermediateAnalysis()
+        ia.uage = a
+        ia.age_units = ag.age_units
+        ia.age_scalar = ag.age_scalar
+        ia.kca = ag.weighted_kca
+        ia.uage_wo_j_err = a
+
+        ia.irradiation_label = ans[0].irradiation_label
+        ia.irradiation = ans[0].irradiation
+        ia.material = ans[0].material
+
+        return ia
+
+    def _get_number_format(self):
+        fn = self._workbook.add_format()
+        fn.set_num_format('0.{}#'.format('0' * self._options.sig_figs))
+        return fn
 
     def _make_analysis(self, sh, cols, item, last):
         status = 'X' if item.is_omitted() else ''
@@ -772,43 +684,55 @@ class XLSXTableWriter(BaseTableWriter):
         border = self._workbook.add_format({'bottom': 1})
         fmt2 = self._workbook.add_format()
         fmt3 = self._workbook.add_format()
+        fmt_j = self._workbook.add_format()
         fmt = []
+
+        fn = self._get_number_format()
         if last:
             fmt2 = self._workbook.add_format({'bottom': 1})
             fmt3 = self._workbook.add_format({'bottom': 1})
-            fmt = [border]
+            fmt.append(border)
+            fn.set_bottom(1)
 
+        fmt2.set_align('center')
+        fmt3.set_num_format('mm/dd/yy hh:mm')
+        fmt_j.set_num_format('0.0000000')
         sh.write(row, 0, status, *fmt)
         for j, c in enumerate(cols[1:]):
             txt = self._get_txt(item, c)
 
-            if c[1] in ('N', 'Power'):
-                fmt2.set_align('center')
+            if c.label in ('N', 'Power'):
                 sh.write(row, j + 1, txt, fmt2)
-            elif c[1] == 'RunDate':
-                fmt3.set_num_format('mm/dd/yy hh:mm')
+            elif c.label == 'RunDate':
                 sh.write_datetime(row, j + 1, txt, fmt3)
+            elif c.attr == 'j':
+                sh.write_number(row, j + 1, txt, fmt_j)
             else:
-                sh.write(row, j + 1, txt, *fmt)
+
+                if isinstance(txt, float):
+                    sh.write_number(row, j+1, txt, cell_format=fn)
+                else:
+                    sh.write(row, j + 1, txt, *fmt)
 
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
+        nfmt = self._get_number_format()
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
-            idx = next((i for i, c in enumerate(cols) if c[1] == 'K/Ca'))
+            idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
             sh.write_rich_string(self._current_row, start_col, u'K/Ca {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
-            sh.write(self._current_row, idx, nominal_value(kca))
-            sh.write(self._current_row, idx + 1, std_dev(kca))
+            sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
             self._current_row += 1
 
-        idx = next((i for i, c in enumerate(cols) if c[1] == 'Age'))
+        idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
         sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
-        sh.write(self._current_row, idx, nominal_value(group.weighted_age))
-        sh.write(self._current_row, idx + 1, std_dev(group.weighted_age))
+        sh.write_number(self._current_row, idx, nominal_value(group.weighted_age), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age), nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
@@ -817,24 +741,24 @@ class XLSXTableWriter(BaseTableWriter):
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
-                sh.write(self._current_row, idx, nominal_value(group.plateau_age))
-                sh.write(self._current_row, idx + 1, std_dev(group.plateau_age))
+                sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age), nfmt)
 
                 self._current_row += 1
 
             if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                      fmt)
-                sh.write(self._current_row, idx, nominal_value(group.integrated_age))
-                sh.write(self._current_row, idx + 1, std_dev(group.integrated_age))
+                sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age), nfmt)
 
                 self._current_row += 1
 
         if self._options.include_isochron_age:
             sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
-            sh.write(self._current_row, idx, nominal_value(group.isochron_age))
-            sh.write(self._current_row, idx + 1, std_dev(group.isochron_age))
+            sh.write_number(self._current_row, idx, nominal_value(group.isochron_age), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(group.isochron_age), nfmt)
 
             self._current_row += 1
 
@@ -902,24 +826,24 @@ class XLSXTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _get_names_units(self, cols):
-        names = [c[1] for c in cols]
-        units = [c[2] for c in cols]
+        names = [c.label for c in cols]
+        units = [c.units for c in cols]
         return names, units
 
     def _get_txt(self, item, col):
-        attr = col[3]
+        attr = col.attr
         if attr is None:
             return ''
 
-        if len(col) == 5:
-            getter = col[4]
-        else:
-            getter = getattr
+        # if len(col) == 5:
+        #     getter = col[4]
+        # else:
+        #     getter = getattr
 
-        if getter is None:
-            return ''
-        else:
-            return getter(item, attr)
+        func = col.func
+        if func is None:
+            func = getattr
+        return func(item, attr)
 
 
 if __name__ == '__main__':
@@ -938,6 +862,7 @@ if __name__ == '__main__':
             self.name = name
             self.uvalue = ufloat(frand(10, 10), frand(10))
             self.blank = Blank(name)
+            self.detector = 'CDD'
 
         def get_intensity(self):
             return ufloat(frand(10, 10), frand(10))
@@ -952,7 +877,15 @@ if __name__ == '__main__':
             return ufloat(frand(10, 1), frand(10))
 
 
+    class AC:
+        age_units = 'Ma'
+        ma_age_scalar = 1
+
+
     class A:
+        def is_omitted(self):
+            return False
+
         def __init__(self, a):
             self.identifier = 'Foo'
             self.project = 'Bar'
@@ -964,6 +897,7 @@ if __name__ == '__main__':
                              'Ar38': Iso('Ar38'),
                              'Ar37': Iso('Ar37'),
                              'Ar36': Iso('Ar36')}
+            self.arar_constants = AC()
             self.tag = 'ok'
             self.aliquot_step_str = '01'
             self.extract_value = frand(1)
@@ -1014,6 +948,11 @@ if __name__ == '__main__':
         preferred_age_kind = 'Plateau'
         nanalyses = 2
         percent_39Ar = 0.1234
+        total_n = 2
+        comments = ''
+
+        def set_temporary_age_units(self, *args):
+            pass
 
 
     g = G()
@@ -1021,7 +960,9 @@ if __name__ == '__main__':
     paths.build('_dev')
     options = XLSXTableWriterOptions()
     options.configure_traits()
-    x.build(path=p, unknowns=[g, g], options=options)
+    x.build(groups={'unknowns': [g, g],
+                    'machine_unknowns': [g, g]},
+            path=p, options=options)
     options.dump()
     # app_path = '/Applications/Microsoft Office 2011/Microsoft Excel.app'
     #

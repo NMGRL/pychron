@@ -93,11 +93,16 @@ class GroupSubOptions(SubOptions):
 
 class AppearanceSubOptions(SubOptions):
     def _get_layout_group(self):
-        rc_grp = VGroup(HGroup(Item('object.layout.rows', enabled_when='object.layout.fixed!="square"'),
-                               Item('object.layout.columns', enabled_when='object.layout.fixed!="square"'),
-                               Item('object.layout.fixed')),
-                        label='Layout', show_border=True)
-        return rc_grp
+        # rc_grp = VGroup(HGroup(Item('object.layout.rows',
+        #                             enabled_when='object.layout.row_enabled'),
+        #                        Item('object.layout.columns',
+        #                             enabled_when='object.layout.column_enabled'
+        #                             ),
+        #                        Item('object.layout.fixed')),
+        #                 label='Layout', show_border=True)
+        # return rc_grp
+        return VGroup(UItem('layout', style='custom'))
+
 
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
@@ -391,6 +396,8 @@ class FigureOptions(BaseOptions):
                     v = n
                 elif ai == '<space>':
                     v = ' '
+                elif ai == 'runid':
+                    v = ref.record_id
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':

@@ -273,6 +273,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                             icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
                                                tooltip='Add a new conditionals file. Duplicated currently '
                                                        'selected file if applicable'),
+                            icon_button_editor(run_factory_name('apply_conditionals_button'), 'arrow_left',
+                                               tooltip='Apply conditionals file to selected analyses'),
                             show_border=True,
                             label='File'),
                      enabled_when=queue_factory_name('ok_make'),

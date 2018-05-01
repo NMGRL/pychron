@@ -26,7 +26,6 @@ from binascii import hexlify
 from six.moves import map
 from six.moves import range
 
-
 from numpy import array, Inf, polyfit
 from uncertainties import ufloat, nominal_value, std_dev
 
@@ -164,6 +163,25 @@ class IsotopicMeasurement(BaseMeasurement):
     def __init__(self, *args, **kw):
         super(IsotopicMeasurement, self).__init__(*args, **kw)
         self.filter_outliers_dict = dict()
+
+    def get_linear_rsquared(self):
+        from pychron.core.regression.ols_regressor import OLSRegressor
+        reg = OLSRegressor(fit='linear', xs=self.xs, ys=self.ys)
+        reg.calculate()
+        return reg.rsquared
+
+    def get_rsquared(self):
+        return self._regressor.rsquared
+
+    @property
+    def rsquared(self):
+        if self._regressor:
+            return self._regressor.rsquared
+
+    @property
+    def rsquared_adj(self):
+        if self._regressor:
+            return self._regressor.rsquared_adj
 
     @property
     def fn(self):

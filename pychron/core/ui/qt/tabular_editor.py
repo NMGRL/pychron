@@ -27,7 +27,7 @@ from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
 from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView as TableView, HeaderEventFilter, _ItemDelegate
-from traitsui.qt4.tabular_model import TabularModel, alignment_map
+from traitsui.qt4.tabular_model import TabularModel, alignment_map, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
 import six
@@ -437,6 +437,43 @@ class _TableView(TableView):
 
 
 class _TabularModel(TabularModel):
+    def dropMimeData(self, mime_data, action, row, column, parent):
+        if action == QtCore.Qt.IgnoreAction:
+            return False
+
+        # this is a drag from a tabular model
+        data = mime_data.data(tabular_mime_type)
+        if not data.isNull() and action == QtCore.Qt.MoveAction:
+            id_and_rows = [int(di) for di in data.split(' ')]
+            table_id = id_and_rows[0]
+            # is it from ourself?
+            if table_id == id(self):
+                current_rows = id_and_rows[1:]
+                self.moveRows(current_rows, parent.row())
+                return True
+
+        # this is an external drag
+        data = PyMimeData.coerce(mime_data).instance()
+        if data is not None:
+            if not isinstance(data, list):
+                data = [data]
+            editor = self._editor
+            object = editor.object
+            name = editor.name
+            adapter = editor.adapter
+            if row == -1 and parent.isValid():
+                # find correct row number
+                row = parent.row()
+            if row == -1 and adapter.len(object, name) == 0:
+                # if empty list, target is after end of list
+                row = 0
+            if all(adapter.get_can_drop(object, name, row, item)
+                                    for item in data):
+                for item in reversed(data):
+                    self.dropItem(item, row)
+                return True
+        return False
+
     def data(self, mi, role=None):
         """ Reimplemented to return the data.
         """
@@ -571,10 +608,6 @@ class _TabularEditor(qtTabularEditor):
 
         QtCore.QObject.connect(control.horizontalHeader(), signal,
                                self._on_column_resize)
-
-    # def dispose(self):
-    #     # self.control._should_consume = False
-    #     super(_TabularEditor, self).dispose()
 
     def refresh_editor(self):
         if self.control:

@@ -25,7 +25,7 @@ from traitsui.menu import Action
 import os
 import yaml
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import get_path
+from pychron.core.helpers.filetools import get_path, add_extension
 from pychron.envisage.view_util import open_view
 from pychron.experiment.conditional.groups import ConditionalGroup, ModificationGroup, ActionGroup, TruncationGroup, \
     CancelationGroup, TerminationGroup, EPostRunGroup, EPreRunGroup
@@ -197,10 +197,10 @@ def get_file_path(root, action='open'):
                      default_directory=root)
     if dlg.open():
         if dlg.path:
-            return dlg.path
+            return add_extension(dlg.path, '.yaml')
 
 
-def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
+def edit_conditionals(name, detectors=None, root=None, save_as=False,
                       kinds=None, title=''):
     if not root:
         root = paths.queue_conditionals_dir
@@ -212,9 +212,6 @@ def edit_conditionals(name, detectors=None, app=None, root=None, save_as=False,
                 return
         else:
             path = os.path.join(root, name)
-            #
-            # if not os.path.isfile(path):
-            # return
     else:
         path = ''
 

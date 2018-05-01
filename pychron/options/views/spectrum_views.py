@@ -167,6 +167,7 @@ class SpectrumMainOptions(MainOptions):
                 checkbox_column(name='y_error', label='Y Err.'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='y_axis_right', label='Y Right'),
                 # object_column(name='filter_str', label='Filter')
                 ]
 

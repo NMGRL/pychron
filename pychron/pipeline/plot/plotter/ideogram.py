@@ -17,6 +17,9 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
+import math
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.data_label import DataLabel
@@ -39,10 +42,7 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-import six
-from six.moves import filter
-from six.moves import range
-from six.moves import zip
+
 
 N = 500
 
@@ -217,7 +217,6 @@ class Ideogram(BaseArArFigure):
     def _plot_aux(self, title, vk, po, pid):
 
         ys, es = self._get_aux_plot_data(vk)
-
         selection = []
         invalid = []
 
@@ -275,7 +274,7 @@ class Ideogram(BaseArArFigure):
             # if title is not visible title=='' so check tag instead
 
             if p.y_axis.tag == tag:
-                for k, rend in six.iteritems(p.plots):
+                for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
                     if k.startswith(name) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
@@ -289,18 +288,18 @@ class Ideogram(BaseArArFigure):
         ts = array([ai.timestamp for ai in ans])
         ts -= ts[0]
 
+        kw = {}
         if self.options.use_cmap_analysis_number:
-            scatter = self._add_aux_plot(xs, ys, name, po, pid,
-                                         colors=ts,
-                                         color_map_name=self.options.cmap_analysis_number,
-                                         type='cmap_scatter',
-                                         xs=xs)
+            kw = dict(colors=ts,
+                      color_map_name=self.options.cmap_analysis_number,
+                      type='cmap_scatter',
+                      xs=xs)
         else:
             if nonsorted:
                 data = sorted(zip(xs, ys), key=lambda x: x[0])
                 xs, ys = list(zip(*data))
 
-            scatter = self._add_aux_plot(ys, name, po, pid, xs=xs)
+        scatter = self._add_aux_plot(ys, name, po, pid, xs=xs, **kw)
 
         if self.options.use_latest_overlay:
             idx = argmax(ts)
@@ -639,18 +638,23 @@ class Ideogram(BaseArArFigure):
         # ov.data_point = wm, y
         # n = len(fxs)
         # ov.label_text = self._build_label_text(wm, we, mswd, valid_mswd, n)
-        mi, ma = min(ys), max(ys)
-        if sel:
-            dp.visible = True
-            xs, ys = self._calculate_probability_curve(self.xs, self.xes)
-            dp.value.set_data(ys)
-            dp.index.set_data(xs)
-            # oys = dp.value.get_data()
-            mi, ma = min(mi, min(ys)), max(mi, max(ys))
-        else:
-            dp.visible = False
+        try:
+            mi, ma = min(ys), max(ys)
 
-        self._set_y_limits(0, ma, min_=0)
+            if sel:
+                dp.visible = True
+                xs, ys = self._calculate_probability_curve(self.xs, self.xes)
+                dp.value.set_data(ys)
+                dp.index.set_data(xs)
+                # oys = dp.value.get_data()
+                mi, ma = min(mi, min(ys)), max(mi, max(ys))
+            else:
+                dp.visible = False
+
+            self._set_y_limits(0, ma, min_=0)
+        except ValueError:
+            pass
+
         graph.redraw()
 
     # ===============================================================================

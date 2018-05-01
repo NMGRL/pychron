@@ -22,7 +22,6 @@ from traits.api import Str, Property, Int, List, Button, \
 import os
 # ============= local library imports  ==========================
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
-from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.pychron_constants import NULL_STR
 from pychron.experiment.automated_run.uv.factory_view import UVFactoryView
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
@@ -42,7 +41,6 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
 
     _spec_klass = UVAutomatedRunSpec
     factory_view_klass = UVFactoryView
-    human_error_checker = Instance(UVHumanErrorChecker, ())
 
     def _get_run_attr(self):
         #r = super(UVAutomatedRunFactory, self)._get_run_attr()

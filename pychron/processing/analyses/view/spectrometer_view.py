@@ -31,7 +31,10 @@ class DictTabularAdapter(TabularAdapter):
     value_text = Property
 
     def _get_value_text(self):
-        return floatfmt(float(self.item.value))
+        try:
+            return floatfmt(float(self.item.value))
+        except (ValueError, TypeError):
+            return 'NaN'
 
 
 class DValue(HasTraits):

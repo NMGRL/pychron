@@ -287,29 +287,29 @@ class ExtractionAction(Action):
 
 
 # ============= Quick Series ====================================
-class LastNAnalysesSeriesAction(PipelineAction):
-    name = 'Last N...'
-    action = 'set_last_n_analyses_template'
-
-
-class LastNHoursSeriesAction(PipelineAction):
-    name = 'Last N Hours...'
-    action = 'set_last_n_hours_template'
-
-
-class LastDaySeriesAction(PipelineAction):
-    name = 'Last Day'
-    action = 'set_last_day_template'
-
-
-class LastWeekSeriesAction(PipelineAction):
-    name = 'Last Week'
-    action = 'set_last_week_template'
-
-
-class LastMonthSeriesAction(PipelineAction):
-    name = 'Last Month'
-    action = 'set_last_month_template'
+# class LastNAnalysesSeriesAction(PipelineAction):
+#     name = 'Last N...'
+#     action = 'set_last_n_analyses_template'
+#
+#
+# class LastNHoursSeriesAction(PipelineAction):
+#     name = 'Last N Hours...'
+#     action = 'set_last_n_hours_template'
+#
+#
+# class LastDaySeriesAction(PipelineAction):
+#     name = 'Last Day'
+#     action = 'set_last_day_template'
+#
+#
+# class LastWeekSeriesAction(PipelineAction):
+#     name = 'Last Week'
+#     action = 'set_last_week_template'
+#
+#
+# class LastMonthSeriesAction(PipelineAction):
+#     name = 'Last Month'
+#     action = 'set_last_month_template'
 
 
 # ============= tag =============================================
