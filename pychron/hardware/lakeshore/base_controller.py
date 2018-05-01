@@ -89,7 +89,7 @@ class BaseLakeShoreController(CoreDevice):
         v1 = self.read_input_a()
         if abs(v1 - self.setpoint1) < tol:
             self.debug('setpoint 1 achieved')
-            v2 = self.read_input_a()
+            v2 = self.read_input_b()
             if abs(v2 - self.setpoint2) < tol:
                 self.debug('setpoint 2 achieved')
                 return True

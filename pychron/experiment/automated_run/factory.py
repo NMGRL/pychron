@@ -365,7 +365,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._end_after = run.end_after
 
     def set_mass_spectrometer(self, new):
-        print('asdfasdf', new, type(new), id(self))
         new = new.lower()
         self.debug('setting mass spec to={}'.format(new))
         self.mass_spectrometer = new
@@ -661,13 +660,11 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if '##' in self.labnumber:
             mod = script.get_parameter('modifier')
-            print('masodfasdf', mod, script)
             if mod is not None:
                 if isinstance(mod, int):
                     mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
-                print('asdfasfasf', self.labnumber)
 
     def _clear_labnumber(self):
         self.debug('clear labnumber')
@@ -1460,7 +1457,6 @@ post_equilibration_script:name''')
             if ln:
                 if ln not in ('dg', 'pa'):
                     msname = self.mass_spectrometer[0].capitalize()
-                    # print('asdfasdfasdf', self.mass_spectrometer, msname, id(self))
                     if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                         ln = make_standard_identifier(ln, '##', msname)
                     else:

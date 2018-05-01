@@ -82,10 +82,17 @@ class MKSController(BaseGaugeController, CoreDevice):
                 v = float(match.group('value'))
                 return v
 
-            for reg in (NO_GAUGE_RE, LO_RE):
-                match = reg.match(r)
-                if match:
-                    return 0
+            match = NO_GAUGE_RE.match(r)
+            if match:
+                return 0
+            match = LO_RE.match(r)
+            if match:
+                return 1e-12
+
+            # for reg in (NO_GAUGE_RE, LO_RE):
+            #     match = reg.match(r)
+            #     if match:
+            #         return 0
 
         # r = r.split('ACK')
         # r = r[1]
