@@ -48,7 +48,7 @@ def group_analyses_by_key(items, key, attr='group_id'):
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
+    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'SubGroup', 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
@@ -62,9 +62,8 @@ class GroupingNode(BaseNode):
         d['key'] = self.by_key
 
     def _generate_key(self):
-        if self.by_key in ('Aliquot', 'Identifier', 'Step', 'Comment'):
-            key = attrgetter(self.by_key.lower())
-            return key
+        if self.by_key != 'No Grouping':
+            return attrgetter(self.by_key.lower())
 
     def run(self, state):
         if self.by_key != 'No Grouping':

@@ -471,7 +471,7 @@ class XLSXTableWriter(BaseTableWriter):
             n = len(group.analyses) - 1
             nitems = []
             has_subgroups = False
-            key = attrgetter('table_group')
+            key = attrgetter('subgroup')
             ans = group.analyses
             for tg, items in groupby(ans, key=key):
                 items = list(items)

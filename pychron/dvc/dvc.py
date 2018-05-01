@@ -72,7 +72,7 @@ class Tag(object):
     name = None
     path = None
     note = ''
-    table_group = ''
+    subgroup = ''
 
     @classmethod
     def from_analysis(cls, an, **kw):
@@ -82,7 +82,7 @@ class Tag(object):
         tag.record_id = an.record_id
         tag.repository_identifier = an.repository_identifier
         tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
-        tag.table_group = an.table_group
+        tag.subgroup = an.subgroup
 
         for k, v in kw.items():
             setattr(tag, k, v)
@@ -92,7 +92,7 @@ class Tag(object):
     def dump(self):
         obj = {'name': self.name,
                'note': self.note,
-               'table_group': self.table_group}
+               'subgroup': self.subgroup}
         if not self.path:
             self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
 
@@ -1177,7 +1177,7 @@ class DVC(Loggable):
                 obj[attr] = [getattr(pr, attr), getattr(pr, '{}_err'.format(attr))]
             dvc_dump(obj, path)
 
-    def save_tag_table_group_items(self, items):
+    def save_tag_subgroup_items(self, items):
         key = attrgetter('repository_identifier')
 
         for expid, ans in groupby(sorted(items, key=key), key=key):
@@ -1186,7 +1186,7 @@ class DVC(Loggable):
             for it in ans:
                 if self.update_tag(it):
                     cs.append(it)
-            self._commit_tags(cs, expid, '<TABLE_GROUP>')
+            self._commit_tags(cs, expid, '<SUBGROUP>')
 
     def _commit_tags(self, cs, expid, msg):
         if cs:

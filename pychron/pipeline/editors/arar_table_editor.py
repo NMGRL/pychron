@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import hashlib
 from itertools import groupby
 from operator import attrgetter
 
@@ -37,7 +38,7 @@ class ArArTableAdapter(BaseAdapter):
     columns = [
         ('RunID', 'record_id'),
         ('Tag', 'tag'),
-        ('Table Group', 'table_group'),
+        ('SubGroup', 'subgroup'),
         # ('Power', 'extract_value'),
         # ('Ar40', 'Ar40'),
         # (PLUSMINUS_ONE_SIGMA, 'Ar40_err'),
@@ -63,11 +64,13 @@ class ArArTableAdapter(BaseAdapter):
         #     ('', 'blank_column')
     ]
 
-    table_group_text = Property
+    subgroup_text = Property
     record_id_width = Int(60)
 
-    def _get_table_group_text(self):
-        ret = self.item.table_group or ''
+    def _get_subgroup_text(self):
+        ret = self.item.subgroup or ''
+        if ':' in ret:
+            _, ret = ret.split(':')
         return ret
 
     def get_menu(self, obj, trait, row, column):
@@ -122,7 +125,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     def clear_grouping(self, save=False):
         if self.selected:
             for s in self.selected:
-                s.table_group = ''
+                s.subgroup = ''
 
             self._compress_groups()
             if save:
@@ -130,7 +133,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
     def save_grouping(self):
         dvc = self.dvc
-        dvc.save_tag_table_group_items(self.items)
+        dvc.save_tag_subgroup_items(self.items)
 
     def group_as_plateau(self):
         self._group('plateau')
@@ -143,27 +146,32 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
     def _group(self, tag):
         if self.selected:
-            gs = {r.table_group for r in self.items}
+            gs = {r.subgroup for r in self.items}
 
             gs = [int(gi.split('_')[-1]) for gi in gs if gi]
-            table_grouping_cnt = max(gs) if gs else -1
+            subgroup_cnt = max(gs) if gs else -1
 
+            sha = hashlib.sha1()
             for s in self.selected:
-                s.table_group = '{}_{}'.format(tag, table_grouping_cnt + 1)
+                sha.update(s.uuid)
+
+            sha_id = sha.hexdigest()
+            for s in self.selected:
+                s.subgroup = '{}:{}_{}'.format(sha_id, tag, subgroup_cnt + 1)
 
             self._compress_groups()
 
     def _compress_groups(self):
         # compress groups
-        key = lambda x: '_'.join(x.table_group.split('_')[:-1]) if x.table_group else ''
+        key = lambda x: '_'.join(x.subgroup.split('_')[:-1]) if x.subgroup else ''
         for kind, ans in groupby(sorted(self.items, key=key), key=key):
             if kind:
-                for i,(_, ais) in enumerate(groupby(ans, key=attrgetter('table_group'))):
+                for i,(_, ais) in enumerate(groupby(ans, key=attrgetter('subgroup'))):
                     for a in ais:
-                        a.table_group = '{}_{}'.format(kind, i)
+                        a.subgroup = '{}_{}'.format(kind, i)
             else:
                 for a in ans:
-                    a.table_group = ''
+                    a.subgroup = ''
 
     def traits_view(self):
         v = View(VGroup(
