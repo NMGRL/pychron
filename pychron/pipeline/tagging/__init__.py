@@ -11,7 +11,6 @@ def apply_subgrouping(tag, selected, items=None, gid=None):
 
     if items:
         gs = {r.subgroup for r in items}
-
         gs = [int(gi.split('_')[-1]) for gi in gs if gi]
         gid = max(gs)+1 if gs else 0
 
@@ -29,7 +28,7 @@ def apply_subgrouping(tag, selected, items=None, gid=None):
 
 def compress_groups(items):
     # compress groups
-    key = lambda x: '_'.join(x.subgroup.split('_')[:-1]) if x.subgroup else ''
+    key = lambda x: '_'.join(x.subgroup.split(':')[-1].split('_')[:-1]) if x.subgroup else ''
     for kind, ans in groupby(sorted(items, key=key), key=key):
         if kind:
             for i, (_, ais) in enumerate(groupby(ans, key=attrgetter('subgroup'))):

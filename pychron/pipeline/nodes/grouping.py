@@ -96,6 +96,7 @@ class GraphGroupingNode(GroupingNode):
 
 class SubGroupingNode(GroupingNode):
     title = 'Edit SubGrouping'
+    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
     name = 'SubGroup'
     by_key = 'Aliquot'
     _attr = 'subgroup'
