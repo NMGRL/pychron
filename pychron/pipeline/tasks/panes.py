@@ -43,7 +43,7 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode
+from pychron.pipeline.nodes.grouping import GroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
 from pychron.pipeline.nodes.table import InterpretedAgeTableNode
@@ -67,10 +67,11 @@ def node_adder(name):
 class PipelineHandlerMeta(MetaHasTraits):
     def __new__(cls, *args, **kwargs):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
-        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
+        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping', 'set_interpreted_age', 'interpreted_ages'):
+                  'grouping', 'graph_grouping', 'subgrouping',
+                  'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -180,6 +181,8 @@ class PipelinePane(TraitsDockPane):
                                       action='add_grouping'),
                                Action(name='Add Graph Grouping',
                                       action='add_graph_grouping'),
+                               Action(name='Add SubGrouping',
+                                      action='add_subgrouping'),
                                Action(name='Add Filter',
                                       action='add_filter'),
                                Action(name='Add Inverse Isochron',
@@ -290,7 +293,7 @@ class PipelinePane(TraitsDockPane):
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
                  SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
-                 GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
+                 GroupingTreeNode(node_for=[GroupingNode, SubGroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  FindTreeNode(node_for=[FindReferencesNode, FindFluxMonitorsNode], menu=ffind_menu_factory()),
                  FitTreeNode(node_for=[FitIsotopeEvolutionNode,

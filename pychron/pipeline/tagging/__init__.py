@@ -1,1 +1,40 @@
+import hashlib
+from itertools import groupby
+from operator import attrgetter
+
 __author__ = 'ross'
+
+
+def apply_subgrouping(tag, selected, items=None, gid=None):
+    if items is None and gid is None:
+        raise ValueError('must set items or gid')
+
+    if items:
+        gs = {r.subgroup for r in items}
+
+        gs = [int(gi.split('_')[-1]) for gi in gs if gi]
+        gid = max(gs)+1 if gs else 0
+
+    sha = hashlib.sha1()
+    for s in selected:
+        sha.update(s.uuid.encode('utf-8'))
+
+    sha_id = sha.hexdigest()
+    for s in selected:
+        s.subgroup = '{}:{}_{}'.format(sha_id, tag, gid)
+
+    if items:
+        compress_groups(items)
+
+
+def compress_groups(items):
+    # compress groups
+    key = lambda x: '_'.join(x.subgroup.split('_')[:-1]) if x.subgroup else ''
+    for kind, ans in groupby(sorted(items, key=key), key=key):
+        if kind:
+            for i, (_, ais) in enumerate(groupby(ans, key=attrgetter('subgroup'))):
+                for a in ais:
+                    a.subgroup = '{}_{}'.format(kind, i)
+        else:
+            for a in ans:
+                a.subgroup = ''

@@ -28,6 +28,7 @@ from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.pipeline.editors.base_adapter import BaseGroupAdapter, BaseAdapter
+from pychron.pipeline.tagging import apply_subgrouping
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -146,32 +147,33 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
     def _group(self, tag):
         if self.selected:
-            gs = {r.subgroup for r in self.items}
-
-            gs = [int(gi.split('_')[-1]) for gi in gs if gi]
-            subgroup_cnt = max(gs) if gs else -1
-
-            sha = hashlib.sha1()
-            for s in self.selected:
-                sha.update(s.uuid)
-
-            sha_id = sha.hexdigest()
-            for s in self.selected:
-                s.subgroup = '{}:{}_{}'.format(sha_id, tag, subgroup_cnt + 1)
-
-            self._compress_groups()
-
-    def _compress_groups(self):
-        # compress groups
-        key = lambda x: '_'.join(x.subgroup.split('_')[:-1]) if x.subgroup else ''
-        for kind, ans in groupby(sorted(self.items, key=key), key=key):
-            if kind:
-                for i,(_, ais) in enumerate(groupby(ans, key=attrgetter('subgroup'))):
-                    for a in ais:
-                        a.subgroup = '{}_{}'.format(kind, i)
-            else:
-                for a in ans:
-                    a.subgroup = ''
+            apply_subgrouping(tag, self.items, self.selected)
+    #         gs = {r.subgroup for r in self.items}
+    #
+    #         gs = [int(gi.split('_')[-1]) for gi in gs if gi]
+    #         subgroup_cnt = max(gs) if gs else -1
+    #
+    #         sha = hashlib.sha1()
+    #         for s in self.selected:
+    #             sha.update(s.uuid)
+    #
+    #         sha_id = sha.hexdigest()
+    #         for s in self.selected:
+    #             s.subgroup = '{}:{}_{}'.format(sha_id, tag, subgroup_cnt + 1)
+    #
+    #         self._compress_groups()
+    #
+    # def _compress_groups(self):
+    #     # compress groups
+    #     key = lambda x: '_'.join(x.subgroup.split('_')[:-1]) if x.subgroup else ''
+    #     for kind, ans in groupby(sorted(self.items, key=key), key=key):
+    #         if kind:
+    #             for i,(_, ais) in enumerate(groupby(ans, key=attrgetter('subgroup'))):
+    #                 for a in ais:
+    #                     a.subgroup = '{}_{}'.format(kind, i)
+    #         else:
+    #             for a in ans:
+    #                 a.subgroup = ''
 
     def traits_view(self):
         v = View(VGroup(

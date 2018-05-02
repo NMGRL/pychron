@@ -25,9 +25,10 @@ from numpy import array, array_split
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.tagging import apply_subgrouping
 
 
-def group_analyses_by_key(items, key, attr='group_id'):
+def group_analyses_by_key(items, key, attr='group_id', id_func=None):
     if isinstance(key, str):
         keyfunc = lambda x: getattr(x, key)
     else:
@@ -42,6 +43,8 @@ def group_analyses_by_key(items, key, attr='group_id'):
     sitems = sorted(items, key=keyfunc)
     for k, analyses in groupby(sitems, key=keyfunc):
         gid = ids.index(k)
+        if id_func:
+            gid = id_func(gid, analyses)
         for it in analyses:
             setattr(it, attr, gid)
 
@@ -54,6 +57,7 @@ class GroupingNode(BaseNode):
     title = 'Edit Grouping'
 
     _attr = 'group_id'
+    _id_func = None
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -69,9 +73,9 @@ class GroupingNode(BaseNode):
         if self.by_key != 'No Grouping':
             unks = getattr(state, self.analysis_kind)
             for unk in unks:
-                unk.group_id = 0
+                setattr(unk, self._attr, 0)
 
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
+            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
 
     def traits_view(self):
         v = View(UItem('by_key',
@@ -90,13 +94,23 @@ class GraphGroupingNode(GroupingNode):
     _attr = 'graph_id'
 
 
+class SubGroupingNode(GroupingNode):
+    title = 'Edit SubGrouping'
+    name = 'SubGroup'
+    by_key = 'Aliquot'
+    _attr = 'subgroup'
+
+    def _id_func(self, gid, analyses):
+        apply_subgrouping('weighted_mean', list(analyses), gid=gid)
+
+
 class BinNode(BaseNode):
     analysis_kind = 'unknowns'
 
     def run(self, state):
         unks = getattr(state, self.analysis_kind)
 
-        key = lambda x: x.timestamp
+        key = attrgetter('timestamp')
         unks = sorted(unks, key=key)
 
         tol_hrs = 1

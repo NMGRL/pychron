@@ -35,7 +35,7 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
+from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
     BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
@@ -504,6 +504,10 @@ class PipelineEngine(Loggable):
 
     def add_grouping(self, node=None, run=True):
         newnode = GroupingNode()
+        self._add_node(node, newnode, run)
+
+    def add_subgrouping(self, node=None, run=True):
+        newnode = SubGroupingNode()
         self._add_node(node, newnode, run)
 
     # find

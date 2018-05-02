@@ -133,6 +133,7 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
+  - klass: SubGroupingNode
   - klass: XLSXAnalysisTableNode
   - klass: ReviewNode
   - klass: XLSXTablePersistNode
