@@ -17,15 +17,15 @@
 # ============= enthought library imports =======================
 from operator import attrgetter
 
-from traits.api import Str
-from traitsui.api import View, UItem, EnumEditor
+from traits.api import Str, Enum
+from traitsui.api import View, UItem, EnumEditor, VGroup, Item
 
 from itertools import groupby
 from numpy import array, array_split
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.tagging import apply_subgrouping
+from pychron.pipeline.tagging import apply_subgrouping, compress_groups
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None):
@@ -100,9 +100,33 @@ class SubGroupingNode(GroupingNode):
     name = 'SubGroup'
     by_key = 'Aliquot'
     _attr = 'subgroup'
+    grouping_kind = Enum('Weighted Mean', 'Plateau')
+
+    def load(self, nodedict):
+        self.by_key = nodedict.get('key', 'Aliquot')
 
     def _id_func(self, gid, analyses):
-        apply_subgrouping('weighted_mean', list(analyses), gid=gid)
+        tag = self.grouping_kind.lower().replace(' ', '_')
+
+        apply_subgrouping(tag, list(analyses), gid=gid)
+
+    def run(self, state):
+        super(SubGroupingNode, self).run(state)
+
+        ans = getattr(state, self.analysis_kind)
+        compress_groups(ans)
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(UItem('by_key',
+                                     style='custom',
+                                     editor=EnumEditor(name='keys')),
+                               show_border=True, label='Grouping'),
+                        VGroup(Item('grouping_kind', label='Grouping Type'), show_border=True)),
+                 width=300,
+                 title=self.title,
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal')
+        return v
 
 
 class BinNode(BaseNode):

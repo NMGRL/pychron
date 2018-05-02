@@ -674,7 +674,10 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _get_number_format(self):
         fn = self._workbook.add_format()
-        fn.set_num_format('0.{}#'.format('0' * self._options.sig_figs))
+        fmt = '0.{}'.format('0' * self._options.sig_figs)
+        if not self._options.ensure_trailing_zeros:
+            fmt = '{}#'.format(fmt)
+        fn.set_num_format(fmt)
         return fn
 
     def _make_analysis(self, sh, cols, item, last):
