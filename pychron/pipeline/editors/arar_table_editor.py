@@ -28,7 +28,7 @@ from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.pipeline.editors.base_adapter import BaseGroupAdapter, BaseAdapter
-from pychron.pipeline.tagging import apply_subgrouping
+from pychron.pipeline.tagging import apply_subgrouping, compress_groups
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -128,7 +128,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
             for s in self.selected:
                 s.subgroup = ''
 
-            self._compress_groups()
+            compress_groups(self.items)
             if save:
                 self.save_grouping()
 
