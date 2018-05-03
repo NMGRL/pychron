@@ -1150,6 +1150,10 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisGroupTbl)
             q = q.join(ProjectTbl)
             q = q.filter(AnalysisGroupTbl.name == name)
+
+            if not isinstance(project, six.text_type):
+                project = project.name
+
             q = q.filter(ProjectTbl.name == project)
 
             return self._query_all(q)
