@@ -54,7 +54,7 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
+            unks = [u for u in unks if not u.is_omitted() and u.analysis_type in self.plotter_options.analysis_types]
         return unks
 
     def check_refit(self, unks):
