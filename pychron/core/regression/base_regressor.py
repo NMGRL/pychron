@@ -21,7 +21,7 @@ import logging
 import math
 import re
 
-from numpy import where, delete
+from numpy import where, delete, polyfit
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
@@ -113,6 +113,12 @@ class BaseRegressor(HasTraits):
 
     def _get_rsquared_adj(self):
         return 0
+
+    def get_xsquared_coefficient(self):
+        x = self.clean_xs
+        y = self.clean_ys
+        a, b, c = polyfit(x, y, 2)
+        return b
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict

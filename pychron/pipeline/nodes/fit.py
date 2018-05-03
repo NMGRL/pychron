@@ -36,6 +36,10 @@ import six
 from six.moves import zip
 
 
+class RefitException(BaseException):
+    pass
+
+
 class FitNode(FigureNode):
     use_save_node = Bool(True)
     _fits = List
@@ -56,8 +60,12 @@ class FitNode(FigureNode):
     def check_refit(self, unks):
         unks = self._get_valid_unknowns(unks)
         for ui in unks:
-            if self._check_refit(ui):
-                break
+            try:
+                if self._check_refit(ui):
+                    break
+
+            except RefitException:
+                return False
         else:
             if confirm(None, self._refit_message) == YES:
                 return True
@@ -181,8 +189,13 @@ class FitICFactorNode(FitReferencesNode):
         for k in self._keys:
             num, dem = k.split('/')
             i = ai.get_isotope(detector=dem)
-            if not i.ic_factor_reviewed:
-                return True
+            if i is not None:
+                if not i.ic_factor_reviewed:
+                    return True
+            else:
+                self.warning('Data for detector missing {}'.format(k))
+                self.warning_dialog('Data for detector {} is missing from {}'.format(dem, ai.record_id))
+                raise RefitException()
 
     def load(self, nodedict):
         try:
