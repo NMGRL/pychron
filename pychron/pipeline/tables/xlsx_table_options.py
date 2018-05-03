@@ -141,7 +141,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 Item('age_units', label='Age Units'),
                                 Item('repeat_header', label='Repeat Header'),
                                 Item('sig_figs', label='Significant Figures'),
-                                Item('ensure_trailing_zeros', 'Ensure Trailing Zeros'),
+                                Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                                 show_border=True, label='Appearance')
 
         arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
