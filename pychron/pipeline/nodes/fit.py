@@ -204,6 +204,7 @@ class FitICFactorNode(FitReferencesNode):
 
 GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared')
 GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared')
+INVERTED_GOODNESS = ('rsquared',)
 
 
 class IsoEvoResult(HasTraits):
@@ -251,7 +252,8 @@ class IsoEvoResult(HasTraits):
         def f(t, m):
             v = getattr(self, '{}_goodness'.format(t))
             if v is not None:
-                v = 'OK' if v else "Bad {}>{}".format('{}'.format(t), '{}_threshold'.format(t))
+                comp = '<' if t in INVERTED_GOODNESS else '>'
+                v = 'OK' if v else "Bad {}{}{}".format('{}'.format(t), comp, '{}_threshold'.format(t))
             else:
                 v = 'Not Tested'
             return '{:<25}: {}'.format(m, v)
@@ -400,7 +402,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
-                    rsquared_goodness = rsquared < rsquared_threshold
+                    rsquared_goodness = rsquared > rsquared_threshold
 
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
