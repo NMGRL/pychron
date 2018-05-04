@@ -344,7 +344,10 @@ class DVCPersister(BasePersister):
 
             for position in self._positions:
                 dbpos = db.add_measured_position(load=load_name, **position)
-                an.measured_positions.append(dbpos)
+                if dbpos:
+                    an.measured_positions.append(dbpos)
+                else:
+                    self.warning('failed adding position {}, load={}'.format(position, load_name))
 
                 # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers

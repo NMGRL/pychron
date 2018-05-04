@@ -456,7 +456,7 @@ class PipelineTask(BaseBrowserTask):
 
     def _run(self, message, func, close_all=False):
 
-        if self.engine.pre_run_check():
+        if self.engine.pre_run_check(func):
 
             self.debug('{} started'.format(message))
             if close_all:

@@ -614,11 +614,16 @@ class PipelineEngine(Loggable):
     #         if state.canceled:
     #             self.debug('pipeline canceled by {}'.format(node))
     #             return True
-    def pre_run_check(self):
+    def pre_run_check(self, run_kind):
         if self.pipeline:
             ret = bool(self.pipeline.nodes)
             if not ret:
                 self.warning_dialog('Please select a pipeline template to run')
+            elif run_kind == 'run_from_pipeline':
+                if self.selected is None or self.selected not in self.pipeline.nodes:
+                    self.warning_dialog('Please select the starting node')
+                    ret = False
+
             return ret
 
     def run_from_pipeline(self):
