@@ -122,9 +122,9 @@ class IdeogramOptions(AgeOptions):
              'line_color': fg.line_color}
 
         if fg.use_fill:
-            color = fg.color
+            color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
-            d['fill_color'] = fg.color
+            d['fill_color'] = color
             d['type'] = 'filled_line'
         return d
 
