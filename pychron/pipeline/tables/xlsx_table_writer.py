@@ -105,8 +105,8 @@ class XLSXTableWriter(BaseTableWriter):
         if monitors:
             self._make_monitors(monitors)
 
-        if not self._options.include_production_ratios:
-            self._make_irradiations(unknowns)
+        # if not self._options.include_production_ratios:
+        #     self._make_irradiations(unknowns)
 
         if self._options.include_summary_sheet:
             if unknowns:
@@ -425,29 +425,29 @@ class XLSXTableWriter(BaseTableWriter):
 
         self._make_notes(sh, len(cols), 'summary')
 
-    def _make_irradiations(self, unks):
-        self._current_row = 1
-        sh = self._workbook.add_worksheet('Irradiations')
-        self._format_generic_worksheet(sh)
-
-        cols = [Column(label='Name', attr='irradiation')]
-        icols = self._get_irradiation_columns(True)
-        cols.extend(icols)
-
-        # write header
-        self._write_header(sh, cols, include_units=True)
-
-        # cols = [c for c in cols if c.enabled]
-        self._hide_columns(sh, cols)
-        for ug in unks:
-            for i, ci in enumerate(cols):
-                try:
-                    txt = self._get_txt(ug.analyses[0], ci)
-                except AttributeError as e:
-                    txt = self._get_txt(ug, ci)
-
-                sh.write(self._current_row, i, txt)
-            self._current_row += 1
+    # def _make_irradiations(self, unks):
+    #     self._current_row = 1
+    #     sh = self._workbook.add_worksheet('Irradiations')
+    #     self._format_generic_worksheet(sh)
+    #
+    #     cols = [Column(label='Name', attr='irradiation')]
+    #     icols = self._get_irradiation_columns(True)
+    #     cols.extend(icols)
+    #
+    #     # write header
+    #     self._write_header(sh, cols, include_units=True)
+    #
+    #     # cols = [c for c in cols if c.enabled]
+    #     self._hide_columns(sh, cols)
+    #     for ug in unks:
+    #         for i, ci in enumerate(cols):
+    #             try:
+    #                 txt = self._get_txt(ug.analyses[0], ci)
+    #             except AttributeError as e:
+    #                 txt = self._get_txt(ug, ci)
+    #
+    #             sh.write(self._current_row, i, txt)
+    #         self._current_row += 1
 
     def _make_sheet(self, groups, name):
         self._current_row = 1
@@ -650,7 +650,7 @@ class XLSXTableWriter(BaseTableWriter):
             a = ag.isochron_age
             label = 'isochron'
 
-        for i in range(age_idx+1):
+        for i in range(age_idx + 1):
             sh.write_blank(row, i, '', fmt)
 
         sh.write_rich_string(row, 1, label, fmt2)
@@ -713,7 +713,7 @@ class XLSXTableWriter(BaseTableWriter):
             else:
 
                 if isinstance(txt, float):
-                    sh.write_number(row, j+1, txt, cell_format=fn)
+                    sh.write_number(row, j + 1, txt, cell_format=fn)
                 else:
                     sh.write(row, j + 1, txt, *fmt)
 
@@ -758,10 +758,16 @@ class XLSXTableWriter(BaseTableWriter):
                 self._current_row += 1
 
         if self._options.include_isochron_age:
+
             sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
-            sh.write_number(self._current_row, idx, nominal_value(group.isochron_age), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(group.isochron_age), nfmt)
+            iage = group.isochron_age
+            if iage is None:
+                v,e = 0,0
+            else:
+                v,e = nominal_value(iage), std_dev(iage)
+            sh.write_number(self._current_row, idx, v, nfmt)
+            sh.write_number(self._current_row, idx + 1, e, nfmt)
 
             self._current_row += 1
 
