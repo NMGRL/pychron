@@ -193,8 +193,8 @@ class FitICFactorNode(FitReferencesNode):
                 if not i.ic_factor_reviewed:
                     return True
             else:
-                self.warning('Data for detector missing {}'.format(k))
-                self.warning_dialog('Data for detector {} is missing from {}'.format(dem, ai.record_id))
+                from pyface.message_dialog import warning
+                warning(None, 'Data for detector {} is missing from {}'.format(dem, ai.record_id))
                 raise RefitException()
 
     def load(self, nodedict):
