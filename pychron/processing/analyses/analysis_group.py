@@ -391,18 +391,20 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
+        ret = nan
+        ans = list(self.clean_analyses())
+        if ans:
+            rad40 = sum([a.get_computed_value('rad40') for a in ans])
+            k39 = sum([a.get_computed_value('k39') for a in ans])
 
-        rad40, k39 = list(
-            zip(*[(a.get_computed_value('rad40'), a.get_computed_value('k39')) for a in self.clean_analyses()]))
-        rad40 = sum(rad40)
-        k39 = sum(k39)
+            a = ans[0]
+            j = a.j
+            try:
+                ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
+            except ZeroDivisionError:
+                pass
 
-        a = next(self.clean_analyses())
-        j = a.j
-        try:
-            return age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
-        except ZeroDivisionError:
-            return nan
+        return ret
 
     # def _get_steps(self):
     #     d = [(ai.age,
