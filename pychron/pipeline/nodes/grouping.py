@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from operator import attrgetter
 
-from traits.api import Str, Enum
+from traits.api import Str, Enum, Bool
 from traitsui.api import View, UItem, EnumEditor, VGroup, Item
 
 from itertools import groupby
@@ -26,6 +26,7 @@ from numpy import array, array_split
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tagging import apply_subgrouping, compress_groups
+from pychron.processing.analyses.analysis_group import AnalysisGroup, StepHeatAnalysisGroup, InterpretedAgeGroup
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None):
@@ -58,9 +59,12 @@ class GroupingNode(BaseNode):
 
     _attr = 'group_id'
     _id_func = None
+    mean_groups = Bool(False)
+    meanify_enabled = Bool(True)
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
+        self.meanify_enabled = nodedict.get('meanify_enabled', True)
 
     def _to_template(self, d):
         d['key'] = self.by_key
@@ -75,12 +79,25 @@ class GroupingNode(BaseNode):
             for unk in unks:
                 setattr(unk, self._attr, 0)
 
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
+            key = self._generate_key()
+            if self.mean_groups:
+                gs = []
+                for k, ans in groupby(sorted(unks, key=key), key=key):
+                    a = InterpretedAgeGroup(analyses=list(ans))
+                    if 'plateau' in k:
+                        a.preferred_age_kind = 'plateau'
+                    gs.append(a)
+                setattr(state, self.analysis_kind, gs)
+            else:
+                group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
 
     def traits_view(self):
         v = View(UItem('by_key',
                        style='custom',
                        editor=EnumEditor(name='keys')),
+                 Item('mean_groups', label='Meanify Groups',
+                      visible_when='meanify_enabled',
+                      enabled_when='by_key=="SubGroup"'),
                  width=300,
                  title=self.title,
                  buttons=['OK', 'Cancel'],

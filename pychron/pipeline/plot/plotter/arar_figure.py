@@ -439,7 +439,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux('Extract Value', k, po, pid)
 
     def _get_aux_plot_data(self, k):
-        vs = self._unpack_attr(k)
+        vs = list(self._unpack_attr(k))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
     def _set_ml_title(self, text, plotid, ax):

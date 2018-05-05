@@ -89,7 +89,7 @@ class GraphEditor(BaseTraitsEditor):
                 self.refresh_needed = True
 
     def _set_name(self):
-        na = sorted(list(set([ni.labnumber for ni in self.analyses])))
+        na = sorted(list(set([ni.identifier for ni in self.analyses])))
         na = grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 

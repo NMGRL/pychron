@@ -133,6 +133,7 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
+    meanify_enabled: False
   - klass: SubGroupingNode
   - klass: XLSXAnalysisTableNode
   - klass: ReviewNode

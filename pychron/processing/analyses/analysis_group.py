@@ -25,6 +25,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.experiment.utilities.identifier import make_aliquot
+from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
@@ -41,7 +42,7 @@ def AGProperty(*depends):
     return Property(depends_on=d)
 
 
-class AnalysisGroup(HasTraits):
+class AnalysisGroup(IdeogramPlotable):
     attribute = Str('uage')
     analyses = List
     nanalyses = AGProperty()
@@ -95,6 +96,9 @@ class AnalysisGroup(HasTraits):
     isochron_4036 = None
     isochron_regressor = None
     _age_units = None
+
+    def __init__(self, *args, **kw):
+        super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
@@ -235,7 +239,7 @@ class AnalysisGroup(HasTraits):
         v, e = self._calculate_weighted_mean(attr, self.weighted_age_error_kind)
         e = self._modify_error(v, e, self.weighted_age_error_kind)
         try:
-            return ufloat(v, max(0, e)) #/ self.age_scalar
+            return ufloat(v, max(0, e))  # / self.age_scalar
         except AttributeError:
             return ufloat(0, 0)
 
@@ -277,7 +281,7 @@ class AnalysisGroup(HasTraits):
         else:
             v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
         e = self._modify_error(v, e, self.arith_age_error_kind)
-        return ufloat(v, e) #/ self.age_scalar
+        return ufloat(v, e)  # / self.age_scalar
 
     @cached_property
     def _get_total_n(self):
@@ -396,7 +400,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         a = next(self.clean_analyses())
         j = a.j
         try:
-            return age_equation(rad40 / k39, j, a.arar_constants) #/ self.age_scalar
+            return age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
         except ZeroDivisionError:
             return nan
 
@@ -462,7 +466,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             if math.isnan(e):
                 e = 0
 
-        return ufloat(v, max(0, e)) #/ self.age_scalar
+        return ufloat(v, max(0, e))  # / self.age_scalar
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
@@ -504,6 +508,34 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     lat_long = Str
 
     comments = Str
+
+    @property
+    def age(self):
+        return self.preferred_age
+
+    @property
+    def uage(self):
+        return self.preferred_age
+
+    @property
+    def kca(self):
+        return self.preferred_kca
+
+    def _value_string(self, t):
+        try:
+            v = getattr(self, t)
+            a,e = nominal_value(v), std_dev(v)
+        except AttributeError:
+            a,e = '---', '---'
+
+        return a, e
+
+    def get_value(self, attr):
+        if hasattr(self, attr):
+            ret = getattr(self, attr)
+        else:
+            ret = ufloat(0, 0)
+        return ret
 
     def _name_default(self):
         name = ''

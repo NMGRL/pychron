@@ -43,7 +43,6 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
-
 N = 500
 
 
@@ -220,7 +219,7 @@ class Ideogram(BaseArArFigure):
         selection = []
         invalid = []
 
-        scatter = self._add_aux_plot(ys, title, po, pid)
+        scatter = self._add_aux_plot(ys, title, po, pid, es=es)
 
         nsigma = self.options.error_bar_nsigma
 
@@ -683,14 +682,14 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, type='scatter', xs=None, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, es=None, type='scatter', xs=None, **kw):
         if xs is None:
             xs = self.xs
 
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
-            ys[ys < 0] = 1e-20
+            ys[ys < 0] = 10**math.floor(math.log10(min(ys[ys > 0])))
 
         graph = self.graph
 
@@ -706,6 +705,9 @@ class Ideogram(BaseArArFigure):
             selection_marker_size=po.marker_size,
             bind_id=self.group_id,
             plotid=pid, **kw)
+
+        if es is not None:
+            s.yerror = array(es)
 
         if not po.ytitle_visible:
             title = ''

@@ -177,9 +177,10 @@ class IdeogramPlotable(HasTraits):
     timestamp = 0
     subgroup = ''
 
-    def __init__(self, *args, **kw):
+    def __init__(self, make_arar_constants=True, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
-        self.arar_constants = ArArConstants()
+        if make_arar_constants:
+            self.arar_constants = ArArConstants()
 
     def refresh_view(self):
         pass

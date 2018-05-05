@@ -203,7 +203,7 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
-        for bit, tag in ((ibit, 'intercept'), (bkbit, 'blank'), (True, 'disc_ic_corrected')):
+        for bit, tag in ((ibit, 'intercept'), (True, 'disc_ic_corrected'), (bkbit, 'blank')):
             cols = [c for iso, mass in isos
                     for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
@@ -650,6 +650,17 @@ class XLSXTableWriter(BaseTableWriter):
             a = ag.isochron_age
             label = 'isochron'
 
+        ia = IntermediateAnalysis()
+        ia.uage = a
+        ia.age_units = ag.age_units
+        ia.age_scalar = ag.age_scalar
+        ia.kca = kca = ag.weighted_kca
+        ia.uage_wo_j_err = a
+
+        ia.irradiation_label = ans[0].irradiation_label
+        ia.irradiation = ans[0].irradiation
+        ia.material = ans[0].material
+
         for i in range(age_idx + 1):
             sh.write_blank(row, i, '', fmt)
 
@@ -657,24 +668,17 @@ class XLSXTableWriter(BaseTableWriter):
 
         sh.write_number(row, age_idx, nominal_value(a), fmt)
         sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+
+        sh.write_number(row, age_idx + 2, nominal_value(kca), fmt)
+        sh.write_number(row, age_idx + 3, std_dev(kca), fmt)
+
         self._current_row += 1
-
-        ia = IntermediateAnalysis()
-        ia.uage = a
-        ia.age_units = ag.age_units
-        ia.age_scalar = ag.age_scalar
-        ia.kca = ag.weighted_kca
-        ia.uage_wo_j_err = a
-
-        ia.irradiation_label = ans[0].irradiation_label
-        ia.irradiation = ans[0].irradiation
-        ia.material = ans[0].material
 
         return ia
 
     def _get_number_format(self):
         fn = self._workbook.add_format()
-        fmt = '0.{}'.format('0' * self._options.sig_figs)
+        fmt = '0.{}'.format('0' * (self._options.sig_figs-1))
         if not self._options.ensure_trailing_zeros:
             fmt = '{}#'.format(fmt)
         fn.set_num_format(fmt)
@@ -725,7 +729,8 @@ class XLSXTableWriter(BaseTableWriter):
         start_col = 0
         if self._options.include_kca:
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
-            sh.write_rich_string(self._current_row, start_col, u'K/Ca {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+            sh.write_rich_string(self._current_row, start_col, u'Weighted Mean K/Ca {}'.format(PLUSMINUS_ONE_SIGMA),
+                                 fmt)
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
@@ -763,9 +768,9 @@ class XLSXTableWriter(BaseTableWriter):
                                  fmt)
             iage = group.isochron_age
             if iage is None:
-                v,e = 0,0
+                v, e = 0, 0
             else:
-                v,e = nominal_value(iage), std_dev(iage)
+                v, e = nominal_value(iage), std_dev(iage)
             sh.write_number(self._current_row, idx, v, nfmt)
             sh.write_number(self._current_row, idx + 1, e, nfmt)
 

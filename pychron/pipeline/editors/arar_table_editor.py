@@ -68,6 +68,9 @@ class ArArTableAdapter(BaseAdapter):
 
     subgroup_text = Property
     record_id_width = Int(60)
+    tag_width = Int(40)
+    group_id_width = Int(60)
+    subgroup_width = Int(100)
 
     def _get_subgroup_text(self):
         ret = self.item.subgroup or ''

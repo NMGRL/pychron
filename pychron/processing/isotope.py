@@ -26,7 +26,7 @@ from binascii import hexlify
 from six.moves import map
 from six.moves import range
 
-from numpy import array, Inf, polyfit
+from numpy import array, Inf, polyfit, gradient
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -172,6 +172,13 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def get_rsquared(self):
         return self._regressor.rsquared
+
+    def get_gradient(self):
+        return ((gradient(self.ys)**2).sum())**0.5
+
+    def get_xsquared_coefficient(self):
+        if self._regressor:
+            return self._regressor.get_xsquared_coefficient()
 
     @property
     def rsquared(self):

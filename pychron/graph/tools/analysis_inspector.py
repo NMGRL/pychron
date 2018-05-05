@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from chaco.array_data_source import ArrayDataSource
 from traits.api import List, Callable
 from traitsui.menu import Action, Menu as MenuManager
 
@@ -117,7 +119,11 @@ class AnalysisPointInspector(PointInspector):
 
                     if hasattr(component, 'yerror'):
                         try:
-                            ye = component.yerror.get_data()[ind]
+                            yerror = component.yerror
+                            if isinstance(yerror, ArrayDataSource):
+                                yerror = yerror.get_data()
+
+                            ye = yerror[ind]
                             pe = self.percent_error(y, ye)
                             if self.value_format:
                                 ye = self.value_format(ye)
@@ -125,8 +131,8 @@ class AnalysisPointInspector(PointInspector):
                                 y = self.value_format(y)
 
                             y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
-                        except IndexError:
-                            pass
+                        except IndexError as e:
+                            print('asdf', e)
 
                     else:
                         if self.value_format:
