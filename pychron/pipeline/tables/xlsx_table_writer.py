@@ -635,7 +635,7 @@ class XLSXTableWriter(BaseTableWriter):
         row = self._current_row
         ag = StepHeatAnalysisGroup(analyses=[ai for ai in ans if not ai.is_omitted()])
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
-        fmt = self._get_number_format()
+        fmt = self._get_number_format('subgroup')
         fmt.set_bottom(1)
 
         fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
@@ -649,6 +649,12 @@ class XLSXTableWriter(BaseTableWriter):
         elif kind == 'isochron':
             a = ag.isochron_age
             label = 'isochron'
+        elif kind == 'integrated':
+            a = ag.integrated_age
+        elif kind == 'plateau_else_weighted_mean':
+            a = ag.plateau_age
+            if not ag.plateau_steps:
+                a = ag.weighted_age
 
         ia = IntermediateAnalysis()
         ia.uage = a
@@ -666,8 +672,14 @@ class XLSXTableWriter(BaseTableWriter):
 
         sh.write_rich_string(row, 1, label, fmt2)
 
-        sh.write_number(row, age_idx, nominal_value(a), fmt)
-        sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+        if kind == 'plateau' and not ag.plateau_steps:
+            a = None
+
+        if a is not None:
+            sh.write_number(row, age_idx, nominal_value(a), fmt)
+            sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+        else:
+            sh.write_number(row, age_idx, 'No plateau')
 
         sh.write_number(row, age_idx + 2, nominal_value(kca), fmt)
         sh.write_number(row, age_idx + 3, std_dev(kca), fmt)
@@ -676,9 +688,14 @@ class XLSXTableWriter(BaseTableWriter):
 
         return ia
 
-    def _get_number_format(self):
+    def _get_number_format(self, kind=None):
+        try:
+            sf = getattr(self._options, '{}_sig_figs'.format(kind))
+        except AttributeError:
+            sf = self._options.sig_figs
+
         fn = self._workbook.add_format()
-        fmt = '0.{}'.format('0' * (self._options.sig_figs-1))
+        fmt = '0.{}'.format('0' * (sf - 1))
         if not self._options.ensure_trailing_zeros:
             fmt = '{}#'.format(fmt)
         fn.set_num_format(fmt)
@@ -691,7 +708,7 @@ class XLSXTableWriter(BaseTableWriter):
         border = self._workbook.add_format({'bottom': 1})
         fmt2 = self._workbook.add_format()
         fmt3 = self._workbook.add_format()
-        fmt_j = self._workbook.add_format()
+        fmt_j = self._get_number_format('j')
         fmt = []
 
         fn = self._get_number_format()
@@ -703,7 +720,7 @@ class XLSXTableWriter(BaseTableWriter):
 
         fmt2.set_align('center')
         fmt3.set_num_format('mm/dd/yy hh:mm')
-        fmt_j.set_num_format('0.0000000')
+
         sh.write(row, 0, status, *fmt)
         for j, c in enumerate(cols[1:]):
             txt = self._get_txt(item, c)
@@ -724,7 +741,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
-        nfmt = self._get_number_format()
+        nfmt = self._get_number_format('summary')
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:

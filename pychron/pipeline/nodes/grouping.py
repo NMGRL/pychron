@@ -117,7 +117,7 @@ class SubGroupingNode(GroupingNode):
     name = 'SubGroup'
     by_key = 'Aliquot'
     _attr = 'subgroup'
-    grouping_kind = Enum('Weighted Mean', 'Plateau')
+    grouping_kind = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Plateau else Weighted Mean', 'Integrated')
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')
