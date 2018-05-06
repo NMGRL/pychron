@@ -176,7 +176,7 @@ class LevelEditor(Loggable):
             original_tray = self.selected_tray
 
         if level.note:
-            self.level_note = level.note
+            self.level_note = level.note.decode('utf-8')
         else:
             self.level_note = ''
 
