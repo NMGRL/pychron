@@ -34,6 +34,7 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     subgroup_sig_figs = dumpable(Int(6))
+    summary_sig_figs = dumpable(Int(6))
 
     ensure_trailing_zeros = dumpable(Bool(False))
 
@@ -150,7 +151,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
                               Item('subgroup_sig_figs', label='Subgroup'),
                               Item('j_sig_figs', label='Flux'),
-                              Item('summary_sig_figs', label='Summary'),
+                              Item('c', label='Summary'),
                               Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                               show_border=True, label='Significant Figures')
 
