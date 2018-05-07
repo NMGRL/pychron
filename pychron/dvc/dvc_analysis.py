@@ -364,7 +364,7 @@ class DVCAnalysis(Analysis):
 
         self._dump(isos, path)
 
-    def dump_icfactors(self, dkeys, fits, refs, reviewed=False):
+    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
         jd, path = self._get_json('icfactors')
 
         for dk, fi in zip(dkeys, fits):

@@ -41,7 +41,7 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
     AUTO_REPORT, REPORT, CORRECTION_FACTORS, ANALYSIS_METADATA, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
-    CSV_ANALYSES_EXPORT
+    CSV_ANALYSES_EXPORT, BULK_EDIT
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -893,7 +893,8 @@ class PipelineEngine(Loggable):
                                   ('Blanks', BLANKS),
                                   ('IC Factor', ICFACTOR),
                                   ('Flux', FLUX),
-                                  ('Correction Factors', CORRECTION_FACTORS))),
+                                  ('Correction Factors', CORRECTION_FACTORS),
+                                  ('Bulk Edit', BULK_EDIT))),
                          ('Plot', (('Ideogram', IDEO),
                                    ('CSV Ideogram', CSV_IDEO),
                                    ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),

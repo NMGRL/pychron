@@ -38,6 +38,7 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsView, InterpretedAgePersistOptions
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
@@ -52,7 +53,7 @@ from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 
-class PersistNode(BaseNode):
+class PersistNode(BaseDVCNode):
     def configure(self, **kw):
         return True
 
@@ -500,9 +501,8 @@ class CSVAnalysesExportNode(BaseNode):
 #
 #
 
-class SetInterpretedAgeNode(BaseNode):
+class SetInterpretedAgeNode(BaseDVCNode):
     name = 'Set IA'
-    dvc = Instance('pychron.dvc.dvc.DVC')
 
     def configure(self, pre_run=False, **kw):
         return True

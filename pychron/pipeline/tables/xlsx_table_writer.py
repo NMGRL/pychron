@@ -473,14 +473,18 @@ class XLSXTableWriter(BaseTableWriter):
             has_subgroups = False
             key = attrgetter('subgroup')
             ans = group.analyses
-            for tg, items in groupby(ans, key=key):
+            for subgroup, items in groupby(ans, key=key):
                 items = list(items)
+                kind = None
+                if subgroup:
+                    kind = '_'.join(subgroup.split('_')[:-1])
+
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
                     item.arar_constants.age_units = self._options.age_units
                     self._make_analysis(worksheet, cols, item, i == n)
-                if tg:
-                    kind = '_'.join(tg.split('_')[:-1])
+
+                if kind:
                     ia = self._make_intermediate_summary(worksheet, cols, items, kind)
                     nitems.append(ia)
                     has_subgroups = True
@@ -639,6 +643,7 @@ class XLSXTableWriter(BaseTableWriter):
         fmt.set_bottom(1)
 
         fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
+        border = self._workbook.add_format({'bottom': 1})
 
         if kind == 'weighted_mean':
             a = ag.weighted_age
@@ -674,14 +679,18 @@ class XLSXTableWriter(BaseTableWriter):
 
         sh.write_rich_string(row, 1, label, fmt2)
 
-        if kind == 'plateau' and not ag.plateau_steps:
-            a = None
+        if kind == 'plateau':
+            if not ag.plateau_steps:
+                a = None
+            else:
+                sh.write(row, 2, 'n={}'.format(ag.plateau_nsteps), border)
+                sh.write(row, 3, ag.plateau_steps_str, border)
 
         if a is not None:
             sh.write_number(row, age_idx, nominal_value(a), fmt)
             sh.write_number(row, age_idx + 1, std_dev(a), fmt)
         else:
-            sh.write(row, age_idx, 'No plateau')
+            sh.write(row, age_idx, 'No plateau', border)
 
         sh.write_number(row, age_idx + 2, nominal_value(kca), fmt)
         sh.write_number(row, age_idx + 3, std_dev(kca), fmt)
@@ -703,7 +712,7 @@ class XLSXTableWriter(BaseTableWriter):
         fn.set_num_format(fmt)
         return fn
 
-    def _make_analysis(self, sh, cols, item, last):
+    def _make_analysis(self, sh, cols, item, last, subgroup=None):
         status = 'X' if item.is_omitted() else ''
         row = self._current_row
 
@@ -955,7 +964,7 @@ if __name__ == '__main__':
             self.rundate = datetime.now()
             self.decay_days = frand(2, 200)
             self.k2o = frand(2)
-            self.irradiation_label = 'NM-284 E9'
+            self.irradiation_label = 'NM-284 E9o'
             self.irradiation = 'NM-284'
             self.isochron3940 = ufloat(frand(10), frand(10))
             self.isochron3640 = ufloat(frand(10), frand(10))

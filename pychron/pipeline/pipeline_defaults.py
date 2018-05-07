@@ -239,4 +239,10 @@ nodes:
   - klass: AnalysisMetadataNode
 
 """
+
+BULK_EDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: BulkEditNode"""
 # ============= EOF =============================================

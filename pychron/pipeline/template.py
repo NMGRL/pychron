@@ -26,14 +26,13 @@ from traitsui.api import View, UItem
 from pychron.core.ui.strings import PascalCase
 from pychron.paths import paths
 from pychron.pipeline.nodes import PushNode
-from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode
+from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
+    BaseDVCNode
 from pychron.pipeline.nodes.diff import DiffNode
-from pychron.pipeline.nodes.email import EmailNode
+from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
-from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
-from pychron.pipeline.nodes.persist import PersistNode, SetInterpretedAgeNode
-from pychron.pipeline.nodes.table import TableNode
+
 
 
 class PipelineTemplateSaveView(HasTraits):
@@ -138,11 +137,9 @@ class PipelineTemplate(HasTraits):
         node.load(ni)
         if isinstance(node, InterpretedAgeNode):
             node.trait_set(browser_model=iabmodel, dvc=dvc)
-        elif isinstance(node, SetInterpretedAgeNode):
-            node.trait_set(dvc=dvc)
         elif isinstance(node, (DVCNode, FindNode)):
             node.trait_set(browser_model=bmodel, dvc=dvc)
-        elif isinstance(node, (TableNode, PersistNode, GainCalibrationNode, PushNode)):
+        elif isinstance(node, BaseDVCNode):
             node.trait_set(dvc=dvc)
         elif isinstance(node, DiffNode):
             recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')

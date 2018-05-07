@@ -35,13 +35,17 @@ from pychron.pychron_constants import ANALYSIS_TYPES
 import six
 
 
-class DVCNode(BaseNode):
+class BaseDVCNode(BaseNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+
+class DVCNode(BaseDVCNode):
     """
 
     Base node for all nodes that need access to a DVC instance or BrowserModel for
     retrieving analyses
     """
-    dvc = Instance('pychron.dvc.dvc.DVC')
+
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     def get_browser_analyses(self, irradiation=None, level=None):
@@ -301,8 +305,8 @@ class BaseAutoUnknownNode(UnknownNode):
                       tooltip='Default time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
-                Item('analysis_types',style='custom',
-                     editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('analysis_types', style='custom',
+                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
@@ -443,7 +447,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         else:
             self._ran = False
 
-        period = 60*10
+        period = 60 * 10
         do_after(1000 * period, self._iter)
 
     def traits_view(self):

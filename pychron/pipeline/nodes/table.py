@@ -28,11 +28,12 @@ from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
-class TableNode(BaseNode):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class TableNode(BaseDVCNode):
+    pass
 
 
 class XLSXAnalysisTableNode(TableNode):
