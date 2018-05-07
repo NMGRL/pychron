@@ -130,17 +130,18 @@ def ahead_behind(repo, fetch=True, remote='origin'):
 
     ahead = 0
     behind = 0
-    if fetch:
-        repo.git.fetch(remote)
+    if repo:
+        if fetch:
+            repo.git.fetch(remote)
 
-    status = repo.git.status('-sb')
+        status = repo.git.status('-sb')
 
-    ma = aregex.search(status)
-    mb = bregex.search(status)
-    if ma:
-        ahead = int(ma.group('count'))
-    if mb:
-        behind = int(mb.group('count'))
+        ma = aregex.search(status)
+        mb = bregex.search(status)
+        if ma:
+            ahead = int(ma.group('count'))
+        if mb:
+            behind = int(mb.group('count'))
 
     return ahead, behind
 

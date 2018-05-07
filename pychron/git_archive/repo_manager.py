@@ -759,6 +759,18 @@ class GitRepoManager(Loggable):
     def get_active_branch(self):
         return self._repo.active_branch.name
 
+    def get_sha(self, path=None):
+        sha = ''
+        if path:
+            l = self.cmd('ls-tree', 'HEAD', path)
+            try:
+                mode, kind, sha_name = l.split(' ')
+                sha, name = sha_name.split('\t')
+            except ValueError:
+                pass
+
+        return sha
+
     # action handlers
     def diff_selected(self):
         if self._validate_diff():
