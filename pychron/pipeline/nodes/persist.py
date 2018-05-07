@@ -238,8 +238,8 @@ class FluxPersistNode(DVCPersistNode):
                 i.recalculate_age()
 
 
-class XLSXTablePersistNode(BaseNode):
-    name = 'Save Analysis Table'
+class XLSXAnalysisTablePersistNode(BaseNode):
+    name = 'Excel Analysis Table'
     # auto_configure = False
     # configurable = False
 

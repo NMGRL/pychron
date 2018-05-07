@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+ML = """
+required:
+nodes:
+  - klass: MLDataNode
+  - klass: MLRegressionNode
+"""
 
 REGRESSION_SERIES = """
 required:
@@ -75,10 +81,8 @@ BLANKS = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: FindReferencesNode
+  - klass: FindBlanksNode
     threshold: 10
-    analysis_types: 
-      - Blank Unknown
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode
@@ -137,7 +141,7 @@ nodes:
   - klass: SubGroupingNode
   - klass: XLSXAnalysisTableNode
   - klass: ReviewNode
-  - klass: XLSXTablePersistNode
+  - klass: XLSXAnalysisTablePersistNode
 """
 
 INTERPRETED_AGE_TABLE = """

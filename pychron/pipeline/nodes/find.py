@@ -175,6 +175,8 @@ class FindReferencesNode(FindNode):
     analysis_loads = List
     limit_to_analysis_loads = Bool(True)
 
+    threshold_enabled = Property
+
     analysis_types = List
     available_analysis_types = List
 
@@ -195,8 +197,9 @@ class FindReferencesNode(FindNode):
     def load(self, nodedict):
         self.threshold = nodedict.get('threshold', 10)
         self.analysis_types = nodedict.get('analysis_types', [])
-        if self.analysis_types:
-            self.name = 'Find {}'.format(','.join(self.analysis_types))
+        self.name = nodedict.get('name', 'Find References')
+        # if self.analysis_types:
+        #     self.name = 'Find {}'.format(','.join(self.analysis_types))
         self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
 
     def finish_load(self):
@@ -218,6 +221,8 @@ class FindReferencesNode(FindNode):
     #     if new == 'Blank Unknown':
     #         new = 'Blank'
     #     self.name = 'Find {}s'.format(new)
+    def _load_analysis_types(self, state):
+        pass
 
     def pre_run(self, state, configure=True):
         if not state.unknowns:
@@ -233,6 +238,8 @@ class FindReferencesNode(FindNode):
 
         ls = {ai.loadname for ai in state.unknowns}
         self.analysis_loads = list(ls)
+
+        self._load_analysis_types(state)
 
         self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
@@ -308,9 +315,12 @@ class FindReferencesNode(FindNode):
 
     def traits_view(self):
         v = self._view_factory(HGroup(Item('loadname', editor=EnumEditor(name='display_loads')),
-                                      Item('limit_to_analysis_loads', label='Analysis Loads')),
+                                      Item('limit_to_analysis_loads',
+                                           tooltip='Limit Loads based on the selected analyses',
+                                           label='Limit Loads by Analyses')),
                                Item('threshold',
-                                    tooltip='Maximum difference between blank and unknowns in hours',
+                                    tooltip='Maximum difference between references and unknowns in hours',
+                                    enabled_when='threshold_enabled',
                                     label='Threshold (Hrs)'),
                                VGroup(UItem('analysis_types',
                                             style='custom',
@@ -336,17 +346,20 @@ class FindReferencesNode(FindNode):
             return self.analysis_loads
         else:
             return self.loads
-#
-# class FindAirsNode(FindNode):
-#     name = 'Find Airs'
-#     analysis_type = 'blank_unknown'
-#     analysis_type_name = 'Air'
-#
-#
-# class FindBlanksNode(FindNode):
-#     name = 'Find Blanks'
-#     analysis_type = 'blank_unknown'
-#     analysis_type_name = 'Blank Unknown'
 
+    def _get_threshold_enabled(self):
+        return not self.loadname or self.loadname == NULL_STR
+
+
+class FindBlanksNode(FindReferencesNode):
+    def _load_analysis_types(self, state):
+        ats = list({ai.analysis_type for ai in state.unknowns})
+        bats = []
+        for a in ats:
+            if not a.startswith('blank'):
+                ba = 'blank_{}'.format(a)
+                if ba in self.available_analysis_types:
+                    bats.append(ba)
+        self.analysis_types = bats
 
 # ============= EOF =============================================
