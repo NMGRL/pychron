@@ -225,7 +225,7 @@ class Production(MetaObject):
         obj = json.load(rfile)
 
         attrs = []
-        for k, v in six.iteritems(obj):
+        for k, v in obj.items():
             if k == 'reactor':
                 self.reactor = v
             else:

@@ -709,6 +709,8 @@ class XLSXTableWriter(BaseTableWriter):
         fmt2 = self._workbook.add_format()
         fmt3 = self._workbook.add_format()
         fmt_j = self._get_number_format('j')
+        fmt_ic = self._get_number_format('ic')
+        fmt_disc = self._get_number_format('disc')
         fmt = []
 
         fn = self._get_number_format()
@@ -731,6 +733,10 @@ class XLSXTableWriter(BaseTableWriter):
                 sh.write_datetime(row, j + 1, txt, fmt3)
             elif c.attr == 'j':
                 sh.write_number(row, j + 1, txt, fmt_j)
+            elif c.attr.startswith('ic'):
+                sh.write_number(row, j + 1, txt, fmt_ic)
+            elif c.attr.startswith('disc'):
+                sh.write_number(row, j + 1, txt, fmt_disc)
             else:
 
                 if isinstance(txt, float):
