@@ -652,8 +652,10 @@ class XLSXTableWriter(BaseTableWriter):
         elif kind == 'integrated':
             a = ag.integrated_age
         elif kind == 'plateau_else_weighted_mean':
+            label = 'plateau'
             a = ag.plateau_age
             if not ag.plateau_steps:
+                label = 'wt. mean'
                 a = ag.weighted_age
 
         ia = IntermediateAnalysis()
