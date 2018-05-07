@@ -206,6 +206,7 @@ class NewYorkRegressor(YorkRegressor):
             b=slope
             a=intercept
         """
+        a = 0
         if abs(pb - b) < tol or cnt > total:
             W = self._calculate_W(b)
             XBar, YBar = self._calculate_xy_bar(W)
