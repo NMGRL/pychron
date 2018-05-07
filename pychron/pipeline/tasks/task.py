@@ -257,11 +257,11 @@ class PipelineTask(BaseBrowserTask):
                 tag = tag.lower()
 
                 self.dvc.tag_items(tag, items, note)
-
                 if use_filter:
                     for e in self.editor_area.editors:
-                        if isinstance(e, FigureEditor):
-                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
+                        if hasattr(e, 'set_items'):
+                            fans = [ai for ai in e.analyses if ai.tag != 'invalid']
+                            e.set_items(fans)
 
                 if self.active_editor:
                     self.active_editor.refresh_needed = True

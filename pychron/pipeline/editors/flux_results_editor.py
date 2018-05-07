@@ -440,6 +440,19 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
 
+            # plot fit line
+            line, _p = g.new_series(fxs, fys)
+
+            ee = ErrorEnvelopeOverlay(component=line,
+                                      xs=fxs, lower=l, upper=u)
+            line.error_envelope = ee
+            line.underlays.append(ee)
+
+            # plot the individual analyses
+            iscatter, iys = self._graph_individual_analyses()
+            iscatter.index.metadata['selections'] = sel
+
+            # plot means
             scatter, _ = g.new_series(xs, ys,
                                       yerror=yserr,
                                       type='scatter',
@@ -447,25 +460,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             ebo = ErrorBarOverlay(component=scatter,
                                   orientation='y')
-            scatter.overlays.append(ebo)
+            scatter.underlays.append(ebo)
             scatter.error_bars = ebo
 
             add_inspector(scatter, self._additional_info)
-            line, _p = g.new_series(fxs, fys)
-
-            ee = ErrorEnvelopeOverlay(component=line,
-                                      xs=fxs, lower=l, upper=u)
-            line.error_envelope = ee
-            line.overlays.append(ee)
-
-            # plot the individual analyses
-            scatter, iys = self._graph_individual_analyses()
-            scatter.index.metadata['selections'] = sel
-
-            ebo = ErrorBarOverlay(component=scatter,
-                                  orientation='y')
-            scatter.overlays.append(ebo)
-            scatter.error_bars = ebo
 
             # s.index.metadata_changed = True
 
@@ -525,6 +523,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 # ixs.extend(xx)
                 # iys.extend(yy)
         s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
+
+        ebo = ErrorBarOverlay(component=s,
+                              orientation='y')
+        s.underlays.append(ebo)
+        s.error_bars = ebo
+
         add_analysis_inspector(s, ans)
 
         self.analyses = ans

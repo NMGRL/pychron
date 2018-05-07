@@ -44,7 +44,7 @@ class AnalysisPointInspector(PointInspector):
                           on_perform=self._set_tag),
                    Action(name='Set Omit',
                           on_perform=self._set_omit),
-                   Action(name='Set INVALID',
+                   Action(name='Set Invalid',
                           on_perform=self._set_invalid))
         # menu = MenuManager(name='recall', *actions)
         # contents = [menu, ]
