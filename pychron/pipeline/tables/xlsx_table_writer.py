@@ -681,7 +681,7 @@ class XLSXTableWriter(BaseTableWriter):
             sh.write_number(row, age_idx, nominal_value(a), fmt)
             sh.write_number(row, age_idx + 1, std_dev(a), fmt)
         else:
-            sh.write_number(row, age_idx, 'No plateau')
+            sh.write(row, age_idx, 'No plateau')
 
         sh.write_number(row, age_idx + 2, nominal_value(kca), fmt)
         sh.write_number(row, age_idx + 3, std_dev(kca), fmt)
