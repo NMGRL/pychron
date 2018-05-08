@@ -223,11 +223,22 @@ class FluxPersistNode(DVCPersistNode):
         if prog:
             prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
-        decay = state.decay_constants
+        po = state.flux_options
+        lk = po.lambda_k
+
+        decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
                         irp.j, irp.jerr,
                         irp.mean_j, irp.mean_jerr,
-                        decay,
+                        decay_constants,
+
+                        model_kind=po.model_kind,
+                        predicted_j_error_type=po.predicted_j_error_type,
+                        use_weighted_fit=po.use_weighted_fit,
+                        monte_carlo_ntrials=po.monte_carlo_ntrials,
+                        use_monte_carlo=po.use_monte_carlo,
+                        monitor_sample_name=po.monitor_sample_name,
+
                         analyses=irp.analyses,
                         add=False)
 
@@ -235,7 +246,7 @@ class FluxPersistNode(DVCPersistNode):
         for i in state.unknowns:
             if i.identifier == irp.identifier:
                 i.j = j
-                i.arar_constants.lambda_k = decay['lambda_k_total']
+                i.arar_constants.lambda_k = lk
                 i.recalculate_age()
 
 

@@ -467,10 +467,14 @@ class FitFluxNode(FitNode):
         monitors = state.flux_monitors
 
         if monitors:
-            lk = self.plotter_options.lambda_k
-            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            po = self.plotter_options
+            # lk = po.lambda_k
+            # state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            # state.error_calc_method = po.
+            # state.flux_fit = po.
+            state.flux_options = po
 
-            editor.plotter_options = self.plotter_options
+            editor.plotter_options = po
             editor.geometry = geom
             editor.irradiation = state.irradiation
             editor.level = state.level
