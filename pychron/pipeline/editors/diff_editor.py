@@ -296,14 +296,14 @@ class DiffEditor(BaseTraitsEditor):
 
             vs.append(Value(name='Ca37/K39', lvalue=nominal_value(ca / k),
                             rvalue=nominal_value(right.r3739)))
-            vs.append(Value(name='Ca/K', lvalue=nominal_value(left.kca) ** -1,
-                            rvalue=nominal_value(right.kca) ** -1))
+            vs.append(Value(name='K/Ca', lvalue=nominal_value(left.kca),
+                            rvalue=nominal_value(right.kca)))
 
             cl = left.get_non_ar_isotope('cl38')
             vs.append(Value(name='Cl38/K39', lvalue=nominal_value(cl / k),
                             rvalue=nominal_value(right.Cl3839)))
-            vs.append(Value(name='Cl/K', lvalue=nominal_value(left.kcl) ** -1,
-                            rvalue=nominal_value(right.kcl) ** -1))
+            vs.append(Value(name='K/Cl', lvalue=nominal_value(left.kcl),
+                            rvalue=nominal_value(right.kcl)))
 
             constants = left.arar_constants
             vv = [Value(name=n, lvalue=nominal_value(getattr(constants, k)),

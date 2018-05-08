@@ -82,8 +82,15 @@ class MassSpecAnalysis(Analysis):
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
                 self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
                 self.Cl3839 = ufloat(arar.Cl3839, 0)
-                self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
-                self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
+                try:
+                    self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
+                except ZeroDivisionError:
+                    self.kca = 0
+
+                try:
+                    self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
+                except ZeroDivisionError:
+                    self.kcl = 0
 
         prefs = obj.changeable.preferences_set
         # prefs = None
