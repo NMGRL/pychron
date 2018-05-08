@@ -474,7 +474,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         else:
             plot = g.plots[0]
 
-            s1 = plot.plots['plot0'][0]
+            s1 = plot.plots['plot2'][0]
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
 
@@ -485,7 +485,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             g.set_data(ys, plotid=0, series=0, axis=1)
             g.set_data(fys, plotid=0, series=1, axis=1)
 
-            s2 = plot.plots['plot2'][0]
+            s2 = plot.plots['plot0'][0]
             iys = s2.value.get_data()
             ymi = min(fys.min(), lyy.min(), iys.min())
             yma = max(fys.max(), uyy.max(), iys.max())
