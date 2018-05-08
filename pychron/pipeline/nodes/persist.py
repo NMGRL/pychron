@@ -44,8 +44,8 @@ from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsV
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.state import get_isotope_set
-from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
+from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from six.moves import zip
 
@@ -244,7 +244,7 @@ class XLSXAnalysisTablePersistNode(BaseNode):
     # auto_configure = False
     # configurable = False
 
-    options_klass = XLSXTableWriterOptions
+    options_klass = XLSXAnalysisTableWriterOptions
 
     def _finish_configure(self):
         self.options.dump()
@@ -291,7 +291,7 @@ class XLSXAnalysisTablePersistNode(BaseNode):
                   'blanks': blank_group,
                   'airs': air_group,
                   'machine_unknowns': munk_group}
-        writer = XLSXTableWriter()
+        writer = XLSXAnalysisTableWriter()
 
         for gs in groups.values():
             for gi in gs:

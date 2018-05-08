@@ -382,6 +382,35 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     #     else:
     #         n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
     #     return n
+    total_ar39 = AGProperty()
+
+    @cached_property
+    def _get_total_ar39(self):
+        total = 0
+        ans = self.clean_analyses()
+        if ans:
+            total = sum([a.get_computed_value('k39') for a in ans])
+
+        return nominal_value(total)
+
+    def valid_total_ar39(self):
+        total = sum([a.get_computed_value('k39') for a in self.analyses])
+        return nominal_value(self.total_ar39/total*100)
+
+    def cumulative_ar39(self, idx):
+        ai = self.analyses[idx]
+        if ai.is_omitted():
+            return ''
+
+        cum = 0
+        for i, a in enumerate(self.analyses):
+            if a.is_omitted():
+                continue
+            if i > idx:
+                break
+            cum += a.get_computed_value('k39')
+
+        return nominal_value(cum/self.total_ar39*100)
 
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
@@ -526,9 +555,9 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def _value_string(self, t):
         try:
             v = getattr(self, t)
-            a,e = nominal_value(v), std_dev(v)
+            a, e = nominal_value(v), std_dev(v)
         except AttributeError:
-            a,e = '---', '---'
+            a, e = '---', '---'
 
         return a, e
 

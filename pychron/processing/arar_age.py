@@ -121,7 +121,7 @@ class ArArAge(IsotopeGroup):
         weight should be in milligrams
         @return:
         """
-        k2o = 0
+        k2o = ''
         if self.weight:
             k40_k = 0.0001167
             k40 = self.non_ar_isotopes['k40']

@@ -28,7 +28,7 @@ from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
 
 
-class XLSXTableWriterOptions(BasePersistenceOptions):
+class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     table_kind = dumpable(Enum('Fusion', 'Step Heat'))
 
     sig_figs = dumpable(Int(6))
@@ -55,7 +55,7 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_isochron_ratios = dumpable(Bool(False))
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
-
+    include_percent_ar39 = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
     repeat_header = dumpable(Bool(False))
 
@@ -103,11 +103,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     _persistence_name = 'xlsx_table_options'
 
-    def _table_kind_changed(self):
-        if self.table_kind == 'Fusion':
-            self.include_summary_percent_ar39 = False
-        else:
-            self.include_summary_percent_ar39 = True
+    # def _table_kind_changed(self):
+    #     if self.table_kind == 'Fusion':
+    #         self.include_summary_percent_ar39 = False
+    #     else:
+    #         self.include_summary_percent_ar39 = True
 
     @property
     def age_scalar(self):
