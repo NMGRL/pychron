@@ -441,6 +441,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
 
             # plot fit line
+            # plot0 == line
             line, _p = g.new_series(fxs, fys)
 
             ee = ErrorEnvelopeOverlay(component=line,
@@ -449,10 +450,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             line.underlays.append(ee)
 
             # plot the individual analyses
+            # plot1 == scatter
             iscatter, iys = self._graph_individual_analyses()
             iscatter.index.metadata['selections'] = sel
 
             # plot means
+            # plot2 == scatter
             scatter, _ = g.new_series(xs, ys,
                                       yerror=yserr,
                                       type='scatter',
@@ -478,14 +481,14 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
 
-            l1 = plot.plots['plot1'][0]
+            l1 = plot.plots['plot0'][0]
             l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
             l1.error_envelope.invalidate()
 
-            g.set_data(ys, plotid=0, series=0, axis=1)
-            g.set_data(fys, plotid=0, series=1, axis=1)
+            g.set_data(ys, plotid=0, series=2, axis=1)
+            g.set_data(fys, plotid=0, series=0, axis=1)
 
-            s2 = plot.plots['plot0'][0]
+            s2 = plot.plots['plot1'][0]
             iys = s2.value.get_data()
             ymi = min(fys.min(), lyy.min(), iys.min())
             yma = max(fys.max(), uyy.max(), iys.max())
