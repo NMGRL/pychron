@@ -53,7 +53,13 @@ users_file = os.path.join(global_hidden, 'users')
 environments_file = os.path.join(global_hidden, 'environments')
 
 resources = os.path.join(path.dirname(path.dirname(__file__)), 'resources')
+
 icons = os.path.join(resources, 'icons')
+dbicons = os.path.join(icons, 'database')
+arrows = os.path.join(icons, 'arrows')
+document = os.path.join(icons, 'document')
+table = os.path.join(icons, 'table')
+
 images = os.path.join(resources, 'images')
 splashes = os.path.join(resources, 'splashes')
 labspy_templates = os.path.join(resources, 'labspy_templates')
@@ -61,7 +67,7 @@ abouts = os.path.join(resources, 'abouts')
 sounds = os.path.join(resources, 'sounds')
 
 image_search_path = [images]
-icon_search_path = [icons]
+icon_search_path = [icons, dbicons, arrows, document, table]
 splash_search_path = [splashes]
 about_search_path = [abouts]
 sounds_search_path = [sounds]

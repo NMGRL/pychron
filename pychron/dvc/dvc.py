@@ -303,6 +303,8 @@ class DVC(Loggable):
         repo = self._get_repository(reponame, as_current=False)
         ps = []
         db = self.db
+        repo.pull()
+
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
 
@@ -335,18 +337,18 @@ class DVC(Loggable):
                                     ('irradiation_position', pos)):
                         ov = obj.get(attr)
                         if ov != v:
-                            print('{:<20s} repo={} db={}'.format(attr, ov, v))
+                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
                             obj[attr] = v
                             changed = True
 
                     if changed:
-                        print('{}'.format(p))
+                        self.debug('{}'.format(p))
                         ps.append(p)
                         if not dry_run:
                             dvc_dump(obj, p)
 
         if ps and not dry_run:
-            repo.pull()
+            # repo.pull()
             repo.add_paths(ps)
             repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()

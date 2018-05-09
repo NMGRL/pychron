@@ -31,7 +31,8 @@ from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
-    FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction
+    FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
+    SyncRepoAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -68,14 +69,16 @@ class ExperimentRepoTask(BaseTask):
 
     local_names = List
     tool_bars = [SToolBar(CloneAction(),
-                          AddBranchAction(),
+                          LoadOriginAction()),
+                 SToolBar(AddBranchAction(),
                           CheckoutBranchAction(),
+                          SyncRepoAction(),
                           PushAction(),
                           PullAction(),
-                          LoadOriginAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
-                          ArchiveRepositoryAction())]
+                          ArchiveRepositoryAction()),
+                 SToolBar(SyncSampleInfoAction())]
 
     commits = List
     _repo = None
@@ -185,11 +188,37 @@ class ExperimentRepoTask(BaseTask):
 
     def delete_local_changes(self):
         self.info('delete local changes')
-        name = self.selected_local_repository_name.name
-        msg = 'Are you sure you want to delete your non-shared changes in "{}"'.format(name)
-        if self.confirmation_dialog(msg):
-            self._repo.delete_local_commits()
-            self.selected_local_repository_name.dirty = False
+        selected = self._has_selected_local()
+        if selected:
+            name = selected.name
+            msg = 'Are you sure you want to delete your non-shared changes in "{}"'.format(name)
+            if self.confirmation_dialog(msg):
+                self._repo.delete_local_commits()
+                self.selected_local_repository_name.dirty = False
+
+    def sync_sample_info(self):
+        self.info('sync sample info')
+
+        selected = self._has_selected_local()
+        if selected:
+            name = selected.name
+            if self.confirmation_dialog('Are you sure you want to copy values from the '
+                                        'database into the repository "{}"'.format(name)):
+                self.dvc.repository_db_sync(name)
+
+    def sync_repo(self):
+        selected = self._has_selected_local()
+        if selected:
+            if self.confirmation_dialog('Are you sure you want to Sync to Origin. aka Pull/Push'):
+                self.pull()
+                self.push()
+
+    def _has_selected_local(self):
+        if not self.selected_local_repository_name:
+            self.information_dialog('Please select a local repository')
+            return
+
+        return self.selected_local_repository_name
 
     def create_central_pane(self):
         return RepoCentralPane(model=self)

@@ -95,6 +95,18 @@ class LoadOriginAction(TaskAction):
     tooltip = 'Update the list of available repositories'
 
 
+class SyncSampleInfoAction(TaskAction):
+    name = 'Sync Repo/DB Sample Info'
+    method = 'sync_sample_info'
+    tooltip = 'Copy information from Central Database to the selected repository'
+    image = icon('database_link')
+
+
+class SyncRepoAction(TaskAction):
+    name = 'Sync'
+    method = 'sync_repo'
+    tooltip = 'Sync to Origin. aka Pull then Push'
+    image = icon('database_cleanup')
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #
