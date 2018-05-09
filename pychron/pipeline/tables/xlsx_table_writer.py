@@ -462,10 +462,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._make_title(worksheet, name, cols)
 
-        repeat_header = self._options.repeat_header
+        options = self._options
+        repeat_header = options.repeat_header
 
         for i, group in enumerate(groups):
-            group.set_temporary_age_units(self._options.age_units)
+            group.set_temporary_age_units(options.age_units)
 
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
@@ -482,12 +483,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 if subgroup:
                     kind = '_'.join(subgroup.split('_')[:-1])
                     ag = StepHeatAnalysisGroup(analyses=items)
+                    _, label = self._get_intermediate_age(ag, kind)
 
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
-                    item.arar_constants.age_units = self._options.age_units
+                    item.arar_constants.age_units = options.age_units
+
+                    is_plateau_step = None
+                    if ag:
+                        if label == 'plateau' and options.highlight_non_plateau:
+                            is_plateau_step = ag.get_is_plateau_step(i)
 
                     self._make_analysis(worksheet, cols, item, i == n,
+                                        is_plateau_step=is_plateau_step,
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
@@ -641,18 +649,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-    def _make_intermediate_summary(self, sh, ag, cols, kind):
-        row = self._current_row
-
-        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
-        cum_idx = next((i for i, c in enumerate(cols) if c.attr == 'cumulative_ar39'), 0)
-
-        fmt = self._get_number_format('subgroup')
-        fmt.set_bottom(1)
-
-        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
-        border = self._workbook.add_format({'bottom': 1})
-
+    def _get_intermediate_age(self, ag, kind):
         if kind == 'weighted_mean':
             a = ag.weighted_age
             label = 'wt. mean'
@@ -671,6 +668,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 label = 'wt. mean'
                 a = ag.weighted_age
 
+        return a, label
+
+    def _make_intermediate_summary(self, sh, ag, cols, kind):
+        row = self._current_row
+
+        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
+        cum_idx = next((i for i, c in enumerate(cols) if c.attr == 'cumulative_ar39'), 0)
+
+        fmt = self._get_number_format('subgroup')
+        fmt.set_bottom(1)
+
+        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
+        border = self._workbook.add_format({'bottom': 1})
+
+        a, label = self._get_intermediate_age(ag, kind)
         ia = IntermediateAnalysis()
         ia.uage = a
         ia.age_units = ag.age_units
@@ -685,17 +697,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         for i in range(age_idx + 1):
             sh.write_blank(row, i, '', fmt)
 
-        sh.write_rich_string(row, 1, label, fmt2)
+        startcol = 1
+        sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
+        sh.write_rich_string(row, startcol+1, label, fmt2)
 
         tn = ag.total_n
         if kind == 'plateau':
             if not ag.plateau_steps:
                 a = None
             else:
-                sh.write(row, 2, 'n={}/{}'.format(ag.plateau_nsteps, tn), border)
-                sh.write(row, 3, ag.plateau_steps_str, border)
+                sh.write(row, startcol+2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
+
         else:
-            sh.write(row, 2, 'n={}/{}'.format(ag.nanalyses, tn), border)
+            sh.write(row, startcol+2, 'n={}/{}'.format(ag.nanalyses, tn), border)
 
         if a is not None:
             sh.write_number(row, age_idx, nominal_value(a), fmt)
@@ -723,29 +737,36 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         fn.set_num_format(fmt)
         return fn
 
-    def _make_analysis(self, sh, cols, item, last, cum=''):
+    def _make_analysis(self, sh, cols, item, last, is_plateau_step=None, cum=''):
         status = 'X' if item.is_omitted() else ''
         row = self._current_row
 
         border = self._workbook.add_format({'bottom': 1})
+        fmt = self._workbook.add_format()
         fmt2 = self._workbook.add_format()
-        fmt3 = self._workbook.add_format()
+        fmt_rundate = self._workbook.add_format()
         fmt_j = self._get_number_format('j')
         fmt_ic = self._get_number_format('ic')
         fmt_disc = self._get_number_format('disc')
-        fmt = []
 
         fn = self._get_number_format()
         if last:
             fmt2 = self._workbook.add_format({'bottom': 1})
-            fmt3 = self._workbook.add_format({'bottom': 1})
-            fmt.append(border)
+            fmt_rundate = self._workbook.add_format({'bottom': 1})
             fn.set_bottom(1)
+            fmt = border
 
         fmt2.set_align('center')
-        fmt3.set_num_format('mm/dd/yy hh:mm')
+        fmt_rundate.set_num_format('mm/dd/yy hh:mm')
 
-        sh.write(row, 0, status, *fmt)
+        if is_plateau_step is False:
+            for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
+                f.set_bg_color(self._options.highlight_color.name())
+            fmt.set_bg_color(self._options.highlight_color.name())
+
+            sh.set_row(0, -1, fmt)
+
+        sh.write(row, 0, status, fmt)
         for j, c in enumerate(cols[1:]):
             if c.attr == 'cumulative_ar39':
                 txt = cum
@@ -755,7 +776,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if c.label in ('N', 'Power'):
                 sh.write(row, j + 1, txt, fmt2)
             elif c.label == 'RunDate':
-                sh.write_datetime(row, j + 1, txt, fmt3)
+                sh.write_datetime(row, j + 1, txt, fmt_rundate)
             elif c.attr == 'j':
                 sh.write_number(row, j + 1, txt, fmt_j)
             elif c.attr.startswith('ic'):
@@ -766,7 +787,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=fn)
                 else:
-                    sh.write(row, j + 1, txt, *fmt)
+                    sh.write(row, j + 1, txt, fmt)
 
         self._current_row += 1
 

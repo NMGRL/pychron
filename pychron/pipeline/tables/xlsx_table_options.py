@@ -17,7 +17,7 @@
 
 import os
 
-from traits.api import Enum, Bool, Str, Int, Float
+from traits.api import Enum, Bool, Str, Int, Float, Color
 from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
@@ -58,6 +58,8 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     include_percent_ar39 = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
     repeat_header = dumpable(Bool(False))
+    highlight_non_plateau = Bool(True)
+    highlight_color = dumpable(Color)
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
@@ -146,7 +148,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
                                 Item('age_units', label='Age Units'),
                                 Item('repeat_header', label='Repeat Header'),
-
+                                HGroup(Item('highlight_non_plateau'),
+                                       UItem('highlight_color', enabled_when='highlight_non_plateau')),
                                 show_border=True, label='Appearance')
 
         sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
@@ -179,7 +182,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  label='General')
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)
-        g1 = VGroup(grp, columns_grp, appearence_grp, sig_figs_grp, label='Main')
+
+        g1 = VGroup(HGroup(grp,appearence_grp),
+                    HGroup(columns_grp, sig_figs_grp), label='Main')
 
         summary_grp = VGroup(Item('include_summary_sheet', label='Summary Sheet'),
                              VGroup(

@@ -418,6 +418,21 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def calculate_plateau(self):
         return self.plateau_age
 
+    def get_is_plateau_step(self, an):
+        if isinstance(an, int):
+            idx = an
+            an = self.analyses[idx]
+        else:
+            idx = self.analyses.index(an)
+
+        plateau_step = False
+        if self.plateau_age:
+            if not an.is_omitted():
+                ps, pe = self.plateau_steps
+                plateau_step = ps <= idx <= pe
+
+        return plateau_step
+
     @cached_property
     def _get_integrated_age(self):
         ret = nan
@@ -458,16 +473,17 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     @cached_property
     def _get_plateau_age(self):
         # ages, errors, k39 = self._get_steps()
+        ans = self.analyses
 
-        ages = [ai.age for ai in self.analyses]
-        errors = [ai.age_err for ai in self.analyses]
-        k39 = [nominal_value(ai.get_computed_value('k39')) for ai in self.analyses]
+        ages = [ai.age for ai in ans]
+        errors = [ai.age_err for ai in ans]
+        k39 = [nominal_value(ai.get_computed_value('k39')) for ai in ans]
 
         options = {'nsteps': self.plateau_nsteps,
                    'gas_fraction': self.plateau_gas_fraction,
                    'fixed_steps': self.fixed_steps}
 
-        excludes = [i for i, ai in enumerate(self.analyses) if ai.is_omitted()]
+        excludes = [i for i, ai in enumerate(ans) if ai.is_omitted()]
         args = calculate_plateau_age(ages, errors, k39, options=options, excludes=excludes)
 
         v, e = 0, 0
@@ -475,12 +491,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             v, e, pidx = args
             if pidx[0] == pidx[1]:
                 return
-
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
                                                     ALPHAS[pidx[1]])
 
-            step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not self.analyses[i].is_omitted()]
+            step_idxs = [i for i in range(pidx[0], pidx[1] + 1) if not ans[i].is_omitted()]
             self.nsteps = len(step_idxs)
 
             pages = [ages[i] for i in step_idxs]
@@ -585,18 +600,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         self.arith_age_error_kind = new
         self.plateau_age_error_kind = new
         self.isochron_age_error_kind = new
-
-    def get_is_plateau_step(self, an):
-        plateau_step = False
-        if self.preferred_age_kind == 'Plateau':
-            if self.plateau_age:
-                if not an.is_omitted():
-                    idx = self.analyses.index(an)
-                    ps, pe = self.plateau_steps
-
-                    plateau_step = ps <= idx <= pe
-
-        return plateau_step
 
     def get_ma_scaled_age(self):
         a = self.preferred_age
