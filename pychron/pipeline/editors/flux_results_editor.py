@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 # from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
 from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
+from operator import attrgetter
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 from uncertainties import nominal_value, std_dev
 from itertools import groupby
@@ -233,7 +233,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         lk = opt.lambda_k
         ek = opt.error_kind
 
-        key = lambda x: x.identifier
+        key = attrgetter('identifier')
         geom = self.geometry
         poss = []
         ans = []

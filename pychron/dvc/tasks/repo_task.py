@@ -27,12 +27,13 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
 
 # ============= local library imports  ==========================
+from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction
+    SyncRepoAction, RepoStatusAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -62,6 +63,7 @@ class RepoItem(HasTraits):
 class ExperimentRepoTask(BaseTask):
     name = 'Experiment Repositories'
 
+    filter_repository_value = Str
     selected_repository_name = Str
     selected_local_repository_name = Instance(RepoItem)
 
@@ -77,7 +79,8 @@ class ExperimentRepoTask(BaseTask):
                           PullAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
-                          ArchiveRepositoryAction()),
+                          ArchiveRepositoryAction(),
+                          RepoStatusAction()),
                  SToolBar(SyncSampleInfoAction())]
 
     commits = List
@@ -86,6 +89,7 @@ class ExperimentRepoTask(BaseTask):
     branch = Str
     branches = List
     dvc = Any
+    o_local_repos = None
 
     def activated(self):
         # self._preference_binder('pychron.dvc.connection', ('organization',))
@@ -213,19 +217,19 @@ class ExperimentRepoTask(BaseTask):
                 self.pull()
                 self.push()
 
-    def _has_selected_local(self):
-        if not self.selected_local_repository_name:
-            self.information_dialog('Please select a local repository')
-            return
+    def status(self):
+        selected = self._has_selected_local()
+        if selected:
+            self.dvc.status_view(selected.name)
 
-        return self.selected_local_repository_name
-
+    # task
     def create_central_pane(self):
         return RepoCentralPane(model=self)
 
     def create_dock_panes(self):
         return [SelectionPane(model=self)]
 
+    # private
     def _refresh_branches(self):
         self.branches = self._repo.get_branch_names()
         b = self._repo.get_active_branch()
@@ -234,6 +238,22 @@ class ExperimentRepoTask(BaseTask):
         self.branch = b
         if force:
             self._branch_changed(self.branch)
+
+    def _filter_repository_value_changed(self, new):
+        if new:
+            if self.o_local_repos is None:
+                self.o_local_repos = self.local_names
+
+            self.local_names = fuzzyfinder(new, self.o_local_repos, attr='name')
+        elif self.o_local_repos:
+            self.local_names = self.o_local_repos
+
+    def _has_selected_local(self):
+        if not self.selected_local_repository_name:
+            self.information_dialog('Please select a local repository')
+            return
+
+        return self.selected_local_repository_name
 
     def _selected_local_repository_name_changed(self, new):
         if new:

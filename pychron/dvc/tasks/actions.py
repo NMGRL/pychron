@@ -43,36 +43,41 @@ class CloneAction(RemoteRepositoryAction):
     method = 'clone'
     name = 'Clone'
     image = icon('production_copyleft')
+    tooltip = 'Clone repository from remote. e.g. git clone https://github.com...'
 
 
 class AddBranchAction(LocalRepositoryAction):
     name = 'Add Branch'
     method = 'add_branch'
     image = icon('add')
+    tooltip = 'Add branch to selected repository'
 
 
 class CheckoutBranchAction(LocalRepositoryAction):
     name = 'Checkout Branch'
     method = 'checkout_branch'
     image = icon('cart_put')
+    tooltip = 'Checkout branch. e.g. git checkout <branch_name>'
 
 
 class PushAction(LocalRepositoryAction):
     name = 'Push'
     method = 'push'
     image = icon('arrow_up')
+    tooltip = 'Push changes to remote. git push'
 
 
 class PullAction(LocalRepositoryAction):
     name = 'Pull'
     method = 'pull'
     image = icon('arrow_down')
+    tooltip = 'Pull changes from remote. git pull'
 
 
-class FindChangesAction(TaskAction):
+class FindChangesAction(LocalRepositoryAction):
     name = 'Find Changes'
     method = 'find_changes'
-    tooltip = 'Search all local repositories for changes'
+    tooltip = 'Search all local repositories for changes. e.g. git log <remote>/branch..HEAD'
     image = icon('find')
 
 
@@ -85,28 +90,35 @@ class DeleteLocalChangesAction(LocalRepositoryAction):
 class ArchiveRepositoryAction(LocalRepositoryAction):
     name = 'Archive Repository'
     method = 'archive_repository'
-    image = icon('archive')
+    image = icon('bookshelf')
 
 
 class LoadOriginAction(TaskAction):
-    name = 'Load Origin'
+    name = 'Load Remote'
     method = 'load_origin'
     image = icon('arrow_refresh')
     tooltip = 'Update the list of available repositories'
 
 
-class SyncSampleInfoAction(TaskAction):
+class SyncSampleInfoAction(LocalRepositoryAction):
     name = 'Sync Repo/DB Sample Info'
     method = 'sync_sample_info'
     tooltip = 'Copy information from Central Database to the selected repository'
     image = icon('database_link')
 
 
-class SyncRepoAction(TaskAction):
+class SyncRepoAction(LocalRepositoryAction):
     name = 'Sync'
     method = 'sync_repo'
     tooltip = 'Sync to Origin. aka Pull then Push'
     image = icon('database_cleanup')
+
+
+class RepoStatusAction(LocalRepositoryAction):
+    name = 'Status'
+    method = 'status'
+    tooltip = 'Report the repository status. e.g. git status'
+    image = icon('eye')
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #

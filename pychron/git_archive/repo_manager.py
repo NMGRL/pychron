@@ -34,7 +34,7 @@ from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
-from pychron.git_archive.commit import Commit
+from pychron.git_archive.commit import GitSha
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind
@@ -328,7 +328,10 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.git.diff(a, b, )
 
-    def report_status(self):
+    def status(self):
+        return self._git_command(self._repo.git.status, 'status')
+
+    def report_local_changes(self):
         self.debug('Local Changes to {}'.format(self.path))
         for p in self.get_local_changes():
             self.debug('\t{}'.format(p))
@@ -860,7 +863,7 @@ class GitRepoManager(Loggable):
         def factory(ci):
             repo = self._repo
             obj = repo.rev_parse(ci)
-            cx = Commit(message=obj.message,
+            cx = GitSha(message=obj.message,
                         hexsha=obj.hexsha,
                         name=p,
                         date=format_date(obj.committed_date))

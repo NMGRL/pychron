@@ -15,20 +15,41 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Property, Bool
+from traits.api import HasTraits, Str, Property, Bool, Date, Int
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
-class Commit(HasTraits):
+class CommitAdapter(TabularAdapter):
+    columns = [('ID', 'hexsha'),
+               ('Date', 'date'),
+               ('Message', 'message'),
+               ('Author', 'author'),
+               ('Email', 'email'),
+               ]
+    hexsha_width = Int(80)
+    message_width = Int(300)
+    date_width = Int(120)
+    author_width = Int(100)
+
+    font = '10'
+    hexsha_text = Property
+
+    def _get_hexsha_text(self):
+        return self.item.hexsha[:8]
+
+
+class GitSha(HasTraits):
     message = Str
-    date = Str
-    hexsha = Str
-    summary = Property
-    active = Bool
+    date = Date
     blob = Str
     name = Str
+    hexsha = Str
+    author = Str
+    email = Str
+    active = Bool
+    tag = Str
 
     def _get_summary(self):
         return '{} {}'.format(self.date, self.message)

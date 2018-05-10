@@ -25,25 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-class CommitAdapter(TabularAdapter):
-    columns = [('ID', 'hexsha'),
-               ('Date', 'date'),
-               ('Message', 'message'),
-               ('Author', 'author'),
-               ('Email', 'email'),
-               ]
-    hexsha_width = Int(80)
-    message_width = Int(300)
-    date_width = Int(120)
-    author_width = Int(100)
-
-    font = '10'
-    hexsha_text = Property
-
-    def _get_hexsha_text(self):
-        return self.item.hexsha[:8]
+from pychron.git_archive.commit import CommitAdapter
 
 
 class RepoCentralPane(TraitsTaskPane):
@@ -77,7 +59,8 @@ class SelectionPane(TraitsDockPane):
                                                        editable=False)),
                             show_border=True, label='Origin')
 
-        local_grp = VGroup(UItem('local_names',
+        local_grp = VGroup(UItem('filter_repository_value'),
+                           UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
                                                       selected='selected_local_repository_name',
                                                       editable=False

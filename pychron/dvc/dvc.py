@@ -47,6 +47,7 @@ from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
+from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
@@ -495,56 +496,56 @@ class DVC(Loggable):
     #
     # def manual_baselines(self, runid, experiment_identifier, values, errors):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
-    def analysis_metadata_edit(self, uuid, runid, repository_identifier, analysis_metadata, extraction_metadata,
-                               identifier_metadata):
-        ps = []
-        if analysis_metadata:
-            path = analysis_path(runid, repository_identifier)
-            obj = dvc_load(path)
-            obj.update(analysis_metadata)
-            ps.append(path)
-            dvc_dump(obj, path)
-
-        if extraction_metadata:
-            path = analysis_path(runid, repository_identifier, modifier='extraction')
-            obj = dvc_load(path)
-            obj.update(extraction_metadata)
-            ps.append(path)
-            dvc_dump(obj, path)
-
-        if identifier_metadata:
-            new_identifier = identifier_metadata.get('identifier')
-            with self.db.session_ctx():
-                a = self.db.get_analysis_uuid(uuid)
-                if new_identifier:
-                    ipid = self.db.get_irradiation_position(new_identifier)
-                    if ipid is not None:
-                        a.irradiation_positionID = ipid
-                    else:
-                        self.warning('New Identifier is invalid')
-
-                a.aliquot = identifier_metadata.get('aliquot', a.aliquot)
-                a.increment = identifier_metadata.get('increment', a.increment)
-
-            path = analysis_path(runid, repository_identifier)
-            obj = dvc_load(path)
-            obj.update(identifier_metadata)
-            new_runid = make_runid(obj['identifier'], obj['aliquot'], obj['increment'])
-            new_path = analysis_path(new_runid, repository_identifier)
-            dvc_dump(new_path, obj)
-            os.remove(path)
-            ps.append(path)
-            ps.append(new_path)
-
-            for mod in PATH_MODIFIERS:
-                path = analysis_path(runid, repository_identifier, modifier=mod)
-                new_path = analysis_path(new_runid, repository_identifier, modifier=mod)
-                shutil.move(path, new_path)
-                ps.append(path)
-                ps.append(new_path)
-
-        if ps:
-            self.repository_add_paths(repository_identifier, ps)
+    # def analysis_metadata_edit(self, uuid, runid, repository_identifier, analysis_metadata, extraction_metadata,
+    #                            identifier_metadata):
+    #     ps = []
+    #     if analysis_metadata:
+    #         path = analysis_path(runid, repository_identifier)
+    #         obj = dvc_load(path)
+    #         obj.update(analysis_metadata)
+    #         ps.append(path)
+    #         dvc_dump(obj, path)
+    #
+    #     if extraction_metadata:
+    #         path = analysis_path(runid, repository_identifier, modifier='extraction')
+    #         obj = dvc_load(path)
+    #         obj.update(extraction_metadata)
+    #         ps.append(path)
+    #         dvc_dump(obj, path)
+    #
+    #     if identifier_metadata:
+    #         new_identifier = identifier_metadata.get('identifier')
+    #         with self.db.session_ctx():
+    #             a = self.db.get_analysis_uuid(uuid)
+    #             if new_identifier:
+    #                 ipid = self.db.get_irradiation_position(new_identifier)
+    #                 if ipid is not None:
+    #                     a.irradiation_positionID = ipid
+    #                 else:
+    #                     self.warning('New Identifier is invalid')
+    #
+    #             a.aliquot = identifier_metadata.get('aliquot', a.aliquot)
+    #             a.increment = identifier_metadata.get('increment', a.increment)
+    #
+    #         path = analysis_path(runid, repository_identifier)
+    #         obj = dvc_load(path)
+    #         obj.update(identifier_metadata)
+    #         new_runid = make_runid(obj['identifier'], obj['aliquot'], obj['increment'])
+    #         new_path = analysis_path(new_runid, repository_identifier)
+    #         dvc_dump(new_path, obj)
+    #         os.remove(path)
+    #         ps.append(path)
+    #         ps.append(new_path)
+    #
+    #         for mod in PATH_MODIFIERS:
+    #             path = analysis_path(runid, repository_identifier, modifier=mod)
+    #             new_path = analysis_path(new_runid, repository_identifier, modifier=mod)
+    #             shutil.move(path, new_path)
+    #             ps.append(path)
+    #             ps.append(new_path)
+    #
+    #     if ps:
+    #         self.repository_add_paths(repository_identifier, ps)
 
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
@@ -587,7 +588,15 @@ class DVC(Loggable):
         if self.repository_add_paths(repository_identifier, ps):
             self.repository_commit(repository_identifier, msg)
 
+    def status_view(self, repo):
+        repo = self._get_repository(repo, as_current=False)
+        v = StatusView(status=repo.status())
+        v.edit_traits()
+
     # analysis processing
+    def make_historical_branch(self, repo, branch):
+        pass
+
     def analysis_has_review(self, ai, attr):
         return True
         # test_str = TESTSTR[attr]
@@ -943,7 +952,7 @@ class DVC(Loggable):
         changes = self.meta_repo.has_staged()
         if changes:
             self.debug('meta repo has changes: {}'.format(changes))
-            self.meta_repo.report_status()
+            self.meta_repo.report_local_changess()
             self.meta_repo.commit(msg)
             self.meta_repo.clear_cache = True
         else:
@@ -1364,6 +1373,9 @@ class DVC(Loggable):
         path = analysis_path(rid, repo, 'productions')
         if path:
             return Production(path)
+
+    def get_repository(self, repo):
+        return self._get_repository(repo, as_current=False)
 
     def _get_repository(self, repository_identifier, as_current=True):
         repo = None

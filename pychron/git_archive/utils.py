@@ -20,27 +20,27 @@ import os
 from datetime import datetime
 
 import re
+
+import six
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
-from traits.api import HasTraits, Str, Bool, Date
-import six
-
 
 # ============= local library imports  ==========================
+from pychron.git_archive.commit import GitSha
 
 TAG_RE = re.compile(r'^\<\w+\>')
 
 
-class GitShaObject(HasTraits):
-    message = Str
-    date = Date
-    blob = Str
-    name = Str
-    hexsha = Str
-    author = Str
-    email = Str
-    active = Bool
-    tag = Str
+# class GitShaObject(HasTraits):
+# message = Str
+# date = Date
+# blob = Str
+# name = Str
+# hexsha = Str
+# author = Str
+# email = Str
+# active = Bool
+# tag = Str
 
 
 def from_gitlog(obj, path, tag=None):
@@ -54,13 +54,13 @@ def from_gitlog(obj, path, tag=None):
         else:
             tag = 'NULL'
 
-    g = GitShaObject(hexsha=hexsha,
-                     message=message,
-                     date=date,
-                     author=author,
-                     email=email,
-                     path=path,
-                     tag=tag)
+    g = GitSha(hexsha=hexsha,
+               message=message,
+               date=date,
+               author=author,
+               email=email,
+               path=path,
+               tag=tag)
     return g
 
 

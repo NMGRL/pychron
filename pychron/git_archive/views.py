@@ -15,13 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Property, Any
-from traitsui.api import View, UItem
+from traitsui.api import View, UItem, TextEditor
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
+class StatusView(HasTraits):
+    def traits_view(self):
+        v = View(UItem('status', style='custom',
+                       editor=TextEditor(read_only=True)),
+                 kind='modal',
+                 title='Repository Status')
+        return v
 
 
 class NewBranchView(HasTraits):
