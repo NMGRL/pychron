@@ -240,7 +240,7 @@ class ReferenceNode(DataNode):
     name = 'References'
     analysis_kind = 'references'
 
-    def pre_run(self, state):
+    def pre_run(self, state, configure=True):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
@@ -250,7 +250,8 @@ class ReferenceNode(DataNode):
                 self.references = refs
 
         if not self.references:
-            self.configure(pre_run=True)
+            if configure:
+                self.configure(pre_run=True)
 
         return self.references
 
