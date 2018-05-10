@@ -129,6 +129,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.db.close_session()
 
     def activated(self):
+        self.debug('activated labnumber')
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
@@ -306,6 +307,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _manager_default(self):
         dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
+        dvc.create_session()
         return LabnumberEntry(application=self.application, dvc=dvc)
 
     # def _importer_default(self):
