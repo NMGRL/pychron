@@ -514,7 +514,13 @@ class GitRepoManager(Loggable):
             self.warning_dialog('There was an issue trying to checkout branch "{}"'.format(name))
             raise e
 
-    def create_branch(self, name=None, commit='HEAD'):
+    def delete_branch(self, name):
+        self._repo.delete_head(name)
+
+    def get_branch(self, name):
+        return getattr(self._repo.heads, name)
+
+    def create_branch(self, name=None, commit='HEAD', inform=True):
         repo = self._repo
 
         if name is None:
@@ -529,7 +535,8 @@ class GitRepoManager(Loggable):
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
-            self.information_dialog('Repository now on branch "{}"'.format(name))
+            if inform:
+                self.information_dialog('Repository now on branch "{}"'.format(name))
             return True
 
     def create_remote(self, url, name='origin', force=False):

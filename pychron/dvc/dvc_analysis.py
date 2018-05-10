@@ -71,6 +71,7 @@ class DVCAnalysis(Analysis):
 
     production_obj = None
     chronology_obj = None
+    use_repository_suffix = False
 
     def __init__(self, record_id, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
@@ -78,6 +79,7 @@ class DVCAnalysis(Analysis):
         path = analysis_path(record_id, repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
+
         root = os.path.dirname(path)
         bname = os.path.basename(path)
         head, ext = os.path.splitext(bname)
@@ -91,6 +93,10 @@ class DVCAnalysis(Analysis):
         self.load_paths()
         self.load_spectrometer_parameters(jd['spec_sha'])
         self.load_environmentals(jd.get('environmental'))
+
+    @property
+    def irradiation_position_position(self):
+        return self.irradiation_position
 
     def load_meta(self, jd):
         self.measurement_script_name = jd.get('measurement', NULL_STR)

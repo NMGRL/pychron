@@ -594,8 +594,9 @@ class DVC(Loggable):
         v.edit_traits()
 
     # analysis processing
-    def make_historical_branch(self, repo, branch):
-        pass
+    # def make_historical_branch(self, repo, name, commit):
+    #     repo = self._get_repository(repo, as_current=False)
+    #     repo.create_branch(name=name, commit=commit)
 
     def analysis_has_review(self, ai, attr):
         return True
@@ -731,7 +732,7 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False):
+    def make_analyses(self, records, calculate_f_only=False, reload=False):
         if not records:
             return []
 
@@ -779,7 +780,7 @@ class DVC(Loggable):
         def func(*args):
             try:
                 r = make_record(branches=branches, chronos=chronos, productions=productions,
-                                fluxes=fluxes, calculate_f_only=calculate_f_only, *args)
+                                fluxes=fluxes, calculate_f_only=calculate_f_only, reload=reload, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -1274,7 +1275,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None,
-                     calculate_f_only=False):
+                     calculate_f_only=False, reload=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1297,7 +1298,7 @@ class DVC(Loggable):
             if expid is None:
                 expid = self._get_requested_experiment_id(exps)
 
-        if isinstance(record, DVCAnalysis):
+        if isinstance(record, DVCAnalysis) and not reload:
             a = record
         else:
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))

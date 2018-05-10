@@ -172,6 +172,15 @@ nodes:
   - klass: IdeogramNode
     no_analyses_warning: False
 """
+
+HISTORY_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: IdeogramNode
+"""
+
 REPORT = """
 required:
 nodes:
