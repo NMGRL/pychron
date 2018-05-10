@@ -43,7 +43,7 @@ class AddAnalysisGroupView(HasTraits):
         if append:
             db.append_analysis_group(gdb, ans)
         elif ok:
-            db.add_analysis_group(ans, self.name, self.project)
+            db.add_analysis_group(ans, self.name, self.project.name)
 
     def traits_view(self):
         v = View(Item('name'),
