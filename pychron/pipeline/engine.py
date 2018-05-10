@@ -41,7 +41,7 @@ from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersis
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
     AUTO_REPORT, REPORT, CORRECTION_FACTORS, ANALYSIS_METADATA, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
-    CSV_ANALYSES_EXPORT, BULK_EDIT
+    CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -693,7 +693,7 @@ class PipelineEngine(Loggable):
                 self.post_run(state)
             return True
 
-    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True):
+    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True, configure=True):
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -722,7 +722,7 @@ class PipelineEngine(Loggable):
                 node.editor = None
 
                 with ActiveCTX(node):
-                    if not node.pre_run(state):
+                    if not node.pre_run(state, configure=configure):
                         self.debug('Pre run failed {}'.format(node))
                         return True
 
@@ -907,6 +907,7 @@ class PipelineEngine(Loggable):
                          ('Table', (('Analysis', ANALYSIS_TABLE),
                                     ('Interpreted Age', INTERPRETED_AGE_TABLE),
                                     ('Report', REPORT))),
+                         ('History', (('Ideogram', HISTORY_IDEOGRAM),)),
                          ('Auto', (('Ideogram', AUTO_IDEOGRAM),
                                    ('Series', AUTO_SERIES),
                                    ('Report', AUTO_REPORT))),

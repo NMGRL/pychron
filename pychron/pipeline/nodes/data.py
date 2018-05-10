@@ -546,7 +546,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
             #     self._unks_ids = unks_ids
             # self.engine.rerun_with(unks, post_run=False)
             self.state.unknowns = unks
-            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state)
+            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
 
             self.engine.post_run_refresh(state=self.state)
             self.engine.refresh_figure_editors()
