@@ -93,10 +93,9 @@ class MassSpecAnalysis(Analysis):
                     self.kcl = 0
 
         prefs = obj.changeable.preferences_set
-        # prefs = None
         fo, fi, fs = 0, 0, 0
         if prefs:
-            # fo = prefs.DelOutliersAfterFit == 'true'
+            fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
             self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
@@ -121,6 +120,7 @@ class MassSpecAnalysis(Analysis):
                 except AttributeError:
                     pass
 
+            iso.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
             iso.total_value = ufloat(tv, te)
             # iso.set_uvalue((uv, ee))
             iso.n = n
@@ -167,11 +167,13 @@ class MassSpecAnalysis(Analysis):
     def sync_filtering(self, obj, prefs):
         """
         """
+
         fo, fi, fs = 0, 0, 0
         if prefs:
             fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
+
         obj.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
     def sync_irradiation(self, irrad):

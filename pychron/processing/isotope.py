@@ -18,8 +18,6 @@
 # from traits.api import HasTraits, Str, Float, Property, Instance, \
 #     String, Either, Dict, cached_property, Event, List, Bool, Int, Array
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from __future__ import print_function
 import re
 import struct
 from binascii import hexlify
@@ -174,7 +172,7 @@ class IsotopicMeasurement(BaseMeasurement):
         return self._regressor.rsquared
 
     def get_gradient(self):
-        return ((gradient(self.ys)**2).sum())**0.5
+        return ((gradient(self.ys) ** 2).sum()) ** 0.5
 
     def get_xsquared_coefficient(self):
         if self._regressor:
@@ -198,6 +196,7 @@ class IsotopicMeasurement(BaseMeasurement):
             n = self._regressor.clean_xs.shape[0]
         else:
             n = self.n
+
         return n
 
     @fn.setter
@@ -206,6 +205,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_filtering(self, d):
         self.filter_outliers_dict = d.copy()
+        if self._regressor:
+            self._regressor.dirty = True
 
     def set_fit_blocks(self, fit):
         """
@@ -264,10 +265,13 @@ class IsotopicMeasurement(BaseMeasurement):
         self.filter_outliers_dict = {'filter_outliers': filter_outliers,
                                      'iterations': iterations,
                                      'std_devs': std_devs}
-        # self._dirty = notify
+
+        self._fn = None
+        if self._regressor:
+            self._regressor.dirty = True
 
     def attr_set(self, **kw):
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             setattr(self, k, v)
 
     def set_fit_error_type(self, e):
@@ -285,9 +289,10 @@ class IsotopicMeasurement(BaseMeasurement):
                 if fitname == 'Auto':
                     fitname = fit.auto_fit(self.n)
 
-                self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                                                 iterations=int(fit.filter_outlier_iterations or 0),
-                                                 std_devs=int(fit.filter_outlier_std_devs or 0))
+                # self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
+                #                                  iterations=int(fit.filter_outlier_iterations or 0),
+                #                                  std_devs=int(fit.filter_outlier_std_devs or 0))
+                # self._fn =
                 # self.error_type=fit.error_type or 'SEM'
                 self.attr_set(fit=fitname,
                               time_zero_offset=fit.time_zero_offset or 0,
@@ -296,6 +301,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
                 self._regressor = None
 
+                self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
+                                              iterations=int(fit.filter_outlier_iterations or 0),
+                                              std_devs=int(fit.filter_outlier_std_devs or 0))
                 # if self._regressor:
                 #     self._regressor.error_calc_type = self.error_type
 

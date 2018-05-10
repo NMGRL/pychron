@@ -413,7 +413,7 @@ class DVCAnalysis(Analysis):
         self.set_tag(jd)
 
     def _load_blanks(self, jd):
-        for key, v in six.iteritems(jd):
+        for key, v in jd.items():
             if key in self.isotopes:
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
@@ -440,7 +440,7 @@ class DVCAnalysis(Analysis):
                 i.error_type = v.get('error_type', 'SEM')
                 fod = v.get('filter_outliers_dict')
                 if fod:
-                    i.filter_outliers_dict = fod
+                    i.set_filter_outliers_dict(**fod)
                 i.set_fit(v['fit'], notify=False)
                 i.reviewed = v.get('reviewed', False)
 
@@ -462,7 +462,7 @@ class DVCAnalysis(Analysis):
                 setattr(item, k, obj[k])
 
     def _load_baselines(self, jd):
-        for det, v in six.iteritems(jd):
+        for det, v in jd.items():
             for iso in self.itervalues():
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
@@ -470,10 +470,10 @@ class DVCAnalysis(Analysis):
                     iso.baseline.set_fit(v['fit'], notify=False)
                     fod = v.get('filter_outliers_dict')
                     if fod:
-                        iso.baseline.filter_outliers_dict = fod
+                        iso.baseline.set_filter_outliers_dict(**fod)
 
     def _load_icfactors(self, jd):
-        for key, v in six.iteritems(jd):
+        for key, v in jd.items():
             if isinstance(v, dict):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')
