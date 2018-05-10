@@ -51,6 +51,9 @@ class SampleBrowserModel(BrowserModel):
         prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
+        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
+        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
+
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):

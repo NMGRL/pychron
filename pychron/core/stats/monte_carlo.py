@@ -16,19 +16,20 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from numpy import zeros, percentile, array, median
+from numpy import zeros, percentile, array, median, random
 from scipy.stats import norm
-from six.moves import range
 # ============= local library imports  ==========================
 
 
-def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
+def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, seed=None):
     exog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
     n = len(ys)
     yes = array((ys, yserr)).T
+    if seed:
+        random.seed(seed)
+
     ga = norm().rvs((ntrials, n))
     yp = zeros(n)
     res = zeros((ntrials, len(pts)))

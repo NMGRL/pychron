@@ -92,21 +92,27 @@ class BrowserModel(BaseBrowserModel):
     def activate_browser(self, force=False):
         db = self.db
         self.datasource_url = db.datasource_url
+        print('asdfasd', self.auto_load_database, self.load_selection_enabled)
         if not self.is_activated or force:
-            self._suppress_load_labnumbers = True
-            self.load_principal_investigators()
-            self.load_projects()
-            self.load_repositories()
-            self.load_loads()
-            self._suppress_load_labnumbers = False
 
-            self._load_projects_and_irradiations()
+            if self.auto_load_database:
+                self._suppress_load_labnumbers = True
+                self.load_principal_investigators()
+                # self.load_projects()
+                self.load_repositories()
+                self.load_loads()
 
-            # self._load_associated_labnumbers()
+                self._suppress_load_labnumbers = False
 
-            self._load_mass_spectrometers()
+                self._load_projects_and_irradiations()
 
-            self.load_browser_selection()
+                # self._load_associated_labnumbers()
+
+                self._load_mass_spectrometers()
+
+            if self.load_selection_enabled:
+                self.load_browser_selection()
+
             self.is_activated = True
 
     def refresh_samples(self):

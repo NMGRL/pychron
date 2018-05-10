@@ -1527,6 +1527,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return lt
 
+    get_load = get_loadtable
+
     def get_identifier(self, identifier):
         return self._retrieve_item(IrradiationPositionTbl, identifier,
                                    key='identifier')

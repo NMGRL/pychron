@@ -171,7 +171,7 @@ class ExperimentRepoTask(BaseTask):
         path = os.path.join(root, name)
         if not os.path.isdir(path):
             self.debug('cloning repository {}'.format(name))
-            service = self.application.get_service(IGitHost)
+            service = self.dvc.application.get_service(IGitHost)
             service.clone_from(name, path, self.organization)
             self.refresh_local_names()
 

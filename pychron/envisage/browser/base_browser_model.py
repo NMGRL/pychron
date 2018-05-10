@@ -158,6 +158,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     mass_spectrometer_includes = List
     available_mass_spectrometers = List
 
+    auto_load_database = Bool(True)
+    load_selection_enabled = Bool(True)
+
     named_date_range = Enum('this month', 'this week', 'yesterday')
     low_post = Property(Date, depends_on='date_enabled, _low_post, use_low_post, use_named_date_range, '
                                          'named_date_range')
@@ -383,11 +386,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _load_associated_labnumbers(self):
         """
         """
+
         if self._suppress_load_labnumbers:
+            print('skiping load associated')
             return
 
         sams = self._make_labnumbers()
-
         self.samples = sams
         self.osamples = sams
 
@@ -540,29 +544,61 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         return p.lower()
 
+    def _make_project(self, record):
+        return ProjectRecordView(record)
+
+    def _make_principal_investigator(self, record):
+        return PrincipalInvestigatorRecordView(record)
+
+    def _make_load(self, record):
+        return LoadRecordView(record)
+
+    def _make_sample(self, record):
+        return LabnumberRecordView(record)
+
     def _load_browser_selection(self, selection):
-        def load(attr, values):
-            def get(n):
+        print('asdfas', selection)
+        if not self.auto_load_database:
+            for attr in ('load', 'project', 'principal_investigator', 'sample'):
+                pattr = '{}s'.format(attr)
                 try:
-                    return next((p for p in values if p.id == n), None)
-                except AttributeError as e:
-                    print(e)
+                    sel = selection[pattr]
+                except KeyError:
+                    return
+                vs = []
+                if sel:
+                    for si in sel:
+                        func = getattr(self.db, 'get_{}'.format(attr))
+                        v = func(si)
+                        make = getattr(self, '_make_{}'.format(attr))
+                        vs.append(make(v))
+
+                    setattr(self, pattr, vs)
+                    setattr(self, 'selected_{}'.format(pattr), vs)
+
+        else:
+            def load(attr, values):
+                def get(n):
+                    try:
+                        return next((p for p in values if p.id == n), None)
+                    except AttributeError as e:
+                        print(e)
+                        return
+
+                try:
+                    sel = selection[attr]
+                except KeyError:
                     return
 
-            try:
-                sel = selection[attr]
-            except KeyError:
-                return
+                vs = [get(pp) for pp in sel]
+                vs = [pp for pp in vs if pp is not None]
+                setattr(self, 'selected_{}'.format(attr), vs)
 
-            vs = [get(pp) for pp in sel]
-            vs = [pp for pp in vs if pp is not None]
-            setattr(self, 'selected_{}'.format(attr), vs)
-
-        load('principal_investigators', self.principal_investigators)
-        load('projects', self.projects)
-        # load('experiments', self.repositories)
-        load('samples', self.samples)
-        load('loads', self.loads)
+            load('principal_investigators', self.principal_investigators)
+            load('projects', self.projects)
+            # load('experiments', self.repositories)
+            load('samples', self.samples)
+            load('loads', self.loads)
 
     def _load_projects_for_principal_investigators(self, pis=None):
         ms = None
