@@ -181,6 +181,14 @@ nodes:
   - klass: IdeogramNode
 """
 
+HISTORY_SPECTRUM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: SpectrumNode
+"""
+
 REPORT = """
 required:
 nodes:
