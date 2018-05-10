@@ -216,6 +216,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     irradiation = Str
     level = Str
 
+    suppress_metadata_change = Bool(False)
     # scene = Instance(MlabSceneModel, ())
 
     def set_items(self, analyses):
@@ -452,7 +453,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             # plot the individual analyses
             # plot1 == scatter
             iscatter, iys = self._graph_individual_analyses()
-            iscatter.index.metadata['selections'] = sel
 
             # plot means
             # plot2 == scatter
@@ -474,9 +474,13 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             yma = max(uyy.max(), max(iys))
             g.set_x_limits(-3.5, 3.5)
 
+            # set metadata last because it will trigger a refresh
+            self.suppress_metadata_change = True
+            iscatter.index.metadata['selections'] = sel
+            self.suppress_metadata_change = False
+
         else:
             plot = g.plots[0]
-
             s1 = plot.plots['plot2'][0]
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
@@ -552,7 +556,8 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old, new
         # print obj.metadata
-        sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
+        if not self.suppress_metadata_change:
+            sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
     def _recalculate_means(self, sel):
         identifier = None
