@@ -952,7 +952,7 @@ class DVC(Loggable):
         changes = self.meta_repo.has_staged()
         if changes:
             self.debug('meta repo has changes: {}'.format(changes))
-            self.meta_repo.report_local_changess()
+            self.meta_repo.report_local_changes()
             self.meta_repo.commit(msg)
             self.meta_repo.clear_cache = True
         else:
