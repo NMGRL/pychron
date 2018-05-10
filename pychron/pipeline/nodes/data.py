@@ -479,6 +479,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
     _between_updates = None
     pipeline = None
     state = None
+    _low = None
 
     def clear_data(self):
         super(ListenUnknownNode, self).clear_data()
@@ -491,7 +492,6 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         self.state = None
 
     def _post_run_hook(self, engine, state):
-        self.state = state
         self.pipeline = engine.pipeline
         engine.pipeline.active = True
 
@@ -524,6 +524,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
             self._low = datetime.now()
             unks, updated = self._load_analyses()
             state.unknowns = unks
+            self.state = state
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
