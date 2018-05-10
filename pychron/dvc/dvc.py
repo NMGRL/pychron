@@ -661,10 +661,10 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
+    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options=None, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add)
 
         with self.session_ctx(use_parent_session=False):
             ip = self.get_identifier(identifier)

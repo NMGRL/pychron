@@ -227,19 +227,19 @@ class FluxPersistNode(DVCPersistNode):
         lk = po.lambda_k
 
         decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+        options = dict(model_kind=po.model_kind,
+                       predicted_j_error_type=po.predicted_j_error_type,
+                       use_weighted_fit=po.use_weighted_fit,
+                       monte_carlo_ntrials=po.monte_carlo_ntrials,
+                       use_monte_carlo=po.use_monte_carlo,
+                       monitor_sample_name=po.monitor_sample_name)
+
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
                         irp.j, irp.jerr,
                         irp.mean_j, irp.mean_jerr,
                         decay_constants,
-
-                        model_kind=po.model_kind,
-                        predicted_j_error_type=po.predicted_j_error_type,
-                        use_weighted_fit=po.use_weighted_fit,
-                        monte_carlo_ntrials=po.monte_carlo_ntrials,
-                        use_monte_carlo=po.use_monte_carlo,
-                        monitor_sample_name=po.monitor_sample_name,
-
                         analyses=irp.analyses,
+                        options=options,
                         add=False)
 
         j = ufloat(irp.j, irp.jerr, tag='j')

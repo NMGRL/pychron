@@ -593,7 +593,12 @@ class MetaRepo(GitRepoManager):
             if add:
                 self.add(p, commit=False)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
+                    analyses=None, options=None, add=True):
+
+        if options is None:
+            options = {}
+
         if decay is None:
             decay = {}
         if analyses is None:
@@ -612,6 +617,7 @@ class MetaRepo(GitRepoManager):
                 'mean_j': mj, 'mean_j_err': me,
                 'decay_constants': decay,
                 'identifier': identifier,
+                'options': options,
                 'analyses': [{'uuid': ai.uuid,
                               'record_id': ai.record_id,
                               'status': ai.is_omitted()}
