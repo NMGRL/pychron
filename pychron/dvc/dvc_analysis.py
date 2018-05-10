@@ -426,17 +426,16 @@ class DVCAnalysis(Analysis):
                     i.blank_source = fit
 
     def _load_intercepts(self, jd):
-        for iso, v in six.iteritems(jd):
+        for iso, v in jd.items():
             if iso in self.isotopes:
                 i = self.isotopes[iso]
                 self._load_value_error(i, v)
 
-                i.set_fit(v['fit'], notify=False)
                 i.error_type = v.get('error_type', 'SEM')
                 fod = v.get('filter_outliers_dict')
                 if fod:
                     i.filter_outliers_dict = fod
-
+                i.set_fit(v['fit'], notify=False)
                 i.reviewed = v.get('reviewed', False)
 
     def _load_value_error(self, item, obj):
