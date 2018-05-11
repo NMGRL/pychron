@@ -178,7 +178,7 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: DVCHistoryNode
-  - klass: IdeogramNode
+  - klass: HistoryIdeogramNode
 """
 
 HISTORY_SPECTRUM = """

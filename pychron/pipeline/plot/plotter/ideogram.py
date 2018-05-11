@@ -156,6 +156,8 @@ class Ideogram(BaseArArFigure):
             selection = []
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            # plotobj.group_id = self.group_id
+            # print(id(plotobj), plotobj.group_id)
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             except AttributeError:
@@ -359,17 +361,19 @@ class Ideogram(BaseArArFigure):
         plotkw = self.options.get_plot_dict(ogid)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
+        line.group_id = self.group_id
 
         self._add_peak_labels(line)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
         # add the dashed original line
-        graph.new_series(x=bins, y=probs,
-                         plotid=pid,
-                         visible=False,
-                         color=line.color,
-                         line_style='dash')
+        dline, _ = graph.new_series(x=bins, y=probs,
+                                    plotid=pid,
+                                    visible=False,
+                                    color=line.color,
+                                    line_style='dash')
+        dline.group_id = self.group_id
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
@@ -689,7 +693,7 @@ class Ideogram(BaseArArFigure):
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
-            ys[ys < 0] = 10**math.floor(math.log10(min(ys[ys > 0])))
+            ys[ys < 0] = 10 ** math.floor(math.log10(min(ys[ys > 0])))
 
         graph = self.graph
 
@@ -718,6 +722,7 @@ class Ideogram(BaseArArFigure):
             graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
+        s.group_id = self.group_id
         return s
 
     def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):

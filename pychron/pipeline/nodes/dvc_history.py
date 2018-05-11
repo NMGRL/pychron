@@ -49,6 +49,8 @@ class CommitSelector(HasTraits):
                               editor=TabularEditor(adapter=CommitAdapter(),
                                                    editable=False,
                                                    selected='selected'))),
+                 height=600,
+                 width=700,
                  buttons=['OK', 'Cancel'])
         return v
 

@@ -31,8 +31,8 @@ from pychron.pipeline.plot.figure_container import FigureContainer
 
 class WarningLabel(PlotLabel):
     def _layout_as_overlay(self, size=None, force=False):
-        self.x = self.component.x+self.component.width/2
-        self.y = self.component.y+self.component.height/2
+        self.x = self.component.x + self.component.width / 2
+        self.y = self.component.y + self.component.height / 2
 
 
 class GraphEditor(BaseTraitsEditor):
@@ -131,11 +131,14 @@ class GraphEditor(BaseTraitsEditor):
     def _component_factory(self):
         raise NotImplementedError
 
+    def get_component_view(self):
+        return UItem('component',
+                     style='custom',
+                     # width=650,
+                     editor=EnableComponentEditor())
+
     def traits_view(self):
-        v = View(UItem('component',
-                       style='custom',
-                       width=650,
-                       editor=EnableComponentEditor()),
+        v = View(self.get_component_view(),
                  resizable=True)
         return v
 

@@ -25,7 +25,7 @@ from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
-    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode
+    VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, FindBlanksNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
