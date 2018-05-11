@@ -593,6 +593,12 @@ class DVC(Loggable):
         v = StatusView(status=repo.status())
         v.edit_traits()
 
+    def add_bookmark(self, repo, name, message=None, hexsha=None):
+        if not message:
+            message = 'No message provided'
+        repo = self._get_repository(repo, as_current=False)
+        repo.add_tag(name, message, hexsha)
+
     # analysis processing
     # def make_historical_branch(self, repo, name, commit):
     #     repo = self._get_repository(repo, as_current=False)

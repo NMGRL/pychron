@@ -32,9 +32,8 @@ from traits.api import Any, Str, List, Event
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
-from pychron.git_archive.commit import GitSha
+from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.diff_view import DiffView, DiffModel
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind
@@ -64,6 +63,17 @@ def isoformat_date(d):
 
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
+
+
+class StashCTX(object):
+    def __init__(self, repo):
+        self._repo = repo
+
+    def __enter__(self):
+        self._repo.git.stash()
+
+    def __exit__(self):
+        self._repo.git.stash.pop()
 
 
 class GitRepoManager(Loggable):
@@ -646,18 +656,22 @@ class GitRepoManager(Loggable):
                         return
 
                 # potentially conflicts
+                with StashCTX(repo):
+                    # do merge
+                    try:
+                        repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                    except GitCommandError:
+                        if self.confirmation_dialog('There appears to be a problem with {}.'
+                                                    '\n\nWould you like to accept the master copy'.format(self.name)):
+                            try:
+                                repo.git.merge('--abort')
+                            except GitCommandError:
+                                pass
 
-                # do merge
-                try:
-                    repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
-                except GitCommandError:
-                    if self.confirmation_dialog('There appears to be a problem with {}.'
-                                                '\n\nWould you like to accept the master copy'.format(self.name)):
-                        repo.git.merge('--abort')
-                        repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-                        return True
-                    else:
-                        return
+                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                            return True
+                        else:
+                            return
 
                 # self._git_command(lambda: repo.git.rebase('--preserve-merges',
                 #                                           '{}/{}'.format(remote, branch)),
@@ -780,6 +794,13 @@ class GitRepoManager(Loggable):
                 pass
 
         return sha
+
+    def add_tag(self, name, message, hexsha=None):
+        args = ('-a', name, '-m', message)
+        if hexsha:
+            args = args + (hexsha,)
+
+        self.cmd('tag', *args)
 
     # action handlers
     def diff_selected(self):

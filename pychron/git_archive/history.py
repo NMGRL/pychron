@@ -19,12 +19,12 @@ from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, \
     Event
 from traitsui.api import View, Item, Controller, TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
-from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.git_archive.commit import GitSha, CommitAdapter
+from pychron.git_archive.git_objects import GitSha
+from pychron.git_archive.views import CommitAdapter
 from pychron.git_archive.diff_view import DiffView
 
 

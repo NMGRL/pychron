@@ -162,4 +162,18 @@ class DVCExperimentPreferencesPane(PreferencesPane):
                         label='DVC', show_border=True))
         return v
 
+
+class DVCRepositoryPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.dvc.repository'
+    check_for_changes = Bool
+
+
+class DVCRepositoryPreferencesPane(PreferencesPane):
+    model_factory = DVCRepositoryPreferences
+    category = 'Repositories'
+
+    def traits_view(self):
+        v = View(VGroup(Item('check_for_changes', label='Check for Changes'),
+                        label='', show_border=True))
+        return v
 # ============= EOF =============================================

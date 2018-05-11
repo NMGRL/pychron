@@ -13,17 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from itertools import groupby
-from operator import attrgetter
 
-from git import Repo
 from traits.api import HasTraits, List, Any, Str
 from traitsui.api import View, UItem, TabularEditor, EnumEditor, VGroup
 
-from pychron.git_archive.commit import CommitAdapter
+from itertools import groupby
+from operator import attrgetter
+
+from pychron.git_archive.views import CommitAdapter
 from pychron.git_archive.utils import get_commits
-from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.data import DVCNode, DataNode, BaseDVCNode
+from pychron.pipeline.nodes.data import BaseDVCNode
 
 
 class CommitSelector(HasTraits):

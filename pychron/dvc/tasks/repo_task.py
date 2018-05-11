@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import os
 import shutil
 
+from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 
 # ============= enthought library imports =======================
@@ -33,13 +34,13 @@ from pychron.core.progress import progress_loader
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.git_archive.utils import get_commits, ahead_behind
+from pychron.git_archive.utils import get_commits, ahead_behind, get_tags
 from pychron.github import Organization
 from pychron.paths import paths
 
@@ -80,18 +81,22 @@ class ExperimentRepoTask(BaseTask):
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
-                          RepoStatusAction()),
+                          RepoStatusAction(),
+                          BookmarkAction()),
                  SToolBar(SyncSampleInfoAction())]
 
     commits = List
+    git_tags = List
     _repo = None
     selected_commit = Any
     branch = Str
     branches = List
     dvc = Any
     o_local_repos = None
+    check_for_changes = Bool(True)
 
     def activated(self):
+        bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
         # self._preference_binder('pychron.dvc.connection', ('organization',))
         # prefid = 'pychron.dvc.connection'
 
@@ -99,8 +104,9 @@ class ExperimentRepoTask(BaseTask):
 
         # self._preference_binder('pychron.github', ('oauth_token',))
         self.refresh_local_names()
-        if self.confirmation_dialog('Check all Repositories for changes'):
-            self.find_changes()
+        if self.check_for_changes:
+            if self.confirmation_dialog('Check all Repositories for changes'):
+                self.find_changes()
 
     def archive_repository(self):
         self.debug('archive repository')
@@ -222,6 +228,24 @@ class ExperimentRepoTask(BaseTask):
         if selected:
             self.dvc.status_view(selected.name)
 
+    def add_bookmark(self):
+        selected = self._has_selected_local()
+        if selected:
+            hexsha = None
+            if self.selected_commit:
+                hexsha = self.selected_commit.hexsha
+
+            from pychron.git_archive.views import NewTagView
+            nt = NewTagView()
+            info = nt.edit_traits()
+            if info.result:
+                if nt.name:
+                    self.dvc.add_bookmark(selected.name, nt.name,
+                                          nt.message or 'No message provided',
+                                          hexsha=hexsha)
+                else:
+                    self.warning_dialog('A name is required to add a bookmark. Please try again')
+
     # task
     def create_central_pane(self):
         return RepoCentralPane(model=self)
@@ -230,6 +254,9 @@ class ExperimentRepoTask(BaseTask):
         return [SelectionPane(model=self)]
 
     # private
+    def _refresh_tags(self):
+        self.git_tags = get_tags(self._repo.active_repo)
+
     def _refresh_branches(self):
         self.branches = self._repo.get_branch_names()
         b = self._repo.get_active_branch()
@@ -264,12 +291,11 @@ class ExperimentRepoTask(BaseTask):
                 repo.open_repo(root)
                 self._repo = repo
                 self._refresh_branches()
+                self._refresh_tags()
 
     def _branch_changed(self, new):
         if new:
-            # fmt = 'format:"%H|%cn|%ce|%ct|%s"'
             self.commits = get_commits(self._repo.active_repo, new, None, '')
-            # self.commits = [from_gitlog(l) for l in self._repo.get_log(new, '--pretty={}'.format(fmt))]
         else:
             self.commits = []
 

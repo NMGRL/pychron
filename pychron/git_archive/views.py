@@ -16,11 +16,14 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Property, Any
-from traitsui.api import View, UItem, TextEditor
-
+from traits.trait_types import Int
+from traits.traits import Property
+from traitsui.api import View, UItem, TextEditor, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+
 
 class StatusView(HasTraits):
     def traits_view(self):
@@ -28,6 +31,22 @@ class StatusView(HasTraits):
                        editor=TextEditor(read_only=True)),
                  kind='modal',
                  title='Repository Status')
+        return v
+
+
+class NewTagView(HasTraits):
+    message = Str
+    name = Str
+
+    def traits_view(self):
+        v = View(VGroup(Item('name'),
+                        VGroup(UItem('message', style='custom'),
+                               show_border=True, label='Message')),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'],
+                 width=400,
+                 title='New Tag')
+
         return v
 
 
@@ -54,5 +73,49 @@ class NewBranchView(HasTraits):
         if v not in self.branches:
             if ' ' not in v:
                 return v
+
+
+class GitObjectAdapter(TabularAdapter):
+    hexsha_width = Int(80)
+    message_width = Int(300)
+    date_width = Int(120)
+
+    font = '10'
+    hexsha_text = Property
+    message_text = Property
+
+    def _get_hexsha_text(self):
+        return self.item.hexsha[:8]
+
+    def _get_message_text(self):
+        return self._truncate_message(self.item.message)
+
+    def _truncate_message(self, m):
+        if len(m) > 50:
+            m = '{}...'.format(m[:50])
+        return m
+
+
+class GitTagAdapter(GitObjectAdapter):
+    columns = [('Name', 'name'),
+               ('Message', 'message'),
+               ('Date', 'date'),
+               ('Commit', 'hexsha'),
+               ('Commit Message', 'commit_message')]
+    name_width = Int(60)
+    commit_message_text = Property
+
+    def _get_commit_message_text(self):
+        return self._truncate_message(self.item.commit_message)
+
+
+class CommitAdapter(GitObjectAdapter):
+    columns = [('ID', 'hexsha'),
+               ('Date', 'date'),
+               ('Message', 'message'),
+               ('Author', 'author'),
+               ('Email', 'email'),
+               ]
+    author_width = Int(100)
 
 # ============= EOF =============================================

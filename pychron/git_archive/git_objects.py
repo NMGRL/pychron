@@ -15,29 +15,33 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Property, Bool, Date, Int
-from traitsui.tabular_adapter import TabularAdapter
+from datetime import datetime
+
+from traits.api import HasTraits, Str, Bool, Date
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
-class CommitAdapter(TabularAdapter):
-    columns = [('ID', 'hexsha'),
-               ('Date', 'date'),
-               ('Message', 'message'),
-               ('Author', 'author'),
-               ('Email', 'email'),
-               ]
-    hexsha_width = Int(80)
-    message_width = Int(300)
-    date_width = Int(120)
-    author_width = Int(100)
+class GitTag(HasTraits):
+    message = Str
+    date = Date
+    name = Str
+    hexsha = Str
+    commit_message = Str
 
-    font = '10'
-    hexsha_text = Property
+    def __init__(self, obj):
+        tag = obj.tag
+        commit = obj.commit
 
-    def _get_hexsha_text(self):
-        return self.item.hexsha[:8]
+        self.name = obj.name
+
+        self.message = tag.message
+        self.date = datetime.fromtimestamp(float(tag.tagged_date))
+
+        self.hexsha = commit.hexsha
+        self.commit_message = commit.message
 
 
 class GitSha(HasTraits):
@@ -55,6 +59,3 @@ class GitSha(HasTraits):
         return '{} {}'.format(self.date, self.message)
 
 # ============= EOF =============================================
-
-
-

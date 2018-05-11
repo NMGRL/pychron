@@ -119,6 +119,14 @@ class RepoStatusAction(LocalRepositoryAction):
     method = 'status'
     tooltip = 'Report the repository status. e.g. git status'
     image = icon('eye')
+
+
+class BookmarkAction(LocalRepositoryAction):
+    name = 'Bookmark'
+    method = 'add_bookmark'
+    tooltip = 'Add a bookmark to the data reduction history. e.g. git tag -a <name> -m <message>'
+    image = icon('bookmark')
+
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'
 #

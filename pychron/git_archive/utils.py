@@ -26,7 +26,7 @@ from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
 
 # ============= local library imports  ==========================
-from pychron.git_archive.commit import GitSha
+from pychron.git_archive.git_objects import GitSha, GitTag
 
 TAG_RE = re.compile(r'^\<\w+\>')
 
@@ -86,32 +86,20 @@ def get_head_commit(repo):
 
 
 def get_commits(repo, branch, path, tag, *args):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
+    repo = get_repo(repo)
     txt = gitlog(repo, branch=branch, args=args, path=path)
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 
 
+def get_tags(repo):
+    repo = get_repo(repo)
+    return [GitTag(t) for t in repo.tags]
+
+
 def get_log(repo, branch, path):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
+    repo = get_repo(repo)
     return gitlog(repo, branch=branch, path=path)
-
-
-def get_repo(repo):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
-    return repo
 
 
 def get_diff(repo, a, b, path, change_type='M'):
@@ -144,6 +132,15 @@ def ahead_behind(repo, fetch=True, remote='origin'):
             behind = int(mb.group('count'))
 
     return ahead, behind
+
+
+def get_repo(repo):
+    if isinstance(repo, (str, six.text_type)):
+        if not os.path.isdir(repo):
+            return
+        repo = Repo(repo)
+
+    return repo
 
 
 def fu(repo, text):
