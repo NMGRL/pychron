@@ -16,8 +16,12 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from numpy import zeros, percentile, array, median, random
+from functools import partial
+
+from numpy import zeros, percentile, array, random, abs as nabs, vectorize
 from scipy.stats import norm
+
+
 # ============= local library imports  ==========================
 
 
@@ -25,37 +29,37 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, seed=None):
     exog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
+
     n = len(ys)
-    yes = array((ys, yserr)).T
+    npts = len(pts)
     if seed:
         random.seed(seed)
 
     ga = norm().rvs((ntrials, n))
-    yp = zeros(n)
-    res = zeros((ntrials, len(pts)))
+    ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
+    yp = ys + yserr * ga
     for i in range(ntrials):
-        res[i] = perturb(pred, exog, nominal_ys, yes, ga[i], yp)
+        ps[i] = pred(yp[i], exog)
+
+    res = nominal_ys - ps
 
     res = res.T
-    ret = zeros(len(pts))
+
     pct = (15.87, 84.13)
-    # pct = (2.27, 97.73)
-    for i, po in enumerate(pts):
-        ri = res[i]
-        ai, bi = percentile(ri, pct)
-        ret[i] = (abs(ai) + abs(bi)) * 0.5
 
-    return ret
+    a, b = array([percentile(ri, pct) for ri in res]).T
+    a, b = nabs(a), nabs(b)
+    return (a + b) * 0.5
 
-
-def perturb(pred, exog, nominal_ys, y_es, ga, yp):
-    for i, (y, e) in enumerate(y_es):
-        yp[i] = y + (e * ga[i])
-
-    pys = pred(yp, exog)
-    return nominal_ys - pys
+# def perturb(pred, exog, nominal_ys, y_es, ga, yp):
+# def perturb(pred, exog, nominal_ys, ys, es, ga):
+# for i, (y, e) in enumerate(y_es):
+#     yp[i] = y + (e * ga[i])
+# yp = ys + es * ga
+# pys = pred(yp, exog)
+# return nominal_ys - pys
 
 
 # if __name__ == '__main__':

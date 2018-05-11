@@ -365,6 +365,10 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
+    def fast_predict2(self, endog, exog):
+        # OLSRegressor fast_predict2 is not working for multiplelinear regressor
+        # use fast_predict instead
+        return self.fast_predict(endog, exog)
 
     def _get_X(self, xs=None):
         if xs is None:

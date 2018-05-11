@@ -154,6 +154,9 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         super(FindFluxMonitorsNode, self)._to_template(d)
         d['level'] = self.level
 
+    def _irradiation_changed(self):
+        self.level = self.levels[0]
+
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),

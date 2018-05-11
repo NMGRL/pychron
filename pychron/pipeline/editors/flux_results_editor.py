@@ -23,7 +23,7 @@ from traitsui.table_column import ObjectColumn
 
 from operator import attrgetter
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
-from uncertainties import nominal_value, std_dev
+from uncertainties import nominal_value, std_dev, ufloat
 from itertools import groupby
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
@@ -47,6 +47,30 @@ from six.moves import zip
 
 
 def mean_j(ans, error_kind, monitor_age, lambda_k):
+    js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
+
+    fs = [nominal_value(fi) for fi in js]
+    es = [std_dev(fi) for fi in js]
+
+    av, werr = calculate_weighted_mean(fs, es)
+
+    mswd = None
+    if error_kind == SD:
+        n = len(fs)
+        werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
+    elif error_kind == MSEM:
+        mswd = calculate_mswd(fs, es)
+        werr *= (mswd ** 0.5 if mswd > 1 else 1)
+
+    j = ufloat(av, werr)
+
+    if mswd is None:
+        mswd = calculate_mswd(fs, es)
+
+    return j, mswd
+
+
+def omean_j(ans, error_kind, monitor_age, lambda_k):
     # ufs = (ai.uF for ai in ans)
     # fs, es = zip(*((fi.nominal_value, fi.std_dev)
     #                for fi in ufs))
@@ -317,6 +341,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
                                                       ntrials=self.plotter_options.monte_carlo_ntrials)
+
                 for p, j, je in zip(positions, nominals, errors):
                     oj = p.saved_j
 
@@ -419,10 +444,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         fys = reg.predict(pts)
         yserr = reg.yserr
 
-        if self.plotter_options.use_weighted_fit:
-            l, u = reg.calculate_error_envelope(pts, rmodel=fys)
-        else:
-            l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+        # if self.plotter_options.use_weighted_fit:
+            # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        # else:
+        l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr
@@ -637,10 +662,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         y = array(y)
         xy = vstack((x, y)).T
         wf = self.plotter_options.use_weighted_fit
-        if wf:
-            ec = 'SD'
-        else:
-            ec = self.plotter_options.predicted_j_error_type
+        # if wf:
+        #     ec = 'SD'
+        # else:
+        ec = self.plotter_options.predicted_j_error_type
 
         reg = klass(xs=xy, ys=z, yserr=ze,
                     error_calc_type=ec,
