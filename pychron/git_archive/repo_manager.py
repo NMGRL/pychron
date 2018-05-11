@@ -72,7 +72,7 @@ class StashCTX(object):
     def __enter__(self):
         self._repo.git.stash()
 
-    def __exit__(self):
+    def __exit__(self, *args, **kw):
         self._repo.git.stash.pop()
 
 
