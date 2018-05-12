@@ -97,6 +97,7 @@ class DVCHistoryNode(BaseDVCNode):
             # analyses are then partitioned by group_id then history_group_id
             for unk in pans:
                 unk.group_id = 1
+                unk.history_id = 1
 
             branch = repo.get_branch(abranch)
             branch.checkout()

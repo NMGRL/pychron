@@ -75,7 +75,7 @@ class BulkEditNode(BaseDVCNode):
     def pre_run(self, state, configure=True):
         if state.unknowns:
             dets = list({iso.detector for ai in state.unknowns for iso in ai.itervalues()})
-            self.options.detectors= dets
+            self.options.detectors = dets
 
         return super(BulkEditNode, self).pre_run(state, configure=configure)
 

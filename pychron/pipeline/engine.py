@@ -44,7 +44,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
-from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+# from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from pychron.pipeline.state import EngineState, get_detector_set
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
@@ -201,7 +201,7 @@ class PipelineEngine(Loggable):
 
     dclicked = Event
     active_editor = Event
-    active_inspector_item = Instance(BaseInspectorItem, ())
+    # active_inspector_item = Instance(BaseInspectorItem, ())
     selected_editor = Any
 
     resume_enabled = Bool(False)

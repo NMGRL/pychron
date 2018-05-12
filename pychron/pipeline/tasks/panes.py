@@ -153,24 +153,24 @@ class PipelinePane(TraitsDockPane):
 
         def menu_factory(*actions):
             return MenuManager(
-                               # Action(name='Enable',
-                               #        action='enable',
-                               #        visible_when='not object.enabled'),
-                               # Action(name='Disable',
-                               #        action='disable',
-                               #        visible_when='object.enabled'),
-                               Action(name='Configure', action='configure'),
-                               Action(name='Enable Auto Configure',
-                                      action='toggle_skip_configure',
-                                      visible_when='object.skip_configure'),
-                               Action(name='Disable Auto Configure',
-                                      action='toggle_skip_configure',
-                                      visible_when='not object.skip_configure'),
-                               Action(name='Move Up', action='move_up'),
-                               Action(name='Move Down', action='move_down'),
-                               Action(name='Delete', action='delete_node'),
-                               Action(name='Save Template', action='save_template'),
-                               *actions)
+                # Action(name='Enable',
+                #        action='enable',
+                #        visible_when='not object.enabled'),
+                # Action(name='Disable',
+                #        action='disable',
+                #        visible_when='object.enabled'),
+                Action(name='Configure', action='configure'),
+                Action(name='Enable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='object.skip_configure'),
+                Action(name='Disable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='not object.skip_configure'),
+                Action(name='Move Up', action='move_up'),
+                Action(name='Move Down', action='move_down'),
+                Action(name='Delete', action='delete_node'),
+                Action(name='Save Template', action='save_template'),
+                *actions)
 
         def add_menu_factory():
             return MenuManager(Action(name='Add Unknowns',
@@ -519,14 +519,24 @@ class RepositoryPane(TraitsDockPane):
         return v
 
 
-class InspectorPane(TraitsDockPane):
-    name = 'Inspector'
-    id = 'pychron.pipeline.inspector'
+class EditorOptionsPane(TraitsDockPane):
+    name = 'Editor Options'
+    id = 'pychron.pipeline.editor_options'
 
     def traits_view(self):
-        v = View(UItem('object.active_inspector_item', style='custom',
+        v = View(UItem('object.active_editor_options', style='custom',
                        editor=InstanceEditor()))
         return v
+
+
+# class InspectorPane(TraitsDockPane):
+#     name = 'Inspector'
+#     id = 'pychron.pipeline.inspector'
+#
+#     def traits_view(self):
+#         v = View(UItem('object.active_inspector_item', style='custom',
+#                        editor=InstanceEditor()))
+#         return v
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):

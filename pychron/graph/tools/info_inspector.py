@@ -21,7 +21,7 @@ from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 from traits.api import Event, Instance
 
-from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+# from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 import six
 from six.moves import range
 from six.moves import zip
@@ -46,9 +46,9 @@ class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
-    use_pane = False
+    # use_pane = False
     inspector_item = Event
-    inspector_item_klass = BaseInspectorItem
+    # inspector_item_klass = BaseInspectorItem
     event_queue = None
     hittest_threshold = 3
 
@@ -73,8 +73,8 @@ class InfoInspector(BaseTool):
         if self.event_queue is not None:
             self.event_queue[id(self)] = self.current_position is not None
 
-        if self.use_pane:
-            self._generate_inspector_event()
+        # if self.use_pane:
+        #     self._generate_inspector_event()
 
         self.metadata_changed = True
 
@@ -87,21 +87,21 @@ class InfoInspector(BaseTool):
         self.metadata_changed = True
         # event.window.set_pointer('arrow')
 
-    def _generate_inspector_event(self):
-        if self.current_position:
-            txt = '\n'.join(self.assemble_lines())
-        else:
-            txt = ''
-            if self.event_queue:
-                if not any((v for v in self.event_queue.values())):
-                    txt = ''
-                else:
-                    txt = None
-
-        if txt or txt == '':
-            i = self.inspector_item_klass()
-            i.text = txt
-            self.inspector_item = i
+    # def _generate_inspector_event(self):
+    #     if self.current_position:
+    #         txt = '\n'.join(self.assemble_lines())
+    #     else:
+    #         txt = ''
+    #         if self.event_queue:
+    #             if not any((v for v in self.event_queue.values())):
+    #                 txt = ''
+    #             else:
+    #                 txt = None
+    #
+    #     if txt or txt == '':
+    #         i = self.inspector_item_klass()
+    #         i.text = txt
+    #         self.inspector_item = i
 
 
 class InfoOverlay(AbstractOverlay):

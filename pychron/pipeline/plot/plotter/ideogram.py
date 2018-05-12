@@ -361,7 +361,7 @@ class Ideogram(BaseArArFigure):
         plotkw = self.options.get_plot_dict(ogid)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
-        line.group_id = self.group_id
+        line.history_id =  self.group_id
 
         self._add_peak_labels(line)
 
@@ -373,7 +373,7 @@ class Ideogram(BaseArArFigure):
                                     visible=False,
                                     color=line.color,
                                     line_style='dash')
-        dline.group_id = self.group_id
+        dline.history_id =  self.group_id
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
@@ -722,7 +722,7 @@ class Ideogram(BaseArArFigure):
             graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
-        s.group_id = self.group_id
+        s.history_id =  self.group_id
         return s
 
     def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):
