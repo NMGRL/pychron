@@ -211,14 +211,18 @@ class SampleBrowserModel(BrowserModel):
         if ans:
             from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
             # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
+            projects = self.db.get_projects(order='asc')
+            projects = self._make_project_records(projects, include_recent=False)
             agv = AddAnalysisGroupView(db=self.db,
                                        projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
-                                                 enumerate(self.oprojects)})
+                                                 enumerate(projects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-
-            project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
-            agv.project = project
+            try:
+                project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
+                agv.project = project
+            except StopIteration:
+                pass
 
             info = agv.edit_traits(kind='livemodal')
             if info.result:
