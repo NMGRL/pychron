@@ -259,8 +259,15 @@ class PipelineTask(BaseBrowserTask):
                 if use_filter:
                     for e in self.editor_area.editors:
                         if hasattr(e, 'set_items'):
-                            fans = [ai for ai in e.analyses if ai.tag != 'invalid']
-                            e.set_items(fans)
+                            ans = None
+                            if hasattr(e, 'analyses'):
+                                ans = e.analyses
+                            elif hasattr(e, 'items'):
+                                ans = e.items
+
+                            if ans:
+                                fans = [ai for ai in ans if ai.tag != 'invalid']
+                                e.set_items(fans)
 
                 if self.active_editor:
                     self.active_editor.refresh_needed = True
