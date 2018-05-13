@@ -17,10 +17,12 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from itertools import groupby
+from operator import attrgetter
 
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
+from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
@@ -94,6 +96,23 @@ class FindVerticalFluxNode(BaseFindFluxNode):
                                title='Select Irradiation and Level',
                                resizable=True)
         return v
+
+
+class FindRepositoryAnalysesNode(FindNode):
+    repositories = List
+
+    def run(self, state):
+        dvc = self.dvc
+        rs = []
+        for ri in self.repositories:
+            ans = dvc.get_repoository_analyses(ri)
+            rs.extend(ans)
+
+        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == 'unknown')
+        state.unknowns = unks
+        state.references = refs
+        self.unknowns = unks
+        self.references = refs
 
 
 class FindFluxMonitorsNode(BaseFindFluxNode):

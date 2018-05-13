@@ -27,7 +27,8 @@ from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, InverseIsochronNode, \
     VerticalFluxNode, XYScatterNode, RadialNode, RegressionSeriesNode, HistoryIdeogramNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, FindBlanksNode
+from pychron.pipeline.nodes.find import FindReferencesNode, FindFluxMonitorsNode, FindVerticalFluxNode, \
+    FindBlanksNode, FindRepositoryAnalysesNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
 from pychron.pipeline.nodes.gain import GainCalibrationNode
 from pychron.pipeline.nodes.geochron import GeochronNode
@@ -42,6 +43,8 @@ from pychron.pipeline.nodes.table import XLSXAnalysisTableNode, InterpretedAgeTa
 from pychron.pipeline.nodes.correction_factors import CorrectionFactorsNode
 from pychron.pipeline.nodes.ml import MLDataNode, MLRegressionNode
 from pychron.pipeline.nodes.bulk_edit import BulkEditNode
+from pychron.pipeline.nodes.audit import AuditNode
+
 # from pychron.pipeline.nodes.analysis_metadata import AnalysisMetadataNode
 
 # ============= EOF =============================================

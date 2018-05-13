@@ -262,4 +262,11 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: BulkEditNode"""
+
+AUDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: AuditNode
+"""
 # ============= EOF =============================================

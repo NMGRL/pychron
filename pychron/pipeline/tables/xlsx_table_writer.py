@@ -24,6 +24,7 @@ from traits.api import Instance, BaseStr, HasTraits
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
@@ -126,7 +127,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         detectors = {i.detector for g in grps
                      for a in g.analyses
                      for i in a.isotopes.values()}
-        return detectors
+        return sort_detectors(detectors)
 
     def _get_columns(self, name, grps):
 

@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 from datetime import datetime, timedelta
@@ -124,8 +122,6 @@ class DataNode(DVCNode):
     name = 'Data'
 
     analysis_kind = None
-
-    check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
         print(self, pre_run, getattr(self, self.analysis_kind), self.index)
