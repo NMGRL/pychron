@@ -30,7 +30,7 @@ from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup, AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
 import six
 
@@ -46,6 +46,8 @@ DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, b
 
 
 class IntermediateAnalysis(HasTraits):
+    analysis_group = Instance(AnalysisGroup)
+
     def is_omitted(self):
         return False
 
@@ -55,6 +57,9 @@ class IntermediateAnalysis(HasTraits):
         except AttributeError:
             print('sdfa', attr)
             return 0
+
+    def __getattr__(self, item):
+        return getattr(self.analysis_group, item)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -484,7 +489,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 if subgroup:
                     kind = '_'.join(subgroup.split('_')[:-1])
                     ag = StepHeatAnalysisGroup(analyses=items)
-                    _, label = self._get_intermediate_age(ag, kind)
+                    age, label = self._get_intermediate_age(ag, kind)
 
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
@@ -500,7 +505,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
-                    ia = self._make_intermediate_summary(worksheet, ag, cols, kind)
+                    ia = self._make_intermediate_analysis(ag, age)
+                    self._make_intermediate_summary(worksheet, cols, ag, kind, ia, label)
                     nitems.append(ia)
                     has_subgroups = True
                 else:
@@ -671,7 +677,20 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         return a, label
 
-    def _make_intermediate_summary(self, sh, ag, cols, kind):
+    def _make_intermediate_analysis(self, ag, a):
+        ia = IntermediateAnalysis(analysis_group=ag)
+        ia.uage = a
+        ia.age_units = ag.age_units
+        ia.age_scalar = ag.age_scalar
+        ia.kca = ag.weighted_kca
+        ia.uage_wo_j_err = a
+
+        ia.irradiation_label = ag.irradiation_label
+        ia.irradiation = ag.irradiation
+        ia.material = ag.material
+        return ia
+
+    def _make_intermediate_summary(self, sh, cols, ag, kind, ia, label):
         row = self._current_row
 
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
@@ -683,47 +702,34 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
         border = self._workbook.add_format({'bottom': 1})
 
-        a, label = self._get_intermediate_age(ag, kind)
-        ia = IntermediateAnalysis()
-        ia.uage = a
-        ia.age_units = ag.age_units
-        ia.age_scalar = ag.age_scalar
-        ia.kca = kca = ag.weighted_kca
-        ia.uage_wo_j_err = a
-
-        ia.irradiation_label = ag.irradiation_label
-        ia.irradiation = ag.irradiation
-        ia.material = ag.material
-
         for i in range(age_idx + 1):
             sh.write_blank(row, i, '', fmt)
 
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
-        sh.write_rich_string(row, startcol+1, label, fmt2)
+        sh.write_rich_string(row, startcol + 1, label, fmt2)
 
+        age = ia.uage
         tn = ag.total_n
         if kind == 'plateau':
             if not ag.plateau_steps:
-                a = None
+                age = None
             else:
-                sh.write(row, startcol+2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
+                sh.write(row, startcol + 2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
 
         else:
-            sh.write(row, startcol+2, 'n={}/{}'.format(ag.nanalyses, tn), border)
+            sh.write(row, startcol + 2, 'n={}/{}'.format(ag.nanalyses, tn), border)
 
-        if a is not None:
-            sh.write_number(row, age_idx, nominal_value(a), fmt)
-            sh.write_number(row, age_idx + 1, std_dev(a), fmt)
+        if age is not None:
+            sh.write_number(row, age_idx, nominal_value(age), fmt)
+            sh.write_number(row, age_idx + 1, std_dev(age), fmt)
         else:
             sh.write(row, age_idx, 'No plateau', border)
 
-        sh.write_number(row, age_idx + 2, nominal_value(kca), fmt)
-        sh.write_number(row, age_idx + 3, std_dev(kca), fmt)
+        sh.write_number(row, age_idx + 2, nominal_value(ia.kca), fmt)
+        sh.write_number(row, age_idx + 3, std_dev(ia.kca), fmt)
         sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
         self._current_row += 1
-
-        return ia
 
     def _get_number_format(self, kind=None):
         try:

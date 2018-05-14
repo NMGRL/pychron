@@ -567,10 +567,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     return
                 vs = []
                 if sel:
-                    for si in sel:
+                    if attr == 'sample':
+                        func = self.db.get_identifier
+                    else:
                         func = getattr(self.db, 'get_{}'.format(attr))
+
+                    make = getattr(self, '_make_{}'.format(attr))
+                    for si in sel:
                         v = func(si)
-                        make = getattr(self, '_make_{}'.format(attr))
                         vs.append(make(v))
 
                     setattr(self, pattr, vs)
