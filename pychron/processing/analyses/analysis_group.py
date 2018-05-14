@@ -395,7 +395,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     def valid_total_ar39(self):
         total = sum([a.get_computed_value('k39') for a in self.analyses])
-        return nominal_value(self.total_ar39/total*100)
+        return nominal_value(self.total_ar39 / total * 100)
 
     def cumulative_ar39(self, idx):
         ai = self.analyses[idx]
@@ -410,7 +410,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                 break
             cum += a.get_computed_value('k39')
 
-        return nominal_value(cum/self.total_ar39*100)
+        return nominal_value(cum / self.total_ar39 * 100)
 
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
@@ -647,17 +647,23 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return pa
 
     def _get_preferred_age(self):
-        pa = None
-        if self.preferred_age_kind == 'Weighted Mean':
+        pa = ufloat(0, 0)
+        pak = self.preferred_age_kind
+        pak = pak.replace(' ', '_')
+        if pak == 'weighted_mean':
             pa = self.weighted_age
-        elif self.preferred_age_kind == 'Arithmetic Mean':
+        elif pak == 'arithmetic_mean':
             pa = self.arith_age
-        elif self.preferred_age_kind == 'Isochron':
+        elif pak == 'isochron':
             pa = self.isochron_age
-        elif self.preferred_age_kind == 'Integrated':
+        elif pak == 'integrated':
             pa = self.integrated_age
-        elif self.preferred_age_kind == 'Plateau':
+        elif pak == 'plateau':
             pa = self.plateau_age
+        elif pak == 'plateau_else_weighted_mean':
+            pa = self.plateau_age
+            if not self.plateau_steps:
+                pa = self.weighted_age
 
         return pa
 

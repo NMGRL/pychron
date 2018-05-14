@@ -83,10 +83,14 @@ class GroupingNode(BaseNode):
             if self.mean_groups:
                 gs = []
                 for k, ans in groupby(sorted(unks, key=key), key=key):
-                    a = InterpretedAgeGroup(analyses=list(ans))
-                    if 'plateau' in k:
-                        a.preferred_age_kind = 'plateau'
+
+                    # k in form of `sha1:tag_counter`
+
+                    pak = k.split(':')[1].split('_')[0]
+                    a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
+
                     gs.append(a)
+
                 setattr(state, self.analysis_kind, gs)
             else:
                 group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
