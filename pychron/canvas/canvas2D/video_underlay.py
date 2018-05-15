@@ -45,20 +45,12 @@ class VideoUnderlay(AbstractOverlay):
             gc.translate_ctm(component.x, component.y)
 
             if self.video:
-                # img = self.video.get_image_data(size=(int(component.height),
-                #                                       int(component.width)))
                 img = self.video.get_image_data()
                 if img is not None:
-
-                    # if len(img.shape) == 2:
-                    #     scalar = 255./self.video.pixel_depth
-                    #     img = gray2rgb(img*scalar)
-
                     try:
-                        img = asarray(resize(img, (int(component.height), int(component.width))),
+                        img = asarray(resize(img, (int(component.height), int(component.width)), preserve_range=True),
                                       dtype=uint8)
                         gc.draw_image(img)
                     except IndexError:
                         pass
-
 # ============= EOF ====================================

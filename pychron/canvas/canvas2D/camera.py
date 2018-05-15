@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-import yaml
+
 from traits.api import Bool, Any, Float, Tuple, Int, Str, HasTraits, Button
 # ============= standard library imports ========================
 from numpy import polyval, exp
+import yaml
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.loggable import Loggable
-from six.moves import map
 
 
 class BaseCamera(HasTraits):
@@ -39,8 +38,9 @@ class BaseCamera(HasTraits):
     # hflip = Bool(False)
     focus_z = Float
     # fps = Int
-    zoom_coefficients = Str
+    zoom_coefficients = Str('0,0,23')
     config_path = Str
+    zoom_fitfunc = Str('polynomial')
 
     def save_calibration(self):
         raise NotImplementedError
@@ -152,11 +152,11 @@ class Camera(ConfigLoadable, BaseCamera):
         """
         self.info('saving px per mm calibration to {}'.format(self.config_path))
         config = self.get_configuration(self.config_path)
-
-        if not config.has_section('Zoom'):
-            config.add_section('Zoom')
-        config.set('Zoom', 'coefficients', self.zoom_coefficients)
-        self.write_configuration(config, self.config_path)
+        if config is not None:
+            if not config.has_section('Zoom'):
+                config.add_section('Zoom')
+            config.set('Zoom', 'coefficients', self.zoom_coefficients)
+            self.write_configuration(config, self.config_path)
 # if __name__ == '__main__':
 #    c = Camera()
 #    p = '/Users/fargo2/Pychrondata_beta/setupfiles/canvas2D/camera.txt'
