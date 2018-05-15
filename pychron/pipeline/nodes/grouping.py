@@ -85,8 +85,11 @@ class GroupingNode(BaseNode):
                 for k, ans in groupby(sorted(unks, key=key), key=key):
 
                     # k in form of `sha1:tag_counter`
+                    try:
+                        pak = k.split(':')[1].split('_')[0]
+                    except IndexError:
+                        pak = 'weighted_mean'
 
-                    pak = k.split(':')[1].split('_')[0]
                     a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
 
                     gs.append(a)
