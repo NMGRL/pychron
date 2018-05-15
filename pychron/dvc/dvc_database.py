@@ -1602,6 +1602,9 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             return self._query_one(q)
 
+    def get_sample_id(self, id):
+        return self._retrieve_item(SampleTbl, id, key='id')
+
     def get_sample(self, name, project, pi, material, grainsize=None):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -1801,9 +1804,6 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(distinct(MaterialTbl.grainsize))
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
-
-    def get_sample_id(self, id):
-        return self._retrieve_item(SampleTbl, id, key='id')
 
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:

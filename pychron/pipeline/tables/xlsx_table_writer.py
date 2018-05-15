@@ -59,6 +59,7 @@ class IntermediateAnalysis(HasTraits):
             return 0
 
     def __getattr__(self, item):
+        print('getatttr', item)
         return getattr(self.analysis_group, item)
 
 
@@ -483,6 +484,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             has_subgroups = False
             key = attrgetter('subgroup')
             ans = group.analyses
+
+            nsubgroups = len({key(i) for i in ans})
+
             for subgroup, items in groupby(ans, key=key):
                 items = list(items)
                 ag = None
@@ -505,12 +509,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
-                    ia = self._make_intermediate_analysis(ag, age)
-                    self._make_intermediate_summary(worksheet, cols, ag, kind, ia, label)
+                    ia = self._make_intermediate_analysis(ag, age, kind)
+                    if nsubgroups > 1:
+                        self._make_intermediate_summary(worksheet, ag, cols, kind, ia, label)
                     nitems.append(ia)
                     has_subgroups = True
                 else:
-                    nitems.extend(items)
+                    if nsubgroups == 1:
+                        ag = StepHeatAnalysisGroup(analyses=items)
+                        age, label = self._get_intermediate_age(ag, 'weighted_mean')
+                        ia = self._make_intermediate_analysis(ag, age, 'weighted_mean')
+                        nitems = [ia]
+                    else:
+                        nitems.extend(items)
 
                 for item in items:
                     item.arar_constants.age_units = ounits
@@ -518,7 +529,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if has_subgroups:
                 group.analyses = nitems
 
-            self._make_summary(worksheet, cols, group)
+            if nsubgroups == 1:
+                self._make_summary(worksheet, cols, nitems[0])
+            else:
+                self._make_summary(worksheet, cols, group)
             self._current_row += 1
 
             group.set_temporary_age_units(None)
@@ -677,17 +691,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         return a, label
 
-    def _make_intermediate_analysis(self, ag, a):
+    def _make_intermediate_analysis(self, ag, a, kind):
         ia = IntermediateAnalysis(analysis_group=ag)
+        ia.subgroup_kind = kind
         ia.uage = a
-        ia.age_units = ag.age_units
-        ia.age_scalar = ag.age_scalar
-        ia.kca = ag.weighted_kca
         ia.uage_wo_j_err = a
 
-        ia.irradiation_label = ag.irradiation_label
-        ia.irradiation = ag.irradiation
-        ia.material = ag.material
         return ia
 
     def _make_intermediate_summary(self, sh, cols, ag, kind, ia, label):
@@ -806,6 +815,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
             sh.write_rich_string(self._current_row, start_col, u'Weighted Mean K/Ca {}'.format(PLUSMINUS_ONE_SIGMA),
                                  fmt)
+
+            print('asfdas', group, type(group))
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
@@ -820,7 +831,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
         self._current_row += 1
-        if self._options.table_kind == 'Step Heat':
+
+        if self._options.table_kind == 'Step Heat' or group.subgroup_kind == 'plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))

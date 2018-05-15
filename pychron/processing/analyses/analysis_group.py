@@ -97,6 +97,9 @@ class AnalysisGroup(IdeogramPlotable):
     isochron_regressor = None
     _age_units = None
 
+    # used by XLSXAnalysisWriter/subgrouping
+    subgroup_kind = None
+
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
