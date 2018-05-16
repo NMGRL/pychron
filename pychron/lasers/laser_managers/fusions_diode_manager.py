@@ -27,7 +27,7 @@ from pychron.hardware.fusions.fusions_diode_logic_board import FusionsDiodeLogic
 from pychron.hardware.mikron_pyrometer import MikronGA140Pyrometer
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
-from pychron.hardware.watlow_ezzone import WatlowEZZone
+from pychron.hardware.watlow.watlow_ezzone import WatlowEZZone
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 from pychron.response_recorder import ResponseRecorder
