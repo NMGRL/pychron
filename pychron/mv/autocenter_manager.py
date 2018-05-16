@@ -60,37 +60,18 @@ class AutoCenterManager(MachineVisionManager):
         bind_preference(self, 'blocksize', '{}.autocenter_blocksize'.format(pref_id))
         bind_preference(self, 'blocksize_step', '{}.autocenter_blocksize_step'.format(pref_id))
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0,
-                             open_image=True,
-                             alpha_enabled=True,
-                             auto_close_image=True):
+    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
         frame = self.new_image_frame()
 
-        loc = self._get_locator()
+        loc = self._get_locator(shape=shape)
 
-        # if self.use_target_radius:
-        # dim = self.target_radius
-
-        # if self.use_crop_size:
-        #     cropdim = self.crop_size
-        # else:
         cropdim = ceil(dim * 2.55)
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
-        # im = self.new_image(frame, alpha_enabled=alpha_enabled)
-        # im = self.new_image(frame, alpha_enabled=alpha_enabled)
-        # if open_image:
-        #     view_image(im, auto_close=auto_close_image)
-        # self.debug('calculate new center: dim={} ({},{}) {}'.format(dim, self.use_target_radius,
-        # self.target_radius, self.pxpermm))
-
         im = self.display_image
         im.source_frame = frame
         dim = self.pxpermm * dim
-        # if self.use_hough_circle:
-        #     dx, dy = loc.find_circle(im, frame, dim=dim)
-        # else:
 
         preprop = {'stretch_intensity': self.stretch_intensity,
                    'blur': self.blur}
@@ -103,8 +84,6 @@ class AutoCenterManager(MachineVisionManager):
 
         dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search)
 
-        # frm = loc.preprocessed_frame
-        # im.overlay(frm, 0.5)
         if dx is None and dy is None:
             return
         else:
