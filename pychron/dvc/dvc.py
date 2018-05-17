@@ -632,12 +632,14 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_repositories
 
-    def update_tag(self, an, **kw):
-        tag = Tag.from_analysis(an, **kw)
-        tag.dump()
-
-        expid = an.repository_identifier
-        return self.repository_add_paths(expid, tag.path)
+    # def update_tag(self, an, **kw):
+    #     tag = Tag.from_analysis(an, **kw)
+    #     tag.dump()
+    #
+    #     # expid = an.repository_identifier
+    #     return tag
+    #
+    #     # return self.repository_add_paths(expid, tag.path)
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
@@ -1200,13 +1202,18 @@ class DVC(Loggable):
 
         for expid, ans in groupby(sorted(items, key=key), key=key):
             self.sync_repo(expid)
-            cs = []
+            ps = []
             for it in ans:
-                if self.update_tag(it):
-                    cs.append(it)
-            self._commit_tags(cs, expid, '<SUBGROUP>')
 
-    def _commit_tags(self, cs, expid, msg):
+                tag = Tag.from_analysis(it)
+                tag.dump()
+
+                ps.append(tag.path)
+
+            if self.repository_add_paths(expid, ps):
+                self._commit_tags(ans, expid, '<SUBGROUP>', refresh=False)
+
+    def _commit_tags(self, cs, expid, msg, refresh=True):
         if cs:
             cc = [c.record_id for c in cs]
             if len(cc) > 1:
@@ -1215,9 +1222,9 @@ class DVC(Loggable):
                 cstr = cc[0]
 
             self.repository_commit(expid, '{} {}'.format(msg, cstr))
-
-            for ci in cs:
-                ci.refresh_view()
+            if refresh:
+                for ci in cs:
+                    ci.refresh_view()
 
     def tag_items(self, tag, items, note=''):
         key = attrgetter('repository_identifier')
