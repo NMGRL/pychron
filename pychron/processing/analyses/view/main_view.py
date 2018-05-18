@@ -117,7 +117,8 @@ class MainView(HasTraits):
             MeasurementValue(name='J',
                              value=jf),
             MeasurementValue(name='Lambda K',
-                             value=nominal_value(ar.arar_constants.lambda_k)),
+                             value=nominal_value(ar.arar_constants.lambda_k),
+                             units='1/a'),
             MeasurementValue(name='Project',
                              value=an.project),
             MeasurementValue(name='Sample',
@@ -131,7 +132,8 @@ class MainView(HasTraits):
             MeasurementValue(name='Ar37Decay',
                              value=floatfmt(a37)),
             MeasurementValue(name='Sens.',
-                             value=floatfmt(an.sensitivity))]
+                             value=floatfmt(an.sensitivity, use_scientific=True),
+                             units=an.sensitivity_units)]
 
         self.measurement_values = ms
 

@@ -21,6 +21,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from copy import copy
+from datetime import datetime
+from operator import attrgetter, itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -30,7 +32,7 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
     calculate_decay_factor, calculate_flux
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
-from pychron.pychron_constants import ARGON_KEYS
+from pychron.pychron_constants import ARGON_KEYS, DATE_FORMAT
 import six
 
 
@@ -89,7 +91,9 @@ class ArArAge(IsotopeGroup):
     Ar39_decay_corrected = None
     Ar37_decay_corrected = None
 
-    sensitivity = 1e-12  # fA/torr
+    sensitivity = 1e-17  # fA/torr
+    sensitivity_units = 'mol/fA'
+
     # temporary_ic_factors =None
 
     _missing_isotope_warned = False
@@ -165,6 +169,15 @@ class ArArAge(IsotopeGroup):
             return v ** 2 / ae ** 2 * 100
         else:
             return 0
+
+    def set_sensitivity(self, sens):
+        for si in sorted(sens, key=itemgetter('create_date')):
+            cd = datetime.strptime(si['create_date'], DATE_FORMAT)
+
+            if cd > self.rundate:
+                self.sensitivity = si['sensitivity']
+                self.sensitivity_units = si['units']
+                break
 
     def set_temporary_ic_factor(self, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)

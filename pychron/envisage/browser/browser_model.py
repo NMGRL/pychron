@@ -92,7 +92,8 @@ class BrowserModel(BaseBrowserModel):
     def activate_browser(self, force=False):
         db = self.db
         self.datasource_url = db.datasource_url
-        print('asdfasd', self.auto_load_database, self.load_selection_enabled)
+        self.debug('activate browser'.format(self.auto_load_database, self.load_selection_enabled))
+
         if not self.is_activated or force:
 
             if self.auto_load_database:

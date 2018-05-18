@@ -191,4 +191,6 @@ DEFAULT_MONITOR_NAME = 'FC-2'
 
 ELLIPSE_KINDS = ('1' + SIGMA, '2' + SIGMA, '95%')
 ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
+
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 # ============= EOF =============================================

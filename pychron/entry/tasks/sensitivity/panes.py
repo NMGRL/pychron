@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Property, Int
-from traitsui.api import View, Item
+from traitsui.api import View, Item, InstanceEditor, UItem, HGroup, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -28,9 +27,9 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 
 class SensitivityAdapter(TabularAdapter):
     columns = [
-        #                ('', 'placeholder'),
         ('Spectrometer', 'mass_spectrometer'),
         ('Sensitivity', 'sensitivity'),
+        ('Units', 'units'),
         ('User', 'user'),
         ('Date', 'create_date'),
         ('Note', 'note')]
@@ -43,56 +42,49 @@ class SensitivityAdapter(TabularAdapter):
 
     font = 'arial 11'
     #    mass_spectrometer_width = Int(40)
-    def _set_create_date_text(self, v):
-        pass
-
+    # def _set_create_date_text(self, v):
+    #     pass
+    #
     def _get_create_date_text(self, *args, **kw):
         return str(self.item.create_date or '')
 
     #         return self.item.create_date or ''
+    #
+    # def get_can_edit(self, obj, trait, row):
+    #     item = getattr(obj, trait)[row]
+    #     return item.primary_key is None or item.editable
 
-    def get_can_edit(self, obj, trait, row):
-        item = getattr(obj, trait)[row]
-        return item.primary_key is None or item.editable
 
-#         return TabularAdapter.get_can_edit(self, object, trait, row)
+SVIEW = View(HGroup(Item('mass_spectrometer'), Item('sensitivity'), Item('units')),
+             HGroup(UItem('note', style='custom'), label='Note', show_border=True))
+
+
 class SensitivityPane(TraitsTaskPane):
-    id = 'pychron.entry.sensitivty'
+    id = 'pychron.entry.sensitivity'
 
     def traits_view(self):
-        v = View(Item('records',
-                      editor=myTabularEditor(adapter=SensitivityAdapter(),
-                                             paste_function='paste',
-                                             #                                               editable=False,
-                                             #                                               refresh='refresh_table',
-                                             #                                               multi_select=True,
-                                             selected='selected',
-                                             operations=['edit']
-                                             #                                                 operations=[]
-                      ),
-                      show_label=False
-        ),
+        v = View(VGroup(UItem('records',
+                              editor=myTabularEditor(adapter=SensitivityAdapter(),
+                                                     editable=False,
+                                                     auto_update=True,
+                                                     selected='selected')),
+                        UItem('selected', style='custom', editor=InstanceEditor(view=SVIEW))),
                  buttons=['OK', 'Cancel'],
                  width=600,
                  resizable=True,
-                 title='Sensitivity'
-        )
+                 title='Sensitivity')
         return v
 
     def readonly_view(self):
         v = View(Item('records',
                       editor=myTabularEditor(adapter=SensitivityAdapter(),
                                              editable=False,
-                                             selected='selected',
-                      ),
-                      show_label=False
-        ),
+                                             selected='selected'),
+                      show_label=False),
                  buttons=['OK', 'Cancel'],
                  width=600,
                  resizable=True,
-                 title='Sensitivity'
-        )
+                 title='Sensitivity')
         return v
-
 
 # ============= EOF =============================================

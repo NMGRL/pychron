@@ -724,6 +724,39 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(root, add_extension('{}.gain'.format(name), '.json'))
         return p
 
+    def save_sensitivities(self, sens):
+        ps = []
+        for k, v in sens.items():
+            root = os.path.join(paths.meta_root, 'spectrometers')
+            p = os.path.join(root, add_extension('{}.sens'.format(k), '.json'))
+            dvc_dump(v, p)
+            ps.append(p)
+
+        if self.add_paths(ps):
+            self.commit('Updated sensitivity')
+
+    def get_sensitivities(self):
+        specs = {}
+        root = os.path.join(paths.meta_root, 'spectrometers')
+        for p in list_directory(root):
+            if p.endswith('.sens.json'):
+                name = p.split('.')[0]
+                p = os.path.join(root, p)
+                obj = dvc_load(p)
+                # cd = self.get_modification_date(p)
+                # obj['create_date'] = cd
+                specs[name] = obj
+
+        return specs
+
+    def get_sensitivity(self, name):
+        sens = self.get_sensitivities()
+        spec = sens.get(name)
+        v = 1
+        if spec:
+            v = spec.get('sensitivity', 1)
+        return v
+
     @cached('clear_cache')
     def get_gain_obj(self, name, **kw):
         p = self._gain_path(name)
@@ -754,6 +787,10 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
         holder = LoadHolder(p)
         return holder.holes
+
+    @property
+    def sensitivity_path(self):
+        return os.path.join(paths.meta_root, 'sensitivity.json')
 
     # private
     def _get_level_positions(self, irrad, level):

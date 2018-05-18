@@ -783,12 +783,13 @@ class DVC(Loggable):
                 fluxes[irrad] = flux_levels
                 productions[irrad] = prod_levels
 
+        sens = meta_repo.get_sensitivities()
         make_record = self._make_record
 
         def func(*args):
             try:
                 r = make_record(branches=branches, chronos=chronos, productions=productions,
-                                fluxes=fluxes, calculate_f_only=calculate_f_only, reload=reload, *args)
+                                fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens, reload=reload, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -1287,7 +1288,7 @@ class DVC(Loggable):
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None,
+    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
                      calculate_f_only=False, reload=False):
         meta_repo = self.meta_repo
         if prog:
@@ -1343,6 +1344,13 @@ class DVC(Loggable):
             # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
+            if sens:
+                sens = sens.get(a.mass_spectrometer.lower(), [])
+            else:
+                sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
+
+            a.set_sensitivity(sens)
+
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 # self.debug('Irradiation {}'.format(a.irradiation))
                 if chronos:
