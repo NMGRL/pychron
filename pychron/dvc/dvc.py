@@ -16,26 +16,27 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import shutil
-from operator import attrgetter
-
-import time
 from datetime import datetime
 from itertools import groupby
 from math import isnan
-from git import Repo
-from uncertainties import nominal_value, std_dev, ufloat
+from operator import attrgetter
 
+import six
+import time
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from git import Repo
 from traits.api import Instance, Str, Set, List, provides
+from uncertainties import nominal_value, std_dev, ufloat
 
+from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.database.tasks.connection_preferences import ConnectionFavoriteItem
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
@@ -44,7 +45,6 @@ from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repo
 from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.experiment.utilities.identifier import make_runid
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
@@ -52,8 +52,6 @@ from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
-from pychron import json
-import six
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -1017,7 +1015,7 @@ class DVC(Loggable):
                  analyses=[dict(uuid=ai.uuid,
                                 record_id=ai.record_id,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses])
+                           ia.analyses])
 
         if self.macrochron_enabled:
             d['macrochron'] = self._make_macrochron(ia)
@@ -1337,7 +1335,8 @@ class DVC(Loggable):
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
-            a.loadname = record.loadname
+            a.load_name = record.load_name
+            a.load_holder = record.load_holder
             # get repository branch
             a.branch = branches.get(expid, '')
             # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))

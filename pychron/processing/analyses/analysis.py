@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from collections import namedtuple
 
+import six
 from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
@@ -36,7 +38,6 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
-import six
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -48,6 +49,8 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'extract_units',
                     # 'duration',
                     # 'cleanup',
+                    'load_name',
+                    'load_holder',
                     'extract_duration',
                     'cleanup_duration',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
@@ -277,7 +280,8 @@ class Analysis(ArArAge, IdeogramPlotable):
     measured_response_stream = None
     requested_output_stream = None
     setpoint_stream = None
-    loadname = ''
+    load_name = ''
+    load_holder = ''
 
     experiment_queue_name = ''
 

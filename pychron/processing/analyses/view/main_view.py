@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
 from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 
-from pychron.core.helpers.formatting import floatfmt, format_percent_error, uformat_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-
 # class MainViewHandler(Handler):
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
@@ -146,6 +146,9 @@ class MainView(HasTraits):
                             value=an.measurement_script_name),
             ExtractionValue(name='Device',
                             value=an.extract_device),
+            ExtractionValue(name='Load',
+                            value=an.load_name,
+                            units=an.load_holder),
             ExtractionValue(name='Position',
                             value=an.position, ),
             ExtractionValue(name='XYZ',

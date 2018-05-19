@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
+
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import object_session, deferred
@@ -248,9 +249,20 @@ class AnalysisTbl(Base, BaseMixin):
             return es[0]
 
     @property
-    def loadname(self):
+    def load_name(self):
+        ln = ''
         if self.measured_positions:
-            return self.measured_positions[0].loadName
+            ln = self.measured_positions[0].loadName or ''
+        return ln
+
+    @property
+    def load_holder(self):
+        lh = ''
+        if self.measured_positions:
+            load = self.measured_positions[0].load
+            if load:
+                lh = load.holderName
+        return lh
 
     @property
     def record_views(self):
