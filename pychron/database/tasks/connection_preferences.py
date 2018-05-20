@@ -17,22 +17,20 @@
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import warning
-from pyface.timer.do_later import do_later, do_after
-from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, Event, File, HasTraits, Bool
-from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label, Spring, \
+from pyface.timer.do_later import do_later
+from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool
+from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
     EnumEditor, ObjectColumn, TableEditor, UItem
-from traitsui.editors import TextEditor, FileEditor
-
+from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.pychron_traits import IPAddress, IPREGEX
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
+from pychron.core.pychron_traits import IPREGEX
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
 
 
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -96,19 +94,22 @@ class ConnectionMixin(HasTraits):
 
     def _test_connection_button_fired(self):
         kw = self._get_connection_dict()
-        klass = self._get_adapter()
-        db = klass(**kw)
-        self._connected_label = ''
-        if self._test_func:
-            db.test_func = self._test_func
+        self._connected_label = 'Not Connected'
+        self._connected_color = 'red'
 
-        c = db.connect(warn=False)
-        if c:
-            self._connected_color = 'green'
-            self._connected_label = 'Connected'
-        else:
-            self._connected_label = 'Not Connected'
-            self._connected_color = 'red'
+        if kw is not None:
+
+            klass = self._get_adapter()
+            db = klass(**kw)
+            self._connected_label = ''
+            if self._test_func:
+                db.test_func = self._test_func
+
+            c = db.connect(warn=False)
+            if c:
+                self._connected_color = 'green'
+                self._connected_label = 'Connected'
+s
 
 
 class ConnectionFavoriteItem(HasTraits):
@@ -193,12 +194,12 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
     def _get_connection_dict(self):
 
         obj = self._selected
-
-        return dict(username=obj.username,
-                    host=obj.host,
-                    password=obj.password,
-                    name=obj.dbname,
-                    kind=obj.kind)
+        if obj is not None:
+            return dict(username=obj.username,
+                        host=obj.host,
+                        password=obj.password,
+                        name=obj.dbname,
+                        kind=obj.kind)
 
     def __selected_changed(self):
         self._reset_connection_label(True)
