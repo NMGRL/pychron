@@ -17,28 +17,29 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import os
 import shutil
 import subprocess
-import time
 from datetime import datetime
 
-from git import Repo, RemoteProgress
+import time
+from git import Repo
 from git.exc import GitCommandError
-from git.util import CallableRemoteProgress
 from traits.api import Any, Str, List, Event
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
 from pychron.envisage.view_util import open_view
-from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.diff_view import DiffView, DiffModel
+from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
+from pychron.pychron_constants import DATE_FORMAT
 
 
 def get_repository_branch(path):
@@ -182,6 +183,17 @@ class GitRepoManager(Loggable):
                 for a in args:
                     afile.write('{}\n'.format(a))
         self.add(p, commit=False)
+
+    def get_modification_date(self, path):
+        """
+        "Fri May 18 11:13:57 2018 -0600"
+        :param path:
+        :return:
+        """
+        d = self.cmd('log', '-1', '--format="%ad"', '--date=format:{}'.format(DATE_FORMAT), '--', path)
+        if d:
+            d = d[1:-1]
+        return d
 
     def out_of_date(self, branchname='master'):
         pd = open_progress(2)
