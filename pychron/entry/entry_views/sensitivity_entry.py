@@ -21,12 +21,12 @@ from datetime import datetime
 from itertools import groupby
 from operator import attrgetter
 
-from traits.api import HasTraits, List, Str, Int, Float, \
-    Date, Any, Bool, TraitError
+from traits.api import HasTraits, List, Str, Float, \
+    Date, Any, TraitError
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_irradiationable import DVCAble
-from pychron.entry.entry_views.entry import BaseEntry
 from pychron.paths import paths
 from pychron.pychron_constants import DATE_FORMAT
 
@@ -54,7 +54,10 @@ class SensitivityRecord(HasTraits):
         record = cls()
         for attr in record.traits(dictable=True):
             if attr == 'create_date':
-                record.create_date = datetime.strptime(d.get(attr), DATE_FORMAT)
+                cd = d.get(attr)
+                if cd and not isinstance(cd, datetime):
+                    cd = datetime.strptime(cd, DATE_FORMAT)
+                record.create_date = cd
             else:
                 try:
                     setattr(record, attr, d.get(attr))
