@@ -45,7 +45,7 @@ class IdeogramPanel(FigurePanel):
         skey = attrgetter('subgroup')
         ans = sorted(self.analyses, key=key)
 
-        sg = {skey(ai) for ai in ans}
+        sg = list({skey(ai) for ai in ans})
 
         nsubgroups = len(sg)
         if nsubgroups > 1 or bool(sg[0]):

@@ -16,17 +16,14 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-
 import math
 
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
-from six.moves import map
 from traits.api import HasTraits, Any, Int, Str, Property, \
-    Event, Bool, cached_property, List, Float
+    Event, Bool, cached_property, List, Float, Instance
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.filtering import filter_ufloats, sigma_filter
@@ -98,7 +95,9 @@ class BaseArArFigure(SelectionFigure):
     inspector_event = Event
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
-    analysis_group = Property(depends_on='analyses')
+
+    analysis_group = Property(depends_on='analyses, _analysis_group')
+    _analysis_group = Instance(AnalysisGroup)
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
@@ -706,7 +705,13 @@ class BaseArArFigure(SelectionFigure):
                       reverse=self._reverse_sorted_analyses)
 
     @cached_property
-    def _get_group(self):
-        return self._analysis_group_klass(analyses=self.sorted_analyses)
+    def _get_analysis_group(self):
+        ag = self._analysis_group
+        if ag is None:
+            ag = self._analysis_group_klass(analyses=self.sorted_analyses)
+        return ag
+
+    def _set_analysis_group(self, v):
+        self._analysis_group = v
 
 # ============= EOF =============================================
