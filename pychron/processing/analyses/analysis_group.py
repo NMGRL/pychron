@@ -453,7 +453,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_integrated_age(self):
         ret = ufloat(0, 0)
         ans = list(self.clean_analyses())
-        if ans and all((isinstance(a, IntermediateAnalysis) for a in ans)):
+        if ans and all((not isinstance(a, IntermediateAnalysis) for a in ans)):
 
             rad40 = sum([a.get_computed_value('rad40') for a in ans])
             k39 = sum([a.get_computed_value('k39') for a in ans])
@@ -492,7 +492,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         # ages, errors, k39 = self._get_steps()
         ans = self.analyses
         v, e = 0, 0
-        if all((isinstance(ai, IntermediateAnalysis) for ai in ans)):
+        if all((not isinstance(ai, IntermediateAnalysis) for ai in ans)):
             if ans:
                 ages = [ai.age for ai in ans]
                 errors = [ai.age_err for ai in ans]
