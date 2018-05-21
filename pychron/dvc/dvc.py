@@ -630,14 +630,12 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_repositories
 
-    # def update_tag(self, an, **kw):
-    #     tag = Tag.from_analysis(an, **kw)
-    #     tag.dump()
-    #
-    #     # expid = an.repository_identifier
-    #     return tag
-    #
-    #     # return self.repository_add_paths(expid, tag.path)
+    def update_tag(self, an, **kw):
+        tag = Tag.from_analysis(an, **kw)
+        tag.dump()
+
+        expid = an.repository_identifier
+        return self.repository_add_paths(expid, tag.path)
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
