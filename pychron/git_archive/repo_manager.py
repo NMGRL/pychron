@@ -74,7 +74,7 @@ class StashCTX(object):
         self._repo.git.stash()
 
     def __exit__(self, *args, **kw):
-        self._repo.git.stash.pop()
+        self._repo.git.stash('pop')
 
 
 class GitRepoManager(Loggable):
