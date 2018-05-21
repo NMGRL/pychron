@@ -17,6 +17,7 @@
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_later
 from traits.api import Str, Password, Enum, Button, on_trait_change, Color, String, List, File, HasTraits, Bool
 from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
@@ -109,6 +110,8 @@ class ConnectionMixin(HasTraits):
             if c:
                 self._connected_color = 'green'
                 self._connected_label = 'Connected'
+        else:
+            warning(None, 'Please select a connection to test')
 
 
 class ConnectionFavoriteItem(HasTraits):
