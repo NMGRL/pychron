@@ -574,7 +574,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     comments = Str
 
-    def get_age(self, kind):
+    def get_age(self, kind, set_preferred=False):
         if kind == 'weighted_mean':
             a = self.weighted_age
             label = 'wt. mean'
@@ -592,6 +592,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             if not self.plateau_steps:
                 label = 'wt. mean'
                 a = self.weighted_age
+
+        if set_preferred:
+            self.preferred_age_kind = label
+
         return a, label
 
     def ages(self, asfloat=True):
@@ -640,7 +644,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return name
 
     def _get_nanalyses(self):
-        if self.preferred_age_kind == 'Plateau':
+        if self.preferred_age_kind.lower() == 'plateau':
             return self.nsteps
         else:
             return super(InterpretedAgeGroup, self)._get_nanalyses()
@@ -656,7 +660,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return a / self.age_scalar
 
     def _get_preferred_mswd(self):
-        if self.preferred_age_kind == 'Plateau':
+        if self.preferred_age_kind.lower() == 'plateau':
             return self.plateau_mswd
         else:
             return self.mswd
@@ -690,7 +694,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return e
 
     def _get_preferred_kca(self):
-        if self.preferred_kca_kind == 'Weighted Mean':
+        pk = self.preferred_kca_kind.lower().replace(' ', '_')
+        if pk == 'weighted_mean':
             pa = self.weighted_kca
         else:
             pa = self.arith_kca
@@ -698,7 +703,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def _get_preferred_age(self):
         pa = ufloat(0, 0)
-        pak = self.preferred_age_kind
+        pak = self.preferred_age_kind.lower()
         pak = pak.replace(' ', '_')
         if pak == 'weighted_mean':
             pa = self.weighted_age
@@ -717,19 +722,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
         return pa
 
-    @cached_property
-    def _get_preferred_ages(self):
-        ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron',
-              'Integrated', 'Plateau']
-        # if self.analyses:
-        #     ref = self.analyses[0]
-        #     print 'asfasfasdfasfas', ref, ref.step
-        #     if ref.step:
-        #         ps.append('Integrated')
-        #         if self.plateau_age:
-        #             ps.append('Plateau')
-
-        return ps
 
 # ============= EOF =============================================
 

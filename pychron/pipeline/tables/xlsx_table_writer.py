@@ -489,7 +489,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 if subgroup:
                     kind = '_'.join(subgroup.split('_')[:-1])
                     ag = InterpretedAgeGroup(analyses=items)
-                    age, label = ag.get_age(kind)
+                    age, label = ag.get_age(kind, set_preferred=True)
                     # age, label = self._get_intermediate_age(ag, kind)
 
                 for i, item in enumerate(items):
