@@ -28,7 +28,7 @@ from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
 from numpy import array, arange, Inf, argmax
 from pyface.message_dialog import warning
-from traits.api import Array, Event
+from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.codetools.inspection import caller
@@ -119,7 +119,8 @@ class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
     ytitle = 'Relative Probability'
-
+    subgroup_id = 0
+    subgroup = None
     # xlimits_updated = Event
     # ylimits_updated = Event
 
@@ -358,7 +359,7 @@ class Ideogram(BaseArArFigure):
         gid = ogid + 1
         sgid = ogid * 2
 
-        plotkw = self.options.get_plot_dict(ogid)
+        plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
         line.history_id =  self.group_id
@@ -412,7 +413,7 @@ class Ideogram(BaseArArFigure):
             else:
                 bgcolor = 'transparent'
 
-            d = self.options.get_plot_dict(ogid)
+            d = self.options.get_plot_dict(ogid, self.subgroup_id)
             o = IdeogramPointsInset(self.xs, ys,
                                     color=d['color'],
                                     outline_color=d['color'],

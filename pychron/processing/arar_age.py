@@ -22,7 +22,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from copy import copy
-from datetime import datetime
 from operator import itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
@@ -33,7 +32,7 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
     calculate_decay_factor, calculate_flux
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
-from pychron.pychron_constants import ARGON_KEYS, DATE_FORMAT
+from pychron.pychron_constants import ARGON_KEYS
 
 
 class ArArAge(IsotopeGroup):
@@ -171,8 +170,8 @@ class ArArAge(IsotopeGroup):
             return 0
 
     def set_sensitivity(self, sens):
-        for si in sens:
-            si['create_date'] = datetime.strptime(si['create_date'], DATE_FORMAT)
+        # for si in sens:
+        #     si['create_date'] = datetime.strptime(si['create_date'], DATE_FORMAT)
 
         for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
             if si['create_date'] < self.rundate:

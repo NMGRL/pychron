@@ -16,16 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 from itertools import groupby
 from operator import attrgetter
 
 from chaco.plot_label import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-from traits.api import List, Property, Event, cached_property, Any
+from traits.api import Property, Event, cached_property, Any
 from traitsui.api import View, UItem
 
-from pychron.envisage.tasks.base_editor import grouped_name, BaseTraitsEditor
+from pychron.core.codetools.inspection import caller
+from pychron.pipeline.plot.editors.base_editor import BaseEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
 
 
@@ -35,14 +37,18 @@ class WarningLabel(PlotLabel):
         self.y = self.component.y + self.component.height / 2
 
 
-class GraphEditor(BaseTraitsEditor):
-    analyses = List
+class GraphEditor(BaseEditor):
     refresh_needed = Event
     save_needed = Event
     component = Property(depends_on='refresh_needed')
     basename = ''
     figure_model = Any
     figure_container = Any
+
+    @property
+    @caller
+    def analyses(self):
+        return self.items
 
     def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)
@@ -77,24 +83,19 @@ class GraphEditor(BaseTraitsEditor):
 
     def set_items(self, ans, is_append=False, refresh=False, compress=True):
         if is_append:
-            self.analyses.extend(ans)
+            self.items.extend(ans)
         else:
-            self.analyses = ans
+            self.items = ans
 
-        if self.analyses:
+        if self.items:
             self._set_name()
             if compress:
                 self._compress_groups()
             if refresh:
                 self.refresh_needed = True
 
-    def _set_name(self):
-        na = sorted(list(set([ni.identifier for ni in self.analyses])))
-        na = grouped_name(na)
-        self.name = '{} {}'.format(na, self.basename)
-
     def _compress_groups(self):
-        ans = self.analyses
+        ans = self.items
         if ans:
             key = attrgetter('group_id')
             ans = sorted(ans, key=key)
@@ -106,7 +107,7 @@ class GraphEditor(BaseTraitsEditor):
 
     @cached_property
     def _get_component(self):
-        if self.analyses:
+        if self.items:
             if self.figure_container:
                 self.figure_container.model_changed(False)
             return self._component_factory()

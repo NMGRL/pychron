@@ -46,7 +46,7 @@ def compress_groups(items):
             for a in ans:
                 a.subgroup = ''
 
-    gs = {r.subgroup for r in items}
-    if len(gs) == 1:
-        for a in items:
-            a.subgroup = ''
+    # gs = {r.subgroup for r in items}
+    # if len(gs) == 1:
+    #     for a in items:
+    #         a.subgroup = ''

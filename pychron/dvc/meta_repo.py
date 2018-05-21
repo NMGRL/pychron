@@ -16,14 +16,19 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import shutil
-import time
 from datetime import datetime
-from uncertainties import ufloat, std_dev
+
+import six
+import time
+from six.moves import map
 # ============= enthought library imports =======================
 from traits.api import Bool
+from uncertainties import ufloat, std_dev
 
+from pychron import json
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, add_extension, \
@@ -31,10 +36,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension, \
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME
-from pychron import json
-import six
-from six.moves import map
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT
 
 
 class MetaObject(object):
@@ -744,8 +746,12 @@ class MetaRepo(GitRepoManager):
                 p = os.path.join(root, p)
                 obj = dvc_load(p)
                 # cd = self.get_modification_date(p)
+                # obj['modification_date'] = cd
                 # obj['create_date'] = cd
                 specs[name] = obj
+                for r in obj:
+                    if r['create_date']:
+                        r['create_date'] = datetime.strptime(r['create_date'], DATE_FORMAT)
 
         return specs
 

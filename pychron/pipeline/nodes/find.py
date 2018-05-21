@@ -16,9 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from itertools import groupby
-from operator import attrgetter
 
+from itertools import groupby
+
+from six.moves import map
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
@@ -29,7 +30,6 @@ from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR
-from six.moves import map
 
 
 class FindNode(DVCNode):
@@ -190,7 +190,7 @@ class FindReferencesNode(FindNode):
     user_choice = False
     threshold = Float
 
-    loadname = Str
+    load_name = Str
 
     display_loads = Property(depends_on='limit_to_analysis_loads')
     loads = List
@@ -258,7 +258,7 @@ class FindReferencesNode(FindNode):
         self.enable_mass_spectrometer = len(ms) > 1
         self.mass_spectrometer = list(ms)[0]
 
-        ls = {ai.loadname for ai in state.unknowns}
+        ls = {ai.load_name for ai in state.unknowns}
         self.analysis_loads = list(ls)
 
         self._load_analysis_types(state)
@@ -296,8 +296,8 @@ class FindReferencesNode(FindNode):
                   mass_spectrometers=self.mass_spectrometer,
                   make_records=False)
 
-        if self.loadname and self.loadname != NULL_STR:
-            refs = self.dvc.find_references_by_load(self.loadname, atypes, **kw)
+        if self.load_name and self.load_name != NULL_STR:
+            refs = self.dvc.find_references_by_load(self.load_name, atypes, **kw)
             if refs:
                 times = sorted([ai.rundate for ai in refs])
         else:
@@ -336,7 +336,7 @@ class FindReferencesNode(FindNode):
                 return True
 
     def traits_view(self):
-        v = self._view_factory(HGroup(Item('loadname', editor=EnumEditor(name='display_loads')),
+        v = self._view_factory(HGroup(Item('load_name', editor=EnumEditor(name='display_loads')),
                                       Item('limit_to_analysis_loads',
                                            tooltip='Limit Loads based on the selected analyses',
                                            label='Limit Loads by Analyses')),
@@ -370,7 +370,7 @@ class FindReferencesNode(FindNode):
             return self.loads
 
     def _get_threshold_enabled(self):
-        return not self.loadname or self.loadname == NULL_STR
+        return not self.load_name or self.load_name == NULL_STR
 
 
 class FindBlanksNode(FindReferencesNode):

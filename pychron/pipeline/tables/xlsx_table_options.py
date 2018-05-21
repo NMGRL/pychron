@@ -29,7 +29,7 @@ from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
-    table_kind = dumpable(Enum('Fusion', 'Step Heat'))
+    # table_kind = dumpable(Enum('Fusion', 'Step Heat'))
 
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
@@ -53,6 +53,9 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     include_time_delta = dumpable(Bool(True))
     include_k2o = dumpable(Bool(True))
     include_isochron_ratios = dumpable(Bool(False))
+    include_sensitivity = dumpable(Bool(True))
+    sensitivity_units = dumpable(Str('mol/fA'))
+
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
@@ -138,15 +141,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                              VGroup(UItem('monitor_notes', style='custom'), show_border=True,
                                     label='Notes'), label='Monitors')
 
-        grp = VGroup(Item('table_kind', label='Kind'),
-                     Item('name', label='Filename'),
+        grp = VGroup(Item('name', label='Filename'),
                      Item('auto_view', label='Open in Excel'),
                      show_border=True)
 
         appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
                                 Item('power_units', label='Power Units'),
-
                                 Item('age_units', label='Age Units'),
+                                Item('sensitivity_units', label='Sensitivity Units'),
                                 Item('repeat_header', label='Repeat Header'),
                                 HGroup(Item('highlight_non_plateau'),
                                        UItem('highlight_color', enabled_when='highlight_non_plateau')),
@@ -165,12 +167,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               Item('include_radiogenic_yield', label='%40Ar*'),
                               Item('include_kca', label='K/Ca'),
                               Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
+                              Item('include_sensitivity', label='Sensitivity'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_plateau_age', label='Plateau',
-                                   visible_when='table_kind=="Step Heat"'),
-                              Item('include_integrated_age', label='Integrated',
-                                   visible_when='table_kind=="Step Heat"'),
+                              Item('include_plateau_age', label='Plateau'),
+                              Item('include_integrated_age', label='Integrated'),
                               Item('include_isochron_age', label='Isochron'),
                               Item('include_isochron_ratios', label='Isochron Ratios'),
                               Item('include_time_delta', label='Time since Irradiation'),

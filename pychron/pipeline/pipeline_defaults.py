@@ -137,11 +137,25 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
-    meanify_enabled: False
   - klass: SubGroupingNode
-  - klass: XLSXAnalysisTableNode
+  - klass: AnalysisTableNode
   - klass: ReviewNode
   - klass: XLSXAnalysisTablePersistNode
+"""
+
+ANALYSIS_TABLE_W_IA = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: AnalysisTableNode
+  - klass: ReviewNode
+  - klass: SetInterpretedAgeNode
+  - klass: ReviewNode
+  - klass: InterpretedAgePersistNode
+  - klass: XLSXAnalysisTablePersistNode
+  
 """
 
 INTERPRETED_AGE_TABLE = """
@@ -157,6 +171,26 @@ INTERPRETED_AGE_IDEOGRAM = """
 required:
 nodes:
   - klass: InterpretedAgeNode
+  - klass: IdeogramNode
+"""
+
+HYBRID_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: InterpretedAgeNode
+  - klass: IdeogramNode
+"""
+
+SUBGROUP_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: GroupAgeNode
+  - klass: ReviewNode
   - klass: IdeogramNode
 """
 

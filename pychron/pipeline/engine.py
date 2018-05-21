@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
-
 import os
+
 import time
 import yaml
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
@@ -34,18 +34,20 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedA
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
 from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
+from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
+    BlanksPersistNode, ICFactorPersistNode
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
-    AUTO_REPORT, REPORT, CORRECTION_FACTORS, ANALYSIS_METADATA, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
-    CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT
+    AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
+    CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
+    ANALYSIS_TABLE_W_IA
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
-from pychron.pipeline.state import EngineState, get_detector_set
+from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
 
@@ -82,6 +84,17 @@ class Pipeline(HasTraits):
     name = Str('Pipeline 1')
     nodes = List
     active = Bool(False)
+
+    def resume(self, state):
+        start_node = state.veto
+
+        idx = self.nodes.index(start_node)
+        try:
+            prev_node = self.nodes[idx - 1]
+        except IndexError:
+            return
+
+        prev_node.resume(state)
 
     def group_nodes(self):
         pass
@@ -705,6 +718,9 @@ class PipelineEngine(Loggable):
 
         self.dvc.create_session(force=True)
 
+        if state.veto:
+            pipeline.resume(state)
+
         start_node = run_from or state.veto
         self.debug('pipeline run started')
         if start_node:
@@ -899,6 +915,8 @@ class PipelineEngine(Loggable):
                          ('Plot', (('Ideogram', IDEO),
                                    ('CSV Ideogram', CSV_IDEO),
                                    ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                                   ('Hybrid Ideogram', HYBRID_IDEOGRAM),
+                                   ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
                                    ('Spectrum', SPEC),
                                    ('Series', SERIES),
                                    ('InverseIsochron', INVERSE_ISOCHRON),
@@ -906,6 +924,7 @@ class PipelineEngine(Loggable):
                                    ('Regresssion', REGRESSION_SERIES),
                                    ('Vertical Flux', VERTICAL_FLUX))),
                          ('Table', (('Analysis', ANALYSIS_TABLE),
+                                    ('Analysis w/Set IA', ANALYSIS_TABLE_W_IA),
                                     ('Interpreted Age', INTERPRETED_AGE_TABLE),
                                     ('Report', REPORT))),
                          ('History', (('Ideogram', HISTORY_IDEOGRAM),

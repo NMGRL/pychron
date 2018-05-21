@@ -14,19 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+from itertools import groupby
 # ============= enthought library imports =======================
 from operator import attrgetter
 
-from traits.api import Str, Enum, Bool
-from traitsui.api import View, UItem, EnumEditor, VGroup, Item
-
-from itertools import groupby
 from numpy import array, array_split
+from traits.api import Str, Enum
+from traitsui.api import View, UItem, EnumEditor, VGroup, Item
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.tagging import apply_subgrouping, compress_groups
-from pychron.processing.analyses.analysis_group import AnalysisGroup, StepHeatAnalysisGroup, InterpretedAgeGroup
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None):
@@ -59,12 +57,9 @@ class GroupingNode(BaseNode):
 
     _attr = 'group_id'
     _id_func = None
-    mean_groups = Bool(False)
-    meanify_enabled = Bool(True)
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
-        self.meanify_enabled = nodedict.get('meanify_enabled', True)
 
     def _to_template(self, d):
         d['key'] = self.by_key
@@ -80,31 +75,29 @@ class GroupingNode(BaseNode):
                 setattr(unk, self._attr, 0)
 
             key = self._generate_key()
-            if self.mean_groups:
-                gs = []
-                for k, ans in groupby(sorted(unks, key=key), key=key):
-
-                    # k in form of `sha1:tag_counter`
-                    try:
-                        pak = k.split(':')[1].split('_')[0]
-                    except IndexError:
-                        pak = 'weighted_mean'
-
-                    a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
-
-                    gs.append(a)
-
-                setattr(state, self.analysis_kind, gs)
-            else:
-                group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
+            # if self.mean_groups:
+            #     gs = []
+            #     for k, ans in groupby(sorted(unks, key=key), key=key):
+            #
+            #         # k in form of `sha1:tag_counter`
+            #         try:
+            #             pak = k.split(':')[1].split('_')[0]
+            #         except IndexError:
+            #             pak = 'weighted_mean'
+            #
+            #         a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
+            #
+            #         gs.append(a)
+            #
+            #     setattr(state, self.analysis_kind, gs)
+            # else:
+            #     group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
+            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
 
     def traits_view(self):
         v = View(UItem('by_key',
                        style='custom',
                        editor=EnumEditor(name='keys')),
-                 Item('mean_groups', label='Meanify Groups',
-                      visible_when='meanify_enabled',
-                      enabled_when='by_key=="SubGroup"'),
                  width=300,
                  title=self.title,
                  buttons=['OK', 'Cancel'],
@@ -131,7 +124,6 @@ class SubGroupingNode(GroupingNode):
 
     def _id_func(self, gid, analyses):
         tag = self.grouping_kind.lower().replace(' ', '_')
-
         apply_subgrouping(tag, list(analyses), gid=gid)
 
     def run(self, state):

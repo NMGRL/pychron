@@ -24,6 +24,7 @@ from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
+from six.moves import map
 from traits.api import HasTraits, Any, Int, Str, Property, \
     Event, Bool, cached_property, List, Float
 from uncertainties import std_dev, nominal_value, ufloat
@@ -43,8 +44,6 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
-import six
-from six.moves import map
 
 
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
@@ -707,7 +706,7 @@ class BaseArArFigure(SelectionFigure):
                       reverse=self._reverse_sorted_analyses)
 
     @cached_property
-    def _get_analysis_group(self):
+    def _get_group(self):
         return self._analysis_group_klass(analyses=self.sorted_analyses)
 
 # ============= EOF =============================================

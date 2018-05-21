@@ -109,7 +109,6 @@ class ConnectionMixin(HasTraits):
             if c:
                 self._connected_color = 'green'
                 self._connected_label = 'Connected'
-s
 
 
 class ConnectionFavoriteItem(HasTraits):

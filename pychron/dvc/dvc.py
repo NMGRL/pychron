@@ -1012,8 +1012,15 @@ class DVC(Loggable):
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
                  arar_constants=ia.arar_constants.to_dict(),
+                 ages=ia.ages(),
                  analyses=[dict(uuid=ai.uuid,
                                 record_id=ai.record_id,
+                                age=ai.age,
+                                age_err=ai.age_err,
+                                age_err_wo_j=ai.age_err_wo_j,
+                                radiogenic_yield=ai.rad40_percent,
+                                kca=ai.kca,
+                                kcl=ai.kcal,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
                            ia.analyses])
 
@@ -1203,7 +1210,6 @@ class DVC(Loggable):
             self.sync_repo(expid)
             ps = []
             for it in ans:
-
                 tag = Tag.from_analysis(it)
                 tag.dump()
 

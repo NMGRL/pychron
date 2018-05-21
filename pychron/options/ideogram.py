@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.default_colormaps import color_map_name_dict
 from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
-from pychron.options.views.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
+from pychron.options.views.ideogram_views import VIEWS
 from pychron.pychron_constants import NULL_STR, FONTS, SIZES
 
 
@@ -109,23 +110,33 @@ class IdeogramOptions(AgeOptions):
     def to_dict_test(self, k):
         return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
 
-    def get_plot_dict(self, group_id):
-        # return {}
+    def get_plot_dict(self, group_id, subgroup_id):
 
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]
-        d = {'color': fg.line_color,
-             'edge_color': fg.line_color,
+
+        line_color = fg.line_color
+        color = fg.color
+        if subgroup_id:
+            rgb = color.red(), color.blue(), color.green()
+            rgb = [max(0, c*0.1*subgroup_id) for c in rgb]
+            color.setRgb(*rgb)
+
+        d = {'color': color,
+             'edge_color': line_color,
              'edge_width': fg.line_width,
              'line_width': fg.line_width,
-             'line_color': fg.line_color}
+             'line_color': line_color}
 
         if fg.use_fill:
             color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
             d['fill_color'] = color
             d['type'] = 'filled_line'
+
+
+
         return d
 
     # private

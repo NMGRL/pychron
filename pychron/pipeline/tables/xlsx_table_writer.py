@@ -17,10 +17,11 @@ import re
 from itertools import groupby
 from operator import attrgetter
 
+import six
 import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Instance, BaseStr, HasTraits
+from traits.api import Instance
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.filetools import add_extension, view_file
@@ -28,11 +29,10 @@ from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
-from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
+from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup, AnalysisGroup
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, IntermediateAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
-import six
 
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
@@ -43,24 +43,6 @@ DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, b
                          'Time interval (days) between end of irradiation and beginning of analysis',
 
                          'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
-
-
-class IntermediateAnalysis(HasTraits):
-    analysis_group = Instance(AnalysisGroup)
-
-    def is_omitted(self):
-        return False
-
-    def get_value(self, attr):
-        try:
-            return getattr(self, attr)
-        except AttributeError:
-            print('sdfa', attr)
-            return 0
-
-    def __getattr__(self, item):
-        print('getatttr', item)
-        return getattr(self.analysis_group, item)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -169,6 +151,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(enabled=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)', attr='k2o'),
+                   VColumn(enabled=options.include_sensitivity,
+                           label='Sensitivity',
+                           units=options.sensitivity_units,
+                           attr='sensitivity'),
                    VColumn(enabled=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
@@ -263,6 +249,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)',
                            attr='k2o'),
+                   VColumn(enabled=options.include_sensitivity,
+                           label='Sensitivity',
+                           units=options.sensitivity_units,
+                           attr='sensitivity'),
                    VColumn(enabled=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
@@ -334,7 +324,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_preferred_age_error(ag, *args):
             return std_dev(ag.preferred_age) * opt.summary_age_nsigma
 
-        is_step_heat = opt.table_kind == 'Step Heat'
+        # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
 
         cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
@@ -375,10 +365,15 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 EColumn(attr='arith_age'),
                 VColumn(label='IsochronAge', attr='isochron_age'),
                 EColumn(attr='isochron_age'),
-                VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
-                VColumn(enabled=is_step_heat, attr='plateau_age'),
-                VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
-                VColumn(enabled=is_step_heat, attr='integrated_age')]
+                VColumn(label='PlateauAge', attr='plateau_age'),
+                VColumn(attr='plateau_age'),
+                VColumn(label='IntegratedAge', attr='integrated_age'),
+                VColumn(attr='integrated_age')]
+
+                # VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
+                # VColumn(enabled=is_step_heat, attr='plateau_age'),
+                # VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
+                # VColumn(enabled=is_step_heat, attr='integrated_age')]
         return cols
 
     def _make_human_unknowns(self, unks):
@@ -397,6 +392,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._make_sheet(monitors, 'Monitors')
 
     def _make_summary_sheet(self, unks):
+        print('make suma', unks)
         self._current_row = 1
         sh = self._workbook.add_worksheet('Summary')
         self._format_generic_worksheet(sh)
@@ -492,8 +488,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 ag = None
                 if subgroup:
                     kind = '_'.join(subgroup.split('_')[:-1])
-                    ag = StepHeatAnalysisGroup(analyses=items)
-                    age, label = self._get_intermediate_age(ag, kind)
+                    ag = InterpretedAgeGroup(analyses=items)
+                    age, label = ag.get_age(kind)
+                    # age, label = self._get_intermediate_age(ag, kind)
 
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
@@ -509,16 +506,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
-                    ia = self._make_intermediate_analysis(ag, age, kind)
+                    ia = self._make_intermediate_analysis(ag, kind)
                     if nsubgroups > 1:
                         self._make_intermediate_summary(worksheet, ag, cols, kind, ia, label)
                     nitems.append(ia)
                     has_subgroups = True
                 else:
                     if nsubgroups == 1:
-                        ag = StepHeatAnalysisGroup(analyses=items)
-                        age, label = self._get_intermediate_age(ag, 'weighted_mean')
-                        ia = self._make_intermediate_analysis(ag, age, 'weighted_mean')
+                        ag = InterpretedAgeGroup(analyses=items)
+                        # age, label = self._get_intermediate_age(ag, 'weighted_mean')
+                        ia = self._make_intermediate_analysis(ag, 'weighted_mean')
                         nitems = [ia]
                     else:
                         nitems.extend(items)
@@ -670,36 +667,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-    def _get_intermediate_age(self, ag, kind):
-        if kind == 'weighted_mean':
-            a = ag.weighted_age
-            label = 'wt. mean'
-        elif kind == 'plateau':
-            a = ag.plateau_age
-            label = 'plateau'
-        elif kind == 'isochron':
-            a = ag.isochron_age
-            label = 'isochron'
-        elif kind == 'integrated':
-            a = ag.integrated_age
-        elif kind == 'plateau_else_weighted_mean':
-            label = 'plateau'
-            a = ag.plateau_age
-            if not ag.plateau_steps:
-                label = 'wt. mean'
-                a = ag.weighted_age
-
-        return a, label
-
-    def _make_intermediate_analysis(self, ag, a, kind):
+    def _make_intermediate_analysis(self, ag, kind):
         ia = IntermediateAnalysis(analysis_group=ag)
         ia.subgroup_kind = kind
+        a, label = ia.get_age(kind)
         ia.uage = a
         ia.uage_wo_j_err = a
 
         return ia
 
-    def _make_intermediate_summary(self, sh, cols, ag, kind, ia, label):
+    def _make_intermediate_summary(self, sh, ag, cols, kind, ia, label):
         row = self._current_row
 
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
@@ -832,7 +809,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-        if self._options.table_kind == 'Step Heat' or group.subgroup_kind == 'plateau':
+        if group.subgroup_kind == 'plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
                 sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import uuid
 from itertools import groupby
 
@@ -49,8 +50,7 @@ class InterpretedAgeEditor(FigureEditor):
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
-            return InterpretedAgeGroup(analyses=[x for x in aa if not x.is_omitted()],
-                                       all_analyses=aa,
+            return InterpretedAgeGroup(analyses=aa,
                                        preferred_age_kind=pk,
                                        preferred_age_error_kind=ek,
                                        use=True,
