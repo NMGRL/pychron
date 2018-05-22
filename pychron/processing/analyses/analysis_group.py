@@ -601,7 +601,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return a, label
 
     def ages(self, asfloat=True):
-        vs = {k: getattr(self, k) for k in ('weighted_mean', 'plateau', 'isochron', 'integrated')}
+        vs = {k: getattr(self, k) for k in ('weighted_age', 'plateau_age', 'isochron_age', 'integrated_age')}
         if asfloat:
             es = {}
             for k, v in vs.items():
