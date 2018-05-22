@@ -550,8 +550,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_kca_kind = Str('Weighted Mean')
 
     preferred_age_error_kind = Str(MSEM)  # ('SD')
-    preferred_ages = Property(depends_on='analyses')
+    # preferred_ages = Property(depends_on='analyses')
 
+    preferred_ages = ('Weighted Mean', 'Arithmetic Mean', 'Isochron', 'Integrated', 'Plateau')
+    
     name = Str
     use = Bool
 
@@ -722,6 +724,19 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
         return pa
 
+    # @cached_property
+    # def _get_preferred_ages(self):
+    #     ps = ['Weighted Mean', 'Arithmetic Mean', 'Isochron',
+    #           'Integrated', 'Plateau']
+    #     # if self.analyses:
+    #     #     ref = self.analyses[0]
+    #     #     print 'asfasfasdfasfas', ref, ref.step
+    #     #     if ref.step:
+    #     #         ps.append('Integrated')
+    #     #         if self.plateau_age:
+    #     #             ps.append('Plateau')
+    #
+    #     return ps
 
 # ============= EOF =============================================
 
