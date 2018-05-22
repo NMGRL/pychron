@@ -49,9 +49,17 @@ class IdeogramPanel(FigurePanel):
 
         nsubgroups = len(sg)
         if nsubgroups > 1 or bool(sg[0]):
-            gs = [self._figure_klass(analyses=list(aais), group_id=gid, subgroup_id=j, subgroup=sgid, **kw)
-                  for gid, ais in groupby(ans, key=key)
-                  for j, (sgid, aais) in enumerate(groupby(sorted(ais, key=skey), key=skey))]
+            gs = []
+            cnt = 0
+            for gid, ais in groupby(ans, key=key):
+                for j, (sgid, aais) in enumerate(groupby(sorted(ais, key=skey), key=skey)):
+                    aais = list(aais)
+                    f = self._figure_klass(analyses=aais, group_id=cnt, subgroup_id=j, subgroup=sgid, **kw)
+                    for a in aais:
+                        a.group_id = cnt
+
+                    gs.append(f)
+                    cnt += 1
         else:
             gs = [self._figure_klass(analyses=list(ais), group_id=gid, **kw)
                   for gid, ais in groupby(ans, key=key)]

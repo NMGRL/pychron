@@ -118,10 +118,10 @@ class IdeogramOptions(AgeOptions):
 
         line_color = fg.line_color
         color = fg.color
-        if subgroup_id:
-            rgb = color.red(), color.blue(), color.green()
-            rgb = [max(0, c*0.1*subgroup_id) for c in rgb]
-            color.setRgb(*rgb)
+        # if subgroup_id:
+        #     rgb = color.red(), color.blue(), color.green()
+        #     rgb = [c*0.9*subgroup_id for c in rgb]
+        #     color.setRgb(*rgb)
 
         d = {'color': color,
              'edge_color': line_color,
@@ -134,8 +134,6 @@ class IdeogramOptions(AgeOptions):
             color.setAlphaF(fg.alpha * 0.01)
             d['fill_color'] = color
             d['type'] = 'filled_line'
-
-
 
         return d
 

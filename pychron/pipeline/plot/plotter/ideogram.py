@@ -358,11 +358,10 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-
         plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
-        line.history_id =  self.group_id
+        line.history_id = self.group_id
 
         self._add_peak_labels(line)
 
@@ -518,15 +517,17 @@ class Ideogram(BaseArArFigure):
             mswd_args = (mswd, valid_mswd, n)
             text = self._make_mean_label(wm, we * self.options.nsigma, n, n, mswd_args)
 
-        group = self.options.get_group(self.group_id)
-        color = group.color
+        # group = self.options.get_group(self.group_id)
+        # color = group.color
+
+        plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
                                  nsgima=self.options.nsigma,
-                                 color=color,
+                                 color=plotkw['color'],
                                  visible=self.options.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
@@ -555,7 +556,6 @@ class Ideogram(BaseArArFigure):
         return m
 
     def update_index_mapper(self, obj, name, old, new):
-        print('obj', obj, id(obj))
         self._rebuild_ideo()
         # if new:
         #     self.update_graph_metadata(None, name, old, new)
@@ -698,12 +698,11 @@ class Ideogram(BaseArArFigure):
 
         graph = self.graph
 
-        group = self.options.get_group(self.group_id)
-        color = group.color
+        plotkw = self.options.get_plot_dict(self.group_id, self.subgroup_id)
 
         s, p = graph.new_series(
             x=xs, y=ys,
-            color=color,
+            color=plotkw['color'],
             type=type,
             marker=po.marker,
             marker_size=po.marker_size,
@@ -723,7 +722,7 @@ class Ideogram(BaseArArFigure):
             graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
-        s.history_id =  self.group_id
+        s.history_id = self.group_id
         return s
 
     def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):
