@@ -906,7 +906,8 @@ class GitRepoManager(Loggable):
             cx = GitSha(message=obj.message,
                         hexsha=obj.hexsha,
                         name=p,
-                        date=format_date(obj.committed_date))
+                        date=obj.committed_datetime)
+                        # date=format_date(obj.committed_date))
             return cx
 
         return [factory(ci) for ci in hexshas]

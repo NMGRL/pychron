@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Property, Any
+from traits.api import HasTraits, Str, Any
 from traits.trait_types import Int
 from traits.traits import Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
@@ -30,7 +30,9 @@ class StatusView(HasTraits):
         v = View(UItem('status', style='custom',
                        editor=TextEditor(read_only=True)),
                  kind='modal',
-                 title='Repository Status')
+                 title='Repository Status',
+                 width=500,
+                 resizable=True)
         return v
 
 
