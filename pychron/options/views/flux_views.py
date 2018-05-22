@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
@@ -39,7 +40,7 @@ class FluxSubOptions(SubOptions):
 
         calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
                           Readonly('lambda_k', label=u'Total \u03BB K'),
-                          Item('monitor_age'),
+                          Readonly('monitor_age'),
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
