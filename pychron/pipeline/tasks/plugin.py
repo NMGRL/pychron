@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
@@ -30,16 +31,18 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction
-
-    # LastNAnalysesSeriesAction,LastNHoursSeriesAction, LastMonthSeriesAction,
-    # LastWeekSeriesAction, LastDaySeriesAction, \
-
-
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
+# LastNAnalysesSeriesAction,LastNHoursSeriesAction, LastMonthSeriesAction,
+# LastWeekSeriesAction, LastDaySeriesAction, \
+
+
 class PipelinePlugin(BaseTaskPlugin):
-    # def _file_defaults_default(self):
+    def _file_defaults_default(self):
+        files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', True)]
+        return files
+
     #     ov = True
     #     files = [['pipeline_template_file', 'PIPELINE_TEMPLATES', ov],
     #              ['icfactor_template', 'ICFACTOR', ov],

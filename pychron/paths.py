@@ -23,6 +23,7 @@ make sure directory exists and build if not
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import pickle
 import shutil
@@ -216,11 +217,14 @@ class Paths(object):
     # ==============================================================================
     # processing
     # ==============================================================================
-    pipeline_dir = None
-    pipeline_template_dir = None
+    # pipeline_dir = None
+    # pipeline_template_dir = None
 
     user_pipeline_dir = None
     user_pipeline_template_dir = None
+
+    flux_constants = None
+
     # ==============================================================================
     # lovera exectuables
     # ==============================================================================
@@ -438,8 +442,9 @@ class Paths(object):
         self.user_pipeline_dir = join(self.setup_dir, 'pipeline')
         self.user_pipeline_template_dir = join(self.user_pipeline_dir, 'templates')
 
-        self.pipeline_dir = join(self.appdata_dir, 'pipeline')
-        self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
+        # self.pipeline_dir = join(self.appdata_dir, 'pipeline')
+        # self.pipeline_template_dir = join(self.pipeline_dir, 'templates')
+        self.flux_constants = join(self.setup_dir, 'flux_constants.yaml')
         # ==============================================================================
         # lovera exectuables
         # ==============================================================================
@@ -447,9 +452,9 @@ class Paths(object):
         # =======================================================================
         # files
         # =======================================================================
-        labspy_client_config = join(self.setup_dir, 'labspy_client.yaml')
-        self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
-        self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
+        # labspy_client_config = join(self.setup_dir, 'labspy_client.yaml')
+        # self.template_manifest_file = join(self.pipeline_dir, 'pipeline_manifest.p')
+        # self.pipeline_template_file = join(self.pipeline_dir, 'template_order.yaml')
         self.identifiers_file = join(self.appdata_dir, 'identifiers.yaml')
         self.identifier_mapping_file = join(self.setup_dir, 'identifier_mapping.yaml')
         self.backup_recovery_file = join(self.appdata_dir, 'backup_recovery')
@@ -488,7 +493,7 @@ class Paths(object):
         # =======================================================================
         # pipeline templates
         # =======================================================================
-        self._build_templates(self.pipeline_template_dir)
+        # self._build_templates(self.pipeline_template_dir)
 
         self.af_demagnetization = join(paths.spectrometer_dir, 'af_demagnetization.yaml')
 

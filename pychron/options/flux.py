@@ -45,11 +45,11 @@ class FluxOptions(FigureOptions):
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_decay]
-        return dc[0] + dc[2]
+        return dc['lambda_b'][0] + dc['lambda_ec'][0]
 
     def _get_monitor_age(self):
         dc = FLUX_CONSTANTS[self.selected_decay]
-        return dc[4]
+        return dc['monitor_age']
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS
