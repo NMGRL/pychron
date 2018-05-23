@@ -1018,7 +1018,7 @@ class DVC(Loggable):
                                 age_err_wo_j=ai.age_err_wo_j,
                                 radiogenic_yield=ai.rad40_percent,
                                 kca=ai.kca,
-                                kcl=ai.kcal,
+                                kcl=ai.kcl,
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
                            ia.analyses])
 
