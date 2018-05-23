@@ -17,17 +17,17 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import logging
 
-from numpy import asarray, column_stack, ones, \
-    matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
+from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
+from six.moves import range
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
 from pychron.core.helpers.fits import FITS
 from pychron.pychron_constants import MSEM
 from pychron.pychron_constants import SEM
-from six.moves import range
 
 logger = logging.getLogger('Regressor')
 
@@ -60,11 +60,14 @@ class OLSRegressor(BaseRegressor):
     def get_exog(self, x):
         return self._get_X(x)
 
-    def fast_predict(self, endog, exog):
+    def fast_predict(self, endog, pexog, exog=None):
         ols = self._ols
         ols.wendog = ols.whiten(endog)
+        if exog is not None:
+            ols.wexog = ols.whiten(exog)
+
         result = ols.fit()
-        return result.predict(exog)
+        return result.predict(pexog)
 
     def fast_predict2(self, endog, exog):
         """

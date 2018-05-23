@@ -16,17 +16,16 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from functools import partial
 
-from numpy import zeros, percentile, array, random, abs as nabs, vectorize
+from numpy import zeros, percentile, array, random, abs as nabs
 from scipy.stats import norm
 
 
 # ============= local library imports  ==========================
 
 
-def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, seed=None):
-    exog = reg.get_exog(pts)
+def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None, seed=None):
+    pexog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
 
@@ -40,8 +39,16 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, seed=None):
 
     pred = reg.fast_predict2
     yp = ys + yserr * ga
-    for i in range(ntrials):
-        ps[i] = pred(yp[i], exog)
+
+    if position_error:
+        exog = reg.get_exog(None)
+        exogp = exog + position_error * ga
+
+        for i in range(ntrials):
+            ps[i] = pred(yp[i], pexog, exogp[i])
+    else:
+        for i in range(ntrials):
+            ps[i] = pred(yp[i], pexog)
 
     res = nominal_ys - ps
 

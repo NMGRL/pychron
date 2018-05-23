@@ -14,20 +14,23 @@
 # limitations under the License.
 # ===============================================================================
 
+from itertools import groupby
+from operator import attrgetter
+
+from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
+from six.moves import range
+from six.moves import zip
 # ============= enthought library imports =======================
 # from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-
-from operator import attrgetter
-from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 from uncertainties import nominal_value, std_dev, ufloat
-from itertools import groupby
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
@@ -38,12 +41,9 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
-from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.processing.argon_calculations import calculate_flux, age_equation
+from pychron.processing.argon_calculations import calculate_flux
 from pychron.pychron_constants import MSEM, SD
-from six.moves import range
-from six.moves import zip
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 def mean_j(ans, error_kind, monitor_age, lambda_k):
@@ -299,10 +299,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             prev = p.j
             aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
             ans.extend(aa)
-            # data = zip(p.analyses, xx, yy)
-            # data = sorted(data, key=lambda x: x[2], reverse=p.slope)
-            # aa, xx, yy = zip(*data)
-            # ans.extend(aa)
 
         self.monitor_positions = poss
         self.analyses = ans
@@ -340,6 +336,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      position_error=self.plotter_options.position_error,
                                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
                 for p, j, je in zip(positions, nominals, errors):
@@ -585,7 +582,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
     def _recalculate_means(self, sel):
-        identifier = None
         if sel:
             idx = {self.analyses[si].identifier for si in sel}
         else:
@@ -609,14 +605,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self.max_j = fys.max()
         self.min_j = fys.min()
 
-        # maidx = fys.argmax()
-        # miidx = fys.argmin()
-
-        # x1,y1 = fxs[maidx], fys[maidx]
-        # x2,y2 = fxs[miidx], fys[miidx]
-        # d = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-        # self.j_gradient = self.percent_j_change / d
-
     def _model_flux(self, reg, r):
 
         n = reg.n * 10
@@ -626,24 +614,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         ne = zeros((n, n))
         for i in range(n):
             pts = vstack((gx[i], gy[i])).T
-            # nz[i] = reg.predict(pts)
-            # print 'asdfasfasfasdfasdfasdfsafadsfasdfsadfadsfasfas'
-            # ne[i] = reg.predict_error(pts)
-            # pts = array([[p.x, p.y] for p in positions])
+
             nominals = reg.predict(pts)
             nz[i] = nominals
-            # errors = monte_carlo_error_estimation(reg, nominals, pts,
-            #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
-            # ne[i] = errors
 
         self.max_j = nz.max()
         self.min_j = nz.min()
-
-        # x1, y1 = unravel_index(nz.argmax(), nz.shape)
-        # x2, y2 = unravel_index(nz.argmin(), nz.shape)
-        #
-        # d = 2 * r / n * ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-        # self.j_gradient = self.percent_j_change / d
 
         return gx, gy, nz, ne
 

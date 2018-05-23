@@ -15,9 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
-from traits.api import List, Str, Int, Enum, Property, Bool
+from traits.api import List, Str, Int, Enum, Property, Bool, Float
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
@@ -42,6 +40,8 @@ class FluxOptions(FigureOptions):
     use_monte_carlo = Bool(False)
     monitor_sample_name = Str
     plot_kind = Enum('1D', '2D')
+
+    position_error = Float
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_decay]

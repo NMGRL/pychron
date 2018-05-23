@@ -44,6 +44,10 @@ class FluxSubOptions(SubOptions):
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
+                          Item('position_error', label='Position Error (Beta)',
+                               tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                                       'irradiation hole. '
+                                       'This is to test "monte carloing" the irradiation geometry'),
                           Item('monte_carlo_ntrials'),
                           Item('use_monte_carlo'),
                           show_border=True,
