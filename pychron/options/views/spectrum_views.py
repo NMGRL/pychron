@@ -64,7 +64,7 @@ class DisplaySubOptions(TitleSubOptions):
     def traits_view(self):
         title_grp = self._get_title_group()
 
-        gen_grp = HGroup(UItem('show_info', tooltip='Show general info in the upper right corner'),
+        gen_grp = HGroup(Item('show_info', tooltip='Show general info in the upper right corner'),
                          show_border=True,
                          label='General')
 

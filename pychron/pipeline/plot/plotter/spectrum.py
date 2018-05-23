@@ -454,6 +454,7 @@ class Spectrum(BaseArArFigure):
 
         sample = self.analysis_group.sample
         identifier = self.analysis_group.identifier
+        text = 'Plateau= {}'.format(text)
 
         if self.options.include_plateau_sample:
             if self.options.include_plateau_identifier:
