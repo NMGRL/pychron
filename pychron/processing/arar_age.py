@@ -145,6 +145,10 @@ class ArArAge(IsotopeGroup):
         b = self.get_interference_corrected_value('Ar40')
         return a / b
 
+    @property
+    def lambda_k(self):
+        return self.arar_constants.lambda_k
+
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
         #     print var.tag

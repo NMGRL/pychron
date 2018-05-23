@@ -1384,9 +1384,17 @@ class DVC(Loggable):
                 if fd['lambda_k']:
                     a.arar_constants.lambda_k = fd['lambda_k']
 
-                a.standard_age = fd['standard_age']
-                a.standard_name = fd['standard_name']
-                a.standard_material = fd['standard_material']
+                for attr in ('age', 'name', 'material'):
+                    skey = 'monitor_{}'.format(attr)
+                    try:
+                        setattr(a, skey, fd[skey])
+                    except KeyError as e:
+                        try:
+                            key = 'standard_{}'.format(attr)
+                            setattr(a, skey, fd[key])
+                        except KeyError:
+                            print('b', attr, key, e)
+                            pass
 
                 if calculate_f_only:
                     a.calculate_F()

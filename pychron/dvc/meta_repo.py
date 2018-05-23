@@ -686,7 +686,7 @@ class MetaRepo(GitRepoManager):
 
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, je, lambda_k = 0, 0, None
-        standard_name, standard_material, standard_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
+        monitor_name, monitor_material, monitor_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
         # positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
@@ -702,16 +702,16 @@ class MetaRepo(GitRepoManager):
                     lambda_k = ufloat(v, e)
                 mon = pos.get('monitor')
                 if mon:
-                    standard_name = mon.get('name', DEFAULT_MONITOR_NAME)
+                    monitor_name = mon.get('name', DEFAULT_MONITOR_NAME)
                     sa = mon.get('age', 28.201)
                     se = mon.get('error', 0)
-                    standard_age = ufloat(sa, se, tag='standard_age')
-                    standard_material = mon.get('material', 'sanidine')
+                    monitor_age = ufloat(sa, se, tag='monitor_age')
+                    monitor_material = mon.get('material', 'sanidine')
 
         fd = {'j': ufloat(j, je, tag='J'), 'lambda_k': lambda_k,
-              'standard_name': standard_name,
-              'standard_material': standard_material,
-              'standard_age': standard_age}
+              'monitor_name': monitor_name,
+              'monitor_material': monitor_material,
+              'monitor_age': monitor_age}
         return fd
 
     def get_gains(self, name):

@@ -23,6 +23,7 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Instance
 from uncertainties import nominal_value, std_dev, ufloat
+from uncertainties.core import Variable
 
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.helpers.isotope_utils import sort_detectors
@@ -43,6 +44,11 @@ DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, b
                          'Time interval (days) between end of irradiation and beginning of analysis',
 
                          'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
+
+
+def format_mswd(t):
+    m, v, _ = t
+    return 'mswd={}{:0.3f}'.format('' if v else '*', m)
 
 
 class XLSXAnalysisTableWriter(BaseTableWriter):
@@ -165,6 +171,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._signal_columns(columns, ibit, bkbit)
         self._intercalibration_columns(columns, detectors)
         self._run_columns(columns, ubit)
+        self._flux_columns(columns)
 
         if options.include_production_ratios:
             pr = self._get_irradiation_columns(ubit)
@@ -174,6 +181,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             columns.extend(irr)
 
         return columns
+
+    def _flux_columns(self, columns):
+        options = self._options
+        columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k'),
+                        Column(enabled=False, label='MonitorAge', attr='monitor_age'),
+                        Column(enabled=False, label='MonitorName', attr='monitor_name'),
+                        Column(enabled=False, label='MonitorMaterial', attr='monitor_material')])
 
     def _run_columns(self, columns, ubit):
         options = self._options
@@ -677,10 +691,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return ia
 
     def _make_intermediate_summary(self, sh, ag, cols, ia, label):
-        def format_mswd(t):
-            m, v, _ = t
-            return 'mswd={}{:0.3f}'.format('' if v else '*', m)
-
         row = self._current_row
 
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
@@ -747,7 +757,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         fmt_ic = self._get_number_format('ic')
         fmt_disc = self._get_number_format('disc')
         fmt_sens = self._workbook.add_format()
-        fmt_sens.set_num_format('00E+00')
+        fmt_sens.set_num_format('0.0E+00')
+        fmt_lambda_k = self._workbook.add_format()
+        fmt_lambda_k.set_num_format('0.000E+00')
 
         fn = self._get_number_format()
         if last:
@@ -788,6 +800,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 sh.write_number(row, j + 1, txt, fmt_disc)
             elif c.label == 'Sensitivity':
                 sh.write_number(row, j + 1, txt, fmt_sens)
+            elif c.label == 'LambdaK':
+                sh.write_number(row, j + 1, txt, fmt_lambda_k)
             else:
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=fn)
@@ -798,6 +812,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _make_summary(self, sh, cols, group):
         nfmt = self._get_number_format('summary')
+        nfmt.set_bold(True)
+
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
@@ -825,6 +841,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age) * nsigma, nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
+        sh.write_rich_string(self._current_row, idx + 3, format_mswd(group.get_mswd_tuple()), fmt)
 
         self._current_row += 1
 
@@ -834,6 +851,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
                 sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
                 sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age) * nsigma, nfmt)
+                sh.write_rich_string(self._current_row, idx + 2, format_mswd(group.get_plateau_mswd_tuple()), fmt)
 
                 self._current_row += 1
 
@@ -935,7 +953,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         func = col.func
         if func is None:
             func = getattr
-        return func(item, attr)
+        v = func(item, attr)
+        if isinstance(v, Variable):
+            v = nominal_value(v)
+        return v
 
 
 if __name__ == '__main__':

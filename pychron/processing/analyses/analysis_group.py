@@ -378,7 +378,6 @@ class IntermediateAnalysis(HasTraits):
             return 0
 
     def __getattr__(self, item):
-        print('getatttr', item)
         return getattr(self.analysis_group, item)
 
 
@@ -424,8 +423,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
         cum = 0
         for i, a in enumerate(self.analyses):
-            if a.is_omitted():
-                continue
+            # if a.is_omitted():
+            #     continue
             if i > idx:
                 break
             cum += a.get_computed_value('k39')

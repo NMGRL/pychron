@@ -353,9 +353,9 @@ class Analysis(ArArAge, IdeogramPlotable):
     invalid_event = Event
     omit_event = Event
 
-    standard_name = None
-    standard_age = None
-    standard_material = None
+    monitor_name = None
+    monitor_age = None
+    monitor_material = None
 
     _experiment_type = None
 
