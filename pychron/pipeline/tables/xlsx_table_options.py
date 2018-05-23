@@ -29,8 +29,6 @@ from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
-    # table_kind = dumpable(Enum('Fusion', 'Step Heat'))
-
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     subgroup_sig_figs = dumpable(Int(6))
@@ -101,18 +99,15 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     summary_age_nsigma = dumpable(Enum(1, 2, 3))
     summary_kca_nsigma = dumpable(Enum(1, 2, 3))
 
+    asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
+    asummary_age_nsigma = dumpable(Enum(1, 2, 3))
+
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
     fixed_step_low = dumpable(SingleStr)
     fixed_step_high = dumpable(SingleStr)
 
     _persistence_name = 'xlsx_table_options'
-
-    # def _table_kind_changed(self):
-    #     if self.table_kind == 'Fusion':
-    #         self.include_summary_percent_ar39 = False
-    #     else:
-    #         self.include_summary_percent_ar39 = True
 
     @property
     def age_scalar(self):
@@ -149,6 +144,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 Item('power_units', label='Power Units'),
                                 Item('age_units', label='Age Units'),
                                 Item('sensitivity_units', label='Sensitivity Units'),
+                                Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
+                                Item('asummary_age_nsigma', label='Age Nsigma'),
                                 Item('repeat_header', label='Repeat Header'),
                                 HGroup(Item('highlight_non_plateau'),
                                        UItem('highlight_color', enabled_when='highlight_non_plateau')),

@@ -32,7 +32,7 @@ from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, IntermediateAnalysis
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
+from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
@@ -337,7 +337,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
                 # Column(enabled=opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
 
-                Column(enabled=opt.include_summary_n, label='N', attr='nanalyses'),
+                Column(enabled=opt.include_summary_n, label='N', attr='nratio'),
                 Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        attr='percent_39Ar'),
                 Column(enabled=opt.include_summary_mswd, label='MSWD', attr='mswd'),
@@ -370,10 +370,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 VColumn(label='IntegratedAge', attr='integrated_age'),
                 VColumn(attr='integrated_age')]
 
-                # VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
-                # VColumn(enabled=is_step_heat, attr='plateau_age'),
-                # VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
-                # VColumn(enabled=is_step_heat, attr='integrated_age')]
+        # VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
+        # VColumn(enabled=is_step_heat, attr='plateau_age'),
+        # VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
+        # VColumn(enabled=is_step_heat, attr='integrated_age')]
         return cols
 
     def _make_human_unknowns(self, unks):
@@ -508,7 +508,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 if ag:
                     ia = self._make_intermediate_analysis(ag, kind)
                     if nsubgroups > 1:
-                        self._make_intermediate_summary(worksheet, ag, cols, kind, ia, label)
+                        self._make_intermediate_summary(worksheet, ag, cols, ia, label)
                     nitems.append(ia)
                     has_subgroups = True
                 else:
@@ -523,7 +523,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 for item in items:
                     item.arar_constants.age_units = ounits
 
-            if has_subgroups:
+            if has_subgroups and nsubgroups > 1:
                 group.analyses = nitems
 
             if nsubgroups == 1:
@@ -676,7 +676,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         return ia
 
-    def _make_intermediate_summary(self, sh, ag, cols, kind, ia, label):
+    def _make_intermediate_summary(self, sh, ag, cols, ia, label):
+        def format_mswd(t):
+            m, v, _ = t
+            return 'mswd={}{:0.3f}'.format('' if v else '*', m)
+
         row = self._current_row
 
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
@@ -697,14 +701,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         age = ia.uage
         tn = ag.total_n
-        if kind == 'plateau':
+        if label == 'plateau':
             if not ag.plateau_steps:
                 age = None
             else:
                 sh.write(row, startcol + 2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
+                sh.write(row, startcol + 2, format_mswd(ag.get_plateau_mswd_tuple()), border)
 
         else:
             sh.write(row, startcol + 2, 'n={}/{}'.format(ag.nanalyses, tn), border)
+            sh.write(row, startcol + 3, format_mswd(ag.get_mswd_tuple()), border)
 
         if age is not None:
             sh.write_number(row, age_idx, nominal_value(age), fmt)
@@ -731,7 +737,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(self, sh, cols, item, last, is_plateau_step=None, cum=''):
-        status = 'X' if item.is_omitted() else ''
         row = self._current_row
 
         border = self._workbook.add_format({'bottom': 1})
@@ -741,6 +746,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         fmt_j = self._get_number_format('j')
         fmt_ic = self._get_number_format('ic')
         fmt_disc = self._get_number_format('disc')
+        fmt_sens = self._workbook.add_format()
+        fmt_sens.set_num_format('00E+00')
 
         fn = self._get_number_format()
         if last:
@@ -751,6 +758,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         fmt2.set_align('center')
         fmt_rundate.set_num_format('mm/dd/yy hh:mm')
+        status = 'X' if item.is_omitted() else ''
 
         if is_plateau_step is False:
             for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
@@ -758,6 +766,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             fmt.set_bg_color(self._options.highlight_color.name())
 
             sh.set_row(0, -1, fmt)
+            if not status:
+                status = 'pX'
 
         sh.write(row, 0, status, fmt)
         for j, c in enumerate(cols[1:]):
@@ -776,6 +786,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 sh.write_number(row, j + 1, txt, fmt_ic)
             elif c.attr.startswith('disc'):
                 sh.write_number(row, j + 1, txt, fmt_disc)
+            elif c.label == 'Sensitivity':
+                sh.write_number(row, j + 1, txt, fmt_sens)
             else:
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=fn)
@@ -790,20 +802,27 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         start_col = 0
         if self._options.include_kca:
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
-            sh.write_rich_string(self._current_row, start_col, u'Weighted Mean K/Ca {}'.format(PLUSMINUS_ONE_SIGMA),
+
+            nsigma = self._options.asummary_kca_nsigma
+            pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
+
+            sh.write_rich_string(self._current_row, start_col,
+                                 u'Weighted Mean K/Ca {}'.format(pmsigma),
                                  fmt)
 
-            print('asfdas', group, type(group))
+            # print('asfdas', group, type(group))
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)
             self._current_row += 1
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
-        sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+        nsigma = self._options.asummary_age_nsigma
+        pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
+        sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(pmsigma), fmt)
         sh.write_number(self._current_row, idx, nominal_value(group.weighted_age), nfmt)
-        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age) * nsigma, nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
 
@@ -811,32 +830,27 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         if group.subgroup_kind == 'plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(pmsigma), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
                 sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age) * nsigma, nfmt)
 
                 self._current_row += 1
 
             if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
+                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(pmsigma),
                                      fmt)
                 sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 
                 self._current_row += 1
 
         if self._options.include_isochron_age:
-
-            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
+            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
                                  fmt)
             iage = group.isochron_age
-            if iage is None:
-                v, e = 0, 0
-            else:
-                v, e = nominal_value(iage), std_dev(iage)
-            sh.write_number(self._current_row, idx, v, nfmt)
-            sh.write_number(self._current_row, idx + 1, e, nfmt)
+            sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
             self._current_row += 1
 

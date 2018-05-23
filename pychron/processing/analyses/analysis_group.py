@@ -98,6 +98,10 @@ class AnalysisGroup(IdeogramPlotable):
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
+    @property
+    def nratio(self):
+        return '{}/{}'.format(self.nanalyses, len(self.analyses))
+
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
         mswd = calculate_mswd(vs, es, wm=w)
@@ -173,7 +177,11 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_isochron_age(self):
-        return self.calculate_isochron_age()
+        a = self.calculate_isochron_age()
+        if a is None:
+            a = ufloat(0, 0)
+
+        return a
 
     @cached_property
     def _get_aliquot(self):
@@ -402,21 +410,17 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_total_ar39(self):
-        total = 0
-        ans = self.clean_analyses()
-        if ans:
-            total = sum([a.get_computed_value('k39') for a in ans])
-
+        total = sum([a.get_computed_value('k39') for a in self.analyses])
         return nominal_value(total)
 
     def valid_total_ar39(self):
-        total = sum([a.get_computed_value('k39') for a in self.analyses])
-        return nominal_value(self.total_ar39 / total * 100)
+        cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses()])
+        return nominal_value(cleantotal / self.total_ar39 * 100)
 
     def cumulative_ar39(self, idx):
-        ai = self.analyses[idx]
-        if ai.is_omitted():
-            return ''
+        # ai = self.analyses[idx]
+        # # if ai.is_omitted():
+        #     return ''
 
         cum = 0
         for i, a in enumerate(self.analyses):
@@ -553,7 +557,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     # preferred_ages = Property(depends_on='analyses')
 
     preferred_ages = ('Weighted Mean', 'Arithmetic Mean', 'Isochron', 'Integrated', 'Plateau')
-    
+
     name = Str
     use = Bool
 
