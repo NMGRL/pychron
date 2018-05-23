@@ -14,12 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
-
 import os
+
 import time
 import yaml
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
@@ -34,18 +34,20 @@ from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedA
 from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode
+from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
+from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
+from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
 from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode, FluxPersistNode, SetInterpretedAgeNode
+    BlanksPersistNode, ICFactorPersistNode
 from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
-    AUTO_REPORT, REPORT, CORRECTION_FACTORS, ANALYSIS_METADATA, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
-    CSV_ANALYSES_EXPORT
+    AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
+    CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
+    ANALYSIS_TABLE_W_IA
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
-from pychron.pipeline.plot.inspector_item import BaseInspectorItem
-from pychron.pipeline.state import EngineState, get_detector_set
+# from pychron.pipeline.plot.inspector_item import BaseInspectorItem
+from pychron.pipeline.state import EngineState
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
     PipelineTemplateRoot
 
@@ -82,6 +84,17 @@ class Pipeline(HasTraits):
     name = Str('Pipeline 1')
     nodes = List
     active = Bool(False)
+
+    def resume(self, state):
+        start_node = state.veto
+
+        idx = self.nodes.index(start_node)
+        try:
+            prev_node = self.nodes[idx - 1]
+        except IndexError:
+            return
+
+        prev_node.resume(state)
 
     def group_nodes(self):
         pass
@@ -201,7 +214,7 @@ class PipelineEngine(Loggable):
 
     dclicked = Event
     active_editor = Event
-    active_inspector_item = Instance(BaseInspectorItem, ())
+    # active_inspector_item = Instance(BaseInspectorItem, ())
     selected_editor = Any
 
     resume_enabled = Bool(False)
@@ -506,6 +519,10 @@ class PipelineEngine(Loggable):
         newnode = GroupingNode()
         self._add_node(node, newnode, run)
 
+    def add_subgrouping(self, node=None, run=True):
+        newnode = SubGroupingNode()
+        self._add_node(node, newnode, run)
+
     # find
     def add_find_airs(self, node=None, run=True):
         self._add_find_node(node, run, 'air')
@@ -610,11 +627,16 @@ class PipelineEngine(Loggable):
     #         if state.canceled:
     #             self.debug('pipeline canceled by {}'.format(node))
     #             return True
-    def pre_run_check(self):
+    def pre_run_check(self, run_kind):
         if self.pipeline:
             ret = bool(self.pipeline.nodes)
             if not ret:
                 self.warning_dialog('Please select a pipeline template to run')
+            elif run_kind == 'run_from_pipeline':
+                if self.selected is None or self.selected not in self.pipeline.nodes:
+                    self.warning_dialog('Please select the starting node')
+                    ret = False
+
             return ret
 
     def run_from_pipeline(self):
@@ -684,7 +706,7 @@ class PipelineEngine(Loggable):
                 self.post_run(state)
             return True
 
-    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True):
+    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True, configure=True):
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -695,6 +717,9 @@ class PipelineEngine(Loggable):
         ost = time.time()
 
         self.dvc.create_session(force=True)
+
+        if state.veto:
+            pipeline.resume(state)
 
         start_node = run_from or state.veto
         self.debug('pipeline run started')
@@ -713,7 +738,7 @@ class PipelineEngine(Loggable):
                 node.editor = None
 
                 with ActiveCTX(node):
-                    if not node.pre_run(state):
+                    if not node.pre_run(state, configure=configure):
                         self.debug('Pre run failed {}'.format(node))
                         return True
 
@@ -811,6 +836,12 @@ class PipelineEngine(Loggable):
             else:
                 dvc.push_repository(r.name)
 
+    def delete_local_changes(self):
+        self.debug('PipelineEngine.delete_local_changes')
+        dvc = self.dvc
+        for r in self._active_repositories():
+            dvc.delete_local_commits(r.name)
+
     # private
     def _active_repositories(self):
         if self.selected_repositories:
@@ -884,10 +915,14 @@ class PipelineEngine(Loggable):
                                   ('Blanks', BLANKS),
                                   ('IC Factor', ICFACTOR),
                                   ('Flux', FLUX),
-                                  ('Correction Factors', CORRECTION_FACTORS))),
+                                  ('Correction Factors', CORRECTION_FACTORS),
+                                  ('Bulk Edit', BULK_EDIT),
+                                  ('Audit', AUDIT))),
                          ('Plot', (('Ideogram', IDEO),
                                    ('CSV Ideogram', CSV_IDEO),
                                    ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
+                                   ('Hybrid Ideogram', HYBRID_IDEOGRAM),
+                                   ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
                                    ('Spectrum', SPEC),
                                    ('Series', SERIES),
                                    ('InverseIsochron', INVERSE_ISOCHRON),
@@ -895,8 +930,11 @@ class PipelineEngine(Loggable):
                                    ('Regresssion', REGRESSION_SERIES),
                                    ('Vertical Flux', VERTICAL_FLUX))),
                          ('Table', (('Analysis', ANALYSIS_TABLE),
+                                    ('Analysis w/Set IA', ANALYSIS_TABLE_W_IA),
                                     ('Interpreted Age', INTERPRETED_AGE_TABLE),
                                     ('Report', REPORT))),
+                         ('History', (('Ideogram', HISTORY_IDEOGRAM),
+                                      ('Spectrum', HISTORY_SPECTRUM))),
                          ('Auto', (('Ideogram', AUTO_IDEOGRAM),
                                    ('Series', AUTO_SERIES),
                                    ('Report', AUTO_REPORT))),

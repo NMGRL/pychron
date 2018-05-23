@@ -20,11 +20,11 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from pychron.core.stats import calculate_weighted_mean
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
+from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 from six.moves import zip
 
 
-class InterpretedAgeXLSTableWriter(XLSXTableWriter):
+class InterpretedAgeXLSTableWriter(XLSXAnalysisTableWriter):
     def build(self, p, ias, title=None, adapter=None, options=None):
         self._new_workbook(p)
 

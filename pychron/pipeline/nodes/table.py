@@ -14,46 +14,75 @@
 # limitations under the License.
 # ===============================================================================
 
+import os
+from itertools import groupby
 # ============= enthought library imports =======================
+from operator import attrgetter
+
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import HasTraits, List, Enum, Bool, Str, Instance
+from traits.api import HasTraits, List, Enum, Bool, Str
 from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
-import os
-from itertools import groupby
-
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.pipeline.editors.arar_table_editor import ArArTableEditor
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import BaseDVCNode
+from pychron.pipeline.nodes.group_age import GroupAgeNode
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 
-class TableNode(BaseNode):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class TableNode(BaseDVCNode):
+    pass
 
 
-class XLSXAnalysisTableNode(TableNode):
+class AnalysisTableNode(GroupAgeNode):
+    def set_groups(self, state):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+        def factory(ans, tag='Human Table'):
+            if self.skip_meaning:
+                if tag in self.skip_meaning:
+                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+            return InterpretedAgeGroup(analyses=list(ans))
+
+        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+        blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
+        airs = (a for a in state.unknowns if a.analysis_type == 'air')
+
+        key = attrgetter('group_id')
+
+        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
+        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+
+        groups = {'unknowns': unk_group,
+                  'blanks': blank_group,
+                  'airs': air_group,
+                  'machine_unknowns': munk_group}
+
+        state.groups = groups
+
+
+class XLSXAnalysisTableNode(AnalysisTableNode):
     name = 'Analysis Table'
     # options_klass = XLSXTableWriterOptions
 
     # def _finish_configure(self):
     #     self.options.dump()
-    auto_configure = False
-    configurable = False
+    # auto_configure = False
+    # configurable = False
 
-    def run(self, state):
-
-        self._make_table(state)
-
-    def _make_table(self, state):
-        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
-
-        editor = ArArTableEditor(dvc=self.dvc)
-        editor.items = unknowns
-        state.editors.append(editor)
+    # def run(self, state):
+    #     unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+    #
+    #     editor = ArArTableEditor(dvc=self.dvc)
+    #     editor.items = unknowns
+    #     state.editors.append(editor)
+    #     self.set_groups(state)
 
 
 class TableOptions(HasTraits, PersistenceMixin):

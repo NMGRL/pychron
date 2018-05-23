@@ -125,6 +125,9 @@ def repository_path(project):
 
 
 def make_ref_list(refs):
-    return [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
+    ret = ''
+    if refs:
+        ret = [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
+    return ret
 
 # ============= EOF =============================================

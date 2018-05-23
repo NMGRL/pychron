@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2018 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Property, Bool
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from pychron.pipeline.editors.group_age_editor import GroupAgeEditor
+from pychron.pipeline.nodes.data import BaseDVCNode
 
 
-class Commit(HasTraits):
-    message = Str
-    date = Str
-    hexsha = Str
-    summary = Property
-    active = Bool
-    blob = Str
-    name = Str
+class GroupAgeNode(BaseDVCNode):
+    name = 'Group Age'
+    auto_configure = False
+    configurable = False
+    editor_klass = GroupAgeEditor
 
-    def _get_summary(self):
-        return '{} {}'.format(self.date, self.message)
+    def run(self, state):
+        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+
+        editor = self.editor_klass(dvc=self.dvc)
+        editor.items = unknowns
+        state.editors.append(editor)
+        self.set_groups(state)
+
+    def set_groups(self, state):
+        pass
 
 # ============= EOF =============================================
-
-
-

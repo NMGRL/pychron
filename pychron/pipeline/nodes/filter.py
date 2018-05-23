@@ -99,7 +99,8 @@ class PipelineFilter(HasTraits):
 
             try:
                 result = eval(test, edict)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, TypeError) as e:
+                print('filter evaluation failed e={} test={}, dict={}'.format(e, test, edict))
                 result = False
 
             return result
@@ -236,13 +237,12 @@ class FilterNode(BaseNode):
                 else:
                     flag = flag or b
             return flag
-
+        ans = getattr(state, self.analysis_kind)
         if self.remove:
             # vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
-            vs = [a for a in getattr(state, self.analysis_kind) if filterfunc(a)]
+            vs = [a for a in ans if filterfunc(a)]
             setattr(state, self.analysis_kind, vs)
         else:
-            ans = getattr(state, self.analysis_kind)
             for a in ans:
                 if not filterfunc(a):
                     a.tag = 'omit'

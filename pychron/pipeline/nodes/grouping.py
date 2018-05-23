@@ -14,20 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
+from itertools import groupby
 # ============= enthought library imports =======================
 from operator import attrgetter
 
-from traits.api import Str
-from traitsui.api import View, UItem, EnumEditor
-
-from itertools import groupby
 from numpy import array, array_split
+from traits.api import Str, Enum
+from traitsui.api import View, UItem, EnumEditor, VGroup, Item
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.tagging import apply_subgrouping, compress_groups
 
 
-def group_analyses_by_key(items, key, attr='group_id'):
+def group_analyses_by_key(items, key, attr='group_id', id_func=None):
     if isinstance(key, str):
         keyfunc = lambda x: getattr(x, key)
     else:
@@ -42,6 +42,8 @@ def group_analyses_by_key(items, key, attr='group_id'):
     sitems = sorted(items, key=keyfunc)
     for k, analyses in groupby(sitems, key=keyfunc):
         gid = ids.index(k)
+        if id_func:
+            gid = id_func(gid, analyses)
         for it in analyses:
             setattr(it, attr, gid)
 
@@ -54,6 +56,7 @@ class GroupingNode(BaseNode):
     title = 'Edit Grouping'
 
     _attr = 'group_id'
+    _id_func = None
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -69,9 +72,27 @@ class GroupingNode(BaseNode):
         if self.by_key != 'No Grouping':
             unks = getattr(state, self.analysis_kind)
             for unk in unks:
-                unk.group_id = 0
+                setattr(unk, self._attr, 0)
 
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr)
+            key = self._generate_key()
+            # if self.mean_groups:
+            #     gs = []
+            #     for k, ans in groupby(sorted(unks, key=key), key=key):
+            #
+            #         # k in form of `sha1:tag_counter`
+            #         try:
+            #             pak = k.split(':')[1].split('_')[0]
+            #         except IndexError:
+            #             pak = 'weighted_mean'
+            #
+            #         a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
+            #
+            #         gs.append(a)
+            #
+            #     setattr(state, self.analysis_kind, gs)
+            # else:
+            #     group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
+            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
 
     def traits_view(self):
         v = View(UItem('by_key',
@@ -90,13 +111,47 @@ class GraphGroupingNode(GroupingNode):
     _attr = 'graph_id'
 
 
+class SubGroupingNode(GroupingNode):
+    title = 'Edit SubGrouping'
+    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
+    name = 'SubGroup'
+    by_key = 'Aliquot'
+    _attr = 'subgroup'
+    grouping_kind = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Plateau else Weighted Mean', 'Integrated')
+
+    def load(self, nodedict):
+        self.by_key = nodedict.get('key', 'Aliquot')
+
+    def _id_func(self, gid, analyses):
+        tag = self.grouping_kind.lower().replace(' ', '_')
+        apply_subgrouping(tag, list(analyses), gid=gid)
+
+    def run(self, state):
+        super(SubGroupingNode, self).run(state)
+
+        ans = getattr(state, self.analysis_kind)
+        compress_groups(ans)
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(UItem('by_key',
+                                     style='custom',
+                                     editor=EnumEditor(name='keys')),
+                               show_border=True, label='Grouping'),
+                        VGroup(Item('grouping_kind', label='Grouping Type'), show_border=True)),
+                 width=300,
+                 title=self.title,
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal')
+        return v
+
+
 class BinNode(BaseNode):
     analysis_kind = 'unknowns'
 
     def run(self, state):
         unks = getattr(state, self.analysis_kind)
 
-        key = lambda x: x.timestamp
+        key = attrgetter('timestamp')
         unks = sorted(unks, key=key)
 
         tol_hrs = 1

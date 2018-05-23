@@ -82,14 +82,20 @@ class MassSpecAnalysis(Analysis):
                 self.rad4039 = ufloat(arar.Rad4039, arar.Rad4039Er)
                 self.r3739 = ufloat(arar.R3739Cor, arar.ErR3739Cor)
                 self.Cl3839 = ufloat(arar.Cl3839, 0)
-                self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
-                self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
+                try:
+                    self.kca = ufloat(arar.CaOverK, arar.CaOverKEr) ** -1
+                except ZeroDivisionError:
+                    self.kca = 0
+
+                try:
+                    self.kcl = ufloat(arar.ClOverK, arar.ClOverKEr) ** -1
+                except ZeroDivisionError:
+                    self.kcl = 0
 
         prefs = obj.changeable.preferences_set
-        # prefs = None
         fo, fi, fs = 0, 0, 0
         if prefs:
-            # fo = prefs.DelOutliersAfterFit == 'true'
+            fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
             self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
@@ -114,6 +120,7 @@ class MassSpecAnalysis(Analysis):
                 except AttributeError:
                     pass
 
+            iso.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
             iso.total_value = ufloat(tv, te)
             # iso.set_uvalue((uv, ee))
             iso.n = n
@@ -160,11 +167,13 @@ class MassSpecAnalysis(Analysis):
     def sync_filtering(self, obj, prefs):
         """
         """
+
         fo, fi, fs = 0, 0, 0
         if prefs:
             fo = prefs.DelOutliersAfterFit == 'true'
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
+
         obj.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
     def sync_irradiation(self, irrad):

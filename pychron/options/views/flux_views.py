@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.default_colormaps import color_map_name_dict
 from traitsui.api import Item, HGroup, VGroup, Readonly, EnumEditor
 
@@ -39,10 +40,14 @@ class FluxSubOptions(SubOptions):
 
         calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
                           Readonly('lambda_k', label=u'Total \u03BB K'),
-                          Item('monitor_age'),
+                          Readonly('monitor_age'),
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
+                          Item('position_error', label='Position Error (Beta)',
+                               tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                                       'irradiation hole. '
+                                       'This is to test "monte carloing" the irradiation geometry'),
                           Item('monte_carlo_ntrials'),
                           Item('use_monte_carlo'),
                           show_border=True,

@@ -36,6 +36,10 @@ import six
 from six.moves import zip
 
 
+class RefitException(BaseException):
+    pass
+
+
 class FitNode(FigureNode):
     use_save_node = Bool(True)
     _fits = List
@@ -50,14 +54,18 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
+            unks = [u for u in unks if not u.is_omitted() and u.analysis_type in self.plotter_options.analysis_types]
         return unks
 
     def check_refit(self, unks):
         unks = self._get_valid_unknowns(unks)
         for ui in unks:
-            if self._check_refit(ui):
-                break
+            try:
+                if self._check_refit(ui):
+                    break
+
+            except RefitException:
+                return False
         else:
             if confirm(None, self._refit_message) == YES:
                 return True
@@ -181,8 +189,13 @@ class FitICFactorNode(FitReferencesNode):
         for k in self._keys:
             num, dem = k.split('/')
             i = ai.get_isotope(detector=dem)
-            if not i.ic_factor_reviewed:
-                return True
+            if i is not None:
+                if not i.ic_factor_reviewed:
+                    return True
+            else:
+                from pyface.message_dialog import warning
+                warning(None, 'Data for detector {} is missing from {}'.format(dem, ai.record_id))
+                raise RefitException()
 
     def load(self, nodedict):
         try:
@@ -204,6 +217,7 @@ class FitICFactorNode(FitReferencesNode):
 
 GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared')
 GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared')
+INVERTED_GOODNESS = ('rsquared',)
 
 
 class IsoEvoResult(HasTraits):
@@ -251,7 +265,8 @@ class IsoEvoResult(HasTraits):
         def f(t, m):
             v = getattr(self, '{}_goodness'.format(t))
             if v is not None:
-                v = 'OK' if v else "Bad {}>{}".format('{}'.format(t), '{}_threshold'.format(t))
+                comp = '<' if t in INVERTED_GOODNESS else '>'
+                v = 'OK' if v else "Bad {}{}{}".format('{}'.format(t), comp, '{}_threshold'.format(t))
             else:
                 v = 'Not Tested'
             return '{:<25}: {}'.format(m, v)
@@ -400,7 +415,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
-                    rsquared_goodness = rsquared < rsquared_threshold
+                    rsquared_goodness = rsquared > rsquared_threshold
 
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
@@ -452,10 +467,14 @@ class FitFluxNode(FitNode):
         monitors = state.flux_monitors
 
         if monitors:
-            lk = self.plotter_options.lambda_k
-            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            po = self.plotter_options
+            # lk = po.lambda_k
+            # state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            # state.error_calc_method = po.
+            # state.flux_fit = po.
+            state.flux_options = po
 
-            editor.plotter_options = self.plotter_options
+            editor.plotter_options = po
             editor.geometry = geom
             editor.irradiation = state.irradiation
             editor.level = state.level

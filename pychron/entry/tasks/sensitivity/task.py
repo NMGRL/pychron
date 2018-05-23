@@ -51,10 +51,6 @@ class SensitivityEntryTask(BaseManagerTask):
     #                 IrradiationEditorPane(model=self.manager)
     #                 ]
 
-
-    #     @on_trait_change('extractor:update_irradiations_needed')
-    #     def _update_irradiations(self):
-    #         self.manager.updated = True
     # ===========================================================================
     # GenericActon Handlers
     # ===========================================================================
@@ -74,8 +70,8 @@ class SensitivityEntryTask(BaseManagerTask):
     # defaults
     # ===============================================================================
     def _manager_default(self):
-        man = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManage')
-        return SensitivityEntry(db=man.db)
+        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        return SensitivityEntry(dvc=dvc)
 
         #
         #     def _default_layout_default(self):

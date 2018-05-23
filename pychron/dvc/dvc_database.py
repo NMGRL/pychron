@@ -567,6 +567,9 @@ class DVCDatabase(DatabaseAdapter):
     def add_load(self, name, holder):
         with self.session_ctx():
             if not self.get_loadtable(name):
+                if not self.get_load_holder(holder):
+                    self.add_load_holder(holder)
+
                 a = LoadTbl(name=name, holderName=holder)
                 return self._add_item(a)
 
@@ -1150,6 +1153,10 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisGroupTbl)
             q = q.join(ProjectTbl)
             q = q.filter(AnalysisGroupTbl.name == name)
+
+            if not isinstance(project, six.text_type):
+                project = project.name
+
             q = q.filter(ProjectTbl.name == project)
 
             return self._query_all(q)
@@ -1520,6 +1527,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return lt
 
+    get_load = get_loadtable
+
     def get_identifier(self, identifier):
         return self._retrieve_item(IrradiationPositionTbl, identifier,
                                    key='identifier')
@@ -1592,6 +1601,9 @@ class DVCDatabase(DatabaseAdapter):
             if grainsize:
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             return self._query_one(q)
+
+    def get_sample_id(self, id):
+        return self._retrieve_item(SampleTbl, id, key='id')
 
     def get_sample(self, name, project, pi, material, grainsize=None):
         with self.session_ctx() as sess:
@@ -1792,9 +1804,6 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(distinct(MaterialTbl.grainsize))
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
-
-    def get_sample_id(self, id):
-        return self._retrieve_item(SampleTbl, id, key='id')
 
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:

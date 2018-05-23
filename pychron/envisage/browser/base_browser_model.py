@@ -17,11 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-import six.moves.cPickle as pickle
+
 import os
 import re
 from datetime import timedelta, datetime
 
+import six.moves.cPickle as pickle
+from six.moves import filter
+from six.moves import map
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
@@ -33,14 +36,11 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
-from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
     PrincipalInvestigatorRecordView, LoadRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
-from six.moves import filter
-from six.moves import map
 
 
 class IdentifierStr(BaseStr):
@@ -157,6 +157,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     mass_spectrometers_enabled = Bool
     mass_spectrometer_includes = List
     available_mass_spectrometers = List
+
+    auto_load_database = Bool(True)
+    load_selection_enabled = Bool(True)
 
     named_date_range = Enum('this month', 'this week', 'yesterday')
     low_post = Property(Date, depends_on='date_enabled, _low_post, use_low_post, use_named_date_range, '
@@ -383,11 +386,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _load_associated_labnumbers(self):
         """
         """
+
         if self._suppress_load_labnumbers:
+            print('skiping load associated')
             return
 
         sams = self._make_labnumbers()
-
         self.samples = sams
         self.osamples = sams
 
@@ -540,29 +544,64 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         return p.lower()
 
+    def _make_project(self, record):
+        return ProjectRecordView(record)
+
+    def _make_principal_investigator(self, record):
+        return PrincipalInvestigatorRecordView(record)
+
+    def _make_load(self, record):
+        return LoadRecordView(record)
+
+    def _make_sample(self, record):
+        return LabnumberRecordView(record)
+
     def _load_browser_selection(self, selection):
-        def load(attr, values):
-            def get(n):
+        if not self.auto_load_database:
+            for attr in ('load', 'project', 'principal_investigator', 'sample'):
+                pattr = '{}s'.format(attr)
                 try:
-                    return next((p for p in values if p.id == n), None)
-                except AttributeError as e:
-                    print(e)
+                    sel = selection[pattr]
+                except KeyError:
+                    return
+                vs = []
+                if sel:
+                    if attr == 'sample':
+                        func = self.db.get_identifier
+                    else:
+                        func = getattr(self.db, 'get_{}'.format(attr))
+
+                    make = getattr(self, '_make_{}'.format(attr))
+                    for si in sel:
+                        v = func(si)
+                        vs.append(make(v))
+
+                    setattr(self, pattr, vs)
+                    setattr(self, 'selected_{}'.format(pattr), vs)
+
+        else:
+            def load(attr, values):
+                def get(n):
+                    try:
+                        return next((p for p in values if p.id == n), None)
+                    except AttributeError as e:
+                        print(e)
+                        return
+
+                try:
+                    sel = selection[attr]
+                except KeyError:
                     return
 
-            try:
-                sel = selection[attr]
-            except KeyError:
-                return
+                vs = [get(pp) for pp in sel]
+                vs = [pp for pp in vs if pp is not None]
+                setattr(self, 'selected_{}'.format(attr), vs)
 
-            vs = [get(pp) for pp in sel]
-            vs = [pp for pp in vs if pp is not None]
-            setattr(self, 'selected_{}'.format(attr), vs)
-
-        load('principal_investigators', self.principal_investigators)
-        load('projects', self.projects)
-        # load('experiments', self.repositories)
-        load('samples', self.samples)
-        load('loads', self.loads)
+            load('principal_investigators', self.principal_investigators)
+            load('projects', self.projects)
+            # load('experiments', self.repositories)
+            load('samples', self.samples)
+            load('loads', self.loads)
 
     def _load_projects_for_principal_investigators(self, pis=None):
         ms = None

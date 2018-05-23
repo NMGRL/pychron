@@ -16,10 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Bool, Any, List, Str
-from traitsui.api import View
-import six
 
+from traits.api import Bool, Any, List, Str
+from traitsui.api import View
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -47,6 +46,9 @@ class BaseNode(ColumnSorterMixin):
     index = -1
 
     skip_meaning = Str
+
+    def resume(self, state):
+        pass
 
     def clear_data(self):
         print('clearing data')

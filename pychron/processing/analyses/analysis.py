@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from collections import namedtuple
 
+import six
 from numpy import Inf
 from pyface.message_dialog import information
 from pyface.qt import QtCore
@@ -36,7 +38,6 @@ from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR
-import six
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
@@ -48,6 +49,8 @@ EXTRACTION_ATTRS = ('weight', 'extract_device', 'tray', 'extract_value',
                     'extract_units',
                     # 'duration',
                     # 'cleanup',
+                    'load_name',
+                    'load_holder',
                     'extract_duration',
                     'cleanup_duration',
                     'pattern', 'beam_diameter', 'ramp_duration', 'ramp_rate')
@@ -158,6 +161,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
 
 class IdeogramPlotable(HasTraits):
+    history_id = 0
     group_id = 0
     graph_id = 0
     name = ''
@@ -177,9 +181,10 @@ class IdeogramPlotable(HasTraits):
     timestamp = 0
     subgroup = ''
 
-    def __init__(self, *args, **kw):
+    def __init__(self, make_arar_constants=True, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)
-        self.arar_constants = ArArConstants()
+        if make_arar_constants:
+            self.arar_constants = ArArConstants()
 
     def refresh_view(self):
         pass
@@ -275,7 +280,8 @@ class Analysis(ArArAge, IdeogramPlotable):
     measured_response_stream = None
     requested_output_stream = None
     setpoint_stream = None
-    loadname = ''
+    load_name = ''
+    load_holder = ''
 
     experiment_queue_name = ''
 
@@ -347,9 +353,9 @@ class Analysis(ArArAge, IdeogramPlotable):
     invalid_event = Event
     omit_event = Event
 
-    standard_name = None
-    standard_age = None
-    standard_material = None
+    monitor_name = None
+    monitor_age = None
+    monitor_material = None
 
     _experiment_type = None
 

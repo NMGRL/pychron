@@ -17,29 +17,29 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import os
 import shutil
 import subprocess
-import time
 from datetime import datetime
 
-from git import Repo, RemoteProgress
+import time
+from git import Repo
 from git.exc import GitCommandError
-from git.util import CallableRemoteProgress
 from traits.api import Any, Str, List, Event
 
 from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.filetools import fileiter
 from pychron.core.progress import open_progress
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.view_util import open_view
-from pychron.git_archive.commit import Commit
 from pychron.git_archive.diff_view import DiffView, DiffModel
+from pychron.git_archive.git_objects import GitSha
 from pychron.git_archive.merge_view import MergeModel, MergeView
 from pychron.git_archive.utils import get_head_commit, ahead_behind
 from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
+from pychron.pychron_constants import DATE_FORMAT
 
 
 def get_repository_branch(path):
@@ -64,6 +64,17 @@ def isoformat_date(d):
 
     return d.strftime('%Y-%m-%d %H:%M:%S')
     # return time.mktime(time.gmtime(d))
+
+
+class StashCTX(object):
+    def __init__(self, repo):
+        self._repo = repo
+
+    def __enter__(self):
+        self._repo.git.stash()
+
+    def __exit__(self, *args, **kw):
+        self._repo.git.stash('pop')
 
 
 class GitRepoManager(Loggable):
@@ -127,7 +138,10 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
                 self.set_name(path)
 
-    def delete_local_commits(self, remote='origin', branch='master'):
+    def delete_local_commits(self, remote='origin', branch=None):
+        if branch is None:
+            branch = self._repo.active_branch.name
+
         self._repo.git.reset('--hard', '{}/{}'.format(remote, branch))
 
     def add_paths(self, apaths):
@@ -173,10 +187,24 @@ class GitRepoManager(Loggable):
                     afile.write('{}\n'.format(a))
         self.add(p, commit=False)
 
-    def out_of_date(self, branchname='master'):
+    def get_modification_date(self, path):
+        """
+        "Fri May 18 11:13:57 2018 -0600"
+        :param path:
+        :return:
+        """
+        d = self.cmd('log', '-1', '--format="%ad"', '--date=format:{}'.format(DATE_FORMAT), '--', path)
+        if d:
+            d = d[1:-1]
+        return d
+
+    def out_of_date(self, branchname=None):
+        repo = self._repo
+        if branchname is None:
+            branchname = repo.active_branch.name
+
         pd = open_progress(2)
 
-        repo = self._repo
         origin = repo.remotes.origin
         pd.change_message('Fetching {} {}'.format(origin, branchname))
 
@@ -205,7 +233,7 @@ class GitRepoManager(Loggable):
             remote_commit = None
 
         if branchname is None:
-            branch = repo.head
+            branch = repo.active_branch.name
         else:
             try:
                 branch = repo.heads[branchname]
@@ -328,7 +356,10 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.git.diff(a, b, )
 
-    def report_status(self):
+    def status(self):
+        return self._git_command(self._repo.git.status, 'status')
+
+    def report_local_changes(self):
         self.debug('Local Changes to {}'.format(self.path))
         for p in self.get_local_changes():
             self.debug('\t{}'.format(p))
@@ -511,7 +542,13 @@ class GitRepoManager(Loggable):
             self.warning_dialog('There was an issue trying to checkout branch "{}"'.format(name))
             raise e
 
-    def create_branch(self, name=None, commit='HEAD'):
+    def delete_branch(self, name):
+        self._repo.delete_head(name)
+
+    def get_branch(self, name):
+        return getattr(self._repo.heads, name)
+
+    def create_branch(self, name=None, commit='HEAD', inform=True):
         repo = self._repo
 
         if name is None:
@@ -526,7 +563,8 @@ class GitRepoManager(Loggable):
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
-            self.information_dialog('Repository now on branch "{}"'.format(name))
+            if inform:
+                self.information_dialog('Repository now on branch "{}"'.format(name))
             return True
 
     def create_remote(self, url, name='origin', force=False):
@@ -636,18 +674,22 @@ class GitRepoManager(Loggable):
                         return
 
                 # potentially conflicts
+                with StashCTX(repo):
+                    # do merge
+                    try:
+                        repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
+                    except GitCommandError:
+                        if self.confirmation_dialog('There appears to be a problem with {}.'
+                                                    '\n\nWould you like to accept the master copy'.format(self.name)):
+                            try:
+                                repo.git.merge('--abort')
+                            except GitCommandError:
+                                pass
 
-                # do merge
-                try:
-                    repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
-                except GitCommandError:
-                    if self.confirmation_dialog('There appears to be a problem with {}.'
-                                                '\n\nWould you like to accept the master copy'.format(self.name)):
-                        repo.git.merge('--abort')
-                        repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
-                        return True
-                    else:
-                        return
+                            repo.git.pull('-X', 'theirs', '--commit', '--no-edit')
+                            return True
+                        else:
+                            return
 
                 # self._git_command(lambda: repo.git.rebase('--preserve-merges',
                 #                                           '{}/{}'.format(remote, branch)),
@@ -759,6 +801,25 @@ class GitRepoManager(Loggable):
     def get_active_branch(self):
         return self._repo.active_branch.name
 
+    def get_sha(self, path=None):
+        sha = ''
+        if path:
+            l = self.cmd('ls-tree', 'HEAD', path)
+            try:
+                mode, kind, sha_name = l.split(' ')
+                sha, name = sha_name.split('\t')
+            except ValueError:
+                pass
+
+        return sha
+
+    def add_tag(self, name, message, hexsha=None):
+        args = ('-a', name, '-m', message)
+        if hexsha:
+            args = args + (hexsha,)
+
+        self.cmd('tag', *args)
+
     # action handlers
     def diff_selected(self):
         if self._validate_diff():
@@ -848,10 +909,11 @@ class GitRepoManager(Loggable):
         def factory(ci):
             repo = self._repo
             obj = repo.rev_parse(ci)
-            cx = Commit(message=obj.message,
+            cx = GitSha(message=obj.message,
                         hexsha=obj.hexsha,
                         name=p,
-                        date=format_date(obj.committed_date))
+                        date=obj.committed_datetime)
+                        # date=format_date(obj.committed_date))
             return cx
 
         return [factory(ci) for ci in hexshas]

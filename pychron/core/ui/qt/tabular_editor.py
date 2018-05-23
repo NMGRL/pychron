@@ -632,9 +632,10 @@ class _TabularEditor(qtTabularEditor):
 
     def _on_column_resize(self, idx, old, new):
         control = self.control
-        header = control.horizontalHeader()
-        cs = [header.sectionSize(i) for i in range(header.count())]
-        self.col_widths = cs
+        if control:
+            header = control.horizontalHeader()
+            cs = [header.sectionSize(i) for i in range(header.count())]
+            self.col_widths = cs
 
     def _multi_selected_rows_changed(self, selected_rows):
         super(_TabularEditor, self)._multi_selected_rows_changed(selected_rows)

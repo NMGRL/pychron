@@ -16,8 +16,6 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 from datetime import datetime, timedelta
@@ -35,13 +33,17 @@ from pychron.pychron_constants import ANALYSIS_TYPES
 import six
 
 
-class DVCNode(BaseNode):
+class BaseDVCNode(BaseNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+
+class DVCNode(BaseDVCNode):
     """
 
     Base node for all nodes that need access to a DVC instance or BrowserModel for
     retrieving analyses
     """
-    dvc = Instance('pychron.dvc.dvc.DVC')
+
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     def get_browser_analyses(self, irradiation=None, level=None):
@@ -120,8 +122,6 @@ class DataNode(DVCNode):
     name = 'Data'
 
     analysis_kind = None
-
-    check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
         print(self, pre_run, getattr(self, self.analysis_kind), self.index)
@@ -236,7 +236,7 @@ class ReferenceNode(DataNode):
     name = 'References'
     analysis_kind = 'references'
 
-    def pre_run(self, state):
+    def pre_run(self, state, configure=True):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
@@ -246,7 +246,8 @@ class ReferenceNode(DataNode):
                 self.references = refs
 
         if not self.references:
-            self.configure(pre_run=True)
+            if configure:
+                self.configure(pre_run=True)
 
         return self.references
 
@@ -301,8 +302,8 @@ class BaseAutoUnknownNode(UnknownNode):
                       tooltip='Default time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
-                Item('analysis_types',style='custom',
-                     editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('analysis_types', style='custom',
+                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
@@ -443,7 +444,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         else:
             self._ran = False
 
-        period = 60*10
+        period = 60 * 10
         do_after(1000 * period, self._iter)
 
     def traits_view(self):
@@ -475,6 +476,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
     _between_updates = None
     pipeline = None
     state = None
+    _low = None
 
     def clear_data(self):
         super(ListenUnknownNode, self).clear_data()
@@ -487,7 +489,6 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         self.state = None
 
     def _post_run_hook(self, engine, state):
-        self.state = state
         self.pipeline = engine.pipeline
         engine.pipeline.active = True
 
@@ -520,6 +521,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
             self._low = datetime.now()
             unks, updated = self._load_analyses()
             state.unknowns = unks
+            self.state = state
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
@@ -541,7 +543,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
             #     self._unks_ids = unks_ids
             # self.engine.rerun_with(unks, post_run=False)
             self.state.unknowns = unks
-            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state)
+            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
 
             self.engine.post_run_refresh(state=self.state)
             self.engine.refresh_figure_editors()

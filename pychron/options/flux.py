@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import List, Str, Int, Enum, Float, Property, Bool
+from traits.api import List, Str, Int, Enum, Property, Bool, Float
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
@@ -32,9 +31,8 @@ class FluxOptions(FigureOptions):
     error_kind = Enum(*ERROR_TYPES)
 
     selected_decay = Enum(list(FLUX_CONSTANTS.keys()))
-    monitor_age = Float(28.201)
     lambda_k = Property(depends_on='selected_decay')
-
+    monitor_age = Property(depends_on='selected_decay')
     model_kind = Enum('Plane', 'Bowl')
     predicted_j_error_type = Enum(*ERROR_TYPES)
     use_weighted_fit = Bool(False)
@@ -43,18 +41,15 @@ class FluxOptions(FigureOptions):
     monitor_sample_name = Str
     plot_kind = Enum('1D', '2D')
 
-    def _selected_decay_changed(self, new):
-        self.monitor_age = FLUX_CONSTANTS[new][4]
+    position_error = Float
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_decay]
-        return dc[0] + dc[2]
+        return dc['lambda_b'][0] + dc['lambda_ec'][0]
 
-    # def get_subview(self, name):
-    #     name = name.lower()
-    #     klass = self._get_subview(name)
-    #     obj = klass(model=self)
-    #     return obj
+    def _get_monitor_age(self):
+        dc = FLUX_CONSTANTS[self.selected_decay]
+        return dc['monitor_age']
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS

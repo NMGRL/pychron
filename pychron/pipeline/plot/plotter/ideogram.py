@@ -28,7 +28,7 @@ from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
 from numpy import array, arange, Inf, argmax
 from pyface.message_dialog import warning
-from traits.api import Array, Event
+from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.codetools.inspection import caller
@@ -42,7 +42,6 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorO
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-
 
 N = 500
 
@@ -120,7 +119,8 @@ class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
     ytitle = 'Relative Probability'
-
+    subgroup_id = 0
+    subgroup = None
     # xlimits_updated = Event
     # ylimits_updated = Event
 
@@ -157,6 +157,8 @@ class Ideogram(BaseArArFigure):
             selection = []
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            # plotobj.group_id = self.group_id
+            # print(id(plotobj), plotobj.group_id)
             try:
                 args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             except AttributeError:
@@ -220,7 +222,7 @@ class Ideogram(BaseArArFigure):
         selection = []
         invalid = []
 
-        scatter = self._add_aux_plot(ys, title, po, pid)
+        scatter = self._add_aux_plot(ys, title, po, pid, es=es)
 
         nsigma = self.options.error_bar_nsigma
 
@@ -356,21 +358,22 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-
-        plotkw = self.options.get_plot_dict(ogid)
+        plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
 
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
+        line.history_id = self.group_id
 
         self._add_peak_labels(line)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
         # add the dashed original line
-        graph.new_series(x=bins, y=probs,
-                         plotid=pid,
-                         visible=False,
-                         color=line.color,
-                         line_style='dash')
+        dline, _ = graph.new_series(x=bins, y=probs,
+                                    plotid=pid,
+                                    visible=False,
+                                    color=line.color,
+                                    line_style='dash')
+        dline.history_id =  self.group_id
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
@@ -409,7 +412,7 @@ class Ideogram(BaseArArFigure):
             else:
                 bgcolor = 'transparent'
 
-            d = self.options.get_plot_dict(ogid)
+            d = self.options.get_plot_dict(ogid, self.subgroup_id)
             o = IdeogramPointsInset(self.xs, ys,
                                     color=d['color'],
                                     outline_color=d['color'],
@@ -514,15 +517,17 @@ class Ideogram(BaseArArFigure):
             mswd_args = (mswd, valid_mswd, n)
             text = self._make_mean_label(wm, we * self.options.nsigma, n, n, mswd_args)
 
-        group = self.options.get_group(self.group_id)
-        color = group.color
+        # group = self.options.get_group(self.group_id)
+        # color = group.color
+
+        plotkw = self.options.get_plot_dict(ogid, self.subgroup_id)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
                                  y=20 * gid,
                                  error=we,
                                  nsgima=self.options.nsigma,
-                                 color=color,
+                                 color=plotkw['color'],
                                  visible=self.options.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
@@ -551,7 +556,6 @@ class Ideogram(BaseArArFigure):
         return m
 
     def update_index_mapper(self, obj, name, old, new):
-        print('obj', obj, id(obj))
         self._rebuild_ideo()
         # if new:
         #     self.update_graph_metadata(None, name, old, new)
@@ -683,29 +687,31 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key, nonsorted=nonsorted)])
         return xs
 
-    def _add_aux_plot(self, ys, title, po, pid, type='scatter', xs=None, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, es=None, type='scatter', xs=None, **kw):
         if xs is None:
             xs = self.xs
 
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
-            ys[ys < 0] = 1e-20
+            ys[ys < 0] = 10 ** math.floor(math.log10(min(ys[ys > 0])))
 
         graph = self.graph
 
-        group = self.options.get_group(self.group_id)
-        color = group.color
+        plotkw = self.options.get_plot_dict(self.group_id, self.subgroup_id)
 
         s, p = graph.new_series(
             x=xs, y=ys,
-            color=color,
+            color=plotkw['color'],
             type=type,
             marker=po.marker,
             marker_size=po.marker_size,
             selection_marker_size=po.marker_size,
             bind_id=self.group_id,
             plotid=pid, **kw)
+
+        if es is not None:
+            s.yerror = array(es)
 
         if not po.ytitle_visible:
             title = ''
@@ -716,6 +722,7 @@ class Ideogram(BaseArArFigure):
             graph.set_y_title(title, plotid=pid)
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)
+        s.history_id = self.group_id
         return s
 
     def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):

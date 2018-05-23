@@ -150,13 +150,13 @@ class SerialCommunicator(Communicator):
                            optional=True, default=None, cast='int')
 
         self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
-                           optional=True, default='\r')
+                           optional=True, default=b'\r')
 
         if self.write_terminator == 'CRLF':
-            self.write_terminator = '\r\n'
+            self.write_terminator = b'\r\n'
 
         if self.read_terminator == 'CRLF':
-            self.read_terminator = '\r\n'
+            self.read_terminator = b'\r\n'
 
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)

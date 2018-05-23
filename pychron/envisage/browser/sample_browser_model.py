@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import re
 from datetime import datetime, timedelta
 
@@ -37,6 +38,8 @@ REG = re.compile(r'.' * NCHARS)
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
+    refresh_selectors_button = Button
+
     load_recent_button = Button
     toggle_view = Button
 
@@ -51,6 +54,9 @@ class SampleBrowserModel(BrowserModel):
         prefid = 'pychron.browser'
         bind_preference(self.search_criteria, 'reference_hours_padding',
                         '{}.reference_hours_padding'.format(prefid))
+        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
+        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
+
         bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
 
     def reattach(self):
@@ -208,14 +214,18 @@ class SampleBrowserModel(BrowserModel):
         if ans:
             from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
             # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
+            projects = self.db.get_projects(order='asc')
+            projects = self._make_project_records(projects, include_recent=False)
             agv = AddAnalysisGroupView(db=self.db,
                                        projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
-                                                 enumerate(self.oprojects)})
+                                                 enumerate(projects)})
 
             project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-
-            project = next((p for p in self.oprojects if p.name == project and p.principal_investigator == pp))
-            agv.project = project
+            try:
+                project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
+                agv.project = project
+            except StopIteration:
+                pass
 
             info = agv.edit_traits(kind='livemodal')
             if info.result:
@@ -230,6 +240,11 @@ class SampleBrowserModel(BrowserModel):
         ans = self.db.get_analyses_uuid([a[0] for a in ans])
         xx = self._make_records(ans)
         self.analysis_table.set_analyses(xx)
+
+    def _refresh_selectors_button_fired(self):
+        self.debug('refresh selectors fired')
+        if self.sample_view_active:
+            self.load_selectors()
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')

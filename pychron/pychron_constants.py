@@ -17,7 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from kiva import pdfmetrics
+import os
+
+import yaml
+
+from pychron.paths import paths
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
@@ -171,8 +175,20 @@ DEFAULT_INTEGRATION_TIME = 1
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
                      'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 
-FLUX_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0, 28.201),
-                  'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0, 28.02)}
+FLUX_CONSTANTS = {'Min et al., 2000': {'lambda_ec': [5.80e-11, 0],  'lambda_b': [4.884e-10, 0],  'monitor_age': 28.201},
+                  'Steiger & Jager 1977': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0], 'monitor_age': 28.02}}
+
+
+flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
+if os.path.isfile(flux_constants):
+    with open(flux_constants, 'r') as rf:
+        obj = yaml.load(rf)
+        try:
+            FLUX_CONSTANTS.update(obj)
+        except BaseException:
+            pass
+
+
 
 AR_AR = 'Ar/Ar'
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
@@ -191,4 +207,6 @@ DEFAULT_MONITOR_NAME = 'FC-2'
 
 ELLIPSE_KINDS = ('1' + SIGMA, '2' + SIGMA, '95%')
 ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
+
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 # ============= EOF =============================================

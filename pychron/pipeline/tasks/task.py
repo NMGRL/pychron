@@ -15,15 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-import os
-from itertools import groupby
+from traits.api import Instance, Bool, on_trait_change, Any
 
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
-from traits.api import Instance, Bool, on_trait_change
+
+import os
 
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
@@ -48,9 +46,8 @@ from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction,
     InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
 from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
     InterpretedAgeFactoryModel, set_interpreted_age
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
-import six
 
 
 class DataMenu(SMenu):
@@ -105,6 +102,7 @@ class PipelineTask(BaseBrowserTask):
     # resume_enabled = Bool(False)
     # run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
+    active_editor_options = Any
     # run_to = None
 
     modified = False
@@ -142,8 +140,9 @@ class PipelineTask(BaseBrowserTask):
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
                  AnalysesPane(model=self.engine),
-                 RepositoryPane(model=self.engine)
+                 RepositoryPane(model=self.engine),
                  # InspectorPane(model=self.engine)
+                 EditorOptionsPane(model=self)
                  ]
         return panes
 
@@ -257,11 +256,18 @@ class PipelineTask(BaseBrowserTask):
                 tag = tag.lower()
 
                 self.dvc.tag_items(tag, items, note)
-
                 if use_filter:
                     for e in self.editor_area.editors:
-                        if isinstance(e, FigureEditor):
-                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
+                        if hasattr(e, 'set_items'):
+                            ans = None
+                            if hasattr(e, 'analyses'):
+                                ans = e.analyses
+                            elif hasattr(e, 'items'):
+                                ans = e.items
+
+                            if ans:
+                                fans = [ai for ai in ans if ai.tag != 'invalid']
+                                e.set_items(fans)
 
                 if self.active_editor:
                     self.active_editor.refresh_needed = True
@@ -456,7 +462,7 @@ class PipelineTask(BaseBrowserTask):
 
     def _run(self, message, func, close_all=False):
 
-        if self.engine.pre_run_check():
+        if self.engine.pre_run_check(func):
 
             self.debug('{} started'.format(message))
             if close_all:
@@ -538,6 +544,10 @@ class PipelineTask(BaseBrowserTask):
             self.engine.select_node_by_editor(new)
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
+        if hasattr(new, 'editor_options'):
+            self.active_editor_options = new.editor_options
+        else:
+            self.active_editor_options = None
 
     # @on_trait_change('active_editor:save_needed')
     # def _handle_save_needed(self):

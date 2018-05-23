@@ -17,60 +17,48 @@ import re
 from itertools import groupby
 from operator import attrgetter
 
+import six
 import xlsxwriter
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
-from traits.api import Instance, BaseStr, HasTraits
+from traits.api import Instance
 from uncertainties import nominal_value, std_dev, ufloat
+from uncertainties.core import Variable
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
-from pychron.pipeline.tables.util import iso_value, value, error, icf_value, icf_error, correction_value, age_value
-from pychron.pipeline.tables.xlsx_table_options import XLSXTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, StepHeatAnalysisGroup
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_NSIGMA
-import six
+from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
+from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, IntermediateAnalysis
+from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
 
-DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, baseline, radioactivity decay and '
-                         'detector intercalibration, not for interfering reactions.',
-                         'Intercepts: t-zero intercept corrected for detector baseline.',
-                         'Time interval (days) between end of irradiation and beginning of analysis',
 
-                         'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
+def format_mswd(t):
+    m, v, _ = t
+    return 'mswd={}{:0.3f}'.format('' if v else '*', m)
 
 
-class IntermediateAnalysis(HasTraits):
-    def is_omitted(self):
-        return False
-
-    def get_value(self, attr):
-        try:
-            return getattr(self, attr)
-        except AttributeError:
-            print('sdfa', attr)
-            return 0
-
-
-class XLSXTableWriter(BaseTableWriter):
+class XLSXAnalysisTableWriter(BaseTableWriter):
     _workbook = None
     _current_row = 0
     _bold = None
     _superscript = None
     _subscript = None
 
-    _options = Instance(XLSXTableWriterOptions)
+    _options = Instance(XLSXAnalysisTableWriterOptions)
 
     def _new_workbook(self, path):
         self._workbook = xlsxwriter.Workbook(add_extension(path, '.xlsx'), {'nan_inf_to_errors': True})
 
     def build(self, groups, path=None, options=None):
         if options is None:
-            options = XLSXTableWriterOptions()
+            options = XLSXAnalysisTableWriterOptions()
 
         self._options = options
         if path is None:
@@ -105,8 +93,8 @@ class XLSXTableWriter(BaseTableWriter):
         if monitors:
             self._make_monitors(monitors)
 
-        if not self._options.include_production_ratios:
-            self._make_irradiations(unknowns)
+        # if not self._options.include_production_ratios:
+        #     self._make_irradiations(unknowns)
 
         if self._options.include_summary_sheet:
             if unknowns:
@@ -126,7 +114,7 @@ class XLSXTableWriter(BaseTableWriter):
         detectors = {i.detector for g in grps
                      for a in g.analyses
                      for i in a.isotopes.values()}
-        return detectors
+        return sort_detectors(detectors)
 
     def _get_columns(self, name, grps):
 
@@ -150,6 +138,9 @@ class XLSXTableWriter(BaseTableWriter):
                    EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
                    VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
                    EColumn(enabled=ubit, attr='kca'),
+                   VColumn(enabled=ubit and options.include_percent_ar39,
+                           label=('Cum. %', '<sup>39</sup>', 'Ar'),
+                           units='(%)', attr='cumulative_ar39'),
                    VColumn(enabled=ubit and options.include_radiogenic_yield,
                            label=('%', '<sup>40</sup>', 'Ar'),
                            units='(%)', attr='rad40_percent'),
@@ -159,6 +150,10 @@ class XLSXTableWriter(BaseTableWriter):
                    VColumn(enabled=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)', attr='k2o'),
+                   VColumn(enabled=options.include_sensitivity,
+                           label='Sensitivity',
+                           units=options.sensitivity_units,
+                           attr='sensitivity'),
                    VColumn(enabled=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
@@ -169,6 +164,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._signal_columns(columns, ibit, bkbit)
         self._intercalibration_columns(columns, detectors)
         self._run_columns(columns, ubit)
+        self._flux_columns(columns)
 
         if options.include_production_ratios:
             pr = self._get_irradiation_columns(ubit)
@@ -178,6 +174,13 @@ class XLSXTableWriter(BaseTableWriter):
             columns.extend(irr)
 
         return columns
+
+    def _flux_columns(self, columns):
+        options = self._options
+        columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k'),
+                        Column(enabled=False, label='MonitorAge', attr='monitor_age'),
+                        Column(enabled=False, label='MonitorName', attr='monitor_name'),
+                        Column(enabled=False, label='MonitorMaterial', attr='monitor_material')])
 
     def _run_columns(self, columns, ubit):
         options = self._options
@@ -203,7 +206,7 @@ class XLSXTableWriter(BaseTableWriter):
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
-        for bit, tag in ((ibit, 'intercept'), (bkbit, 'blank'), (True, 'disc_ic_corrected')):
+        for bit, tag in ((ibit, 'intercept'), (True, 'disc_ic_corrected'), (bkbit, 'blank')):
             cols = [c for iso, mass in isos
                     for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
@@ -253,6 +256,10 @@ class XLSXTableWriter(BaseTableWriter):
                            label=('K', '<sub>2</sub>', 'O'),
                            units='(wt. %)',
                            attr='k2o'),
+                   VColumn(enabled=options.include_sensitivity,
+                           label='Sensitivity',
+                           units=options.sensitivity_units,
+                           attr='sensitivity'),
                    VColumn(enabled=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
@@ -324,7 +331,7 @@ class XLSXTableWriter(BaseTableWriter):
         def get_preferred_age_error(ag, *args):
             return std_dev(ag.preferred_age) * opt.summary_age_nsigma
 
-        is_step_heat = opt.table_kind == 'Step Heat'
+        # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
 
         cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
@@ -337,7 +344,7 @@ class XLSXTableWriter(BaseTableWriter):
                 Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
                 # Column(enabled=opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
 
-                Column(enabled=opt.include_summary_n, label='N', attr='nanalyses'),
+                Column(enabled=opt.include_summary_n, label='N', attr='nratio'),
                 Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        attr='percent_39Ar'),
                 Column(enabled=opt.include_summary_mswd, label='MSWD', attr='mswd'),
@@ -365,10 +372,15 @@ class XLSXTableWriter(BaseTableWriter):
                 EColumn(attr='arith_age'),
                 VColumn(label='IsochronAge', attr='isochron_age'),
                 EColumn(attr='isochron_age'),
-                VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
-                VColumn(enabled=is_step_heat, attr='plateau_age'),
-                VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
-                VColumn(enabled=is_step_heat, attr='integrated_age')]
+                VColumn(label='PlateauAge', attr='plateau_age'),
+                VColumn(attr='plateau_age'),
+                VColumn(label='IntegratedAge', attr='integrated_age'),
+                VColumn(attr='integrated_age')]
+
+        # VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
+        # VColumn(enabled=is_step_heat, attr='plateau_age'),
+        # VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
+        # VColumn(enabled=is_step_heat, attr='integrated_age')]
         return cols
 
     def _make_human_unknowns(self, unks):
@@ -387,6 +399,7 @@ class XLSXTableWriter(BaseTableWriter):
         self._make_sheet(monitors, 'Monitors')
 
     def _make_summary_sheet(self, unks):
+        print('make suma', unks)
         self._current_row = 1
         sh = self._workbook.add_worksheet('Summary')
         self._format_generic_worksheet(sh)
@@ -425,29 +438,29 @@ class XLSXTableWriter(BaseTableWriter):
 
         self._make_notes(sh, len(cols), 'summary')
 
-    def _make_irradiations(self, unks):
-        self._current_row = 1
-        sh = self._workbook.add_worksheet('Irradiations')
-        self._format_generic_worksheet(sh)
-
-        cols = [Column(label='Name', attr='irradiation')]
-        icols = self._get_irradiation_columns(True)
-        cols.extend(icols)
-
-        # write header
-        self._write_header(sh, cols, include_units=True)
-
-        # cols = [c for c in cols if c.enabled]
-        self._hide_columns(sh, cols)
-        for ug in unks:
-            for i, ci in enumerate(cols):
-                try:
-                    txt = self._get_txt(ug.analyses[0], ci)
-                except AttributeError as e:
-                    txt = self._get_txt(ug, ci)
-
-                sh.write(self._current_row, i, txt)
-            self._current_row += 1
+    # def _make_irradiations(self, unks):
+    #     self._current_row = 1
+    #     sh = self._workbook.add_worksheet('Irradiations')
+    #     self._format_generic_worksheet(sh)
+    #
+    #     cols = [Column(label='Name', attr='irradiation')]
+    #     icols = self._get_irradiation_columns(True)
+    #     cols.extend(icols)
+    #
+    #     # write header
+    #     self._write_header(sh, cols, include_units=True)
+    #
+    #     # cols = [c for c in cols if c.enabled]
+    #     self._hide_columns(sh, cols)
+    #     for ug in unks:
+    #         for i, ci in enumerate(cols):
+    #             try:
+    #                 txt = self._get_txt(ug.analyses[0], ci)
+    #             except AttributeError as e:
+    #                 txt = self._get_txt(ug, ci)
+    #
+    #             sh.write(self._current_row, i, txt)
+    #         self._current_row += 1
 
     def _make_sheet(self, groups, name):
         self._current_row = 1
@@ -459,10 +472,11 @@ class XLSXTableWriter(BaseTableWriter):
 
         self._make_title(worksheet, name, cols)
 
-        repeat_header = self._options.repeat_header
+        options = self._options
+        repeat_header = options.repeat_header
 
         for i, group in enumerate(groups):
-            group.set_temporary_age_units(self._options.age_units)
+            group.set_temporary_age_units(options.age_units)
 
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
@@ -473,27 +487,56 @@ class XLSXTableWriter(BaseTableWriter):
             has_subgroups = False
             key = attrgetter('subgroup')
             ans = group.analyses
-            for tg, items in groupby(ans, key=key):
+
+            nsubgroups = len({key(i) for i in ans})
+
+            for subgroup, items in groupby(ans, key=key):
                 items = list(items)
+                ag = None
+                if subgroup:
+                    kind = '_'.join(subgroup.split('_')[:-1])
+                    ag = InterpretedAgeGroup(analyses=items)
+                    age, label = ag.get_age(kind, set_preferred=True)
+                    # age, label = self._get_intermediate_age(ag, kind)
+
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
-                    item.arar_constants.age_units = self._options.age_units
-                    self._make_analysis(worksheet, cols, item, i == n)
-                if tg:
-                    kind = '_'.join(tg.split('_')[:-1])
-                    ia = self._make_intermediate_summary(worksheet, cols, items, kind)
+                    item.arar_constants.age_units = options.age_units
+
+                    is_plateau_step = None
+                    if ag:
+                        if label == 'plateau' and options.highlight_non_plateau:
+                            is_plateau_step = ag.get_is_plateau_step(i)
+
+                    self._make_analysis(worksheet, cols, item, i == n,
+                                        is_plateau_step=is_plateau_step,
+                                        cum=ag.cumulative_ar39(i) if ag else '')
+
+                if ag:
+                    ia = self._make_intermediate_analysis(ag, kind)
+                    if nsubgroups > 1:
+                        self._make_intermediate_summary(worksheet, ag, cols, ia, label)
                     nitems.append(ia)
                     has_subgroups = True
                 else:
-                    nitems.extend(items)
+                    if nsubgroups == 1:
+                        ag = InterpretedAgeGroup(analyses=items)
+                        # age, label = self._get_intermediate_age(ag, 'weighted_mean')
+                        ia = self._make_intermediate_analysis(ag, 'weighted_mean')
+                        nitems = [ia]
+                    else:
+                        nitems.extend(items)
 
                 for item in items:
                     item.arar_constants.age_units = ounits
 
-            if has_subgroups:
+            if has_subgroups and nsubgroups > 1:
                 group.analyses = nitems
 
-            self._make_summary(worksheet, cols, group)
+            if nsubgroups == 1:
+                self._make_summary(worksheet, cols, nitems[0])
+            else:
+                self._make_summary(worksheet, cols, group)
             self._current_row += 1
 
             group.set_temporary_age_units(None)
@@ -631,134 +674,194 @@ class XLSXTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-    def _make_intermediate_summary(self, sh, cols, ans, kind):
-        row = self._current_row
-        ag = StepHeatAnalysisGroup(analyses=[ai for ai in ans if not ai.is_omitted()])
-        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
-        fmt = self._get_number_format()
-        fmt.set_bottom(1)
-
-        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
-
-        if kind == 'weighted_mean':
-            a = ag.weighted_age
-            label = 'wt. mean'
-        elif kind == 'plateau':
-            a = ag.plateau_age
-            label = 'plateau'
-        elif kind == 'isochron':
-            a = ag.isochron_age
-            label = 'isochron'
-
-        for i in range(age_idx+1):
-            sh.write_blank(row, i, '', fmt)
-
-        sh.write_rich_string(row, 1, label, fmt2)
-
-        sh.write_number(row, age_idx, nominal_value(a), fmt)
-        sh.write_number(row, age_idx + 1, std_dev(a), fmt)
-        self._current_row += 1
-
-        ia = IntermediateAnalysis()
+    def _make_intermediate_analysis(self, ag, kind):
+        ia = IntermediateAnalysis(analysis_group=ag)
+        ia.subgroup_kind = kind
+        a, label = ia.get_age(kind)
         ia.uage = a
-        ia.age_units = ag.age_units
-        ia.age_scalar = ag.age_scalar
-        ia.kca = ag.weighted_kca
         ia.uage_wo_j_err = a
-
-        ia.irradiation_label = ans[0].irradiation_label
-        ia.irradiation = ans[0].irradiation
-        ia.material = ans[0].material
 
         return ia
 
-    def _get_number_format(self):
+    def _make_intermediate_summary(self, sh, ag, cols, ia, label):
+        row = self._current_row
+
+        age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
+        cum_idx = next((i for i, c in enumerate(cols) if c.attr == 'cumulative_ar39'), 0)
+
+        fmt = self._get_number_format('subgroup')
+        fmt.set_bottom(1)
+
+        fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
+        border = self._workbook.add_format({'bottom': 1})
+
+        for i in range(age_idx + 1):
+            sh.write_blank(row, i, '', fmt)
+
+        startcol = 1
+        sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
+        sh.write_rich_string(row, startcol + 1, label, fmt2)
+
+        age = ia.uage
+        tn = ag.total_n
+        if label == 'plateau':
+            if not ag.plateau_steps:
+                age = None
+            else:
+                sh.write(row, startcol + 2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
+                sh.write(row, startcol + 2, format_mswd(ag.get_plateau_mswd_tuple()), border)
+
+        else:
+            sh.write(row, startcol + 2, 'n={}/{}'.format(ag.nanalyses, tn), border)
+            sh.write(row, startcol + 3, format_mswd(ag.get_mswd_tuple()), border)
+
+        if age is not None:
+            sh.write_number(row, age_idx, nominal_value(age), fmt)
+            sh.write_number(row, age_idx + 1, std_dev(age), fmt)
+        else:
+            sh.write(row, age_idx, 'No plateau', border)
+
+        sh.write_number(row, age_idx + 2, nominal_value(ia.kca), fmt)
+        sh.write_number(row, age_idx + 3, std_dev(ia.kca), fmt)
+        sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
+        self._current_row += 1
+
+    def _get_number_format(self, kind=None):
+        try:
+            sf = getattr(self._options, '{}_sig_figs'.format(kind))
+        except AttributeError:
+            sf = self._options.sig_figs
+
         fn = self._workbook.add_format()
-        fn.set_num_format('0.{}#'.format('0' * self._options.sig_figs))
+        fmt = '0.{}'.format('0' * (sf - 1))
+        if not self._options.ensure_trailing_zeros:
+            fmt = '{}#'.format(fmt)
+        fn.set_num_format(fmt)
         return fn
 
-    def _make_analysis(self, sh, cols, item, last):
-        status = 'X' if item.is_omitted() else ''
+    def _make_analysis(self, sh, cols, item, last, is_plateau_step=None, cum=''):
         row = self._current_row
 
         border = self._workbook.add_format({'bottom': 1})
+        fmt = self._workbook.add_format()
         fmt2 = self._workbook.add_format()
-        fmt3 = self._workbook.add_format()
-        fmt_j = self._workbook.add_format()
-        fmt = []
+        fmt_rundate = self._workbook.add_format()
+        fmt_j = self._get_number_format('j')
+        fmt_ic = self._get_number_format('ic')
+        fmt_disc = self._get_number_format('disc')
+        fmt_sens = self._workbook.add_format()
+        fmt_sens.set_num_format('0.0E+00')
+        fmt_lambda_k = self._workbook.add_format()
+        fmt_lambda_k.set_num_format('0.000E+00')
 
         fn = self._get_number_format()
         if last:
             fmt2 = self._workbook.add_format({'bottom': 1})
-            fmt3 = self._workbook.add_format({'bottom': 1})
-            fmt.append(border)
+            fmt_rundate = self._workbook.add_format({'bottom': 1})
             fn.set_bottom(1)
+            fmt = border
 
         fmt2.set_align('center')
-        fmt3.set_num_format('mm/dd/yy hh:mm')
-        fmt_j.set_num_format('0.0000000')
-        sh.write(row, 0, status, *fmt)
+        fmt_rundate.set_num_format('mm/dd/yy hh:mm')
+        status = 'X' if item.is_omitted() else ''
+
+        if is_plateau_step is False:
+            for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
+                f.set_bg_color(self._options.highlight_color.name())
+            fmt.set_bg_color(self._options.highlight_color.name())
+
+            sh.set_row(0, -1, fmt)
+            if not status:
+                status = 'pX'
+
+        sh.write(row, 0, status, fmt)
         for j, c in enumerate(cols[1:]):
-            txt = self._get_txt(item, c)
+            if c.attr == 'cumulative_ar39':
+                txt = cum
+            else:
+                txt = self._get_txt(item, c)
 
             if c.label in ('N', 'Power'):
                 sh.write(row, j + 1, txt, fmt2)
             elif c.label == 'RunDate':
-                sh.write_datetime(row, j + 1, txt, fmt3)
+                sh.write_datetime(row, j + 1, txt, fmt_rundate)
             elif c.attr == 'j':
                 sh.write_number(row, j + 1, txt, fmt_j)
+            elif c.attr.startswith('ic'):
+                sh.write_number(row, j + 1, txt, fmt_ic)
+            elif c.attr.startswith('disc'):
+                sh.write_number(row, j + 1, txt, fmt_disc)
+            elif c.label == 'Sensitivity':
+                sh.write_number(row, j + 1, txt, fmt_sens)
+            elif c.label == 'LambdaK':
+                sh.write_number(row, j + 1, txt, fmt_lambda_k)
             else:
-
                 if isinstance(txt, float):
-                    sh.write_number(row, j+1, txt, cell_format=fn)
+                    sh.write_number(row, j + 1, txt, cell_format=fn)
                 else:
-                    sh.write(row, j + 1, txt, *fmt)
+                    sh.write(row, j + 1, txt, fmt)
 
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
-        nfmt = self._get_number_format()
+        nfmt = self._get_number_format('summary')
+        nfmt.set_bold(True)
+
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
-            sh.write_rich_string(self._current_row, start_col, u'K/Ca {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+
+            nsigma = self._options.asummary_kca_nsigma
+            pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
+
+            sh.write_rich_string(self._current_row, start_col,
+                                 u'Weighted Mean K/Ca {}'.format(pmsigma),
+                                 fmt)
+
+            # print('asfdas', group, type(group))
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(kca), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)
             self._current_row += 1
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
-        sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+        nsigma = self._options.asummary_age_nsigma
+        pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
+        sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(pmsigma), fmt)
         sh.write_number(self._current_row, idx, nominal_value(group.weighted_age), nfmt)
-        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age) * nsigma, nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
+        sh.write_rich_string(self._current_row, idx + 3, format_mswd(group.get_mswd_tuple()), fmt)
 
         self._current_row += 1
-        if self._options.table_kind == 'Step Heat':
+
+        if group.subgroup_kind == 'plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(PLUSMINUS_ONE_SIGMA), fmt)
+                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(pmsigma), fmt)
                 sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
                 sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age) * nsigma, nfmt)
+                sh.write_rich_string(self._current_row, idx + 2, format_mswd(group.get_plateau_mswd_tuple()), fmt)
 
                 self._current_row += 1
 
             if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(PLUSMINUS_ONE_SIGMA),
+                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(pmsigma),
                                      fmt)
                 sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age), nfmt)
+                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 
                 self._current_row += 1
 
         if self._options.include_isochron_age:
-            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(PLUSMINUS_ONE_SIGMA),
+            sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),
                                  fmt)
-            sh.write_number(self._current_row, idx, nominal_value(group.isochron_age), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(group.isochron_age), nfmt)
+            iage = group.isochron_age
+            sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
 
             self._current_row += 1
 
@@ -792,18 +895,28 @@ class XLSXTableWriter(BaseTableWriter):
     def _make_unknowns_notes(self, sh):
         monitor_age = 28.201
         decay_ref = u'Steiger and J\u00E4ger (1977)'
-        notes = six.text_type(self._options.unknown_notes)
+        opt = self._options
+        notes = opt.unknown_notes
+
+        corrected_note = opt.unknown_corrected_note
+        intercept_note = opt.unknown_intercept_note
+        time_note = opt.unknown_time_note
+        x_note = opt.unknown_x_note
+        px_note = opt.unknown_px_note
+
         notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
 
-        sh.write_rich_string(self._current_row, 0, self._superscript, '1', DEFAULT_UNKNOWN_NOTES[0])
+        sh.write_rich_string(self._current_row, 0, self._superscript, '1', corrected_note)
         self._current_row += 1
-        sh.write_rich_string(self._current_row, 0, self._superscript, '2', DEFAULT_UNKNOWN_NOTES[1])
+        sh.write_rich_string(self._current_row, 0, self._superscript, '2', intercept_note)
         self._current_row += 1
-        if self._options.include_time_delta:
-            sh.write_rich_string(self._current_row, 0, self._superscript, '3', DEFAULT_UNKNOWN_NOTES[2])
-            self._current_row += 1
+        sh.write_rich_string(self._current_row, 0, self._superscript, '3', time_note)
+        self._current_row += 1
 
-        sh.write(self._current_row, 0, DEFAULT_UNKNOWN_NOTES[3])
+        sh.write(self._current_row, 0, x_note)
+        self._current_row += 1
+
+        sh.write(self._current_row, 0, px_note)
         self._current_row += 1
 
         self._write_notes(sh, notes)
@@ -843,11 +956,14 @@ class XLSXTableWriter(BaseTableWriter):
         func = col.func
         if func is None:
             func = getattr
-        return func(item, attr)
+        v = func(item, attr)
+        if isinstance(v, Variable):
+            v = nominal_value(v)
+        return v
 
 
 if __name__ == '__main__':
-    x = XLSXTableWriter()
+    x = XLSXAnalysisTableWriter()
 
     from random import random
     from datetime import datetime
@@ -916,7 +1032,7 @@ if __name__ == '__main__':
             self.rundate = datetime.now()
             self.decay_days = frand(2, 200)
             self.k2o = frand(2)
-            self.irradiation_label = 'NM-284 E9'
+            self.irradiation_label = 'NM-284 E9o'
             self.irradiation = 'NM-284'
             self.isochron3940 = ufloat(frand(10), frand(10))
             self.isochron3640 = ufloat(frand(10), frand(10))
@@ -958,7 +1074,7 @@ if __name__ == '__main__':
     g = G()
     p = '/Users/ross/Sandbox/testtable.xlsx'
     paths.build('_dev')
-    options = XLSXTableWriterOptions()
+    options = XLSXAnalysisTableWriterOptions()
     options.configure_traits()
     x.build(groups={'unknowns': [g, g],
                     'machine_unknowns': [g, g]},

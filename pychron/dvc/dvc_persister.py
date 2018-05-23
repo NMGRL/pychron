@@ -14,25 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Bool, Str
-
-import base64
 import hashlib
 import os
 import shutil
 import struct
 from datetime import datetime
+
 from git.exc import GitCommandError
+# ============= enthought library imports =======================
+from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
+from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.dvc import dvc_dump, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
-from pychron.core.helpers.binpack import encode_blob, pack
+
 
 def format_repository_identifier(project):
     return project.replace('/', '_').replace('\\', '_')
@@ -57,7 +57,6 @@ class DVCPersister(BasePersister):
     default_principal_investigator = Str
     _positions = None
 
-    macrochron_enabled = Bool(True)
     save_log_enabled = Bool(False)
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
@@ -344,7 +343,10 @@ class DVCPersister(BasePersister):
 
             for position in self._positions:
                 dbpos = db.add_measured_position(load=load_name, **position)
-                an.measured_positions.append(dbpos)
+                if dbpos:
+                    an.measured_positions.append(dbpos)
+                else:
+                    self.warning('failed adding position {}, load={}'.format(position, load_name))
 
                 # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
@@ -500,8 +502,7 @@ class DVCPersister(BasePersister):
         # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
         #                                  self.per_spec.experiment_queue_blob)
 
-        if self.macrochron_enabled:
-            self._save_macrochron(obj)
+        self._save_macrochron(obj)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha

@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Button, Int, Bool, Float, Property, on_trait_change, List, Enum, Range, Color
 from traitsui.api import View, Item
 
@@ -53,6 +54,7 @@ class SpectrumOptions(AgeOptions):
     display_plateau_info = Bool(True)
     display_integrated_info = Bool(True)
     display_weighted_mean_info = Bool(True)
+    display_weighted_bar = Bool(True)
 
     plateau_sig_figs = Int
     integrated_sig_figs = Int

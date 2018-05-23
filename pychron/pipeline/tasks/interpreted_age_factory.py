@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import List, HasTraits, Bool, Str, Instance, on_trait_change
+
+from traits.api import List, HasTraits
 from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -26,98 +27,73 @@ from traitsui.table_column import ObjectColumn
 from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_ONE_SIGMA
 
 
-class InterpretedAgeFactoryModel(HasTraits):
-    groups = List
-
-
 class UObjectColumn(ObjectColumn):
     editable = False
     width = 10
 
 
-class InterpretedAgeFactoryView(Controller):
-    repository_identifiers = List
-    # macrochron_enabled = Bool(False)
-    #
-    # lith_class = Str
-    # lith_classes = List
-    #
-    # lith_group = Str
-    # lith_groups = List
-    #
-    # lith_type = Str
-    # lith_types = List
-    #
-    # lith = Str
-    # liths = List
+lithology_grp = VGroup(UItem('lithology_class', editor=EnumEditor(name='lithology_classes')),
+                       UItem('lithology_group', editor=EnumEditor(name='lithology_groups')),
+                       UItem('lithology_type', editor=EnumEditor(name='lithology_types')),
+                       UItem('lithology', editor=EnumEditor(name='lithologies')),
+                       show_border=True, label='Lithology')
 
-    # macrochron = Instance('pychron.macrochron.macrostrat_api.MacroStrat')
+macrostrat_grp = VGroup(Item('reference'),
+                        Item('rlocation'),
+                        Item('lat_long'),
+                        lithology_grp,
+                        show_border=True,
+                        label='MacroChron')
 
-    # @on_trait_change('lith_class,lith_type,lith_group')
-    # def _handle_lith_change(self):
-    #     self.macrochron.get_lithologies(lith_class=self.lith_class,
-    #                                     lith_type=self.lith_type,
-    #                                     lith_group=self.lith_group)
-
-    def _edit_view(self):
-        lithology_grp = VGroup(UItem('lith_class', editor=EnumEditor(name='lith_classes')),
-                               UItem('lith_group', editor=EnumEditor(name='lith_groups')),
-                               UItem('lith_type', editor=EnumEditor(name='lith_types')),
-                               UItem('lith', editor=EnumEditor(name='liths')),
-                               show_border=True, label='Lithology')
-
-        macrostrat_grp = VGroup(Item('reference'),
-                                Item('lat_long'),
-                                lithology_grp,
-                                show_border=True,
-                                label='MacroChron',
-                                defined_when='macrochron_enabled')
-
-        v = View(Item('preferred_kca_kind'),
+EDIT_VIEW = View(Item('preferred_kca_kind'),
                  Item('preferred_kca_value'),
                  UItem('preferred_kca_error'),
                  macrostrat_grp)
-        return v
 
-    def traits_view(self):
-        cols = [UObjectColumn(name='identifier'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='repository_identifier',
-                             editor=EnumEditor(name='controller.repository_identifiers')),
-                ObjectColumn(name='preferred_age_kind', label='Age Type',
-                             editor=EnumEditor(name='preferred_ages')),
+cols = [UObjectColumn(name='identifier'),
+        ObjectColumn(name='name'),
+        ObjectColumn(name='repository_identifier',
+                     editor=EnumEditor(name='controller.repository_identifiers')),
+        ObjectColumn(name='preferred_age_kind', label='Age Type',
+                     editor=EnumEditor(name='preferred_ages')),
 
-                ObjectColumn(name='preferred_age_error_kind', label='Age Error Type',
-                             editor=EnumEditor(values=ERROR_TYPES)),
-                UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age'),
-                UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+        ObjectColumn(name='preferred_age_error_kind', label='Age Error Type',
+                     editor=EnumEditor(values=ERROR_TYPES)),
+        UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age'),
+        UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
 
-                # ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
-                #              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
-                # UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
-                # UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
-                # UObjectColumn(name='nanalyses', label='N'),
-                # UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
-                CheckboxColumn(name='use', label='Save', width=10)]
+        # ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
+        #              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
+        # UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
+        # UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+        # UObjectColumn(name='nanalyses', label='N'),
+        # UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
+        CheckboxColumn(name='use', label='Save', width=10)]
 
-        editor = TableEditor(columns=cols, edit_view=self._edit_view())
-        v = View(Item('groups', show_label=False, editor=editor),
-                 resizable=True,
-                 title='Set Interpreted Age',
-                 kind='livemodal',
-                 buttons=['OK', 'Cancel'])
+editor = TableEditor(columns=cols, edit_view=EDIT_VIEW)
+VIEW = View(Item('items', show_label=False, editor=editor),
+            resizable=True,
+            title='Set Interpreted Age',
+            kind='livemodal',
+            buttons=['OK', 'Cancel'])
 
-        return v
+
+class InterpretedAgeFactoryModel(HasTraits):
+    items = List
+
+
+class InterpretedAgeFactoryView(Controller):
+    repository_identifiers = List
+    traits_view = VIEW
 
 
 def set_interpreted_age(dvc, ias):
     repos = dvc.get_local_repositories()
-    model = InterpretedAgeFactoryModel(groups=ias)
+    model = InterpretedAgeFactoryModel(items=ias)
     iaf = InterpretedAgeFactoryView(model=model,
                                     repository_identifiers=repos)
     info = iaf.edit_traits()
     if info.result:
-        dvc = dvc
         for ia in ias:
             if ia.use:
                 dvc.add_interpreted_age(ia)

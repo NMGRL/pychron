@@ -71,6 +71,7 @@ class DVCAnalysis(Analysis):
 
     production_obj = None
     chronology_obj = None
+    use_repository_suffix = False
 
     def __init__(self, record_id, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
@@ -78,6 +79,7 @@ class DVCAnalysis(Analysis):
         path = analysis_path(record_id, repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
+
         root = os.path.dirname(path)
         bname = os.path.basename(path)
         head, ext = os.path.splitext(bname)
@@ -91,6 +93,10 @@ class DVCAnalysis(Analysis):
         self.load_paths()
         self.load_spectrometer_parameters(jd['spec_sha'])
         self.load_environmentals(jd.get('environmental'))
+
+    @property
+    def irradiation_position_position(self):
+        return self.irradiation_position
 
     def load_meta(self, jd):
         self.measurement_script_name = jd.get('measurement', NULL_STR)
@@ -364,7 +370,7 @@ class DVCAnalysis(Analysis):
 
         self._dump(isos, path)
 
-    def dump_icfactors(self, dkeys, fits, refs, reviewed=False):
+    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
         jd, path = self._get_json('icfactors')
 
         for dk, fi in zip(dkeys, fits):
@@ -407,7 +413,7 @@ class DVCAnalysis(Analysis):
         self.set_tag(jd)
 
     def _load_blanks(self, jd):
-        for key, v in six.iteritems(jd):
+        for key, v in jd.items():
             if key in self.isotopes:
                 i = self.isotopes[key]
                 self._load_value_error(i.blank, v)
@@ -426,17 +432,16 @@ class DVCAnalysis(Analysis):
                     i.blank_source = fit
 
     def _load_intercepts(self, jd):
-        for iso, v in six.iteritems(jd):
+        for iso, v in jd.items():
             if iso in self.isotopes:
                 i = self.isotopes[iso]
                 self._load_value_error(i, v)
 
-                i.set_fit(v['fit'], notify=False)
                 i.error_type = v.get('error_type', 'SEM')
                 fod = v.get('filter_outliers_dict')
                 if fod:
-                    i.filter_outliers_dict = fod
-
+                    i.set_filter_outliers_dict(**fod)
+                i.set_fit(v['fit'], notify=False)
                 i.reviewed = v.get('reviewed', False)
 
     def _load_value_error(self, item, obj):
@@ -457,7 +462,7 @@ class DVCAnalysis(Analysis):
                 setattr(item, k, obj[k])
 
     def _load_baselines(self, jd):
-        for det, v in six.iteritems(jd):
+        for det, v in jd.items():
             for iso in self.itervalues():
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
@@ -465,10 +470,10 @@ class DVCAnalysis(Analysis):
                     iso.baseline.set_fit(v['fit'], notify=False)
                     fod = v.get('filter_outliers_dict')
                     if fod:
-                        iso.baseline.filter_outliers_dict = fod
+                        iso.baseline.set_filter_outliers_dict(**fod)
 
     def _load_icfactors(self, jd):
-        for key, v in six.iteritems(jd):
+        for key, v in jd.items():
             if isinstance(v, dict):
                 vv, ee = v['value'] or 0, v['error'] or 0
                 r = v.get('reviewed')

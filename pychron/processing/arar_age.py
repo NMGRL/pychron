@@ -20,7 +20,9 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from copy import copy
+from operator import itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -31,7 +33,6 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS
-import six
 
 
 class ArArAge(IsotopeGroup):
@@ -89,7 +90,9 @@ class ArArAge(IsotopeGroup):
     Ar39_decay_corrected = None
     Ar37_decay_corrected = None
 
-    sensitivity = 1e-12  # fA/torr
+    sensitivity = 1e-17  # fA/torr
+    sensitivity_units = 'mol/fA'
+
     # temporary_ic_factors =None
 
     _missing_isotope_warned = False
@@ -121,7 +124,7 @@ class ArArAge(IsotopeGroup):
         weight should be in milligrams
         @return:
         """
-        k2o = 0
+        k2o = ''
         if self.weight:
             k40_k = 0.0001167
             k40 = self.non_ar_isotopes['k40']
@@ -141,6 +144,10 @@ class ArArAge(IsotopeGroup):
         a = self.get_interference_corrected_value('Ar36')
         b = self.get_interference_corrected_value('Ar40')
         return a / b
+
+    @property
+    def lambda_k(self):
+        return self.arar_constants.lambda_k
 
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
@@ -166,15 +173,19 @@ class ArArAge(IsotopeGroup):
         else:
             return 0
 
-    # def set_ic_factor(self, det, v, e):
-    #     for iso in self.get_isotopes(det):
-    #         iso.ic_factor = ufloat(v, e, tag='icfactor')
+    def set_sensitivity(self, sens):
+        # for si in sens:
+        #     si['create_date'] = datetime.strptime(si['create_date'], DATE_FORMAT)
 
-    def set_temporary_ic_factor(self, k, v, e):
-        self.temporary_ic_factors[k] = ufloat(v, e)
-        # iso = self.get_isotope(detector=k)
-        # if iso:
-        #     iso.temporary_ic_factor = (v, e)
+        for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
+            if si['create_date'] < self.rundate:
+                self.sensitivity = si['sensitivity']
+                self.sensitivity_units = si['units']
+                break
+
+    def set_temporary_ic_factor(self, k, v, e, tag=None):
+        self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
+        return uv
 
     def set_temporary_blank(self, k, v, e, f):
         tol = 0.00001

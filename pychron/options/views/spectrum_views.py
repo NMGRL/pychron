@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traitsui.api import View, UItem, Item, HGroup, VGroup, Group, EnumEditor
 
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -63,7 +64,7 @@ class DisplaySubOptions(TitleSubOptions):
     def traits_view(self):
         title_grp = self._get_title_group()
 
-        gen_grp = HGroup(UItem('show_info', tooltip='Show general info in the upper right corner'),
+        gen_grp = HGroup(Item('show_info', tooltip='Show general info in the upper right corner'),
                          show_border=True,
                          label='General')
 
@@ -107,8 +108,11 @@ class DisplaySubOptions(TitleSubOptions):
                                 label='Integrated')
 
         weighted_mean_grp = HGroup(UItem('display_weighted_mean_info',
-                                         tooltip='Display integrated age info'),
+                                         tooltip='Display weighted age info'),
                                    Item('weighted_mean_sig_figs', label='SigFigs'),
+                                   Item('display_weighted_bar',
+                                        label='Display Weighted Mean Bar',
+                                        tooltip='Display weighted mean age if no plateau'),
                                    show_border=True,
                                    label='Weighted Mean')
 

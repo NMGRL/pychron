@@ -17,7 +17,8 @@
 
 import os
 
-from traits.api import Enum, Bool, Str, Int, Float
+import yaml
+from traits.api import Enum, Bool, Str, Int, Float, Color
 from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
@@ -28,9 +29,14 @@ from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
 
 
-class XLSXTableWriterOptions(BasePersistenceOptions):
-    table_kind = dumpable(Enum('Fusion', 'Step Heat'))
-    sig_figs = dumpable(Int(5))
+class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
+    sig_figs = dumpable(Int(6))
+    j_sig_figs = dumpable(Int(6))
+    subgroup_sig_figs = dumpable(Int(6))
+    summary_sig_figs = dumpable(Int(6))
+    ic_sig_figs = dumpable(Int(6))
+    disc_sig_figs = dumpable(Int(6))
+    ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C'))
     age_units = dumpable(Enum('Ma', 'Ga', 'ka', 'a'))
@@ -46,11 +52,16 @@ class XLSXTableWriterOptions(BasePersistenceOptions):
     include_time_delta = dumpable(Bool(True))
     include_k2o = dumpable(Bool(True))
     include_isochron_ratios = dumpable(Bool(False))
+    include_sensitivity = dumpable(Bool(True))
+    sensitivity_units = dumpable(Str('mol/fA'))
+
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
-
+    include_percent_ar39 = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
     repeat_header = dumpable(Bool(False))
+    highlight_non_plateau = Bool(True)
+    highlight_color = dumpable(Color)
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
@@ -61,6 +72,16 @@ Plateau age error is inverse-variance-weighted mean error (Taylor, 1982) times r
 Plateau error is weighted error of Taylor (1982).
 Decay constants and isotopic abundances after {decay_ref:}
 Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at {monitor_age:} Ma'''))
+
+    unknown_corrected_note = dumpable(Str('''Corrected: Isotopic intensities corrected for blank, baseline, 
+    radioactivity decay and detector intercalibration, not for interfering reactions.'''))
+    unknown_intercept_note = dumpable(Str('''Intercepts: t-zero intercept corrected for detector baseline.'''))
+    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis'''))
+
+    unknown_x_note = dumpable(Str('''X symbol preceding sample ID denotes analyses 
+    excluded from weighted-mean age calculations.'''))
+    unknown_px_note = dumpable(Str('''pX symbol preceding sample ID denotes analyses
+    excluded plateau age calculations'''))
 
     unknown_title = dumpable(Str('Ar/Ar analytical data.'))
     air_notes = dumpable(Str(''''''))
@@ -89,6 +110,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     summary_age_nsigma = dumpable(Enum(1, 2, 3))
     summary_kca_nsigma = dumpable(Enum(1, 2, 3))
 
+    asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
+    asummary_age_nsigma = dumpable(Enum(1, 2, 3))
+
     plateau_nsteps = dumpable(Int(3))
     plateau_gas_fraction = dumpable(Float(50))
     fixed_step_low = dumpable(SingleStr)
@@ -96,11 +120,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     _persistence_name = 'xlsx_table_options'
 
-    def _table_kind_changed(self):
-        if self.table_kind == 'Fusion':
-            self.include_summary_percent_ar39 = False
-        else:
-            self.include_summary_percent_ar39 = True
+    def __init__(self, *args, **kw):
+        super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
+        self.load_notes()
 
     @property
     def age_scalar(self):
@@ -115,9 +137,23 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
         return path
 
+    def load_notes(self):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+                for k, v in obj.items():
+                    if v is not None:
+                        setattr(self, k, v)
+
     def traits_view(self):
-        unknown_grp = VGroup(Item('unknown_title', label='Table Heading'),
-                             VGroup(UItem('unknown_notes', style='custom'),
+        unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
+                             VGroup(VGroup(UItem('unknown_notes', style='custom'), label='Main', show_border=True),
+                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'), label='Corrected', show_border=True),
+                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'), label='Intercept', show_border=True),
+                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time', show_border=True),
+                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X', show_border=True),
+                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX', show_border=True),
                                     show_border=True, label='Notes'), label='Unknowns')
 
         air_grp = VGroup(Item('air_title', label='Table Heading'),
@@ -129,29 +165,39 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                              VGroup(UItem('monitor_notes', style='custom'), show_border=True,
                                     label='Notes'), label='Monitors')
 
-        grp = VGroup(Item('table_kind', label='Kind'),
-                     Item('name', label='Filename'),
+        grp = VGroup(Item('name', label='Filename'),
                      Item('auto_view', label='Open in Excel'),
                      show_border=True)
 
         appearence_grp = VGroup(Item('hide_gridlines', label='Hide Gridlines'),
                                 Item('power_units', label='Power Units'),
-
                                 Item('age_units', label='Age Units'),
+                                Item('sensitivity_units', label='Sensitivity Units'),
+                                Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
+                                Item('asummary_age_nsigma', label='Age Nsigma'),
                                 Item('repeat_header', label='Repeat Header'),
-                                Item('sig_figs', label='Significant Figures'),
+                                HGroup(Item('highlight_non_plateau'),
+                                       UItem('highlight_color', enabled_when='highlight_non_plateau')),
                                 show_border=True, label='Appearance')
+
+        sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
+                              Item('subgroup_sig_figs', label='Subgroup'),
+                              Item('j_sig_figs', label='Flux'),
+                              Item('summary_sig_figs', label='Summary'),
+                              Item('ic_sig_figs', label='IC'),
+                              Item('disc_sig_figs', label='Disc.'),
+                              Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
+                              show_border=True, label='Significant Figures')
 
         arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
                               Item('include_radiogenic_yield', label='%40Ar*'),
                               Item('include_kca', label='K/Ca'),
                               Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
+                              Item('include_sensitivity', label='Sensitivity'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),
-                              Item('include_plateau_age', label='Plateau',
-                                   visible_when='table_kind=="Step Heat"'),
-                              Item('include_integrated_age', label='Integrated',
-                                   visible_when='table_kind=="Step Heat"'),
+                              Item('include_plateau_age', label='Plateau'),
+                              Item('include_integrated_age', label='Integrated'),
                               Item('include_isochron_age', label='Isochron'),
                               Item('include_isochron_ratios', label='Isochron Ratios'),
                               Item('include_time_delta', label='Time since Irradiation'),
@@ -163,7 +209,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  label='General')
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)
-        g1 = VGroup(grp, columns_grp, appearence_grp, label='Main')
+
+        g1 = VGroup(HGroup(grp, appearence_grp),
+                    HGroup(columns_grp, sig_figs_grp), label='Main')
 
         summary_grp = VGroup(Item('include_summary_sheet', label='Summary Sheet'),
                              VGroup(

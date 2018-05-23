@@ -16,12 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import six
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traits.api import Int, Property, Button, Str
+from traits.api import Int, Property, Button
 from traits.has_traits import MetaHasTraits
-from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, ListStrEditor, \
-    Handler, TabularEditor, TreeEditor
+from traitsui.api import View, UItem, VGroup, InstanceEditor, HGroup, VSplit, Handler, TabularEditor, TreeEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.tree_node import TreeNode
@@ -32,7 +33,6 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.ui.qt.tree_editor import PipelineEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.browser.sample_view import BaseBrowserSampleView
 from pychron.envisage.browser.view import PaneBrowserView
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.engine import Pipeline, PipelineGroup, NodeGroup
@@ -43,16 +43,14 @@ from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.find import FindFluxMonitorsNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode, FitFluxNode
-from pychron.pipeline.nodes.grouping import GroupingNode
+from pychron.pipeline.nodes.grouping import GroupingNode, SubGroupingNode
 from pychron.pipeline.nodes.persist import PDFNode, DVCPersistNode
 from pychron.pipeline.nodes.review import ReviewNode
-from pychron.pipeline.nodes.table import InterpretedAgeTableNode
 from pychron.pipeline.tasks.tree_node import SeriesTreeNode, PDFTreeNode, GroupingTreeNode, SpectrumTreeNode, \
     IdeogramTreeNode, FilterTreeNode, DataTreeNode, DBSaveTreeNode, FindTreeNode, FitTreeNode, PipelineTreeNode, \
     ReviewTreeNode, PipelineGroupTreeNode, NodeGroupTreeNode
 from pychron.pipeline.template import PipelineTemplate, PipelineTemplateGroup, PipelineTemplateRoot
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW
-import six
 
 
 def node_adder(name):
@@ -67,10 +65,11 @@ def node_adder(name):
 class PipelineHandlerMeta(MetaHasTraits):
     def __new__(cls, *args, **kwargs):
         klass = MetaHasTraits.__new__(cls, *args, **kwargs)
-        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum', 'grouping',
+        for t in ('review', 'pdf_figure', 'iso_evo_persist', 'data', 'filter', 'ideogram', 'spectrum',
                   'series', 'isotope_evolution', 'blanks', 'detector_ic', 'flux', 'find_blanks', 'find_airs',
                   'icfactor', 'push', 'inverse_isochron',
-                  'graph_grouping', 'set_interpreted_age', 'interpreted_ages'):
+                  'grouping', 'graph_grouping', 'subgrouping',
+                  'set_interpreted_age', 'interpreted_ages'):
             name = 'add_{}'.format(t)
             setattr(klass, name, node_adder(name))
 
@@ -152,24 +151,24 @@ class PipelinePane(TraitsDockPane):
 
         def menu_factory(*actions):
             return MenuManager(
-                               # Action(name='Enable',
-                               #        action='enable',
-                               #        visible_when='not object.enabled'),
-                               # Action(name='Disable',
-                               #        action='disable',
-                               #        visible_when='object.enabled'),
-                               Action(name='Configure', action='configure'),
-                               Action(name='Enable Auto Configure',
-                                      action='toggle_skip_configure',
-                                      visible_when='object.skip_configure'),
-                               Action(name='Disable Auto Configure',
-                                      action='toggle_skip_configure',
-                                      visible_when='not object.skip_configure'),
-                               Action(name='Move Up', action='move_up'),
-                               Action(name='Move Down', action='move_down'),
-                               Action(name='Delete', action='delete_node'),
-                               Action(name='Save Template', action='save_template'),
-                               *actions)
+                # Action(name='Enable',
+                #        action='enable',
+                #        visible_when='not object.enabled'),
+                # Action(name='Disable',
+                #        action='disable',
+                #        visible_when='object.enabled'),
+                Action(name='Configure', action='configure'),
+                Action(name='Enable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='object.skip_configure'),
+                Action(name='Disable Auto Configure',
+                       action='toggle_skip_configure',
+                       visible_when='not object.skip_configure'),
+                Action(name='Move Up', action='move_up'),
+                Action(name='Move Down', action='move_down'),
+                Action(name='Delete', action='delete_node'),
+                Action(name='Save Template', action='save_template'),
+                *actions)
 
         def add_menu_factory():
             return MenuManager(Action(name='Add Unknowns',
@@ -180,6 +179,8 @@ class PipelinePane(TraitsDockPane):
                                       action='add_grouping'),
                                Action(name='Add Graph Grouping',
                                       action='add_graph_grouping'),
+                               Action(name='Add SubGrouping',
+                                      action='add_subgrouping'),
                                Action(name='Add Filter',
                                       action='add_filter'),
                                Action(name='Add Inverse Isochron',
@@ -290,7 +291,7 @@ class PipelinePane(TraitsDockPane):
                  SpectrumTreeNode(node_for=[SpectrumNode], menu=figure_menu_factory()),
                  SeriesTreeNode(node_for=[SeriesNode], menu=figure_menu_factory()),
                  PDFTreeNode(node_for=[PDFNode], menu=menu_factory()),
-                 GroupingTreeNode(node_for=[GroupingNode], menu=data_menu_factory()),
+                 GroupingTreeNode(node_for=[GroupingNode, SubGroupingNode], menu=data_menu_factory()),
                  DBSaveTreeNode(node_for=[DVCPersistNode], menu=data_menu_factory()),
                  FindTreeNode(node_for=[FindReferencesNode, FindFluxMonitorsNode], menu=ffind_menu_factory()),
                  FitTreeNode(node_for=[FitIsotopeEvolutionNode,
@@ -480,7 +481,8 @@ class RepositoryTabularAdapter(TabularAdapter):
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Refresh Status', action='refresh_repository_status'),
                            Action(name='Get Changes', action='pull'),
-                           Action(name='Share Changes', action='push'))
+                           Action(name='Share Changes', action='push'),
+                           Action(name='Delete Local Changes', action='delete_local_changes'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         if self.item.behind:
@@ -502,6 +504,10 @@ class RepositoryPaneHandler(Handler):
     def push(self, info, obj):
         obj.push()
 
+    def delete_local_changes(self, info, obj):
+        obj.delete_local_changes()
+        obj.refresh_repository_status()
+
 
 class RepositoryPane(TraitsDockPane):
     name = 'Repositories'
@@ -511,19 +517,30 @@ class RepositoryPane(TraitsDockPane):
         v = View(UItem('object.repositories', editor=myTabularEditor(adapter=RepositoryTabularAdapter(),
                                                                      editable=False,
                                                                      multi_select=True,
+                                                                     refresh='object.refresh_needed',
                                                                      selected='object.selected_repositories')),
                  handler=RepositoryPaneHandler())
         return v
 
 
-class InspectorPane(TraitsDockPane):
-    name = 'Inspector'
-    id = 'pychron.pipeline.inspector'
+class EditorOptionsPane(TraitsDockPane):
+    name = 'Editor Options'
+    id = 'pychron.pipeline.editor_options'
 
     def traits_view(self):
-        v = View(UItem('object.active_inspector_item', style='custom',
+        v = View(UItem('object.active_editor_options', style='custom',
                        editor=InstanceEditor()))
         return v
+
+
+# class InspectorPane(TraitsDockPane):
+#     name = 'Inspector'
+#     id = 'pychron.pipeline.inspector'
+#
+#     def traits_view(self):
+#         v = View(UItem('object.active_inspector_item', style='custom',
+#                        editor=InstanceEditor()))
+#         return v
 
 
 class BrowserPane(TraitsDockPane, PaneBrowserView):

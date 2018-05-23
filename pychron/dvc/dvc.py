@@ -16,26 +16,27 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import shutil
-from operator import attrgetter
-
-import time
 from datetime import datetime
 from itertools import groupby
 from math import isnan
-from git import Repo
-from uncertainties import nominal_value, std_dev, ufloat
+from operator import attrgetter
 
+import six
+import time
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+from git import Repo
 from traits.api import Instance, Str, Set, List, provides
+from uncertainties import nominal_value, std_dev, ufloat
 
+from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.database.tasks.connection_preferences import ConnectionFavoriteItem
 from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
@@ -44,15 +45,13 @@ from pychron.dvc.func import find_interpreted_age_path, GitSessionCTX, push_repo
 from pychron.dvc.meta_repo import MetaRepo, Production
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.experiment.utilities.identifier import make_runid
 from pychron.git.hosts import IGitHost, CredentialException
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
+from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, NULL_STR
-from pychron import json
-import six
 
 TESTSTR = {'blanks': 'auto update blanks', 'iso_evo': 'auto update iso_evo'}
 
@@ -303,6 +302,8 @@ class DVC(Loggable):
         repo = self._get_repository(reponame, as_current=False)
         ps = []
         db = self.db
+        repo.pull()
+
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
 
@@ -335,18 +336,18 @@ class DVC(Loggable):
                                     ('irradiation_position', pos)):
                         ov = obj.get(attr)
                         if ov != v:
-                            print('{:<20s} repo={} db={}'.format(attr, ov, v))
+                            self.info('{:<20s} repo={} db={}'.format(attr, ov, v))
                             obj[attr] = v
                             changed = True
 
                     if changed:
-                        print('{}'.format(p))
+                        self.debug('{}'.format(p))
                         ps.append(p)
                         if not dry_run:
                             dvc_dump(obj, p)
 
         if ps and not dry_run:
-            repo.pull()
+            # repo.pull()
             repo.add_paths(ps)
             repo.commit('<SYNC> Synced repository with database {}'.format(self.db.datasource_url))
             repo.push()
@@ -493,56 +494,56 @@ class DVC(Loggable):
     #
     # def manual_baselines(self, runid, experiment_identifier, values, errors):
     #     return self._manual_edit(runid, experiment_identifier, values, errors, 'baselines')
-    def analysis_metadata_edit(self, uuid, runid, repository_identifier, analysis_metadata, extraction_metadata,
-                               identifier_metadata):
-        ps = []
-        if analysis_metadata:
-            path = analysis_path(runid, repository_identifier)
-            obj = dvc_load(path)
-            obj.update(analysis_metadata)
-            ps.append(path)
-            dvc_dump(obj, path)
-
-        if extraction_metadata:
-            path = analysis_path(runid, repository_identifier, modifier='extraction')
-            obj = dvc_load(path)
-            obj.update(extraction_metadata)
-            ps.append(path)
-            dvc_dump(obj, path)
-
-        if identifier_metadata:
-            new_identifier = identifier_metadata.get('identifier')
-            with self.db.session_ctx():
-                a = self.db.get_analysis_uuid(uuid)
-                if new_identifier:
-                    ipid = self.db.get_irradiation_position(new_identifier)
-                    if ipid is not None:
-                        a.irradiation_positionID = ipid
-                    else:
-                        self.warning('New Identifier is invalid')
-
-                a.aliquot = identifier_metadata.get('aliquot', a.aliquot)
-                a.increment = identifier_metadata.get('increment', a.increment)
-
-            path = analysis_path(runid, repository_identifier)
-            obj = dvc_load(path)
-            obj.update(identifier_metadata)
-            new_runid = make_runid(obj['identifier'], obj['aliquot'], obj['increment'])
-            new_path = analysis_path(new_runid, repository_identifier)
-            dvc_dump(new_path, obj)
-            os.remove(path)
-            ps.append(path)
-            ps.append(new_path)
-
-            for mod in PATH_MODIFIERS:
-                path = analysis_path(runid, repository_identifier, modifier=mod)
-                new_path = analysis_path(new_runid, repository_identifier, modifier=mod)
-                shutil.move(path, new_path)
-                ps.append(path)
-                ps.append(new_path)
-
-        if ps:
-            self.repository_add_paths(repository_identifier, ps)
+    # def analysis_metadata_edit(self, uuid, runid, repository_identifier, analysis_metadata, extraction_metadata,
+    #                            identifier_metadata):
+    #     ps = []
+    #     if analysis_metadata:
+    #         path = analysis_path(runid, repository_identifier)
+    #         obj = dvc_load(path)
+    #         obj.update(analysis_metadata)
+    #         ps.append(path)
+    #         dvc_dump(obj, path)
+    #
+    #     if extraction_metadata:
+    #         path = analysis_path(runid, repository_identifier, modifier='extraction')
+    #         obj = dvc_load(path)
+    #         obj.update(extraction_metadata)
+    #         ps.append(path)
+    #         dvc_dump(obj, path)
+    #
+    #     if identifier_metadata:
+    #         new_identifier = identifier_metadata.get('identifier')
+    #         with self.db.session_ctx():
+    #             a = self.db.get_analysis_uuid(uuid)
+    #             if new_identifier:
+    #                 ipid = self.db.get_irradiation_position(new_identifier)
+    #                 if ipid is not None:
+    #                     a.irradiation_positionID = ipid
+    #                 else:
+    #                     self.warning('New Identifier is invalid')
+    #
+    #             a.aliquot = identifier_metadata.get('aliquot', a.aliquot)
+    #             a.increment = identifier_metadata.get('increment', a.increment)
+    #
+    #         path = analysis_path(runid, repository_identifier)
+    #         obj = dvc_load(path)
+    #         obj.update(identifier_metadata)
+    #         new_runid = make_runid(obj['identifier'], obj['aliquot'], obj['increment'])
+    #         new_path = analysis_path(new_runid, repository_identifier)
+    #         dvc_dump(new_path, obj)
+    #         os.remove(path)
+    #         ps.append(path)
+    #         ps.append(new_path)
+    #
+    #         for mod in PATH_MODIFIERS:
+    #             path = analysis_path(runid, repository_identifier, modifier=mod)
+    #             new_path = analysis_path(new_runid, repository_identifier, modifier=mod)
+    #             shutil.move(path, new_path)
+    #             ps.append(path)
+    #             ps.append(new_path)
+    #
+    #     if ps:
+    #         self.repository_add_paths(repository_identifier, ps)
 
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug('manual edit {} {} {}'.format(runid, repository_identifier, modifier))
@@ -585,7 +586,22 @@ class DVC(Loggable):
         if self.repository_add_paths(repository_identifier, ps):
             self.repository_commit(repository_identifier, msg)
 
+    def status_view(self, repo):
+        repo = self._get_repository(repo, as_current=False)
+        v = StatusView(status=repo.status())
+        v.edit_traits()
+
+    def add_bookmark(self, repo, name, message=None, hexsha=None):
+        if not message:
+            message = 'No message provided'
+        repo = self._get_repository(repo, as_current=False)
+        repo.add_tag(name, message, hexsha)
+
     # analysis processing
+    # def make_historical_branch(self, repo, name, commit):
+    #     repo = self._get_repository(repo, as_current=False)
+    #     repo.create_branch(name=name, commit=commit)
+
     def analysis_has_review(self, ai, attr):
         return True
         # test_str = TESTSTR[attr]
@@ -649,10 +665,10 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add=True):
+    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options=None, add=True):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add)
 
         with self.session_ctx(use_parent_session=False):
             ip = self.get_identifier(identifier)
@@ -720,7 +736,7 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False):
+    def make_analyses(self, records, calculate_f_only=False, reload=False):
         if not records:
             return []
 
@@ -763,12 +779,13 @@ class DVC(Loggable):
                 fluxes[irrad] = flux_levels
                 productions[irrad] = prod_levels
 
+        sens = meta_repo.get_sensitivities()
         make_record = self._make_record
 
         def func(*args):
             try:
                 r = make_record(branches=branches, chronos=chronos, productions=productions,
-                                fluxes=fluxes, calculate_f_only=calculate_f_only, *args)
+                                fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens, reload=reload, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -904,6 +921,10 @@ class DVC(Loggable):
         for gi in self.application.get_services(IGitHost):
             push_repositories(changes, gi.default_remote_name, quiet=False)
 
+    def delete_local_commits(self, repo, **kw):
+        r = self._get_repository(repo)
+        r.delete_local_commits(**kw)
+
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
@@ -941,7 +962,7 @@ class DVC(Loggable):
         changes = self.meta_repo.has_staged()
         if changes:
             self.debug('meta repo has changes: {}'.format(changes))
-            self.meta_repo.report_status()
+            self.meta_repo.report_local_changes()
             self.meta_repo.commit(msg)
             self.meta_repo.clear_cache = True
         else:
@@ -993,13 +1014,21 @@ class DVC(Loggable):
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
                  arar_constants=ia.arar_constants.to_dict(),
+                 ages=ia.ages(),
                  analyses=[dict(uuid=ai.uuid,
                                 record_id=ai.record_id,
+                                age=ai.age,
+                                age_err=ai.age_err,
+                                age_err_wo_j=ai.age_err_wo_j,
+                                radiogenic_yield=nominal_value(ai.rad40_percent),
+                                kca=float(nominal_value(ai.kca)),
+                                kca_err=float(std_dev(ai.kca)),
+                                kcl=float(nominal_value(ai.kcl)),
+                                kcl_err=float(std_dev(ai.kcl)),
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
-                           ia.all_analyses])
+                           ia.analyses])
 
-        if self.macrochron_enabled:
-            d['macrochron'] = self._make_macrochron(ia)
+        d['macrochron'] = self._make_macrochron(ia)
 
         self._add_interpreted_age(ia, d)
 
@@ -1182,13 +1211,17 @@ class DVC(Loggable):
 
         for expid, ans in groupby(sorted(items, key=key), key=key):
             self.sync_repo(expid)
-            cs = []
+            ps = []
             for it in ans:
-                if self.update_tag(it):
-                    cs.append(it)
-            self._commit_tags(cs, expid, '<SUBGROUP>')
+                tag = Tag.from_analysis(it)
+                tag.dump()
 
-    def _commit_tags(self, cs, expid, msg):
+                ps.append(tag.path)
+
+            if self.repository_add_paths(expid, ps):
+                self._commit_tags(ans, expid, '<SUBGROUP>', refresh=False)
+
+    def _commit_tags(self, cs, expid, msg, refresh=True):
         if cs:
             cc = [c.record_id for c in cs]
             if len(cc) > 1:
@@ -1197,9 +1230,9 @@ class DVC(Loggable):
                 cstr = cc[0]
 
             self.repository_commit(expid, '{} {}'.format(msg, cstr))
-
-            for ci in cs:
-                ci.refresh_view()
+            if refresh:
+                for ci in cs:
+                    ci.refresh_view()
 
     def tag_items(self, tag, items, note=''):
         key = attrgetter('repository_identifier')
@@ -1239,6 +1272,9 @@ class DVC(Loggable):
     def _make_macrochron(self, ia):
         m = {'material': ia.material,
              'lithology': ia.lithology,
+             'lithology_group': ia.lithology_group,
+             'lithology_class': ia.lithology_class,
+             'lithology_type': ia.lithology_type,
              'reference': ia.reference,
              'rlocation': ia.rlocation}
         return m
@@ -1262,8 +1298,8 @@ class DVC(Loggable):
             prog.change_message('Loading repository {}. {}/{}'.format(expid, i, n))
         self.sync_repo(expid)
 
-    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None,
-                     calculate_f_only=False):
+    def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
+                     calculate_f_only=False, reload=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1286,7 +1322,7 @@ class DVC(Loggable):
             if expid is None:
                 expid = self._get_requested_experiment_id(exps)
 
-        if isinstance(record, DVCAnalysis):
+        if isinstance(record, DVCAnalysis) and not reload:
             a = record
         else:
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
@@ -1311,13 +1347,21 @@ class DVC(Loggable):
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
-            a.loadname = record.loadname
+            a.load_name = record.load_name
+            a.load_holder = record.load_holder
             # get repository branch
             a.branch = branches.get(expid, '')
             # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
             # print 'asdfdffff {}'.format(time.time() - st)
             # a.set_tag(record.tag)
             # load irradiation
+            if sens:
+                sens = sens.get(a.mass_spectrometer.lower(), [])
+            else:
+                sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
+
+            a.set_sensitivity(sens)
+
             if a.irradiation and a.irradiation not in ('NoIrradiation',):
                 # self.debug('Irradiation {}'.format(a.irradiation))
                 if chronos:
@@ -1348,9 +1392,17 @@ class DVC(Loggable):
                 if fd['lambda_k']:
                     a.arar_constants.lambda_k = fd['lambda_k']
 
-                a.standard_age = fd['standard_age']
-                a.standard_name = fd['standard_name']
-                a.standard_material = fd['standard_material']
+                for attr in ('age', 'name', 'material'):
+                    skey = 'monitor_{}'.format(attr)
+                    try:
+                        setattr(a, skey, fd[skey])
+                    except KeyError as e:
+                        try:
+                            key = 'standard_{}'.format(attr)
+                            setattr(a, skey, fd[key])
+                        except KeyError:
+                            print('b', attr, key, e)
+                            pass
 
                 if calculate_f_only:
                     a.calculate_F()
@@ -1362,6 +1414,9 @@ class DVC(Loggable):
         path = analysis_path(rid, repo, 'productions')
         if path:
             return Production(path)
+
+    def get_repository(self, repo):
+        return self._get_repository(repo, as_current=False)
 
     def _get_repository(self, repository_identifier, as_current=True):
         repo = None

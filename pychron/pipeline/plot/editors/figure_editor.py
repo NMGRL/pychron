@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 from traits.api import Any, List
 
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor
@@ -82,7 +83,7 @@ class FigureEditor(GraphEditor):
         model.trait_set(plot_options=self.plotter_options,
                         analysis_groups=self.analysis_groups,
                         # titles=self.titles,
-                        analyses=self.analyses,
+                        analyses=self.items,
                         references=self.references)
 
         return model

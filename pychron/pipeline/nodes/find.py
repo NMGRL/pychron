@@ -16,18 +16,20 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from itertools import groupby
 
+from six.moves import map
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
+from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR
-from six.moves import map
 
 
 class FindNode(DVCNode):
@@ -96,6 +98,23 @@ class FindVerticalFluxNode(BaseFindFluxNode):
         return v
 
 
+class FindRepositoryAnalysesNode(FindNode):
+    repositories = List
+
+    def run(self, state):
+        dvc = self.dvc
+        rs = []
+        for ri in self.repositories:
+            ans = dvc.get_repoository_analyses(ri)
+            rs.extend(ans)
+
+        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == 'unknown')
+        state.unknowns = unks
+        state.references = refs
+        self.unknowns = unks
+        self.references = refs
+
+
 class FindFluxMonitorsNode(BaseFindFluxNode):
     name = 'Find Flux Monitors'
 
@@ -154,6 +173,9 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         super(FindFluxMonitorsNode, self)._to_template(d)
         d['level'] = self.level
 
+    def _irradiation_changed(self):
+        self.level = self.levels[0]
+
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
@@ -168,12 +190,14 @@ class FindReferencesNode(FindNode):
     user_choice = False
     threshold = Float
 
-    loadname = Str
+    load_name = Str
 
     display_loads = Property(depends_on='limit_to_analysis_loads')
     loads = List
     analysis_loads = List
     limit_to_analysis_loads = Bool(True)
+
+    threshold_enabled = Property
 
     analysis_types = List
     available_analysis_types = List
@@ -195,8 +219,9 @@ class FindReferencesNode(FindNode):
     def load(self, nodedict):
         self.threshold = nodedict.get('threshold', 10)
         self.analysis_types = nodedict.get('analysis_types', [])
-        if self.analysis_types:
-            self.name = 'Find {}'.format(','.join(self.analysis_types))
+        self.name = nodedict.get('name', 'Find References')
+        # if self.analysis_types:
+        #     self.name = 'Find {}'.format(','.join(self.analysis_types))
         self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
 
     def finish_load(self):
@@ -218,6 +243,8 @@ class FindReferencesNode(FindNode):
     #     if new == 'Blank Unknown':
     #         new = 'Blank'
     #     self.name = 'Find {}s'.format(new)
+    def _load_analysis_types(self, state):
+        pass
 
     def pre_run(self, state, configure=True):
         if not state.unknowns:
@@ -231,8 +258,10 @@ class FindReferencesNode(FindNode):
         self.enable_mass_spectrometer = len(ms) > 1
         self.mass_spectrometer = list(ms)[0]
 
-        ls = {ai.loadname for ai in state.unknowns}
+        ls = {ai.load_name for ai in state.unknowns}
         self.analysis_loads = list(ls)
+
+        self._load_analysis_types(state)
 
         self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
@@ -267,8 +296,8 @@ class FindReferencesNode(FindNode):
                   mass_spectrometers=self.mass_spectrometer,
                   make_records=False)
 
-        if self.loadname and self.loadname != NULL_STR:
-            refs = self.dvc.find_references_by_load(self.loadname, atypes, **kw)
+        if self.load_name and self.load_name != NULL_STR:
+            refs = self.dvc.find_references_by_load(self.load_name, atypes, **kw)
             if refs:
                 times = sorted([ai.rundate for ai in refs])
         else:
@@ -307,10 +336,13 @@ class FindReferencesNode(FindNode):
                 return True
 
     def traits_view(self):
-        v = self._view_factory(HGroup(Item('loadname', editor=EnumEditor(name='display_loads')),
-                                      Item('limit_to_analysis_loads', label='Analysis Loads')),
+        v = self._view_factory(HGroup(Item('load_name', editor=EnumEditor(name='display_loads')),
+                                      Item('limit_to_analysis_loads',
+                                           tooltip='Limit Loads based on the selected analyses',
+                                           label='Limit Loads by Analyses')),
                                Item('threshold',
-                                    tooltip='Maximum difference between blank and unknowns in hours',
+                                    tooltip='Maximum difference between references and unknowns in hours',
+                                    enabled_when='threshold_enabled',
                                     label='Threshold (Hrs)'),
                                VGroup(UItem('analysis_types',
                                             style='custom',
@@ -336,17 +368,20 @@ class FindReferencesNode(FindNode):
             return self.analysis_loads
         else:
             return self.loads
-#
-# class FindAirsNode(FindNode):
-#     name = 'Find Airs'
-#     analysis_type = 'blank_unknown'
-#     analysis_type_name = 'Air'
-#
-#
-# class FindBlanksNode(FindNode):
-#     name = 'Find Blanks'
-#     analysis_type = 'blank_unknown'
-#     analysis_type_name = 'Blank Unknown'
 
+    def _get_threshold_enabled(self):
+        return not self.load_name or self.load_name == NULL_STR
+
+
+class FindBlanksNode(FindReferencesNode):
+    def _load_analysis_types(self, state):
+        ats = list({ai.analysis_type for ai in state.unknowns})
+        bats = []
+        for a in ats:
+            if not a.startswith('blank'):
+                ba = 'blank_{}'.format(a)
+                if ba in self.available_analysis_types:
+                    bats.append(ba)
+        self.analysis_types = bats
 
 # ============= EOF =============================================

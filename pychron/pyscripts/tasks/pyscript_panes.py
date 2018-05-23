@@ -32,17 +32,13 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-
 # from pychron.pyscripts.commands.core import ICommand
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.git_archive.views import CommitAdapter
 
 
-class CommitAdapter(TabularAdapter):
-    columns = [('Commit', 'message'), ('Date', 'date')]
-    font = '10'
-    date_width = Int(100)
-
+class mCommitAdapter(CommitAdapter):
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
         if self.item.active:
@@ -68,7 +64,7 @@ class RepoPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(UItem('selected_path_commits',
-                       editor=TabularEditor(adapter=CommitAdapter(),
+                       editor=TabularEditor(adapter=mCommitAdapter(),
                                             editable=False,
                                             multi_select=True,
                                             refresh='refresh_commits_table_needed',

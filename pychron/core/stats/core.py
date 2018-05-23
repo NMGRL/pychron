@@ -59,8 +59,13 @@ def calculate_weighted_mean(x, errs):
     x = x[idx]
 
     weights = 1 / errs ** 2
-    wmean, sum_weights = average(x, weights=weights, returned=True)
-    werr = sum_weights ** -0.5
+    try:
+        wmean, sum_weights = average(x, weights=weights, returned=True)
+        werr = sum_weights ** -0.5
+    except ZeroDivisionError:
+        wmean = average(x)
+        werr = 0
+
     return wmean, werr
 
 

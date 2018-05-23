@@ -16,45 +16,57 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from numpy import zeros, percentile, array, median
+
+from numpy import zeros, percentile, array, random, abs as nabs
 from scipy.stats import norm
-from six.moves import range
+
+
 # ============= local library imports  ==========================
 
 
-def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
-    exog = reg.get_exog(pts)
+def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None, seed=None):
+    pexog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
+
     n = len(ys)
-    yes = array((ys, yserr)).T
+    npts = len(pts)
+    if seed:
+        random.seed(seed)
+
     ga = norm().rvs((ntrials, n))
-    yp = zeros(n)
-    res = zeros((ntrials, len(pts)))
+    ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
-    for i in range(ntrials):
-        res[i] = perturb(pred, exog, nominal_ys, yes, ga[i], yp)
+    yp = ys + yserr * ga
+
+    if position_error:
+        exog = reg.get_exog(None)
+        exogp = exog + position_error * ga
+
+        for i in range(ntrials):
+            ps[i] = pred(yp[i], pexog, exogp[i])
+    else:
+        for i in range(ntrials):
+            ps[i] = pred(yp[i], pexog)
+
+    res = nominal_ys - ps
 
     res = res.T
-    ret = zeros(len(pts))
+
     pct = (15.87, 84.13)
-    # pct = (2.27, 97.73)
-    for i, po in enumerate(pts):
-        ri = res[i]
-        ai, bi = percentile(ri, pct)
-        ret[i] = (abs(ai) + abs(bi)) * 0.5
 
-    return ret
+    a, b = array([percentile(ri, pct) for ri in res]).T
+    a, b = nabs(a), nabs(b)
+    return (a + b) * 0.5
 
-
-def perturb(pred, exog, nominal_ys, y_es, ga, yp):
-    for i, (y, e) in enumerate(y_es):
-        yp[i] = y + (e * ga[i])
-
-    pys = pred(yp, exog)
-    return nominal_ys - pys
+# def perturb(pred, exog, nominal_ys, y_es, ga, yp):
+# def perturb(pred, exog, nominal_ys, ys, es, ga):
+# for i, (y, e) in enumerate(y_es):
+#     yp[i] = y + (e * ga[i])
+# yp = ys + es * ga
+# pys = pred(yp, exog)
+# return nominal_ys - pys
 
 
 # if __name__ == '__main__':
