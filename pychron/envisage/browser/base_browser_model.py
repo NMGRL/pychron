@@ -17,11 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-import six.moves.cPickle as pickle
+
 import os
 import re
 from datetime import timedelta, datetime
 
+import six.moves.cPickle as pickle
+from six.moves import filter
+from six.moves import map
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
@@ -33,14 +36,11 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
-from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
     PrincipalInvestigatorRecordView, LoadRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
-from six.moves import filter
-from six.moves import map
 
 
 class IdentifierStr(BaseStr):
@@ -557,7 +557,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         return LabnumberRecordView(record)
 
     def _load_browser_selection(self, selection):
-        print('asdfas', selection)
         if not self.auto_load_database:
             for attr in ('load', 'project', 'principal_investigator', 'sample'):
                 pattr = '{}s'.format(attr)

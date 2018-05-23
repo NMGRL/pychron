@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import re
 from datetime import datetime, timedelta
 
@@ -37,6 +38,8 @@ REG = re.compile(r'.' * NCHARS)
 class SampleBrowserModel(BrowserModel):
     graphical_filter_button = Button
     find_references_button = Button
+    refresh_selectors_button = Button
+
     load_recent_button = Button
     toggle_view = Button
 
@@ -237,6 +240,11 @@ class SampleBrowserModel(BrowserModel):
         ans = self.db.get_analyses_uuid([a[0] for a in ans])
         xx = self._make_records(ans)
         self.analysis_table.set_analyses(xx)
+
+    def _refresh_selectors_button_fired(self):
+        self.debug('refresh selectors fired')
+        if self.sample_view_active:
+            self.load_selectors()
 
     def _find_references_button_fired(self):
         self.debug('find references button fired')
