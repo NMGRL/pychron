@@ -15,7 +15,8 @@
 # ===============================================================================
 
 from __future__ import absolute_import
-from traits.api import Str, List, HasTraits, Dict, Any
+
+from traits.api import Str, HasTraits, Dict, Any
 from traitsui.api import View, Item, EnumEditor
 
 
@@ -43,7 +44,7 @@ class AddAnalysisGroupView(HasTraits):
         if append:
             db.append_analysis_group(gdb, ans)
         elif ok:
-            db.add_analysis_group(ans, self.name, self.project.name)
+            db.add_analysis_group(ans, self.name, self.project)
 
     def traits_view(self):
         v = View(Item('name'),
