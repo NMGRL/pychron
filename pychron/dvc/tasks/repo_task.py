@@ -15,17 +15,15 @@
 # ===============================================================================
 
 # ============= standard library imports ========================
-from __future__ import absolute_import
 import os
 import shutil
 
 from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
-
 # ============= enthought library imports =======================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int
+from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event
 
 # ============= local library imports  ==========================
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -41,7 +39,6 @@ from pychron.envisage.tasks.base_task import BaseTask
 from pychron.git.hosts import IGitHost
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import get_commits, ahead_behind, get_tags
-from pychron.github import Organization
 from pychron.paths import paths
 
 
@@ -51,6 +48,7 @@ class RepoItem(HasTraits):
     ahead = Int
     behind = Int
     status = Str
+    refresh_needed = Event
 
     def update(self, fetch=True):
         name = self.name
@@ -59,6 +57,7 @@ class RepoItem(HasTraits):
         self.ahead = a
         self.behind = b
         self.status = '{},{}'.format(a, b)
+        self.refresh_needed = True
 
 
 class ExperimentRepoTask(BaseTask):

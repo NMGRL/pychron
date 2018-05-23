@@ -836,6 +836,12 @@ class PipelineEngine(Loggable):
             else:
                 dvc.push_repository(r.name)
 
+    def delete_local_changes(self):
+        self.debug('PipelineEngine.delete_local_changes')
+        dvc = self.dvc
+        for r in self._active_repositories():
+            dvc.delete_local_commits(r.name)
+
     # private
     def _active_repositories(self):
         if self.selected_repositories:

@@ -138,7 +138,10 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
                 self.set_name(path)
 
-    def delete_local_commits(self, remote='origin', branch='master'):
+    def delete_local_commits(self, remote='origin', branch=None):
+        if branch is None:
+            branch = self._repo.head
+
         self._repo.git.reset('--hard', '{}/{}'.format(remote, branch))
 
     def add_paths(self, apaths):

@@ -32,18 +32,18 @@ class UObjectColumn(ObjectColumn):
     width = 10
 
 
-lithology_grp = VGroup(UItem('lith_class', editor=EnumEditor(name='lith_classes')),
-                       UItem('lith_group', editor=EnumEditor(name='lith_groups')),
-                       UItem('lith_type', editor=EnumEditor(name='lith_types')),
-                       UItem('lith', editor=EnumEditor(name='liths')),
+lithology_grp = VGroup(UItem('lithology_class', editor=EnumEditor(name='lithology_classes')),
+                       UItem('lithology_group', editor=EnumEditor(name='lithology_groups')),
+                       UItem('lithology_type', editor=EnumEditor(name='lithology_types')),
+                       UItem('lithology', editor=EnumEditor(name='lithologies')),
                        show_border=True, label='Lithology')
 
 macrostrat_grp = VGroup(Item('reference'),
+                        Item('rlocation'),
                         Item('lat_long'),
                         lithology_grp,
                         show_border=True,
-                        label='MacroChron',
-                        defined_when='macrochron_enabled')
+                        label='MacroChron')
 
 EDIT_VIEW = View(Item('preferred_kca_kind'),
                  Item('preferred_kca_value'),

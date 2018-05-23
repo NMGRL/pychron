@@ -921,6 +921,10 @@ class DVC(Loggable):
         for gi in self.application.get_services(IGitHost):
             push_repositories(changes, gi.default_remote_name, quiet=False)
 
+    def delete_local_commits(self, repo, **kw):
+        r = self._get_repository(repo)
+        r.delete_local_commits(**kw)
+
     # IDatastore
     def get_greatest_aliquot(self, identifier):
         return self.db.get_greatest_aliquot(identifier)
@@ -1016,14 +1020,15 @@ class DVC(Loggable):
                                 age=ai.age,
                                 age_err=ai.age_err,
                                 age_err_wo_j=ai.age_err_wo_j,
-                                radiogenic_yield=ai.rad40_percent,
-                                kca=ai.kca,
-                                kcl=ai.kcl,
+                                radiogenic_yield=nominal_value(ai.rad40_percent),
+                                kca=float(nominal_value(ai.kca)),
+                                kca_err=float(std_dev(ai.kca)),
+                                kcl=float(nominal_value(ai.kcl)),
+                                kcl_err=float(std_dev(ai.kcl)),
                                 tag=ai.tag, plateau_step=ia.get_is_plateau_step(ai)) for ai in
                            ia.analyses])
 
-        if self.macrochron_enabled:
-            d['macrochron'] = self._make_macrochron(ia)
+        d['macrochron'] = self._make_macrochron(ia)
 
         self._add_interpreted_age(ia, d)
 
@@ -1267,6 +1272,9 @@ class DVC(Loggable):
     def _make_macrochron(self, ia):
         m = {'material': ia.material,
              'lithology': ia.lithology,
+             'lithology_group': ia.lithology_group,
+             'lithology_class': ia.lithology_class,
+             'lithology_type': ia.lithology_type,
              'reference': ia.reference,
              'rlocation': ia.rlocation}
         return m

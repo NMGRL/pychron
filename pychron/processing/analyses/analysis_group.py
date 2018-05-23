@@ -560,22 +560,21 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     name = Str
     use = Bool
 
-    macrochron_enabled = Bool(True)
+    lithology_class = Str
+    lithology_classes = List
 
-    lith_class = Str
-    lith_classes = List
+    lithology_group = Str
+    lithology_groups = List
 
-    lith_group = Str
-    lith_groups = List
+    lithology_type = Str
+    lithology_types = List
 
-    lith_type = Str
-    lith_types = List
-
-    lith = Str
-    liths = List
+    lithology = Str
+    lithologies = List
 
     reference = Str
     lat_long = Str
+    rlocation = Str
 
     comments = Str
 
