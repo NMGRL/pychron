@@ -17,6 +17,7 @@
 
 import os
 
+import yaml
 from traits.api import Enum, Bool, Str, Int, Float, Color
 from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label
 
@@ -109,6 +110,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     _persistence_name = 'xlsx_table_options'
 
+    def __init__(self, *args, **kw):
+        super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
+        self.load_notes()
+
     @property
     def age_scalar(self):
         return AGE_MA_SCALARS[self.age_units]
@@ -121,6 +126,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         else:
             path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
         return path
+
+    def load_notes(self):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+                for k, v in obj.items():
+                    setattr(self, k, v)
 
     def traits_view(self):
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading'),
@@ -181,7 +194,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         columns_grp = HGroup(general_col_grp, arar_col_grp,
                              label='Columns', show_border=True)
 
-        g1 = VGroup(HGroup(grp,appearence_grp),
+        g1 = VGroup(HGroup(grp, appearence_grp),
                     HGroup(columns_grp, sig_figs_grp), label='Main')
 
         summary_grp = VGroup(Item('include_summary_sheet', label='Summary Sheet'),
