@@ -49,6 +49,7 @@ class RepoItem(HasTraits):
     behind = Int
     status = Str
     refresh_needed = Event
+    active_branch = Str
 
     def update(self, fetch=True):
         name = self.name
@@ -122,7 +123,7 @@ class ExperimentRepoTask(BaseTask):
         self.information_dialog('"{}" Successfully archived to {}'.format(name, dst))
 
     def refresh_local_names(self):
-        self.local_names = [RepoItem(name=i) for i in sorted(list_local_repos())]
+        self.local_names = [RepoItem(name=i, active_branch=branch) for i, branch in sorted(list_local_repos())]
 
     def find_changes(self, remote='origin', branch='master'):
         self.debug('find changes')
@@ -190,6 +191,7 @@ class ExperimentRepoTask(BaseTask):
     def checkout_branch(self):
         self.info('checkout branch {}'.format(self.branch))
         self._repo.checkout_branch(self.branch)
+        self.selected_local_repository_name.active_branch = self.branch
 
     def load_origin(self):
         self.debug('load origin')
@@ -264,6 +266,8 @@ class ExperimentRepoTask(BaseTask):
         self.branch = b
         if force:
             self._branch_changed(self.branch)
+
+        self.selected_local_repository_name.active_branch = b
 
     def _filter_repository_value_changed(self, new):
         if new:

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Int, Property
+from traits.api import Property
 from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -44,6 +44,10 @@ class RepoCentralPane(TraitsTaskPane):
 
 class RepoAdapter(TabularAdapter):
     columns = [('Name', 'name')]
+    name_text = Property
+
+    def _get_name_text(self):
+        return '{} ({})'.format(self.item.name, self.item.active_branch)
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]

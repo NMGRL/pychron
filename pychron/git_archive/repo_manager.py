@@ -140,7 +140,7 @@ class GitRepoManager(Loggable):
 
     def delete_local_commits(self, remote='origin', branch=None):
         if branch is None:
-            branch = self._repo.head
+            branch = self._repo.active_branch.name
 
         self._repo.git.reset('--hard', '{}/{}'.format(remote, branch))
 
@@ -198,10 +198,13 @@ class GitRepoManager(Loggable):
             d = d[1:-1]
         return d
 
-    def out_of_date(self, branchname='master'):
+    def out_of_date(self, branchname=None):
+        repo = self._repo
+        if branchname is None:
+            branchname = repo.active_branch.name
+
         pd = open_progress(2)
 
-        repo = self._repo
         origin = repo.remotes.origin
         pd.change_message('Fetching {} {}'.format(origin, branchname))
 
@@ -230,7 +233,7 @@ class GitRepoManager(Loggable):
             remote_commit = None
 
         if branchname is None:
-            branch = repo.head
+            branch = repo.active_branch.name
         else:
             try:
                 branch = repo.heads[branchname]
