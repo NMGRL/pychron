@@ -32,7 +32,7 @@ from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup, IntermediateAnalysis
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
 
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
@@ -513,17 +513,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
-                    ia = self._make_intermediate_analysis(ag, kind)
+                    # ia = self._make_intermediate_analysis(ag, kind)
                     if nsubgroups > 1:
-                        self._make_intermediate_summary(worksheet, ag, cols, ia, label)
-                    nitems.append(ia)
+                        self._make_intermediate_summary(worksheet, ag, cols, label)
+                    nitems.append(ag)
                     has_subgroups = True
                 else:
                     if nsubgroups == 1:
                         ag = InterpretedAgeGroup(analyses=items)
+                        ag.preferred_age_kind = 'weighted_mean'
                         # age, label = self._get_intermediate_age(ag, 'weighted_mean')
-                        ia = self._make_intermediate_analysis(ag, 'weighted_mean')
-                        nitems = [ia]
+                        # ia = self._make_intermediate_analysis(ag, 'weighted_mean')
+                        nitems = [ag]
                     else:
                         nitems.extend(items)
 
@@ -674,16 +675,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-    def _make_intermediate_analysis(self, ag, kind):
-        ia = IntermediateAnalysis(analysis_group=ag)
-        ia.subgroup_kind = kind
-        a, label = ia.get_age(kind)
-        ia.uage = a
-        ia.uage_wo_j_err = a
+    # def _make_intermediate_analysis(self, ag, kind):
+    #     ia = IntermediateAnalysis(analysis_group=ag)
+    #     ia.subgroup_kind = kind
+    #     a, label = ia.get_age(kind)
+    #     ia.uage = a
+    #     ia.uage_wo_j_err = a
+    #
+    #     return ia
 
-        return ia
-
-    def _make_intermediate_summary(self, sh, ag, cols, ia, label):
+    def _make_intermediate_summary(self, sh, ag, cols, label):
         row = self._current_row
 
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
@@ -702,7 +703,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
         sh.write_rich_string(row, startcol + 1, label, fmt2)
 
-        age = ia.uage
+        age = ag.uage
         tn = ag.total_n
         if label == 'plateau':
             if not ag.plateau_steps:
@@ -721,8 +722,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         else:
             sh.write(row, age_idx, 'No plateau', border)
 
-        sh.write_number(row, age_idx + 2, nominal_value(ia.kca), fmt)
-        sh.write_number(row, age_idx + 3, std_dev(ia.kca), fmt)
+        sh.write_number(row, age_idx + 2, nominal_value(ag.kca), fmt)
+        sh.write_number(row, age_idx + 3, std_dev(ag.kca), fmt)
         sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
         self._current_row += 1
 

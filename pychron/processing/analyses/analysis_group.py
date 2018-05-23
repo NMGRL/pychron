@@ -18,7 +18,7 @@ import math
 
 from numpy import array, nan
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event, Float, Instance
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
@@ -364,21 +364,21 @@ class AnalysisGroup(IdeogramPlotable):
             return ufloat(v, e)
 
 
-class IntermediateAnalysis(HasTraits):
-    analysis_group = Instance(AnalysisGroup)
-
-    def is_omitted(self):
-        return False
-
-    def get_value(self, attr):
-        try:
-            return getattr(self, attr)
-        except AttributeError:
-            print('sdfa', attr)
-            return 0
-
-    def __getattr__(self, item):
-        return getattr(self.analysis_group, item)
+# class IntermediateAnalysis(HasTraits):
+#     analysis_group = Instance(AnalysisGroup)
+#
+#     def is_omitted(self):
+#         return False
+#
+#     def get_value(self, attr):
+#         try:
+#             return getattr(self, attr)
+#         except AttributeError:
+#             print('sdfa', attr)
+#             return 0
+#
+#     def __getattr__(self, item):
+#         return getattr(self.analysis_group, item)
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
@@ -456,7 +456,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_integrated_age(self):
         ret = ufloat(0, 0)
         ans = list(self.clean_analyses())
-        if ans and all((not isinstance(a, IntermediateAnalysis) for a in ans)):
+        if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
             rad40 = sum([a.get_computed_value('rad40') for a in ans])
             k39 = sum([a.get_computed_value('k39') for a in ans])
@@ -495,7 +495,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         # ages, errors, k39 = self._get_steps()
         ans = self.analyses
         v, e = 0, 0
-        if all((not isinstance(ai, IntermediateAnalysis) for ai in ans)):
+        if all((not isinstance(ai, InterpretedAgeGroup) for ai in ans)):
             if ans:
                 ages = [ai.age for ai in ans]
                 errors = [ai.age_err for ai in ans]
@@ -577,6 +577,9 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     rlocation = Str
 
     comments = Str
+
+    def is_omitted(self, tags=None):
+        return False
 
     def get_age(self, kind, set_preferred=False):
         if kind == 'weighted_mean':
@@ -709,7 +712,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         pa = ufloat(0, 0)
         pak = self.preferred_age_kind.lower()
         pak = pak.replace(' ', '_')
-        if pak == 'weighted_mean':
+        if pak in ('weighted_mean', 'wt._mean'):
             pa = self.weighted_age
         elif pak == 'arithmetic_mean':
             pa = self.arith_age
