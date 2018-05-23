@@ -73,6 +73,16 @@ Plateau error is weighted error of Taylor (1982).
 Decay constants and isotopic abundances after {decay_ref:}
 Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory standard at {monitor_age:} Ma'''))
 
+    unknown_corrected_note = dumpable(Str('''Corrected: Isotopic intensities corrected for blank, baseline, 
+    radioactivity decay and detector intercalibration, not for interfering reactions.'''))
+    unknown_intercept_note = dumpable(Str('''Intercepts: t-zero intercept corrected for detector baseline.'''))
+    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis'''))
+
+    unknown_x_note = dumpable(Str('''X symbol preceding sample ID denotes analyses 
+    excluded from weighted-mean age calculations.'''))
+    unknown_px_note = dumpable(Str('''pX symbol preceding sample ID denotes analyses
+    excluded plateau age calculations'''))
+
     unknown_title = dumpable(Str('Ar/Ar analytical data.'))
     air_notes = dumpable(Str(''''''))
     air_title = dumpable(Str(''''''))
@@ -133,11 +143,17 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             with open(p, 'r') as rf:
                 obj = yaml.load(rf)
                 for k, v in obj.items():
-                    setattr(self, k, v)
+                    if v is not None:
+                        setattr(self, k, v)
 
     def traits_view(self):
-        unknown_grp = VGroup(Item('unknown_title', label='Table Heading'),
-                             VGroup(UItem('unknown_notes', style='custom'),
+        unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
+                             VGroup(VGroup(UItem('unknown_notes', style='custom'), label='Main', show_border=True),
+                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'), label='Corrected', show_border=True),
+                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'), label='Intercept', show_border=True),
+                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time', show_border=True),
+                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X', show_border=True),
+                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX', show_border=True),
                                     show_border=True, label='Notes'), label='Unknowns')
 
         air_grp = VGroup(Item('air_title', label='Table Heading'),

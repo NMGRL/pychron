@@ -38,13 +38,6 @@ from pychron.pychron_constants import PLUSMINUS_NSIGMA
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
 
-DEFAULT_UNKNOWN_NOTES = ('Corrected: Isotopic intensities corrected for blank, baseline, radioactivity decay and '
-                         'detector intercalibration, not for interfering reactions.',
-                         'Intercepts: t-zero intercept corrected for detector baseline.',
-                         'Time interval (days) between end of irradiation and beginning of analysis',
-
-                         'X symbol preceding sample ID denotes analyses excluded from plateau age calculations.',)
-
 
 def format_mswd(t):
     m, v, _ = t
@@ -902,18 +895,28 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_unknowns_notes(self, sh):
         monitor_age = 28.201
         decay_ref = u'Steiger and J\u00E4ger (1977)'
-        notes = six.text_type(self._options.unknown_notes)
+        opt = self._options
+        notes = opt.unknown_notes
+
+        corrected_note = opt.unknown_corrected_note
+        intercept_note = opt.unknown_intercept_note
+        time_note = opt.unknown_time_note
+        x_note = opt.unknown_x_note
+        px_note = opt.unknown_px_note
+
         notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
 
-        sh.write_rich_string(self._current_row, 0, self._superscript, '1', DEFAULT_UNKNOWN_NOTES[0])
+        sh.write_rich_string(self._current_row, 0, self._superscript, '1', corrected_note)
         self._current_row += 1
-        sh.write_rich_string(self._current_row, 0, self._superscript, '2', DEFAULT_UNKNOWN_NOTES[1])
+        sh.write_rich_string(self._current_row, 0, self._superscript, '2', intercept_note)
         self._current_row += 1
-        if self._options.include_time_delta:
-            sh.write_rich_string(self._current_row, 0, self._superscript, '3', DEFAULT_UNKNOWN_NOTES[2])
-            self._current_row += 1
+        sh.write_rich_string(self._current_row, 0, self._superscript, '3', time_note)
+        self._current_row += 1
 
-        sh.write(self._current_row, 0, DEFAULT_UNKNOWN_NOTES[3])
+        sh.write(self._current_row, 0, x_note)
+        self._current_row += 1
+
+        sh.write(self._current_row, 0, px_note)
         self._current_row += 1
 
         self._write_notes(sh, notes)
