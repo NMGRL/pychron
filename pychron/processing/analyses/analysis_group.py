@@ -660,6 +660,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         self.arith_age_error_kind = new
         self.plateau_age_error_kind = new
         self.isochron_age_error_kind = new
+        self.dirty = True
 
     def get_ma_scaled_age(self):
         a = self.preferred_age

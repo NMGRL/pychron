@@ -63,13 +63,10 @@ def apply_subgrouping(kind, error_kind, selected, items=None, gid=None):
 
 
 def compress_groups(items):
-    # compress groups
-    # key = lambda x: '_'.join(x.subgroup.split(':')[-1].split('_')[:-1]) if x.subgroup else ''
 
     def key(x):
         return x.subgroup['name'] if x.subgroup else ''
 
-    # gkey = attrgetter('group_id')
     cnt = 0
     for kind, ans in groupby(sorted(items, key=key), key=key):
         if kind:
@@ -81,23 +78,10 @@ def compress_groups(items):
                 a.subgroup['name'] = v
 
             cnt += 1
-            # for i, (_, ais) in enumerate(groupby(ans, key=key)):
-            #     ais = list(ais)
-            #     valid_ais = [a for a in ais if not a.is_omitted()]
-            #     v = i if len(valid_ais) > 1 else ''
-            #
-            #     print('asfdasfdasd', v, i)
-            #     for a in ais:
-            #         a.subgroup['name'] = v
 
         else:
             for a in ans:
                 a.subgroup = None
-
-    # gs = {r.subgroup for r in items}
-    # if len(gs) == 1:
-    #     for a in items:
-    #         a.subgroup = ''
 
 
 def subgrouping_key(x):
