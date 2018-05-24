@@ -709,12 +709,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if not ag.plateau_steps:
                 age = None
             else:
-                sh.write(row, startcol + 2, 'n={}/{} {}'.format(ag.nsteps, tn, ag.plateau_steps_str), border)
-                sh.write(row, startcol + 2, format_mswd(ag.get_plateau_mswd_tuple()), border)
+                txt = 'n={}/{} {} steps={}'.format(ag.nsteps, tn,
+                                                   format_mswd(ag.get_plateau_mswd_tuple()),
+                                                   ag.plateau_steps_str)
+                sh.write(row, startcol + 2, txt, border)
 
         else:
-            sh.write(row, startcol + 2, 'n={}/{}'.format(ag.nanalyses, tn), border)
-            sh.write(row, startcol + 3, format_mswd(ag.get_mswd_tuple()), border)
+            txt = 'n={}/{} {}'.format(ag.nanalyses, tn, format_mswd(ag.get_mswd_tuple()))
+            sh.write(row, startcol + 2, txt, border)
 
         if age is not None:
             sh.write_number(row, age_idx, nominal_value(age), fmt)
@@ -724,7 +726,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         sh.write_number(row, age_idx + 2, nominal_value(ag.kca), fmt)
         sh.write_number(row, age_idx + 3, std_dev(ag.kca), fmt)
-        sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
+        sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
         self._current_row += 1
 
     def _get_number_format(self, kind=None):
@@ -757,10 +759,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         fn = self._get_number_format()
         if last:
-            fmt2 = self._workbook.add_format({'bottom': 1})
-            fmt_rundate = self._workbook.add_format({'bottom': 1})
-            fn.set_bottom(1)
             fmt = border
+            for fi in (fmt2, fn, fmt_lambda_k, fmt_lambda_k, fmt_sens, fmt_disc, fmt_rundate):
+                fi.set_bottom(1)
 
         fmt2.set_align('center')
         fmt_rundate.set_num_format('mm/dd/yy hh:mm')
@@ -820,7 +821,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                  u'Weighted Mean K/Ca {}'.format(pmsigma),
                                  fmt)
 
-            # print('asfdas', group, type(group))
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)

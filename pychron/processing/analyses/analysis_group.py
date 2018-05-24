@@ -412,8 +412,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         total = sum([a.get_computed_value('k39') for a in self.analyses])
         return nominal_value(total)
 
-    def valid_total_ar39(self):
-        cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses()])
+    def plateau_total_ar39(self):
+        cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses() if self.get_is_plateau_step(a)])
         return nominal_value(cleantotal / self.total_ar39 * 100)
 
     def cumulative_ar39(self, idx):
