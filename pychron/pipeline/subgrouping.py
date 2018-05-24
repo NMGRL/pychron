@@ -75,10 +75,10 @@ def compress_groups(items):
         if kind:
             ans = list(ans)
             valid_ais = [a for a in ans if not a.is_omitted()]
-            v = cnt if len(valid_ais) > 1 else ''
+            v = '{:02n}'.format(cnt) if len(valid_ais) > 1 else ''
 
             for a in ans:
-                a.subgroup['name'] = '{:02n}'.format(v)
+                a.subgroup['name'] = v
 
             cnt += 1
             # for i, (_, ais) in enumerate(groupby(ans, key=key)):
