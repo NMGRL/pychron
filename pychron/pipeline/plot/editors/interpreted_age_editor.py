@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 import uuid
 from itertools import groupby
+from operator import attrgetter
 
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -28,10 +29,6 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 class InterpretedAgeEditor(FigureEditor):
     def get_interpreted_ages(self):
-        key = lambda x: x.group_id
-        unks = sorted(self.analyses, key=key)
-        # ok = 'omit_{}'.format(self.basename)
-
         po = self.plotter_options
         additional = {}
         if isinstance(po, SpectrumOptions):
@@ -57,7 +54,8 @@ class InterpretedAgeEditor(FigureEditor):
                                        uuid=str(uuid.uuid4()),
                                        **additional)
 
-        ias = [func(list(ans)) for gid, ans in groupby(unks, key=key)]
+        key = attrgetter('group_id')
+        ias = [func(list(ans)) for gid, ans in groupby(sorted(self.analyses, key=key), key=key)]
         return ias
 
 # ============= EOF =============================================

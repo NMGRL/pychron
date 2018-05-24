@@ -257,19 +257,6 @@ class AnalysisGroup(IdeogramPlotable):
         if kind == MSEM:
             e *= mswd ** 0.5 if mswd > 1 else 1
 
-        # print('iiiii', kind, mswd, e, v, e/v, self.j_err)
-        # if 'age' in self.attribute:
-        #     if include_j_error is None:
-        #         include_j_error = self.include_j_error_in_mean
-        #
-        #     if include_j_error:
-        #         try:
-        #             # e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-        #             # e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
-        #
-        #         except ZeroDivisionError:
-        #             return nan
-        # print('aoutasd', e)
         return e
 
     @cached_property
@@ -540,7 +527,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
     uuid = Str
     all_analyses = List
-    preferred_age = Property(depends_on='preferred_age_kind')
+    preferred_age = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')
     preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
     preferred_mswd = Property(depends_on='preferred_age_kind')
@@ -552,7 +539,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_age_kind = Str('Weighted Mean')
     preferred_kca_kind = Str('Weighted Mean')
 
-    preferred_age_error_kind = Str(MSEM)  # ('SD')
+    preferred_age_error_kind = Str
     # preferred_ages = Property(depends_on='analyses')
 
     preferred_ages = ('Weighted Mean', 'Arithmetic Mean', 'Isochron', 'Integrated', 'Plateau')

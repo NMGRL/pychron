@@ -265,8 +265,11 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('Kind', 'age_kind')]
 
     font = 'arial 10'
-    name_width = 100
-    identifier_width = 100
+    # name_width = Int(100)
+    # identifier_width = Int(100)
+    # age_width = Int(100)
+    # age_err_width = Int(100)
+    # age_kind_width = Int(100)
 
     age_text = Property
     age_err_text = Property

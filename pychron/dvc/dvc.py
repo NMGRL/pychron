@@ -1010,6 +1010,7 @@ class DVC(Loggable):
                  display_age_units=ia.age_units,
                  age_kind=ia.preferred_age_kind,
                  kca_kind=ia.preferred_kca_kind,
+                 age_error_kind=ia.preferred_age_error_kind,
                  kca=float(ia.preferred_kca_value),
                  kca_err=float(ia.preferred_kca_error),
                  mswd=float(mswd),
