@@ -18,7 +18,7 @@ import math
 
 from numpy import array, nan
 # ============= enthought library imports =======================
-from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
@@ -67,7 +67,9 @@ class AnalysisGroup(IdeogramPlotable):
     irradiation_label = Property
     sample = Property
     project = Property
-    aliquot = Property
+    aliquot = Property(depends_on='_aliquot')
+    _aliquot = Any
+
     material = Property
     unit = Str
     location = Str
@@ -185,7 +187,13 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_aliquot(self):
-        return self.analyses[0].aliquot
+        a = self._aliquot
+        if not a:
+            a = self.analyses[0].aliquot
+        return a
+
+    def _set_aliquot(self, a):
+        self._aliquot = a
 
     @cached_property
     def _get_identifier(self):

@@ -98,6 +98,7 @@ class ArArAge(IsotopeGroup):
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
+    _lambda_k = None
 
     discrimination = None
     weight = 0  # in milligrams
@@ -147,7 +148,14 @@ class ArArAge(IsotopeGroup):
 
     @property
     def lambda_k(self):
-        return self.arar_constants.lambda_k
+        l = self._lambda_k
+        if l is None:
+            l = self.arar_constants.lambda_k
+        return l
+
+    @lambda_k.setter
+    def lambda_k(self, v):
+        self._lambda_k = v
 
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():

@@ -24,7 +24,7 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS
 
 
 class SpectrumAuxPlot(AuxPlot):
@@ -56,9 +56,9 @@ class SpectrumOptions(AgeOptions):
     display_weighted_mean_info = Bool(True)
     display_weighted_bar = Bool(True)
 
-    plateau_sig_figs = Int
-    integrated_sig_figs = Int
-    weighted_mean_sig_figs = Int
+    plateau_sig_figs = Enum(*SIG_FIGS)
+    integrated_sig_figs = Enum(*SIG_FIGS)
+    weighted_mean_sig_figs = Enum(*SIG_FIGS)
 
     plateau_font = Property
     integrated_font = Property

@@ -488,7 +488,8 @@ class BaseArArFigure(SelectionFigure):
             ctx = {'aliquot': si.aliquot,
                    'step': si.step,
                    'sample': si.sample,
-                   'name': si.name}
+                   'name': si.name,
+                   'label_name': si.label_name}
 
             x = f.format(**ctx)
             labels.append(x)

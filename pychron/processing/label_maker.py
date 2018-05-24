@@ -15,14 +15,16 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import List, Property, \
     Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
 from pychron.core.templater.templater_view import BaseTemplateView
-from six.moves import range
 
 
 class TitleTemplater(BaseTemplater):
@@ -102,13 +104,13 @@ class TitleTemplater(BaseTemplater):
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Aliquot', 'Step', 'Name', '<SPACE>'])
+    attributes = List(['Sample', 'Aliquot', 'Step', 'Label_name', 'Name', '<SPACE>'])
     attribute_formats = {'step': '',
                          'aliquot': '02n',
                          'sample': '',
-                         'name': ''}
+                         'label_name': ''}
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo'}
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo', 'label_name': 'Bar'}
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
                                    'Aliquot Step'])

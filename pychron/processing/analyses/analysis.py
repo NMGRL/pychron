@@ -164,7 +164,7 @@ class IdeogramPlotable(HasTraits):
     history_id = 0
     group_id = 0
     graph_id = 0
-    name = ''
+    _label_name = None
 
     tag = 'ok'
     tag_note = ''
@@ -218,6 +218,18 @@ class IdeogramPlotable(HasTraits):
         a, e = self._value_string(t)
         pe = format_percent_error(a, e)
         return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+
+    @property
+    def label_name(self):
+        n = self._label_name
+        if n is None:
+            n = self.aliquot
+
+        return n
+
+    @label_name.setter
+    def label_name(self, v):
+        self._label_name = v
 
     @property
     def status_text(self):

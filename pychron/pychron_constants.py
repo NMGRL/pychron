@@ -68,6 +68,7 @@ SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
+SIG_FIGS = range(0, 15)
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
