@@ -24,7 +24,8 @@ from traitsui.api import View, UItem, EnumEditor, VGroup, Item
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.tagging import apply_subgrouping, compress_groups
+from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
+from pychron.pychron_constants import MSEM
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None):
@@ -123,8 +124,8 @@ class SubGroupingNode(GroupingNode):
         self.by_key = nodedict.get('key', 'Aliquot')
 
     def _id_func(self, gid, analyses):
-        tag = self.grouping_kind.lower().replace(' ', '_')
-        apply_subgrouping(tag, list(analyses), gid=gid)
+        kind = self.grouping_kind.lower().replace(' ', '_')
+        apply_subgrouping(kind, MSEM, list(analyses), gid=gid)
 
     def run(self, state):
         super(SubGroupingNode, self).run(state)

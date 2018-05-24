@@ -15,7 +15,6 @@
 # ===============================================================================
 import re
 from itertools import groupby
-from operator import attrgetter
 
 import six
 import xlsxwriter
@@ -28,6 +27,7 @@ from uncertainties.core import Variable
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
+from pychron.pipeline.subgrouping import subgrouping_key
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
@@ -482,23 +482,25 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
 
-            n = len(group.analyses) - 1
             nitems = []
             has_subgroups = False
-            key = attrgetter('subgroup')
+
             ans = group.analyses
 
-            nsubgroups = len({key(i) for i in ans})
+            nsubgroups = len({subgrouping_key(i) for i in ans})
 
-            for subgroup, items in groupby(ans, key=key):
+            for subgroup, items in groupby(ans, key=subgrouping_key):
                 items = list(items)
                 ag = None
                 if subgroup:
-                    kind = '_'.join(subgroup.split('_')[:-1])
+                    kind = items[0].subgroup['kind']
+
+                    # kind = '_'.join(subgroup.split('_')[:-1])
                     ag = InterpretedAgeGroup(analyses=items)
                     age, label = ag.get_age(kind, set_preferred=True)
                     # age, label = self._get_intermediate_age(ag, kind)
 
+                n = len(items) - 1
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
                     item.arar_constants.age_units = options.age_units
@@ -508,7 +510,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         if label == 'plateau' and options.highlight_non_plateau:
                             is_plateau_step = ag.get_is_plateau_step(i)
 
-                    self._make_analysis(worksheet, cols, item, i == n,
+                    self._make_analysis(worksheet, cols, item, i == n and not subgroup,
                                         is_plateau_step=is_plateau_step,
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
@@ -709,14 +711,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if not ag.plateau_steps:
                 age = None
             else:
-                txt = 'n={}/{} {} steps={}'.format(ag.nsteps, tn,
-                                                   format_mswd(ag.get_plateau_mswd_tuple()),
-                                                   ag.plateau_steps_str)
+                txt = 'n={}/{} steps={}'.format(ag.nsteps, tn, ag.plateau_steps_str)
                 sh.write(row, startcol + 2, txt, border)
+                sh.write(row, cum_idx+1, format_mswd(ag.get_plateau_mswd_tuple()), border)
 
         else:
-            txt = 'n={}/{} {}'.format(ag.nanalyses, tn, format_mswd(ag.get_mswd_tuple()))
+            txt = 'n={}/{}'.format(ag.nanalyses, tn)
             sh.write(row, startcol + 2, txt, border)
+            sh.write(row, cum_idx + 1, format_mswd(ag.get_mswd_tuple()), border)
 
         if age is not None:
             sh.write_number(row, age_idx, nominal_value(age), fmt)
@@ -726,7 +728,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         sh.write_number(row, age_idx + 2, nominal_value(ag.kca), fmt)
         sh.write_number(row, age_idx + 3, std_dev(ag.kca), fmt)
-        sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
+
+        if label == 'plateau':
+            sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
+        else:
+            sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
         self._current_row += 1
 
     def _get_number_format(self, kind=None):
@@ -761,8 +767,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if last:
             fmt = border
             for fi in (fmt2, fn, fmt_lambda_k, fmt_lambda_k, fmt_sens, fmt_disc, fmt_rundate):
+                print('setinga bottom')
                 fi.set_bottom(1)
 
+        print('islaasta', last)
         fmt2.set_align('center')
         fmt_rundate.set_num_format('mm/dd/yy hh:mm')
         status = 'X' if item.is_omitted() else ''

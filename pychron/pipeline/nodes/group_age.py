@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from pychron.pipeline.editors.group_age_editor import GroupAgeEditor
 from pychron.pipeline.nodes.data import BaseDVCNode
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pipeline.subgrouping import make_interpreted_age_subgroups
 
 
 class GroupAgeNode(BaseDVCNode):
@@ -42,22 +42,25 @@ class GroupAgeNode(BaseDVCNode):
         key = attrgetter('group_id')
         nans = []
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
-            ans = list(ans)
+            ias = make_interpreted_age_subgroups(ans)
+            nans.extend(ias)
 
-            key = attrgetter('subgroup')
-
-            for subgroup, items in groupby(ans, key=key):
-                items = list(items)
-                if subgroup:
-                    kind = '_'.join(subgroup.split('_')[:-1])
-                else:
-                    kind = 'weighted_mean'
-
-                ag = InterpretedAgeGroup(analyses=items)
-                ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[0])
-
-                ag.get_age(kind, set_preferred=True)
-                nans.append(ag)
+            # ans = list(ans)
+            #
+            # key = attrgetter('subgroup')
+            #
+            # for subgroup, items in groupby(ans, key=key):
+            #     items = list(items)
+            #     if subgroup:
+            #         kind = '_'.join(subgroup.split('_')[:-1])
+            #     else:
+            #         kind = 'weighted_mean'
+            #
+            #     ag = InterpretedAgeGroup(analyses=items)
+            #     ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[0])
+            #
+            #     ag.get_age(kind, set_preferred=True)
+            #     nans.append(ag)
 
         state.unknowns = nans
 

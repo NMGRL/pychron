@@ -22,8 +22,8 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
-from pychron.pipeline.tagging import apply_subgrouping, compress_groups
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
+from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, MSEM, SEM, SD
 
 
 # ============= standard library imports ========================
@@ -36,6 +36,9 @@ class GroupAgeAdapter(BaseAdapter):
         ('Tag', 'tag'),
         ('Group', 'group_id'),
         ('SubGroup', 'subgroup'),
+        ('Kind', 'kind'),
+        ('Error', 'error_kind'),
+
         ('Age', 'age'),
         (PLUSMINUS_ONE_SIGMA, 'age_err'),
         ('K/Ca', 'kca')]
@@ -46,16 +49,36 @@ class GroupAgeAdapter(BaseAdapter):
     group_id_width = Int(60)
     subgroup_width = Int(100)
 
+    kind_text = Property
+    error_kind_text = Property
+
     def _get_subgroup_text(self):
-        ret = self.item.subgroup or ''
-        if ':' in ret:
-            _, ret = ret.split(':')
+        return self._get_subgroup_attr('name')
+
+    def _get_kind_text(self):
+        return self._get_subgroup_attr('kind')
+
+    def _get_error_kind_text(self):
+        return self._get_subgroup_attr('error_kind')
+
+    def _get_subgroup_attr(self, attr):
+        ret = ''
+        if self.item.subgroup:
+            ret = self.item.subgroup[attr]
         return ret
 
     def get_menu(self, obj, trait, row, column):
-        m = MenuManager(Action(name='Calculate Mean', action='group_as_weighted_mean'),
-                        Action(name='Calculate Plateau', action='group_as_plateau'),
-                        Action(name='Calculate Isochron', action='group_as_isochron'),
+        age = MenuManager(Action(name='Calculate Mean', action='group_as_weighted_mean'),
+                          Action(name='Calculate Plateau', action='group_as_plateau'),
+                          Action(name='Calculate Isochron', action='group_as_isochron'),
+                          name='Age')
+
+        error = MenuManager(Action(name=SD, action='group_sd'),
+                            Action(name=SEM, action='group_sem'),
+                            Action(name=MSEM, action='group_msem'),
+                            name='Error')
+        m = MenuManager(age,
+                        error,
                         Action(name='Clear Grouping', action='clear_grouping'))
         return m
 
@@ -76,6 +99,15 @@ class THandler(Handler):
     def clear_grouping(self, info, obj):
         obj.clear_grouping()
 
+    def group_sd(self, info, obj):
+        obj.group_sd()
+
+    def group_sem(self, info, obj):
+        obj.group_sem()
+
+    def group_msem(self, info, obj):
+        obj.group_msem()
+
 
 class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     adapter_klass = GroupAgeAdapter
@@ -85,9 +117,18 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def clear_grouping(self):
         if self.selected:
             for s in self.selected:
-                s.subgroup = ''
+                s.subgroup = None
 
             compress_groups(self.items)
+
+    def group_sd(self):
+        self._group_error(SD)
+
+    def group_sem(self):
+        self._group_error(SEM)
+
+    def group_msem(self):
+        self._group_error(MSEM)
 
     def group_as_plateau(self):
         self._group('plateau')
@@ -98,14 +139,21 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def group_as_isochron(self):
         self._group('isochron')
 
+    def _group_error(self, tag):
+        if self.selected:
+            set_subgrouping_error(tag, self.selected, self.items)
+            self.refresh_needed = True
+
     def _group(self, tag):
         if self.selected:
-            apply_subgrouping(tag, self.selected, items=self.items)
+            apply_subgrouping(tag, MSEM, self.selected, items=self.items)
+            self.refresh_needed = True
 
     def traits_view(self):
         v = View(VGroup(
             HGroup(UItem('help_str', style='readonly'),
                    show_border=True, label='Info'),
+
             UItem('items',
                   editor=myTabularEditor(adapter=self.adapter_klass(),
                                          # col_widths='col_widths',

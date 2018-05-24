@@ -45,34 +45,43 @@ macrostrat_grp = VGroup(Item('reference'),
                         show_border=True,
                         label='MacroChron')
 
-EDIT_VIEW = View(Item('preferred_kca_kind'),
-                 Item('preferred_kca_value'),
-                 UItem('preferred_kca_error'),
+EDIT_VIEW = View(Item('preferred_kca_kind', ),
+                 Item('preferred_kca_value', format_str='%0.3f'),
+                 UItem('preferred_kca_error', format_str='%0.3f'),
                  macrostrat_grp)
 
-cols = [UObjectColumn(name='identifier'),
-        ObjectColumn(name='name'),
-        ObjectColumn(name='repository_identifier',
-                     editor=EnumEditor(name='controller.repository_identifiers')),
-        ObjectColumn(name='preferred_age_kind', label='Age Type',
-                     editor=EnumEditor(name='preferred_ages')),
+cols = [
+    CheckboxColumn(name='use', label='Save', width=10),
+    UObjectColumn(name='identifier'),
+    ObjectColumn(name='name', width=50),
+    ObjectColumn(name='repository_identifier',
+                 width=50,
+                 editor=EnumEditor(name='controller.repository_identifiers')),
+    ObjectColumn(name='preferred_age_kind',
+                 width=50,
+                 label='Age Type',
+                 editor=EnumEditor(name='preferred_ages')),
 
-        ObjectColumn(name='preferred_age_error_kind', label='Age Error Type',
-                     editor=EnumEditor(values=ERROR_TYPES)),
-        UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age'),
-        UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+    ObjectColumn(name='preferred_age_error_kind',
+                 label='Age Error Type',
+                 editor=EnumEditor(values=ERROR_TYPES)),
+    UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age',
+                  width=70),
+    UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
+                  width=70),
 
-        # ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
-        #              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
-        # UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
-        # UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
-        # UObjectColumn(name='nanalyses', label='N'),
-        # UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
-        CheckboxColumn(name='use', label='Save', width=10)]
+    # ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
+    #              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
+    # UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
+    # UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
+    # UObjectColumn(name='nanalyses', label='N'),
+    # UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
+]
 
 editor = TableEditor(columns=cols, edit_view=EDIT_VIEW)
 VIEW = View(Item('items', show_label=False, editor=editor),
             resizable=True,
+            width=1150,
             title='Set Interpreted Age',
             kind='livemodal',
             buttons=['OK', 'Cancel'])

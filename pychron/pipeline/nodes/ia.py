@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from itertools import groupby
-from operator import attrgetter
 
 from pychron.pipeline.editors.set_ia_editor import SetInterpretedAgeEditor
 from pychron.pipeline.nodes.data import DVCNode
-from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pipeline.subgrouping import make_interpreted_age_subgroups
 
 
 class SetInterpretedAgeNode(DVCNode):
@@ -29,19 +27,27 @@ class SetInterpretedAgeNode(DVCNode):
     def run(self, state):
         unks = state.groups['unknowns']
 
-        ias = []
+        # ias = []
+        #
+        # def key(x):
+        #     return x.subgroup['name'] if x.subgroup else ''
+        #
+        # for group in unks:
+        #     ans = group.analyses
+        #
+        #     for subgroup, items in groupby(ans, key=key):
+        #
+        #         if subgroup:
+        #             kind = subgroup['kind']
+        #         else:
+        #             kind = 'weighted_mean'
+        #
+        #         ag = InterpretedAgeGroup(analyses=list(items), preferred_age_kind=kind)
+        #         ias.append(ag)
+        nans = []
         for group in unks:
-            key = attrgetter('subgroup')
-            ans = group.analyses
-
-            for subgroup, items in groupby(ans, key=key):
-                if subgroup:
-                    kind = '_'.join(subgroup.split('_')[:-1])
-                else:
-                    kind = 'weighted_mean'
-
-                ag = InterpretedAgeGroup(analyses=list(items), preferred_age_kind=kind)
-                ias.append(ag)
+            ias = make_interpreted_age_subgroups(group.analyses)
+            nans.extend(ias)
 
         editor = SetInterpretedAgeEditor()
         editor.set_items(ias)
