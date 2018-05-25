@@ -174,16 +174,18 @@ class GitRepoManager(Loggable):
         ps = [p for p in apaths if p in changes]
         self.debug('changed paths {}'.format(ps))
         changed = bool(ps)
-        for p in ps:
-            self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
-        self.index.add(ps)
+        if ps:
+            for p in ps:
+                self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
+            self.index.add(ps)
 
         ps = [p for p in apaths if p in deletes]
-        self.debug('changed paths {}'.format(ps))
+        self.debug('delete paths {}'.format(ps))
         delete_changed = bool(ps)
-        for p in ps:
-            self.debug('removing from index: {}'.format(os.path.relpath(p, self.path)))
-        self.index.remove(ps, working_tree=True)
+        if ps:
+            for p in ps:
+                self.debug('removing from index: {}'.format(os.path.relpath(p, self.path)))
+            self.index.remove(ps, working_tree=True)
 
         return changed or delete_changed
 

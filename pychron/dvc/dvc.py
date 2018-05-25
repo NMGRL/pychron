@@ -109,8 +109,9 @@ class DVCInterpretedAge(InterpretedAge):
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name', 'project'
-                                                                                          'uuid'):
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+                  'name', 'project', 'uuid', 'age_error_kind'):
+
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
