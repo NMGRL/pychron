@@ -402,6 +402,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     #     return n
     total_ar39 = AGProperty()
 
+    @property
+    def labnumber(self):
+        return self.identifier
+
     @cached_property
     def _get_total_ar39(self):
         total = sum([a.get_computed_value('k39') for a in self.analyses])

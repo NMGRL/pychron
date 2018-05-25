@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import pickle
 
+import six
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
@@ -52,7 +54,6 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR, DVC_PROTOCOL, SPECIAL_IDENTIFIER
-import six
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -667,7 +668,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     mod = '{:02d}'.format(mod)
 
                 self.labnumber = self.labnumber.replace('##', str(mod))
-                print('asdfasfasf', self.labnumber)
 
     def _clear_labnumber(self):
         self.debug('clear labnumber')

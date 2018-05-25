@@ -109,7 +109,6 @@ def make_interpreted_age_subgroups(ans):
                                      preferred_age_error_kind=error_kind)
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
-
             ias.append(ag)
         else:
             ias.extend(items)
