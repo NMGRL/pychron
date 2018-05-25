@@ -308,9 +308,9 @@ class ArArAge(IsotopeGroup):
         arc = self.arar_constants
         # only calculate decayfactors once
         if not self.ar39decayfactor:
-            a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
+            a37df = calculate_decay_factor(nominal_value(arc.lambda_Ar37),
                                            self.chron_segments)
-            a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
+            a39df = calculate_decay_factor(nominal_value(arc.lambda_Ar39),
                                            self.chron_segments)
             # print a37df, a39df, self.chron_segments, self.chron_dosages
             self.ar37decayfactor = a37df
