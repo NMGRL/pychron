@@ -63,9 +63,10 @@ class InterpretedAgeTable(ColumnSorterMixin):
                         os.remove(r.path)
                         ps.append(r.path)
                         ns.append(r.name)
+                        self.interpreted_ages.remove(r)
 
                 if dvc.repository_add_paths(repo, ps):
-                    dvc.commit('Removed interpreted ages {}'.format(ns))
+                    dvc.repository_commit(repo, 'Removed interpreted ages {}'.format(','.join(ns)))
 
     # handlers
     def _interpreted_ages_items_changed(self, old, new):

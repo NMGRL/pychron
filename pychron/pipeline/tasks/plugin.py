@@ -97,8 +97,9 @@ class PipelinePlugin(BaseTaskPlugin):
         return SampleBrowserModel(application=self.application)
 
     def _interpreted_age_browser_model_factory(self):
-        return InterpretedAgeBrowserModel(application=self.application)
-
+        dvc = self.application.get_service(DVC)
+        return InterpretedAgeBrowserModel(application=self.application,
+                                          dvc=dvc)
     # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=SampleBrowserModel,

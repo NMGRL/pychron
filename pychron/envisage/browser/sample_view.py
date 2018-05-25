@@ -388,7 +388,6 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):
-        print('asfdasfdasdfasdf', info, obj)
         obj.delete()
 
     def trait_context(self):

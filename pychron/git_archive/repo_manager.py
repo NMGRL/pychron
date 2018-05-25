@@ -148,11 +148,17 @@ class GitRepoManager(Loggable):
         if not isinstance(apaths, (list, tuple)):
             apaths = (apaths,)
 
-        changes = self.get_local_changes()
+        changes = self.get_local_changes(change_type=('A', 'R', 'M'))
         changes = [os.path.join(self.path, c) for c in changes]
         if changes:
             self.debug('-------- local changes ---------')
             for c in changes:
+                self.debug(c)
+
+        deletes = self.get_local_changes(change_type=('D',))
+        if deletes:
+            self.debug('-------- deletes ---------')
+            for c in deletes:
                 self.debug(c)
 
         untracked = self.untracked_files()
@@ -171,7 +177,15 @@ class GitRepoManager(Loggable):
         for p in ps:
             self.debug('adding to index: {}'.format(os.path.relpath(p, self.path)))
         self.index.add(ps)
-        return changed
+
+        ps = [p for p in apaths if p in deletes]
+        self.debug('changed paths {}'.format(ps))
+        delete_changed = bool(ps)
+        for p in ps:
+            self.debug('removing from index: {}'.format(os.path.relpath(p, self.path)))
+        self.index.remove(ps, working_tree=True)
+
+        return changed or delete_changed
 
     def add_ignore(self, *args):
         ignores = []
@@ -376,11 +390,12 @@ class GitRepoManager(Loggable):
             self.commit(cd.commit_message)
             return True
 
-    def get_local_changes(self):
+    def get_local_changes(self, change_type=('M',)):
         repo = self._repo
 
         diff = repo.index.diff(None)
-        return [di.a_blob.abspath for di in diff.iter_change_type('M')]
+
+        return [di.a_blob.abspath for change_type in change_type for di in diff.iter_change_type(change_type)]
 
         # diff_str = repo.git.diff('HEAD', '--full-index')
         # diff_str = StringIO(diff_str)
@@ -913,7 +928,7 @@ class GitRepoManager(Loggable):
                         hexsha=obj.hexsha,
                         name=p,
                         date=obj.committed_datetime)
-                        # date=format_date(obj.committed_date))
+            # date=format_date(obj.committed_date))
             return cx
 
         return [factory(ci) for ci in hexshas]
