@@ -14,18 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import Instance, Bool, on_trait_change, Any
+import os
 
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
-
-import os
+# ============= enthought library imports =======================
+from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
-from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
@@ -42,10 +40,8 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
-    InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
-from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
-    InterpretedAgeFactoryModel, set_interpreted_age
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction
+from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
 
@@ -111,6 +107,7 @@ class PipelineTask(BaseBrowserTask):
     diff_enabled = Bool
 
     def activated(self):
+        # 2=a
         self.debug('activating pipeline')
         super(PipelineTask, self).activated()
 

@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
-from numpy import zeros, percentile, array, random, abs as nabs
+from numpy import zeros, percentile, array, random, abs as nabs, column_stack
 from scipy.stats import norm
 
 
@@ -33,19 +33,25 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_err
     npts = len(pts)
     if seed:
         random.seed(seed)
-
-    ga = norm().rvs((ntrials, n))
+    ndist = norm()
+    ga = ndist.rvs((ntrials, n))
     ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
     yp = ys + yserr * ga
 
     if position_error:
-        exog = reg.get_exog(None)
-        exogp = exog + position_error * ga
+        pgax = ndist.rvs((ntrials, n))
+        pgay = ndist.rvs((ntrials, n))
 
+        xs = reg.clean_xs
+
+        ox, oy = xs.T
         for i in range(ntrials):
-            ps[i] = pred(yp[i], pexog, exogp[i])
+            x = ox + position_error * pgax[i]
+            y = oy + position_error * pgay[i]
+            x = reg.get_exog(column_stack((x, y)))
+            ps[i] = pred(yp[i], pexog, exog=x)
     else:
         for i in range(ntrials):
             ps[i] = pred(yp[i], pexog)
