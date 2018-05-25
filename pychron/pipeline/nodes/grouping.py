@@ -28,7 +28,7 @@ from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
 from pychron.pychron_constants import MSEM
 
 
-def group_analyses_by_key(items, key, attr='group_id', id_func=None):
+def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
     if isinstance(key, str):
         keyfunc = lambda x: getattr(x, key)
     else:
@@ -40,8 +40,10 @@ def group_analyses_by_key(items, key, attr='group_id', id_func=None):
         if v not in ids:
             ids.append(v)
 
-    sitems = sorted(items, key=keyfunc)
-    for k, analyses in groupby(sitems, key=keyfunc):
+    if sorting_enabled:
+        items = sorted(items, key=keyfunc)
+
+    for k, analyses in groupby(items, key=keyfunc):
         gid = ids.index(k)
         if id_func:
             gid = id_func(gid, analyses)
@@ -59,6 +61,8 @@ class GroupingNode(BaseNode):
     _attr = 'group_id'
     _id_func = None
 
+    sorting_enabled = True
+
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
 
@@ -75,25 +79,8 @@ class GroupingNode(BaseNode):
             for unk in unks:
                 setattr(unk, self._attr, 0)
 
-            key = self._generate_key()
-            # if self.mean_groups:
-            #     gs = []
-            #     for k, ans in groupby(sorted(unks, key=key), key=key):
-            #
-            #         # k in form of `sha1:tag_counter`
-            #         try:
-            #             pak = k.split(':')[1].split('_')[0]
-            #         except IndexError:
-            #             pak = 'weighted_mean'
-            #
-            #         a = InterpretedAgeGroup(analyses=list(ans), preferred_age_kind=pak)
-            #
-            #         gs.append(a)
-            #
-            #     setattr(state, self.analysis_kind, gs)
-            # else:
-            #     group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func)
+            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func,
+                                  sorting_enabled=self.sorting_enabled)
 
     def traits_view(self):
         v = View(UItem('by_key',
@@ -119,6 +106,7 @@ class SubGroupingNode(GroupingNode):
     by_key = 'Aliquot'
     _attr = 'subgroup'
     grouping_kind = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Plateau else Weighted Mean', 'Integrated')
+    sorting_enabled = False
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')

@@ -68,17 +68,19 @@ def compress_groups(items):
         return x.subgroup['name'] if x.subgroup else ''
 
     cnt = 0
-    for kind, ans in groupby(sorted(items, key=key), key=key):
+    for kind, ans in groupby(items, key=key):
         if kind:
             ans = list(ans)
             valid_ais = [a for a in ans if not a.is_omitted()]
-            v = '{:02n}'.format(cnt) if len(valid_ais) > 1 else ''
+            if len(valid_ais) > 1:
+                v = '{:02n}'.format(cnt)
+                for a in ans:
+                    a.subgroup['name'] = v
+                cnt += 1
 
-            for a in ans:
-                a.subgroup['name'] = v
-
-            cnt += 1
-
+            else:
+                for a in ans:
+                    a.subgroup = None
         else:
             for a in ans:
                 a.subgroup = None
