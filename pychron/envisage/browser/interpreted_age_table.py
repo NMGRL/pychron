@@ -59,10 +59,10 @@ class InterpretedAgeTable(ColumnSorterMixin):
                 ps = []
                 ns = []
                 for r in records:
-                    print('remove path', r.path)
-                    os.remove(r.path)
-                    ps.append(r.path)
-                    ns.append(r.name)
+                    if os.path.isfile(r.path):
+                        os.remove(r.path)
+                        ps.append(r.path)
+                        ns.append(r.name)
 
                 if dvc.repository_add_paths(repo, ps):
                     dvc.commit('Removed interpreted ages {}'.format(ns))
