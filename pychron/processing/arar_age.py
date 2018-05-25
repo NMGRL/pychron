@@ -61,6 +61,8 @@ class ArArAge(IsotopeGroup):
     kcl = 0
     clk = 0
     rad40_percent = 0
+    rad40 = 0
+    total40 = 0
 
     # non_ar_isotopes = Dict
     # computed = Dict
@@ -448,6 +450,8 @@ class ArArAge(IsotopeGroup):
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']
+        self.rad40 = computed['rad40']
+        self.total40 = computed['a40']
 
         isotopes = self.isotopes
         for k, v in interference_corrected.items():

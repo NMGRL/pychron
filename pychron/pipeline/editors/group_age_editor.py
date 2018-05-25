@@ -131,13 +131,13 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self._group_error(MSEM)
 
     def group_as_plateau(self):
-        self._group('plateau')
+        self._group('Plateau')
 
     def group_as_weighted_mean(self):
-        self._group('weighted_mean')
+        self._group('Weighted Mean')
 
     def group_as_isochron(self):
-        self._group('isochron')
+        self._group('Isochron')
 
     def _group_error(self, tag):
         if self.selected:

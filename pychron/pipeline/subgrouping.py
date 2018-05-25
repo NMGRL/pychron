@@ -19,10 +19,10 @@ import hashlib
 from itertools import groupby
 
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.pychron_constants import MSEM
 
 
 def set_subgrouping_error(tag, selected, items):
-
     ss = []
     for s in selected:
         if s.subgroup:
@@ -63,7 +63,6 @@ def apply_subgrouping(kind, error_kind, selected, items=None, gid=None):
 
 
 def compress_groups(items):
-
     def key(x):
         return x.subgroup['name'] if x.subgroup else ''
 
@@ -91,22 +90,31 @@ def subgrouping_key(x):
 
 
 def make_interpreted_age_subgroups(ans):
-
     ias = []
 
     for subgroup, items in groupby(ans, key=subgrouping_key):
         items = list(items)
         if subgroup:
             item = items[0]
-            kind = item.subgroup['kind']
-            error_kind = item.subgroup['error_kind']
-        # else:
-        #     kind = 'weighted_mean'
-        #     error_kind = MSEM
+            sg = item.subgroup
+            kind = sg['kind']
+            error_kind = sg['error_kind']
 
             ag = InterpretedAgeGroup(analyses=list(items),
                                      preferred_age_kind=kind,
                                      preferred_age_error_kind=error_kind)
+
+            for attr in ('kca', 'kcl', 'rad40_percent', 'percent_39Ar'):
+                k = sg.get('{}_kind'.format(attr))
+                ek = sg.get('{}_error_kind'.format(attr))
+                if k is None:
+                    k = 'Weighted Mean'
+                if ek is None:
+                    ek = MSEM
+
+                setattr(ag, 'preferred_{}_kind'.format(attr), k)
+                setattr(ag, 'preferred_{}_error_kind'.format(attr), ek)
+
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ias.append(ag)

@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 
+
 import math
 
 from numpy import array, nan
 # ============= enthought library imports =======================
-from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
@@ -42,17 +43,28 @@ class AnalysisGroup(IdeogramPlotable):
     analyses = List
     nanalyses = AGProperty()
 
-    arith_age = AGProperty()
-    arith_age_error_kind = Str
-
-    # arith_age_error_kind = Enum(*ERROR_TYPES)
-
     weighted_age = AGProperty()
-    # weighted_age_error_kind = Enum(*ERROR_TYPES)
-    weighted_age_error_kind = Str  # Enum(*ERROR_TYPES)
+    arith_age = AGProperty()
+    integrated_age = AGProperty()
 
     weighted_kca = AGProperty()
     arith_kca = AGProperty()
+    integrated_kca = AGProperty()
+
+    weighted_kcl = AGProperty()
+    arith_kcl = AGProperty()
+    integrated_kcl = AGProperty()
+
+    weighted_rad40_percent = AGProperty()
+    arith_rad40_percent = AGProperty()
+    integrated_rad40_percent = AGProperty()
+
+    weighted_moles_k39 = AGProperty()
+    arith_moles_k39 = AGProperty()
+    integrated_moles_k39 = AGProperty()
+
+    weighted_age_error_kind = Str
+    arith_age_error_kind = Str
 
     mswd = Property
 
@@ -83,7 +95,7 @@ class AnalysisGroup(IdeogramPlotable):
     include_j_error_in_mean = Bool(True)
     include_j_error_in_individual_analyses = Bool(False)
 
-    percent_39Ar = AGProperty()
+    # percent_39Ar = AGProperty()
     dirty = Event
 
     total_n = AGProperty()
@@ -236,8 +248,13 @@ class AnalysisGroup(IdeogramPlotable):
         return self.analyses[0].project
 
     @cached_property
-    def _get_percent_39Ar(self):
-        return 0
+    def _get_arith_age(self):
+        if self.include_j_error_in_individual_analyses:
+            v, e = self._calculate_arithmetic_mean('uage')
+        else:
+            v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
+        e = self._modify_error(v, e, self.arith_age_error_kind)
+        return ufloat(v, e)  # / self.age_scalar
 
     @cached_property
     def _get_weighted_age(self):
@@ -276,13 +293,48 @@ class AnalysisGroup(IdeogramPlotable):
         return ufloat(*self._calculate_arithmetic_mean('kca'))
 
     @cached_property
-    def _get_arith_age(self):
-        if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_arithmetic_mean('uage')
-        else:
-            v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
-        e = self._modify_error(v, e, self.arith_age_error_kind)
-        return ufloat(v, e)  # / self.age_scalar
+    def _get_integrated_kca(self):
+        return ufloat(*self._calculate_integrated('kca'))
+
+    @cached_property
+    def _get_weighted_kcl(self):
+        return ufloat(*self._calculate_weighted_mean('kcl'))
+
+    @cached_property
+    def _get_arith_kcl(self):
+        return ufloat(*self._calculate_arithmetic_mean('kcl'))
+
+    @cached_property
+    def _get_integrated_kcl(self):
+        return ufloat(*self._calculate_integrated('kcl'))
+
+    @cached_property
+    def _get_weighted_rad40_percent(self):
+        return ufloat(*self._calculate_weighted_mean('rad40_percent'))
+
+    @cached_property
+    def _get_arith_rad40_percent(self):
+        return ufloat(*self._calculate_arithmetic_mean('rad40_percent'))
+
+    @cached_property
+    def _get_integrated_rad40_percent(self):
+        return ufloat(*self._calculate_integrated('rad40_percent'))
+
+    @cached_property
+    def _get_weighted_moles_k39(self):
+        return ufloat(*self._calculate_weighted_mean('k39'))
+
+    @cached_property
+    def _get_arith_moles_k39(self):
+        return ufloat(*self._calculate_arithmetic_mean('k39'))
+
+    @cached_property
+    def _get_integrated_moles_k39(self):
+        return ufloat(*self._calculate_integrated('k39'))
+
+    # @cached_property
+    # def _get_percent_39Ar(self):
+    #     return 0
 
     @cached_property
     def _get_total_n(self):
@@ -331,6 +383,45 @@ class AnalysisGroup(IdeogramPlotable):
             return av, werr, sem, args
         else:
             return av, werr
+
+    def _calculate_integrated(self, attr):
+        uv = ufloat(0, 0)
+        ans = self.clean_analyses()
+
+        prs = ans[0].production_ratios
+
+        def apply_pr(n, d, k):
+            pr = 1
+            if prs:
+                pr = prs.get(k, 1)
+                if not pr:
+                    pr = 1.0
+
+                pr = 1 / pr
+
+            try:
+                v = sum(n) / sum(d) * pr
+            except ZeroDivisionError:
+                v = 0
+
+            return v
+
+        if attr == 'kca':
+            ks = [ai.get_computed_value('k39') for ai in ans]
+            cas = [ai.get_non_ar_isotope('ca37') for ai in ans]
+            uv = apply_pr(ks, cas, 'Ca_K')
+        elif attr == 'kcl':
+            ks = [ai.get_computed_value('k39') for ai in ans]
+            cls = [ai.get_non_ar_isotope('cl38') for ai in ans]
+            uv = apply_pr(ks, cls, 'Cl_k')
+        elif attr == 'rad40_percent':
+            ns = [ai.rad40 for ai in ans]
+            ds = [ai.total40 for ai in ans]
+            uv = apply_pr(ns, ds, '')
+        elif attr == 'k39':
+            uv = sum([ai.get_computed_value('k39') for ai in ans])
+
+        return uv
 
     def _calculate_arithmetic_mean(self, attr):
         return self._calculate_mean(attr, use_weights=False)
@@ -544,18 +635,30 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     uuid = Str
     all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
-    preferred_age_value = Property(depends_on='preferred_age_kind')
-    preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
     preferred_mswd = Property(depends_on='preferred_age_kind')
-
     preferred_kca = Property(depends_on='preferred_kca_kind')
+    preferred_kcl = Property(depends_on='preferred_kcl_kind')
+    preferred_rad40_percent = Property(depends_on='preferred_rad40_percent_kind')
+    preferred_moles_k39 = Property(depends_on='preferred_moles_k39_kind')
+
+    preferred_age_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Isochron')
+    preferred_kca_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+    preferred_kcl_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+    preferred_rad40_percent_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+    preferred_moles_k39_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+
+    preferred_age_error_kind = Str(MSEM)
+    preferred_kca_error_kind = Str(MSEM)
+    preferred_kcl_error_kind = Str(MSEM)
+    preferred_rad40_percent_error_kind = Str(MSEM)
+    preferred_moles_k39_kind = Str(MSEM)
+
+    preferred_age_value = Property(depends_on='preferred_age_kind')
     preferred_kca_value = Property(depends_on='preferred_kca_kind')
+
+    preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
     preferred_kca_error = Property(depends_on='preferred_kca_kind')
 
-    preferred_age_kind = Str('Weighted Mean')
-    preferred_kca_kind = Str('Weighted Mean')
-
-    preferred_age_error_kind = Str
     # preferred_ages = Property(depends_on='analyses')
 
     preferred_ages = ('Weighted Mean', 'Arithmetic Mean', 'Isochron', 'Integrated', 'Plateau')
@@ -631,6 +734,18 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def kca(self):
         return self.preferred_kca
 
+    @property
+    def kcl(self):
+        return self.preferred_kcl
+
+    @property
+    def rad40_percent(self):
+        return self.preferred_rad40_percent
+
+    @property
+    def k39(self):
+        return self.preferred_moles_k39
+
     def _value_string(self, t):
         try:
             v = getattr(self, t)
@@ -704,18 +819,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             e = float(std_dev(pa))
         return e
 
-    def _get_preferred_kca(self):
-        pk = self.preferred_kca_kind.lower().replace(' ', '_')
-        if pk == 'weighted_mean':
-            pa = self.weighted_kca
-        else:
-            pa = self.arith_kca
-        return pa
-
+    # get preferred objects
     def _get_preferred_age(self):
         pa = ufloat(0, 0)
-        pak = self.preferred_age_kind.lower()
-        pak = pak.replace(' ', '_')
+        pak = self._convert_preferred_kind('age')
         if pak in ('weighted_mean', 'wt._mean'):
             pa = self.weighted_age
         elif pak == 'arithmetic_mean':
@@ -732,6 +839,32 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
                 pa = self.weighted_age
 
         return pa
+
+    def _get_preferred_kca(self):
+        return self._get_preferred_('kca')
+
+    def _get_preferred_kcl(self):
+        return self._get_preferred_('kcl')
+
+    def _get_preferred_rad40_percent(self):
+        return self._get_preferred_('rad40_percent')
+
+    def _get_preferred_moles_k39(self):
+        return self._get_preferred_('moles_k39')
+
+    def _get_preferred_(self, attr):
+        pk = self._convert_preferred_kind(attr)
+        if pk == 'weighted_mean':
+            pa = getattr(self, 'weighted_{}'.format(attr))
+        elif pk == 'integrated':
+            pa = getattr(self, 'integrated_{}'.format(attr))
+        else:
+            pa = getattr(self, 'arith_{}'.format(attr))
+
+        return pa
+
+    def _convert_preferred_kind(self, attr):
+        return getattr(self, 'preferred_{}_kind'.format(attr)).lower().replace(' ', '_')
 
     # @cached_property
     # def _get_preferred_ages(self):

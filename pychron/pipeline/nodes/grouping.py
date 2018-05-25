@@ -112,8 +112,8 @@ class SubGroupingNode(GroupingNode):
         self.by_key = nodedict.get('key', 'Aliquot')
 
     def _id_func(self, gid, analyses):
-        kind = self.grouping_kind.lower().replace(' ', '_')
-        apply_subgrouping(kind, MSEM, list(analyses), gid=gid)
+        # kind = self.grouping_kind.lower().replace(' ', '_')
+        apply_subgrouping(self.grouping_kind, MSEM, list(analyses), gid=gid)
 
     def run(self, state):
         super(SubGroupingNode, self).run(state)
