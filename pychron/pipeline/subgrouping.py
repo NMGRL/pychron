@@ -18,7 +18,7 @@
 from itertools import groupby
 
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import MSEM
+from pychron.pychron_constants import MSEM, SUBGROUPING_ATTRS
 
 
 def set_subgrouping_error(tag, selected, items):

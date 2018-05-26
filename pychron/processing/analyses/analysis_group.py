@@ -27,7 +27,8 @@ from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, AGE_SUBGROUPINGS, SUBGROUPINGS
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, AGE_SUBGROUPINGS, SUBGROUPINGS, \
+    SUBGROUPING_ATTRS
 
 
 def AGProperty(*depends):
@@ -683,6 +684,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     rlocation = Str
 
     comments = Str
+
+    def set_preferred_defaults(self, default_kind='Weighted Mean', default_error_kind=MSEM):
+        for attr in SUBGROUPING_ATTRS:
+            setattr(self, 'preferred_{}_kind'.format(attr), default_kind)
+            setattr(self, 'preferred_{}_error_kind'.format(attr), default_error_kind)
 
     def is_omitted(self, tags=None):
         return False

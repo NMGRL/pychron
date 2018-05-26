@@ -493,11 +493,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 items = list(items)
                 ag = None
                 if subgroup:
-                    kind = items[0].subgroup['kind']
+                    kind = items[0].subgroup['age_kind']
 
                     # kind = '_'.join(subgroup.split('_')[:-1])
                     ag = InterpretedAgeGroup(analyses=items)
-                    age, label = ag.get_age(kind, set_preferred=True)
+                    _, label = ag.get_age(kind, set_preferred=True)
                     # age, label = self._get_intermediate_age(ag, kind)
 
                 n = len(items) - 1
@@ -523,9 +523,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 else:
                     if nsubgroups == 1:
                         ag = InterpretedAgeGroup(analyses=items)
-                        ag.preferred_age_kind = 'weighted_mean'
-                        # age, label = self._get_intermediate_age(ag, 'weighted_mean')
-                        # ia = self._make_intermediate_analysis(ag, 'weighted_mean')
+                        ag.set_preferred_defaults()
                         nitems = [ag]
                     else:
                         nitems.extend(items)
