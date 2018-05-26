@@ -36,12 +36,13 @@ class GroupAgeAdapter(BaseAdapter):
         ('Tag', 'tag'),
         ('Group', 'group_id'),
         ('SubGroup', 'subgroup'),
-        ('Kind', 'kind'),
-        ('Error', 'error_kind'),
+        ('Kind', 'age_kind'),
+        ('Error', 'age_error_kind'),
 
         ('Age', 'age'),
         (PLUSMINUS_ONE_SIGMA, 'age_err'),
-        ('K/Ca', 'kca')]
+        ('K/Ca', 'kca')
+    ]
 
     subgroup_text = Property
     record_id_width = Int(60)
@@ -49,17 +50,17 @@ class GroupAgeAdapter(BaseAdapter):
     group_id_width = Int(60)
     subgroup_width = Int(100)
 
-    kind_text = Property
-    error_kind_text = Property
+    age_kind_text = Property
+    age_error_kind_text = Property
 
     def _get_subgroup_text(self):
         return self._get_subgroup_attr('name')
 
-    def _get_kind_text(self):
-        return self._get_subgroup_attr('kind')
+    def _get_age_kind_text(self):
+        return self._get_subgroup_attr('age_kind')
 
-    def _get_error_kind_text(self):
-        return self._get_subgroup_attr('error_kind')
+    def _get_age_error_kind_text(self):
+        return self._get_subgroup_attr('age_error_kind')
 
     def _get_subgroup_attr(self, attr):
         ret = ''
@@ -146,7 +147,8 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
 
     def _group(self, tag):
         if self.selected:
-            apply_subgrouping(tag, MSEM, self.selected, items=self.items)
+            d = {'age_kind': tag, 'age_error_kind': MSEM}
+            apply_subgrouping(d, self.selected, items=self.items)
             self.refresh_needed = True
 
     def traits_view(self):

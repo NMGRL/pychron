@@ -20,12 +20,12 @@ from operator import attrgetter
 
 from numpy import array, array_split
 from traits.api import Str, Enum
-from traitsui.api import View, UItem, EnumEditor, VGroup, Item
+from traitsui.api import View, UItem, EnumEditor, VGroup, Item, HGroup, spring
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
-from pychron.pychron_constants import MSEM
+from pychron.pychron_constants import AGE_SUBGROUPINGS, SUBGROUPINGS, ERROR_TYPES, SUBGROUPING_ATTRS
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
@@ -105,15 +105,29 @@ class SubGroupingNode(GroupingNode):
     name = 'SubGroup'
     by_key = 'Aliquot'
     _attr = 'subgroup'
-    grouping_kind = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Plateau else Weighted Mean', 'Integrated')
+
+    age_kind = Enum(*AGE_SUBGROUPINGS)
+    kca_kind = Enum(*SUBGROUPINGS)
+    kcl_kind = Enum(*SUBGROUPINGS)
+    rad40_percent_kind = Enum(*SUBGROUPINGS)
+    moles_39Ar_kind = Enum(*SUBGROUPINGS)
+
+    age_error_kind = Enum(*ERROR_TYPES)
+    kca_error_kind = Enum(*ERROR_TYPES)
+    kcl_error_kind = Enum(*ERROR_TYPES)
+    rad40_percent_error_kind = Enum(*ERROR_TYPES)
+    moles_39Ar_error_kind = Enum(*ERROR_TYPES)
+
     sorting_enabled = False
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')
 
     def _id_func(self, gid, analyses):
-        # kind = self.grouping_kind.lower().replace(' ', '_')
-        apply_subgrouping(self.grouping_kind, MSEM, list(analyses), gid=gid)
+        attrs = ['{}_{}'.format(attr, tag) for attr in SUBGROUPING_ATTRS for tag in ('kind', 'error_kind')]
+
+        grouping = {attr: getattr(self, attr) for attr in attrs}
+        apply_subgrouping(grouping, list(analyses), gid=gid)
 
     def run(self, state):
         super(SubGroupingNode, self).run(state)
@@ -126,8 +140,25 @@ class SubGroupingNode(GroupingNode):
                                      style='custom',
                                      editor=EnumEditor(name='keys')),
                                show_border=True, label='Grouping'),
-                        VGroup(Item('grouping_kind', label='Grouping Type'), show_border=True)),
-                 width=300,
+                        VGroup(HGroup(Item('age_kind', label='Age'),
+                                      spring,
+                                      Item('age_error_kind', label='Error')),
+                               HGroup(Item('kca_kind', label='K/Ca'),
+                                      spring,
+                                      Item('kca_error_kind', label='Error')),
+                               HGroup(Item('kcl_kind', label='K/Cl'),
+                                      spring,
+                                      Item('kcl_error_kind', label='Error')),
+                               HGroup(Item('rad40_percent_kind', label='%40Ar*'),
+                                      spring,
+                                      Item('rad40_percent_error_kind', label='Error')),
+                               HGroup(Item('moles_39Ar_kind', label='mol 39Ar'),
+                                      spring,
+                                      Item('moles_39Ar_error_kind', label='Error')),
+                               label='Types',
+                               show_border=True)),
+                 width=500,
+                 resizable=True,
                  title=self.title,
                  buttons=['OK', 'Cancel'],
                  kind='livemodal')

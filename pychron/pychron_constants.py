@@ -70,6 +70,10 @@ MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 
+AGE_SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Plateau else Weighted Mean', 'Isochron')
+SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_39Ar')
+
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}

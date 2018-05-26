@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-import hashlib
 from itertools import groupby
 
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
@@ -36,7 +35,7 @@ def set_subgrouping_error(tag, selected, items):
                 i.subgroup['error_kind'] = tag
 
 
-def apply_subgrouping(kind, error_kind, selected, items=None, gid=None):
+def apply_subgrouping(sg, selected, items=None, gid=None):
     if len(selected) == 1:
         return
 
@@ -48,13 +47,15 @@ def apply_subgrouping(kind, error_kind, selected, items=None, gid=None):
         gs = [int(gi) for gi in gs if gi]
         gid = max(gs) + 1 if gs else 0
 
-    sha = hashlib.sha1()
-    for s in selected:
-        sha.update(s.uuid.encode('utf-8'))
-
-    sha_id = sha.hexdigest()
+    # sha = hashlib.sha1()
+    # for s in selected:
+    #     sha.update(s.uuid.encode('utf-8'))
+    #
+    # sha_id = sha.hexdigest()
     # sg = {'name':'{}:{}_{}'.format(sha_id, tag, gid),'error_kind': }
-    sg = {'name': '{:02n}'.format(gid), 'kind': kind, 'error_kind': error_kind, 'sha_id': sha_id}
+    # sg = {'name': '{:02n}'.format(gid), 'kind': kind, 'error_kind': error_kind, 'sha_id': sha_id}
+    sg['name'] = '{:02n}'.format(gid)
+
     for s in selected:
         s.subgroup = sg
 
@@ -97,14 +98,9 @@ def make_interpreted_age_subgroups(ans):
         if subgroup:
             item = items[0]
             sg = item.subgroup
-            kind = sg['kind']
-            error_kind = sg['error_kind']
+            ag = InterpretedAgeGroup(analyses=list(items))
 
-            ag = InterpretedAgeGroup(analyses=list(items),
-                                     preferred_age_kind=kind,
-                                     preferred_age_error_kind=error_kind)
-
-            for attr in ('kca', 'kcl', 'rad40_percent', 'percent_39Ar'):
+            for attr in SUBGROUPING_ATTRS:
                 k = sg.get('{}_kind'.format(attr))
                 ek = sg.get('{}_error_kind'.format(attr))
                 if k is None:
@@ -115,6 +111,7 @@ def make_interpreted_age_subgroups(ans):
                 setattr(ag, 'preferred_{}_kind'.format(attr), k)
                 setattr(ag, 'preferred_{}_error_kind'.format(attr), ek)
 
+            kind = ag.preferred_age_kind
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ias.append(ag)

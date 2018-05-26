@@ -27,7 +27,7 @@ from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, AGE_SUBGROUPINGS, SUBGROUPINGS
 
 
 def AGProperty(*depends):
@@ -641,12 +641,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_rad40_percent = Property(depends_on='preferred_rad40_percent_kind')
     preferred_moles_k39 = Property(depends_on='preferred_moles_k39_kind')
 
-    preferred_age_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean',
-                              'Plateau', 'Plateau else Weighted Mean', 'Isochron')
-    preferred_kca_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
-    preferred_kcl_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
-    preferred_rad40_percent_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
-    preferred_moles_k39_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+    preferred_age_kind = Enum(*AGE_SUBGROUPINGS)
+    preferred_kca_kind = Enum(*SUBGROUPINGS)
+    preferred_kcl_kind = Enum(*SUBGROUPINGS)
+    preferred_rad40_percent_kind = Enum(*SUBGROUPINGS)
+    preferred_moles_k39_kind = Enum(*SUBGROUPINGS)
 
     preferred_age_error_kind = Str(MSEM)
     preferred_kca_error_kind = Str(MSEM)
