@@ -17,6 +17,9 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
+import re
+
 from uncertainties import nominal_value, std_dev
 
 
@@ -97,4 +100,27 @@ def age_value(target_units='Ma'):
         return v
     return wrapper
 
+
+subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
+supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
+
+
+def interpolate_noteline(line, sup, sub):
+    def parse(line):
+        args = []
+        for fmt, reg, taglen in ((sup, supreg, 5),
+                                 (sub, subreg, 5)):
+            g = reg.match(line)
+            if g:
+                args.append(fmt)
+                args.append(g.group('item'))
+                break
+        else:
+            args.append(line)
+        return args
+
+    ns = []
+    for token in line.split(' '):
+        ns.extend(parse(token))
+    return ns
 # ============= EOF =============================================

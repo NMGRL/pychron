@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import re
 from itertools import groupby
 
 import six
@@ -30,13 +29,11 @@ from pychron.paths import paths
 from pychron.pipeline.subgrouping import subgrouping_key
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
-from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value
+from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value, supreg, \
+    subreg, interpolate_noteline
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
-
-subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
-supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
 
 
 def format_mswd(t):
@@ -942,7 +939,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _write_notes(self, sh, notes):
         for line in notes.split('\n'):
-            sh.write(self._current_row, 0, line)
+            line = interpolate_noteline(line, self._superscript, self._subscript)
+            sh.write(self._current_row, 0, *line)
             self._current_row += 1
 
     def _get_names_units(self, cols):
