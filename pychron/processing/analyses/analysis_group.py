@@ -641,7 +641,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_rad40_percent = Property(depends_on='preferred_rad40_percent_kind')
     preferred_moles_k39 = Property(depends_on='preferred_moles_k39_kind')
 
-    preferred_age_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Isochron')
+    preferred_age_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean',
+                              'Plateau', 'Plateau else Weighted Mean', 'Isochron')
     preferred_kca_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
     preferred_kcl_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')
     preferred_rad40_percent_kind = Enum('Weighted Mean', 'Integrated', 'Arithmetic Mean')

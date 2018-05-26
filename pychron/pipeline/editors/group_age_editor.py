@@ -68,9 +68,11 @@ class GroupAgeAdapter(BaseAdapter):
         return ret
 
     def get_menu(self, obj, trait, row, column):
-        age = MenuManager(Action(name='Calculate Mean', action='group_as_weighted_mean'),
+        age = MenuManager(Action(name='Calculate Wt. Mean', action='group_as_weighted_mean'),
                           Action(name='Calculate Plateau', action='group_as_plateau'),
+                          Action(name='Calculate Plateau else Wt. Mean', action='group_as_plateau_else_weighted_mean'),
                           Action(name='Calculate Isochron', action='group_as_isochron'),
+                          Action(name='Calculate Integrated', action='group_as_integrated'),
                           name='Age')
 
         error = MenuManager(Action(name=SD, action='group_sd'),
@@ -84,17 +86,20 @@ class GroupAgeAdapter(BaseAdapter):
 
 
 class THandler(Handler):
+    def group_as_plateau_else_weighted_mean(self, info, obj):
+        obj.group('Plateau else Weighted Mean')
+
     def group_as_weighted_mean(self, info, obj):
-        obj.group_as_weighted_mean()
-        obj.refresh_needed = True
+        obj.group('Weighted Mean')
 
     def group_as_plateau(self, info, obj):
-        obj.group_as_plateau()
-        obj.refresh_needed = True
+        obj.group('Plateau')
 
     def group_as_isochron(self, info, obj):
-        obj.group_as_isochron()
-        obj.refresh_needed = True
+        obj.group('Isochron')
+
+    def group_as_integrated(self, info, obj):
+        obj.group('Integrated')
 
     def clear_grouping(self, info, obj):
         obj.clear_grouping()
@@ -130,14 +135,9 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def group_msem(self):
         self._group_error(MSEM)
 
-    def group_as_plateau(self):
-        self._group('Plateau')
-
-    def group_as_weighted_mean(self):
-        self._group('Weighted Mean')
-
-    def group_as_isochron(self):
-        self._group('Isochron')
+    def group(self, kind):
+        self._group(kind)
+        self.refresh_needed = True
 
     def _group_error(self, tag):
         if self.selected:
