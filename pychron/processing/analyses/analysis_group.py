@@ -700,6 +700,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             label = 'isochron'
         elif kind == 'integrated':
             a = self.integrated_age
+            label = 'integrated'
         elif kind == 'plateau_else_weighted_mean':
             label = 'plateau'
             a = self.plateau_age
