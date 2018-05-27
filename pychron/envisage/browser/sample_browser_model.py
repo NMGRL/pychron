@@ -165,9 +165,10 @@ class SampleBrowserModel(BrowserModel):
 
     def delete_analysis_group(self):
         self.debug('delete analysis groups')
-        for g in self.selected_analysis_groups:
+        n = len(self.selected_analysis_groups)
+        for i, g in enumerate(self.selected_analysis_groups):
             self.debug('deleting analysis group. {}'.format(g))
-            self.db.delete_analysis_group(g)
+            self.db.delete_analysis_group(g, commit=i == n - 1)
             self.analysis_groups.remove(g)
 
     def set_tags(self, tagname):

@@ -2083,13 +2083,14 @@ class DVCDatabase(DatabaseAdapter):
             self._delete_item(name, name='tag')
             return True
 
-    def delete_analysis_group(self, g):
+    def delete_analysis_group(self, g, commit=False):
         with self.session_ctx() as sess:
             for si in g.sets:
                 sess.delete(si)
 
             sess.delete(g)
-            sess.commit()
+            if commit:
+                sess.commit()
 
     # ============================================================
     # Sample Prep
