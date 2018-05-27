@@ -223,7 +223,7 @@ class IdeogramPlotable(HasTraits):
     def label_name(self):
         n = self._label_name
         if n is None:
-            n = self.aliquot
+            n = '{:02n}'.format(self.aliquot)
 
         return n
 
