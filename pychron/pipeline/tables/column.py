@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable
+from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable, List
 
 from pychron.pipeline.tables.util import value, error
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
@@ -25,6 +25,8 @@ class Column(HasTraits):
     label = Either(Str, Tuple)
     units = Str
     func = Callable
+    sigformat = Str
+    fformat = List
 
     def _label_default(self):
         return ''

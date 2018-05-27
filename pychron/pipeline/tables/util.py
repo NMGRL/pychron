@@ -116,7 +116,8 @@ def interpolate_noteline(line, sup, sub):
                 args.append(g.group('item'))
                 break
         else:
-            args.append(line)
+            args.append('{} '.format(line))
+
         return args
 
     ns = []

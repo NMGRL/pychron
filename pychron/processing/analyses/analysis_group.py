@@ -693,7 +693,9 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def is_omitted(self, tags=None):
         return False
 
-    def get_age(self, kind, set_preferred=False):
+    def get_age(self, okind, set_preferred=False):
+
+        kind = okind.lower().replace(' ', '_')
         if kind == 'weighted_mean':
             a = self.weighted_age
             label = 'wt. mean'
@@ -712,9 +714,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             if not self.plateau_steps:
                 label = 'wt. mean'
                 a = self.weighted_age
+        else:
+            label = 'wt. mean'
 
         if set_preferred:
-            self.preferred_age_kind = label
+            self.preferred_age_kind = okind
 
         return a, label
 

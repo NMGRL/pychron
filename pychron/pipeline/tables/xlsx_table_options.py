@@ -32,10 +32,25 @@ from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
-    subgroup_sig_figs = dumpable(Int(6))
-    summary_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
     disc_sig_figs = dumpable(Int(6))
+
+    age_sig_figs = dumpable(Int(6))
+    summary_age_sig_figs = dumpable(Int(6))
+
+    kca_sig_figs = dumpable(Int(6))
+    summary_kca_sig_figs = dumpable(Int(6))
+
+    rad40_percent_sig_figs = dumpable(Int(6))
+    percent_39Ar_sig_figs = dumpable(Int(6))
+
+    signal_sig_figs = dumpable(Int(6))
+    j_sig_figs = dumpable(Int(6))
+    ic_sig_figs = dumpable(Int(6))
+    disc_sig_figs = dumpable(Int(6))
+    decay_sig_figs = dumpable(Int(6))
+    correction_sig_figs = dumpable(Int(6))
+
     ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C'))
@@ -181,11 +196,29 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 show_border=True, label='Appearance')
 
         sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
-                              Item('subgroup_sig_figs', label='Subgroup'),
+
+                              Item('age_sig_figs', label='Age'),
+                              Item('summary_age_sig_figs', label='Summary Age'),
+
+                              Item('kca_sig_figs', label='K/Ca'),
+                              Item('summary_kca_sig_figs', label='Summary K/Ca'),
+
+                              Item('rad40_percent_sig_figs', label='%40Ar*'),
+                              Item('percent_39Ar_sig_figs', label='%39Ar'),
+
+                              Item('signal_sig_figs', label='Signal'),
                               Item('j_sig_figs', label='Flux'),
-                              Item('summary_sig_figs', label='Summary'),
                               Item('ic_sig_figs', label='IC'),
                               Item('disc_sig_figs', label='Disc.'),
+                              Item('decay_sig_figs', label='Decay'),
+                              Item('correction_sig_figs', label='Correction Factors'),
+
+                              # Item('subgroup_sig_figs', label='Subgroup'),
+                              # Item('j_sig_figs', label='Flux'),
+                              # Item('summary_sig_figs', label='Summary'),
+                              # Item('ic_sig_figs', label='IC'),
+                              # Item('disc_sig_figs', label='Disc.'),
+
                               Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                               show_border=True, label='Significant Figures')
 

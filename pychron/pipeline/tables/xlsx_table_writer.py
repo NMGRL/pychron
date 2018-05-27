@@ -132,7 +132,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(label='Tag', attr='tag'),
                    Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
                    Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func, sigformat='age'),
                    VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
                    EColumn(enabled=ubit, attr='kca'),
                    VColumn(enabled=ubit and options.include_percent_ar39,
@@ -158,6 +158,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            label=('<sup>36</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3640')]
 
+        # setup formats
+        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_39Ar')
+        for c in columns:
+            if c.attr in sigfigs:
+                c.sigformat = c.attr
+
         self._signal_columns(columns, ibit, bkbit)
         self._intercalibration_columns(columns, detectors)
         self._run_columns(columns, ubit)
@@ -173,7 +179,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return columns
 
     def _flux_columns(self, columns):
-        options = self._options
         columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k'),
                         Column(enabled=False, label='MonitorAge', attr='monitor_age'),
                         Column(enabled=False, label='MonitorName', attr='monitor_name'),
@@ -181,25 +186,34 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _run_columns(self, columns, ubit):
         options = self._options
-        columns.extend([Column(enabled=options.include_rundate, label='RunDate', attr='rundate'),
+
+        # fmt = self._workbook.add_format()
+        # datefmt = fmt.set_num_format('mm/dd/yy hh:mm')
+        # dfmt = self._get_number_format('decay')
+
+        columns.extend([Column(enabled=options.include_rundate,
+                               label='RunDate', attr='rundate',
+                               fformat=[('set_num_format', ('mm/dd/yy hh:mm',))]),
                         Column(enabled=options.include_time_delta,
                                label=(u'\u0394t', '<sup>3</sup>'),
                                units='(days)',
                                attr='decay_days'),
-                        VColumn(enabled=ubit, label='J', attr='j'),
+                        VColumn(enabled=ubit, label='J', attr='j', sigformat='j'),
                         EColumn(enabled=ubit, attr='j'),
-                        VColumn(enabled=ubit, label=('<sup>39</sup>', 'Ar Decay'), attr='ar39decayfactor'),
-                        VColumn(enabled=ubit, label=('<sup>37</sup>', 'Ar Decay'), attr='ar37decayfactor')])
+                        VColumn(enabled=ubit, label=('<sup>39</sup>', 'Ar Decay'),
+                                attr='ar39decayfactor', sigformat='decay'),
+                        VColumn(enabled=ubit, label=('<sup>37</sup>', 'Ar Decay'),
+                                attr='ar37decayfactor', sigformat='decay')])
 
     def _intercalibration_columns(self, columns, detectors):
-        disc = [VColumn(label='Disc', attr='discrimination'),
-                EColumn(attr='discrimination')]
+        disc = [VColumn(label='Disc', attr='discrimination', sigformat='disc'),
+                EColumn(attr='discrimination', sigformat='disc')]
         columns.extend(disc)
 
         for det in detectors:
             tag = '{}_ic_factor'.format(det)
-            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)), attr=tag, func=icf_value),
-                            EColumn(attr=tag, func=icf_error)])
+            columns.extend([Column(label=('IC', '<sup>{}</sup>'.format(det)), attr=tag, func=icf_value, sigformat='ic'),
+                            EColumn(attr=tag, func=icf_error, sigformat='ic')])
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
@@ -208,10 +222,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
                                      units='(fA)',
-                                     func=iso_value(tag)),
+                                     func=iso_value(tag),
+                                     sigformat='signal'),
                               EColumn(enabled=bit,
                                       attr='{}{}'.format(iso, mass),
-                                      func=iso_value(tag, ve='error')))]
+                                      func=iso_value(tag, ve='error'),
+                                      sigformat='signal'))]
             columns.extend(cols)
 
     def _get_machine_columns(self, name, grps):
@@ -278,6 +294,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return columns
 
     def _get_irradiation_columns(self, ubit):
+        fmt = 'correction'
 
         cols = [c for (ai, am), (bi, bm), e in ((('Ar', 40), ('Ar', 39), 'K'),
                                                 (('Ar', 38), ('Ar', 39), 'K'),
@@ -293,13 +310,15 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 for c in (Column(label=('(', '<sup>{}</sup>'.format(am),
                                         '{}/'.format(ai),
                                         '<sup>{}</sup>'.format(bm), '{})'.format(bm), '<sub>{}</sub>'.format(e)),
-                                 attr='{}{}{}'.format(e, am, bm)),
-                          EColumn(attr='{}{}{}'.format(e, am, bm)))]
+                                 attr='{}{}{}'.format(e, am, bm),
+                                 sigformat=fmt),
+                          EColumn(attr='{}{}{}'.format(e, am, bm),
+                                  sigformat=fmt))]
 
-        cols.extend([Column(label='Ca/K', attr='Ca_K', ),
-                     EColumn(attr='Ca_K'),
-                     Column(label='Cl/K ', attr='Cl_K', ),
-                     EColumn(attr='Cl_K')])
+        cols.extend([Column(label='Ca/K', attr='Ca_K', sigformat=fmt),
+                     EColumn(attr='Ca_K', sigformat=fmt),
+                     Column(label='Cl/K ', attr='Cl_K', sigformat=fmt),
+                     EColumn(attr='Cl_K', sigformat=fmt)])
 
         for c in cols:
             c.enabled = ubit
@@ -687,8 +706,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         age_idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 0)
         cum_idx = next((i for i, c in enumerate(cols) if c.attr == 'cumulative_ar39'), 0)
 
-        fmt = self._get_number_format('subgroup')
+        fmt = self._get_number_format('summary_age')
+        kcafmt = self._get_number_format('summary_kca')
+
         fmt.set_bottom(1)
+        kcafmt.set_bottom(1)
 
         fmt2 = self._workbook.add_format({'bottom': 1, 'bold': True})
         border = self._workbook.add_format({'bottom': 1})
@@ -721,8 +743,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         else:
             sh.write(row, age_idx, 'No plateau', border)
 
-        sh.write_number(row, age_idx + 2, nominal_value(ag.kca), fmt)
-        sh.write_number(row, age_idx + 3, std_dev(ag.kca), fmt)
+        sh.write_number(row, age_idx + 2, nominal_value(ag.kca), kcafmt)
+        sh.write_number(row, age_idx + 3, std_dev(ag.kca), kcafmt)
 
         if label == 'plateau':
             sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
@@ -746,63 +768,78 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_analysis(self, sh, cols, item, last, is_plateau_step=None, cum=''):
         row = self._current_row
 
-        border = self._workbook.add_format({'bottom': 1})
+        # border = self._workbook.add_format({'bottom': 1})
         fmt = self._workbook.add_format()
-        fmt2 = self._workbook.add_format()
-        fmt_rundate = self._workbook.add_format()
-        fmt_j = self._get_number_format('j')
-        fmt_ic = self._get_number_format('ic')
-        fmt_disc = self._get_number_format('disc')
-        fmt_sens = self._workbook.add_format()
-        fmt_sens.set_num_format('0.0E+00')
-        fmt_lambda_k = self._workbook.add_format()
-        fmt_lambda_k.set_num_format('0.000E+00')
+        # fmt2 = self._workbook.add_format()
+        # fmt_rundate = self._workbook.add_format()
+        # fmt_j = self._get_number_format('j')
+        # fmt_ic = self._get_number_format('ic')
+        # fmt_disc = self._get_number_format('disc')
+        # fmt_sens = self._workbook.add_format()
+        # fmt_sens.set_num_format('0.0E+00')
+        # fmt_lambda_k = self._workbook.add_format()
+        # fmt_lambda_k.set_num_format('0.000E+00')
+        #
+        # fmt_age = self._get_number_format('age')
+        # fmt_kca = self._get_number_format('kca')
+        # fmt_rad40_percent = self._get_number_format('rad40_percent')
+        # fmt_percent_39Ar = self._get_number_format('percent_39Ar')
 
-        fn = self._get_number_format()
-        if last:
-            fmt = border
-            for fi in (fmt2, fn, fmt_lambda_k, fmt_lambda_k, fmt_sens, fmt_disc, fmt_rundate):
-                print('setinga bottom')
-                fi.set_bottom(1)
+        # fn = self._get_number_format()
+        # if last:
+        #     fmt = border
+        #     for fi in (fmt2, fn, fmt_j, fmt_lambda_k, fmt_lambda_k, fmt_sens, fmt_disc, fmt_rundate,
+        #                fmt_kca, fmt_rad40_percent, fmt_percent_39Ar):
+        #         fi.set_bottom(1)
 
-        print('islaasta', last)
-        fmt2.set_align('center')
-        fmt_rundate.set_num_format('mm/dd/yy hh:mm')
+        # fmt2.set_align('center')
+        # fmt_rundate.set_num_format('mm/dd/yy hh:mm')
         status = 'X' if item.is_omitted() else ''
-
+        highlight_color = self._options.highlight_color.name()
         if is_plateau_step is False:
-            for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
-                f.set_bg_color(self._options.highlight_color.name())
-            fmt.set_bg_color(self._options.highlight_color.name())
-
+            # for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
+            #     f.set_bg_color(self._options.highlight_color.name())
+            fmt.set_bg_color(highlight_color)
             sh.set_row(0, -1, fmt)
             if not status:
                 status = 'pX'
 
         sh.write(row, 0, status, fmt)
         for j, c in enumerate(cols[1:]):
+            cfmt = self._get_fmt(item, c)
             if c.attr == 'cumulative_ar39':
                 txt = cum
             else:
                 txt = self._get_txt(item, c)
 
+            if cfmt:
+                if is_plateau_step is False:
+                    cfmt.set_bg_color(highlight_color)
+            else:
+                cfmt = fmt
+
+            if last:
+                cfmt.set_bottom(1)
+
             if c.label in ('N', 'Power'):
-                sh.write(row, j + 1, txt, fmt2)
+                sh.write(row, j + 1, txt, cfmt)
             elif c.label == 'RunDate':
-                sh.write_datetime(row, j + 1, txt, fmt_rundate)
-            elif c.attr == 'j':
-                sh.write_number(row, j + 1, txt, fmt_j)
-            elif c.attr.startswith('ic'):
-                sh.write_number(row, j + 1, txt, fmt_ic)
-            elif c.attr.startswith('disc'):
-                sh.write_number(row, j + 1, txt, fmt_disc)
-            elif c.label == 'Sensitivity':
-                sh.write_number(row, j + 1, txt, fmt_sens)
-            elif c.label == 'LambdaK':
-                sh.write_number(row, j + 1, txt, fmt_lambda_k)
+                sh.write_datetime(row, j + 1, txt, cfmt)
+            # elif c.attr in ('age', 'age_error_wo_j'):
+            #     sh.write_number(row, j+1, txt, cfmt)
+            # elif c.attr == 'j':
+            #     sh.write_number(row, j + 1, txt, fmt_j)
+            # elif c.attr.startswith('ic'):
+            #     sh.write_number(row, j + 1, txt, fmt_ic)
+            # elif c.attr.startswith('disc'):
+            #     sh.write_number(row, j + 1, txt, fmt_disc)
+            # elif c.label == 'Sensitivity':
+            #     sh.write_number(row, j + 1, txt, fmt_sens)
+            # elif c.label == 'LambdaK':
+            #     sh.write_number(row, j + 1, txt, fmt_lambda_k)
             else:
                 if isinstance(txt, float):
-                    sh.write_number(row, j + 1, txt, cell_format=fn)
+                    sh.write_number(row, j + 1, txt, cell_format=cfmt)
                 else:
                     sh.write(row, j + 1, txt, fmt)
 
@@ -940,13 +977,26 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _write_notes(self, sh, notes):
         for line in notes.split('\n'):
             line = interpolate_noteline(line, self._superscript, self._subscript)
-            sh.write(self._current_row, 0, *line)
+            sh.write_rich_string(self._current_row, 0, *line)
             self._current_row += 1
 
     def _get_names_units(self, cols):
         names = [c.label for c in cols]
         units = [c.units for c in cols]
         return names, units
+
+    def _get_fmt(self, item, col):
+        fmt = None
+        if col.sigformat:
+            fmt = self._get_number_format(col.attr)
+
+        elif col.fformat:
+            fmt = self._workbook.add_format()
+            for cmd, args in col.fformat:
+                # print(cmd, args)
+                getattr(fmt, cmd)(*args)
+
+        return fmt
 
     def _get_txt(self, item, col):
         attr = col.attr
