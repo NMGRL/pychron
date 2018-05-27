@@ -23,7 +23,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, MSEM, SEM, SD
+from pychron.pychron_constants import MSEM, SEM, SD
 
 
 # ============= standard library imports ========================
@@ -36,12 +36,23 @@ class GroupAgeAdapter(BaseAdapter):
         ('Tag', 'tag'),
         ('Group', 'group_id'),
         ('SubGroup', 'subgroup'),
+
         ('Kind', 'age_kind'),
         ('Error', 'age_error_kind'),
 
-        ('Age', 'age'),
-        (PLUSMINUS_ONE_SIGMA, 'age_err'),
-        ('K/Ca', 'kca')
+        # ('Age', 'age'),
+        # (PLUSMINUS_ONE_SIGMA, 'age_err'),
+
+        ('Kind', 'kca_kind'),
+        # ('K/Ca', 'kca'),
+
+        ('Kind', 'kcl_kind'),
+        # ('K/Cl', 'kcl'),
+
+        ('Kind', 'rad40_percent_kind'),
+        # ('%40Ar*', 'rad40_percent'),
+        ('Kind', 'moles_k39_kind'),
+        # ('mol 39K', 'k39'),
     ]
 
     subgroup_text = Property
@@ -53,6 +64,15 @@ class GroupAgeAdapter(BaseAdapter):
     age_kind_text = Property
     age_error_kind_text = Property
 
+    kca_kind_text = Property
+    kca_error_kind_text = Property
+    kcl_kind_text = Property
+    kcl_error_kind_text = Property
+    rad40_percent_kind_text = Property
+    rad40_percent_error_kind_text = Property
+    moles_k39_kind_text = Property
+    moles_k39_error_kind_text = Property
+
     def _get_subgroup_text(self):
         return self._get_subgroup_attr('name')
 
@@ -61,6 +81,30 @@ class GroupAgeAdapter(BaseAdapter):
 
     def _get_age_error_kind_text(self):
         return self._get_subgroup_attr('age_error_kind')
+
+    def _get_kca_kind_text(self):
+        return self._get_subgroup_attr('kca_kind')
+
+    def _get_kca_error_kind_text(self):
+        return self._get_subgroup_attr('kca_error_kind')
+
+    def _get_kcl_kind_text(self):
+        return self._get_subgroup_attr('kcl_kind')
+
+    def _get_kcl_error_kind_text(self):
+        return self._get_subgroup_attr('kcl_error_kind')
+
+    def _get_rad40_percent_kind_text(self):
+        return self._get_subgroup_attr('rad40_percent_kind')
+
+    def _get_rad40_percent_error_kind_text(self):
+        return self._get_subgroup_attr('rad40_percent_error_kind')
+
+    def _get_moles_k39_kind_text(self):
+        return self._get_subgroup_attr('moles_k39_kind')
+
+    def _get_moles_k39_error_kind_text(self):
+        return self._get_subgroup_attr('moles_k39_error_kind')
 
     def _get_subgroup_attr(self, attr):
         ret = ''

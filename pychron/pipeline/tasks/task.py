@@ -389,6 +389,15 @@ class PipelineTask(BaseBrowserTask):
     def set_xy_scatter_template(self):
         self._set_action_template('XYScatter')
 
+    def set_subgroup_ideogram_template(self):
+        self._set_action_template('SubGroup Ideogram')
+
+    def set_hybrid_ideogram_template(self):
+        self._set_action_template('Hybrid Ideogram')
+
+    def set_history_ideogram_template(self):
+        self._set_action_template('History Ideogram')
+
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
         # get n analyses from user

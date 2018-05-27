@@ -18,12 +18,13 @@
 from __future__ import absolute_import
 
 from traits.api import List, HasTraits
-from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup
+from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup, TextEditor, HGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_ONE_SIGMA
 
 
@@ -45,9 +46,29 @@ macrostrat_grp = VGroup(Item('reference'),
                         show_border=True,
                         label='MacroChron')
 
-EDIT_VIEW = View(Item('preferred_kca_kind', ),
-                 Item('preferred_kca_value', format_str='%0.3f'),
-                 UItem('preferred_kca_error', format_str='%0.3f'),
+
+class TItem(Item):
+    def _editor_default(self):
+        return TextEditor(read_only=True, format_str='%0.3f')
+
+
+preferred_grp = VGroup(
+    HGroup(TItem('preferred_kca_value', label='K/Ca', format_str='%0.3f'),
+           TItem('preferred_kca_error', format_str='%0.3f', show_label=False),
+           UItem('preferred_kca_kind'),
+           ),
+    HGroup(TItem('preferred_kcl_value', label='K/Cl'),
+           TItem('preferred_kcl_error', show_label=False),
+           UItem('preferred_kcl_kind')),
+    HGroup(TItem('preferred_rad40_percent_value', label='%40Ar*'),
+           TItem('preferred_rad40_percent_error', show_label=False),
+           UItem('preferred_rad40_percent_kind')),
+    HGroup(TItem('preferred_moles_k39_value', label='mol 39K'),
+           TItem('preferred_moles_k39_error', show_label=False),
+           UItem('preferred_moles_k39_kind')),
+    label='Preferred', show_border=True, )
+
+EDIT_VIEW = View(preferred_grp,
                  macrostrat_grp)
 
 cols = [
@@ -106,4 +127,11 @@ def set_interpreted_age(dvc, ias):
         for ia in ias:
             if ia.use:
                 dvc.add_interpreted_age(ia)
+
+
+if __name__ == '__main__':
+    m = InterpretedAgeFactoryModel()
+    m.items = [InterpretedAgeGroup()]
+    c = InterpretedAgeFactoryView(model=m)
+    c.configure_traits()
 # ============= EOF =============================================

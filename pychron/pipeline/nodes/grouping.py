@@ -110,13 +110,13 @@ class SubGroupingNode(GroupingNode):
     kca_kind = Enum(*SUBGROUPINGS)
     kcl_kind = Enum(*SUBGROUPINGS)
     rad40_percent_kind = Enum(*SUBGROUPINGS)
-    moles_39Ar_kind = Enum(*SUBGROUPINGS)
+    moles_k39_kind = Enum(*SUBGROUPINGS)
 
     age_error_kind = Enum(*ERROR_TYPES)
     kca_error_kind = Enum(*ERROR_TYPES)
     kcl_error_kind = Enum(*ERROR_TYPES)
     rad40_percent_error_kind = Enum(*ERROR_TYPES)
-    moles_39Ar_error_kind = Enum(*ERROR_TYPES)
+    moles_k39_error_kind = Enum(*ERROR_TYPES)
 
     sorting_enabled = False
 
@@ -152,9 +152,9 @@ class SubGroupingNode(GroupingNode):
                                HGroup(Item('rad40_percent_kind', label='%40Ar*'),
                                       spring,
                                       Item('rad40_percent_error_kind', label='Error')),
-                               HGroup(Item('moles_39Ar_kind', label='mol 39Ar'),
+                               HGroup(Item('moles_k39_kind', label='mol 39K'),
                                       spring,
-                                      Item('moles_39Ar_error_kind', label='Error')),
+                                      Item('moles_k39_error_kind', label='Error')),
                                label='Types',
                                show_border=True)),
                  width=500,

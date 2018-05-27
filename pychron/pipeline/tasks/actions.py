@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -240,6 +241,24 @@ class IdeogramAction(PlotAction):
     action = 'set_ideogram_template'
     image = icon('histogram')
     accelerator = 'Ctrl+i'
+
+
+class SubgroupIdeogramAction(PlotAction):
+    name = 'SubGroup Ideogram'
+    action = 'set_subgroup_ideogram_template'
+    image = icon('histogram')
+
+
+class HybridIdeogramAction(PlotAction):
+    name = 'Hybrid Ideogram'
+    action = 'set_hybrid_ideogram_template'
+    image = icon('histogram')
+
+
+class HistoryIdeogramAction(PlotAction):
+    name = 'History Ideogram'
+    action = 'set_history_ideogram_template'
+    image = icon('histogram')
 
 
 class SpectrumAction(PlotAction):

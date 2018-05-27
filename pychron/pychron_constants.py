@@ -72,7 +72,7 @@ SIG_FIGS = range(0, 15)
 
 AGE_SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Plateau else Weighted Mean', 'Isochron')
 SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean')
-SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_39Ar')
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
@@ -183,15 +183,15 @@ K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
 FLUX_CONSTANTS = {'Min et al., 2000': {'lambda_ec': [5.80e-11, 0],  'lambda_b': [4.884e-10, 0],  'monitor_age': 28.201},
                   'Steiger & Jager 1977': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0], 'monitor_age': 28.02}}
 
-
-flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
-if os.path.isfile(flux_constants):
-    with open(flux_constants, 'r') as rf:
-        obj = yaml.load(rf)
-        try:
-            FLUX_CONSTANTS.update(obj)
-        except BaseException:
-            pass
+if paths.setup_dir:
+    flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
+    if os.path.isfile(flux_constants):
+        with open(flux_constants, 'r') as rf:
+            obj = yaml.load(rf)
+            try:
+                FLUX_CONSTANTS.update(obj)
+            except BaseException:
+                pass
 
 
 

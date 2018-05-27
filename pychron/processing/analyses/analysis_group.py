@@ -652,15 +652,20 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     preferred_kca_error_kind = Str(MSEM)
     preferred_kcl_error_kind = Str(MSEM)
     preferred_rad40_percent_error_kind = Str(MSEM)
-    preferred_moles_k39_kind = Str(MSEM)
+    preferred_moles_k39_error_kind = Str(MSEM)
 
     preferred_age_value = Property(depends_on='preferred_age_kind')
     preferred_kca_value = Property(depends_on='preferred_kca_kind')
+    preferred_kcl_value = Property(depends_on='preferred_kcl_kind')
+    preferred_rad40_percent_value = Property(depends_on='preferred_rad40_percent_kind')
+    preferred_moles_k39_value = Property(depends_on='preferred_moles_k39_kind')
 
     preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
-    preferred_kca_error = Property(depends_on='preferred_kca_kind')
-
-    # preferred_ages = Property(depends_on='analyses')
+    preferred_kca_error = Property(depends_on='preferred_kca_kind, preferred_kca_error_kind')
+    preferred_kcl_error = Property(depends_on='preferred_kcl_kind, preferred_kcl_error_kind')
+    preferred_rad40_percent_error = Property(depends_on='preferred_rad40_percent_kind, '
+                                                        'preferred_rad40_percent_error_kind')
+    preferred_moles_k39_error = Property(depends_on='preferred_moles_k39_kind, preferred_moles_k39_error_kind')
 
     preferred_ages = ('Weighted Mean', 'Arithmetic Mean', 'Isochron', 'Integrated', 'Plateau')
 
@@ -803,31 +808,47 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             return self.mswd
 
     def _get_preferred_age_value(self):
-        pa = self.preferred_age
-        v = 0
-        if pa is not None:
-            v = float(nominal_value(pa))
-        return v
+        return self._get_preferred_value('age')
 
     def _get_preferred_age_error(self):
-        pa = self.preferred_age
-        e = 0
-        if pa is not None:
-            e = float(std_dev(pa))
-        return e
+        return self._get_preferred_error('age')
 
     def _get_preferred_kca_value(self):
-        pa = self.preferred_kca
+        return self._get_preferred_value('kca')
+
+    def _get_preferred_kca_error(self):
+        return self._get_preferred_error('kca')
+
+    def _get_preferred_kcl_value(self):
+        return self._get_preferred_value('kcl')
+
+    def _get_preferred_kcl_error(self):
+        return self._get_preferred_error('kcl')
+
+    def _get_preferred_rad40_percent_value(self):
+        return self._get_preferred_value('rad40_percent')
+
+    def _get_preferred_rad40_percent_error(self):
+        return self._get_preferred_error('rad40_percent')
+
+    def _get_preferred_moles_k39_value(self):
+        return self._get_preferred_value('moles_k39')
+
+    def _get_preferred_moles_k39_error(self):
+        return self._get_preferred_error('moles_k39')
+
+    def _get_preferred_value(self, tag):
+        pa = getattr(self, 'preferred_{}'.format(tag))
         v = 0
         if pa is not None:
             v = float(nominal_value(pa))
         return v
 
-    def _get_preferred_kca_error(self):
-        pa = self.preferred_kca
-        e = 0
+    def _get_preferred_error(self, tag):
+        pa = getattr(self, 'preferred_{}'.format(tag))
         if pa is not None:
             e = float(std_dev(pa))
+
         return e
 
     # get preferred objects

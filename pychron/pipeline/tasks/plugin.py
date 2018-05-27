@@ -30,7 +30,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, \
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
-    AnalysisTableAction, ClearAnalysisSetsAction
+    AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -116,6 +116,14 @@ class PipelinePlugin(BaseTaskPlugin):
         def data_menu():
             return SMenu(id='data.menu', name='Data')
 
+        def ideogram_menu():
+            return SMenu(IdeogramAction(),
+                         SubgroupIdeogramAction(),
+                         HybridIdeogramAction(),
+                         HistoryIdeogramAction(),
+
+                         id='ideogram.menu', name='Ideogram')
+
         def plot_group():
             return SGroup(id='plot.group')
 
@@ -147,8 +155,10 @@ class PipelinePlugin(BaseTaskPlugin):
                                            after='view.menu', ),
                             SchemaAddition(factory=plot_group,
                                            path='MenuBar/data.menu'),
-                            SchemaAddition(factory=IdeogramAction,
+
+                            SchemaAddition(factory=ideogram_menu,
                                            path=pg),
+
                             SchemaAddition(factory=SpectrumAction,
                                            path=pg),
                             # SchemaAddition(factory=IsochronAction,
