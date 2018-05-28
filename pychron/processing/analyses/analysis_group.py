@@ -387,7 +387,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     def _calculate_integrated(self, attr):
         uv = ufloat(0, 0)
-        ans = self.clean_analyses()
+        ans = list(self.clean_analyses())
 
         prs = ans[0].production_ratios
 
