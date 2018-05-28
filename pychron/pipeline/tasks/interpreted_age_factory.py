@@ -101,10 +101,11 @@ cols = [
     UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
                   width=70)]
 
-editor = TableEditor(columns=cols, orientation='vertical', edit_view=EDIT_VIEW)
+editor = TableEditor(columns=cols, orientation='vertical',
+                     sortable=False, edit_view=EDIT_VIEW)
 VIEW = View(Item('items', show_label=False, editor=editor),
             resizable=True,
-            width=800,
+            width=900,
             title='Set Interpreted Age',
             kind='livemodal',
             buttons=['OK', 'Cancel'])
