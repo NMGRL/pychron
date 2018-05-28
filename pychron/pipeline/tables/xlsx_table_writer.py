@@ -74,9 +74,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._make_human_unknowns(unknowns)
 
             # make a machine optimized table
-        munknowns = groups.get('machine_unknowns')
-        if munknowns:
-            self._make_machine_unknowns(munknowns)
+        # munknowns = groups.get('machine_unknowns')
+        # if munknowns:
+        #     self._make_machine_unknowns(munknowns)
 
         airs = groups.get('airs')
         if airs:
@@ -132,7 +132,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    Column(label='Tag', attr='tag'),
                    Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
                    Column(enabled=ubit, label='Age', units=age_units, attr='age', func=age_func),
-                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func, sigformat='age'),
+                   EColumn(enabled=ubit, units=age_units, attr='age_err_wo_j', func=age_func,
+                           sigformat='age'),
                    VColumn(enabled=kcabit, label='K/Ca', attr='kca'),
                    EColumn(enabled=ubit, attr='kca'),
                    VColumn(enabled=ubit and options.include_percent_ar39,
@@ -159,7 +160,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            attr='isochron3640')]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_39Ar')
+        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_ar39')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
@@ -393,10 +394,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 VColumn(label='IntegratedAge', attr='integrated_age'),
                 VColumn(attr='integrated_age')]
 
-        # VColumn(enabled=is_step_heat, label='PlateauAge', attr='plateau_age'),
-        # VColumn(enabled=is_step_heat, attr='plateau_age'),
-        # VColumn(enabled=is_step_heat, label='IntegratedAge', attr='integrated_age'),
-        # VColumn(enabled=is_step_heat, attr='integrated_age')]
         return cols
 
     def _make_human_unknowns(self, unks):
@@ -415,7 +412,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._make_sheet(monitors, 'Monitors')
 
     def _make_summary_sheet(self, unks):
-        print('make suma', unks)
         self._current_row = 1
         sh = self._workbook.add_worksheet('Summary')
         self._format_generic_worksheet(sh)
@@ -453,30 +449,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             ug.set_temporary_age_units(None)
 
         self._make_notes(sh, len(cols), 'summary')
-
-    # def _make_irradiations(self, unks):
-    #     self._current_row = 1
-    #     sh = self._workbook.add_worksheet('Irradiations')
-    #     self._format_generic_worksheet(sh)
-    #
-    #     cols = [Column(label='Name', attr='irradiation')]
-    #     icols = self._get_irradiation_columns(True)
-    #     cols.extend(icols)
-    #
-    #     # write header
-    #     self._write_header(sh, cols, include_units=True)
-    #
-    #     # cols = [c for c in cols if c.enabled]
-    #     self._hide_columns(sh, cols)
-    #     for ug in unks:
-    #         for i, ci in enumerate(cols):
-    #             try:
-    #                 txt = self._get_txt(ug.analyses[0], ci)
-    #             except AttributeError as e:
-    #                 txt = self._get_txt(ug, ci)
-    #
-    #             sh.write(self._current_row, i, txt)
-    #         self._current_row += 1
 
     def _make_sheet(self, groups, name):
         self._current_row = 1
@@ -691,15 +663,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._current_row += 1
 
-    # def _make_intermediate_analysis(self, ag, kind):
-    #     ia = IntermediateAnalysis(analysis_group=ag)
-    #     ia.subgroup_kind = kind
-    #     a, label = ia.get_age(kind)
-    #     ia.uage = a
-    #     ia.uage_wo_j_err = a
-    #
-    #     return ia
-
     def _make_intermediate_summary(self, sh, ag, cols, label):
         row = self._current_row
 
@@ -755,50 +718,25 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_number_format(self, kind=None):
         try:
             sf = getattr(self._options, '{}_sig_figs'.format(kind))
-        except AttributeError:
+        except AttributeError as e:
             sf = self._options.sig_figs
 
         fn = self._workbook.add_format()
-        fmt = '0.{}'.format('0' * (sf - 1))
+        fmt = '0.{}'.format('0' * sf)
         if not self._options.ensure_trailing_zeros:
             fmt = '{}#'.format(fmt)
+
         fn.set_num_format(fmt)
         return fn
 
     def _make_analysis(self, sh, cols, item, last, is_plateau_step=None, cum=''):
         row = self._current_row
 
-        # border = self._workbook.add_format({'bottom': 1})
         fmt = self._workbook.add_format()
-        # fmt2 = self._workbook.add_format()
-        # fmt_rundate = self._workbook.add_format()
-        # fmt_j = self._get_number_format('j')
-        # fmt_ic = self._get_number_format('ic')
-        # fmt_disc = self._get_number_format('disc')
-        # fmt_sens = self._workbook.add_format()
-        # fmt_sens.set_num_format('0.0E+00')
-        # fmt_lambda_k = self._workbook.add_format()
-        # fmt_lambda_k.set_num_format('0.000E+00')
-        #
-        # fmt_age = self._get_number_format('age')
-        # fmt_kca = self._get_number_format('kca')
-        # fmt_rad40_percent = self._get_number_format('rad40_percent')
-        # fmt_percent_39Ar = self._get_number_format('percent_39Ar')
 
-        # fn = self._get_number_format()
-        # if last:
-        #     fmt = border
-        #     for fi in (fmt2, fn, fmt_j, fmt_lambda_k, fmt_lambda_k, fmt_sens, fmt_disc, fmt_rundate,
-        #                fmt_kca, fmt_rad40_percent, fmt_percent_39Ar):
-        #         fi.set_bottom(1)
-
-        # fmt2.set_align('center')
-        # fmt_rundate.set_num_format('mm/dd/yy hh:mm')
         status = 'X' if item.is_omitted() else ''
         highlight_color = self._options.highlight_color.name()
         if is_plateau_step is False:
-            # for f in (fn, border, fmt2, fmt_rundate, fmt_j, fmt_ic, fmt_disc):
-            #     f.set_bg_color(self._options.highlight_color.name())
             fmt.set_bg_color(highlight_color)
             sh.set_row(0, -1, fmt)
             if not status:
@@ -825,18 +763,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 sh.write(row, j + 1, txt, cfmt)
             elif c.label == 'RunDate':
                 sh.write_datetime(row, j + 1, txt, cfmt)
-            # elif c.attr in ('age', 'age_error_wo_j'):
-            #     sh.write_number(row, j+1, txt, cfmt)
-            # elif c.attr == 'j':
-            #     sh.write_number(row, j + 1, txt, fmt_j)
-            # elif c.attr.startswith('ic'):
-            #     sh.write_number(row, j + 1, txt, fmt_ic)
-            # elif c.attr.startswith('disc'):
-            #     sh.write_number(row, j + 1, txt, fmt_disc)
-            # elif c.label == 'Sensitivity':
-            #     sh.write_number(row, j + 1, txt, fmt_sens)
-            # elif c.label == 'LambdaK':
-            #     sh.write_number(row, j + 1, txt, fmt_lambda_k)
             else:
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=cfmt)
@@ -846,12 +772,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
-        nfmt = self._get_number_format('summary')
-        nfmt.set_bold(True)
 
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
+            nfmt = self._get_number_format('summary_kca')
+            nfmt.set_bold(True)
             idx = next((i for i, c in enumerate(cols) if c.label == 'K/Ca'))
 
             nsigma = self._options.asummary_kca_nsigma
@@ -865,6 +791,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)
             self._current_row += 1
+
+        nfmt = self._get_number_format('summary_age')
+        nfmt.set_bold(True)
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
@@ -988,12 +917,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_fmt(self, item, col):
         fmt = None
         if col.sigformat:
-            fmt = self._get_number_format(col.attr)
+            fmt = self._get_number_format(col.sigformat)
 
         elif col.fformat:
             fmt = self._workbook.add_format()
             for cmd, args in col.fformat:
-                # print(cmd, args)
                 getattr(fmt, cmd)(*args)
 
         return fmt
@@ -1002,11 +930,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         attr = col.attr
         if attr is None:
             return ''
-
-        # if len(col) == 5:
-        #     getter = col[4]
-        # else:
-        #     getter = getattr
 
         func = col.func
         if func is None:

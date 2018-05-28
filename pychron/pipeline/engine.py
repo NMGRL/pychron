@@ -732,6 +732,7 @@ class PipelineEngine(Loggable):
             node.visited = False
             node.index = idx
 
+        # configure = False
         for idx, node in enumerate(pipeline.iternodes(start_node)):
 
             if node.enabled:

@@ -42,7 +42,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     summary_kca_sig_figs = dumpable(Int(6))
 
     rad40_percent_sig_figs = dumpable(Int(6))
-    percent_39Ar_sig_figs = dumpable(Int(6))
+    cumulative_ar39_sig_figs = dumpable(Int(6))
 
     signal_sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
@@ -204,7 +204,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               Item('summary_kca_sig_figs', label='Summary K/Ca'),
 
                               Item('rad40_percent_sig_figs', label='%40Ar*'),
-                              Item('percent_39Ar_sig_figs', label='%39Ar'),
+                              Item('cumulative_ar39_sig_figs', label='Cum. %39Ar'),
 
                               Item('signal_sig_figs', label='Signal'),
                               Item('j_sig_figs', label='Flux'),

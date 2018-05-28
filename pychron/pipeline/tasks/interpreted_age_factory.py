@@ -90,16 +90,9 @@ cols = [
                   width=70),
     UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
                   width=70),
-
-    # ObjectColumn(name='preferred_kca_kind', label='K/Ca Type',
-    #              editor=EnumEditor(values=['Weighted Mean', 'Arithmetic Mean'])),
-    # UObjectColumn(name='preferred_kca_value', format='%0.3f', label='K/Ca'),
-    # UObjectColumn(name='preferred_kca_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA),
-    # UObjectColumn(name='nanalyses', label='N'),
-    # UObjectColumn(name='preferred_mswd', format='%0.3f', label='MSWD'),
 ]
 
-editor = TableEditor(columns=cols, edit_view=EDIT_VIEW)
+editor = TableEditor(columns=cols, cell_font='modern 10', edit_view=EDIT_VIEW)
 VIEW = View(Item('items', show_label=False, editor=editor),
             resizable=True,
             width=1150,

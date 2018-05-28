@@ -77,8 +77,8 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.dump()
 
     def activated(self, force=False):
-        self.analysis_table.load()
         self.reattach()
+        self.analysis_table.load()
 
         if not self.is_activated or force:
             self.load_browser_options()
@@ -237,7 +237,9 @@ class SampleBrowserModel(BrowserModel):
             self.add_analysis_group()
 
     def _analysis_set_changed(self, new):
+        print('asfsf', new, id(self.analysis_table))
         if self.analysis_table.suppress_load_analysis_set:
+            print('suprereasd')
             return
 
         self.debug('analysis set changed={}'.format(new))
@@ -419,8 +421,8 @@ class SampleBrowserModel(BrowserModel):
 
     def _analysis_table_default(self):
         at = AnalysisTable(dvc=self.dvc)
-        at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        # at.load()
         prefid = 'pychron.browser'
         bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
 

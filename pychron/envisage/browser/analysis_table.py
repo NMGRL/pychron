@@ -15,11 +15,12 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
+import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-import json
 # ============= enthought library imports =======================
 from itertools import groupby
 from operator import attrgetter
@@ -34,11 +35,10 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-import six
 
 
 def sort_items(ans):
-    return sorted(ans, key=lambda x: x.timestampf)
+    return sorted(ans, key=attrgetter('timestampf'))
 
 
 class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
@@ -93,10 +93,20 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
+        p = paths.hidden_path('selected_analysis_set')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                self.analysis_set = rfile.read().strip()
+
     def dump(self):
         p = paths.hidden_path('analysis_sets')
         with open(p, 'w') as wfile:
             json.dump(self._analysis_sets, wfile)
+
+        p = paths.hidden_path('selected_analysis_set')
+        if self.analysis_set:
+            with open(p, 'w') as wfile:
+                wfile.write(self.analysis_set)
 
     def get_selected_analyses(self):
         if self.analyses:
