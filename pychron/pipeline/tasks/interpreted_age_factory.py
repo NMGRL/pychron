@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 
 from traits.api import List, HasTraits
-from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup, TextEditor, HGroup
+from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, UItem, VGroup, TextEditor, HGroup, spring
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
@@ -28,9 +28,12 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import ERROR_TYPES, PLUSMINUS_ONE_SIGMA
 
 
-class UObjectColumn(ObjectColumn):
+class BaseColumn(ObjectColumn):
+    text_font = 'arial 10'
+
+
+class UObjectColumn(BaseColumn):
     editable = False
-    width = 10
 
 
 lithology_grp = VGroup(UItem('lithology_class', editor=EnumEditor(name='lithology_classes')),
@@ -53,49 +56,55 @@ class TItem(Item):
 
 
 preferred_grp = VGroup(
+    HGroup(TItem('preferred_age_value', label='Age', format_str='%0.3f'),
+           TItem('preferred_age_error', format_str='%0.3f', show_label=False),
+           spring,
+           UItem('preferred_age_kind')),
     HGroup(TItem('preferred_kca_value', label='K/Ca', format_str='%0.3f'),
            TItem('preferred_kca_error', format_str='%0.3f', show_label=False),
-           UItem('preferred_kca_kind'),
-           ),
+           spring,
+           UItem('preferred_kca_kind')),
     HGroup(TItem('preferred_kcl_value', label='K/Cl'),
            TItem('preferred_kcl_error', show_label=False),
+           spring,
            UItem('preferred_kcl_kind')),
     HGroup(TItem('preferred_rad40_percent_value', label='%40Ar*'),
            TItem('preferred_rad40_percent_error', show_label=False),
+           spring,
            UItem('preferred_rad40_percent_kind')),
     HGroup(TItem('preferred_moles_k39_value', label='mol 39K'),
            TItem('preferred_moles_k39_error', show_label=False),
+           spring,
            UItem('preferred_moles_k39_kind')),
     label='Preferred', show_border=True, )
 
-EDIT_VIEW = View(preferred_grp,
-                 macrostrat_grp)
+EDIT_VIEW = View(HGroup(preferred_grp,
+                        macrostrat_grp))
 
 cols = [
     CheckboxColumn(name='use', label='Save', width=10),
-    UObjectColumn(name='identifier'),
-    ObjectColumn(name='name', width=50),
-    ObjectColumn(name='repository_identifier',
-                 width=50,
-                 editor=EnumEditor(name='controller.repository_identifiers')),
-    ObjectColumn(name='preferred_age_kind',
-                 width=50,
-                 label='Age Type',
-                 editor=EnumEditor(name='preferred_ages')),
+    UObjectColumn(name='identifier', width=50),
+    BaseColumn(name='name', width=50),
+    BaseColumn(name='repository_identifier',
+               width=50,
+               editor=EnumEditor(name='controller.repository_identifiers')),
+    BaseColumn(name='preferred_age_kind',
+               width=50,
+               label='Age Type',
+               editor=EnumEditor(name='preferred_ages')),
 
-    ObjectColumn(name='preferred_age_error_kind',
-                 label='Age Error Type',
-                 editor=EnumEditor(values=ERROR_TYPES)),
+    BaseColumn(name='preferred_age_error_kind',
+               label='Age Error Type',
+               editor=EnumEditor(values=ERROR_TYPES)),
     UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age',
                   width=70),
     UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
-                  width=70),
-]
+                  width=70)]
 
-editor = TableEditor(columns=cols, cell_font='modern 10', edit_view=EDIT_VIEW)
+editor = TableEditor(columns=cols, orientation='vertical', edit_view=EDIT_VIEW)
 VIEW = View(Item('items', show_label=False, editor=editor),
             resizable=True,
-            width=1150,
+            width=800,
             title='Set Interpreted Age',
             kind='livemodal',
             buttons=['OK', 'Cancel'])
