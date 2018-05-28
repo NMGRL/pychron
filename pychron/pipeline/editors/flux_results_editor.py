@@ -336,6 +336,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      position_only=self.plotter_options.position_only,
                                                       position_error=self.plotter_options.position_error,
                                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 

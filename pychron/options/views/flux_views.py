@@ -48,6 +48,12 @@ class FluxSubOptions(SubOptions):
                                tooltip='Set this value to the radius (same units as hole XY positions) of the '
                                        'irradiation hole. '
                                        'This is to test "monte carloing" the irradiation geometry'),
+                          Item('position_only', label='Position Only (Beta)',
+                               enabled_when='position_error',
+                               tooltip='Monte carlo only the position error, not J error. '
+                                       'used to see affect of position error'
+                               ),
+
                           Item('monte_carlo_ntrials'),
                           Item('use_monte_carlo'),
                           show_border=True,

@@ -41,6 +41,7 @@ class FluxOptions(FigureOptions):
     monitor_sample_name = Str
     plot_kind = Enum('1D', '2D')
 
+    position_only = Bool(False)
     position_error = Float
 
     def _get_lambda_k(self):

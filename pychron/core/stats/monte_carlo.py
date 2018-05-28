@@ -24,7 +24,8 @@ from scipy.stats import norm
 # ============= local library imports  ==========================
 
 
-def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None, seed=None):
+def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None,
+                                 position_only=False, seed=None):
     pexog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
@@ -38,6 +39,9 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_err
     ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
+    if position_only:
+        yserr = 0
+
     yp = ys + yserr * ga
 
     if position_error:
