@@ -24,6 +24,7 @@ from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumE
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
+from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES
 
@@ -337,7 +338,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         return v
 
 if __name__ == '__main__':
-    from pychron.paths import paths
+    # from pychron.paths import paths
     paths.build('~/PychronDev')
     e = XLSXAnalysisTableWriterOptions()
     e.configure_traits()

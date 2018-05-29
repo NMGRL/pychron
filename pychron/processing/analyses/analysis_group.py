@@ -491,7 +491,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_integrated_age(self):
         ret = ufloat(0, 0)
         ans = list(self.clean_analyses())
-        print('get inteaffs agae')
+
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
             rad40 = sum([a.get_computed_value('rad40') for a in ans])
@@ -502,7 +502,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             try:
                 ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
             except ZeroDivisionError:
-                print('asdfasdfasfasfasdfasdfasdfasdfasd', rad40, k39)
+                pass
 
         return ret
 
@@ -831,6 +831,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         else:
             pa = self._calculate_arithmetic_mean(attr)
 
+        if isinstance(pa, tuple):
+            pa = ufloat(*pa)
         return pa
 
 # ============= EOF =============================================

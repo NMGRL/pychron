@@ -556,6 +556,10 @@ class ArArAge(IsotopeGroup):
         return self.sensitivity * self.k39
 
     @property
+    def signal_k39(self):
+        return self.k39
+
+    @property
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope('Ar40').get_intensity()
 
