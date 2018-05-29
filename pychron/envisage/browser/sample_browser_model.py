@@ -237,9 +237,7 @@ class SampleBrowserModel(BrowserModel):
             self.add_analysis_group()
 
     def _analysis_set_changed(self, new):
-        print('asfsf', new, id(self.analysis_table))
         if self.analysis_table.suppress_load_analysis_set:
-            print('suprereasd')
             return
 
         self.debug('analysis set changed={}'.format(new))

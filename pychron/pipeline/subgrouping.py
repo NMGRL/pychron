@@ -108,10 +108,11 @@ def make_interpreted_age_subgroups(ans):
                 if ek is None:
                     ek = MSEM
 
-                setattr(ag, 'preferred_{}_kind'.format(attr), k)
-                setattr(ag, 'preferred_{}_error_kind'.format(attr), ek)
+                ag.set_preferred_kind(attr, k, ek)
+                # setattr(ag, 'preferred_{}_kind'.format(attr), k)
+                # setattr(ag, 'preferred_{}_error_kind'.format(attr), ek)
 
-            kind = ag.preferred_age_kind
+            kind = ag.get_preferred_kind('age')
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ias.append(ag)

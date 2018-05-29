@@ -29,7 +29,7 @@ from pychron.paths import paths
 from pychron.pipeline.subgrouping import subgrouping_key
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
-from pychron.pipeline.tables.util import iso_value, value, icf_value, icf_error, correction_value, age_value, supreg, \
+from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
     subreg, interpolate_noteline
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
@@ -333,20 +333,23 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_summary_columns(self):
         opt = self._options
 
+        def get_kca(ag, *args):
+            return nominal_value(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
+
         def get_kca_error(ag, *args):
-            return std_dev(ag.weighted_kca) * opt.summary_kca_nsigma
+            return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
             ret = ''
             if isinstance(ag, InterpretedAgeGroup):
-                ret = ag.preferred_age_kind
+                ret = ag.get_preferred_kind('age')
             return ret
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.preferred_age)
+            return nominal_value(ag.age)
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
+            return std_dev(ag.age) * opt.summary_age_nsigma
 
         # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
@@ -365,7 +368,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
                        attr='percent_39Ar'),
                 Column(enabled=opt.include_summary_mswd, label='MSWD', attr='mswd'),
-                Column(enabled=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=value),
+                Column(enabled=opt.include_summary_kca, label='K/Ca', attr='weighted_kca', func=get_kca),
 
                 Column(enabled=opt.include_summary_kca,
                        label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
@@ -486,6 +489,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     # kind = '_'.join(subgroup.split('_')[:-1])
                     ag = InterpretedAgeGroup(analyses=items)
                     _, label = ag.get_age(kind, set_preferred=True)
+                    ag.set_preferred_kinds(items[0].subgroup)
                     # age, label = self._get_intermediate_age(ag, kind)
 
                 n = len(items) - 1
@@ -789,7 +793,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             group.kca_error_kind = kind = self._options.kca_error_kind
             # group.dirty = True
-            kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
+            kca = group.get_weighted_mean('kca') if self._options.use_weighted_kca else group.get_arithmetic_mean('kca')
 
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)

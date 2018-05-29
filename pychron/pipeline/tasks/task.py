@@ -118,15 +118,15 @@ class PipelineTask(BaseBrowserTask):
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
-    def _debug(self):
-        self.engine.add_data()
-        if globalv.select_default_data:
-            self.engine.select_default()
-
-        if globalv.pipeline_template:
-            self.engine.set_template(globalv.pipeline_template)
-            if globalv.run_pipeline:
-                self.run()
+    # def _debug(self):
+    #     self.engine.add_data()
+    #     if globalv.select_default_data:
+    #         self.engine.select_default()
+    #
+    #     if globalv.pipeline_template:
+    #         self.engine.set_template(globalv.pipeline_template)
+    #         if globalv.run_pipeline:
+    #             self.run()
 
     def prepare_destroy(self):
         self.interpreted_age_browser_model.dump_browser()
@@ -597,10 +597,10 @@ class PipelineTask(BaseBrowserTask):
 
         return ret
 
-    def _opened_hook(self):
-        super(PipelineTask, self)._opened_hook()
-        if globalv.pipeline_debug:
-            self._debug()
+    # def _opened_hook(self):
+    #     super(PipelineTask, self)._opened_hook()
+    #     if globalv.pipeline_debug:
+    #         self._debug()
 
     def _get_selection(self):
         if self.engine.selected:

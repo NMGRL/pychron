@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc.tasks.repo_task import RepoItem
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -732,7 +733,9 @@ class PipelineEngine(Loggable):
             node.visited = False
             node.index = idx
 
-        # configure = False
+        if globalv.skip_configure:
+            configure = False
+
         for idx, node in enumerate(pipeline.iternodes(start_node)):
 
             if node.enabled:

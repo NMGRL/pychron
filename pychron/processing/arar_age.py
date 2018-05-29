@@ -65,6 +65,7 @@ class ArArAge(IsotopeGroup):
     total40 = 0
     k39 = 0
 
+
     # non_ar_isotopes = Dict
     # computed = Dict
     # corrected_intensities = Dict
@@ -549,6 +550,10 @@ class ArArAge(IsotopeGroup):
             return number of days since irradiation
         """
         return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
+
+    @property
+    def moles_k39(self):
+        return self.sensitivity * self.k39
 
     @property
     def moles_Ar40(self):

@@ -111,7 +111,6 @@ class DVCInterpretedAge(InterpretedAge):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
                   'name', 'project', 'uuid', 'age_error_kind'):
-
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
@@ -997,7 +996,7 @@ class DVC(Loggable):
     def add_interpreted_age(self, ia):
 
         a = ia.get_ma_scaled_age()
-        mswd = ia.preferred_mswd
+        mswd = ia.get_preferred_mswd()
 
         if isnan(mswd):
             mswd = 0
@@ -1009,11 +1008,12 @@ class DVC(Loggable):
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
-                 age_kind=ia.preferred_age_kind,
-                 kca_kind=ia.preferred_kca_kind,
-                 age_error_kind=ia.preferred_age_error_kind,
-                 kca=float(ia.preferred_kca_value),
-                 kca_err=float(ia.preferred_kca_error),
+                 # age_kind=ia.preferred_age_kind,
+                 # kca_kind=ia.preferred_kca_kind,
+                 # age_error_kind=ia.preferred_age_error_kind,
+                 # kca=float(ia.preferred_kca_value),
+                 # kca_err=float(ia.preferred_kca_error),
+                 preferred_kinds=ia.preferred_values_to_dict(),
                  mswd=float(mswd),
                  arar_constants=ia.arar_constants.to_dict(),
                  ages=ia.ages(),
