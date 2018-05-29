@@ -88,8 +88,10 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             with open(p, 'r') as rfile:
                 try:
                     jd = json.load(rfile, object_pairs_hook=OrderedDict)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    print('load sanlaysis set exception', e)
+                    return
+
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 

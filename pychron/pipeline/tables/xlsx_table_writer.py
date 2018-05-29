@@ -47,7 +47,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     _bold = None
     _superscript = None
     _subscript = None
-
+    _ital = None
     _options = Instance(XLSXAnalysisTableWriterOptions)
 
     def _new_workbook(self, path):
@@ -67,6 +67,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._bold = self._workbook.add_format({'bold': True})
         self._superscript = self._workbook.add_format({'font_script': 1})
         self._subscript = self._workbook.add_format({'font_script': 2})
+        self._ital = self._workbook.add_format({'italic': True})
 
         unknowns = groups.get('unknowns')
         if unknowns:
@@ -913,7 +914,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _write_notes(self, sh, notes):
         for line in notes.split('\n'):
-            line = interpolate_noteline(line, self._superscript, self._subscript)
+            line = interpolate_noteline(line, self._superscript, self._subscript, self._ital)
             sh.write_rich_string(self._current_row, 0, *line)
             self._current_row += 1
 

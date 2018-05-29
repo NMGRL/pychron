@@ -241,10 +241,13 @@ class SampleBrowserModel(BrowserModel):
             return
 
         self.debug('analysis set changed={}'.format(new))
-        ans = self.analysis_table.get_analysis_set(new)
-        ans = self.db.get_analyses_uuid([a[0] for a in ans])
-        xx = self._make_records(ans)
-        self.analysis_table.set_analyses(xx)
+        try:
+            ans = self.analysis_table.get_analysis_set(new)
+            ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            xx = self._make_records(ans)
+            self.analysis_table.set_analyses(xx)
+        except StopIteration:
+            pass
 
     def _refresh_selectors_button_fired(self):
         self.debug('refresh selectors fired')

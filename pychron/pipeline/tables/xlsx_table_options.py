@@ -18,8 +18,8 @@
 import os
 
 import yaml
-from traits.api import Enum, Bool, Str, Int, Float, Color
-from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label
+from traits.api import Enum, Bool, Str, Int, Float, Color, List
+from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumEditor
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
@@ -81,6 +81,9 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
+    unknown_note_name = dumpable(Str('Default'))
+    available_unknown_note_names = List
+
     unknown_notes = dumpable(Str('''Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
 Integrated age calculated by summing isotopic measurements of all steps.
 Plateau age is inverse-variance-weighted mean of selected steps.
@@ -138,7 +141,31 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     def __init__(self, *args, **kw):
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
-        self.load_notes()
+        # self.load_notes()
+        self._load_note_names()
+        self._unknown_note_name_changed(self.unknown_note_name)
+        print('asf', id(self), self.unknown_note_name, self.available_unknown_note_names)
+    def _load_note_names(self):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+                for grpname in ('unknown',):
+                    grp = obj.get('{}_notes'.format(grpname))
+                    if grp:
+                        setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
+
+    def _unknown_note_name_changed(self, new):
+        grp = self._load_note('unknown_notes')
+        if grp is not None:
+            self.unknown_notes = grp.get(new, '')
+
+    def _load_note(self, group):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+                return obj.get(group)
 
     @property
     def age_scalar(self):
@@ -164,12 +191,19 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     def traits_view(self):
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
-                             VGroup(VGroup(UItem('unknown_notes', style='custom'), label='Main', show_border=True),
-                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'), label='Corrected', show_border=True),
-                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'), label='Intercept', show_border=True),
-                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time', show_border=True),
-                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X', show_border=True),
-                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX', show_border=True),
+                             VGroup(VGroup(UItem('unknown_note_name',
+                                                 editor=EnumEditor(name='available_unknown_note_names')),
+                                           UItem('unknown_notes', style='custom'), label='Main', show_border=True),
+                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'),
+                                           label='Corrected', show_border=True),
+                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'),
+                                           label='Intercept', show_border=True),
+                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time',
+                                           show_border=True),
+                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X',
+                                           show_border=True),
+                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX',
+                                           show_border=True),
                                     show_border=True, label='Notes'), label='Unknowns')
 
         air_grp = VGroup(Item('air_title', label='Table Heading'),

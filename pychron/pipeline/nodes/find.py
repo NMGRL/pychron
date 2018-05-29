@@ -263,7 +263,6 @@ class FindReferencesNode(FindNode):
 
         self._load_analysis_types(state)
 
-        self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
@@ -274,9 +273,6 @@ class FindReferencesNode(FindNode):
 
         self._compress_groups(state.unknowns)
         self._compress_groups(state.references)
-
-    def _pre_run_hook(self):
-        pass
 
     def _compress_groups(self, ans):
         if not ans:

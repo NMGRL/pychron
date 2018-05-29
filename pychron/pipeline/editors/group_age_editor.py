@@ -23,7 +23,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error
-from pychron.pychron_constants import MSEM, SEM, SD
+from pychron.pychron_constants import MSEM, SEM, SD, WEIGHTED_MEAN, INTEGRATED
 
 
 # ============= standard library imports ========================
@@ -135,7 +135,7 @@ class THandler(Handler):
         obj.group('Plateau else Weighted Mean')
 
     def group_as_weighted_mean(self, info, obj):
-        obj.group('Weighted Mean')
+        obj.group(WEIGHTED_MEAN)
 
     def group_as_plateau(self, info, obj):
         obj.group('Plateau')
@@ -144,7 +144,7 @@ class THandler(Handler):
         obj.group('Isochron')
 
     def group_as_integrated(self, info, obj):
-        obj.group('Integrated')
+        obj.group(INTEGRATED)
 
     def clear_grouping(self, info, obj):
         obj.clear_grouping()
@@ -180,7 +180,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def group_msem(self):
         self._group_error(MSEM)
 
-    def group(self, kind):
+    def group(self, kind: object) -> object:
         self._group(kind)
         self.refresh_needed = True
 

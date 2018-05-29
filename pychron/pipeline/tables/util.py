@@ -22,6 +22,8 @@ import re
 
 from uncertainties import nominal_value, std_dev
 
+from pychron.pychron_constants import PLUSMINUS, SIGMA, LAMBDA
+
 
 def iso_value(attr, ve='value'):
     def f(x, k):
@@ -103,21 +105,27 @@ def age_value(target_units='Ma'):
 
 subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
 supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
+italreg = re.compile(r'^<ital>(?P<item>[\w\-\(\)]+)</ital>')
 
 
-def interpolate_noteline(line, sup, sub):
+def interpolate_noteline(line, sup, sub, ital):
+    line = line.replace('<plus_minus>', PLUSMINUS)
+    line = line.replace('<sigma>', SIGMA)
+    line = line.replace('<lambda>', LAMBDA)
+
     def parse(line):
         args = []
         for fmt, reg, taglen in ((sup, supreg, 5),
-                                 (sub, subreg, 5)):
+                                 (sub, subreg, 5),
+                                 (ital, italreg, 6)):
             g = reg.match(line)
             if g:
                 args.append(fmt)
-                args.append(g.group('item'))
+                args.append('{} '.format(g.group('item')))
                 break
         else:
             args.append('{} '.format(line))
-
+        print('ars', args)
         return args
 
     ns = []

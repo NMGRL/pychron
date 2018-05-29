@@ -45,23 +45,4 @@ class GroupAgeNode(BaseDVCNode):
             ias = make_interpreted_age_subgroups(ans)
             nans.extend(ias)
 
-            # ans = list(ans)
-            #
-            # key = attrgetter('subgroup')
-            #
-            # for subgroup, items in groupby(ans, key=key):
-            #     items = list(items)
-            #     if subgroup:
-            #         kind = '_'.join(subgroup.split('_')[:-1])
-            #     else:
-            #         kind = 'weighted_mean'
-            #
-            #     ag = InterpretedAgeGroup(analyses=items)
-            #     ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[0])
-            #
-            #     ag.get_age(kind, set_preferred=True)
-            #     nans.append(ag)
-
-        state.unknowns = nans
-
 # ============= EOF =============================================

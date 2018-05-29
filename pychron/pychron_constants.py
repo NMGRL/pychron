@@ -48,6 +48,8 @@ SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
+# LAMBDA = '\N{Greek Small Letter Lambda}'
+LAMBDA = '\u03BB'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
@@ -60,15 +62,19 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Weighted Mean']
-FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
-
 SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
+
+WEIGHTED_MEAN = 'Weighted Mean'
+INTEGRATED = 'Integrated'
+
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', WEIGHTED_MEAN]
+
+FIT_ERROR_TYPES = [SD, SEM, 'CI']
 
 AGE_SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Plateau else Weighted Mean', 'Isochron')
 SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean')

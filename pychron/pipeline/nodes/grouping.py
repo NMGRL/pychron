@@ -25,7 +25,8 @@ from traitsui.api import View, UItem, EnumEditor, VGroup, Item, HGroup, spring
 from pychron.core.helpers.datetime_tools import bin_timestamps
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
-from pychron.pychron_constants import AGE_SUBGROUPINGS, SUBGROUPINGS, ERROR_TYPES, SUBGROUPING_ATTRS
+from pychron.pychron_constants import AGE_SUBGROUPINGS, SUBGROUPINGS, ERROR_TYPES, SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
+    INTEGRATED, MSEM, SD
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
@@ -124,10 +125,28 @@ class SubGroupingNode(GroupingNode):
         self.by_key = nodedict.get('key', 'Aliquot')
 
     def _id_func(self, gid, analyses):
-        attrs = ['{}_{}'.format(attr, tag) for attr in SUBGROUPING_ATTRS for tag in ('kind', 'error_kind')]
+        analyses = list(analyses)
+        naliquots = len({a.aliquot for a in analyses})
 
+        for attr in SUBGROUPING_ATTRS:
+            if attr == 'age':
+                continue
+            setattr(self, '{}_kind'.format(attr), WEIGHTED_MEAN if naliquots > 1 else INTEGRATED)
+            setattr(self, '{}_error_kind'.format(attr), MSEM if naliquots > 1 else SD)
+
+        attrs = ['{}_{}'.format(attr, tag) for attr in SUBGROUPING_ATTRS for tag in ('kind', 'error_kind')]
         grouping = {attr: getattr(self, attr) for attr in attrs}
-        apply_subgrouping(grouping, list(analyses), gid=gid)
+
+        apply_subgrouping(grouping, analyses, gid=gid)
+
+    def _pre_run_hook(self, state):
+        pass
+        # unks = state.unknowns
+        #
+        # naliquots = list({})
+        # for attr in SUBGROUPING_ATTRS:
+        #     setattr(self, '{}_kind'.format(attr), v)
+        #     setattr(self, '{}_error_kind'.format(attr), e)
 
     def run(self, state):
         super(SubGroupingNode, self).run(state)

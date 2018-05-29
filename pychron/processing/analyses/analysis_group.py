@@ -29,7 +29,7 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPINGS, \
-    SUBGROUPING_ATTRS, ERROR_TYPES, AGE_SUBGROUPINGS
+    SUBGROUPING_ATTRS, ERROR_TYPES, AGE_SUBGROUPINGS, INTEGRATED, WEIGHTED_MEAN
 
 
 def AGProperty(*depends):
@@ -612,7 +612,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
-        # self.set_preferred_defaults()
         self.preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (
                                                                                          ('K/Ca', 'kca'),
                                                                                          ('K/Cl', 'kcl'),
@@ -758,10 +757,15 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         else:
             return self.mswd
 
-    def set_preferred_kinds(self, sg):
+    def set_preferred_kinds(self, sg=None):
+        naliquots = len({a.aliquot for a in self.analyses})
         for k in SUBGROUPING_ATTRS:
-            vk = sg['{}_kind'.format(k)]
-            ek = sg['{}_error_kind'.format(k)]
+            if sg is None:
+                vk = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+                ek = MSEM if naliquots > 1 else SD
+            else:
+                vk = sg['{}_kind'.format(k)]
+                ek = sg['{}_error_kind'.format(k)]
             self.set_preferred_kind(k, vk, ek)
 
     def set_preferred_kind(self, attr, k, ek):
