@@ -318,7 +318,7 @@ class PipelineTask(BaseBrowserTask):
 
     def set_interpreted_age(self):
         ias = self.active_editor.get_interpreted_ages()
-        set_interpreted_age(self.dvc, ias)#
+        set_interpreted_age(self.dvc, ias)
 
     def git_rollback(self):
         # select experiment

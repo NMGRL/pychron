@@ -702,9 +702,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
             setattr(self, 'preferred_{}_kind'.format(attr), default_kind)
             setattr(self, 'preferred_{}_error_kind'.format(attr), default_error_kind)
 
-    def is_omitted(self, tags=None):
-        return False
-
     def get_age(self, okind, set_preferred=False):
 
         kind = okind.lower().replace(' ', '_')
