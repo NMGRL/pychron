@@ -59,23 +59,29 @@ preferred_grp = VGroup(
     HGroup(TItem('preferred_age_value', label='Age', format_str='%0.3f'),
            TItem('preferred_age_error', format_str='%0.3f', show_label=False),
            spring,
-           UItem('preferred_age_kind')),
+           UItem('preferred_age_kind'),
+           UItem('preferred_age_error_kind')),
     HGroup(TItem('preferred_kca_value', label='K/Ca', format_str='%0.3f'),
            TItem('preferred_kca_error', format_str='%0.3f', show_label=False),
            spring,
-           UItem('preferred_kca_kind')),
+           UItem('preferred_kca_kind'),
+           UItem('preferred_kca_error_kind')),
     HGroup(TItem('preferred_kcl_value', label='K/Cl'),
            TItem('preferred_kcl_error', show_label=False),
            spring,
-           UItem('preferred_kcl_kind')),
+           UItem('preferred_kcl_kind'),
+           UItem('preferred_kcl_error_kind')),
     HGroup(TItem('preferred_rad40_percent_value', label='%40Ar*'),
            TItem('preferred_rad40_percent_error', show_label=False),
            spring,
-           UItem('preferred_rad40_percent_kind')),
+           UItem('preferred_rad40_percent_kind'),
+           UItem('preferred_rad40_percent_error_kind')),
+
     HGroup(TItem('preferred_moles_k39_value', label='mol 39K'),
            TItem('preferred_moles_k39_error', show_label=False),
            spring,
-           UItem('preferred_moles_k39_kind')),
+           UItem('preferred_moles_k39_kind'),
+           UItem('preferred_moles_k39_error_kind')),
     label='Preferred', show_border=True, )
 
 EDIT_VIEW = View(HGroup(preferred_grp,
@@ -99,7 +105,8 @@ cols = [
     UObjectColumn(name='preferred_age_value', format='%0.3f', label='Age',
                   width=70),
     UObjectColumn(name='preferred_age_error', format='%0.4f', label=PLUSMINUS_ONE_SIGMA,
-                  width=70)]
+                  width=70),
+    UObjectColumn(name='preferred_mswd', format='%0.4f', label='MSWD')]
 
 editor = TableEditor(columns=cols, orientation='vertical',
                      sortable=False, edit_view=EDIT_VIEW)

@@ -43,15 +43,15 @@ class GroupAgeAdapter(BaseAdapter):
         # ('Age', 'age'),
         # (PLUSMINUS_ONE_SIGMA, 'age_err'),
 
-        ('Kind', 'kca_kind'),
+        ('K/Ca Kind', 'kca_kind'),
         # ('K/Ca', 'kca'),
 
-        ('Kind', 'kcl_kind'),
+        ('K/Cl Kind', 'kcl_kind'),
         # ('K/Cl', 'kcl'),
 
-        ('Kind', 'rad40_percent_kind'),
+        ('%40Ar* Kind', 'rad40_percent_kind'),
         # ('%40Ar*', 'rad40_percent'),
-        ('Kind', 'moles_k39_kind'),
+        ('Mol 39K Kind', 'moles_k39_kind'),
         # ('mol 39K', 'k39'),
     ]
 

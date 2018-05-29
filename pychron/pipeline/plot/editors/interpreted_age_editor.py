@@ -47,12 +47,13 @@ class InterpretedAgeEditor(FigureEditor):
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
-            return InterpretedAgeGroup(analyses=aa,
-                                       preferred_age_kind=pk,
-                                       preferred_age_error_kind=ek,
-                                       use=True,
-                                       uuid=str(uuid.uuid4()),
-                                       **additional)
+            p = InterpretedAgeGroup(analyses=aa,
+                                    use=True,
+                                    uuid=str(uuid.uuid4()),
+                                    **additional)
+            p.set_preferred_defaults()
+            p.set_preferred_age(pk, ek)
+            return p
 
         key = attrgetter('group_id')
         ias = [func(list(ans)) for gid, ans in groupby(sorted(self.analyses, key=key), key=key)]

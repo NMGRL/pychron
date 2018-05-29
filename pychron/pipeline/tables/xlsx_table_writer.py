@@ -160,7 +160,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            attr='isochron3640')]
 
         # setup formats
-        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_ar39')
+        sigfigs = ('age', 'kca', 'rad40_percent', 'cumulative_ar39', 'uF')
         for c in columns:
             if c.attr in sigfigs:
                 c.sigformat = c.attr
