@@ -829,8 +829,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         elif pk == 'integrated':
             pa = self._calculate_integrated(attr)
         else:
-            v, e = self._calculate_arithmetic_mean(attr)
-            pa = ufloat(v, e)
+            pa = self._calculate_arithmetic_mean(attr)
 
         return pa
 

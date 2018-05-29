@@ -24,7 +24,6 @@ from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumE
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
-from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES
 
@@ -95,12 +94,12 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     unknown_corrected_note = dumpable(Str('''Corrected: Isotopic intensities corrected for blank, baseline, 
     radioactivity decay and detector intercalibration, not for interfering reactions.'''))
     unknown_intercept_note = dumpable(Str('''Intercepts: t-zero intercept corrected for detector baseline.'''))
-    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis'''))
+    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis.'''))
 
     unknown_x_note = dumpable(Str('''X symbol preceding sample ID denotes analyses 
     excluded from weighted-mean age calculations.'''))
     unknown_px_note = dumpable(Str('''pX symbol preceding sample ID denotes analyses
-    excluded plateau age calculations'''))
+    excluded plateau age calculations.'''))
 
     unknown_title = dumpable(Str('Ar/Ar analytical data.'))
     air_notes = dumpable(Str(''''''))
@@ -145,6 +144,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         self._load_note_names()
         self._unknown_note_name_changed(self.unknown_note_name)
         print('asf', id(self), self.unknown_note_name, self.available_unknown_note_names)
+
     def _load_note_names(self):
         p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
         if os.path.isfile(p):
@@ -153,12 +153,21 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                 for grpname in ('unknown',):
                     grp = obj.get('{}_notes'.format(grpname))
                     if grp:
-                        setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
+                        try:
+                            setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
+                        except AttributeError:
+                            pass
 
     def _unknown_note_name_changed(self, new):
         grp = self._load_note('unknown_notes')
         if grp is not None:
-            self.unknown_notes = grp.get(new, '')
+            sgrp = grp.get(new)
+            if sgrp:
+                self.unknown_notes = sgrp.get('main', '')
+                for k in ('corrected', 'x', 'px', 'intercept', 'time'):
+                    v = sgrp.get(k)
+                    if v is not None:
+                        setattr(self, 'unknown_{}_note'.format(k), v)
 
     def _load_note(self, group):
         p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
@@ -326,4 +335,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                  title='XLSX Analysis Table Options',
                  buttons=['OK', 'Cancel'])
         return v
+
+if __name__ == '__main__':
+    from pychron.paths import paths
+    paths.build('~/PychronDev')
+    e = XLSXAnalysisTableWriterOptions()
+    e.configure_traits()
 # ============= EOF =============================================
