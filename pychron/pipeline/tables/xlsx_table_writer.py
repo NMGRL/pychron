@@ -693,7 +693,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             else:
                 txt = 'n={}/{} steps={}'.format(ag.nsteps, tn, ag.plateau_steps_str)
                 sh.write(row, startcol + 2, txt, border)
-                sh.write(row, cum_idx+1, format_mswd(ag.get_plateau_mswd_tuple()), border)
+                sh.write(row, cum_idx + 1, format_mswd(ag.get_plateau_mswd_tuple()), border)
 
         else:
             txt = 'n={}/{}'.format(ag.nanalyses, tn)
@@ -787,9 +787,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                  u'Weighted Mean K/Ca {}'.format(pmsigma),
                                  fmt)
 
+            group.kca_error_kind = kind = self._options.kca_error_kind
+            # group.dirty = True
             kca = group.weighted_kca if self._options.use_weighted_kca else group.arith_kca
+
             sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)
+            sh.write_rich_string(self._current_row, idx + 2, kind, fmt)
             self._current_row += 1
 
         nfmt = self._get_number_format('summary_age')

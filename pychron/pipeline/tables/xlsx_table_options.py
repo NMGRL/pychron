@@ -26,7 +26,7 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
-from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
+from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
@@ -74,6 +74,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     include_intercepts = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
+    kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
     highlight_non_plateau = Bool(True)
     highlight_color = dumpable(Color)
@@ -226,7 +227,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               Item('include_percent_ar39', label='Cumulative %39Ar'),
                               Item('include_radiogenic_yield', label='%40Ar*'),
                               Item('include_kca', label='K/Ca'),
-                              Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
+                              Item('use_weighted_kca', label='K/Ca Weighted Mean'),
+                              Item('kca_error_kind', label='K/Ca Error'),
                               Item('include_sensitivity', label='Sensitivity'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),

@@ -67,6 +67,10 @@ class AnalysisGroup(IdeogramPlotable):
     weighted_age_error_kind = Str
     arith_age_error_kind = Str
 
+    age_error_kind = Enum(*ERROR_TYPES)
+    kca_error_kind = Enum(*ERROR_TYPES)
+    kcl_error_kind = Enum(*ERROR_TYPES)
+
     mswd = Property
 
     isochron_age = AGProperty()
@@ -280,10 +284,12 @@ class AnalysisGroup(IdeogramPlotable):
 
         return e
 
-    def _get_weighted_mean(self, attr):
-        v, e = self._calculate_weighted_mean(attr)
+    def _get_weighted_mean(self, attr, kind=None):
+        if kind is None:
+            kind = getattr(self, '{}_error_kind'.format(attr), SD)
+
+        v, e = self._calculate_weighted_mean(attr, error_kind=kind)
         mswd = self._calculate_mswd(attr)
-        kind = getattr(self, 'preferred_{}_error_kind'.format(attr))
         e = self._modify_error(v, e, kind, mswd)
         return ufloat(v, e)
 
