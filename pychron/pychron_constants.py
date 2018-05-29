@@ -78,7 +78,7 @@ FIT_ERROR_TYPES = [SD, SEM, 'CI']
 
 AGE_SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Plateau else Weighted Mean', 'Isochron')
 SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean')
-SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39')
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES

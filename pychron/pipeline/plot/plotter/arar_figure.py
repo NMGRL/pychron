@@ -420,9 +420,13 @@ class BaseArArFigure(SelectionFigure):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
 
-    def _plot_moles_k39(self, po, pobj, pid):
+    def _plot_signal_k39(self, po, pobj, pid):
         k = 'k39'
         return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+
+    def _plot_moles_k39(self, po, pobj, pid):
+        k = 'moles_k39'
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub> (mol)', k, po, pid)
 
     def _plot_moles_ar40(self, po, pobj, pid):
         k = 'Ar40'

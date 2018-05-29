@@ -54,6 +54,7 @@ class AnalysisGroup(IdeogramPlotable):
     kcl_error_kind = Enum(*ERROR_TYPES)
     rad40_error_kind = Enum(*ERROR_TYPES)
     moles_k39_error_kind = Enum(*ERROR_TYPES)
+    signal_k39_error_kind = Enum(*ERROR_TYPES)
 
     mswd = Property
 
@@ -334,6 +335,9 @@ class AnalysisGroup(IdeogramPlotable):
             return av, werr
 
     def _calculate_integrated(self, attr):
+        if attr == 'age':
+            return self.integrated_age
+
         uv = ufloat(0, 0)
         ans = list(self.clean_analyses())
 
@@ -366,13 +370,18 @@ class AnalysisGroup(IdeogramPlotable):
         elif attr == 'rad40_percent':
             ns = [ai.rad40 for ai in ans]
             ds = [ai.total40 for ai in ans]
-            uv = apply_pr(ns, ds, '')
+            uv = apply_pr(ns, ds, '') * 100
         elif attr == 'moles_k39':
             uv = sum([ai.moles_k39 for ai in ans])
+        elif attr == 'signal_k39':
+            uv = sum([ai.k39 for ai in ans])
 
         return uv
 
     def _calculate_arithmetic_mean(self, attr):
+        if attr == 'age':
+            return self.arith_age
+
         return self._calculate_mean(attr, use_weights=False)
 
     def _calculate_weighted_mean(self, attr, error_kind=None):
@@ -482,6 +491,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_integrated_age(self):
         ret = ufloat(0, 0)
         ans = list(self.clean_analyses())
+        print('get inteaffs agae')
         if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
 
             rad40 = sum([a.get_computed_value('rad40') for a in ans])
@@ -492,7 +502,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             try:
                 ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
             except ZeroDivisionError:
-                pass
+                print('asdfasdfasfasfasdfasdfasdfasdfasd', rad40, k39)
 
         return ret
 
@@ -616,7 +626,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
                                                                                          ('K/Ca', 'kca'),
                                                                                          ('K/Cl', 'kcl'),
                                                                                          ('%40Ar*', 'rad40_percent'),
-                                                                                         ('Mol 39K', 'moles_k39'))]
+                                                                                         ('Mol 39K', 'moles_k39'),
+                                                                                         ('Signal 39K', 'signal_k39'))]
         self.preferred_values.insert(0, AgePreferredValue(name='Age', attr='age'))
 
     def set_preferred_age(self, pk, ek):
@@ -701,8 +712,13 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
         return pv.uvalue
 
     @property
-    def k39(self):
+    def moles_k39(self):
         pv = self._get_pv('moles_k39')
+        return pv.uvalue
+
+    @property
+    def k39(self):
+        pv = self._get_pv('signal_k39')
         return pv.uvalue
 
     def _get_pv(self, attr):

@@ -125,7 +125,6 @@ def interpolate_noteline(line, sup, sub, ital):
                 break
         else:
             args.append('{} '.format(line))
-        print('ars', args)
         return args
 
     ns = []

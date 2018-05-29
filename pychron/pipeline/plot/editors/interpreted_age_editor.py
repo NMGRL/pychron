@@ -33,7 +33,7 @@ class InterpretedAgeEditor(FigureEditor):
         additional = {}
         if isinstance(po, SpectrumOptions):
             ek = po.plateau_age_error_kind
-            pk = ''
+            pk = 'Plateau'
             additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
         elif isinstance(po, InverseIsochronOptions):
             pk = 'Isochron'

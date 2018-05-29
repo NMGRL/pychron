@@ -29,9 +29,9 @@ from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS
 
 class IdeogramAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
+                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'])
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'])
 
 
 class IdeogramOptions(AgeOptions):

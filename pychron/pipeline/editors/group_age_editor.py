@@ -52,6 +52,7 @@ class GroupAgeAdapter(BaseAdapter):
         ('%40Ar* Kind', 'rad40_percent_kind'),
         # ('%40Ar*', 'rad40_percent'),
         ('Mol 39K Kind', 'moles_k39_kind'),
+        ('Signal 39K Kind', 'signal_k39_kind'),
         # ('mol 39K', 'k39'),
     ]
 
@@ -72,6 +73,8 @@ class GroupAgeAdapter(BaseAdapter):
     rad40_percent_error_kind_text = Property
     moles_k39_kind_text = Property
     moles_k39_error_kind_text = Property
+    signal_k39_kind_text = Property
+    signal_k39_error_kind_text = Property
 
     def _get_subgroup_text(self):
         return self._get_subgroup_attr('name')
@@ -105,6 +108,12 @@ class GroupAgeAdapter(BaseAdapter):
 
     def _get_moles_k39_error_kind_text(self):
         return self._get_subgroup_attr('moles_k39_error_kind')
+
+    def _get_signal_k39_kind_text(self):
+        return self._get_subgroup_attr('signal_k39_kind')
+
+    def _get_signal_k39_error_kind_text(self):
+        return self._get_subgroup_attr('signal_k39_error_kind')
 
     def _get_subgroup_attr(self, attr):
         ret = ''
