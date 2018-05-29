@@ -29,7 +29,7 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPINGS, \
-    SUBGROUPING_ATTRS, ERROR_TYPES
+    SUBGROUPING_ATTRS, ERROR_TYPES, AGE_SUBGROUPINGS
 
 
 def AGProperty(*depends):
@@ -579,6 +579,10 @@ class PreferredValue(HasTraits):
         return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error')}
 
 
+class AgePreferredValue(PreferredValue):
+    kind = Enum(*AGE_SUBGROUPINGS)
+
+
 class InterpretedAgeGroup(StepHeatAnalysisGroup):
     uuid = Str
     all_analyses = List
@@ -609,11 +613,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         # self.set_preferred_defaults()
-        self.preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (('Age', 'age'),
+        self.preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (
                                                                                          ('K/Ca', 'kca'),
                                                                                          ('K/Cl', 'kcl'),
                                                                                          ('%40Ar*', 'rad40_percent'),
                                                                                          ('Mol 39K', 'moles_k39'))]
+        self.preferred_values.insert(0, AgePreferredValue(name='Age', attr='age'))
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -735,7 +740,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
     def _preferred_kind_changd(self, obj, old, name, new):
-        print('name', name, obj.attr)
         v = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
         obj.value = nominal_value(v)
         obj.error = std_dev(v)
