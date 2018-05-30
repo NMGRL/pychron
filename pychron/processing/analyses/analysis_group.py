@@ -575,7 +575,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
 class PreferredValue(HasTraits):
     attr = Str
-    error_kind = Enum(*ERROR_TYPES)
+    error_kind = Str(MSEM)
+    error_kinds = List(ERROR_TYPES)
     kind = Enum(*SUBGROUPINGS)
     value = Float
     error = Float
@@ -587,6 +588,13 @@ class PreferredValue(HasTraits):
 
     def to_dict(self):
         return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error')}
+
+    def _kind_changed(self, new):
+        if new in ('Integrated', 'Arithmetic Mean'):
+            self.error_kinds = [SD, ]
+            self.error_kind = SD
+        else:
+            self.error_kinds = ERROR_TYPES
 
 
 class AgePreferredValue(PreferredValue):
@@ -623,11 +631,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         self.preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (
-                                                                                         ('K/Ca', 'kca'),
-                                                                                         ('K/Cl', 'kcl'),
-                                                                                         ('%40Ar*', 'rad40_percent'),
-                                                                                         ('Mol 39K', 'moles_k39'),
-                                                                                         ('Signal 39K', 'signal_k39'))]
+            ('K/Ca', 'kca'),
+            ('K/Cl', 'kcl'),
+            ('%40Ar*', 'rad40_percent'),
+            ('Mol 39K', 'moles_k39'),
+            ('Signal 39K', 'signal_k39'))]
         self.preferred_values.insert(0, AgePreferredValue(name='Age', attr='age'))
 
     def set_preferred_age(self, pk, ek):

@@ -218,7 +218,7 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     def _plot_aux(self, title, vk, po, pid):
 
-        ys, es = self._get_aux_plot_data(vk)
+        ys, es = self._get_aux_plot_data(vk, po.scalar)
         selection = []
         invalid = []
 

@@ -86,7 +86,9 @@ class TItem(Item):
 #     label='Preferred', show_border=True, )
 cols = [ObjectColumn(name='name', label='Name', editable=False),
         ObjectColumn(name='kind', label='Kind'),
-        ObjectColumn(name='error_kind', label='Error Kind'),
+        ObjectColumn(name='error_kind',
+                     editor=EnumEditor(name='error_kinds'),
+                     label='Error Kind'),
         ObjectColumn(name='value', label='Value', editable=False, format_func=lambda x: floatfmt(x, use_scientific=True)),
         ObjectColumn(name='error', label='Error', editable=False, format_func=lambda x: floatfmt(x, use_scientific=True)),
         ]

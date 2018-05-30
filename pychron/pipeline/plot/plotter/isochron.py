@@ -16,13 +16,15 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.plot_label import PlotLabel
 from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from numpy import linspace
-from traits.api import Array, Float, Str
+from six.moves import zip
+from traits.api import Float, Str
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
@@ -33,7 +35,6 @@ from pychron.pipeline.plot.flow_label import FlowPlotLabel
 from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pychron_constants import PLUSMINUS, SIGMA
-from six.moves import zip
 
 
 class OffsetPlotLabel(PlotLabel):
@@ -106,7 +107,7 @@ class InverseIsochron(Isochron):
     # plotters
     # ===============================================================================
     def _plot_aux(self, title, vk, po, pid):
-        ys, es = self._get_aux_plot_data(vk)
+        ys, es = self._get_aux_plot_data(vk, po.scalar)
         self._add_aux_plot(ys, title, vk, pid)
 
     def _add_plot(self, xs, ys, es, plotid, value_scale='linear'):
