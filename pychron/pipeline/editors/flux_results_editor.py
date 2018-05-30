@@ -18,12 +18,9 @@ from itertools import groupby
 from operator import attrgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
-from six.moves import range
-from six.moves import zip
 # ============= enthought library imports =======================
-# from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev, ufloat
@@ -239,6 +236,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     plotter_options = None
     irradiation = Str
     level = Str
+    holder = Str
 
     suppress_metadata_change = Bool(False)
     # scene = Instance(MlabSceneModel, ())
@@ -338,6 +336,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
                                                       position_only=self.plotter_options.position_only,
                                                       position_error=self.plotter_options.position_error,
+
+                                                      # mean_position_only=self.plotter_options.position_only,
+                                                      # mean_position_error=self.plotter_options.position_error,
                                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
                 for p, j, je in zip(positions, nominals, errors):
@@ -747,6 +748,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            style='readonly',
                            format_func=floatfmt,
                            label='Delta J(%)'),
+                      Readonly('holder', label='Tray'),
                       # Item('j_gradient',
                       #      style='readonly',
                       #      format_func=floatfmt,

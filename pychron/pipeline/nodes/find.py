@@ -131,7 +131,11 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
             state.veto = self
         else:
             dvc = self.dvc
-            state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            args = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            if args:
+                geom, holder = args
+                state.geometry = geom
+                state.holder = holder
 
             ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
 

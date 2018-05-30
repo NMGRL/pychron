@@ -63,8 +63,12 @@ class OLSRegressor(BaseRegressor):
     def fast_predict(self, endog, pexog, exog=None):
         ols = self._ols
         ols.wendog = ols.whiten(endog)
+
         if exog is not None:
             ols.wexog = ols.whiten(exog)
+
+            # force recalculation
+            del ols.pinv_wexog
 
         result = ols.fit()
         return result.predict(pexog)

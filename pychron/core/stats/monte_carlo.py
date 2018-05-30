@@ -25,7 +25,9 @@ from scipy.stats import norm
 
 
 def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None,
-                                 position_only=False, seed=None):
+                                 position_only=False,
+                                 mean_position_error=None,
+                                 mean_position_only=False, seed=None):
     pexog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
@@ -39,12 +41,11 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_err
     ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
-    if position_only:
+    if mean_position_only or position_only:
         yserr = 0
 
     yp = ys + yserr * ga
-
-    if position_error:
+    if mean_position_error:
         pgax = ndist.rvs((ntrials, n))
         pgay = ndist.rvs((ntrials, n))
 
@@ -52,10 +53,22 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_err
 
         ox, oy = xs.T
         for i in range(ntrials):
-            x = ox + position_error * pgax[i]
-            y = oy + position_error * pgay[i]
+            x = ox + mean_position_error * pgax[i]
+            y = oy + mean_position_error * pgay[i]
             x = reg.get_exog(column_stack((x, y)))
             ps[i] = pred(yp[i], pexog, exog=x)
+    elif position_error:
+        pgax = ndist.rvs((ntrials, n))
+        pgay = ndist.rvs((ntrials, n))
+
+        # xs = reg.clean_xs
+        ox, oy = pts.T
+        for i in range(ntrials):
+            x = ox + position_error * pgax[i]
+            y = oy + position_error * pgay[i]
+            pexog = reg.get_exog(column_stack((x, y)))
+            ps[i] = pred(yp[i], pexog)
+
     else:
         for i in range(ntrials):
             ps[i] = pred(yp[i], pexog)

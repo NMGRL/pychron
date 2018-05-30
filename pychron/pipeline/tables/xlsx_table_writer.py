@@ -306,9 +306,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                                 (('Ar', 38), ('Ar', 37), 'Ca'),
                                                 (('Ar', 36), ('Ar', 37), 'Ca'),
 
-                                                (('Ar', 36), ('Ar', 38), 'Cl'),
-
-                                                )
+                                                (('Ar', 36), ('Ar', 38), 'Cl'))
                 for c in (Column(label=('(', '<sup>{}</sup>'.format(am),
                                         '{}/'.format(ai),
                                         '<sup>{}</sup>'.format(bm), '{})'.format(bm), '<sub>{}</sub>'.format(e)),

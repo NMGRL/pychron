@@ -986,7 +986,8 @@ class DVC(Loggable):
 
     def get_irradiation_geometry(self, irrad, level):
         dblevel = self.db.get_irradiation_level(irrad, level)
-        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+
+        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder), dblevel.holder
 
     def get_irradiation_names(self):
         irrads = self.db.get_irradiations()
