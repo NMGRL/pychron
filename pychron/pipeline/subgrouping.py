@@ -110,10 +110,7 @@ def make_interpreted_age_subgroups(ans):
                     k = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
                 if ek is None:
                     ek = MSEM if naliquots > 1 else SD
-                # print('attttr')
                 ag.set_preferred_kind(attr, k, ek)
-                # setattr(ag, 'preferred_{}_kind'.format(attr), k)
-                # setattr(ag, 'preferred_{}_error_kind'.format(attr), ek)
 
             kind = ag.get_preferred_kind('age')
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])

@@ -81,6 +81,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
+
     unknown_note_name = dumpable(Str('Default'))
     available_unknown_note_names = List
 
@@ -103,12 +104,13 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     excluded plateau age calculations.'''))
 
     unknown_title = dumpable(Str('Ar/Ar analytical data.'))
-    air_notes = dumpable(Str(''''''))
-    air_title = dumpable(Str(''''''))
-    blank_notes = dumpable(Str(''''''))
-    blank_title = dumpable(Str(''''''))
-    monitor_notes = dumpable(Str(''''''))
-    monitor_title = dumpable(Str(''''''))
+    air_notes = dumpable(Str(''))
+    air_title = dumpable(Str(''))
+    blank_notes = dumpable(Str(''))
+    blank_title = dumpable(Str(''))
+    monitor_notes = dumpable(Str(''))
+    monitor_title = dumpable(Str(''))
+    summary_notes = dumpable(Str(''))
 
     include_summary_sheet = dumpable(Bool(True))
     include_summary_age = dumpable(Bool(True))
@@ -142,15 +144,19 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     def __init__(self, *args, **kw):
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
-        self._load_note_names()
-        self._unknown_note_name_changed(self.unknown_note_name)
-        print('asf', id(self), self.unknown_note_name, self.available_unknown_note_names)
+        # self._load_note_names()
 
-    def _load_note_names(self):
+        self._load_notes()
+        self._unknown_note_name_changed(self.unknown_note_name)
+
+    def _load_notes(self):
         p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as rf:
                 obj = yaml.load(rf)
+
+                setattr(self, 'summary_notes', obj.get('summary_notes', ''))
+
                 for grpname in ('unknown',):
                     grp = obj.get('{}_notes'.format(grpname))
                     if grp:
@@ -190,14 +196,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
         return path
 
-    def load_notes(self):
-        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
-        if os.path.isfile(p):
-            with open(p, 'r') as rf:
-                obj = yaml.load(rf)
-                for k, v in obj.items():
-                    if v is not None:
-                        setattr(self, k, v)
+    # def load_notes(self):
+    #     p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as rf:
+    #             obj = yaml.load(rf)
+    #             for k, v in obj.items():
+    #                 if k == 'summary_notes':
+    #                     setattr(self, 'summary_notes', v)
 
     def traits_view(self):
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
@@ -314,6 +320,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  enabled_when='include_summary_sheet',
                                  label='Columns',
                                  show_border=True),
+                             VGroup(UItem('summary_notes', style='custom'), show_border=True, label='Notes'),
                              label='Summary')
 
         plat_grp = VGroup(Item('plateau_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
@@ -336,6 +343,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                  title='XLSX Analysis Table Options',
                  buttons=['OK', 'Cancel'])
         return v
+
 
 if __name__ == '__main__':
     # from pychron.paths import paths

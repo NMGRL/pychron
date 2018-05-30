@@ -51,7 +51,7 @@ class InterpretedAgeEditor(FigureEditor):
                                     use=True,
                                     uuid=str(uuid.uuid4()),
                                     **additional)
-            p.set_preferred_defaults()
+            p.set_preferred_kinds()
             p.set_preferred_age(pk, ek)
             return p
 

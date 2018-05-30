@@ -516,7 +516,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 else:
                     if nsubgroups == 1:
                         ag = InterpretedAgeGroup(analyses=items)
-                        ag.set_preferred_defaults()
+                        ag.set_preferred_kinds()
                         nitems = [ag]
                     else:
                         nitems.extend(items)
@@ -858,18 +858,20 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_blank(self._current_row, i, 'Notes:', cell_format=top)
 
     def _make_summary_notes(self, sh):
-        sh.write(self._current_row, 0, 'Plateau Criteria:')
-        self._current_row += 1
-
-        sh.write(self._current_row, 0, '\t\tN Steps= {}'.format(self._options.plateau_nsteps))
-        self._current_row += 1
-
-        sh.write(self._current_row, 0, '\t\tGas Fraction= {}'.format(self._options.plateau_gas_fraction))
-        self._current_row += 1
-        if self._options.fixed_step_low or self._options.fixed_step_high:
-            sh.write(self._current_row, 0, '\t\tFixed Steps= {},{}'.format(self._options.fixed_step_low,
-                                                                           self.fixed_step_high))
-            self._current_row += 1
+        notes = six.text_type(self._options.summary_notes)
+        self._write_notes(sh, notes)
+        # sh.write(self._current_row, 0, 'Plateau Criteria:')
+        # self._current_row += 1
+        #
+        # sh.write(self._current_row, 0, '\t\tN Steps= {}'.format(self._options.plateau_nsteps))
+        # self._current_row += 1
+        #
+        # sh.write(self._current_row, 0, '\t\tGas Fraction= {}'.format(self._options.plateau_gas_fraction))
+        # self._current_row += 1
+        # if self._options.fixed_step_low or self._options.fixed_step_high:
+        #     sh.write(self._current_row, 0, '\t\tFixed Steps= {},{}'.format(self._options.fixed_step_low,
+        #                                                                    self.fixed_step_high))
+        #     self._current_row += 1
 
     def _make_unknowns_notes(self, sh):
         monitor_age = 28.201
@@ -914,7 +916,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _write_notes(self, sh, notes):
         for line in notes.split('\n'):
-            line = interpolate_noteline(line, self._superscript, self._subscript, self._ital)
+            line = interpolate_noteline(line, self._superscript, self._subscript,
+                                        self._ital, self._bold)
+
             sh.write_rich_string(self._current_row, 0, *line)
             self._current_row += 1
 

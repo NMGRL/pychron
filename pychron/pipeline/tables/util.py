@@ -103,12 +103,13 @@ def age_value(target_units='Ma'):
     return wrapper
 
 
-subreg = re.compile(r'^<sub>(?P<item>[\w\(\)]+)</sub>')
-supreg = re.compile(r'^<sup>(?P<item>[\w\(\)]+)</sup>')
-italreg = re.compile(r'^<ital>(?P<item>[\w\-\(\)]+)</ital>')
+subreg = re.compile(r'^<sub>(?P<item>.+)</sub>')
+supreg = re.compile(r'^<sup>(?P<item>.+)</sup>')
+italreg = re.compile(r'^<ital>(?P<item>.+)</ital>')
+boldreg = re.compile(r'^<bold>(?P<item>.+)</bold>')
 
 
-def interpolate_noteline(line, sup, sub, ital):
+def interpolate_noteline(line, sup, sub, ital, bold):
     line = line.replace('<plus_minus>', PLUSMINUS)
     line = line.replace('<sigma>', SIGMA)
     line = line.replace('<lambda>', LAMBDA)
@@ -117,7 +118,9 @@ def interpolate_noteline(line, sup, sub, ital):
         args = []
         for fmt, reg, taglen in ((sup, supreg, 5),
                                  (sub, subreg, 5),
-                                 (ital, italreg, 6)):
+                                 (ital, italreg, 6),
+                                 (bold, boldreg, 6),
+                                 ):
             g = reg.match(line)
             if g:
                 args.append(fmt)

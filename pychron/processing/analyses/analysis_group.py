@@ -610,13 +610,13 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv.kind = pk
         pv.dirty = True
 
-    def set_preferred_defaults(self, default_kind='Weighted Mean', default_error_kind=MSEM):
-
-        for attr in SUBGROUPING_ATTRS:
-            pv = self._get_pv(attr)
-            pv.kind = default_kind
-            pv.error_kind = default_error_kind
-            pv.dirty = True
+    # def set_preferred_defaults(self, default_kind='Weighted Mean', default_error_kind=MSEM):
+    #
+    #     for attr in SUBGROUPING_ATTRS:
+    #         pv = self._get_pv(attr)
+    #         pv.kind = default_kind
+    #         pv.error_kind = default_error_kind
+    #         pv.dirty = True
 
     def get_age(self, okind, set_preferred=False):
 
