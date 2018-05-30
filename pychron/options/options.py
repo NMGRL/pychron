@@ -182,7 +182,7 @@ class MainOptions(SubOptions):
                 checkbox_column(name='ytitle_visible', label='Y Title'),
                 checkbox_column(name='y_axis_right', label='Y Right'),
                 object_column(name='scalar', label='Multiplier',
-                              format_func=lambda x: floatfmt(x, use_scientific=True)),
+                              format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]

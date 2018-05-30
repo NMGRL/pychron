@@ -27,7 +27,7 @@ from pychron.pychron_constants import NULL_STR
 
 
 class AuxPlot(HasTraits):
-    names = List
+    names = List(transient=True)
     _plot_names = List
 
     save_enabled = Bool

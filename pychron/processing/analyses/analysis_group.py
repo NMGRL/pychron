@@ -20,16 +20,16 @@ import math
 from numpy import array, nan
 # ============= enthought library imports =======================
 from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
-from traits.has_traits import HasTraits
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.experiment.utilities.identifier import make_aliquot
 from pychron.processing.analyses.analysis import IdeogramPlotable
+from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPINGS, \
-    SUBGROUPING_ATTRS, ERROR_TYPES, AGE_SUBGROUPINGS, INTEGRATED, WEIGHTED_MEAN
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, INTEGRATED, \
+    WEIGHTED_MEAN
 
 
 def AGProperty(*depends):
@@ -573,39 +573,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         return ufloat(v, max(0, e))  # / self.age_scalar
 
 
-class PreferredValue(HasTraits):
-    attr = Str
-    error_kind = Str(MSEM)
-    error_kinds = List(ERROR_TYPES)
-    kind = Enum(*SUBGROUPINGS)
-    value = Float
-    error = Float
-    dirty = Event
-
-    @property
-    def uvalue(self):
-        return ufloat(self.value, self.error)
-
-    def to_dict(self):
-        return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error')}
-
-    def _kind_changed(self, new):
-        if new in ('Integrated', 'Arithmetic Mean'):
-            self.error_kinds = [SD, ]
-            self.error_kind = SD
-        else:
-            self.error_kinds = ERROR_TYPES
-
-
-class AgePreferredValue(PreferredValue):
-    kind = Enum(*AGE_SUBGROUPINGS)
-
-
-class InterpretedAgeGroup(StepHeatAnalysisGroup):
+class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     uuid = Str
     all_analyses = List
 
-    preferred_values = List
+    # preferred_values = List
 
     name = Str
     use = Bool
@@ -630,13 +602,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
 
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
-        self.preferred_values = [PreferredValue(name=name, attr=attr) for name, attr in (
-            ('K/Ca', 'kca'),
-            ('K/Cl', 'kcl'),
-            ('%40Ar*', 'rad40_percent'),
-            ('Mol 39K', 'moles_k39'),
-            ('Signal 39K', 'signal_k39'))]
-        self.preferred_values.insert(0, AgePreferredValue(name='Age', attr='age'))
+        super(Preferred, self).__init__()
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -728,9 +694,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup):
     def k39(self):
         pv = self._get_pv('signal_k39')
         return pv.uvalue
-
-    def _get_pv(self, attr):
-        return next((pv for pv in self.preferred_values if pv.attr == attr))
 
     def _value_string(self, t):
         try:
