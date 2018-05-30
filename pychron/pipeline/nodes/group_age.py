@@ -44,5 +44,5 @@ class GroupAgeNode(BaseDVCNode):
         for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
             ias = make_interpreted_age_subgroups(ans)
             nans.extend(ias)
-
+        state.unknowns = nans
 # ============= EOF =============================================
