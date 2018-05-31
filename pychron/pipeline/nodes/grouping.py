@@ -142,13 +142,16 @@ class SubGroupingNode(GroupingNode, Preferred):
         for attr in SUBGROUPING_ATTRS:
             if attr == 'age':
                 continue
-            pv = self._get_pv(attr)
-            pv.kind = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
-            pv.error_kind = MSEM if naliquots > 1 else SD
-            # setattr(self, '{}_kind'.format(attr), WEIGHTED_MEAN if naliquots > 1 else INTEGRATED)
-            # setattr(self, '{}_error_kind'.format(attr), MSEM if naliquots > 1 else SD)
 
-        # attrs = ['{}_{}'.format(attr, tag) for attr in SUBGROUPING_ATTRS for tag in ('kind', 'error_kind')]
+            pv = self._get_pv(attr)
+            if attr == 'age':
+                kind, error = WEIGHTED_MEAN, MSEM
+            else:
+                kind = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+                error = MSEM if naliquots > 1 else SD
+
+            pv.kind = kind
+            pv.error_kind = error
 
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
@@ -165,6 +168,7 @@ class SubGroupingNode(GroupingNode, Preferred):
 
     def run(self, state):
         ans = getattr(state, self.analysis_kind)
+        self._run(ans)
         compress_groups(ans)
 
     def traits_view(self):

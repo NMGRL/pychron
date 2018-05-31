@@ -18,7 +18,6 @@
 from itertools import groupby
 
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import MSEM, SUBGROUPING_ATTRS, SD, WEIGHTED_MEAN, INTEGRATED
 
 
 def set_subgrouping_error(tag, selected, items):
@@ -100,17 +99,24 @@ def make_interpreted_age_subgroups(ans):
             sg = item.subgroup
 
             items = list(items)
-            naliquots = len({a.aliquot for a in items})
             ag = InterpretedAgeGroup(analyses=items)
+            ag.set_preferred_kinds(sg)
+
             # print('asdf', subgroup, naliquots)
-            for attr in SUBGROUPING_ATTRS:
-                k = sg.get('{}_kind'.format(attr))
-                ek = sg.get('{}_error_kind'.format(attr))
-                if k is None:
-                    k = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
-                if ek is None:
-                    ek = MSEM if naliquots > 1 else SD
-                ag.set_preferred_kind(attr, k, ek)
+            # for attr in SUBGROUPING_ATTRS:
+            #     k = sg.get('{}_kind'.format(attr))
+            #     ek = sg.get('{}_error_kind'.format(attr))
+            #     if k is None:
+            #         if attr == 'age':
+            #             k = WEIGHTED_MEAN
+            #         else:
+            #             k = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+            #     if ek is None:
+            #         if attr == 'age':
+            #             ek = MSEM
+            #         else:
+            #             ek = MSEM if naliquots > 1 else SD
+            #     ag.set_preferred_kind(attr, k, ek)
 
             kind = ag.get_preferred_kind('age')
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])

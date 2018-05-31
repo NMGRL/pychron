@@ -102,8 +102,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def dump(self):
         p = paths.hidden_path('analysis_sets')
-        with open(p, 'w') as wfile:
-            json.dump(self._analysis_sets, wfile)
+        if self._analysis_sets:
+            with open(p, 'w') as wfile:
+                json.dump(self._analysis_sets, wfile)
 
         p = paths.hidden_path('selected_analysis_set')
         if self.analysis_set:

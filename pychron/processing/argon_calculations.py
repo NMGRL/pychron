@@ -167,6 +167,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     errors=errors,
                     signals=k39,
                     excludes=excludes,
+                    overlap_sigma=options.get('overlap_sigma', 2),
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 

@@ -423,6 +423,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     plateau_nsteps = Int(3)
     plateau_gas_fraction = Float(50)
+    plateau_overlap_sigma = Int(2)
     plateau_mswd = Float
     plateau_mswd_valid = Bool
 
@@ -540,6 +541,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
                 options = {'nsteps': self.plateau_nsteps,
                            'gas_fraction': self.plateau_gas_fraction,
+                           'overlap_sigma': self.plateau_overlap_sigma,
                            'fixed_steps': self.fixed_steps}
 
                 excludes = [i for i, ai in enumerate(ans) if ai.is_omitted()]
@@ -619,7 +621,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     #         pv.dirty = True
 
     def get_age(self, okind, set_preferred=False):
-
         kind = okind.lower().replace(' ', '_')
         if kind == 'weighted_mean':
             a = self.weighted_age
@@ -748,8 +749,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         naliquots = len({a.aliquot for a in self.analyses})
         for k in SUBGROUPING_ATTRS:
             if sg is None:
-                vk = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
-                ek = MSEM if naliquots > 1 else SD
+                if k == 'age':
+                    vk, ek = WEIGHTED_MEAN, MSEM
+                else:
+                    vk = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+                    ek = MSEM if naliquots > 1 else SD
             else:
                 vk = sg['{}_kind'.format(k)]
                 ek = sg['{}_error_kind'.format(k)]
@@ -770,7 +774,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pa = ufloat(0, 0)
 
         pv = self._get_pv('age')
-
         pak = pv.kind.lower().replace(' ', '_')
         if pak in ('weighted_mean', 'wt._mean'):
             pa = self.weighted_age
@@ -784,6 +787,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self.plateau_age
         elif pak == 'plateau_else_weighted_mean':
             pa = self.plateau_age
+
             if not self.plateau_steps:
                 pa = self.weighted_age
 
