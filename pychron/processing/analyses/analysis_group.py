@@ -664,13 +664,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     @property
     def age(self):
-        pv = self._get_pv('age')
-        return pv.uvalue
+        return self.preferred_age
 
     @property
     def uage(self):
-        pv = self._get_pv('age')
-        return pv.uvalue
+        return self.age
 
     @property
     def kca(self):
