@@ -601,6 +601,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     rlocation = Str
 
     comments = Str
+    preferred_age = Property
 
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)

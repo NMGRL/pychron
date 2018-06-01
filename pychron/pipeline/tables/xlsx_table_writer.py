@@ -345,10 +345,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             return ret
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.age)
+            return nominal_value(ag.preferred_age)
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.age) * opt.summary_age_nsigma
+            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
 
         # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
@@ -913,7 +913,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._write_notes(sh, notes)
 
     def _write_notes(self, sh, notes):
-        for line in notes.split('\n'):
+        for line in notes.split('\r\n'):
             line = interpolate_noteline(line, self._superscript, self._subscript,
                                         self._ital, self._bold)
 
