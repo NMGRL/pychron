@@ -339,7 +339,8 @@ class AnalysisGroup(IdeogramPlotable):
             return self.integrated_age
 
         uv = ufloat(0, 0)
-        ans = list(self.clean_analyses())
+
+        ans = self.analyses
         if ans:
             prs = ans[0].production_ratios
 

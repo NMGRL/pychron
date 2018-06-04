@@ -508,6 +508,6 @@ class Spectrum(BaseArArFigure):
             error *= self.options.nsigma
             txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
 
-        return u'Integrated Age= {}'.format(txt)
+        return u'Total Integrated Age= {}'.format(txt)
 
 # ============= EOF =============================================
