@@ -340,41 +340,41 @@ class AnalysisGroup(IdeogramPlotable):
 
         uv = ufloat(0, 0)
         ans = list(self.clean_analyses())
+        if ans:
+            prs = ans[0].production_ratios
 
-        prs = ans[0].production_ratios
+            def apply_pr(n, d, k):
+                pr = 1
+                if prs:
+                    pr = prs.get(k, 1)
+                    if not pr:
+                        pr = 1.0
 
-        def apply_pr(n, d, k):
-            pr = 1
-            if prs:
-                pr = prs.get(k, 1)
-                if not pr:
-                    pr = 1.0
+                    pr = 1 / pr
 
-                pr = 1 / pr
+                try:
+                    v = sum(n) / sum(d) * pr
+                except ZeroDivisionError:
+                    v = 0
 
-            try:
-                v = sum(n) / sum(d) * pr
-            except ZeroDivisionError:
-                v = 0
+                return v
 
-            return v
-
-        if attr == 'kca':
-            ks = [ai.get_computed_value('k39') for ai in ans]
-            cas = [ai.get_non_ar_isotope('ca37') for ai in ans]
-            uv = apply_pr(ks, cas, 'Ca_K')
-        elif attr == 'kcl':
-            ks = [ai.get_computed_value('k39') for ai in ans]
-            cls = [ai.get_non_ar_isotope('cl38') for ai in ans]
-            uv = apply_pr(ks, cls, 'Cl_k')
-        elif attr == 'rad40_percent':
-            ns = [ai.rad40 for ai in ans]
-            ds = [ai.total40 for ai in ans]
-            uv = apply_pr(ns, ds, '') * 100
-        elif attr == 'moles_k39':
-            uv = sum([ai.moles_k39 for ai in ans])
-        elif attr == 'signal_k39':
-            uv = sum([ai.k39 for ai in ans])
+            if attr == 'kca':
+                ks = [ai.get_computed_value('k39') for ai in ans]
+                cas = [ai.get_non_ar_isotope('ca37') for ai in ans]
+                uv = apply_pr(ks, cas, 'Ca_K')
+            elif attr == 'kcl':
+                ks = [ai.get_computed_value('k39') for ai in ans]
+                cls = [ai.get_non_ar_isotope('cl38') for ai in ans]
+                uv = apply_pr(ks, cls, 'Cl_k')
+            elif attr == 'rad40_percent':
+                ns = [ai.rad40 for ai in ans]
+                ds = [ai.total40 for ai in ans]
+                uv = apply_pr(ns, ds, '') * 100
+            elif attr == 'moles_k39':
+                uv = sum([ai.moles_k39 for ai in ans])
+            elif attr == 'signal_k39':
+                uv = sum([ai.k39 for ai in ans])
 
         return uv
 

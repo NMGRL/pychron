@@ -767,6 +767,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             elif c.label == 'RunDate':
                 sh.write_datetime(row, j + 1, txt, cfmt)
             else:
+                self.debug('writing {} attr={} label={}'.format(type(txt), c.attr, c.label))
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=cfmt)
                 else:
