@@ -385,7 +385,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
-                    if f.slope_goodness_intensity > i:
+                    if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
                         slope = iso.get_slope()
                         slope_goodness = bool(slope < 0 or slope < slope_threshold)
@@ -412,6 +412,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
                 rsquared_goodness = None
                 rsquared = 0
+                rsquared_threshold = 0
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
