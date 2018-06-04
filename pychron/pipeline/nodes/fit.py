@@ -379,7 +379,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
-                    int_err_goodness = bool(pe < goodness_threshold)
+                    int_err_goodness = bool(e < goodness_threshold)
 
                 slope = None
                 slope_goodness = None
@@ -388,7 +388,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     if f.slope_goodness_intensity > i:
                         slope_threshold = f.slope_goodness
                         slope = iso.get_slope()
-                        slope_goodness = bool(slope < 0 or i < slope_threshold)
+                        slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None
