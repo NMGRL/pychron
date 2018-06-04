@@ -411,6 +411,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
                 rsquared_goodness = None
+                rsquared = 0
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
