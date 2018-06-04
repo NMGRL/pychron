@@ -234,7 +234,7 @@ class SampleBrowserModel(BrowserModel):
     def _add_analysis_group_button_fired(self):
         ans = self.analysis_table.get_selected_analyses()
         if ans:
-            self.add_analysis_group()
+            self.add_analysis_group(ans)
 
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:
