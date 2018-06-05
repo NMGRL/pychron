@@ -108,9 +108,11 @@ class GraphEditor(BaseEditor):
     @cached_property
     def _get_component(self):
         if self.items:
-            if self.figure_container:
-                self.figure_container.model_changed(False)
-            return self._component_factory()
+            model = self._figure_model_factory()
+            if not self.figure_container:
+                self.figure_container = FigureContainer()
+            self.figure_container.model = model
+            return self.figure_container.component
 
         else:
             return self._no_component_factory()
