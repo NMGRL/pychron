@@ -272,7 +272,6 @@ class PipelineEngine(Loggable):
 
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
-
     # def update_detectors(self):
     #     """
     #     set valid detectors for FitICFactorNodes
@@ -712,6 +711,9 @@ class PipelineEngine(Loggable):
             return True
 
     def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True, configure=True):
+        self.selected_unknowns = []
+        self.selected_references = []
+
         if pipeline is None:
             pipeline = self.pipeline
 
