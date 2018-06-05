@@ -75,9 +75,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._make_human_unknowns(unknowns)
 
             # make a machine optimized table
-        # munknowns = groups.get('machine_unknowns')
-        # if munknowns:
-        #     self._make_machine_unknowns(munknowns)
+        munknowns = groups.get('machine_unknowns')
+        if munknowns:
+            self._make_machine_unknowns(munknowns)
 
         airs = groups.get('airs')
         if airs:
@@ -458,7 +458,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         worksheet = self._workbook.add_worksheet(name)
 
         cols = self._get_columns(name, groups)
-        self._format_worksheet(worksheet, cols)
+        self._format_worksheet(worksheet, cols, (7, 2))
 
         self._make_title(worksheet, name, cols)
 
@@ -541,7 +541,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         worksheet = self._workbook.add_worksheet(name)
 
         cols = self._get_machine_columns(name, groups)
-        self._format_worksheet(worksheet, cols)
+        self._format_worksheet(worksheet, cols, (5, 2))
 
         self._make_title(worksheet, name, cols)
 
@@ -562,15 +562,15 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if self._options.hide_gridlines:
             sh.hide_gridlines(2)
 
-    def _format_worksheet(self, sh, cols):
+    def _format_worksheet(self, sh, cols, freeze):
         self._format_generic_worksheet(sh)
         if self._options.include_rundate:
             idx = next((i for i, c in enumerate(cols) if c.label == 'RunDate'))
-            sh.set_column(idx, idx, 12)
+            sh.set_column(idx, idx, 20)
 
         sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
-            sh.freeze_panes(7, 2)
+            sh.freeze_panes(*freeze)
         self._hide_columns(sh, cols)
 
     def _hide_columns(self, sh, cols):
