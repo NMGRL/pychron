@@ -490,7 +490,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     _, label = ag.get_age(kind, set_preferred=True)
                     ag.set_preferred_kinds(items[0].subgroup)
                     # age, label = self._get_intermediate_age(ag, kind)
-
                 n = len(items) - 1
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
@@ -501,7 +500,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         if label == 'plateau' and options.highlight_non_plateau:
                             is_plateau_step = ag.get_is_plateau_step(i)
 
-                    self._make_analysis(worksheet, cols, item, i == n and not subgroup,
+                    self._make_analysis(worksheet, cols, item, i == n and (not subgroup or nsubgroups == 1),
                                         is_plateau_step=is_plateau_step,
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
@@ -566,7 +565,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._format_generic_worksheet(sh)
         if self._options.include_rundate:
             idx = next((i for i, c in enumerate(cols) if c.label == 'RunDate'))
-            sh.set_column(idx, idx, 20)
+            sh.set_column(idx, idx, 30)
 
         sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
@@ -767,7 +766,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             elif c.label == 'RunDate':
                 sh.write_datetime(row, j + 1, txt, cfmt)
             else:
-                self.debug('writing {} attr={} label={}'.format(type(txt), c.attr, c.label))
+                # self.debug('writing {} attr={} label={}'.format(type(txt), c.attr, c.label))
                 if isinstance(txt, float):
                     sh.write_number(row, j + 1, txt, cell_format=cfmt)
                 else:
@@ -776,7 +775,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
-
         fmt = self._bold
         start_col = 0
         if self._options.include_kca:
@@ -807,32 +805,35 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
-        sh.write_rich_string(self._current_row, start_col, u'Weighted Mean Age {}'.format(pmsigma), fmt)
-        sh.write_number(self._current_row, idx, nominal_value(group.weighted_age), nfmt)
-        sh.write_number(self._current_row, idx + 1, std_dev(group.weighted_age) * nsigma, nfmt)
 
-        sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses, group.total_n), fmt)
-        sh.write_rich_string(self._current_row, idx + 3, format_mswd(group.get_mswd_tuple()), fmt)
+        a, label = group.get_age()
 
-        self._current_row += 1
+        label = label.capitalize()
+        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(label, pmsigma), fmt)
+        sh.write_number(self._current_row, idx, nominal_value(a), nfmt)
+        sh.write_number(self._current_row, idx + 1, std_dev(a) * nsigma, nfmt)
 
-        if group.subgroup_kind == 'plateau':
+        sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
+                                                                          group.total_n), fmt)
+
+        mt = group.get_preferred_mswd_tuple()
+        sh.write_rich_string(self._current_row, idx + 3, format_mswd(mt), fmt)
+
+        if label == 'Plateau':
             if self._options.include_plateau_age and hasattr(group, 'plateau_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Plateau {}'.format(pmsigma), fmt)
-                sh.write(self._current_row, 3, 'steps {}'.format(group.plateau_steps_str))
-                sh.write_number(self._current_row, idx, nominal_value(group.plateau_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.plateau_age) * nsigma, nfmt)
-                sh.write_rich_string(self._current_row, idx + 2, format_mswd(group.get_plateau_mswd_tuple()), fmt)
+                sh.write(self._current_row, idx + 4, 'steps {}'.format(group.plateau_steps_str), fmt)
 
                 self._current_row += 1
 
             if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Integrated Age {}'.format(pmsigma),
+                sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma),
                                      fmt)
                 sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
                 sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 
                 self._current_row += 1
+        else:
+            self._current_row += 1
 
         if self._options.include_isochron_age:
             sh.write_rich_string(self._current_row, start_col, u'Isochron Age {}'.format(pmsigma),

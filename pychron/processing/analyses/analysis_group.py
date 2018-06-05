@@ -294,6 +294,9 @@ class AnalysisGroup(IdeogramPlotable):
     def _get_nanalyses(self):
         return len(list(self.clean_analyses()))
 
+    def plateau_analyses(self):
+        return
+
     def clean_analyses(self):
         return (ai for ai in self.analyses if not ai.is_omitted())
 
@@ -334,13 +337,18 @@ class AnalysisGroup(IdeogramPlotable):
         else:
             return av, werr
 
-    def _calculate_integrated(self, attr):
+    def _calculate_integrated(self, attr, kind='total'):
         if attr == 'age':
             return self.integrated_age
 
         uv = ufloat(0, 0)
+        if kind == 'total':
+            ans = self.analyses
+        elif kind == 'valid':
+            ans = self.clean_analyses()
+        elif kind == 'plateau':
+            ans = self.plateau_analyses()
 
-        ans = self.analyses
         if ans:
             prs = ans[0].production_ratios
 
@@ -435,6 +443,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     #         n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
     #     return n
     total_ar39 = AGProperty()
+
+    def plateau_analyses(self):
+        return [a for a in self.clean_analyses() if self.get_is_plateau_step(a)]
 
     @property
     def labnumber(self):
@@ -622,7 +633,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     #         pv.error_kind = default_error_kind
     #         pv.dirty = True
 
-    def get_age(self, okind, set_preferred=False):
+    def get_age(self, okind=None, set_preferred=False):
+        if okind is None:
+            okind = self._get_pv('age').kind
+
         kind = okind.lower().replace(' ', '_')
         if kind == 'weighted_mean':
             a = self.weighted_age
@@ -720,10 +734,18 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def _get_nanalyses(self):
         pv = self._get_pv('age')
-        if pv.kind.lower() == 'plateau':
-            return self.nsteps
+        k = pv.kind.lower()
+        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+            n = self.nsteps
         else:
-            return super(InterpretedAgeGroup, self)._get_nanalyses()
+            n = super(InterpretedAgeGroup, self)._get_nanalyses()
+        return n
+
+        # pv = self._get_pv('age')
+        # if pv.kind.lower() == 'plateau':
+        #     return self.nsteps
+        # else:
+        #     return super(InterpretedAgeGroup, self)._get_nanalyses()
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
     def _preferred_kind_changd(self, obj, old, name, new):
@@ -744,6 +766,25 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             return self.plateau_mswd
         else:
             return self.mswd
+
+    def get_preferred_mswd_tuple(self):
+        pv = self._get_pv('age')
+        k = pv.kind.lower()
+        t = self.get_mswd_tuple()
+        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+            t = self.get_plateau_mswd_tuple()
+
+        return t
+
+    def get_n_nt(self):
+        pv = self._get_pv('age')
+        k = pv.kind.lower()
+        n, nt = self.nanalyses, self.total_n
+        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+            n = self.plateau_nsteps
+
+        print('adsfad', k, n, nt)
+        return n, nt
 
     def set_preferred_kinds(self, sg=None):
         naliquots = len({a.aliquot for a in self.analyses})
@@ -801,8 +842,14 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pk = kind.lower().replace(' ', '_')
         if pk == 'weighted_mean':
             pa = self._get_weighted_mean(attr)
-        elif pk == 'integrated':
-            pa = self._calculate_integrated(attr)
+        # elif pk == 'integrated':
+        #     pa = self._calculate_integrated(attr)
+        elif pk == 'valid_integrated':
+            pa = self._calculate_integrated(attr, 'valid')
+        elif pk == 'total_integrated':
+            pa = self._calculate_integrated(attr, 'total')
+        elif pk == 'plateau_integrated':
+            pa = self._calculate_integrated(attr, 'plateau')
         else:
             pa = self._calculate_arithmetic_mean(attr)
 

@@ -69,15 +69,19 @@ ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 
 WEIGHTED_MEAN = 'Weighted Mean'
-INTEGRATED = 'Integrated'
+INTEGRATED = 'Total Integrated'
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', WEIGHTED_MEAN]
 
 FIT_ERROR_TYPES = [SD, SEM, 'CI']
 
-AGE_SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean', 'Plateau', 'Plateau else Weighted Mean', 'Isochron')
-SUBGROUPINGS = ('Weighted Mean', 'Integrated', 'Arithmetic Mean')
+AGE_SUBGROUPINGS = ('Plateau else Weighted Mean', 'Weighted Mean',
+                    'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                    'Arithmetic Mean', 'Plateau', 'Isochron')
+SUBGROUPINGS = ('Weighted Mean',
+                'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                'Arithmetic Mean')
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
