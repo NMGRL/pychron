@@ -50,6 +50,7 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     disc_sig_figs = dumpable(Int(6))
     decay_sig_figs = dumpable(Int(6))
     correction_sig_figs = dumpable(Int(6))
+    sens_sig_figs = dumpable(Int(2))
 
     ensure_trailing_zeros = dumpable(Bool(False))
 
@@ -239,6 +240,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 Item('power_units', label='Power Units'),
                                 Item('age_units', label='Age Units'),
                                 Item('sensitivity_units', label='Sensitivity Units'),
+
                                 Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
                                 Item('asummary_age_nsigma', label='Age Nsigma'),
                                 Item('repeat_header', label='Repeat Header'),
@@ -263,7 +265,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                               Item('disc_sig_figs', label='Disc.'),
                               Item('decay_sig_figs', label='Decay'),
                               Item('correction_sig_figs', label='Correction Factors'),
-
+                              Item('sens_sig_figs', label='Sensitivity'),
                               # Item('subgroup_sig_figs', label='Subgroup'),
                               # Item('j_sig_figs', label='Flux'),
                               # Item('summary_sig_figs', label='Summary'),

@@ -152,7 +152,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                    VColumn(enabled=options.include_sensitivity,
                            label='Sensitivity',
                            units=options.sensitivity_units,
-                           attr='sensitivity'),
+                           attr='sensitivity',
+                           sigformat='sens'),
+
                    VColumn(enabled=ubit and options.include_isochron_ratios,
                            label=('<sup>39</sup>', 'Ar/', '<sup>40</sup>', 'Ar'),
                            attr='isochron3940'),
