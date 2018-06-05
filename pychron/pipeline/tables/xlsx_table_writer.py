@@ -30,7 +30,7 @@ from pychron.pipeline.subgrouping import subgrouping_key
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
-    subreg, interpolate_noteline
+    subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
@@ -181,7 +181,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return columns
 
     def _flux_columns(self, columns):
-        columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k'),
+        columns.extend([Column(enabled=False, label='LambdaK', attr='lambda_k', func=value),
                         Column(enabled=False, label='MonitorAge', attr='monitor_age'),
                         Column(enabled=False, label='MonitorName', attr='monitor_name'),
                         Column(enabled=False, label='MonitorMaterial', attr='monitor_material')])
@@ -914,7 +914,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._write_notes(sh, notes)
 
     def _write_notes(self, sh, notes):
-        for line in notes.split('\r\n'):
+        for line in notes.splitlines():
             line = interpolate_noteline(line, self._superscript, self._subscript,
                                         self._ital, self._bold)
 
