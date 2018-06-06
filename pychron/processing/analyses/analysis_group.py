@@ -776,16 +776,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
         return t
 
-    def get_n_nt(self):
-        pv = self._get_pv('age')
-        k = pv.kind.lower()
-        n, nt = self.nanalyses, self.total_n
-        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
-            n = self.plateau_nsteps
-
-        print('adsfad', k, n, nt)
-        return n, nt
-
     def set_preferred_kinds(self, sg=None):
         naliquots = len({a.aliquot for a in self.analyses})
         for k in SUBGROUPING_ATTRS:
@@ -807,8 +797,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv.dirty = True
 
     def get_preferred_kind(self, attr):
-        pv = self._get_pv(attr)
+        pv = self.get_preferred_obj(attr)
         return pv.kind
+
+    def get_preferred_obj(self, attr):
+        pv = self._get_pv(attr)
+        return pv
 
     # get preferred objects
     def _get_preferred_age(self):

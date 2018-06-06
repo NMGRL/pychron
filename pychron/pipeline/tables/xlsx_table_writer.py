@@ -786,18 +786,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             nsigma = self._options.asummary_kca_nsigma
             pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
-
+            pv = group.get_preferred_obj('kca')
             sh.write_rich_string(self._current_row, start_col,
-                                 u'Weighted Mean K/Ca {}'.format(pmsigma),
+                                 u'{} K/Ca {}'.format(pv.kind.capitalize(), pmsigma),
                                  fmt)
 
-            group.kca_error_kind = kind = self._options.kca_error_kind
-            # group.dirty = True
-            kca = group.get_weighted_mean('kca') if self._options.use_weighted_kca else group.get_arithmetic_mean('kca')
-
-            sh.write_number(self._current_row, idx, nominal_value(kca), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(kca) * nsigma, nfmt)
-            sh.write_rich_string(self._current_row, idx + 2, kind, fmt)
+            sh.write_number(self._current_row, idx, nominal_value(group.kca), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(group.kca) * nsigma, nfmt)
+            sh.write_rich_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
         nfmt = self._get_number_format('summary_age')
