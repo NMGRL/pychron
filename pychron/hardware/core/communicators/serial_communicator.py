@@ -389,7 +389,8 @@ class SerialCommunicator(Communicator):
                 # cmd = cmd.decode('hex')
             else:
                 if self.write_terminator is not None:
-                    cmd += bytes(self.write_terminator,'utf-8')
+                    if type(self.write_terminator) is str:
+                        cmd += bytes(self.write_terminator, 'utf-8')
 
             try:
                 self.handle.write(cmd)
