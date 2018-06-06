@@ -17,7 +17,7 @@
 # ========== standard library imports ==========
 import time
 # ========== local library imports =============
-from gp_actuator import GPActuator
+from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.globals import globalv
 
 
