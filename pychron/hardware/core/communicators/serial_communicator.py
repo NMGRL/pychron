@@ -478,8 +478,10 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
-                        t = r.endswith(ti)
-
+                        if type(ti) is str:
+                            t = r.endswith(str.encode(ti))
+                        else:
+                            t = r.endswith(ti)
                     if t:
                         terminated = True
                         break
