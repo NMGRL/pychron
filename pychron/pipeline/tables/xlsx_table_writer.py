@@ -571,7 +571,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 for item in items:
                     item.arar_constants.age_units = ounits
 
+            oans = None
             if has_subgroups and nsubgroups > 1:
+                oans = group.analyses
                 group.analyses = nitems
 
             if nsubgroups == 1:
@@ -580,6 +582,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 self._make_summary(worksheet, cols, group)
             self._current_row += 1
 
+            if oans is not None:
+                group.analyses = oans
             group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
