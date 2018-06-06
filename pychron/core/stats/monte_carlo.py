@@ -23,6 +23,108 @@ from scipy.stats import norm
 
 # ============= local library imports  ==========================
 
+class MonteCarloEstimator(object):
+
+    def __init__(self, ntrials, regressor, seed=None):
+        self.regressor = regressor
+        self.ntrials = ntrials
+        self.seed = seed
+
+    def _calculate(self, nominal_ys, ps):
+        res = nominal_ys - ps
+
+        pct = (15.87, 84.13)
+
+        a, b = array([percentile(ri, pct) for ri in res.T]).T
+        a, b = nabs(a), nabs(b)
+        return (a + b) * 0.5
+
+    def _get_dist(self, n, npts):
+        if self.seed:
+            random.seed(self.seed)
+
+        ndist = norm()
+        ntrials = self.ntrials
+
+        ga = ndist.rvs((ntrials, n))
+        ps = zeros((ntrials, npts))
+        return ndist, ga, ps
+
+
+class RegressionEstimator(MonteCarloEstimator):
+    def estimate(self, pts):
+        reg = self.regressor
+        pexog = reg.get_exog(pts)
+        nominal_ys = reg.predict(pts)
+
+        ys = reg.clean_ys
+        yserr = reg.clean_yserr
+
+        ndist, ga, ps = self._get_dist(len(ys), len(pts))
+        pred = reg.fast_predict2
+        yp = ys+yserr*ga
+        for i in range(self.ntrials):
+
+            ps[i] = pred(yp[i], pexog)
+
+        return nominal_ys, self._calculate(nominal_ys, ps)
+
+
+class FluxEstimator(MonteCarloEstimator):
+    def __init__(self, ntrials, regressor, position_only, position_error, mean_position_only=False, mean_position_error=0):
+        super(FluxEstimator, self).__init__(ntrials, regressor)
+
+        self.position_error = position_error
+        self.position_only = position_only
+        self.mean_position_error = mean_position_error
+        self.mean_position_only = mean_position_only
+
+    def estimate(self, pts):
+        reg = self.regressor
+        pexog = reg.get_exog(pts)
+        nominal_ys = reg.predict(pts)
+        ys = reg.ys
+        yserr = reg.yserr
+
+        n, npts = len(ys), len(pts)
+
+        ntrials = self.ntrials
+        ndist, ga, ps = self._get_dist(n, npts)
+
+        pred = reg.fast_predict2
+        if self.mean_position_only or self.position_only:
+            yserr = 0
+
+        yp = ys + yserr * ga
+        if self.mean_position_error:
+            pgax = ndist.rvs((ntrials, n))
+            pgay = ndist.rvs((ntrials, n))
+
+            xs = reg.clean_xs
+
+            ox, oy = xs.T
+            for i in range(ntrials):
+                x = ox + self.mean_position_error * pgax[i]
+                y = oy + self.mean_position_error * pgay[i]
+                x = reg.get_exog(column_stack((x, y)))
+                ps[i] = pred(yp[i], pexog, exog=x)
+        elif self.position_error:
+            pgax = ndist.rvs((ntrials, n))
+            pgay = ndist.rvs((ntrials, n))
+
+            ox, oy = pts.T
+            for i in range(ntrials):
+                x = ox + self.position_error * pgax[i]
+                y = oy + self.position_error * pgay[i]
+                pexog = reg.get_exog(column_stack((x, y)))
+                ps[i] = pred(yp[i], pexog)
+
+        else:
+            for i in range(ntrials):
+                ps[i] = pred(yp[i], pexog)
+
+        return nominal_ys, self._calculate(nominal_ys, ps)
+
 
 def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None,
                                  position_only=False,

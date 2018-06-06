@@ -28,7 +28,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+from pychron.core.stats.monte_carlo import FluxEstimator
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
@@ -328,18 +328,22 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             self.information_dialog(msg)
             return
 
-        if self.plotter_options.use_monte_carlo:
+        options = self.plotter_options
+        if options.use_monte_carlo:
             # from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+            fe = FluxEstimator(options.monte_carlo_ntrials, reg, options.position_only, options.position_error)
+
             for positions in (self.unknown_positions, self.monitor_positions):
                 pts = array([[p.x, p.y] for p in positions])
-                nominals = reg.predict(pts)
-                errors = monte_carlo_error_estimation(reg, nominals, pts,
-                                                      position_only=self.plotter_options.position_only,
-                                                      position_error=self.plotter_options.position_error,
-
-                                                      # mean_position_only=self.plotter_options.position_only,
-                                                      # mean_position_error=self.plotter_options.position_error,
-                                                      ntrials=self.plotter_options.monte_carlo_ntrials)
+                nominals, errors = fe.estimate(pts)
+                # nominals = reg.predict(pts)
+                # errors = monte_carlo_error_estimation(reg, nominals, pts,
+                #                                       position_only=self.plotter_options.position_only,
+                #                                       position_error=self.plotter_options.position_error,
+                #
+                #                                       # mean_position_only=self.plotter_options.position_only,
+                #                                       # mean_position_error=self.plotter_options.position_error,
+                #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
                 for p, j, je in zip(positions, nominals, errors):
                     oj = p.saved_j
@@ -360,7 +364,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
                     p.dev = (oj - j) / j * 100
 
-        if self.plotter_options.plot_kind == '2D':
+        if options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg, refresh)
         else:
             self._graph_hole_vs_j(x, y, r, reg, refresh)
