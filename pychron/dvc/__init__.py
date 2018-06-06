@@ -18,14 +18,15 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
-from pychron import json
 from pprint import pformat
 
+from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 
-__version__ = '0.1'
+__version__ = '1.0'
 
 
 class AnalysisNotAnvailableError(BaseException):

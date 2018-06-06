@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 import uuid
 from itertools import groupby
+from operator import attrgetter
 
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -28,15 +29,11 @@ from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 
 class InterpretedAgeEditor(FigureEditor):
     def get_interpreted_ages(self):
-        key = lambda x: x.group_id
-        unks = sorted(self.analyses, key=key)
-        # ok = 'omit_{}'.format(self.basename)
-
         po = self.plotter_options
         additional = {}
         if isinstance(po, SpectrumOptions):
             ek = po.plateau_age_error_kind
-            pk = ''
+            pk = 'Plateau'
             additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
         elif isinstance(po, InverseIsochronOptions):
             pk = 'Isochron'
@@ -50,14 +47,16 @@ class InterpretedAgeEditor(FigureEditor):
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):
-            return InterpretedAgeGroup(analyses=aa,
-                                       preferred_age_kind=pk,
-                                       preferred_age_error_kind=ek,
-                                       use=True,
-                                       uuid=str(uuid.uuid4()),
-                                       **additional)
+            p = InterpretedAgeGroup(analyses=aa,
+                                    use=True,
+                                    uuid=str(uuid.uuid4()),
+                                    **additional)
+            p.set_preferred_kinds()
+            p.set_preferred_age(pk, ek)
+            return p
 
-        ias = [func(list(ans)) for gid, ans in groupby(unks, key=key)]
+        key = attrgetter('group_id')
+        ias = [func(list(ans)) for gid, ans in groupby(sorted(self.analyses, key=key), key=key)]
         return ias
 
 # ============= EOF =============================================

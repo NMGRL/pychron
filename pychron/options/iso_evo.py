@@ -15,17 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Float, Bool, Int, on_trait_change, Range, Enum, cached_property
+from traits.api import List, Float, Bool, Int, Range, Enum, cached_property
 
+from pychron.core.fits.fit import IsoFilterFit
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
-from pychron.core.fits.fit import IsoFilterFit
 from pychron.pychron_constants import FIT_TYPES
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
-    names = List
     height = 0
     ofit = None
     goodness_threshold = Float  # in percent

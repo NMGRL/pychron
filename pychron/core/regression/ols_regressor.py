@@ -63,8 +63,12 @@ class OLSRegressor(BaseRegressor):
     def fast_predict(self, endog, pexog, exog=None):
         ols = self._ols
         ols.wendog = ols.whiten(endog)
+
         if exog is not None:
             ols.wexog = ols.whiten(exog)
+
+            # force recalculation
+            del ols.pinv_wexog
 
         result = ols.fit()
         return result.predict(pexog)
@@ -166,8 +170,10 @@ class OLSRegressor(BaseRegressor):
 
         x = asarray(x)
 
-        if error_calc == 'CI':
+        if not error_calc or error_calc == 'CI':
             e = self.calculate_ci_error(x)
+        elif error_calc == 'MC':
+            e = self.calculate_mc_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)
 
@@ -368,10 +374,10 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
-    def fast_predict2(self, endog, exog):
+    def fast_predict2(self, endog, pexog, **kw):
         # OLSRegressor fast_predict2 is not working for multiplelinear regressor
         # use fast_predict instead
-        return self.fast_predict(endog, exog)
+        return self.fast_predict(endog, pexog, **kw)
 
     def _get_X(self, xs=None):
         if xs is None:

@@ -17,12 +17,11 @@
 # ============= enthought library imports =======================
 
 import os
-import time
 from datetime import datetime, timedelta
 
+import time
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import View, Item, EnumEditor, CheckListEditor
@@ -30,7 +29,6 @@ from traitsui.api import View, Item, EnumEditor, CheckListEditor
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
-import six
 
 
 class BaseDVCNode(BaseNode):
@@ -203,6 +201,10 @@ class UnknownNode(DataNode):
         if ans:
             records = [ri for ai in ans for ri in ai.record_views]
             self.unknowns = self.dvc.make_analyses(records)
+
+    def pre_run(self, state, configure=True):
+        # force Unknown node to always configure
+        return super(UnknownNode, self).pre_run(state, configure=True)
 
     def run(self, state):
         # if not self.unknowns and not state.unknowns:

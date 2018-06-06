@@ -211,7 +211,7 @@ class Spectrum(BaseArArFigure):
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts = [u'Age {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
+                ts = [u'Ages {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
                       u'Error Env. {}{}{}'.format(PLUSMINUS, self.options.step_nsigma, SIGMA)]
 
                 if ts:
@@ -508,6 +508,6 @@ class Spectrum(BaseArArFigure):
             error *= self.options.nsigma
             txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
 
-        return u'Integrated Age= {}'.format(txt)
+        return u'Total Integrated Age= {}'.format(txt)
 
 # ============= EOF =============================================

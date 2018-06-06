@@ -18,24 +18,40 @@
 import os
 
 import yaml
-from traits.api import Enum, Bool, Str, Int, Float, Color
-from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label
+from traits.api import Enum, Bool, Str, Int, Float, Color, List
+from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumEditor
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
-from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA
+from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES, AGE_SORT_KEYS
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
-    subgroup_sig_figs = dumpable(Int(6))
-    summary_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
     disc_sig_figs = dumpable(Int(6))
+
+    age_sig_figs = dumpable(Int(6))
+    summary_age_sig_figs = dumpable(Int(6))
+
+    kca_sig_figs = dumpable(Int(6))
+    summary_kca_sig_figs = dumpable(Int(6))
+
+    rad40_percent_sig_figs = dumpable(Int(6))
+    cumulative_ar39_sig_figs = dumpable(Int(6))
+
+    signal_sig_figs = dumpable(Int(6))
+    j_sig_figs = dumpable(Int(6))
+    ic_sig_figs = dumpable(Int(6))
+    disc_sig_figs = dumpable(Int(6))
+    decay_sig_figs = dumpable(Int(6))
+    correction_sig_figs = dumpable(Int(6))
+    sens_sig_figs = dumpable(Int(2))
+
     ensure_trailing_zeros = dumpable(Bool(False))
 
     power_units = dumpable(Enum('W', 'C'))
@@ -59,12 +75,17 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     include_intercepts = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
     use_weighted_kca = dumpable(Bool(True))
+    kca_error_kind = dumpable(Enum(*ERROR_TYPES))
     repeat_header = dumpable(Bool(False))
     highlight_non_plateau = Bool(True)
     highlight_color = dumpable(Color)
 
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
+
+    unknown_note_name = dumpable(Str('Default'))
+    available_unknown_note_names = List
+
     unknown_notes = dumpable(Str('''Errors quoted for individual analyses include analytical error only, without interfering reaction or J uncertainties.
 Integrated age calculated by summing isotopic measurements of all steps.
 Plateau age is inverse-variance-weighted mean of selected steps.
@@ -76,20 +97,21 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     unknown_corrected_note = dumpable(Str('''Corrected: Isotopic intensities corrected for blank, baseline, 
     radioactivity decay and detector intercalibration, not for interfering reactions.'''))
     unknown_intercept_note = dumpable(Str('''Intercepts: t-zero intercept corrected for detector baseline.'''))
-    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis'''))
+    unknown_time_note = dumpable(Str('''Time interval (days) between end of irradiation and beginning of analysis.'''))
 
     unknown_x_note = dumpable(Str('''X symbol preceding sample ID denotes analyses 
     excluded from weighted-mean age calculations.'''))
     unknown_px_note = dumpable(Str('''pX symbol preceding sample ID denotes analyses
-    excluded plateau age calculations'''))
+    excluded plateau age calculations.'''))
 
     unknown_title = dumpable(Str('Ar/Ar analytical data.'))
-    air_notes = dumpable(Str(''''''))
-    air_title = dumpable(Str(''''''))
-    blank_notes = dumpable(Str(''''''))
-    blank_title = dumpable(Str(''''''))
-    monitor_notes = dumpable(Str(''''''))
-    monitor_title = dumpable(Str(''''''))
+    air_notes = dumpable(Str(''))
+    air_title = dumpable(Str(''))
+    blank_notes = dumpable(Str(''))
+    blank_title = dumpable(Str(''))
+    monitor_notes = dumpable(Str(''))
+    monitor_title = dumpable(Str(''))
+    summary_notes = dumpable(Str(''))
 
     include_summary_sheet = dumpable(Bool(True))
     include_summary_age = dumpable(Bool(True))
@@ -118,11 +140,53 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     fixed_step_low = dumpable(SingleStr)
     fixed_step_high = dumpable(SingleStr)
 
+    group_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+    subgroup_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+    individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+
     _persistence_name = 'xlsx_table_options'
 
     def __init__(self, *args, **kw):
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
-        self.load_notes()
+        # self.load_notes()
+        # self._load_note_names()
+
+        self._load_notes()
+        self._unknown_note_name_changed(self.unknown_note_name)
+
+    def _load_notes(self):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+
+                setattr(self, 'summary_notes', obj.get('summary_notes', ''))
+
+                for grpname in ('unknown',):
+                    grp = obj.get('{}_notes'.format(grpname))
+                    if grp:
+                        try:
+                            setattr(self, 'available_{}_note_names'.format(grpname), list(grp.keys()))
+                        except AttributeError:
+                            pass
+
+    def _unknown_note_name_changed(self, new):
+        grp = self._load_note('unknown_notes')
+        if grp is not None:
+            sgrp = grp.get(new)
+            if sgrp:
+                self.unknown_notes = sgrp.get('main', '')
+                for k in ('corrected', 'x', 'px', 'intercept', 'time'):
+                    v = sgrp.get(k)
+                    if v is not None:
+                        setattr(self, 'unknown_{}_note'.format(k), v)
+
+    def _load_note(self, group):
+        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+        if os.path.isfile(p):
+            with open(p, 'r') as rf:
+                obj = yaml.load(rf)
+                return obj.get(group)
 
     @property
     def age_scalar(self):
@@ -137,23 +201,30 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
         return path
 
-    def load_notes(self):
-        p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
-        if os.path.isfile(p):
-            with open(p, 'r') as rf:
-                obj = yaml.load(rf)
-                for k, v in obj.items():
-                    if v is not None:
-                        setattr(self, k, v)
+    # def load_notes(self):
+    #     p = os.path.join(paths.user_pipeline_dir, 'table_notes.yaml')
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as rf:
+    #             obj = yaml.load(rf)
+    #             for k, v in obj.items():
+    #                 if k == 'summary_notes':
+    #                     setattr(self, 'summary_notes', v)
 
     def traits_view(self):
         unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
-                             VGroup(VGroup(UItem('unknown_notes', style='custom'), label='Main', show_border=True),
-                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'), label='Corrected', show_border=True),
-                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'), label='Intercept', show_border=True),
-                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time', show_border=True),
-                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X', show_border=True),
-                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX', show_border=True),
+                             VGroup(VGroup(UItem('unknown_note_name',
+                                                 editor=EnumEditor(name='available_unknown_note_names')),
+                                           UItem('unknown_notes', style='custom'), label='Main', show_border=True),
+                                    VGroup(UItem('unknown_corrected_note', height=-50, style='custom'),
+                                           label='Corrected', show_border=True),
+                                    VGroup(UItem('unknown_intercept_note', height=-50, style='custom'),
+                                           label='Intercept', show_border=True),
+                                    VGroup(UItem('unknown_time_note', height=-50, style='custom'), label='Time',
+                                           show_border=True),
+                                    VGroup(UItem('unknown_x_note', height=-50, style='custom'), label='X',
+                                           show_border=True),
+                                    VGroup(UItem('unknown_px_note', height=-50, style='custom'), label='pX',
+                                           show_border=True),
                                     show_border=True, label='Notes'), label='Unknowns')
 
         air_grp = VGroup(Item('air_title', label='Table Heading'),
@@ -173,6 +244,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 Item('power_units', label='Power Units'),
                                 Item('age_units', label='Age Units'),
                                 Item('sensitivity_units', label='Sensitivity Units'),
+                                Item('group_age_sorting', label='Group Age Sorting'),
+                                Item('subgroup_age_sorting', label='SubGroup Age Sorting'),
+                                Item('individual_age_sorting', label='Individual Age Sorting'),
                                 Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
                                 Item('asummary_age_nsigma', label='Age Nsigma'),
                                 Item('repeat_header', label='Repeat Header'),
@@ -181,18 +255,38 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 show_border=True, label='Appearance')
 
         sig_figs_grp = VGroup(Item('sig_figs', label='Default'),
-                              Item('subgroup_sig_figs', label='Subgroup'),
+
+                              Item('age_sig_figs', label='Age'),
+                              Item('summary_age_sig_figs', label='Summary Age'),
+
+                              Item('kca_sig_figs', label='K/Ca'),
+                              Item('summary_kca_sig_figs', label='Summary K/Ca'),
+
+                              Item('rad40_percent_sig_figs', label='%40Ar*'),
+                              Item('cumulative_ar39_sig_figs', label='Cum. %39Ar'),
+
+                              Item('signal_sig_figs', label='Signal'),
                               Item('j_sig_figs', label='Flux'),
-                              Item('summary_sig_figs', label='Summary'),
                               Item('ic_sig_figs', label='IC'),
                               Item('disc_sig_figs', label='Disc.'),
+                              Item('decay_sig_figs', label='Decay'),
+                              Item('correction_sig_figs', label='Correction Factors'),
+                              Item('sens_sig_figs', label='Sensitivity'),
+                              # Item('subgroup_sig_figs', label='Subgroup'),
+                              # Item('j_sig_figs', label='Flux'),
+                              # Item('summary_sig_figs', label='Summary'),
+                              # Item('ic_sig_figs', label='IC'),
+                              # Item('disc_sig_figs', label='Disc.'),
+
                               Item('ensure_trailing_zeros', label='Ensure Trailing Zeros'),
                               show_border=True, label='Significant Figures')
 
         arar_col_grp = VGroup(Item('include_F', label='40Ar*/39ArK'),
+                              Item('include_percent_ar39', label='Cumulative %39Ar'),
                               Item('include_radiogenic_yield', label='%40Ar*'),
                               Item('include_kca', label='K/Ca'),
-                              Item('use_weighted_kca', label='K/Ca Weighted Mean', enabled_when='include_kca'),
+                              Item('use_weighted_kca', label='K/Ca Weighted Mean'),
+                              Item('kca_error_kind', label='K/Ca Error'),
                               Item('include_sensitivity', label='Sensitivity'),
                               Item('include_k2o', label='K2O wt. %'),
                               Item('include_production_ratios', label='Production Ratios'),
@@ -234,6 +328,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                  enabled_when='include_summary_sheet',
                                  label='Columns',
                                  show_border=True),
+                             VGroup(UItem('summary_notes', style='custom'), show_border=True, label='Notes'),
                              label='Summary')
 
         plat_grp = VGroup(Item('plateau_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
@@ -256,4 +351,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                  title='XLSX Analysis Table Options',
                  buttons=['OK', 'Cancel'])
         return v
+
+
+if __name__ == '__main__':
+    # from pychron.paths import paths
+    paths.build('~/PychronDev')
+    e = XLSXAnalysisTableWriterOptions()
+    e.configure_traits()
 # ============= EOF =============================================

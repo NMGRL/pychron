@@ -24,14 +24,15 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS
 
 
 class IdeogramAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
+                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
+                 transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'])
 
 
 class IdeogramOptions(AgeOptions):
@@ -80,7 +81,7 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
-    mean_sig_figs = Int
+    mean_sig_figs = Enum(*SIG_FIGS)
 
     use_cmap_analysis_number = Bool(False)
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))

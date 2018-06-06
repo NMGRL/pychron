@@ -13,8 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from itertools import groupby
+from operator import attrgetter
+
 from pychron.pipeline.editors.group_age_editor import GroupAgeEditor
 from pychron.pipeline.nodes.data import BaseDVCNode
+from pychron.pipeline.subgrouping import make_interpreted_age_subgroups
 
 
 class GroupAgeNode(BaseDVCNode):
@@ -34,4 +38,11 @@ class GroupAgeNode(BaseDVCNode):
     def set_groups(self, state):
         pass
 
+    def resume(self, state):
+        key = attrgetter('group_id')
+        nans = []
+        for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
+            ias = make_interpreted_age_subgroups(ans)
+            nans.extend(ias)
+        state.unknowns = nans
 # ============= EOF =============================================

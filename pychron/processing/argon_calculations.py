@@ -18,18 +18,17 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import math
-from copy import deepcopy
 
 from numpy import asarray, average, array
+from six.moves import range
+from six.moves import zip
 from uncertainties import ufloat, umath, nominal_value, std_dev
 
 from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
 from pychron.pychron_constants import ALPHAS
-import six
-from six.moves import range
-from six.moves import zip
 
 
 def extract_isochron_xy(analyses):
@@ -105,7 +104,7 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
             j = (nominal_value(ref.j), 0)
         age = age_equation(j, r, arar_constants=ref.arar_constants)
 
-    return age, yint, reg #, #(xs, ys, xerrs, yerrs, exclude)
+    return age, yint, reg  # , #(xs, ys, xerrs, yerrs, exclude)
 
 
 def isochron_regressor(xs, xes, ys, yes,
@@ -168,6 +167,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fl
                     errors=errors,
                     signals=k39,
                     excludes=excludes,
+                    overlap_sigma=options.get('overlap_sigma', 2),
                     nsteps=options.get('nsteps', 3),
                     gas_fraction=options.get('gas_fraction', 50))
 
@@ -383,7 +383,7 @@ def calculate_F(isotopes,
         except ZeroDivisionError:
             rp = ufloat(0, 0)
 
-        comp = {'rad40': rad40, 'rad40_percent': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
+        comp = {'rad40': rad40, 'a40': a40, 'rad40_percent': rp, 'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
                 'atm40': atm40}
 
         ifc = {'Ar40': a40 - k40, 'Ar39': k39, 'Ar38': a38, 'Ar37': a37, 'Ar36': atm36}

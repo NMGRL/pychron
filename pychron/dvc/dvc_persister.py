@@ -393,9 +393,6 @@ class DVCPersister(BasePersister):
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
         for iso in per_spec.isotope_group.values():
-
-            # sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
-            # snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
             sblob = encode_blob(iso.pack(endianness, as_hex=False))
             snblob = encode_blob(iso.sniff.pack(endianness, as_hex=False))
 
@@ -403,7 +400,10 @@ class DVCPersister(BasePersister):
                 d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
                 ss.append(d)
 
-            isod = {'detector': iso.detector, 'name': iso.name}
+            detector = next((d for d in per_spec.active_detectors if d.name == iso.detector), None)
+
+            isod = {'detector': iso.detector, 'name': iso.name,
+                    'detector_serial_id': detector.detector_serial_id if detector else '00000'}
 
             if clf is not None:
                 klass, prob = clf.predict_isotope(iso)
@@ -416,11 +416,8 @@ class DVCPersister(BasePersister):
                     nkey = '{}{}'.format(nd['name'], nd['detector'])
                     isos[nkey] = nd
 
-                    nd = intercepts.pop(key)
-                    intercepts[nkey] = nd
-
-                    nd = blanks.pop(key)
-                    blanks[nkey] = nd
+                    intercepts[nkey] = intercepts.pop(key)
+                    blanks[nkey] = blanks.pop(key)
 
                 key = '{}{}'.format(key, iso.detector)
 
@@ -460,15 +457,15 @@ class DVCPersister(BasePersister):
 
         obj = self._make_analysis_dict()
 
-        # from pychron.version import __version__ as pversion
-        # from pychron.experiment import __version__ as eversion
-        # from pychron.dvc import __version__ as dversion
+        from pychron.version import __version__ as pversion
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
 
         obj['timestamp'] = timestamp.isoformat()
 
-        # obj['collection_version'] = '{}:{}'.format(eversion, dversion)
-        # obj['acquisition_software'] = 'pychron version={}'.format(pversion)
-        # obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+        obj['collection_version'] = '{}:{}'.format(eversion, dversion)
+        obj['acquisition_software'] = 'pychron {}'.format(pversion)
+        obj['data_reduction_software'] = 'pychron {}'.format(pversion)
 
         obj['environmental'] = {'lab_temperatures': per_spec.lab_temperatures,
                                 'lab_humiditys': per_spec.lab_humiditys,
@@ -571,7 +568,6 @@ class DVCPersister(BasePersister):
             results = pc.get_results()
             if results:
                 for result in results:
-
                     points = encode_blob(pack(fmt, result.points))
 
                     obj[result.detector] = {'low_dac': result.low_dac,

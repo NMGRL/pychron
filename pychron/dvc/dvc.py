@@ -109,8 +109,8 @@ class DVCInterpretedAge(InterpretedAge):
 
     def from_json(self, obj):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
-                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation', 'name', 'project'
-                                                                                          'uuid'):
+                  'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
+                  'name', 'project', 'uuid', 'age_error_kind'):
             setattr(self, a, obj.get(a, NULL_STR))
 
         self.labnumber = self.identifier
@@ -630,12 +630,15 @@ class DVC(Loggable):
         #         mod_experiments.append(exp)
         return mod_repositories
 
-    def update_tag(self, an, **kw):
+    def update_tag(self, an, add=True, **kw):
         tag = Tag.from_analysis(an, **kw)
         tag.dump()
 
         expid = an.repository_identifier
-        return self.repository_add_paths(expid, tag.path)
+        if add:
+            return self.repository_add_paths(expid, tag.path)
+        else:
+            return tag.path
 
     def save_icfactors(self, ai, dets, fits, refs):
         if fits and dets:
@@ -736,7 +739,7 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False, reload=False):
+    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False):
         if not records:
             return []
 
@@ -762,30 +765,34 @@ class DVC(Loggable):
         fluxes = {}
         productions = {}
         chronos = {}
+        sens = {}
         meta_repo = self.meta_repo
-        for r in records:
-            irrad = r.irradiation
-            if irrad != 'NoIrradiation':
-                level = r.irradiation_level
-                flux_levels = fluxes.get(irrad, {})
-                prod_levels = productions.get(irrad, {})
+        if not quick:
+            for r in records:
+                irrad = r.irradiation
+                if irrad != 'NoIrradiation':
+                    level = r.irradiation_level
+                    flux_levels = fluxes.get(irrad, {})
+                    prod_levels = productions.get(irrad, {})
 
-                if level not in flux_levels:
-                    flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
-                if level not in prod_levels:
-                    prod_levels[level] = meta_repo.get_production(irrad, level)
-                if irrad not in chronos:
-                    chronos[irrad] = meta_repo.get_chronology(irrad)
-                fluxes[irrad] = flux_levels
-                productions[irrad] = prod_levels
+                    if level not in flux_levels:
+                        flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
+                    if level not in prod_levels:
+                        prod_levels[level] = meta_repo.get_production(irrad, level)
+                    if irrad not in chronos:
+                        chronos[irrad] = meta_repo.get_chronology(irrad)
+                    fluxes[irrad] = flux_levels
+                    productions[irrad] = prod_levels
 
-        sens = meta_repo.get_sensitivities()
+            sens = meta_repo.get_sensitivities()
         make_record = self._make_record
 
         def func(*args):
             try:
                 r = make_record(branches=branches, chronos=chronos, productions=productions,
-                                fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens, reload=reload, *args)
+                                fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
+                                quick=quick,
+                                reload=reload, *args)
                 return r
             except BaseException:
                 self.debug('make analysis exception')
@@ -986,7 +993,8 @@ class DVC(Loggable):
 
     def get_irradiation_geometry(self, irrad, level):
         dblevel = self.db.get_irradiation_level(irrad, level)
-        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder)
+
+        return self.meta_repo.get_irradiation_holder_holes(dblevel.holder), dblevel.holder
 
     def get_irradiation_names(self):
         irrads = self.db.get_irradiations()
@@ -996,7 +1004,7 @@ class DVC(Loggable):
     def add_interpreted_age(self, ia):
 
         a = ia.get_ma_scaled_age()
-        mswd = ia.preferred_mswd
+        mswd = ia.get_preferred_mswd()
 
         if isnan(mswd):
             mswd = 0
@@ -1008,10 +1016,12 @@ class DVC(Loggable):
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
-                 age_kind=ia.preferred_age_kind,
-                 kca_kind=ia.preferred_kca_kind,
-                 kca=float(ia.preferred_kca_value),
-                 kca_err=float(ia.preferred_kca_error),
+                 # age_kind=ia.preferred_age_kind,
+                 # kca_kind=ia.preferred_kca_kind,
+                 # age_error_kind=ia.preferred_age_error_kind,
+                 # kca=float(ia.preferred_kca_value),
+                 # kca_err=float(ia.preferred_kca_error),
+                 preferred_kinds=ia.preferred_values_to_dict(),
                  mswd=float(mswd),
                  arar_constants=ia.arar_constants.to_dict(),
                  ages=ia.ages(),
@@ -1241,21 +1251,24 @@ class DVC(Loggable):
                 self.sync_repo(expid)
 
                 cs = []
+                ps = []
                 for it in ans:
                     if not isinstance(it, (InterpretedAge, DVCAnalysis)):
-                        it = self.make_analysis(it)
+                        it = self.make_analysis(it, quick=True)
 
                     self.debug('setting {} tag= {}'.format(it.record_id, tag))
                     if not isinstance(it, InterpretedAge):
                         self.set_analysis_tag(it.uuid, tag)
 
                     it.set_tag({'name': tag, 'note': note or ''})
-                    if self.update_tag(it):
-                        cs.append(it)
-                        # it.refresh_view()
-                sess.commit()
 
-                self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
+                    path = self.update_tag(it, add=False)
+                    ps.append(path)
+                    cs.append(it)
+
+                sess.commit()
+                if self.repository_add_paths(expid, ps):
+                    self._commit_tags(cs, expid, '<TAG> {:<6s}'.format(tag))
                 # if cs:
                 #     cc = [c.record_id for c in cs]
                 #     if len(cc) > 1:
@@ -1299,7 +1312,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
-                     calculate_f_only=False, reload=False):
+                     calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
             # this accounts for ~85% of the time!!!
@@ -1347,67 +1360,68 @@ class DVC(Loggable):
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
 
-            a.load_name = record.load_name
-            a.load_holder = record.load_holder
-            # get repository branch
-            a.branch = branches.get(expid, '')
-            # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-            # print 'asdfdffff {}'.format(time.time() - st)
-            # a.set_tag(record.tag)
-            # load irradiation
-            if sens:
-                sens = sens.get(a.mass_spectrometer.lower(), [])
-            else:
-                sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
-
-            a.set_sensitivity(sens)
-
-            if a.irradiation and a.irradiation not in ('NoIrradiation',):
-                # self.debug('Irradiation {}'.format(a.irradiation))
-                if chronos:
-                    chronology = chronos[a.irradiation]
+            if not quick:
+                a.load_name = record.load_name
+                a.load_holder = record.load_holder
+                # get repository branch
+                a.branch = branches.get(expid, '')
+                # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
+                # print 'asdfdffff {}'.format(time.time() - st)
+                # a.set_tag(record.tag)
+                # load irradiation
+                if sens:
+                    sens = sens.get(a.mass_spectrometer.lower(), [])
                 else:
-                    chronology = meta_repo.get_chronology(a.irradiation)
-                a.set_chronology(chronology)
+                    sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
 
-                frozen_production = self._get_frozen_production(rid, a.repository_identifier)
-                if frozen_production:
-                    pname, prod = frozen_production.name, frozen_production
-                else:
-                    if productions:
-                        pname, prod = productions[a.irradiation][a.irradiation_level]
+                a.set_sensitivity(sens)
+
+                if a.irradiation and a.irradiation not in ('NoIrradiation',):
+                    # self.debug('Irradiation {}'.format(a.irradiation))
+                    if chronos:
+                        chronology = chronos[a.irradiation]
                     else:
-                        pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                        chronology = meta_repo.get_chronology(a.irradiation)
+                    a.set_chronology(chronology)
 
-                a.set_production(pname, prod)
+                    frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                    if frozen_production:
+                        pname, prod = frozen_production.name, frozen_production
+                    else:
+                        if productions:
+                            pname, prod = productions[a.irradiation][a.irradiation_level]
+                        else:
+                            pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
 
-                if fluxes:
-                    level_flux = fluxes[a.irradiation][a.irradiation_level]
-                    fd = meta_repo.get_flux_from_positions(record.irradiation_position_position, level_flux)
-                else:
-                    fd = meta_repo.get_flux(record.irradiation,
-                                            record.irradiation_level,
-                                            record.irradiation_position_position)
-                a.j = fd['j']
-                if fd['lambda_k']:
-                    a.arar_constants.lambda_k = fd['lambda_k']
+                    a.set_production(pname, prod)
 
-                for attr in ('age', 'name', 'material'):
-                    skey = 'monitor_{}'.format(attr)
-                    try:
-                        setattr(a, skey, fd[skey])
-                    except KeyError as e:
+                    if fluxes:
+                        level_flux = fluxes[a.irradiation][a.irradiation_level]
+                        fd = meta_repo.get_flux_from_positions(record.irradiation_position_position, level_flux)
+                    else:
+                        fd = meta_repo.get_flux(record.irradiation,
+                                                record.irradiation_level,
+                                                record.irradiation_position_position)
+                    a.j = fd['j']
+                    if fd['lambda_k']:
+                        a.arar_constants.lambda_k = fd['lambda_k']
+
+                    for attr in ('age', 'name', 'material'):
+                        skey = 'monitor_{}'.format(attr)
                         try:
-                            key = 'standard_{}'.format(attr)
-                            setattr(a, skey, fd[key])
-                        except KeyError:
-                            print('b', attr, key, e)
-                            pass
+                            setattr(a, skey, fd[skey])
+                        except KeyError as e:
+                            try:
+                                key = 'standard_{}'.format(attr)
+                                setattr(a, skey, fd[key])
+                            except KeyError:
+                                print('b', attr, key, e)
+                                pass
 
-                if calculate_f_only:
-                    a.calculate_F()
-                else:
-                    a.calculate_age()
+                    if calculate_f_only:
+                        a.calculate_F()
+                    else:
+                        a.calculate_age()
         return a
 
     def _get_frozen_production(self, rid, repo):

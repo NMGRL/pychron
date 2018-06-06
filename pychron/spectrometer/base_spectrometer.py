@@ -27,8 +27,6 @@ from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_
     set_spectrometer_config_name
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
-import six
-from six.moves import zip
 
 
 class NoIntensityChange(BaseException):
@@ -251,7 +249,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         found = None
         mi = 1
-        for k, v in six.iteritems(molweights):
+        for k, v in molweights.items():
             d = abs(v - mass)
             if d < 0.15 and d < mi:
                 found = k
@@ -426,6 +424,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                    optional=True)
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
+            serial_id = self.config_get(config, name, 'serial_id', default='00000')
 
             index = self.config_get(config, name, 'index', cast='float')
             if index is None:
@@ -443,6 +442,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
             self._add_detector(name=name,
                                index=index,
+                               serial_id=serial_id,
                                relative_position=relative_position,
                                use_deflection=use_deflection,
                                protection_threshold=pt,

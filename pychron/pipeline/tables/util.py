@@ -17,7 +17,12 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
+import re
+
 from uncertainties import nominal_value, std_dev
+
+from pychron.pychron_constants import PLUSMINUS, SIGMA, LAMBDA
 
 
 def iso_value(attr, ve='value'):
@@ -97,4 +102,36 @@ def age_value(target_units='Ma'):
         return v
     return wrapper
 
+
+subreg = re.compile(r'^<sub>(?P<item>.+)</sub>')
+supreg = re.compile(r'^<sup>(?P<item>.+)</sup>')
+italreg = re.compile(r'^<ital>(?P<item>.+)</ital>')
+boldreg = re.compile(r'^<bold>(?P<item>.+)</bold>')
+
+
+def interpolate_noteline(line, sup, sub, ital, bold):
+    line = line.replace('<plus_minus>', PLUSMINUS)
+    line = line.replace('<sigma>', SIGMA)
+    line = line.replace('<lambda>', LAMBDA)
+
+    def parse(line):
+        args = []
+        for fmt, reg, taglen in ((sup, supreg, 5),
+                                 (sub, subreg, 5),
+                                 (ital, italreg, 6),
+                                 (bold, boldreg, 6),
+                                 ):
+            g = reg.match(line)
+            if g:
+                args.append(fmt)
+                args.append('{} '.format(g.group('item')))
+                break
+        else:
+            args.append('{} '.format(line))
+        return args
+
+    ns = []
+    for token in line.split(' '):
+        ns.extend(parse(token))
+    return ns
 # ============= EOF =============================================

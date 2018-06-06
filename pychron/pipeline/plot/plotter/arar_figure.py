@@ -273,7 +273,7 @@ class BaseArArFigure(SelectionFigure):
     def _cmp_analyses(self, x):
         return x.timestamp
 
-    def _unpack_attr(self, attr, exclude_omit=False, nonsorted=False):
+    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False):
         def gen():
             ans = self.sorted_analyses
             if nonsorted:
@@ -283,7 +283,7 @@ class BaseArArFigure(SelectionFigure):
                     continue
 
                 v = ai.get_value(attr)
-                yield v or ufloat(0, 0)
+                yield v * scalar or ufloat(0, 0)
 
         return gen()
 
@@ -420,9 +420,13 @@ class BaseArArFigure(SelectionFigure):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
 
-    def _plot_moles_k39(self, po, pobj, pid):
+    def _plot_signal_k39(self, po, pobj, pid):
         k = 'k39'
         return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+
+    def _plot_moles_k39(self, po, pobj, pid):
+        k = 'moles_k39'
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(mol)', k, po, pid)
 
     def _plot_moles_ar40(self, po, pobj, pid):
         k = 'Ar40'
@@ -436,8 +440,8 @@ class BaseArArFigure(SelectionFigure):
         k = 'extract_value'
         return self._plot_aux('Extract Value', k, po, pid)
 
-    def _get_aux_plot_data(self, k):
-        vs = list(self._unpack_attr(k))
+    def _get_aux_plot_data(self, k, scalar=1):
+        vs = list(self._unpack_attr(k, scalar=scalar))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
     def _set_ml_title(self, text, plotid, ax):
@@ -488,7 +492,8 @@ class BaseArArFigure(SelectionFigure):
             ctx = {'aliquot': si.aliquot,
                    'step': si.step,
                    'sample': si.sample,
-                   'name': si.name}
+                   'name': si.name,
+                   'label_name': si.label_name}
 
             x = f.format(**ctx)
             labels.append(x)

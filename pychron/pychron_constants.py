@@ -43,11 +43,13 @@ FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 #          ]
 TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
 # FONTS = pdfmetrics.standardFonts
-FONTS = ['Helvetica']+TTF_FONTS
+FONTS = ['Helvetica'] + TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
+# LAMBDA = '\N{Greek Small Letter Lambda}'
+LAMBDA = '\u03BB'
 
 PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
@@ -60,21 +62,36 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Weighted Mean']
-FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
-
 SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
+SIG_FIGS = range(0, 15)
+
+WEIGHTED_MEAN = 'Weighted Mean'
+INTEGRATED = 'Total Integrated'
+
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', WEIGHTED_MEAN]
+
+FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
+
+AGE_SUBGROUPINGS = ('Plateau else Weighted Mean', 'Weighted Mean',
+                    'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                    'Arithmetic Mean', 'Plateau', 'Isochron')
+SUBGROUPINGS = ('Weighted Mean',
+                'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                'Arithmetic Mean')
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}
 AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
-
+DESCENDING = 'Descending'
+ASCENDING = 'Ascending'
+AGE_SORT_KEYS = (NULL_STR, ASCENDING, DESCENDING)
 OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 
 UNKNOWN = 'unknown'
@@ -175,20 +192,19 @@ DEFAULT_INTEGRATION_TIME = 1
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
                      'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 
-FLUX_CONSTANTS = {'Min et al., 2000': {'lambda_ec': [5.80e-11, 0],  'lambda_b': [4.884e-10, 0],  'monitor_age': 28.201},
-                  'Steiger & Jager 1977': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0], 'monitor_age': 28.02}}
+FLUX_CONSTANTS = {'Min et al., 2000': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.884e-10, 0], 'monitor_age': 28.201},
+                  'Steiger & Jager 1977': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0],
+                                           'monitor_age': 28.02}}
 
-
-flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
-if os.path.isfile(flux_constants):
-    with open(flux_constants, 'r') as rf:
-        obj = yaml.load(rf)
-        try:
-            FLUX_CONSTANTS.update(obj)
-        except BaseException:
-            pass
-
-
+if paths.setup_dir:
+    flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
+    if os.path.isfile(flux_constants):
+        with open(flux_constants, 'r') as rf:
+            obj = yaml.load(rf)
+            try:
+                FLUX_CONSTANTS.update(obj)
+            except BaseException:
+                pass
 
 AR_AR = 'Ar/Ar'
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),

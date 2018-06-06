@@ -46,7 +46,12 @@ class AnalysisTableNode(GroupAgeNode):
                 if tag in self.skip_meaning:
                     ans = (ai for ai in ans if ai.tag.lower() != 'skip')
 
-            return InterpretedAgeGroup(analyses=list(ans))
+            g = InterpretedAgeGroup(analyses=list(ans))
+
+            # in reality the group defaults
+            # g.set_preferred_defaults()
+            g.set_preferred_kinds()
+            return g
 
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
         blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')

@@ -14,7 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from traits.api import List
+
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import AgeOptions
 from pychron.options.views.radial_views import VIEWS
@@ -22,7 +24,7 @@ from pychron.pychron_constants import NULL_STR
 
 
 class RadialAuxPlot(AuxPlot):
-    names = List([NULL_STR, 'Radial'])
+    names = List([NULL_STR, 'Radial'], transient=True)
     # names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
     #               'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
     # _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',

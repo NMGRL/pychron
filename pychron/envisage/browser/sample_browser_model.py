@@ -77,8 +77,8 @@ class SampleBrowserModel(BrowserModel):
         self.analysis_table.dump()
 
     def activated(self, force=False):
-        self.analysis_table.load()
         self.reattach()
+        self.analysis_table.load()
 
         if not self.is_activated or force:
             self.load_browser_options()
@@ -165,10 +165,32 @@ class SampleBrowserModel(BrowserModel):
 
     def delete_analysis_group(self):
         self.debug('delete analysis groups')
-        for g in self.selected_analysis_groups:
+        n = len(self.selected_analysis_groups)
+        for i, g in enumerate(self.selected_analysis_groups):
             self.debug('deleting analysis group. {}'.format(g))
-            self.db.delete_analysis_group(g)
+            self.db.delete_analysis_group(g, commit=i == n - 1)
             self.analysis_groups.remove(g)
+
+    def add_analysis_group(self, ans):
+        from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
+        # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
+        projects = self.db.get_projects(order='asc')
+        projects = self._make_project_records(projects, include_recent=False)
+        agv = AddAnalysisGroupView(db=self.db,
+                                   projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
+                                             enumerate(projects)})
+
+        project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
+        try:
+            project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
+            agv.project = project
+        except StopIteration:
+            pass
+
+        info = agv.edit_traits(kind='livemodal')
+        if info.result:
+            agv.save(ans, self.db)
+            self.load_associated_groups(projects)
 
     def set_tags(self, tagname):
         items = self.get_analysis_records()
@@ -212,34 +234,20 @@ class SampleBrowserModel(BrowserModel):
     def _add_analysis_group_button_fired(self):
         ans = self.analysis_table.get_selected_analyses()
         if ans:
-            from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
-            # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
-            projects = self.db.get_projects(order='asc')
-            projects = self._make_project_records(projects, include_recent=False)
-            agv = AddAnalysisGroupView(db=self.db,
-                                       projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
-                                                 enumerate(projects)})
-
-            project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
-            try:
-                project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
-                agv.project = project
-            except StopIteration:
-                pass
-
-            info = agv.edit_traits(kind='livemodal')
-            if info.result:
-                agv.save(ans, self.db)
+            self.add_analysis_group(ans)
 
     def _analysis_set_changed(self, new):
         if self.analysis_table.suppress_load_analysis_set:
             return
 
         self.debug('analysis set changed={}'.format(new))
-        ans = self.analysis_table.get_analysis_set(new)
-        ans = self.db.get_analyses_uuid([a[0] for a in ans])
-        xx = self._make_records(ans)
-        self.analysis_table.set_analyses(xx)
+        try:
+            ans = self.analysis_table.get_analysis_set(new)
+            ans = self.db.get_analyses_uuid([a[0] for a in ans])
+            xx = self._make_records(ans)
+            self.analysis_table.set_analyses(xx)
+        except StopIteration:
+            pass
 
     def _refresh_selectors_button_fired(self):
         self.debug('refresh selectors fired')
@@ -414,8 +422,8 @@ class SampleBrowserModel(BrowserModel):
 
     def _analysis_table_default(self):
         at = AnalysisTable(dvc=self.dvc)
-        at.load()
         at.on_trait_change(self._analysis_set_changed, 'analysis_set')
+        # at.load()
         prefid = 'pychron.browser'
         bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
 

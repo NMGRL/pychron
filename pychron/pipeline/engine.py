@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, A
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import list_directory2, add_extension
 from pychron.dvc.tasks.repo_task import RepoItem
+from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pipeline.nodes import FindReferencesNode
@@ -31,7 +32,7 @@ from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedAgeNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, FigureNode, SeriesNode, NoAnalysesError, \
+from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, NoAnalysesError, \
     InverseIsochronNode
 from pychron.pipeline.nodes.filter import FilterNode
 from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
@@ -243,10 +244,10 @@ class PipelineEngine(Loggable):
     recall_analyses_needed = Event
     reset_event = Event
 
-    tag_event = Event
-    invalid_event = Event
-    recall_event = Event
-    omit_event = Event
+    # tag_event = Event
+    # invalid_event = Event
+    # recall_event = Event
+    # omit_event = Event
 
     state = Instance(EngineState)
     editors = List
@@ -271,7 +272,6 @@ class PipelineEngine(Loggable):
 
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
-
     # def update_detectors(self):
     #     """
     #     set valid detectors for FitICFactorNodes
@@ -442,8 +442,8 @@ class PipelineEngine(Loggable):
         self.pipeline.add_after(node, newnode)
 
     def clear(self):
-        self.unknowns = []
-        self.references = []
+        # self.unknowns = []
+        # self.references = []
         for ni in self.pipeline.nodes:
             ni.clear_data()
 
@@ -451,6 +451,10 @@ class PipelineEngine(Loggable):
             # self.selected_pipeline_template = ''
             # self._set_template(self.selected_pipeline_template)
 
+    def remove_invalid(self):
+        unks = self.selected_node.unknowns
+        self.selected_node.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
+        self.refresh_table_needed = True
     # ============================================================================================================
     # nodes
     # ============================================================================================================
@@ -707,6 +711,9 @@ class PipelineEngine(Loggable):
             return True
 
     def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True, configure=True):
+        self.selected_unknowns = []
+        self.selected_references = []
+
         if pipeline is None:
             pipeline = self.pipeline
 
@@ -731,6 +738,9 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(pipeline.iternodes(start_node)):
             node.visited = False
             node.index = idx
+
+        if globalv.skip_configure:
+            configure = False
 
         for idx, node in enumerate(pipeline.iternodes(start_node)):
 
@@ -1020,37 +1030,37 @@ class PipelineEngine(Loggable):
                 self.debug('Pipeline template {} selected'.format(new))
                 self._set_template(new)
 
-    def _selected_changed(self, old, new):
-        if isinstance(new, Pipeline):
-            self.pipeline = new
-        elif isinstance(new, NodeGroup):
-            pass
-        else:
-            self.selected_node = new
-            if old:
-                old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
-                old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',
-                                    remove=True)
-                old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
-                old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
-                old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
-                old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
-                old.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
-
-            if new:
-                new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
-                new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
-                new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
-                new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
-                new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
-                new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
-                new.on_trait_change(self._handle_len_references, 'references_items')
-
-            if isinstance(new, FigureNode):
-                if new.editor:
-                    editor = new.editor
-                    self.selected_editor = editor
-                    self.active_editor = editor
+    # def _selected_changed(self, old, new):
+    #     if isinstance(new, Pipeline):
+    #         self.pipeline = new
+    #     elif isinstance(new, NodeGroup):
+    #         pass
+    #     else:
+    #         self.selected_node = new
+    #         if old:
+    #             old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
+    #             old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',
+    #                                 remove=True)
+    #             old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
+    #             old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
+    #             old.on_trait_change(self._handle_len_unknowns, 'unknowns_items', remove=True)
+    #             old.on_trait_change(self._handle_len_references, 'references_items', remove=True)
+    #             old.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
+    #
+    #         if new:
+    #             new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
+    #             new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+    #             new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
+    #             new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
+    #             new.on_trait_change(self._handle_status, 'unknowns:temp_status,references:temp_status')
+    #             new.on_trait_change(self._handle_len_unknowns, 'unknowns_items')
+    #             new.on_trait_change(self._handle_len_references, 'references_items')
+    #
+    #         if isinstance(new, FigureNode):
+    #             if new.editor:
+    #                 editor = new.editor
+    #                 self.selected_editor = editor
+    #                 self.active_editor = editor
 
     def refresh_unknowns(self, unks, refresh_editor=False):
         self.selected.unknowns = unks
@@ -1061,7 +1071,7 @@ class PipelineEngine(Loggable):
     _len_references_cnt = 0
     _len_references_removed = 0
 
-    def _handle_len_unknowns(self, new):
+    def handle_len_unknowns(self, new):
         self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
 
         def func(editor):
@@ -1074,7 +1084,7 @@ class PipelineEngine(Loggable):
 
         self._handle_len('unknowns', func)
 
-    def _handle_len_references(self, new):
+    def handle_len_references(self, new):
         def func(editor):
             vs = self.selected.references
             editor.set_references(vs)
@@ -1111,20 +1121,20 @@ class PipelineEngine(Loggable):
                 # editor.set_references(self.selected.references)
                 editor.refresh_needed = True
 
-    def _handle_status(self, new):
+    def handle_status(self, new):
         self.refresh_table_needed = True
 
-    def _handle_recall(self, new):
-        self.recall_event = new
-
-    def _handle_tag(self, new):
-        self.tag_event = new
-
-    def _handle_invalid(self, new):
-        self.invalid_event = new
-
-    def _handle_omit(self, new):
-        self.omit_event = new
+    # def _handle_recall(self, new):
+    #     self.recall_event = new
+    #
+    # def _handle_tag(self, new):
+    #     self.tag_event = new
+    #
+    # def _handle_invalid(self, new):
+    #     self.invalid_event = new
+    #
+    # def _handle_omit(self, new):
+    #     self.omit_event = new
 
     def _dclicked_changed(self, new):
         self.configure(new)

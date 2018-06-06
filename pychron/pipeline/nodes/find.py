@@ -131,7 +131,11 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
             state.veto = self
         else:
             dvc = self.dvc
-            state.geometry = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            args = dvc.get_irradiation_geometry(self.irradiation, self.level)
+            if args:
+                geom, holder = args
+                state.geometry = geom
+                state.holder = holder
 
             ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
 
@@ -263,7 +267,6 @@ class FindReferencesNode(FindNode):
 
         self._load_analysis_types(state)
 
-        self._pre_run_hook()
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
@@ -274,9 +277,6 @@ class FindReferencesNode(FindNode):
 
         self._compress_groups(state.unknowns)
         self._compress_groups(state.references)
-
-    def _pre_run_hook(self):
-        pass
 
     def _compress_groups(self, ans):
         if not ans:

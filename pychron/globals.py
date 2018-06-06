@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 from pychron.core.helpers.strtools import to_bool
 
 
@@ -71,9 +72,10 @@ class Globals(object):
     automated_run_debug = False
     spectrometer_debug = False
     system_monitor_debug = False
-    figure_debug = False
-    browser_debug = False
+    # figure_debug = False
+    # browser_debug = False
     auto_pipeline_debug = False
+    skip_configure = False
 
     load_valve_states = True
     load_soft_locks = True
@@ -82,8 +84,8 @@ class Globals(object):
     debug = False
     use_logger_display = True
     use_warning_display = True
-    recall_debug = False
-    pipeline_debug = False
+    # recall_debug = False
+    # pipeline_debug = False
 
     pipeline_template = None
     select_default_data = True
@@ -128,16 +130,17 @@ class Globals(object):
                            ('load_manual_states', to_bool),
                            ('experiment_debug', to_bool),
                            ('experiment_savedb', to_bool),
-                           ('recall_debug', to_bool),
-
-                           ('auto_pipeline_debug', to_bool),
-                           ('pipeline_debug', to_bool),
-                           ('run_pipeline', to_bool),
+                           # ('run_pipeline', to_bool),
                            ('select_default_data', to_bool),
                            ('pipeline_template', str),
 
-                           ('figure_debug', to_bool),
-                           ('browser_debug', to_bool),
+                           ('auto_pipeline_debug', to_bool),
+                           # ('pipeline_debug', to_bool),
+                           # ('recall_debug', to_bool),
+                           # ('figure_debug', to_bool),
+                           # ('browser_debug', to_bool),
+                           ('skip_configure', to_bool),
+
                            ('valve_debug', to_bool),
                            ('communication_simulation', to_bool),
                            ('dashboard_simulation', to_bool),

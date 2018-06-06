@@ -16,11 +16,12 @@
 
 # ============= enthought library imports =======================
 from itertools import groupby
-from numpy import inf
 
+from numpy import inf
 from pyface.confirmation_dialog import confirm
-from pyface.constant import NO, YES
-from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
+from pyface.constant import YES
+from six.moves import zip
+from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -32,8 +33,6 @@ from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
-import six
-from six.moves import zip
 
 
 class RefitException(BaseException):
@@ -380,16 +379,16 @@ class FitIsotopeEvolutionNode(FitNode):
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
-                    int_err_goodness = bool(pe < goodness_threshold)
+                    int_err_goodness = bool(e < goodness_threshold)
 
                 slope = None
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
-                    if f.slope_goodness_intensity > i:
+                    if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
                         slope = iso.get_slope()
-                        slope_goodness = bool(slope < 0 or i < slope_threshold)
+                        slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None
@@ -412,6 +411,8 @@ class FitIsotopeEvolutionNode(FitNode):
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
                 rsquared_goodness = None
+                rsquared = 0
+                rsquared_threshold = 0
                 if f.rsquared_goodness:
                     rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
@@ -478,6 +479,7 @@ class FitFluxNode(FitNode):
             editor.geometry = geom
             editor.irradiation = state.irradiation
             editor.level = state.level
+            editor.holder = state.holder
 
             editor.set_positions(monitors, state.unknown_positions)
             state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions

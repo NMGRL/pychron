@@ -77,7 +77,11 @@ class BaseNode(ColumnSorterMixin):
     def disable(self):
         self.enabled = False
 
+    def _pre_run_hook(self, state):
+        pass
+
     def pre_run(self, state, configure=True):
+        self._pre_run_hook(state)
 
         if not self.auto_configure:
             print('not auto configure')

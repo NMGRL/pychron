@@ -15,7 +15,6 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import os
-import shutil
 
 import apptools.sweet_pickle as pickle
 from traits.api import Str, List, Button, Instance, Tuple, Property, cached_property
@@ -166,8 +165,6 @@ class OptionsManager(Loggable):
         self.save(name, p)
         self._load_names()
 
-        # print self.names
-        # print self.name
         self.selected = name
 
     def factory_default(self):
@@ -187,13 +184,12 @@ class OptionsManager(Loggable):
 
                     self.selected = name
                     break
+            else:
+                self.information_dialog('Factory Defaults not available for "{}". '
+                                        'Not a factory provided options set'.format(options_name))
 
-                    # warning(None, 'Factory defaults temporarily disabled')
-
-                    # print  os.path.isfile(self._defaults_path), self._defaults_path
-                    # if os.path.isfile(self._defaults_path):
-                    #     self.debug('load factory defaults {}'.format(self._defaults_path))
-                    #     self.selected_options.load_factory_defaults(self._defaults_path)
+        else:
+            self.information_dialog('Not Factory Defaults available')
 
     def _initialize(self):
         selected = self._load_selected_po()

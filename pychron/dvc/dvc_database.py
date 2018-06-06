@@ -17,8 +17,11 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from datetime import timedelta, datetime
 
+import six
+from six.moves import map
 from sqlalchemy import not_, func, distinct, or_, select, and_, join
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
@@ -26,7 +29,7 @@ from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
-from pychron.core.helpers.datetime_tools import bin_timestamps, bin_datetimes
+from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
@@ -41,8 +44,6 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl
 from pychron.globals import globalv
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
-import six
-from six.moves import map
 
 
 def make_filter(qq, table, col='value'):
@@ -580,6 +581,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_analysis_group(self, ans, name, project, pi=None):
         with self.session_ctx():
+            if not isinstance(project, six.text_type):
+                pi = project.principal_investigator
+                project = project.name
+
             project = self.get_project(project, pi)
             grp = AnalysisGroupTbl(name=name, user=globalv.username)
             grp.project = project
@@ -2078,13 +2083,14 @@ class DVCDatabase(DatabaseAdapter):
             self._delete_item(name, name='tag')
             return True
 
-    def delete_analysis_group(self, g):
+    def delete_analysis_group(self, g, commit=False):
         with self.session_ctx() as sess:
             for si in g.sets:
                 sess.delete(si)
 
             sess.delete(g)
-            sess.commit()
+            if commit:
+                sess.commit()
 
     # ============================================================
     # Sample Prep
