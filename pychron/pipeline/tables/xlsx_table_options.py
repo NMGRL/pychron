@@ -26,7 +26,7 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
-from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES
+from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, ERROR_TYPES, AGE_SORT_KEYS
 
 
 class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
@@ -140,6 +140,10 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     fixed_step_low = dumpable(SingleStr)
     fixed_step_high = dumpable(SingleStr)
 
+    group_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+    subgroup_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+    individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
+
     _persistence_name = 'xlsx_table_options'
 
     def __init__(self, *args, **kw):
@@ -240,7 +244,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                 Item('power_units', label='Power Units'),
                                 Item('age_units', label='Age Units'),
                                 Item('sensitivity_units', label='Sensitivity Units'),
-
+                                Item('group_age_sorting', label='Group Age Sorting'),
+                                Item('subgroup_age_sorting', label='SubGroup Age Sorting'),
+                                Item('individual_age_sorting', label='Individual Age Sorting'),
                                 Item('asummary_kca_nsigma', label='K/Ca Nsigma'),
                                 Item('asummary_age_nsigma', label='Age Nsigma'),
                                 Item('repeat_header', label='Repeat Header'),

@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from itertools import groupby
+from operator import attrgetter
 
 import six
 import xlsxwriter
@@ -33,7 +34,7 @@ from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correc
     subreg, interpolate_noteline, value
 from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
-from pychron.pychron_constants import PLUSMINUS_NSIGMA
+from pychron.pychron_constants import PLUSMINUS_NSIGMA, NULL_STR, DESCENDING
 
 
 def format_mswd(t):
@@ -454,6 +455,50 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._make_notes(sh, len(cols), 'summary')
 
+    def _sort_groups(self, groups):
+        def group_age(group):
+            nitems = []
+            has_subgroups = False
+
+            ans = group.analyses
+
+            nsubgroups = len({subgrouping_key(i) for i in ans})
+
+            for subgroup, items in groupby(ans, key=subgrouping_key):
+                items = list(items)
+                ag = None
+                if subgroup:
+                    sg = items[0].subgroup
+                    kind = sg['age_kind']
+                    ag = InterpretedAgeGroup(analyses=items)
+                    _, label = ag.get_age(kind, set_preferred=True)
+                    ag.set_preferred_kinds(sg)
+                if ag:
+                    nitems.append(ag)
+                    has_subgroups = True
+                else:
+                    if nsubgroups == 1:
+                        ag = InterpretedAgeGroup(analyses=items)
+                        ag.set_preferred_kinds()
+                        nitems = [ag]
+                    else:
+                        nitems.extend(items)
+
+            if has_subgroups and nsubgroups > 1:
+                group.analyses = nitems
+
+            if nsubgroups == 1:
+                group = nitems[0]
+
+            return group.age
+
+        if self._options.group_age_sorting == NULL_STR:
+            ngs = groups
+        else:
+            ngs = sorted(groups, key=group_age, reverse=self._options.group_age_sorting == DESCENDING)
+
+        return ngs
+
     def _make_sheet(self, groups, name):
         self._current_row = 1
 
@@ -466,6 +511,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         options = self._options
         repeat_header = options.repeat_header
+
+        groups = self._sort_groups(groups)
 
         for i, group in enumerate(groups):
             group.set_temporary_age_units(options.age_units)
@@ -485,14 +532,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 items = list(items)
                 ag = None
                 if subgroup:
-                    kind = items[0].subgroup['age_kind']
-
-                    # kind = '_'.join(subgroup.split('_')[:-1])
+                    sg = items[0].subgroup
+                    kind = sg['age_kind']
                     ag = InterpretedAgeGroup(analyses=items)
                     _, label = ag.get_age(kind, set_preferred=True)
-                    ag.set_preferred_kinds(items[0].subgroup)
-                    # age, label = self._get_intermediate_age(ag, kind)
+                    ag.set_preferred_kinds(sg)
                 n = len(items) - 1
+                if options.individual_age_sorting != NULL_STR:
+                    items = sorted(items, attrgetter('age'),
+                                   reverse=options.individual_age_sorting == DESCENDING)
+
                 for i, item in enumerate(items):
                     ounits = item.arar_constants.age_units
                     item.arar_constants.age_units = options.age_units
@@ -507,7 +556,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                         cum=ag.cumulative_ar39(i) if ag else '')
 
                 if ag:
-                    # ia = self._make_intermediate_analysis(ag, kind)
                     if nsubgroups > 1:
                         self._make_intermediate_summary(worksheet, ag, cols, label)
                     nitems.append(ag)
