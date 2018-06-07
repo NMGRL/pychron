@@ -1365,16 +1365,11 @@ class DVC(Loggable):
                 a.load_holder = record.load_holder
                 # get repository branch
                 a.branch = branches.get(expid, '')
-                # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-                # print 'asdfdffff {}'.format(time.time() - st)
-                # a.set_tag(record.tag)
+
                 # load irradiation
                 if sens:
                     sens = sens.get(a.mass_spectrometer.lower(), [])
-                else:
-                    sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
-
-                a.set_sensitivity(sens)
+                    a.set_sensitivity(sens)
 
                 if a.irradiation and a.irradiation not in ('NoIrradiation',):
                     # self.debug('Irradiation {}'.format(a.irradiation))

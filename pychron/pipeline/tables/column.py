@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable, List
+from traits.api import HasTraits, Bool, Str, Tuple, Either, Callable, List, Int
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.tables.util import value, error
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
@@ -27,6 +28,18 @@ class Column(HasTraits):
     func = Callable
     sigformat = Str
     fformat = List
+    use_scientific = Bool
+    width = None
+    calculated_width = -1
+    nsigfigs = Int
+
+    def calculate_width(self, txt):
+        if isinstance(txt, float):
+            if self.nsigfigs:
+                txt = floatfmt(txt, self.nsigfigs, use_scientific=self.use_scientific)
+                self.calculated_width = max(self.calculated_width, len(txt))
+        # else:
+        #     self.calculated_width = max(self.calculated_width, len(str(txt)))
 
     def _label_default(self):
         return ''

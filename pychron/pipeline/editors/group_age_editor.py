@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from itertools import groupby
+from operator import attrgetter
+
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int
+from traits.api import Property, Str, Int, List
 from traitsui.api import View, UItem, VGroup, HGroup, Handler
 from traitsui.menu import Action
 
@@ -22,7 +25,8 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
-from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error
+from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error, \
+    make_interpreted_age_subgroups
 from pychron.pychron_constants import MSEM, SEM, SD, WEIGHTED_MEAN, INTEGRATED
 
 
@@ -169,9 +173,8 @@ class THandler(Handler):
 
 
 class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
-    adapter_klass = GroupAgeAdapter
-
     help_str = Str('Right-click to subgroup analyses and calculate an age')
+    groups = List
 
     def clear_grouping(self):
         if self.selected:
@@ -193,6 +196,16 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self._group(kind)
         self.refresh_needed = True
 
+    def get_groups(self):
+        key = attrgetter('group_id')
+        nans = []
+
+        for gid, ans in groupby(sorted(self.items, key=key), key=key):
+            ias = make_interpreted_age_subgroups(ans)
+            nans.extend(ias)
+
+        return nans
+
     def _group_error(self, tag):
         if self.selected:
             set_subgrouping_error(tag, self.selected, self.items)
@@ -210,7 +223,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                    show_border=True, label='Info'),
 
             UItem('items',
-                  editor=myTabularEditor(adapter=self.adapter_klass(),
+                  editor=myTabularEditor(adapter=GroupAgeAdapter(),
                                          # col_widths='col_widths',
                                          selected='selected',
                                          multi_select=True,
@@ -218,6 +231,8 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                                          refresh='refresh_needed',
                                          operations=['delete', 'move'],
                                          column_clicked='column_clicked'))),
+            # UItem('groups',
+            #       editor=myTabularEditor(adapter=GroupAgeAdapter())),
             handler=THandler())
         return v
 

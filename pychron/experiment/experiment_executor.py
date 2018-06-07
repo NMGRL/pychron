@@ -18,15 +18,15 @@
 from __future__ import absolute_import
 
 import os
-import time
 from datetime import datetime
 from itertools import groupby
 from threading import Thread, Lock, currentThread
 
+import time
 import yaml
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
+from traits.api import Event, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
     on_trait_change, Long, Float, Str
 from traits.trait_errors import TraitError
 
@@ -1194,6 +1194,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # run = self.current_run if not spec.overlap[0] else None
 
         run = None
+
+        spec.load_name = exp.load_name
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
 

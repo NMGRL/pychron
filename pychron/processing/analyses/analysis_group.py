@@ -28,8 +28,8 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, INTEGRATED, \
-    WEIGHTED_MEAN
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
+    DEFAULT_INTEGRATED
 
 
 def AGProperty(*depends):
@@ -345,9 +345,9 @@ class AnalysisGroup(IdeogramPlotable):
         if kind == 'total':
             ans = self.analyses
         elif kind == 'valid':
-            ans = self.clean_analyses()
+            ans = list(self.clean_analyses())
         elif kind == 'plateau':
-            ans = self.plateau_analyses()
+            ans = list(self.plateau_analyses())
 
         if ans:
             prs = ans[0].production_ratios
@@ -443,6 +443,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     #         n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
     #     return n
     total_ar39 = AGProperty()
+    total_k2o = AGProperty()
 
     def plateau_analyses(self):
         return [a for a in self.clean_analyses() if self.get_is_plateau_step(a)]
@@ -452,13 +453,20 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         return self.identifier
 
     @cached_property
+    def _get_total_k2o(self):
+        total = sum([a.k2o for a in self.analyses])
+        return nominal_value(total)
+
+    @cached_property
     def _get_total_ar39(self):
         total = sum([a.get_computed_value('k39') for a in self.analyses])
         return nominal_value(total)
 
     def plateau_total_ar39(self):
-        cleantotal = sum([a.get_computed_value('k39') for a in self.analyses if self.get_is_plateau_step(a)])
-        return nominal_value(cleantotal / self.total_ar39 * 100)
+        # cleantotal = sum([a.get_computed_value('k39') for a in self.analyses if self.get_is_plateau_step(a)])
+
+        ptotal = sum([a.get_computed_value('k39') for a in self.plateau_analyses()])
+        return nominal_value(ptotal / self.total_ar39 * 100)
 
     def valid_total_ar39(self):
         cleantotal = sum([a.get_computed_value('k39') for a in self.clean_analyses()])
@@ -748,7 +756,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         #     return super(InterpretedAgeGroup, self)._get_nanalyses()
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
-    def _preferred_kind_changd(self, obj, old, name, new):
+    def _preferred_kind_changd(self, obj, name, old, new):
+
         v = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
         obj.value = nominal_value(v)
         obj.error = std_dev(v)
@@ -783,7 +792,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                 if k == 'age':
                     vk, ek = WEIGHTED_MEAN, MSEM
                 else:
-                    vk = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+                    vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
                     ek = MSEM if naliquots > 1 else SD
             else:
                 vk = sg['{}_kind'.format(k)]
@@ -844,6 +853,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self._calculate_integrated(attr, 'total')
         elif pk == 'plateau_integrated':
             pa = self._calculate_integrated(attr, 'plateau')
+        elif pk == 'plateau_else_valid_integrated':
+            if self.plateau_age:
+                pa = self._calculate_integrated(attr, 'plateau')
+            else:
+                pa = self._calculate_integrated(attr, 'valid')
         else:
             pa = self._calculate_arithmetic_mean(attr)
 

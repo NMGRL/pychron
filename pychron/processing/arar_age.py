@@ -132,10 +132,11 @@ class ArArAge(IsotopeGroup):
         k2o = ''
         if self.weight:
             k40_k = 0.0001167
-            k40 = self.non_ar_isotopes['k40']
-            moles_k = k40 / k40_k * self.sensitivity
+            moles_39K = self.computed['k39'] * self.sensitivity
+            moles_k = moles_39K * 9.54 / (k40_k*nominal_value(self.j))
             mw_k2o = 94.2
             k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+
         return k2o
 
     @property

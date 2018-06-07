@@ -70,6 +70,7 @@ SIG_FIGS = range(0, 15)
 
 WEIGHTED_MEAN = 'Weighted Mean'
 INTEGRATED = 'Total Integrated'
+DEFAULT_INTEGRATED = 'Plateau else Valid Integrated'
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', WEIGHTED_MEAN]
@@ -77,10 +78,10 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
 FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
 
 AGE_SUBGROUPINGS = ('Plateau else Weighted Mean', 'Weighted Mean',
-                    'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                    'Total Integrated', 'Valid Integrated', 'Plateau Integrated', DEFAULT_INTEGRATED,
                     'Arithmetic Mean', 'Plateau', 'Isochron')
 SUBGROUPINGS = ('Weighted Mean',
-                'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
+                'Total Integrated', 'Valid Integrated', 'Plateau Integrated', DEFAULT_INTEGRATED,
                 'Arithmetic Mean')
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
