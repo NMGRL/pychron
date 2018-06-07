@@ -62,6 +62,7 @@ class AutomatedRunSpec(HasTraits):
     username = Str
     tray = Str
     load_name = Str
+    load_holder = Str
     queue_conditionals_name = Str
     # ===========================================================================
     # run id
