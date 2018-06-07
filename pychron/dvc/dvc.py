@@ -1371,8 +1371,7 @@ class DVC(Loggable):
                 # load irradiation
                 if sens:
                     sens = sens.get(a.mass_spectrometer.lower(), [])
-                else:
-                    sens = meta_repo.get_sensitivity(a.mass_spectrometer.lower())
+                    a.set_sensitivity(sens)
 
                 a.set_sensitivity(sens)
 
