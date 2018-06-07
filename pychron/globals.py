@@ -31,7 +31,7 @@ class Globals(object):
     use_debug_logger = False
     # use_debug_logger = True
 
-    open_logger_on_launch = True
+    open_logger_on_launch = False
 
     # force display flags
     show_warnings = True

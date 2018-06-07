@@ -18,8 +18,8 @@
 from __future__ import absolute_import
 
 import os
-
 import pickle
+
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.tasks_application import TasksApplication, TasksApplicationState, logger
 from pyface.dialog import Dialog
@@ -77,9 +77,9 @@ class BaseTasksApplication(TasksApplication, Loggable):
         self.about_dialog.open()
 
     def start(self):
-        if globalv.open_logger_on_launch:
-            self._load_state()
-            self.open_task('pychron.logger')
+        # if globalv.open_logger_on_launch:
+        #     self._load_state()
+        #     self.open_task('pychron.logger.task')
 
         self.startup_tester = StartupTester()
 
@@ -116,7 +116,8 @@ class BaseTasksApplication(TasksApplication, Loggable):
                 win.open()
 
         if win:
-            win.active_task.window = win
+            if win.active_task:
+                win.active_task.window = win
 
             return win.active_task
 
