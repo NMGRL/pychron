@@ -61,6 +61,7 @@ class AutomatedRunSpec(HasTraits):
     extract_device = Str
     username = Str
     tray = Str
+    load_name = Str
     queue_conditionals_name = Str
     # ===========================================================================
     # run id

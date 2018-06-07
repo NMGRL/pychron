@@ -1194,6 +1194,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # run = self.current_run if not spec.overlap[0] else None
 
         run = None
+
+        spec.load_name = exp.load_name
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
 
