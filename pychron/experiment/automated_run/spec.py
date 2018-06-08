@@ -64,6 +64,7 @@ class AutomatedRunSpec(HasTraits):
     load_name = Str
     load_holder = Str
     queue_conditionals_name = Str
+    sensitivity_units = Str
     # ===========================================================================
     # run id
     # ===========================================================================
@@ -561,6 +562,10 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @property
     def sensitivity(self):
         return 0
+
+    @property
+    def sensitivity_units(self):
+        return 'mV/mol'
 
     @property
     def extract_duration(self):
