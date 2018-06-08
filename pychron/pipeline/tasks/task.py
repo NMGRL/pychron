@@ -363,7 +363,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Iso Evo')
 
     def set_icfactor_template(self):
-        self._set_action_template('ICFactor')
+        self._set_action_template('IC Factor')
 
     def set_blanks_template(self):
         self._set_action_template('Blanks')

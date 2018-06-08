@@ -347,10 +347,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         opt = self._options
 
         def get_kca(ag, *args):
-            return nominal_value(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
+            pv = ag.get_preferred_obj('kca')
+            return pv.value
 
         def get_kca_error(ag, *args):
-            return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
+            pv = ag.get_preferred_obj('kca')
+            return pv.error * opt.summary_kca_nsigma
+            # return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
             _, label = ag.get_age()
