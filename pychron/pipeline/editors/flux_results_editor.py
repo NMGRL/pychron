@@ -450,7 +450,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         # if self.plotter_options.use_weighted_fit:
             # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
         # else:
-        l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+        try:
+            l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+        except:
+            l, u = reg.calculate_error_envelope(pts, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr

@@ -353,19 +353,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
-            ret = ''
-            if isinstance(ag, InterpretedAgeGroup):
-                a, label = ag.get_age()
-                ret = label.capitalize()
+            _, label = ag.get_age()
+            ret = label.capitalize()
             return ret
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.preferred_age)
+            a, _ = ag.get_age()
+            return nominal_value(a)
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
+            a, _ = ag.get_age()
+            return std_dev(a)*opt.summary_age_nsigma
 
-        # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
 
         cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
@@ -376,7 +375,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(enabled=opt.include_summary_material, label='Material', attr='material'),
 
                 Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
-                # Column(enabled=opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
 
                 Column(enabled=opt.include_summary_n, label='N', attr='nratio'),
                 Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),

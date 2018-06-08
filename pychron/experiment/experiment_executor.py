@@ -1196,6 +1196,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run = None
 
         spec.load_name = exp.load_name
+        spec.load_holder = exp.load_holder
+
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
 
@@ -1214,15 +1216,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.labspy_client = self.application.get_service('pychron.labspy.client.LabspyClient')
         # arun.experiment_executor = self
 
-        arun.signal_color = self.signal_color
-        arun.sniff_color = self.sniff_color
-        arun.baseline_color = self.baseline_color
-        arun.ms_pumptime_start = self.ms_pumptime_start
+        # arun.signal_color = self.signal_color
+        # arun.sniff_color = self.sniff_color
+        # arun.baseline_color = self.baseline_color
+        # arun.ms_pumptime_start = self.ms_pumptime_start
+        # arun.datahub = self.datahub
+        # arun.console_display = self.console_display
+        # arun.experiment_queue = self.experiment_queue
+
+        # arun.spectrometer_manager = self.spectrometer_manager
+        # arun.extraction_line_manager = self.extraction_line_manager
+        # arun.ion_optics_manager = self.ion_optics_manager
+        # # arun.runner = self.pyscript_runner
+        # arun.use_db_persistence = self.use_db_persistence
+        # arun.use_dvc_persistence = self.use_dvc_persistence
+        # arun.use_xls_persistence = self.use_xls_persistence
+
+        for k in ('signal_color', 'sniff_color', 'baseline_color',
+                  'ms_pumptime_start', 'datahub', 'console_display', 'experiment_queue',
+                  'spectrometer_manager', 'extraction_line_manager', 'ion_options_manager',
+                  'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
+
+            setattr(arun, k, getattr(self, k))
+
         arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
         arun.previous_baselines = self._prev_baselines
-        arun.datahub = self.datahub
-        arun.console_display = self.console_display
-        arun.experiment_queue = self.experiment_queue
         arun.on_trait_change(self._handle_executor_event, 'executor_event')
 
         arun.set_preferences(self.application.preferences)
@@ -1237,21 +1255,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 script.manager = self
                 script.runner = self.pyscript_runner
 
-        arun.spectrometer_manager = self.spectrometer_manager
-        arun.extraction_line_manager = self.extraction_line_manager
-        arun.ion_optics_manager = self.ion_optics_manager
-        # arun.runner = self.pyscript_runner
         arun.extract_device = exp.extract_device
-
         arun.persister.datahub = self.datahub
-        arun.persister.load_name = exp.load_name
         arun.persister.dbexperiment_identifier = exp.database_identifier
 
         arun.use_syn_extraction = False
-
-        arun.use_db_persistence = self.use_db_persistence
-        arun.use_dvc_persistence = self.use_dvc_persistence
-        arun.use_xls_persistence = self.use_xls_persistence
 
         if self.use_dvc_persistence:
             dvcp = self.application.get_service('pychron.dvc.dvc_persister.DVCPersister')

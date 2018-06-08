@@ -334,8 +334,8 @@ class DVCPersister(BasePersister):
 
         if self._positions:
             db = self.dvc.db
-            load_name = self.per_spec.load_name
-            load_holder = self.per_spec.load_holder
+            load_name = rs.load_name
+            load_holder = rs.load_holder
 
             db.add_load(load_name, load_holder)
             db.flush()

@@ -65,11 +65,6 @@ class ArArAge(IsotopeGroup):
     total40 = 0
     k39 = 0
 
-
-    # non_ar_isotopes = Dict
-    # computed = Dict
-    # corrected_intensities = Dict
-
     uF = None
     F = None
     F_err = None
@@ -123,7 +118,8 @@ class ArArAge(IsotopeGroup):
     @property
     def k2o(self):
         """
-            MolKTot=Mol39*F39K*9.54/(JVal*KAbund40*.01) // moles of K40; = 39ArK*( (lambda*J/(lambda epsilon + lambda epsion prime)); McDougall  H. p. 19 eq. 2.17
+            MolKTot=Mol39*F39K*9.54/(JVal*KAbund40*.01)
+            // moles of K40; = 39ArK*( (lambda*J/(lambda epsilon + lambda epsion prime)); McDougall  H. p. 19 eq. 2.17
             a=MolKTot*94.2*100/(2*Weight)
 
         weight should be in milligrams
@@ -132,9 +128,10 @@ class ArArAge(IsotopeGroup):
         k2o = ''
         if self.weight:
             k40_k = 0.0001167
-            moles_39K = self.computed['k39'] * self.sensitivity
-            moles_k = moles_39K * 9.54 / (k40_k*nominal_value(self.j))
             mw_k2o = 94.2
+            klambda = 9.54
+            moles_39k = self.computed['k39'] * self.sensitivity
+            moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
             k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
 
         return k2o

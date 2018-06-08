@@ -564,10 +564,6 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_parameter_word(self):
         pass
 
-    def settle(self):
-        import time
-        time.sleep(self.integration_time)
-
     # private
     def _spectrometer_configuration_changed(self, new):
         if new:

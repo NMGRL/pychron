@@ -63,6 +63,7 @@ class AutomatedRunSpec(HasTraits):
     username = Str
     tray = Str
     load_name = Str
+    load_holder = Str
     queue_conditionals_name = Str
     # ===========================================================================
     # run id
@@ -119,6 +120,8 @@ class AutomatedRunSpec(HasTraits):
 
     lab_temperature = 0
     lab_humidity = 0
+    sensitivity = 0
+    sensitivity_units = 'mol/fA'
 
     # ===========================================================================
     # info
@@ -557,10 +560,6 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @property
     def measurement_script_name(self):
         return self.measurement_script
-
-    @property
-    def sensitivity(self):
-        return 0
 
     @property
     def extract_duration(self):

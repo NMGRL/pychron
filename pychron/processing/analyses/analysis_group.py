@@ -670,6 +670,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         if set_preferred:
             pv = self._get_pv('age')
             pv.kind = okind
+            pv.computed_kind = label
             pv.dirty = True
 
         return a, label
@@ -742,8 +743,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def _get_nanalyses(self):
         pv = self._get_pv('age')
-        k = pv.kind.lower()
-        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+        k = pv.computed_kind.lower()
+
+        # if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+        if k == 'plateau':
             n = self.nsteps
         else:
             n = super(InterpretedAgeGroup, self)._get_nanalyses()
@@ -758,9 +761,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
     def _preferred_kind_changd(self, obj, name, old, new):
 
-        v = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
+        v, k = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
         obj.value = nominal_value(v)
         obj.error = std_dev(v)
+        obj.computed_kind = k
 
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
@@ -771,16 +775,17 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def get_preferred_mswd(self):
         pv = self._get_pv('age')
-        if pv.kind.lower() == 'plateau':
+        if pv.computed_kind.lower() == 'plateau':
             return self.plateau_mswd
         else:
             return self.mswd
 
     def get_preferred_mswd_tuple(self):
         pv = self._get_pv('age')
-        k = pv.kind.lower()
+        k = pv.computed_kind.lower()
         t = self.get_mswd_tuple()
-        if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+        # if k == 'plateau' or (k == 'plateau else weighted mean' and self.plateau_age):
+        if k == 'plateau':
             t = self.get_plateau_mswd_tuple()
 
         return t
@@ -819,6 +824,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
         pv = self._get_pv('age')
         pak = pv.kind.lower().replace(' ', '_')
+        pv.computed_kind = pv.kinds
         if pak in ('weighted_mean', 'wt._mean'):
             pa = self.weighted_age
         elif pak == 'arithmetic_mean':
@@ -831,9 +837,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self.plateau_age
         elif pak == 'plateau_else_weighted_mean':
             pa = self.plateau_age
-
+            pv.computed_kind = 'Plateau'
             if not self.plateau_steps:
                 pa = self.weighted_age
+                pv.computed_kind = WEIGHTED_MEAN
 
         return pa
 
@@ -855,15 +862,17 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self._calculate_integrated(attr, 'plateau')
         elif pk == 'plateau_else_valid_integrated':
             if self.plateau_age:
+                kind = 'Plateau'
                 pa = self._calculate_integrated(attr, 'plateau')
             else:
+                kind = 'Valid'
                 pa = self._calculate_integrated(attr, 'valid')
         else:
             pa = self._calculate_arithmetic_mean(attr)
 
         if isinstance(pa, tuple):
             pa = ufloat(*pa)
-        return pa
+        return pa, kind
 
 # ============= EOF =============================================
 

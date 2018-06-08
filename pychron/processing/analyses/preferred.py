@@ -27,6 +27,7 @@ class PreferredValue(HasTraits):
     error_kind = Str(MSEM)
     error_kinds = List(ERROR_TYPES)
     kind = Enum(*SUBGROUPINGS)
+    computed_kind = Str
     value = Float
     error = Float
     dirty = Event
