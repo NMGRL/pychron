@@ -50,7 +50,7 @@ class AnalysisTableNode(GroupAgeNode):
 
             # in reality the group defaults
             # g.set_preferred_defaults()
-            g.set_preferred_kinds()
+            # g.set_preferred_kinds()
             return g
 
         unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
@@ -58,13 +58,14 @@ class AnalysisTableNode(GroupAgeNode):
         airs = (a for a in state.unknowns if a.analysis_type == 'air')
 
         key = attrgetter('group_id')
-
-        unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+    #
+        # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
         blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
         air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
         munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
 
-        groups = {'unknowns': unk_group,
+        groups = {
+            # 'unknowns': unk_group,
                   'blanks': blank_group,
                   'airs': air_group,
                   'machine_unknowns': munk_group}

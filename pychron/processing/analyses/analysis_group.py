@@ -96,9 +96,6 @@ class AnalysisGroup(IdeogramPlotable):
     isochron_regressor = None
     _age_units = None
 
-    # used by XLSXAnalysisWriter/subgrouping
-    subgroup_kind = None
-
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
@@ -362,6 +359,7 @@ class AnalysisGroup(IdeogramPlotable):
                     pr = 1 / pr
 
                 try:
+                    # print(k, sum(n), sum(d))
                     v = sum(n) / sum(d) * pr
                 except ZeroDivisionError:
                     v = 0
@@ -454,7 +452,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_total_k2o(self):
-        total = sum([a.k2o for a in self.analyses])
+        total = sum([a.total_k2o if isinstance(a, StepHeatAnalysisGroup) else a.k2o for a in self.analyses])
         return nominal_value(total)
 
     @cached_property
@@ -598,7 +596,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     uuid = Str
     all_analyses = List
-
+    subgroup_id = Int
     # preferred_values = List
 
     name = Str
@@ -641,39 +639,39 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     #         pv.error_kind = default_error_kind
     #         pv.dirty = True
 
-    def get_age(self, okind=None, set_preferred=False):
-        if okind is None:
-            okind = self._get_pv('age').kind
-
-        kind = okind.lower().replace(' ', '_')
-        if kind == 'weighted_mean':
-            a = self.weighted_age
-            label = 'wt. mean'
-        elif kind == 'plateau':
-            a = self.plateau_age
-            label = 'plateau'
-        elif kind == 'isochron':
-            a = self.isochron_age
-            label = 'isochron'
-        elif kind == 'integrated':
-            a = self.integrated_age
-            label = 'integrated'
-        elif kind == 'plateau_else_weighted_mean':
-            label = 'plateau'
-            a = self.plateau_age
-            if not self.plateau_steps:
-                label = 'wt. mean'
-                a = self.weighted_age
-        else:
-            label = 'wt. mean'
-
-        if set_preferred:
-            pv = self._get_pv('age')
-            pv.kind = okind
-            pv.computed_kind = label
-            pv.dirty = True
-
-        return a, label
+    # def get_age(self, okind=None, set_preferred=False):
+    #     if okind is None:
+    #         okind = self._get_pv('age').kind
+    #
+    #     kind = okind.lower().replace(' ', '_')
+    #     if kind == 'weighted_mean':
+    #         a = self.weighted_age
+    #         label = 'wt. mean'
+    #     elif kind == 'plateau':
+    #         a = self.plateau_age
+    #         label = 'plateau'
+    #     elif kind == 'isochron':
+    #         a = self.isochron_age
+    #         label = 'isochron'
+    #     elif kind == 'integrated':
+    #         a = self.integrated_age
+    #         label = 'integrated'
+    #     elif kind == 'plateau_else_weighted_mean':
+    #         label = 'plateau'
+    #         a = self.plateau_age
+    #         if not self.plateau_steps:
+    #             label = 'Weighted Mean'
+    #             a = self.weighted_age
+    #     else:
+    #         label = 'wt. mean'
+    #
+    #     if set_preferred:
+    #         pv = self._get_pv('age')
+    #         pv.kind = okind
+    #         pv.computed_kind = label
+    #         pv.dirty = True
+    #
+    #     return a, label
 
     def ages(self, asfloat=True):
         vs = {k: getattr(self, k) for k in ('weighted_age', 'plateau_age', 'isochron_age', 'integrated_age')}
@@ -760,11 +758,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
     def _preferred_kind_changd(self, obj, name, old, new):
-
         v, k = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
         obj.value = nominal_value(v)
         obj.error = std_dev(v)
         obj.computed_kind = k
+        # print('change', name, obj.attr, obj.value)
 
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
@@ -815,6 +813,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return pv.kind
 
     def get_preferred_obj(self, attr):
+        if attr == 'age':
+            # force preferred age
+            _ = self.preferred_age
+
         pv = self._get_pv(attr)
         return pv
 
@@ -824,7 +826,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
         pv = self._get_pv('age')
         pak = pv.kind.lower().replace(' ', '_')
-        pv.computed_kind = pv.kinds
+        pv.computed_kind = pv.kind
         if pak in ('weighted_mean', 'wt._mean'):
             pa = self.weighted_age
         elif pak == 'arithmetic_mean':

@@ -179,7 +179,6 @@ class IdeogramPlotable(HasTraits):
     aliquot = 0
     step = ''
     timestamp = 0
-    subgroup = ''
 
     def __init__(self, make_arar_constants=True, *args, **kw):
         super(IdeogramPlotable, self).__init__(*args, **kw)

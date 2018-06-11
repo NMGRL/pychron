@@ -89,42 +89,34 @@ def subgrouping_key(x):
     return x.subgroup['name'] if x.subgroup else ''
 
 
-def make_interpreted_age_subgroups(ans):
-    ias = []
+def make_interpreted_age_group(ans, gid):
+    ag = InterpretedAgeGroup(analyses=ans, group_id=gid)
+    ag.set_preferred_kinds()
+    return ag
 
-    for subgroup, items in groupby(ans, key=subgrouping_key):
+
+def make_interpreted_age_groups(ans):
+    groups = []
+    analyses = []
+    for i, (subgroup, items) in enumerate(groupby(ans, key=subgrouping_key)):
         items = list(items)
         if subgroup:
             item = items[0]
             sg = item.subgroup
 
             items = list(items)
-            ag = InterpretedAgeGroup(analyses=items)
+            ag = InterpretedAgeGroup(analyses=items,
+                                     group=sg)
             ag.set_preferred_kinds(sg)
-
-            # print('asdf', subgroup, naliquots)
-            # for attr in SUBGROUPING_ATTRS:
-            #     k = sg.get('{}_kind'.format(attr))
-            #     ek = sg.get('{}_error_kind'.format(attr))
-            #     if k is None:
-            #         if attr == 'age':
-            #             k = WEIGHTED_MEAN
-            #         else:
-            #             k = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
-            #     if ek is None:
-            #         if attr == 'age':
-            #             ek = MSEM
-            #         else:
-            #             ek = MSEM if naliquots > 1 else SD
-            #     ag.set_preferred_kind(attr, k, ek)
 
             kind = ag.get_preferred_kind('age')
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])
-            ias.append(ag)
+            ag.subgroup_id = i
+            groups.append(ag)
         else:
-            ias.extend(items)
+            analyses.extend(items)
 
-    return ias
+    return groups, analyses
 
 # ============= EOF =============================================
