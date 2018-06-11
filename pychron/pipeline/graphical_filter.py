@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import math
 from datetime import timedelta
 from itertools import groupby
@@ -25,6 +26,10 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
 from enable.tools.drag_tool import DragTool
 from numpy import array, where
+from six.moves import filter
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float, Event
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
@@ -33,10 +38,6 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
-from six.moves import filter
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
 
@@ -225,6 +226,8 @@ class GraphicalFilterModel(HasTraits):
     always_exclude_unknowns = Bool(False)
     threshold = Float(1)
 
+    mass_spectrometer = Str
+    extract_device = Str
     gid = Int
 
     # is_append = True
@@ -296,6 +299,8 @@ class GraphicalFilterModel(HasTraits):
             records = self.dvc.find_references([self.low_post, self.high_post],
                                                [x.lower().replace(' ', '_') for x in self.analysis_types],
                                                self.threshold,
+                                               mass_spectrometers=[self.mass_spectrometer],
+                                               extract_devices=[self.extract_device],
                                                exclude=uuids)
             func()
             if records:
