@@ -308,6 +308,8 @@ class FindReferencesNode(FindNode):
             unknowns.extend(refs)
             model = GraphicalFilterModel(analyses=unknowns,
                                          dvc=self.dvc,
+                                         extract_device=self.extract_device,
+                                         mass_spectrometer=self.mass_spectrometer,
                                          low_post=times[0],
                                          high_post=times[-1],
                                          threshold=self.threshold,

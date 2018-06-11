@@ -26,10 +26,6 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
 from enable.tools.drag_tool import DragTool
 from numpy import array, where
-from six.moves import filter
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float, Event
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
@@ -333,9 +329,10 @@ class GraphicalFilterModel(HasTraits):
             only use analyses with analysis_type in self.analyses_types
         """
 
-        ats = [x.lower().replace(' ', '_') for x in list(map(str, self.analysis_types))]
-        f = lambda x: x.analysis_type.lower() in ats
-        ans = list(filter(f, ans))
+        ats = [str(x).lower().replace(' ', '_') for x in self.analysis_types]
+        # f = lambda x: x.analysis_type.lower() in ats
+        # ans = list(filter(f, ans))
+        ans = [a for a in ans if a.analysis_type.lower() in ats]
         return ans
 
     def _toggle_analysis_types_changed(self):
