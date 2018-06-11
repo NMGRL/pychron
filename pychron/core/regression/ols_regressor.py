@@ -17,17 +17,17 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import logging
 
-from numpy import asarray, column_stack, ones, \
-    matrix, sqrt, dot, linalg, zeros_like, hstack
+from numpy import asarray, column_stack, matrix, sqrt, dot, linalg, zeros_like, hstack, ones_like
+from six.moves import range
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
 from pychron.core.helpers.fits import FITS
 from pychron.pychron_constants import MSEM
 from pychron.pychron_constants import SEM
-from six.moves import range
 
 logger = logging.getLogger('Regressor')
 
@@ -60,11 +60,18 @@ class OLSRegressor(BaseRegressor):
     def get_exog(self, x):
         return self._get_X(x)
 
-    def fast_predict(self, endog, exog):
+    def fast_predict(self, endog, pexog, exog=None):
         ols = self._ols
         ols.wendog = ols.whiten(endog)
+
+        if exog is not None:
+            ols.wexog = ols.whiten(exog)
+
+            # force recalculation
+            del ols.pinv_wexog
+
         result = ols.fit()
-        return result.predict(exog)
+        return result.predict(pexog)
 
     def fast_predict2(self, endog, exog):
         """
@@ -124,7 +131,7 @@ class OLSRegressor(BaseRegressor):
 
                 traceback.print_exc()
 
-    def calculate_error_envelope2(self, fx, fy):
+    def calculate_prediction_envelope(self, fx, fy):
         from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
         prstd, iv_l, iv_u = wls_prediction_std(self._result)
@@ -278,6 +285,13 @@ class OLSRegressor(BaseRegressor):
 
         # def calculate_x(self, y):
         # return 0
+    def _get_rsquared(self):
+        if self._result:
+            return self._result.rsquared
+
+    def _get_rsquared_adj(self):
+        if self._result:
+            return self._result.rsquared_adj
 
     def _calculate_coefficients(self):
         """
@@ -358,15 +372,19 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
+    def fast_predict2(self, endog, pexog, **kw):
+        # OLSRegressor fast_predict2 is not working for multiplelinear regressor
+        # use fast_predict instead
+        return self.fast_predict(endog, pexog, **kw)
 
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.clean_xs
 
-        r, c = xs.shape
-        if c == 2:
-            xs = column_stack((xs, ones(r)))
-            return xs
+        xs = asarray(xs)
+        x1, x2 = xs.T
+        xs = column_stack((x1, x2, ones_like(x1)))
+        return xs
 
 
 if __name__ == '__main__':

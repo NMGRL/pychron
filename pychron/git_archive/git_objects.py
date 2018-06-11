@@ -15,25 +15,47 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Property, Bool
+from datetime import datetime
+
+from traits.api import HasTraits, Str, Bool, Date
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
-class Commit(HasTraits):
+class GitTag(HasTraits):
     message = Str
-    date = Str
+    date = Date
+    name = Str
     hexsha = Str
-    summary = Property
-    active = Bool
+    commit_message = Str
+
+    def __init__(self, obj):
+        tag = obj.tag
+        commit = obj.commit
+
+        self.name = obj.name
+
+        self.message = tag.message
+        self.date = datetime.fromtimestamp(float(tag.tagged_date))
+
+        self.hexsha = commit.hexsha
+        self.commit_message = commit.message
+
+
+class GitSha(HasTraits):
+    message = Str
+    date = Date
     blob = Str
     name = Str
+    hexsha = Str
+    author = Str
+    email = Str
+    active = Bool
+    tag = Str
 
     def _get_summary(self):
         return '{} {}'.format(self.date, self.message)
 
 # ============= EOF =============================================
-
-
-

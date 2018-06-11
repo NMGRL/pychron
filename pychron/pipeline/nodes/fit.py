@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from itertools import groupby
 
+from numpy import inf
 from pyface.confirmation_dialog import confirm
-from pyface.constant import NO, YES
-from traits.api import Bool, List, HasTraits, Str, Float, Instance, Int
+from pyface.constant import YES
+from six.moves import zip
+from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
@@ -32,8 +33,10 @@ from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.state import get_detector_set
 from pychron.pychron_constants import NULL_STR
-import six
-from six.moves import zip
+
+
+class RefitException(BaseException):
+    pass
 
 
 class FitNode(FigureNode):
@@ -50,14 +53,18 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if u.analysis_type in self.plotter_options.analysis_types]
+            unks = [u for u in unks if not u.is_omitted() and u.analysis_type in self.plotter_options.analysis_types]
         return unks
 
     def check_refit(self, unks):
         unks = self._get_valid_unknowns(unks)
         for ui in unks:
-            if self._check_refit(ui):
-                break
+            try:
+                if self._check_refit(ui):
+                    break
+
+            except RefitException:
+                return False
         else:
             if confirm(None, self._refit_message) == YES:
                 return True
@@ -181,8 +188,13 @@ class FitICFactorNode(FitReferencesNode):
         for k in self._keys:
             num, dem = k.split('/')
             i = ai.get_isotope(detector=dem)
-            if not i.ic_factor_reviewed:
-                return True
+            if i is not None:
+                if not i.ic_factor_reviewed:
+                    return True
+            else:
+                from pyface.message_dialog import warning
+                warning(None, 'Data for detector {} is missing from {}'.format(dem, ai.record_id))
+                raise RefitException()
 
     def load(self, nodedict):
         try:
@@ -202,8 +214,9 @@ class FitICFactorNode(FitReferencesNode):
                      for a in self.plotter_options.aux_plots]
 
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature')
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared')
+GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared')
+INVERTED_GOODNESS = ('rsquared',)
 
 
 class IsoEvoResult(HasTraits):
@@ -219,15 +232,19 @@ class IsoEvoResult(HasTraits):
     slope_goodness = None
     outlier_goodness = None
     curvature_goodness = None
+    rsquared_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
     outlier_threshold = None
     curvature_threshold = None
+    rsquared_threshold = None
+
     int_err = None
     slope = None
     outlier = None
     curvature = None
+    rsquared = None
 
     analysis = Instance('pychron.processing.analyses.analysis.Analysis')
 
@@ -247,7 +264,8 @@ class IsoEvoResult(HasTraits):
         def f(t, m):
             v = getattr(self, '{}_goodness'.format(t))
             if v is not None:
-                v = 'OK' if v else "Bad {}>{}".format('{}'.format(t), '{}_threshold'.format(t))
+                comp = '<' if t in INVERTED_GOODNESS else '>'
+                v = 'OK' if v else "Bad {}{}{}".format('{}'.format(t), comp, '{}_threshold'.format(t))
             else:
                 v = 'Not Tested'
             return '{:<25}: {}'.format(m, v)
@@ -350,25 +368,27 @@ class FitIsotopeEvolutionNode(FitNode):
                 iso = isotopes[k]
             else:
                 iso = xi.get_isotope(detector=k, kind='baseline')
-                # iso = next((i.baseline for i in six.itervalues(isotopes) if i.detector == k), None)
 
             if iso:
                 i, e = iso.value, iso.error
-                pe = abs(e / i * 100)
+                try:
+                    pe = abs(e / i * 100)
+                except ZeroDivisionError:
+                    pe = inf
 
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
-                    int_err_goodness = bool(pe < goodness_threshold)
+                    int_err_goodness = bool(e < goodness_threshold)
 
                 slope = None
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
-                    if f.slope_goodness_intensity > i:
+                    if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
                         slope = iso.get_slope()
-                        slope_goodness = bool(slope < 0 or i < slope_threshold)
+                        slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
                 outliers = None
                 outliers_threshold = None
@@ -390,6 +410,14 @@ class FitIsotopeEvolutionNode(FitNode):
                 if iso.noutliers():
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
+                rsquared_goodness = None
+                rsquared = 0
+                rsquared_threshold = 0
+                if f.rsquared_goodness:
+                    rsquared = iso.rsquared_adj
+                    rsquared_threshold = f.rsquared_goodness
+                    rsquared_goodness = rsquared > rsquared_threshold
+
                 yield IsoEvoResult(analysis=xi,
                                    nstr=nstr,
                                    intercept_value=i,
@@ -410,6 +438,11 @@ class FitIsotopeEvolutionNode(FitNode):
                                    curvature=curvature,
                                    curvature_threshold=curvature_threshold,
                                    curvature_goodness=curvature_goodness,
+
+                                   rsquared=rsquared,
+                                   rsquared_threshold=rsquared_threshold,
+                                   rsquared_goodness=rsquared_goodness,
+
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)
@@ -435,13 +468,18 @@ class FitFluxNode(FitNode):
         monitors = state.flux_monitors
 
         if monitors:
-            lk = self.plotter_options.lambda_k
-            state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            po = self.plotter_options
+            # lk = po.lambda_k
+            # state.decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+            # state.error_calc_method = po.
+            # state.flux_fit = po.
+            state.flux_options = po
 
-            editor.plotter_options = self.plotter_options
+            editor.plotter_options = po
             editor.geometry = geom
             editor.irradiation = state.irradiation
             editor.level = state.level
+            editor.holder = state.holder
 
             editor.set_positions(monitors, state.unknown_positions)
             state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions

@@ -16,9 +16,11 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 from math import isnan
 
 from numpy import hstack, array
+from six.moves import zip
 from traits.api import Array, List, Instance
 from uncertainties import nominal_value, std_dev
 
@@ -29,7 +31,6 @@ from pychron.pipeline.plot.overlays.spectrum import SpectrumTool, \
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM
-from six.moves import zip
 
 
 class Spectrum(BaseArArFigure):
@@ -126,7 +127,8 @@ class Spectrum(BaseArArFigure):
 
     def _plot_age_spectrum(self, po, plot, pid):
         graph = self.graph
-        op = self.options
+        opt = self.options
+        op = opt
 
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum()
 
@@ -135,7 +137,7 @@ class Spectrum(BaseArArFigure):
         au = ref.arar_constants.age_units
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)
 
-        grp = self.options.get_group(self.group_id)
+        grp = opt.get_group(self.group_id)
 
         spec = self._add_plot(xs, ys, es, pid, po)
         ls = grp.center_line_style
@@ -146,11 +148,11 @@ class Spectrum(BaseArArFigure):
             spec.line_width = 0
 
         ag = self.analysis_group
-        ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
-        ag.plateau_age_error_kind = self.options.plateau_age_error_kind
-        ag.plateau_nsteps = self.options.pc_nsteps
-        ag.plateau_gas_fraction = self.options.pc_gas_fraction
-        ag.weighted_age_error_kind = self.options.weighted_age_error_kind
+        ag.include_j_error_in_plateau = opt.include_j_error_in_plateau
+        ag.plateau_age_error_kind = opt.plateau_age_error_kind
+        ag.plateau_nsteps = opt.pc_nsteps
+        ag.plateau_gas_fraction = opt.pc_gas_fraction
+        ag.weighted_age_error_kind = opt.weighted_age_error_kind
 
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
@@ -159,6 +161,7 @@ class Spectrum(BaseArArFigure):
 
         pma = None
         plateau_age = ag.plateau_age
+        selections = self._get_omitted_by_tag(self.sorted_analyses)
         if plateau_age:
             platbounds = ag.plateau_steps
 
@@ -167,10 +170,19 @@ class Spectrum(BaseArArFigure):
                                                 ys[::2], es[::2],
                                                 txt)
 
-            selections = self._get_omitted_by_tag(self.sorted_analyses)
+            pma = nominal_value(plateau_age)
+            overlay.id = 'bar_plateau'
+            if overlay.id in po.overlay_positions:
+                y = po.overlay_positions[overlay.id]
+                overlay.y = y
+                pma = y
+        elif opt.display_weighted_bar:
+            txt = self._make_weighted_mean_text()
+            wa = ag.weighted_age
+            overlay = self._add_plateau_overlay(spec, [0, len(ys)//2-1], wa, ys[::2], es[::2], txt)
             overlay.selections = selections
-            pma = plateau_age.nominal_value
-            overlay.id = 'plateau'
+            overlay.id = 'bar_weighted'
+            pma = nominal_value(wa)
             if overlay.id in po.overlay_positions:
                 y = po.overlay_positions[overlay.id]
                 overlay.y = y
@@ -199,7 +211,7 @@ class Spectrum(BaseArArFigure):
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts = [u'Age {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
+                ts = [u'Ages {}{}{}'.format(PLUSMINUS, self.options.nsigma, SIGMA),
                       u'Error Env. {}{}{}'.format(PLUSMINUS, self.options.step_nsigma, SIGMA)]
 
                 if ts:
@@ -287,7 +299,6 @@ class Spectrum(BaseArArFigure):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
-                            id='plateau',
                             ages=ages,
                             age_errors=age_errors,
 
@@ -443,6 +454,7 @@ class Spectrum(BaseArArFigure):
 
         sample = self.analysis_group.sample
         identifier = self.analysis_group.identifier
+        text = 'Plateau= {}'.format(text)
 
         if self.options.include_plateau_sample:
             if self.options.include_plateau_identifier:
@@ -496,6 +508,6 @@ class Spectrum(BaseArArFigure):
             error *= self.options.nsigma
             txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
 
-        return u'Integrated Age= {}'.format(txt)
+        return u'Total Integrated Age= {}'.format(txt)
 
 # ============= EOF =============================================

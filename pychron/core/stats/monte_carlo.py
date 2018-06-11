@@ -16,45 +16,80 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
-from __future__ import absolute_import
-from numpy import zeros, percentile, array, median
+
+from numpy import zeros, percentile, array, random, abs as nabs, column_stack
 from scipy.stats import norm
-from six.moves import range
+
+
 # ============= local library imports  ==========================
 
 
-def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
-    exog = reg.get_exog(pts)
+def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100, position_error=None,
+                                 position_only=False,
+                                 mean_position_error=None,
+                                 mean_position_only=False, seed=None):
+    pexog = reg.get_exog(pts)
     ys = reg.ys
     yserr = reg.yserr
+
     n = len(ys)
-    yes = array((ys, yserr)).T
-    ga = norm().rvs((ntrials, n))
-    yp = zeros(n)
-    res = zeros((ntrials, len(pts)))
+    npts = len(pts)
+    if seed:
+        random.seed(seed)
+    ndist = norm()
+    ga = ndist.rvs((ntrials, n))
+    ps = zeros((ntrials, npts))
 
     pred = reg.fast_predict2
-    for i in range(ntrials):
-        res[i] = perturb(pred, exog, nominal_ys, yes, ga[i], yp)
+    if mean_position_only or position_only:
+        yserr = 0
+
+    yp = ys + yserr * ga
+    if mean_position_error:
+        pgax = ndist.rvs((ntrials, n))
+        pgay = ndist.rvs((ntrials, n))
+
+        xs = reg.clean_xs
+
+        ox, oy = xs.T
+        for i in range(ntrials):
+            x = ox + mean_position_error * pgax[i]
+            y = oy + mean_position_error * pgay[i]
+            x = reg.get_exog(column_stack((x, y)))
+            ps[i] = pred(yp[i], pexog, exog=x)
+    elif position_error:
+        pgax = ndist.rvs((ntrials, n))
+        pgay = ndist.rvs((ntrials, n))
+
+        # xs = reg.clean_xs
+        ox, oy = pts.T
+        for i in range(ntrials):
+            x = ox + position_error * pgax[i]
+            y = oy + position_error * pgay[i]
+            pexog = reg.get_exog(column_stack((x, y)))
+            ps[i] = pred(yp[i], pexog)
+
+    else:
+        for i in range(ntrials):
+            ps[i] = pred(yp[i], pexog)
+
+    res = nominal_ys - ps
 
     res = res.T
-    ret = zeros(len(pts))
+
     pct = (15.87, 84.13)
-    # pct = (2.27, 97.73)
-    for i, po in enumerate(pts):
-        ri = res[i]
-        ai, bi = percentile(ri, pct)
-        ret[i] = (abs(ai) + abs(bi)) * 0.5
 
-    return ret
+    a, b = array([percentile(ri, pct) for ri in res]).T
+    a, b = nabs(a), nabs(b)
+    return (a + b) * 0.5
 
-
-def perturb(pred, exog, nominal_ys, y_es, ga, yp):
-    for i, (y, e) in enumerate(y_es):
-        yp[i] = y + (e * ga[i])
-
-    pys = pred(yp, exog)
-    return nominal_ys - pys
+# def perturb(pred, exog, nominal_ys, y_es, ga, yp):
+# def perturb(pred, exog, nominal_ys, ys, es, ga):
+# for i, (y, e) in enumerate(y_es):
+#     yp[i] = y + (e * ga[i])
+# yp = ys + es * ga
+# pys = pred(yp, exog)
+# return nominal_ys - pys
 
 
 # if __name__ == '__main__':

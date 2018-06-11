@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, \
-    Color, Array
-
 # ============= standard library imports ========================
 from numpy import array, hstack
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, Color, Array
 
 
 # ============= local library imports  ==========================
@@ -29,7 +26,7 @@ from numpy import array, hstack
 class BaseDetector(HasTraits):
     name = Str
     kind = Str
-
+    serial_id = Str
     intensity = Str
     std = Str
     intensities = Array

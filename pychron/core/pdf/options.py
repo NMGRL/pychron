@@ -17,15 +17,17 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 from reportlab.lib.pagesizes import A4, letter, landscape, A2, A0
 from reportlab.lib.units import inch, cm
-from traits.api import Str, Bool, Enum, Button, Float, Int, Color
+from traits.api import Str, Bool, Enum, Button, Float, Color
 from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Spring
 
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.persistence_loggable import dumpable
+from pychron.pychron_constants import SIG_FIGS
 
 PAGE_MAP = {'A4': A4, 'letter': letter, 'A2': A2, 'A0': A0}
 UNITS_MAP = {'inch': inch, 'cm': cm}
@@ -154,8 +156,8 @@ class PDFTableOptions(BasePDFOptions):
     link_sigmas = Bool(True)
 
     age_units = Enum('Ma', 'ka', 'Ga', 'a')
-    kca_sig_figs = Int
-    age_sig_figs = Int
+    kca_sig_figs = Enum(*SIG_FIGS)
+    age_sig_figs = Enum(*SIG_FIGS)
 
     _persistence_name = 'table_pdf_options'
 

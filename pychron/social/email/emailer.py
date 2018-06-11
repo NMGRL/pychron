@@ -30,8 +30,6 @@ from traitsui.api import View
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
-import six
-from six.moves import range
 
 
 class User(HasTraits):
@@ -105,7 +103,7 @@ class Emailer(Loggable):
             time.sleep(1)
 
         if server:
-            if isinstance(addrs, (str, six.text_type)):
+            if not isinstance(addrs, (list, tuple)):
                 addrs = [addrs]
 
             msg = self._message_factory(addrs, sub, msg, paths)

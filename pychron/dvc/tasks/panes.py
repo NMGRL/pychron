@@ -15,49 +15,39 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Int, Property
-from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor
+from traits.api import Property
+from traitsui.api import View, UItem, VGroup, ListStrEditor, TabularEditor, EnumEditor, VSplit
 from traitsui.tabular_adapter import TabularAdapter
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
-
-class CommitAdapter(TabularAdapter):
-    columns = [('ID', 'hexsha'),
-               ('Date', 'date'),
-               ('Message', 'message'),
-               ('Author', 'author'),
-               ('Email', 'email'),
-               ]
-    hexsha_width = Int(80)
-    message_width = Int(300)
-    date_width = Int(120)
-    author_width = Int(100)
-
-    font = '10'
-    hexsha_text = Property
-
-    def _get_hexsha_text(self):
-        return self.item.hexsha[:8]
+from pychron.git_archive.views import CommitAdapter, GitTagAdapter
 
 
 class RepoCentralPane(TraitsTaskPane):
     def traits_view(self):
+        commit_grp = VGroup(VGroup(UItem('commits',
+                                         editor=TabularEditor(adapter=CommitAdapter(),
+                                                              selected='selected_commit')),
+                                   show_border=True, label='Commits'))
+        bookmark_grp = VGroup(VGroup(UItem('git_tags', editor=TabularEditor(adapter=GitTagAdapter()),
+                                           height=200),
+                                     show_border=True, label='Bookmarks'))
+
         v = View(VGroup(UItem('branch',
                               editor=EnumEditor(name='branches')),
-                        UItem('commits',
-                              editor=TabularEditor(adapter=CommitAdapter(),
-                                                   selected='selected_commit'))))
+                        VSplit(commit_grp, bookmark_grp)))
         return v
 
 
 class RepoAdapter(TabularAdapter):
     columns = [('Name', 'name')]
+    name_text = Property
+
+    def _get_name_text(self):
+        return '{} ({})'.format(self.item.name, self.item.active_branch)
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
@@ -77,7 +67,8 @@ class SelectionPane(TraitsDockPane):
                                                        editable=False)),
                             show_border=True, label='Origin')
 
-        local_grp = VGroup(UItem('local_names',
+        local_grp = VGroup(UItem('filter_repository_value'),
+                           UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
                                                       selected='selected_local_repository_name',
                                                       editable=False

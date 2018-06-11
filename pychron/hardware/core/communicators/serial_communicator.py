@@ -150,13 +150,13 @@ class SerialCommunicator(Communicator):
                            optional=True, default=None, cast='int')
 
         self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
-                           optional=True, default='\r')
+                           optional=True, default=b'\r')
 
         if self.write_terminator == 'CRLF':
-            self.write_terminator = '\r\n'
+            self.write_terminator = b'\r\n'
 
         if self.read_terminator == 'CRLF':
-            self.read_terminator = '\r\n'
+            self.read_terminator = b'\r\n'
 
         if self.read_terminator == 'ETX':
             self.read_terminator = chr(3)
@@ -389,7 +389,8 @@ class SerialCommunicator(Communicator):
                 # cmd = cmd.decode('hex')
             else:
                 if self.write_terminator is not None:
-                    cmd += bytes(self.write_terminator,'utf-8')
+                    if type(self.write_terminator) is str:
+                        cmd += bytes(self.write_terminator, 'utf-8')
 
             try:
                 self.handle.write(cmd)
@@ -477,8 +478,10 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
-                        t = r.endswith(ti)
-
+                        if type(ti) is str:
+                            t = r.endswith(str.encode(ti))
+                        else:
+                            t = r.endswith(ti)
                     if t:
                         terminated = True
                         break

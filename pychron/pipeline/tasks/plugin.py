@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu, SGroup
@@ -26,15 +27,22 @@ from pychron.envisage.browser.interpreted_age_browser_model import InterpretedAg
 from pychron.envisage.browser.sample_browser_model import SampleBrowserModel
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction, SpectrumAction, \
-    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, LastNAnalysesSeriesAction, \
-    LastNHoursSeriesAction, LastMonthSeriesAction, LastWeekSeriesAction, LastDaySeriesAction, FluxAction, \
+    SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, \
+    FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
-    AnalysisTableAction, ClearAnalysisSetsAction
+    AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
+# LastNAnalysesSeriesAction,LastNHoursSeriesAction, LastMonthSeriesAction,
+# LastWeekSeriesAction, LastDaySeriesAction, \
+
+
 class PipelinePlugin(BaseTaskPlugin):
-    # def _file_defaults_default(self):
+    def _file_defaults_default(self):
+        files = [('flux_constants', 'FLUX_CONSTANTS_DEFAULT', True)]
+        return files
+
     #     ov = True
     #     files = [['pipeline_template_file', 'PIPELINE_TEMPLATES', ov],
     #              ['icfactor_template', 'ICFACTOR', ov],
@@ -89,8 +97,9 @@ class PipelinePlugin(BaseTaskPlugin):
         return SampleBrowserModel(application=self.application)
 
     def _interpreted_age_browser_model_factory(self):
-        return InterpretedAgeBrowserModel(application=self.application)
-
+        dvc = self.application.get_service(DVC)
+        return InterpretedAgeBrowserModel(application=self.application,
+                                          dvc=dvc)
     # defaults
     def _service_offers_default(self):
         so = self.service_offer_factory(protocol=SampleBrowserModel,
@@ -106,6 +115,14 @@ class PipelinePlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
         def data_menu():
             return SMenu(id='data.menu', name='Data')
+
+        def ideogram_menu():
+            return SMenu(IdeogramAction(),
+                         SubgroupIdeogramAction(),
+                         HybridIdeogramAction(),
+                         HistoryIdeogramAction(),
+
+                         id='ideogram.menu', name='Ideogram')
 
         def plot_group():
             return SGroup(id='plot.group')
@@ -138,8 +155,10 @@ class PipelinePlugin(BaseTaskPlugin):
                                            after='view.menu', ),
                             SchemaAddition(factory=plot_group,
                                            path='MenuBar/data.menu'),
-                            SchemaAddition(factory=IdeogramAction,
+
+                            SchemaAddition(factory=ideogram_menu,
                                            path=pg),
+
                             SchemaAddition(factory=SpectrumAction,
                                            path=pg),
                             # SchemaAddition(factory=IsochronAction,
@@ -174,26 +193,27 @@ class PipelinePlugin(BaseTaskPlugin):
                                        path='MenuBar/help.menu')]
         configure_recall = SchemaAddition(factory=ConfigureRecallAction,
                                           path='MenuBar/Edit')
+
         # browser_actions = [configure_recall]
 
-        quick_series_actions = [SchemaAddition(factory=quick_series_group,
-                                               path='MenuBar/data.menu'),
-                                SchemaAddition(factory=LastNAnalysesSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastNHoursSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastDaySeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastWeekSeriesAction,
-                                               path=qsg),
-                                SchemaAddition(factory=LastMonthSeriesAction,
-                                               path=qsg), ]
+        # quick_series_actions = [SchemaAddition(factory=quick_series_group,
+        #                                        path='MenuBar/data.menu'),
+        #                         SchemaAddition(factory=LastNAnalysesSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastNHoursSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastDaySeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastWeekSeriesAction,
+        #                                        path=qsg),
+        #                         SchemaAddition(factory=LastMonthSeriesAction,
+        #                                        path=qsg), ]
 
         actions = recall_actions
         actions.extend(plotting_actions)
         actions.extend(reduction_actions)
         actions.extend(help_actions)
-        actions.extend(quick_series_actions)
+        # actions.extend(quick_series_actions)
 
         return [TaskExtension(task_id='pychron.pipeline.task',
                               actions=[configure_recall]),

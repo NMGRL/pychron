@@ -141,7 +141,7 @@ class QueueConditionalsAction(Action):
             if spec:
                 dnames = spec.spectrometer.detector_names
 
-            edit_conditionals(None, detectors=dnames, app=task.application)
+            edit_conditionals(None, detectors=dnames)
 
 
 class SystemConditionalsAction(Action):
@@ -160,7 +160,7 @@ class SystemConditionalsAction(Action):
 
         p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
         if p:
-            edit_conditionals(p, detectors=dnames, app=task.application)
+            edit_conditionals(p, detectors=dnames)
         else:
             warning(None, 'No system conditionals file at {}'.format(p))
 

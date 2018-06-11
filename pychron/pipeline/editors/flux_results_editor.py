@@ -14,20 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-# from mayavi.core.ui.api import MayaviScene, MlabSceneModel, SceneEditor
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
-from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, InstanceEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
+from itertools import groupby
+from operator import attrgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
-from uncertainties import nominal_value, std_dev
-from itertools import groupby
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Str, Int, Bool, Float, Property, List, Instance, Event, Button
+from traitsui.api import View, UItem, TableEditor, VGroup, HGroup, Item, spring, Tabbed, Readonly
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
+from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
@@ -38,15 +38,36 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.pipeline.editors.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
-from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.processing.argon_calculations import calculate_flux, age_equation
+from pychron.processing.argon_calculations import calculate_flux
 from pychron.pychron_constants import MSEM, SD
-from six.moves import range
-from six.moves import zip
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 def mean_j(ans, error_kind, monitor_age, lambda_k):
+    js = [calculate_flux(ai.uF, monitor_age, lambda_k=lambda_k) for ai in ans]
+
+    fs = [nominal_value(fi) for fi in js]
+    es = [std_dev(fi) for fi in js]
+
+    av, werr = calculate_weighted_mean(fs, es)
+
+    mswd = None
+    if error_kind == SD:
+        n = len(fs)
+        werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
+    elif error_kind == MSEM:
+        mswd = calculate_mswd(fs, es)
+        werr *= (mswd ** 0.5 if mswd > 1 else 1)
+
+    j = ufloat(av, werr)
+
+    if mswd is None:
+        mswd = calculate_mswd(fs, es)
+
+    return j, mswd
+
+
+def omean_j(ans, error_kind, monitor_age, lambda_k):
     # ufs = (ai.uF for ai in ans)
     # fs, es = zip(*((fi.nominal_value, fi.std_dev)
     #                for fi in ufs))
@@ -215,7 +236,9 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     plotter_options = None
     irradiation = Str
     level = Str
+    holder = Str
 
+    suppress_metadata_change = Bool(False)
     # scene = Instance(MlabSceneModel, ())
 
     def set_items(self, analyses):
@@ -233,7 +256,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         lk = opt.lambda_k
         ek = opt.error_kind
 
-        key = lambda x: x.identifier
+        key = attrgetter('identifier')
         geom = self.geometry
         poss = []
         ans = []
@@ -274,10 +297,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             prev = p.j
             aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
             ans.extend(aa)
-            # data = zip(p.analyses, xx, yy)
-            # data = sorted(data, key=lambda x: x[2], reverse=p.slope)
-            # aa, xx, yy = zip(*data)
-            # ans.extend(aa)
 
         self.monitor_positions = poss
         self.analyses = ans
@@ -315,7 +334,13 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      position_only=self.plotter_options.position_only,
+                                                      position_error=self.plotter_options.position_error,
+
+                                                      # mean_position_only=self.plotter_options.position_only,
+                                                      # mean_position_error=self.plotter_options.position_error,
                                                       ntrials=self.plotter_options.monte_carlo_ntrials)
+
                 for p, j, je in zip(positions, nominals, errors):
                     oj = p.saved_j
 
@@ -417,6 +442,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         fys = reg.predict(pts)
         yserr = reg.yserr
+
+        # if self.plotter_options.use_weighted_fit:
+            # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        # else:
         l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
 
         lyy = ys - yserr
@@ -429,9 +458,28 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            # padding=[90, 5, 5, 40],
                            padding=po.paddings())
             p.bgcolor = po.plot_bgcolor
+            g.add_limit_tool(p, 'x')
+            g.add_limit_tool(p, 'y')
+            g.add_axis_tool(p, p.x_axis)
+            g.add_axis_tool(p, p.y_axis)
 
             p.y_axis.tick_label_formatter = lambda x: floatfmt(x, n=2, s=4, use_scientific=True)
 
+            # plot fit line
+            # plot0 == line
+            line, _p = g.new_series(fxs, fys)
+
+            ee = ErrorEnvelopeOverlay(component=line,
+                                      xs=fxs, lower=l, upper=u)
+            line.error_envelope = ee
+            line.underlays.append(ee)
+
+            # plot the individual analyses
+            # plot1 == scatter
+            iscatter, iys = self._graph_individual_analyses()
+
+            # plot means
+            # plot2 == scatter
             scatter, _ = g.new_series(xs, ys,
                                       yerror=yserr,
                                       type='scatter',
@@ -439,47 +487,36 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
             ebo = ErrorBarOverlay(component=scatter,
                                   orientation='y')
-            scatter.overlays.append(ebo)
+            scatter.underlays.append(ebo)
             scatter.error_bars = ebo
 
             add_inspector(scatter, self._additional_info)
-            line, _p = g.new_series(fxs, fys)
-
-            ee = ErrorEnvelopeOverlay(component=line,
-                                      xs=fxs, lower=l, upper=u)
-            line.error_envelope = ee
-            line.overlays.append(ee)
-
-            # plot the individual analyses
-            scatter, iys = self._graph_individual_analyses()
-            scatter.index.metadata['selections'] = sel
-
-            ebo = ErrorBarOverlay(component=scatter,
-                                  orientation='y')
-            scatter.overlays.append(ebo)
-            scatter.error_bars = ebo
 
             # s.index.metadata_changed = True
 
             ymi = min(lyy.min(), min(iys))
             yma = max(uyy.max(), max(iys))
-            g.set_x_limits(-3.2, 3.2)
+            g.set_x_limits(-3.5, 3.5)
+
+            # set metadata last because it will trigger a refresh
+            self.suppress_metadata_change = True
+            iscatter.index.metadata['selections'] = sel
+            self.suppress_metadata_change = False
 
         else:
             plot = g.plots[0]
-
-            s1 = plot.plots['plot0'][0]
+            s1 = plot.plots['plot2'][0]
             s1.yerror.set_data(yserr)
             s1.error_bars.invalidate()
 
-            l1 = plot.plots['plot1'][0]
+            l1 = plot.plots['plot0'][0]
             l1.error_envelope.trait_set(xs=fxs, lower=l, upper=u)
             l1.error_envelope.invalidate()
 
-            g.set_data(ys, plotid=0, series=0, axis=1)
-            g.set_data(fys, plotid=0, series=1, axis=1)
+            g.set_data(ys, plotid=0, series=2, axis=1)
+            g.set_data(fys, plotid=0, series=0, axis=1)
 
-            s2 = plot.plots['plot2'][0]
+            s2 = plot.plots['plot1'][0]
             iys = s2.value.get_data()
             ymi = min(fys.min(), lyy.min(), iys.min())
             yma = max(fys.max(), uyy.max(), iys.max())
@@ -516,8 +553,13 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 # ans.extend(p.analyses)
                 # ixs.extend(xx)
                 # iys.extend(yy)
-
         s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
+
+        ebo = ErrorBarOverlay(component=s,
+                              orientation='y')
+        s.underlays.append(ebo)
+        s.error_bars = ebo
+
         add_analysis_inspector(s, ans)
 
         self.analyses = ans
@@ -538,10 +580,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     def _update_graph_metadata(self, obj, name, old, new):
         # print obj, name, old, new
         # print obj.metadata
-        sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
+        if not self.suppress_metadata_change:
+            sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
     def _recalculate_means(self, sel):
-        identifier = None
         if sel:
             idx = {self.analyses[si].identifier for si in sel}
         else:
@@ -565,14 +607,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self.max_j = fys.max()
         self.min_j = fys.min()
 
-        # maidx = fys.argmax()
-        # miidx = fys.argmin()
-
-        # x1,y1 = fxs[maidx], fys[maidx]
-        # x2,y2 = fxs[miidx], fys[miidx]
-        # d = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-        # self.j_gradient = self.percent_j_change / d
-
     def _model_flux(self, reg, r):
 
         n = reg.n * 10
@@ -582,24 +616,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         ne = zeros((n, n))
         for i in range(n):
             pts = vstack((gx[i], gy[i])).T
-            # nz[i] = reg.predict(pts)
-            # print 'asdfasfasfasdfasdfasdfsafadsfasdfsadfadsfasfas'
-            # ne[i] = reg.predict_error(pts)
-            # pts = array([[p.x, p.y] for p in positions])
+
             nominals = reg.predict(pts)
             nz[i] = nominals
-            # errors = monte_carlo_error_estimation(reg, nominals, pts,
-            #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
-            # ne[i] = errors
 
         self.max_j = nz.max()
         self.min_j = nz.min()
-
-        # x1, y1 = unravel_index(nz.argmax(), nz.shape)
-        # x2, y2 = unravel_index(nz.argmin(), nz.shape)
-        #
-        # d = 2 * r / n * ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-        # self.j_gradient = self.percent_j_change / d
 
         return gx, gy, nz, ne
 
@@ -618,10 +640,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         y = array(y)
         xy = vstack((x, y)).T
         wf = self.plotter_options.use_weighted_fit
-        if wf:
-            ec = 'SD'
-        else:
-            ec = self.plotter_options.predicted_j_error_type
+        # if wf:
+        #     ec = 'SD'
+        # else:
+        ec = self.plotter_options.predicted_j_error_type
 
         reg = klass(xs=xy, ys=z, yserr=ze,
                     error_calc_type=ec,
@@ -726,6 +748,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                            style='readonly',
                            format_func=floatfmt,
                            label='Delta J(%)'),
+                      Readonly('holder', label='Tray'),
                       # Item('j_gradient',
                       #      style='readonly',
                       #      format_func=floatfmt,

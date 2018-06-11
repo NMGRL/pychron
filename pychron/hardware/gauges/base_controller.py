@@ -59,6 +59,12 @@ class BaseGaugeController(HasTraits):
 
             return gauge.pressure
 
+    def get_pressures(self, force=False):
+        if force:
+            self.update_pressures()
+
+        return [g.pressure for g in self.gauges]
+
     def _pressure_change(self, obj, name, old, new):
         self.trait_set(**{'{}_pressure'.format(obj.name): new})
 

@@ -339,6 +339,15 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def group_selected(self, info, obj):
+        obj.group_selected()
+
+    def clear_selection(self, info, obj):
+        obj.clear_selection()
+
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 
@@ -379,7 +388,7 @@ class BrowserSampleView(BaseBrowserSampleView):
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):
-        print('asfdasfdasdfasdf', info, obj)
+        obj.delete()
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
@@ -389,7 +398,6 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def _get_interpreted_age_group(self):
         grp = VGroup(
             UItem('interpreted_table.interpreted_ages',
-                  # width=0.4,
                   editor=myTabularEditor(
                       auto_resize=True,
                       adapter=self.model.interpreted_age_table.tabular_adapter,

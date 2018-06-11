@@ -20,7 +20,9 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from copy import copy
+from operator import itemgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -31,7 +33,6 @@ from pychron.processing.argon_calculations import calculate_F, abundance_sensiti
 from pychron.processing.isotope import Blank
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ARGON_KEYS
-import six
 
 
 class ArArAge(IsotopeGroup):
@@ -55,11 +56,15 @@ class ArArAge(IsotopeGroup):
 
     timestamp = None
 
-    kca = None
-    cak = None
-    kcl = None
-    clk = None
-    rad40_percent = None
+    kca = 0
+    cak = 0
+    kcl = 0
+    clk = 0
+    rad40_percent = 0
+    rad40 = 0
+    total40 = 0
+    k39 = 0
+
 
     # non_ar_isotopes = Dict
     # computed = Dict
@@ -75,26 +80,29 @@ class ArArAge(IsotopeGroup):
     uage_w_j_err = None
     uage_wo_j_err = None
 
-    age = None
-    age_err = None
-    age_err_wo_j = None
-    age_err_wo_irrad = None
-    age_err_wo_j_irrad = None
+    age = 0
+    age_err = 0
+    age_err_wo_j = 0
+    age_err_wo_irrad = 0
+    age_err_wo_j_irrad = 0
 
-    ar39decayfactor = None
-    ar37decayfactor = None
+    ar39decayfactor = 0
+    ar37decayfactor = 0
 
     # arar_constants =None
 
     Ar39_decay_corrected = None
     Ar37_decay_corrected = None
 
-    sensitivity = 1e-12  # fA/torr
+    sensitivity = 1e-17  # fA/torr
+    sensitivity_units = 'mol/fA'
+
     # temporary_ic_factors =None
 
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
+    _lambda_k = None
 
     discrimination = None
     weight = 0  # in milligrams
@@ -121,7 +129,7 @@ class ArArAge(IsotopeGroup):
         weight should be in milligrams
         @return:
         """
-        k2o = 0
+        k2o = ''
         if self.weight:
             k40_k = 0.0001167
             k40 = self.non_ar_isotopes['k40']
@@ -141,6 +149,17 @@ class ArArAge(IsotopeGroup):
         a = self.get_interference_corrected_value('Ar36')
         b = self.get_interference_corrected_value('Ar40')
         return a / b
+
+    @property
+    def lambda_k(self):
+        l = self._lambda_k
+        if l is None:
+            l = self.arar_constants.lambda_k
+        return l
+
+    @lambda_k.setter
+    def lambda_k(self, v):
+        self._lambda_k = v
 
     def get_error_component(self, key):
         # for var, error in self.uage.error_components().items():
@@ -166,15 +185,19 @@ class ArArAge(IsotopeGroup):
         else:
             return 0
 
-    # def set_ic_factor(self, det, v, e):
-    #     for iso in self.get_isotopes(det):
-    #         iso.ic_factor = ufloat(v, e, tag='icfactor')
+    def set_sensitivity(self, sens):
+        # for si in sens:
+        #     si['create_date'] = datetime.strptime(si['create_date'], DATE_FORMAT)
 
-    def set_temporary_ic_factor(self, k, v, e):
-        self.temporary_ic_factors[k] = ufloat(v, e)
-        # iso = self.get_isotope(detector=k)
-        # if iso:
-        #     iso.temporary_ic_factor = (v, e)
+        for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
+            if si['create_date'] < self.rundate:
+                self.sensitivity = si['sensitivity']
+                self.sensitivity_units = si['units']
+                break
+
+    def set_temporary_ic_factor(self, k, v, e, tag=None):
+        self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
+        return uv
 
     def set_temporary_blank(self, k, v, e, f):
         tol = 0.00001
@@ -289,9 +312,9 @@ class ArArAge(IsotopeGroup):
         arc = self.arar_constants
         # only calculate decayfactors once
         if not self.ar39decayfactor:
-            a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
+            a37df = calculate_decay_factor(nominal_value(arc.lambda_Ar37),
                                            self.chron_segments)
-            a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
+            a39df = calculate_decay_factor(nominal_value(arc.lambda_Ar39),
                                            self.chron_segments)
             # print a37df, a39df, self.chron_segments, self.chron_dosages
             self.ar37decayfactor = a37df
@@ -429,6 +452,9 @@ class ArArAge(IsotopeGroup):
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']
+        self.rad40 = computed['rad40']
+        self.total40 = computed['a40']
+        self.k39 = computed['k39']
 
         isotopes = self.isotopes
         for k, v in interference_corrected.items():
@@ -524,6 +550,14 @@ class ArArAge(IsotopeGroup):
             return number of days since irradiation
         """
         return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
+
+    @property
+    def moles_k39(self):
+        return self.sensitivity * self.k39
+
+    @property
+    def signal_k39(self):
+        return self.k39
 
     @property
     def moles_Ar40(self):

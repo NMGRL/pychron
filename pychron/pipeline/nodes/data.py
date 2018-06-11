@@ -16,15 +16,12 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
-import time
 from datetime import datetime, timedelta
 
+import time
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from pyface.message_dialog import information
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import View, Item, EnumEditor, CheckListEditor
@@ -32,16 +29,19 @@ from traitsui.api import View, Item, EnumEditor, CheckListEditor
 from pychron.globals import globalv
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
-import six
 
 
-class DVCNode(BaseNode):
+class BaseDVCNode(BaseNode):
+    dvc = Instance('pychron.dvc.dvc.DVC')
+
+
+class DVCNode(BaseDVCNode):
     """
 
     Base node for all nodes that need access to a DVC instance or BrowserModel for
     retrieving analyses
     """
-    dvc = Instance('pychron.dvc.dvc.DVC')
+
     browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
 
     def get_browser_analyses(self, irradiation=None, level=None):
@@ -120,8 +120,6 @@ class DataNode(DVCNode):
     name = 'Data'
 
     analysis_kind = None
-
-    check_reviewed = Bool(False)
 
     def configure(self, pre_run=False, **kw):
         print(self, pre_run, getattr(self, self.analysis_kind), self.index)
@@ -204,6 +202,10 @@ class UnknownNode(DataNode):
             records = [ri for ai in ans for ri in ai.record_views]
             self.unknowns = self.dvc.make_analyses(records)
 
+    def pre_run(self, state, configure=True):
+        # force Unknown node to always configure
+        return super(UnknownNode, self).pre_run(state, configure=True)
+
     def run(self, state):
         # if not self.unknowns and not state.unknowns:
         #     if not self.configure():
@@ -211,9 +213,9 @@ class UnknownNode(DataNode):
         #         return
 
         # review_req = []
-        unks = self.unknowns
-        for ai in unks:
-            ai.group_id = 0
+        # unks = self.unknowns
+        # for ai in unks:
+        #     ai.group_id = 0
         #     if self.check_reviewed:
         #         for attr in ('blanks', 'iso_evo'):
         #             # check analyses to see if they have been reviewed
@@ -236,7 +238,7 @@ class ReferenceNode(DataNode):
     name = 'References'
     analysis_kind = 'references'
 
-    def pre_run(self, state):
+    def pre_run(self, state, configure=True):
         self.unknowns = state.unknowns
         refs = state.references
         if refs:
@@ -246,7 +248,8 @@ class ReferenceNode(DataNode):
                 self.references = refs
 
         if not self.references:
-            self.configure(pre_run=True)
+            if configure:
+                self.configure(pre_run=True)
 
         return self.references
 
@@ -301,8 +304,8 @@ class BaseAutoUnknownNode(UnknownNode):
                       tooltip='Default time (s) to delay between "check for new analyses"'),
                  Item('mass_spectrometer', label='Mass Spectrometer',
                       editor=EnumEditor(name='available_spectrometers')),
-                Item('analysis_types',style='custom',
-                     editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
+                 Item('analysis_types', style='custom',
+                      editor=CheckListEditor(name='available_analysis_types', cols=len(self.available_analysis_types))),
                  Item('post_analysis_delay', label='Post Analysis Found Delay',
                       tooltip='Time (min) to delay before next "check for new analyses"'),
                  Item('verbose'),
@@ -316,12 +319,12 @@ class BaseAutoUnknownNode(UnknownNode):
             if not self.single_shot:
                 self._start_listening()
 
-            self._post_run_hook()
+            self._post_run_hook(engine, state)
 
     def reset(self):
         self._stop_listening()
 
-    def _post_run_hook(self):
+    def _post_run_hook(self, engine, state):
         pass
 
     def _finish_load_hook(self):
@@ -364,6 +367,7 @@ class BaseAutoUnknownNode(UnknownNode):
 
             print('retrived n records={}'.format(len(records)))
             if not self._cached_unknowns:
+                updated = True
                 ans = self.dvc.make_analyses(records)
             else:
                 ans = []
@@ -405,7 +409,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
     def _run_time_default(self):
         return (datetime.now() + timedelta(minutes=2)).time()
 
-    def _post_run_hook(self):
+    def _post_run_hook(self, engine, state):
         self._flash_iter(0)
 
     def _flash_iter(self, cnt):
@@ -442,7 +446,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         else:
             self._ran = False
 
-        period = 60*10
+        period = 60 * 10
         do_after(1000 * period, self._iter)
 
     def traits_view(self):
@@ -472,6 +476,23 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
     max_period = 10
     _between_updates = None
+    pipeline = None
+    state = None
+    _low = None
+
+    def clear_data(self):
+        super(ListenUnknownNode, self).clear_data()
+        self.pipeline = None
+        self.state = None
+
+    def reset(self):
+        super(ListenUnknownNode, self).reset()
+        self.pipeline = None
+        self.state = None
+
+    def _post_run_hook(self, engine, state):
+        self.pipeline = engine.pipeline
+        engine.pipeline.active = True
 
     def configure(self, pre_run=False, *args, **kw):
         if pre_run:
@@ -498,9 +519,11 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         return v
 
     def run(self, state):
-        self._low = datetime.now()
-        unks, updated = self._load_analyses()
-        state.unknowns = unks
+        if not self._alive:
+            self._low = datetime.now()
+            unks, updated = self._load_analyses()
+            state.unknowns = unks
+            self.state = state
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
@@ -516,13 +539,17 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         if not self._alive:
             return
 
-        if unks:
-            unks_ids = [id(ai) for ai in unks]
-            if self._unks_ids != unks_ids:
-                # self.unknowns = unks
-                self._unks_ids = unks_ids
-                self.engine.rerun_with(unks, post_run=False)
-                self.engine.refresh_figure_editors()
+        if updated:
+            # unks_ids = [id(ai) for ai in unks]
+            # if self._unks_ids != unks_ids:
+            #     self._unks_ids = unks_ids
+            # self.engine.rerun_with(unks, post_run=False)
+            self.state.unknowns = unks
+            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
+
+            self.engine.post_run_refresh(state=self.state)
+            self.engine.refresh_figure_editors()
+            # self.unknowns = unks
 
         if not self._alive:
             return

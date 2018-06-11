@@ -15,18 +15,21 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from six.moves import range
 from traits.api import List, Property, \
     Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.templater.base_templater import BaseTemplater
 from pychron.core.templater.templater_view import BaseTemplateView
-from six.moves import range
 
 
 class TitleTemplater(BaseTemplater):
-    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material',
+    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Step', 'Material',
+                       'RunID',
                        'AlphaCounter',
                        'NumericCounter', '<SPACE>'])
 
@@ -34,6 +37,7 @@ class TitleTemplater(BaseTemplater):
                          'identifier': '',
                          'project': '',
                          'aliquot': '02n',
+                         'step': '',
                          'material': '',
                          'numericcounter': '',
                          'alphacounter': ''}
@@ -42,12 +46,16 @@ class TitleTemplater(BaseTemplater):
                        'identifier': '20001',
                        'project': 'J-Curve',
                        'aliquot': 1,
+                       'step': 'A',
+                       'runid': '20001-01A',
                        'material': 'GMC',
                        'numericcounter': 1,
                        'alphacounter': 'A'}
 
     base_predefined_labels = List(['Sample ( Identifier )',
                                    'Sample ( Identifier - Aliquot )',
+                                   'Sample ( Identifier - Aliquot Step)',
+                                   'RunID',
                                    'Sample ( Identifier - Aliquot , Material )',
                                    'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
                                    'Sample',
@@ -96,13 +104,13 @@ class TitleTemplater(BaseTemplater):
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Aliquot', 'Step', 'Name', '<SPACE>'])
+    attributes = List(['Sample', 'Aliquot', 'Step', 'Label_name', 'Name', '<SPACE>'])
     attribute_formats = {'step': '',
                          'aliquot': '02n',
                          'sample': '',
-                         'name': ''}
+                         'label_name': ''}
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo'}
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001', 'name': 'Foo', 'label_name': 'Bar'}
     base_predefined_labels = List(['Sample - Aliquot Step',
                                    'Sample',
                                    'Aliquot Step'])

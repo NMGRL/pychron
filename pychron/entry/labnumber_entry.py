@@ -149,8 +149,9 @@ class LabnumberEntry(DVCIrradiationable):
         self.updated = True
 
     def sync_metadata(self):
-        if self.irradiation and self.level:
-            self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
+        self.warning_dialog('Sync db not available')
+        # if self.irradiation and self.level:
+        #     self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
 
     def generate_status_report(self):
         irradname = self.irradiation
@@ -649,7 +650,7 @@ THIS CHANGE CANNOT BE UNDONE')
             self.debug('no level for {}'.format(name))
             return
 
-        self.level_note = level.note or ''
+        self.level_note = level.note.decode('utf-8') or ''
         self.level_production_name = level.production.name if level.production else ''
         if level.holder:
             self.irradiation_tray = level.holder

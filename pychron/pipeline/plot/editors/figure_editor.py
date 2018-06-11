@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 from traits.api import Any, List
 
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor
-from pychron.pipeline.plot.figure_container import FigureContainer
 
 
 class FigureEditor(GraphEditor):
@@ -82,20 +82,20 @@ class FigureEditor(GraphEditor):
         model.trait_set(plot_options=self.plotter_options,
                         analysis_groups=self.analysis_groups,
                         # titles=self.titles,
-                        analyses=self.analyses,
+                        analyses=self.items,
                         references=self.references)
-
         return model
 
-    def _component_factory(self):
-        model = self._figure_model_factory()
-        container = self.figure_container
-        if not container:
-            container = FigureContainer()
-            self.figure_container = container
+    # def _component_factory(self):
+    #     model = self._figure_model_factory()
 
-        container.model = model
-        # container.refresh()
-        return container.component
+        # container = self.figure_container
+        # if not container:
+        #     container = FigureContainer()
+        #     self.figure_container = container
+        #
+        # container.model = model
+        # # container.refresh()
+        # return container.component
 
 # ============= EOF =============================================

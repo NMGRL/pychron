@@ -30,7 +30,8 @@ class Blanks(ReferencesSeries):
         v, e = 0, 0
         iso = self._get_isotope(po, analysis)
         if iso:
-            v, e = iso.temporary_blank.value, iso.temporary_blank.error
+            if iso.temporary_blank is not None:
+                v, e = iso.temporary_blank.value, iso.temporary_blank.error
         return v, e
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):

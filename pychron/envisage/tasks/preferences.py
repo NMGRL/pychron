@@ -93,6 +93,9 @@ class GeneralPreferencesPane(PreferencesPane):
 class BrowserPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.browser'
     reference_hours_padding = Float
+    auto_load_database = Bool
+    load_selection_enabled = Bool
+
     max_history = Int
     unknown_color = Color
     blank_color = Color
@@ -111,15 +114,15 @@ class BrowserPreferencesPane(PreferencesPane):
                               Item('blank_color'),
                               Item('air_color'), enabled_when='use_analysis_colors'),
                        show_border=True, label='Analysis Colors')
-
-        v = View(
-                 Item('reference_hours_padding',
+        load_grp = VGroup(Item('auto_load_database'),
+                          Item('load_selection_enabled'),
+                          show_border=True, label='Browser Loading')
+        v = View(Item('reference_hours_padding',
                       label='References Padding (hrs)',
                       tooltip='Padding in hours when finding associated references'),
                  Item('max_history', label='Max. Analysis Sets',
                       tooltip='Maximum number of analysis sets to maintain'),
-                 acgrp
-                 )
+                 acgrp, load_grp)
         return v
 
 # ============= EOF =============================================

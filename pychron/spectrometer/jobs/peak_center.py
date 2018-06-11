@@ -185,6 +185,7 @@ class BasePeakCenter(HasTraits):
         st = time.time()
         while 1:
             signal = get_reference_intensity()
+            time.sleep(spec.integration_time)
             if signal <= tol:
                 self.info('Peak center baseline intensity achieved')
                 break
@@ -193,7 +194,6 @@ class BasePeakCenter(HasTraits):
             if et > timeout:
                 self.warning('Peak center failed to move to a baseline position')
                 break
-            time.sleep(spec.integration_time)
 
         center, smart_shift, success = None, False, False
 

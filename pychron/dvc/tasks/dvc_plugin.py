@@ -31,7 +31,8 @@ from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction
-from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCExperimentPreferencesPane
+from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, \
+    DVCRepositoryPreferencesPane
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
@@ -133,7 +134,7 @@ class DVCPlugin(BaseTaskPlugin):
         return self._preferences_factory('dvc')
 
     def _preferences_panes_default(self):
-        return [DVCConnectionPreferencesPane, DVCExperimentPreferencesPane]
+        return [DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, DVCRepositoryPreferencesPane]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment_repo.task',

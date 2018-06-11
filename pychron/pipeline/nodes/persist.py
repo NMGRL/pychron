@@ -21,9 +21,9 @@ from __future__ import print_function
 import csv
 import os
 
-from pyface.message_dialog import information
-from traits.api import Str, Instance, List, HasTraits, Bool, Float, Int, Button
-from traitsui.api import Item, UItem, VGroup, HGroup, View
+from six.moves import zip
+from traits.api import Str, Instance, List, HasTraits, Bool, Button
+from traitsui.api import Item, UItem, VGroup, HGroup
 from traitsui.editors import DirectoryEditor, CheckListEditor, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -35,20 +35,16 @@ from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.progress import progress_iterator
 from pychron.core.ui.strings import SpacelessStr
 from pychron.paths import paths
+from pychron.pipeline.editors.set_ia_editor import SetInterpretedAgeEditor
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.nodes.figure import FigureNode
-from pychron.pipeline.nodes.persist_options import InterpretedAgePersistOptionsView, InterpretedAgePersistOptions
-from pychron.pipeline.plot.editors.figure_editor import FigureEditor
-from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
+from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.state import get_isotope_set
-from pychron.pipeline.tables.xlsx_table_writer import XLSXTableWriter
-from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
-from six.moves import zip
-
+from pychron.pipeline.tables.xlsx_table_options import XLSXAnalysisTableWriterOptions
+from pychron.pipeline.tables.xlsx_table_writer import XLSXAnalysisTableWriter
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 
 
-class PersistNode(BaseNode):
+class PersistNode(BaseDVCNode):
     def configure(self, **kw):
         return True
 
@@ -218,31 +214,59 @@ class FluxPersistNode(DVCPersistNode):
         if prog:
             prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
 
-        decay = state.decay_constants
+        po = state.flux_options
+        lk = po.lambda_k
+
+        decay_constants = {'lambda_k_total': lk, 'lambda_k_total_error': 0}
+        options = dict(model_kind=po.model_kind,
+                       predicted_j_error_type=po.predicted_j_error_type,
+                       use_weighted_fit=po.use_weighted_fit,
+                       monte_carlo_ntrials=po.monte_carlo_ntrials,
+                       use_monte_carlo=po.use_monte_carlo,
+                       monitor_sample_name=po.monitor_sample_name)
+
         self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
                         irp.j, irp.jerr,
                         irp.mean_j, irp.mean_jerr,
-                        decay,
+                        decay_constants,
                         analyses=irp.analyses,
+                        options=options,
                         add=False)
 
         j = ufloat(irp.j, irp.jerr, tag='j')
         for i in state.unknowns:
             if i.identifier == irp.identifier:
                 i.j = j
-                i.arar_constants.lambda_k = decay['lambda_k_total']
+                i.arar_constants.lambda_k = lk
                 i.recalculate_age()
 
 
-class XLSXTablePersistNode(BaseNode):
-    name = 'Save Analysis Table'
-    auto_configure = False
+class XLSXAnalysisTablePersistNode(BaseNode):
+    name = 'Excel Analysis Table'
+    # auto_configure = False
+    # configurable = False
+
+    options_klass = XLSXAnalysisTableWriterOptions
+
+    def _finish_configure(self):
+        self.options.dump()
+
+    def run(self, state):
+        writer = XLSXAnalysisTableWriter()
+        writer.build(state.groups, options=self.options)
+
+
+class InterpretedAgePersistNode(BaseDVCNode):
+    name = 'Save Interpreted Ages'
     configurable = False
 
     def run(self, state):
-        for table in state.tables:
-            writer = XLSXTableWriter()
-            writer.build(**table)
+        dvc = self.dvc
+        for e in state.editors:
+            if isinstance(e, SetInterpretedAgeEditor):
+                for ia in e.groups:
+                    if ia.use:
+                        dvc.add_interpreted_age(ia)
 
 
 class Isot(HasTraits):
@@ -326,7 +350,7 @@ class CSVAnalysesExportNode(BaseNode):
             # else:
             #     ref = self.references[0]
         temps = ('lab_temperature', 'east_diffuser_temperature', 'east_return_temperature', 'outside_temperature')
-        self.available_meta_attributes = list(('rundate', 'timestamp')+META_ATTRS + EXTRACTION_ATTRS + temps)
+        self.available_meta_attributes = list(('rundate', 'timestamp') + META_ATTRS + EXTRACTION_ATTRS + temps)
         self._select_all_meta_fired()
 
     def _unselect_all_meta_fired(self):
@@ -414,7 +438,6 @@ class CSVAnalysesExportNode(BaseNode):
 
         return row
 
-
 # class TablePersistNode(FileNode):
 #     pass
 #
@@ -442,36 +465,35 @@ class CSVAnalysesExportNode(BaseNode):
 #                     # editor.make_xls_table('FooBar', path)
 #
 #
-
-class SetInterpretedAgeNode(BaseNode):
-    name = 'Set IA'
-    dvc = Instance('pychron.dvc.dvc.DVC')
-
-    def configure(self, pre_run=False, **kw):
-        return True
-
-    def run(self, state):
-        for editor in state.editors:
-            if isinstance(editor, InterpretedAgeEditor):
-                ias = editor.get_interpreted_ages()
-                set_interpreted_age(self.dvc, ias)
-
-
-class InterpretedAgeTablePersistNode(BaseNode):
-    name = 'Save IA Table'
-    options_klass = InterpretedAgePersistOptionsView
-
-    def _options_factory(self):
-        opt = InterpretedAgePersistOptions(name='foo')
-        return self.options_klass(model=opt)
-
-    def run(self, state):
-        from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
-        for editor in state.editors:
-            if isinstance(editor, InterpretedAgeTableEditor):
-                opt = self.options.model
-                if opt.extension == 'xlsx':
-                    editor.make_xls_table(opt)
-                    view_file(opt.path)
+#
+# class SetInterpretedAgeNode(BaseDVCNode):
+#     name = 'Set IA'
+#
+#     def configure(self, pre_run=False, **kw):
+#         return True
+#
+#     def run(self, state):
+#         for editor in state.editors:
+#             if isinstance(editor, InterpretedAgeEditor):
+#                 ias = editor.get_interpreted_ages()
+#                 set_interpreted_age(self.dvc, ias)
+#
+#
+# class InterpretedAgeTablePersistNode(BaseNode):
+#     name = 'Save IA Table'
+#     options_klass = InterpretedAgePersistOptionsView
+#
+#     def _options_factory(self):
+#         opt = InterpretedAgePersistOptions(name='foo')
+#         return self.options_klass(model=opt)
+#
+#     def run(self, state):
+#         from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
+#         for editor in state.editors:
+#             if isinstance(editor, InterpretedAgeTableEditor):
+#                 opt = self.options.model
+#                 if opt.extension == 'xlsx':
+#                     editor.make_xls_table(opt)
+#                     view_file(opt.path)
 
 # ============= EOF =============================================

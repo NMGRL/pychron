@@ -17,8 +17,11 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 from datetime import timedelta, datetime
 
+import six
+from six.moves import map
 from sqlalchemy import not_, func, distinct, or_, select, and_, join
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
@@ -26,7 +29,7 @@ from sqlalchemy.util import OrderedSet
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
-from pychron.core.helpers.datetime_tools import bin_timestamps, bin_datetimes
+from pychron.core.helpers.datetime_tools import bin_datetimes
 from pychron.core.spell_correct import correct
 from pychron.database.core.database_adapter import DatabaseAdapter, binfunc
 from pychron.database.core.query import compile_query, in_func
@@ -41,8 +44,6 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl
 from pychron.globals import globalv
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
-import six
-from six.moves import map
 
 
 def make_filter(qq, table, col='value'):
@@ -160,6 +161,23 @@ class NewMassSpectrometerView(HasTraits):
                  title='New Mass Spectrometer',
                  kind='livemodal')
         return v
+
+
+def exclude_invalid_analyses(q):
+    return q.filter(AnalysisChangeTbl.tag != 'invalid')
+
+
+def extract_devices_query(analysis_types, extract_devices, q):
+    if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
+        a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
+        if not a:
+            if not isinstance(extract_devices, (tuple, list)):
+                extract_devices = (extract_devices,)
+
+            es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
+            if es:
+                q = in_func(q, AnalysisTbl.extract_device, es)
+    return q
 
 
 class DVCDatabase(DatabaseAdapter):
@@ -333,6 +351,28 @@ class DVCDatabase(DatabaseAdapter):
             change.user = self.save_username
             sess.add(change)
             # sess.commit()
+
+    def find_references_by_load(self, load, analysis_types, extract_devices=None, mass_spectrometers=None,
+                                exclude_invalid=True):
+        with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+            q = q.join(AnalysisChangeTbl)
+            q = q.join(MeasuredPositionTbl)
+
+            q = q.filter(MeasuredPositionTbl.loadName == load)
+
+            if mass_spectrometers:
+                q = in_func(q, AnalysisTbl.mass_spectrometer, mass_spectrometers)
+            if extract_devices:
+                q = extract_devices_query(analysis_types, extract_devices, q)
+            if analysis_types:
+                q = analysis_type_filter(q, analysis_types)
+
+            if exclude_invalid:
+                q = exclude_invalid_analyses(q)
+
+            records = self._query_all(q, verbose_query=True)
+            return [rii for ri in records for rii in ri.record_views]
 
     def find_references(self, times, atypes, hours=10, exclude=None,
                         extract_devices=None,
@@ -528,6 +568,9 @@ class DVCDatabase(DatabaseAdapter):
     def add_load(self, name, holder):
         with self.session_ctx():
             if not self.get_loadtable(name):
+                if not self.get_load_holder(holder):
+                    self.add_load_holder(holder)
+
                 a = LoadTbl(name=name, holderName=holder)
                 return self._add_item(a)
 
@@ -538,6 +581,10 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_analysis_group(self, ans, name, project, pi=None):
         with self.session_ctx():
+            if not isinstance(project, six.text_type):
+                pi = project.principal_investigator
+                project = project.name
+
             project = self.get_project(project, pi)
             grp = AnalysisGroupTbl(name=name, user=globalv.username)
             grp.project = project
@@ -1111,6 +1158,10 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(AnalysisGroupTbl)
             q = q.join(ProjectTbl)
             q = q.filter(AnalysisGroupTbl.name == name)
+
+            if not isinstance(project, six.text_type):
+                project = project.name
+
             q = q.filter(ProjectTbl.name == project)
 
             return self._query_all(q)
@@ -1235,15 +1286,7 @@ class DVCDatabase(DatabaseAdapter):
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
 
-            if extract_devices and ('air' not in analysis_types and 'cocktail' not in analysis_types):
-                a = any((a in analysis_types for a in ('air', 'cocktail', 'blank_air', 'blank_cocktail')))
-                if not a:
-                    if not isinstance(extract_devices, (tuple, list)):
-                        extract_devices = (extract_devices,)
-
-                    es = [ei for ei in extract_devices if ei not in (EXTRACT_DEVICE, NO_EXTRACT_DEVICE, NULL_STR)]
-                    if es:
-                        q = in_func(q, AnalysisTbl.extract_device, es)
+            q = extract_devices_query(analysis_types, extract_devices, q)
 
             if project:
                 q = q.filter(ProjectTbl.name == project)
@@ -1252,7 +1295,7 @@ class DVCDatabase(DatabaseAdapter):
             if hpost:
                 q = q.filter(AnalysisTbl.timestamp <= hpost)
             if exclude_invalid:
-                q = q.filter(AnalysisChangeTbl.tag != 'invalid')
+                q = exclude_invalid_analyses(q)
             if exclude:
                 q = q.filter(not_(AnalysisTbl.id.in_(exclude)))
             if exclude_uuids:
@@ -1489,6 +1532,8 @@ class DVCDatabase(DatabaseAdapter):
 
         return lt
 
+    get_load = get_loadtable
+
     def get_identifier(self, identifier):
         return self._retrieve_item(IrradiationPositionTbl, identifier,
                                    key='identifier')
@@ -1561,6 +1606,9 @@ class DVCDatabase(DatabaseAdapter):
             if grainsize:
                 q = q.filter(MaterialTbl.grainsize == grainsize)
             return self._query_one(q)
+
+    def get_sample_id(self, id):
+        return self._retrieve_item(SampleTbl, id, key='id')
 
     def get_sample(self, name, project, pi, material, grainsize=None):
         with self.session_ctx() as sess:
@@ -1694,7 +1742,7 @@ class DVCDatabase(DatabaseAdapter):
             return [ni.identifier for ni in
                     self._query_all(q, verbose_query=True)]
 
-    def get_loads(self, names=None, exclude_archived=True, **kw):
+    def get_load_names(self, names=None, exclude_archived=True, **kw):
         with self.session_ctx():
             if 'order' not in kw:
                 kw['order'] = LoadTbl.create_date.desc()
@@ -1761,9 +1809,6 @@ class DVCDatabase(DatabaseAdapter):
             q = sess.query(distinct(MaterialTbl.grainsize))
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
-
-    def get_sample_id(self, id):
-        return self._retrieve_item(SampleTbl, id, key='id')
 
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
@@ -2038,13 +2083,14 @@ class DVCDatabase(DatabaseAdapter):
             self._delete_item(name, name='tag')
             return True
 
-    def delete_analysis_group(self, g):
+    def delete_analysis_group(self, g, commit=False):
         with self.session_ctx() as sess:
             for si in g.sets:
                 sess.delete(si)
 
             sess.delete(g)
-            sess.commit()
+            if commit:
+                sess.commit()
 
     # ============================================================
     # Sample Prep

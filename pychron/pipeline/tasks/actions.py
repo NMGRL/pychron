@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 from pyface.confirmation_dialog import confirm
@@ -242,6 +243,24 @@ class IdeogramAction(PlotAction):
     accelerator = 'Ctrl+i'
 
 
+class SubgroupIdeogramAction(PlotAction):
+    name = 'SubGroup Ideogram'
+    action = 'set_subgroup_ideogram_template'
+    image = icon('histogram')
+
+
+class HybridIdeogramAction(PlotAction):
+    name = 'Hybrid Ideogram'
+    action = 'set_hybrid_ideogram_template'
+    image = icon('histogram')
+
+
+class HistoryIdeogramAction(PlotAction):
+    name = 'History Ideogram'
+    action = 'set_history_ideogram_template'
+    image = icon('histogram')
+
+
 class SpectrumAction(PlotAction):
     name = 'Spectrum'
     action = 'set_spectrum_template'
@@ -287,29 +306,29 @@ class ExtractionAction(Action):
 
 
 # ============= Quick Series ====================================
-class LastNAnalysesSeriesAction(PipelineAction):
-    name = 'Last N...'
-    action = 'set_last_n_analyses_template'
-
-
-class LastNHoursSeriesAction(PipelineAction):
-    name = 'Last N Hours...'
-    action = 'set_last_n_hours_template'
-
-
-class LastDaySeriesAction(PipelineAction):
-    name = 'Last Day'
-    action = 'set_last_day_template'
-
-
-class LastWeekSeriesAction(PipelineAction):
-    name = 'Last Week'
-    action = 'set_last_week_template'
-
-
-class LastMonthSeriesAction(PipelineAction):
-    name = 'Last Month'
-    action = 'set_last_month_template'
+# class LastNAnalysesSeriesAction(PipelineAction):
+#     name = 'Last N...'
+#     action = 'set_last_n_analyses_template'
+#
+#
+# class LastNHoursSeriesAction(PipelineAction):
+#     name = 'Last N Hours...'
+#     action = 'set_last_n_hours_template'
+#
+#
+# class LastDaySeriesAction(PipelineAction):
+#     name = 'Last Day'
+#     action = 'set_last_day_template'
+#
+#
+# class LastWeekSeriesAction(PipelineAction):
+#     name = 'Last Week'
+#     action = 'set_last_week_template'
+#
+#
+# class LastMonthSeriesAction(PipelineAction):
+#     name = 'Last Month'
+#     action = 'set_last_month_template'
 
 
 # ============= tag =============================================

@@ -19,42 +19,18 @@ from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, \
     Event
 from traitsui.api import View, Item, Controller, TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
-from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.git_archive.git_objects import GitSha
+from pychron.git_archive.views import CommitAdapter
 from pychron.git_archive.diff_view import DiffView
-from pychron.git_archive.utils import GitShaObject
-
-
-class CommitAdapter(TabularAdapter):
-    columns = [('Message', 'message'),
-               ('Date', 'date')]
-    message_width = Int(300)
-
-
-# class GitShaObject(HasTraits):
-#     message = Str
-#     date = Date
-#     blob = Str
-#     name = Str
-#     hexsha = Str
-#     author = Str
-#     email = Str
-#     active = Bool
-#
-#     def traits_view(self):
-#         return View(UItem('blob',
-#                           style='custom',
-#                           editor=TextEditor(read_only=True)))
-
-
 
 
 class BaseGitHistory(HasTraits):
     items = List
-    selected = Instance(GitShaObject)
+    selected = Instance(GitSha)
     head_hexsha = Str
 
     def set_items(self, items, auto_select=True):
@@ -64,10 +40,10 @@ class BaseGitHistory(HasTraits):
             self.selected = self.items[0]
 
     def git_sha_object_factory(self, com):
-        return GitShaObject(hexsha=com.hexsha,
-                            message=com.message,
-                            active=com.hexsha == self.head_hexsha,
-                            date=datetime.fromtimestamp(float(com.committed_date)))
+        return GitSha(hexsha=com.hexsha,
+                      message=com.message,
+                      active=com.hexsha == self.head_hexsha,
+                      date=datetime.fromtimestamp(float(com.committed_date)))
 
 
 class GitArchiveHistory(BaseGitHistory):
@@ -110,9 +86,9 @@ class GitArchiveHistory(BaseGitHistory):
             self._path = p
             hx = self.repo_man.commits_iter(p, keys=['message', 'committed_date'],
                                             limit=self.limit)
-            self.items = [GitShaObject(hexsha=a, message=b,
-                                       date=datetime.utcfromtimestamp(c),
-                                       name=p) for a, b, c in hx]
+            self.items = [GitSha(hexsha=a, message=b,
+                                 date=datetime.utcfromtimestamp(c),
+                                 name=p) for a, b, c in hx]
 
     def _selected_changed(self, new):
         if new:

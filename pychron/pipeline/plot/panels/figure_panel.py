@@ -15,12 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-from __future__ import print_function
-import time
 from itertools import groupby
 from math import isinf
+from operator import attrgetter
 
 from chaco.legend import Legend
 from numpy import inf
@@ -47,6 +44,7 @@ class FigurePanel(HasTraits):
     use_previous_limits = True
 
     track_value = True
+
     # @on_trait_change('analyses[]')
     # def _analyses_items_changed(self):
     #     self.figures = self._make_figures()
@@ -55,10 +53,9 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _make_figures(self, **kw):
-        key = lambda x: x.group_id
+        key = attrgetter('group_id')
         ans = sorted(self.analyses, key=key)
-        gs = [self._figure_klass(analyses=list(ais),
-                                 group_id=gid, **kw)
+        gs = [self._figure_klass(analyses=list(ais), group_id=gid, **kw)
               for gid, ais in groupby(ans, key=key)]
         return gs
 
@@ -145,30 +142,30 @@ class FigurePanel(HasTraits):
                 for p in plots:
                     if p.has_xlimits():
                         tmi, tma = p.xlimits
-                        print('previous xllimits', tmi, tma)
+                        # print('previous xllimits', tmi, tma)
                         if tmi != -inf and tma != inf:
                             mi, ma = tmi, tma
 
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    print('has ymin max set', p.ymin, p.ymax)
+                    # print('has ymin max set', p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print('has ylimits', i, p.ylimits[0], p.ylimits[1])
+                    # print('has ylimits', i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print('has calculated', p.calculated_ymin, p.calculated_ymax)
+                    # print('has calculated', p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
             if not (isinf(mi) or isinf(ma)):
-                print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
+                # print('setting xlimits', id(self), mi, ma, xpad, self.plot_options.xpadding)
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
