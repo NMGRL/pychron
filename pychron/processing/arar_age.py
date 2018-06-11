@@ -125,7 +125,7 @@ class ArArAge(IsotopeGroup):
         weight should be in milligrams
         @return:
         """
-        k2o = ''
+        k2o = 0
         if self.weight:
             k40_k = 0.0001167
             mw_k2o = 94.2
@@ -330,6 +330,8 @@ class ArArAge(IsotopeGroup):
 
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')
+
+        # print('{} k39={} ca37={}'.format(self, k, ca))
         prs = self.production_ratios
         k_ca_pr = 1
         if prs:
