@@ -19,14 +19,15 @@ from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup
 from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
-from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS
+from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS, WEIGHTED_MEAN
 
 
 class PreferredValue(HasTraits):
     attr = Str
     error_kind = Str(MSEM)
     error_kinds = List(ERROR_TYPES)
-    kind = Enum(*SUBGROUPINGS)
+    kind = Str(WEIGHTED_MEAN)
+    kinds = List(SUBGROUPINGS)
     computed_kind = Str
     value = Float
     error = Float
@@ -40,7 +41,7 @@ class PreferredValue(HasTraits):
         return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error')}
 
     def _kind_changed(self, new):
-        if new in ('Integrated', 'Arithmetic Mean'):
+        if new in ('Plateau Integrated', 'Valid Integrated', 'Total Integrated', 'Arithmetic Mean'):
             self.error_kinds = [SD, ]
             self.error_kind = SD
         else:
@@ -63,7 +64,7 @@ def make_preferred_values():
 
 
 cols = [ObjectColumn(name='name', label='Name', editable=False),
-        ObjectColumn(name='kind', label='Kind'),
+        ObjectColumn(name='kind', label='Kind', editor=EnumEditor(name='kinds')),
         ObjectColumn(name='error_kind',
                      editor=EnumEditor(name='error_kinds'),
                      label='Error Kind'),

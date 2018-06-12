@@ -17,8 +17,8 @@ from itertools import groupby
 from operator import attrgetter
 
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int, List
-from traitsui.api import View, UItem, VGroup, HGroup, Handler, Tabbed, InstanceEditor
+from traits.api import Property, Str, Int, List, on_trait_change
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -193,6 +193,18 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     selected_group_item = Property(depends_on='selected_group')
     selected_subgroup_item = Property(depends_on='selected_subgroup')
 
+    @on_trait_change('selected_subgroup_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        self.gchange(obj, self.selected_subgroup)
+
+    @on_trait_change('selected_group_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        self.gchange(obj, self.selected_group)
+
+    def gchange(self, obj, gs):
+        for g in gs[1:]:
+            g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
+
     def _get_selected_group_item(self):
         if self.selected_group:
             ret = self.selected_group[0]
@@ -248,36 +260,43 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
             self.refresh_needed = True
 
     def traits_view(self):
-        agrp = VGroup(HGroup(UItem('help_str', style='readonly'),
-                             show_border=True, label='Info'),
+        agrp = VGroup(
+            # HGroup(UItem('help_str', style='readonly'),
+            #        show_border=True, label='Info'),
 
-                      UItem('items',
-                            editor=myTabularEditor(adapter=GroupAgeAdapter(),
-                                                   # col_widths='col_widths',
-                                                   selected='selected',
+            UItem('items',
+                  editor=myTabularEditor(adapter=GroupAgeAdapter(),
+                                         # col_widths='col_widths',
+                                         selected='selected',
+                                         multi_select=True,
+                                         auto_update=False,
+                                         refresh='refresh_needed',
+                                         operations=['delete', 'move'],
+                                         column_clicked='column_clicked')),
+            label='Analyses',
+            show_border=True)
+
+        sgrp = VGroup(UItem('subgroups',
+                            height=-100,
+                            editor=myTabularEditor(adapter=SubGroupAdapter(),
                                                    multi_select=True,
-                                                   auto_update=False,
-                                                   refresh='refresh_needed',
-                                                   operations=['delete', 'move'],
-                                                   column_clicked='column_clicked')),
-                      label='Analyses')
-
-        sgrp = VGroup(UItem('subgroups', editor=myTabularEditor(adapter=SubGroupAdapter(),
-                                                                multi_select=True,
-                                                                selected='selected_subgroup')),
+                                                   selected='selected_subgroup')),
                       UItem('selected_subgroup_item',
                             style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-                      label='SubGroups')
+                      label='SubGroups',
+                      show_border=True)
 
         ggrp = VGroup(UItem('groups',
+                            height=-100,
                             style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
                                                                    multi_select=True,
                                                                    selected='selected_group')),
                       UItem('selected_group_item',
                             style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
-                      label='Groups')
+                      label='Groups',
+                      show_border=True)
 
-        v = View(Tabbed(agrp, sgrp, ggrp),
+        v = View(VGroup(agrp, sgrp, ggrp),
 
                  handler=THandler())
         return v

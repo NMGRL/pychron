@@ -29,7 +29,7 @@ from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS, MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
-    DEFAULT_INTEGRATED
+    DEFAULT_INTEGRATED, SUBGROUPINGS
 
 
 def AGProperty(*depends):
@@ -91,6 +91,7 @@ class AnalysisGroup(IdeogramPlotable):
     total_n = AGProperty()
 
     arar_constants = AGProperty()
+    production_ratios = AGProperty()
 
     isochron_4036 = None
     isochron_regressor = None
@@ -291,6 +292,14 @@ class AnalysisGroup(IdeogramPlotable):
     def _get_nanalyses(self):
         return len(list(self.clean_analyses()))
 
+    @cached_property
+    def _get_production_ratios(self):
+        ret = {}
+        if self.analyses:
+            ret = self.analyses[0].production_ratios
+
+        return ret
+
     def plateau_analyses(self):
         return
 
@@ -346,7 +355,9 @@ class AnalysisGroup(IdeogramPlotable):
         elif kind == 'plateau':
             ans = list(self.plateau_analyses())
 
+        ans = [a for a in ans if not isinstance(a, InterpretedAgeGroup)]
         if ans:
+
             prs = ans[0].production_ratios
 
             def apply_pr(n, d, k):
@@ -624,6 +635,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def __init__(self, *args, **kw):
         super(InterpretedAgeGroup, self).__init__(*args, **kw)
         super(Preferred, self).__init__()
+        self.has_subgroups(self.analyses)
 
     def set_preferred_age(self, pk, ek):
         pv = self._get_pv('age')
@@ -631,47 +643,17 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv.kind = pk
         pv.dirty = True
 
-    # def set_preferred_defaults(self, default_kind='Weighted Mean', default_error_kind=MSEM):
-    #
-    #     for attr in SUBGROUPING_ATTRS:
-    #         pv = self._get_pv(attr)
-    #         pv.kind = default_kind
-    #         pv.error_kind = default_error_kind
-    #         pv.dirty = True
-
-    # def get_age(self, okind=None, set_preferred=False):
-    #     if okind is None:
-    #         okind = self._get_pv('age').kind
-    #
-    #     kind = okind.lower().replace(' ', '_')
-    #     if kind == 'weighted_mean':
-    #         a = self.weighted_age
-    #         label = 'wt. mean'
-    #     elif kind == 'plateau':
-    #         a = self.plateau_age
-    #         label = 'plateau'
-    #     elif kind == 'isochron':
-    #         a = self.isochron_age
-    #         label = 'isochron'
-    #     elif kind == 'integrated':
-    #         a = self.integrated_age
-    #         label = 'integrated'
-    #     elif kind == 'plateau_else_weighted_mean':
-    #         label = 'plateau'
-    #         a = self.plateau_age
-    #         if not self.plateau_steps:
-    #             label = 'Weighted Mean'
-    #             a = self.weighted_age
-    #     else:
-    #         label = 'wt. mean'
-    #
-    #     if set_preferred:
-    #         pv = self._get_pv('age')
-    #         pv.kind = okind
-    #         pv.computed_kind = label
-    #         pv.dirty = True
-    #
-    #     return a, label
+    @on_trait_change('analyses')
+    def has_subgroups(self, new):
+        hs = any((isinstance(a, InterpretedAgeGroup) for a in new))
+        for pv in self.preferred_values:
+            if pv.attr == 'age':
+                continue
+            if hs:
+                pv.kind = WEIGHTED_MEAN
+                pv.kinds = [WEIGHTED_MEAN]
+            else:
+                pv.kinds = SUBGROUPINGS
 
     def ages(self, asfloat=True):
         vs = {k: getattr(self, k) for k in ('weighted_age', 'plateau_age', 'isochron_age', 'integrated_age')}
