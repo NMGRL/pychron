@@ -578,7 +578,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     self._current_row += 1
                 else:
                     self._make_analysis(worksheet, cols, a,
-                                        j == n-1,
+                                        j == n - 1,
                                         # is_plateau_step=is_plateau_step,
                                         # cum=a.cumulative_ar39(i) if a else ''
                                         )
@@ -821,7 +821,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
         sh.write_rich_string(row, startcol + 1, label, fmt2)
-        cols[startcol+1].calculate_width(label)
+        cols[startcol + 1].calculate_width(label)
 
         age = ag.uage
         tn = ag.total_n
@@ -955,7 +955,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         # label = label.capitalize()
         age = group.get_preferred_obj('age')
 
-        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma), fmt)
+        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma),
+                             fmt)
         sh.write_number(self._current_row, idx, age.value, nfmt)
         sh.write_number(self._current_row, idx + 1, age.error * nsigma, nfmt)
 
@@ -974,9 +975,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         else:
             self._current_row += 1
 
-        if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-            sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma),
-                                 fmt)
+        if self._options.include_integrated_age and \
+                group.integrated_enabled():  # hasattr(group, 'integrated_age') :
+            sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
             sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 

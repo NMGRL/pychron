@@ -461,6 +461,17 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     total_ar39 = AGProperty()
     total_k2o = AGProperty()
 
+    @property
+    def integrated_enabled(self):
+        '''
+        see issue 1565.
+
+         Total integrated age only appropriate for single-aliquot groups or subgroups
+        :return:
+        '''
+
+        return len({a.aliquot for a in self.analyses}) == 1
+
     def plateau_analyses(self):
         return [a for a in self.clean_analyses() if self.get_is_plateau_step(a)]
 
