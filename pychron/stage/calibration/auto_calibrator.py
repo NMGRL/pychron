@@ -276,10 +276,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         # delay for image refresh
         time.sleep(0.5)
         # autocenter
-        npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True,
-                                               inform=False,
-                                               alpha_enabled=False,
-                                               auto_close_image=False)
+        npt, corrected, interp = sm.autocenter(holenum=hi.id, save=True, inform=False)
         return npt, corrected
 
     def _check_auto_calibration(self):

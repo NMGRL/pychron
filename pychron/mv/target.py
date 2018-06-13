@@ -52,6 +52,7 @@ class Target:
     @property
     def convexity(self):
         # return True
+        print('selfasdfas', self.area, self.min_enclose_area)
         return self.area / self.min_enclose_area
 
     @property

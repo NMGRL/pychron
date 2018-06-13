@@ -133,13 +133,16 @@ class BaseLinearDrive(ConsumerMixin):
             if verbose:
                 self.debug('position buffer={}'.format(pos_buffer))
             if len(pos_buffer) == n:
+                if verbose:
+                    self.debug('asdf {} {}'.format(abs(float(sum(pos_buffer)) / n - steps), tolerance))
                 if abs(float(sum(pos_buffer)) / n - steps) < tolerance:
                     if success_cnt > 2:
                         break
                     success_cnt += 1
                 else:
                     success_cnt = 0
-                    pos_buffer.pop(0)
+
+                pos_buffer.pop(0)
 
             time.sleep(0.1)
 

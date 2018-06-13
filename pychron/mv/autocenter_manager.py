@@ -63,7 +63,7 @@ class AutoCenterManager(MachineVisionManager):
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
         frame = self.new_image_frame()
 
-        loc = self._get_locator(shape=shape)
+        loc = self._get_locator()
 
         cropdim = ceil(dim * 2.55)
 
@@ -82,7 +82,9 @@ class AutoCenterManager(MachineVisionManager):
                       blocksize_step=self.blocksize_step,
                       use_adaptive_threshold=self.use_adaptive_threshold)
 
-        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search)
+        dx, dy = loc.find(im, frame, dim=dim, shape=shape, preprocess=preprop, search=search)
+
+        im.refresh_needed = True
 
         if dx is None and dy is None:
             return

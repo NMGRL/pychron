@@ -77,9 +77,9 @@ class BaseTasksApplication(TasksApplication, Loggable):
         self.about_dialog.open()
 
     def start(self):
-        if globalv.open_logger_on_launch:
-            self._load_state()
-            self.open_task('pychron.logger')
+        # if globalv.open_logger_on_launch:
+        #     self._load_state()
+        #     self.open_task('pychron.logger')
 
         self.startup_tester = StartupTester()
 

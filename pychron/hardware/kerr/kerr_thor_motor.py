@@ -37,7 +37,9 @@ class KerrThorMotor(KerrMotor):
 
         Instead wait until 4 successive read positions return the same value
         """
-        self.block(4, progress=progress, homing=True)
 
+        self.block(6, progress=progress, homing=True, verbose=False)
+        # in an attempt to mitigate home false positives run the homing sequence twice
+        self.block(6, progress=progress, homing=True, verbose=False)
 
 # =============EOF-==============================================

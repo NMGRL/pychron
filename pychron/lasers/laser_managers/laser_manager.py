@@ -188,8 +188,9 @@ class LaserManager(BaseLaserManager):
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
 
-            from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
+            # from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
 
+            from pychron.tx.errors import LaserMonitorErrorCode
             self.error_code = LaserMonitorErrorCode(reason)
 
             invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')

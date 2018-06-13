@@ -61,6 +61,6 @@ class RegionSegmenter(BaseSegmenter):
         elmap = canny(image, sigma=1)
         wsrc = watershed(elmap, markers, mask=image)
 
-        return invert(wsrc)
+        return invert(wsrc).astype('uint8')
 
 # ============= EOF =============================================
