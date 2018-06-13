@@ -80,7 +80,9 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
 FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
 
 ARITHMETIC_MEAN = 'Arithmetic Mean'
-AGE_SUBGROUPINGS = ('Plateau else Weighted Mean', WEIGHTED_MEAN,
+PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
+
+AGE_SUBGROUPINGS = (PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTED_MEAN,
                     INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
                     ARITHMETIC_MEAN, 'Plateau', 'Isochron')
 SUBGROUPINGS = [WEIGHTED_MEAN,

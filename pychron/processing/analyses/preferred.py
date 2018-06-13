@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import HasTraits, Str, List, Enum, Float, Event
+from traits.api import HasTraits, Str, List, Float, Event
 from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup
 from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
-from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS, WEIGHTED_MEAN
+from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS, WEIGHTED_MEAN, \
+    PLATEAU_ELSE_WEIGHTED_MEAN
 
 
 class PreferredValue(HasTraits):
@@ -49,7 +50,8 @@ class PreferredValue(HasTraits):
 
 
 class AgePreferredValue(PreferredValue):
-    kind = Enum(*AGE_SUBGROUPINGS)
+    kind = Str(PLATEAU_ELSE_WEIGHTED_MEAN)
+    kinds = List(AGE_SUBGROUPINGS)
 
 
 def make_preferred_values():
