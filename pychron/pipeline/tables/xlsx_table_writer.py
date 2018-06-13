@@ -859,7 +859,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         fn = self._workbook.add_format()
         if use_scientific:
-            fmt = '#0.0E+00'
+            fmt = '0.0E+00'
         else:
             fmt = '0.{}'.format('0' * sf)
 
@@ -979,7 +979,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             # write total k2o
 
-            sh.write_rich_string(self._current_row, k2o_idx - 1, 'K', self._subscript, '2', 'O wt. %=', fmt)
+            sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %=', fmt)
             sh.write_number(self._current_row, k2o_idx, nominal_value(group.total_k2o), nfmt)
             self._current_row += 1
 

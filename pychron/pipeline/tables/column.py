@@ -30,16 +30,31 @@ class Column(HasTraits):
     fformat = List
     use_scientific = Bool
     width = None
-    calculated_width = -1
+    calculated_width = None
     nsigfigs = Int
 
     def calculate_width(self, txt):
         if isinstance(txt, float):
             if self.nsigfigs:
                 txt = floatfmt(txt, self.nsigfigs, use_scientific=self.use_scientific)
+                if self.calculated_width is None:
+                    self.calculated_width = self._calculate_label_width()
                 self.calculated_width = max(self.calculated_width, len(txt))
         # else:
         #     self.calculated_width = max(self.calculated_width, len(str(txt)))
+
+    def _calculate_label_width(self):
+        label = self.label
+        if isinstance(label, tuple):
+            w = 0
+            for i in label:
+                for r in ('sub', 'sup'):
+                    for rr in ('<{}>'.format(r), '</{}>'.format(r)):
+                        i = i.replace(rr, '')
+                w += len(i)
+        else:
+            w = len(label)
+        return w
 
     def _label_default(self):
         return ''
