@@ -315,6 +315,13 @@ class AnalysisGroup(IdeogramPlotable):
             return vs, es
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
+        def sd(a, v, e):
+            n = len(v)
+            if n == 1:
+                we = e[0]
+            else:
+                we = (sum((a - v) ** 2) / (n - 1)) ** 0.5
+            return we
 
         args = self._get_values(attr)
         sem = 0
@@ -325,12 +332,12 @@ class AnalysisGroup(IdeogramPlotable):
 
                 if error_kind == 'both':
                     sem = werr
-                    n = len(vs)
-                    werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
+                    # n = len(vs)
+                    # werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
+                    werr = sd(av, vs, es)
 
                 elif error_kind == SD:
-                    n = len(vs)
-                    werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
+                    werr = sd(av, vs, es)
 
             else:
                 av = vs.mean()
