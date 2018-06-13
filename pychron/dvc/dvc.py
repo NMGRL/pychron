@@ -111,7 +111,10 @@ class DVCInterpretedAge(InterpretedAge):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
                   'name', 'project', 'uuid', 'age_error_kind'):
-            setattr(self, a, obj.get(a, NULL_STR))
+            try:
+                setattr(self, a, obj.get(a, NULL_STR))
+            except BaseException as a:
+                print('excception DVCInterpretdAge.from_json', a)
 
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
