@@ -975,16 +975,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         else:
             self._current_row += 1
 
-        if self._options.include_integrated_age and \
-                group.integrated_enabled():  # hasattr(group, 'integrated_age') :
+        if self._options.include_integrated_age and group.integrated_enabled:
             sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
             sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
             sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
 
             # write total k2o
-
-            # sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %=', fmt)
-            # sh.write_number(self._current_row, k2o_idx, nominal_value(group.total_k2o), nfmt)
             v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
             sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %={}'.format(v), fmt)
 

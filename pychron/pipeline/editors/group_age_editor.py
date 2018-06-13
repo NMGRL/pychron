@@ -36,98 +36,60 @@ from pychron.pychron_constants import MSEM, SEM, SD, WEIGHTED_MEAN, INTEGRATED
 
 class GroupAdapter(BaseAdapter):
     columns = [('Group', 'group_id'),
-               ('Name', 'name')]
-
-
-class SubGroupAdapter(BaseAdapter):
-    columns = [('Group', 'group_id'),
-               ('SubGroup', 'subgroup_id'),
-               ('Label', 'label_name'),
-               ('Name', 'name')
+               ('Name', 'name'),
+               ('Age Kind', 'age_kind'),
+               ('Error', 'age_error_kind')
                ]
 
+    group_id_width = Int(60)
+    age_kind_text = Property
+    age_error_kind_text = Property
 
-class GroupAgeAdapter(SubGroupAdapter):
+    def _get_age_error_kind_text(self):
+        pv = self.item.get_preferred_obj('age')
+        return pv.error_kind
+
+    def _get_age_kind_text(self):
+        pv = self.item.get_preferred_obj('age')
+        return pv.kind
+
+
+class SubGroupAdapter(GroupAdapter):
+    columns = [('Status', 'tag'),
+               ('Group', 'group_id'),
+               ('SubGroup', 'subgroup_id'),
+               ('Label', 'label_name'),
+               ('Age Kind', 'age_kind'),
+               ('Error', 'age_error_kind')
+               ]
+
+    subgroup_id_width = Int(60)
+    tag_width = Int(60)
+    tag_text = Property
+
+    def _get_tag_text(self):
+        return 'Omit' if self.item.is_omitted() else 'Include'
+
+    def get_menu(self, obj, trait, row, column):
+        m = MenuManager(Action(name='Toggle Omit', action='toggle_omit'))
+        return m
+
+
+class AnalysesAdapter(SubGroupAdapter):
     columns = [
         ('RunID', 'record_id'),
         ('Tag', 'tag'),
         ('Group', 'group_id'),
         ('SubGroup', 'subgroup'),
-        #
-        # ('Kind', 'age_kind'),
-        # ('Error', 'age_error_kind'),
-        #
-        # # ('Age', 'age'),
-        # # (PLUSMINUS_ONE_SIGMA, 'age_err'),
-        #
-        # ('K/Ca Kind', 'kca_kind'),
-        # # ('K/Ca', 'kca'),
-        #
-        # ('K/Cl Kind', 'kcl_kind'),
-        # # ('K/Cl', 'kcl'),
-        #
-        # ('%40Ar* Kind', 'rad40_percent_kind'),
-        # # ('%40Ar*', 'rad40_percent'),
-        # ('Mol 39K Kind', 'moles_k39_kind'),
-        # ('Signal 39K Kind', 'signal_k39_kind'),
-        # ('mol 39K', 'k39'),
     ]
 
     subgroup_text = Property
     record_id_width = Int(60)
-    tag_width = Int(40)
-    group_id_width = Int(60)
     subgroup_width = Int(100)
 
-    # age_kind_text = Property
-    # age_error_kind_text = Property
-    #
-    # kca_kind_text = Property
-    # kca_error_kind_text = Property
-    # kcl_kind_text = Property
-    # kcl_error_kind_text = Property
-    # rad40_percent_kind_text = Property
-    # rad40_percent_error_kind_text = Property
-    # moles_k39_kind_text = Property
-    # moles_k39_error_kind_text = Property
-    # signal_k39_kind_text = Property
-    # signal_k39_error_kind_text = Property
+    def _get_tag_text(self):
+        return self.item.tag
 
-    # def _get_age_kind_text(self):
-    #     return self._get_subgroup_attr('age_kind')
-    #
-    # def _get_age_error_kind_text(self):
-    #     return self._get_subgroup_attr('age_error_kind')
-    #
-    # def _get_kca_kind_text(self):
-    #     return self._get_subgroup_attr('kca_kind')
-    #
-    # def _get_kca_error_kind_text(self):
-    #     return self._get_subgroup_attr('kca_error_kind')
-    #
-    # def _get_kcl_kind_text(self):
-    #     return self._get_subgroup_attr('kcl_kind')
-    #
-    # def _get_kcl_error_kind_text(self):
-    #     return self._get_subgroup_attr('kcl_error_kind')
-    #
-    # def _get_rad40_percent_kind_text(self):
-    #     return self._get_subgroup_attr('rad40_percent_kind')
-    #
-    # def _get_rad40_percent_error_kind_text(self):
-    #     return self._get_subgroup_attr('rad40_percent_error_kind')
-    #
-    # def _get_moles_k39_kind_text(self):
-    #     return self._get_subgroup_attr('moles_k39_kind')
-    #
-    # def _get_moles_k39_error_kind_text(self):
-    #     return self._get_subgroup_attr('moles_k39_error_kind')
-    #
-    # def _get_signal_k39_kind_text(self):
-    #     return self._get_subgroup_attr('signal_k39_kind')
-    #
-    # def _get_signal_k39_error_kind_text(self):
-    #     return self._get_subgroup_attr('signal_k39_error_kind')
     def _get_subgroup_text(self):
         return self._get_subgroup_attr('name')
 
@@ -171,9 +133,6 @@ class THandler(Handler):
     def group_as_integrated(self, info, obj):
         obj.group(INTEGRATED)
 
-    def clear_grouping(self, info, obj):
-        obj.clear_grouping()
-
     def group_sd(self, info, obj):
         obj.group_sd()
 
@@ -182,6 +141,22 @@ class THandler(Handler):
 
     def group_msem(self, info, obj):
         obj.group_msem()
+
+    def clear_grouping(self, info, obj):
+        if obj.selected:
+            for s in obj.selected:
+                s.subgroup = None
+
+            compress_groups(obj.items)
+
+    def toggle_omit(self, info, obj):
+        for sg in obj.selected_subgroup:
+            sg.set_temp_status('ok' if sg.temp_selected else 'omit')
+
+
+def gchange(obj, gs):
+    for g in gs[1:]:
+        g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
 
 
 class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
@@ -192,28 +167,6 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     selected_subgroup = List
     selected_group_item = Property(depends_on='selected_group')
     selected_subgroup_item = Property(depends_on='selected_subgroup')
-
-    @on_trait_change('selected_subgroup_item:preferred_values:[+]')
-    def _group_change(self, obj, name, old, new):
-        self.gchange(obj, self.selected_subgroup)
-
-    @on_trait_change('selected_group_item:preferred_values:[+]')
-    def _group_change(self, obj, name, old, new):
-        self.gchange(obj, self.selected_group)
-
-    def gchange(self, obj, gs):
-        for g in gs[1:]:
-            g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
-
-    def _get_selected_group_item(self):
-        if self.selected_group:
-            ret = self.selected_group[0]
-            return ret
-
-    def _get_selected_subgroup_item(self):
-        if self.selected_subgroup:
-            ret = self.selected_subgroup[0]
-            return ret
 
     def make_groups(self):
         key = attrgetter('group_id')
@@ -228,13 +181,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self.groups = gs
         self.subgroups = sgs
 
-    def clear_grouping(self):
-        if self.selected:
-            for s in self.selected:
-                s.subgroup = None
-
-            compress_groups(self.items)
-
+    # action handlers
     def group_sd(self):
         self._group_error(SD)
 
@@ -248,6 +195,15 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self._group(kind)
         self.refresh_needed = True
 
+    # private
+    @on_trait_change('selected_subgroup_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        gchange(obj, self.selected_subgroup)
+
+    @on_trait_change('selected_group_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        gchange(obj, self.selected_group)
+
     def _group_error(self, tag):
         if self.selected:
             set_subgrouping_error(tag, self.selected, self.items)
@@ -259,13 +215,23 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
             apply_subgrouping(d, self.selected, items=self.items)
             self.refresh_needed = True
 
+    def _get_selected_group_item(self):
+        if self.selected_group:
+            ret = self.selected_group[0]
+            return ret
+
+    def _get_selected_subgroup_item(self):
+        if self.selected_subgroup:
+            ret = self.selected_subgroup[0]
+            return ret
+
     def traits_view(self):
         agrp = VGroup(
             # HGroup(UItem('help_str', style='readonly'),
             #        show_border=True, label='Info'),
 
             UItem('items',
-                  editor=myTabularEditor(adapter=GroupAgeAdapter(),
+                  editor=myTabularEditor(adapter=AnalysesAdapter(),
                                          # col_widths='col_widths',
                                          selected='selected',
                                          multi_select=True,
@@ -280,6 +246,8 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                             height=-100,
                             editor=myTabularEditor(adapter=SubGroupAdapter(),
                                                    multi_select=True,
+                                                   editable=False,
+                                                   auto_update=True,
                                                    selected='selected_subgroup')),
                       UItem('selected_subgroup_item',
                             style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
@@ -290,6 +258,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
                             height=-100,
                             style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
                                                                    multi_select=True,
+                                                                   editable=False,
                                                                    selected='selected_group')),
                       UItem('selected_group_item',
                             style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
