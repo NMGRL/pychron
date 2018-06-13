@@ -137,6 +137,10 @@ class ArArAge(IsotopeGroup):
         return k2o
 
     @property
+    def display_k2o(self):
+        return '' if not self.weight else self.k2o
+
+    @property
     def isochron3940(self):
         a = self.get_interference_corrected_value('Ar39')
         b = self.get_interference_corrected_value('Ar40')

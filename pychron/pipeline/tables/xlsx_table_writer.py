@@ -158,7 +158,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            attr='uF'),
                    VColumn(enabled=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
-                           units='(wt. %)', attr='k2o'),
+                           sigformat='k2o',
+                           units='(wt. %)', attr='display_k2o'),
                    VColumn(enabled=options.include_sensitivity,
                            label='Sensitivity',
                            units=options.sensitivity_units,
@@ -552,6 +553,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             n = len(ans)
             nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
 
+            vn = group.nanalyses
+
             for j, a in enumerate(ans):
                 if isinstance(a, InterpretedAgeGroup):
                     items = a.analyses
@@ -560,19 +563,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     pv = a.get_preferred_obj('age')
 
                     label = pv.computed_kind
-                    for i, item in enumerate(items):
+                    for ii, item in enumerate(items):
                         # ounits = item.arar_constants.age_units
                         item.arar_constants.age_units = options.age_units
                         is_plateau_step = None
                         if a:
                             if label == 'plateau' and options.highlight_non_plateau:
-                                is_plateau_step = a.get_is_plateau_step(i)
+                                is_plateau_step = a.get_is_plateau_step(ii)
 
                         self._make_analysis(worksheet, cols, item,
-                                            i == sn and nsubgroups == 1,
+                                            ii == sn and nsubgroups == 1,
                                             # False,
                                             is_plateau_step=is_plateau_step,
-                                            cum=a.cumulative_ar39(i) if a else '')
+                                            cum=a.cumulative_ar39(ii) if a else '')
 
                     if nsubgroups > 1:
                         self._make_intermediate_summary(worksheet, a, cols, label)
@@ -580,14 +583,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 else:
                     self._make_analysis(worksheet, cols, a, j == n - 1)
 
-            if nsubgroups == 1:
+            if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
                 ngroups.append(a)
                 self._make_summary(worksheet, cols, a)
             else:
                 ngroups.append(group)
                 self._make_summary(worksheet, cols, group)
 
-            self._current_row+=1
+            self._current_row += 1
             group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
@@ -945,7 +948,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
-        k2o_idx, k2o_col = next((c for c in enumerate(cols) if c[1].attr == 'k2o'))
+        k2o_idx, k2o_col = next((c for c in enumerate(cols) if c[1].attr == 'display_k2o'))
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
 
