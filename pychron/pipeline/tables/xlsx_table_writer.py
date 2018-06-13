@@ -23,6 +23,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 from uncertainties.core import Variable
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
@@ -598,9 +599,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             w = c.width
             if w is None:
                 w = c.calculated_width
-
+            print('ccc', c.attr, w)
             if w > 0:
-                worksheet.set_column(i, i, int(w * 1.1))
+                worksheet.set_column(i, i, w)
 
         return ngroups
 
@@ -820,6 +821,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
         sh.write_rich_string(row, startcol + 1, label, fmt2)
+        cols[startcol+1].calculate_width(label)
 
         age = ag.uage
         tn = ag.total_n
@@ -944,7 +946,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         nfmt.set_bold(True)
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
-        k2o_idx = next((i for i, c in enumerate(cols) if c.attr == 'k2o'))
+
+        k2o_idx, k2o_col = next((c for c in enumerate(cols) if c[1].attr == 'k2o'))
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
 
@@ -979,8 +982,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             # write total k2o
 
-            sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %=', fmt)
-            sh.write_number(self._current_row, k2o_idx, nominal_value(group.total_k2o), nfmt)
+            # sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %=', fmt)
+            # sh.write_number(self._current_row, k2o_idx, nominal_value(group.total_k2o), nfmt)
+            v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
+            sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %={}'.format(v), fmt)
+
             self._current_row += 1
 
         if self._options.include_isochron_age:

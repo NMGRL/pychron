@@ -34,14 +34,16 @@ class Column(HasTraits):
     nsigfigs = Int
 
     def calculate_width(self, txt):
+        if self.calculated_width is None:
+            self.calculated_width = self._calculate_label_width()
+
         if isinstance(txt, float):
             if self.nsigfigs:
                 txt = floatfmt(txt, self.nsigfigs, use_scientific=self.use_scientific)
-                if self.calculated_width is None:
-                    self.calculated_width = self._calculate_label_width()
-                self.calculated_width = max(self.calculated_width, len(txt))
-        # else:
-        #     self.calculated_width = max(self.calculated_width, len(str(txt)))
+            else:
+                txt = floatfmt(txt)
+
+        self.calculated_width = max(self.calculated_width, len(str(txt))+5)
 
     def _calculate_label_width(self):
         label = self.label
@@ -54,7 +56,7 @@ class Column(HasTraits):
                 w += len(i)
         else:
             w = len(label)
-        return w
+        return w+5
 
     def _label_default(self):
         return ''
