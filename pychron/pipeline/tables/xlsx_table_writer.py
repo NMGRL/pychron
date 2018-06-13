@@ -549,7 +549,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 self._make_column_header(worksheet, cols, i)
 
             ans = group.analyses
-            nsubgroups = n = len(ans)
+            n = len(ans)
+            nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
 
             for j, a in enumerate(ans):
                 if isinstance(a, InterpretedAgeGroup):
@@ -577,11 +578,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                         self._make_intermediate_summary(worksheet, a, cols, label)
                     self._current_row += 1
                 else:
-                    self._make_analysis(worksheet, cols, a,
-                                        j == n - 1,
-                                        # is_plateau_step=is_plateau_step,
-                                        # cum=a.cumulative_ar39(i) if a else ''
-                                        )
+                    self._make_analysis(worksheet, cols, a, j == n - 1)
 
             if nsubgroups == 1:
                 ngroups.append(a)
@@ -590,6 +587,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 ngroups.append(group)
                 self._make_summary(worksheet, cols, group)
 
+            self._current_row+=1
             group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
