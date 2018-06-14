@@ -553,8 +553,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             n = len(ans)
             nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
 
-            vn = group.nanalyses
-
             for j, a in enumerate(ans):
                 if isinstance(a, InterpretedAgeGroup):
                     items = a.analyses
