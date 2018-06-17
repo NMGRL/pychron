@@ -309,7 +309,11 @@ class FindReferencesNode(FindNode):
 
             if not refs:
                 if confirm(None, 'No References Found. Would you like to try different search criteria?') == YES:
-                    continue
+                    if self.configure():
+                        continue
+                    else:
+                        state.canceled = True
+                        return True
                 else:
                     if not confirm(None, 'Would you like to search manually?') == YES:
                         state.canceled = True
