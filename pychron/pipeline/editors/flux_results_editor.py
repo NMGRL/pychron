@@ -303,7 +303,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             else:
                 ans = list(vs)
 
-            print('fa', ans)
+            # print('fa', ans)
             # ans.extend(aa)
             # ans.extend(vs)
 
@@ -437,8 +437,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
-        sel = [i for i, (a, x, y, e) in enumerate(zip(*self.analyses)) if a.is_omitted() or a.record_id == '24237-02']
-
+        sel = [i for i, (a, x, y, e) in enumerate(zip(*self.analyses)) if a.is_omitted()]
         g = self.graph
         if not isinstance(g, Graph):
             g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
@@ -576,11 +575,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         # print obj, name, old, new
         # print obj.metadata
         if not self.suppress_metadata_change:
-            sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
+            self._filter_metadata_changes(obj, self.analyses[0], self._recalculate_means)
 
     def _recalculate_means(self, sel):
         if sel:
-            idx = {self.analyses[si].identifier for si in sel}
+            idx = {self.analyses[0][si].identifier for si in sel}
         else:
             idx = [None]
 
