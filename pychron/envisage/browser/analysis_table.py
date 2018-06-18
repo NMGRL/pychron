@@ -191,6 +191,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             self._python_dt(ans)
 
     def _python_dt(self, ans):
+        ans = sorted(ans, key=attrgetter('timestampf'))
+
         ref = ans[0]
         prev = ref.timestampf
         ref.delta_time = 0
