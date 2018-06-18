@@ -239,6 +239,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     holder = Str
 
     suppress_metadata_change = Bool(False)
+
     # scene = Instance(MlabSceneModel, ())
 
     def set_items(self, analyses):
@@ -295,11 +296,21 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             if prev:
                 slope = prev < p.j
             prev = p.j
-            aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
-            ans.extend(aa)
+            vs = self._sort_individuals(p, monage, lk, slope)
+            if ans:
+                ans = [list(ans[i]) + list(v) for i, v in enumerate(vs)]
+                # ans = [ans[0].extend(aa), ans[0].extend(xx), ans[0].extend(yy), ans[0].extend(es)]
+            else:
+                ans = list(vs)
+
+            print('fa', ans)
+            # ans.extend(aa)
+            # ans.extend(vs)
 
         self.monitor_positions = poss
+
         self.analyses = ans
+
         if unk is not None:
             self.unknown_positions = unk
             # self.positions = mon + unk
@@ -426,7 +437,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
-        sel = [i for i, a in enumerate(self.analyses) if a.is_omitted()]
+        sel = [i for i, (a, x, y, e) in enumerate(zip(*self.analyses)) if a.is_omitted() or a.record_id == '24237-02']
 
         g = self.graph
         if not isinstance(g, Graph):
@@ -448,7 +459,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         yserr = reg.yserr
 
         # if self.plotter_options.use_weighted_fit:
-            # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
         # else:
         try:
             l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
@@ -534,32 +545,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self._model_sin_flux(fxs, fys)
 
     def _graph_individual_analyses(self):
-        po = self.plotter_options
         g = self.graph
 
-        ixs = []
-        iys = []
-        ies = []
-        ans = []
-        m, k = po.monitor_age * 1e6, po.lambda_k
-        slope = True
-        prev = self.monitor_positions[-1].j
-        for j, p in enumerate(self.monitor_positions):
-            if p.use:
-                if prev:
-                    slope = prev < p.j
-                prev = p.j
-                aa, xx, yy, es = self._sort_individuals(p, m, k, slope)
-                ans.extend(aa)
-                ixs.extend(xx)
-                iys.extend(yy)
-                ies.extend(es)
-                p.slope = slope
-                # yy = sorted(yy, reverse=not slope)
+        ans, ixs, iys, ies = self.analyses
 
-                # ans.extend(p.analyses)
-                # ixs.extend(xx)
-                # iys.extend(yy)
         s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
 
         ebo = ErrorBarOverlay(component=s,
@@ -569,7 +558,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         add_analysis_inspector(s, ans)
 
-        self.analyses = ans
         s.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
         return s, iys
 
