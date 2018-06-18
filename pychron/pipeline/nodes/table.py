@@ -70,7 +70,7 @@ class AnalysisTableNode(GroupAgeNode):
                   'airs': air_group,
                   'machine_unknowns': munk_group}
 
-        state.groups = groups
+        state.run_groups = groups
 
 
 class XLSXAnalysisTableNode(AnalysisTableNode):

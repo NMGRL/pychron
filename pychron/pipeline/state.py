@@ -47,6 +47,7 @@ class EngineState(HasTraits):
     # user_review = Bool
     veto = Any
     canceled = Bool
+    run_groups = Dict
     # udetectors = Property(depends_on='unknowns[]')
     # rdetectors = Property(depends_on='references[]')
     # union_detectors = Property(depends_on='udetectors, rdetectors')

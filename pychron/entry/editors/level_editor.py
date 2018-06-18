@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
 import os
 
 # ============= enthought library imports =======================
@@ -26,6 +27,7 @@ from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup
     HSplit, EnumEditor
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron import json
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.logger_setup import logging_setup
@@ -38,7 +40,6 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import ALPHAS
-from pychron import json
 
 
 def prep_prname(prname):
@@ -249,7 +250,7 @@ class LevelEditor(Loggable):
                         pr = db.add_production(prname)
                     level.production = pr
 
-                    self.meta_repo.update_level_production(self.irradiation, self.name, prname)
+                    self.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -338,10 +339,10 @@ class LevelEditor(Loggable):
 
                 if not next((li for li in irrad.levels if li.name == self.name), None):
 
-                    self._save_level()
-
-                    return self.name
-
+                    if self._save_level():
+                        return self.name
+                    else:
+                        break
                 else:
                     self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
                                                                                             self.irradiation))
@@ -427,7 +428,10 @@ class LevelEditor(Loggable):
     def _save_level(self):
         # prname = self.new_production_name.replace(' ', '_')
         prname = self.selected_production_name
-        prname = prep_prname(prname)
+        # prname = prep_prname(prname)
+        if not prname:
+            self.warning_dialog('SAVE CANCELED\n\nPlease select a set of Production Ratios for this level.')
+            return
 
         db = self.db
         # add to database
@@ -446,17 +450,18 @@ class LevelEditor(Loggable):
         self.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
 
         self._refresh_production()
+        return True
 
     def _save_production(self, name=None):
         prod = self.selected_production
         self.debug('Saving production={}, dirty={}, keywordname={}'.format(prod.name, prod.dirty, name))
-        if prod.dirty or name or prod.name.startswith('Global'):
+        if prod.dirty or name: #or prod.name.startswith('Global'):
             if name:
                 prname = name
             else:
                 prname = prod.name
 
-            prname = prep_prname(prname)
+            # prname = prep_prname(prname)
             prod.name = prname
 
             self.debug('saving production {}'.format(prname))

@@ -25,7 +25,7 @@ class SetInterpretedAgeNode(DVCNode):
     configurable = False
 
     def run(self, state):
-        unks = state.groups['unknowns']
+        unks = state.run_groups['unknowns']
 
         # ias = []
         #
