@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int, List, on_trait_change, Bool
+from traits.api import Property, Str, Int, List, on_trait_change
 from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
 from traitsui.menu import Action
 
@@ -168,7 +168,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     selected_subgroup = List
     selected_group_item = Property(depends_on='selected_group')
     selected_subgroup_item = Property(depends_on='selected_subgroup')
-    skip_meaning = Bool
+    skip_meaning = Str
 
     def make_groups(self):
         bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
