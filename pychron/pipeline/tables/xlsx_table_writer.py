@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from itertools import groupby
-from operator import attrgetter
 
 import six
 import xlsxwriter
@@ -25,9 +23,9 @@ from uncertainties import nominal_value, std_dev, ufloat
 from uncertainties.core import Variable
 
 from pychron.core.helpers.filetools import add_extension, view_file
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.paths import paths
-from pychron.pipeline.subgrouping import subgrouping_key
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
@@ -73,7 +71,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         unknowns = groups.get('unknowns')
         if unknowns:
             # make a human optimized table
-            self._make_human_unknowns(unknowns)
+            unknowns = self._make_human_unknowns(unknowns)
 
             # make a machine optimized table
         munknowns = groups.get('machine_unknowns')
@@ -110,10 +108,21 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     # private
     def _get_detectors(self, grps):
-        detectors = {i.detector for g in grps
-                     for a in g.analyses
-                     for i in a.isotopes.values()}
-        return sort_detectors(detectors)
+        def rec_dets(dets, a):
+            if isinstance(a, InterpretedAgeGroup):
+                for aa in a.analyses:
+                    rec_dets(dets, aa)
+            else:
+                return dets.update({i.detector for i in a.isotopes.values()})
+
+        d = set()
+        for g in grps:
+            for a in g.analyses:
+                rec_dets(d, a)
+        # detectors = {i.detector for g in grps
+        #              for a in g.analyses
+        #              for i in a.isotopes.values()}
+        return sort_detectors(d)
 
     def _get_columns(self, name, grps):
 
@@ -129,7 +138,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         age_units = '({})'.format(options.age_units)
         age_func = age_value(options.age_units)
 
-        columns = [Column(attr='status'),
+        columns = [Column(attr='status', width=2),
                    Column(label='N', attr='aliquot_step_str'),
                    Column(label='Tag', attr='tag'),
                    Column(enabled=ubit, label='Power', units=options.power_units, attr='extract_value'),
@@ -149,11 +158,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                            attr='uF'),
                    VColumn(enabled=ubit and options.include_k2o,
                            label=('K', '<sub>2</sub>', 'O'),
-                           units='(wt. %)', attr='k2o'),
+                           sigformat='k2o',
+                           units='(wt. %)', attr='display_k2o'),
                    VColumn(enabled=options.include_sensitivity,
                            label='Sensitivity',
                            units=options.sensitivity_units,
                            attr='sensitivity',
+                           use_scientific=True,
                            sigformat='sens'),
 
                    VColumn(enabled=ubit and options.include_isochron_ratios,
@@ -181,6 +192,15 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             irr = [Column(enabled=ubit, label='Irradiation', attr='irradiation_label')]
             columns.extend(irr)
 
+        for c in columns:
+            if c.sigformat:
+                try:
+                    sg = getattr(options, '{}_sig_figs'.format(c.sigformat))
+                except AttributeError:
+                    sg = options.sig_figs
+
+                c.nsigfigs = sg
+
         return columns
 
     def _flux_columns(self, columns):
@@ -198,6 +218,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         columns.extend([Column(enabled=options.include_rundate,
                                label='RunDate', attr='rundate',
+                               width=15,
                                fformat=[('set_num_format', ('mm/dd/yy hh:mm',))]),
                         Column(enabled=options.include_time_delta,
                                label=(u'\u0394t', '<sup>3</sup>'),
@@ -336,24 +357,30 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         opt = self._options
 
         def get_kca(ag, *args):
-            return nominal_value(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
+            pv = ag.get_preferred_obj('kca')
+            return pv.value
 
         def get_kca_error(ag, *args):
-            return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
+            pv = ag.get_preferred_obj('kca')
+            return pv.error * opt.summary_kca_nsigma
+            # return std_dev(ag.get_weighted_mean('kca')) * opt.summary_kca_nsigma
 
         def get_preferred_age_kind(ag, *args):
-            ret = ''
-            if isinstance(ag, InterpretedAgeGroup):
-                ret = ag.get_preferred_kind('age')
-            return ret
+            pv = ag.get_preferred_obj('age')
+            # _, label = ag.get_age()
+            # ret = label.capitalize()
+            return pv.computed_kind.capitalize()
 
         def get_preferred_age(ag, *args):
-            return nominal_value(ag.preferred_age)
+            pv = ag.get_preferred_obj('age')
+            # a, _ = ag.get_age()
+            return pv.value
 
         def get_preferred_age_error(ag, *args):
-            return std_dev(ag.preferred_age) * opt.summary_age_nsigma
+            pv = ag.get_preferred_obj('age')
+            # a, _ = ag.get_age()
+            return pv.error * opt.summary_age_nsigma
 
-        # is_step_heat = opt.table_kind == 'Step Heat'
         age_units = '({})'.format(opt.age_units)
 
         cols = [Column(enabled=opt.include_summary_sample, label='Sample', attr='sample'),
@@ -364,7 +391,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 Column(enabled=opt.include_summary_material, label='Material', attr='material'),
 
                 Column(enabled=opt.include_summary_age, label='Age Type', func=get_preferred_age_kind),
-                # Column(enabled=opt.include_summary_age, 'Age Type', '', 'preferred_age_kind'),
 
                 Column(enabled=opt.include_summary_n, label='N', attr='nratio'),
                 Column(enabled=opt.include_summary_percent_ar39, label=('%', '<sup>39</sup>', 'Ar'),
@@ -402,7 +428,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return cols
 
     def _make_human_unknowns(self, unks):
-        self._make_sheet(unks, 'Unknowns')
+        return self._make_sheet(unks, 'Unknowns')
 
     def _make_machine_unknowns(self, unks):
         self._make_machine_sheet(unks, 'Unknowns (Machine)')
@@ -456,41 +482,43 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._make_notes(sh, len(cols), 'summary')
 
     def _sort_groups(self, groups):
-        def group_age(group):
-            nitems = []
-            has_subgroups = False
-
-            ans = group.analyses
-
-            nsubgroups = len({subgrouping_key(i) for i in ans})
-
-            for subgroup, items in groupby(ans, key=subgrouping_key):
-                items = list(items)
-                ag = None
-                if subgroup:
-                    sg = items[0].subgroup
-                    kind = sg['age_kind']
-                    ag = InterpretedAgeGroup(analyses=items)
-                    _, label = ag.get_age(kind, set_preferred=True)
-                    ag.set_preferred_kinds(sg)
-                if ag:
-                    nitems.append(ag)
-                    has_subgroups = True
-                else:
-                    if nsubgroups == 1:
-                        ag = InterpretedAgeGroup(analyses=items)
-                        ag.set_preferred_kinds()
-                        nitems = [ag]
-                    else:
-                        nitems.extend(items)
-
-            if has_subgroups and nsubgroups > 1:
-                group.analyses = nitems
-
-            if nsubgroups == 1:
-                group = nitems[0]
-
-            return group.age
+        # def group_age(group):
+        #     nitems = []
+        #     has_subgroups = False
+        #
+        #     ans = group.analyses
+        #
+        #     nsubgroups = len({subgrouping_key(i) for i in ans})
+        #
+        #     for subgroup, items in groupby(ans, key=subgrouping_key):
+        #         items = list(items)
+        #         ag = None
+        #         if subgroup:
+        #             sg = items[0].subgroup
+        #             kind = sg['age_kind']
+        #             ag = InterpretedAgeGroup(analyses=items)
+        #             _, label = ag.get_age(kind, set_preferred=True)
+        #             ag.set_preferred_kinds(sg)
+        #         if ag:
+        #             nitems.append(ag)
+        #             has_subgroups = True
+        #         else:
+        #             if nsubgroups == 1:
+        #                 ag = InterpretedAgeGroup(analyses=items)
+        #                 ag.set_preferred_kinds()
+        #                 nitems = [ag]
+        #             else:
+        #                 nitems.extend(items)
+        #
+        #     if has_subgroups and nsubgroups > 1:
+        #         group.analyses = nitems
+        #
+        #     if nsubgroups == 1:
+        #         group = nitems[0]
+        #
+        #     return group.age
+        def group_age(g):
+            return 0
 
         if self._options.group_age_sorting == NULL_STR:
             ngs = groups
@@ -513,7 +541,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         repeat_header = options.repeat_header
 
         groups = self._sort_groups(groups)
-
+        ngroups = []
         for i, group in enumerate(groups):
             group.set_temporary_age_units(options.age_units)
 
@@ -521,70 +549,126 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
 
-            nitems = []
-            has_subgroups = False
-
             ans = group.analyses
+            n = len(ans)
+            nsubgroups = len([a for a in ans if isinstance(a, InterpretedAgeGroup)])
 
-            nsubgroups = len({subgrouping_key(i) for i in ans})
+            for j, a in enumerate(ans):
+                if isinstance(a, InterpretedAgeGroup):
+                    items = a.analyses
+                    sn = len(items) - 1
 
-            for subgroup, items in groupby(ans, key=subgrouping_key):
-                items = list(items)
-                ag = None
-                if subgroup:
-                    sg = items[0].subgroup
-                    kind = sg['age_kind']
-                    ag = InterpretedAgeGroup(analyses=items)
-                    _, label = ag.get_age(kind, set_preferred=True)
-                    ag.set_preferred_kinds(sg)
-                n = len(items) - 1
-                if options.individual_age_sorting != NULL_STR:
-                    items = sorted(items, attrgetter('age'),
-                                   reverse=options.individual_age_sorting == DESCENDING)
+                    pv = a.get_preferred_obj('age')
+                    label = pv.computed_kind.lower()
 
-                for i, item in enumerate(items):
-                    ounits = item.arar_constants.age_units
-                    item.arar_constants.age_units = options.age_units
+                    for ii, item in enumerate(items):
+                        # ounits = item.arar_constants.age_units
+                        item.arar_constants.age_units = options.age_units
+                        is_plateau_step = None
+                        if label == 'plateau':
+                            is_plateau_step = a.get_is_plateau_step(ii)
 
-                    is_plateau_step = None
-                    if ag:
-                        if label == 'plateau' and options.highlight_non_plateau:
-                            is_plateau_step = ag.get_is_plateau_step(i)
+                        self._make_analysis(worksheet, cols, item,
+                                            ii == sn and nsubgroups == 1,
+                                            # False,
+                                            is_plateau_step=is_plateau_step,
+                                            cum=a.cumulative_ar39(ii) if a else '')
 
-                    self._make_analysis(worksheet, cols, item, i == n and (not subgroup or nsubgroups == 1),
-                                        is_plateau_step=is_plateau_step,
-                                        cum=ag.cumulative_ar39(i) if ag else '')
-
-                if ag:
-                    if nsubgroups > 1:
-                        self._make_intermediate_summary(worksheet, ag, cols, label)
-                    nitems.append(ag)
-                    has_subgroups = True
+                    # if nsubgroups > 1:
+                    self._make_intermediate_summary(worksheet, a, cols, label)
+                    self._current_row += 1
                 else:
-                    if nsubgroups == 1:
-                        ag = InterpretedAgeGroup(analyses=items)
-                        ag.set_preferred_kinds()
-                        nitems = [ag]
-                    else:
-                        nitems.extend(items)
+                    pv = group.get_preferred_obj('age')
+                    label = pv.computed_kind.lower()
+                    is_plateau_step = None
+                    if label == 'plateau':
+                        is_plateau_step = a.get_is_plateau_step(j)
+                    self._make_analysis(worksheet, cols, a, j == n - 1, is_plateau_step=is_plateau_step)
 
-                for item in items:
-                    item.arar_constants.age_units = ounits
-
-            if has_subgroups and nsubgroups > 1:
-                group.analyses = nitems
-
-            if nsubgroups == 1:
-                self._make_summary(worksheet, cols, nitems[0])
+            if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
+                ngroups.append(a)
+                self._make_summary(worksheet, cols, a)
             else:
+                ngroups.append(group)
                 self._make_summary(worksheet, cols, group)
-            self._current_row += 1
 
+            self._current_row += 1
             group.set_temporary_age_units(None)
 
         self._make_notes(worksheet, len(cols), name)
         self._current_row = 1
 
+        for i, c in enumerate(cols):
+            w = c.width
+            if w is None:
+                w = c.calculated_width
+            if w > 0:
+                worksheet.set_column(i, i, w)
+
+        self._hide_columns(worksheet, cols)
+        return ngroups
+
+    #     nsubgroups = len({subgrouping_key(i) for i in ans})
+    #
+    #     for subgroup, items in groupby(ans, key=subgrouping_key):
+    #         items = list(items)
+    #         ag = None
+    #         if subgroup:
+    #             sg = items[0].subgroup
+    #             kind = sg['age_kind']
+    #             ag = InterpretedAgeGroup(analyses=items)
+    #             _, label = ag.get_age(kind, set_preferred=True)
+    #             ag.set_preferred_kinds(sg)
+    #         n = len(items) - 1
+    #         if options.individual_age_sorting != NULL_STR:
+    #             items = sorted(items, attrgetter('age'),
+    #                            reverse=options.individual_age_sorting == DESCENDING)
+    #
+    #         for i, item in enumerate(items):
+    #             ounits = item.arar_constants.age_units
+    #             item.arar_constants.age_units = options.age_units
+    #
+    #             is_plateau_step = None
+    #             if ag:
+    #                 if label == 'plateau' and options.highlight_non_plateau:
+    #                     is_plateau_step = ag.get_is_plateau_step(i)
+    #
+    #             self._make_analysis(worksheet, cols, item, i == n and (not subgroup or nsubgroups == 1),
+    #                                 is_plateau_step=is_plateau_step,
+    #                                 cum=ag.cumulative_ar39(i) if ag else '')
+    #
+    #         if ag:
+    #             if nsubgroups > 1:
+    #                 self._make_intermediate_summary(worksheet, ag, cols, label)
+    #             nitems.append(ag)
+    #             has_subgroups = True
+    #         else:
+    #             if nsubgroups == 1:
+    #                 ag = InterpretedAgeGroup(analyses=items)
+    #                 ag.set_preferred_kinds()
+    #                 nitems = [ag]
+    #             else:
+    #                 nitems.extend(items)
+    #
+    #         for item in items:
+    #             item.arar_constants.age_units = ounits
+    #
+    #     oans = None
+    #     if has_subgroups and nsubgroups > 1:
+    #         oans = group.analyses
+    #         group.analyses = nitems
+    #
+    #     if nsubgroups == 1:
+    #         ngroups.append(nitems[0])
+    #         self._make_summary(worksheet, cols, nitems[0])
+    #     else:
+    #         ngroups.append(group)
+    #         self._make_summary(worksheet, cols, group)
+    #     self._current_row += 1
+    #
+    #     if oans is not None:
+    #         group.analyses = oans
+    #     group.set_temporary_age_units(None)
     def _make_machine_sheet(self, groups, name):
         self._current_row = 1
         worksheet = self._workbook.add_worksheet(name)
@@ -613,14 +697,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _format_worksheet(self, sh, cols, freeze):
         self._format_generic_worksheet(sh)
-        if self._options.include_rundate:
-            idx = next((i for i, c in enumerate(cols) if c.label == 'RunDate'))
-            sh.set_column(idx, idx, 30)
-
-        sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
             sh.freeze_panes(*freeze)
-        self._hide_columns(sh, cols)
 
     def _hide_columns(self, sh, cols):
         for i, c in enumerate(cols):
@@ -736,6 +814,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         startcol = 1
         sh.write(row, startcol, '{:02n}'.format(ag.aliquot), fmt2)
         sh.write_rich_string(row, startcol + 1, label, fmt2)
+        cols[startcol + 1].calculate_width(label)
 
         age = ag.uage
         tn = ag.total_n
@@ -767,14 +846,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(row, cum_idx, ag.valid_total_ar39(), fmt)
         self._current_row += 1
 
-    def _get_number_format(self, kind=None):
+    def _get_number_format(self, kind=None, use_scientific=False):
         try:
             sf = getattr(self._options, '{}_sig_figs'.format(kind))
         except AttributeError as e:
             sf = self._options.sig_figs
 
         fn = self._workbook.add_format()
-        fmt = '0.{}'.format('0' * sf)
+        if use_scientific:
+            fmt = '0.0E+00'
+        else:
+            fmt = '0.{}'.format('0' * sf)
+
         if not self._options.ensure_trailing_zeros:
             fmt = '{}#'.format(fmt)
 
@@ -822,6 +905,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 else:
                     sh.write(row, j + 1, txt, fmt)
 
+            c.calculate_width(txt)
         self._current_row += 1
 
     def _make_summary(self, sh, cols, group):
@@ -835,12 +919,19 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             nsigma = self._options.asummary_kca_nsigma
             pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
             pv = group.get_preferred_obj('kca')
+
+            kind = pv.kind
+            if 'integrated' in kind.lower():
+                label = 'Integrated'
+            else:
+                label = kind.capitalize()
+
             sh.write_rich_string(self._current_row, start_col,
-                                 u'{} K/Ca {}'.format(pv.kind.capitalize(), pmsigma),
+                                 u'{} K/Ca {}'.format(label, pmsigma),
                                  fmt)
 
-            sh.write_number(self._current_row, idx, nominal_value(group.kca), nfmt)
-            sh.write_number(self._current_row, idx + 1, std_dev(group.kca) * nsigma, nfmt)
+            sh.write_number(self._current_row, idx, pv.value, nfmt)
+            sh.write_number(self._current_row, idx + 1, pv.error * nsigma, nfmt)
             sh.write_rich_string(self._current_row, idx + 2, pv.error_kind, fmt)
             self._current_row += 1
 
@@ -849,15 +940,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
 
+        k2o_idx, k2o_col = next((c for c in enumerate(cols) if c[1].attr == 'display_k2o'))
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
 
-        a, label = group.get_age()
+        # a, label = group.get_age()
+        # label = label.capitalize()
+        age = group.get_preferred_obj('age')
 
-        label = label.capitalize()
-        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(label, pmsigma), fmt)
-        sh.write_number(self._current_row, idx, nominal_value(a), nfmt)
-        sh.write_number(self._current_row, idx + 1, std_dev(a) * nsigma, nfmt)
+        sh.write_rich_string(self._current_row, start_col, u'{} Age {}'.format(age.computed_kind.capitalize(), pmsigma),
+                             fmt)
+        sh.write_number(self._current_row, idx, age.value, nfmt)
+        sh.write_number(self._current_row, idx + 1, age.error * nsigma, nfmt)
 
         sh.write_rich_string(self._current_row, idx + 2, 'n={}/{}'.format(group.nanalyses,
                                                                           group.total_n), fmt)
@@ -871,14 +965,18 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                 self._current_row += 1
 
-            if self._options.include_integrated_age and hasattr(group, 'integrated_age'):
-                sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma),
-                                     fmt)
-                sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
-
-                self._current_row += 1
         else:
+            self._current_row += 1
+
+        if self._options.include_integrated_age and group.integrated_enabled:
+            sh.write_rich_string(self._current_row, start_col, u'Total Integrated Age {}'.format(pmsigma), fmt)
+            sh.write_number(self._current_row, idx, nominal_value(group.integrated_age), nfmt)
+            sh.write_number(self._current_row, idx + 1, std_dev(group.integrated_age) * nsigma, nfmt)
+
+            # write total k2o
+            v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
+            sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %={}'.format(v), fmt)
+
             self._current_row += 1
 
         if self._options.include_isochron_age:
@@ -976,7 +1074,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_fmt(self, item, col):
         fmt = None
         if col.sigformat:
-            fmt = self._get_number_format(col.sigformat)
+            fmt = self._get_number_format(col.sigformat, col.use_scientific)
 
         elif col.fformat:
             fmt = self._workbook.add_format()

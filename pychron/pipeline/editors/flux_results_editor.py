@@ -28,7 +28,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
-from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+from pychron.core.stats.monte_carlo import FluxEstimator
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.contour_graph import ContourGraph
@@ -214,7 +214,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     unknown_positions = List
     positions = List
 
-    analyses = List
     graph = Instance('pychron.graph.graph.Graph')
     # flux_visualization = Instance('pychron.processing.flux_visualization3D.FluxVisualization3D', ())
     _regressor = None
@@ -239,7 +238,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
     holder = Str
 
     suppress_metadata_change = Bool(False)
+    _analyses = List
+
     # scene = Instance(MlabSceneModel, ())
+    @property
+    def analyses(self):
+        return self._analyses[0] if self._analyses else []
 
     def set_items(self, analyses):
         if self.geometry:
@@ -295,11 +299,21 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             if prev:
                 slope = prev < p.j
             prev = p.j
-            aa, xx, yy, es = self._sort_individuals(p, monage, lk, slope)
-            ans.extend(aa)
+            vs = self._sort_individuals(p, monage, lk, slope)
+            if ans:
+                ans = [list(ans[i]) + list(v) for i, v in enumerate(vs)]
+                # ans = [ans[0].extend(aa), ans[0].extend(xx), ans[0].extend(yy), ans[0].extend(es)]
+            else:
+                ans = list(vs)
+
+            # print('fa', ans)
+            # ans.extend(aa)
+            # ans.extend(vs)
 
         self.monitor_positions = poss
-        self.analyses = ans
+
+        self._analyses = ans
+
         if unk is not None:
             self.unknown_positions = unk
             # self.positions = mon + unk
@@ -328,18 +342,22 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             self.information_dialog(msg)
             return
 
-        if self.plotter_options.use_monte_carlo:
+        options = self.plotter_options
+        if options.use_monte_carlo:
             # from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
+            fe = FluxEstimator(options.monte_carlo_ntrials, reg, options.position_only, options.position_error)
+
             for positions in (self.unknown_positions, self.monitor_positions):
                 pts = array([[p.x, p.y] for p in positions])
-                nominals = reg.predict(pts)
-                errors = monte_carlo_error_estimation(reg, nominals, pts,
-                                                      position_only=self.plotter_options.position_only,
-                                                      position_error=self.plotter_options.position_error,
-
-                                                      # mean_position_only=self.plotter_options.position_only,
-                                                      # mean_position_error=self.plotter_options.position_error,
-                                                      ntrials=self.plotter_options.monte_carlo_ntrials)
+                nominals, errors = fe.estimate(pts)
+                # nominals = reg.predict(pts)
+                # errors = monte_carlo_error_estimation(reg, nominals, pts,
+                #                                       position_only=self.plotter_options.position_only,
+                #                                       position_error=self.plotter_options.position_error,
+                #
+                #                                       # mean_position_only=self.plotter_options.position_only,
+                #                                       # mean_position_error=self.plotter_options.position_error,
+                #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
                 for p, j, je in zip(positions, nominals, errors):
                     oj = p.saved_j
@@ -360,7 +378,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
                     p.dev = (oj - j) / j * 100
 
-        if self.plotter_options.plot_kind == '2D':
+        if options.plot_kind == '2D':
             self._graph_contour(x, y, z, r, reg, refresh)
         else:
             self._graph_hole_vs_j(x, y, r, reg, refresh)
@@ -422,8 +440,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
 
-        sel = [i for i, a in enumerate(self.analyses) if a.is_omitted()]
-
+        sel = [i for i, (a, x, y, e) in enumerate(zip(*self._analyses)) if a.is_omitted()]
         g = self.graph
         if not isinstance(g, Graph):
             g = Graph(container_dict={'bgcolor': self.plotter_options.bgcolor})
@@ -444,9 +461,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         yserr = reg.yserr
 
         # if self.plotter_options.use_weighted_fit:
-            # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
+        # l, u = reg.calculate_error_envelope(pts, rmodel=fys)
         # else:
-        l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+        try:
+            l, u = reg.calculate_error_envelope(fxs, rmodel=fys)
+        except:
+            l, u = reg.calculate_error_envelope(pts, rmodel=fys)
 
         lyy = ys - yserr
         uyy = ys + yserr
@@ -527,32 +547,10 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         self._model_sin_flux(fxs, fys)
 
     def _graph_individual_analyses(self):
-        po = self.plotter_options
         g = self.graph
 
-        ixs = []
-        iys = []
-        ies = []
-        ans = []
-        m, k = po.monitor_age * 1e6, po.lambda_k
-        slope = True
-        prev = self.monitor_positions[-1].j
-        for j, p in enumerate(self.monitor_positions):
-            if p.use:
-                if prev:
-                    slope = prev < p.j
-                prev = p.j
-                aa, xx, yy, es = self._sort_individuals(p, m, k, slope)
-                ans.extend(aa)
-                ixs.extend(xx)
-                iys.extend(yy)
-                ies.extend(es)
-                p.slope = slope
-                # yy = sorted(yy, reverse=not slope)
+        ans, ixs, iys, ies = self._analyses
 
-                # ans.extend(p.analyses)
-                # ixs.extend(xx)
-                # iys.extend(yy)
         s, _p = g.new_series(ixs, iys, yerror=ies, type='scatter', marker='circle', marker_size=1.5)
 
         ebo = ErrorBarOverlay(component=s,
@@ -562,7 +560,6 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
 
         add_analysis_inspector(s, ans)
 
-        self.analyses = ans
         s.index.on_trait_change(self._update_graph_metadata, 'metadata_changed')
         return s, iys
 
@@ -581,7 +578,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         # print obj, name, old, new
         # print obj.metadata
         if not self.suppress_metadata_change:
-            sel = self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
+            self._filter_metadata_changes(obj, self.analyses, self._recalculate_means)
 
     def _recalculate_means(self, sel):
         if sel:

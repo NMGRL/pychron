@@ -13,107 +13,86 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from itertools import groupby
+from operator import attrgetter
+
+from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
-from traits.api import Property, Str, Int
-from traitsui.api import View, UItem, VGroup, HGroup, Handler
+from traits.api import Property, Str, Int, List, on_trait_change
+from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
-from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error
+from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error, \
+    make_interpreted_age_groups, make_interpreted_age_group
+from pychron.processing.analyses.preferred import get_preferred_grp
 from pychron.pychron_constants import MSEM, SEM, SD, WEIGHTED_MEAN, INTEGRATED
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+class GroupAdapter(BaseAdapter):
+    columns = [('Group', 'group_id'),
+               ('Name', 'name'),
+               ('Age Kind', 'age_kind'),
+               ('Error', 'age_error_kind')
+               ]
 
-class GroupAgeAdapter(BaseAdapter):
+    group_id_width = Int(60)
+    age_kind_text = Property
+    age_error_kind_text = Property
+
+    def _get_age_error_kind_text(self):
+        pv = self.item.get_preferred_obj('age')
+        return pv.error_kind
+
+    def _get_age_kind_text(self):
+        pv = self.item.get_preferred_obj('age')
+        return pv.kind
+
+
+class SubGroupAdapter(GroupAdapter):
+    columns = [('Status', 'tag'),
+               ('Group', 'group_id'),
+               ('SubGroup', 'subgroup_id'),
+               ('Label', 'label_name'),
+               ('Age Kind', 'age_kind'),
+               ('Error', 'age_error_kind')
+               ]
+
+    subgroup_id_width = Int(60)
+    tag_width = Int(60)
+    tag_text = Property
+
+    def _get_tag_text(self):
+        return 'Omit' if self.item.is_omitted() else 'Include'
+
+    def get_menu(self, obj, trait, row, column):
+        m = MenuManager(Action(name='Toggle Omit', action='toggle_omit'))
+        return m
+
+
+class AnalysesAdapter(SubGroupAdapter):
     columns = [
         ('RunID', 'record_id'),
         ('Tag', 'tag'),
         ('Group', 'group_id'),
         ('SubGroup', 'subgroup'),
-
-        ('Kind', 'age_kind'),
-        ('Error', 'age_error_kind'),
-
-        # ('Age', 'age'),
-        # (PLUSMINUS_ONE_SIGMA, 'age_err'),
-
-        ('K/Ca Kind', 'kca_kind'),
-        # ('K/Ca', 'kca'),
-
-        ('K/Cl Kind', 'kcl_kind'),
-        # ('K/Cl', 'kcl'),
-
-        ('%40Ar* Kind', 'rad40_percent_kind'),
-        # ('%40Ar*', 'rad40_percent'),
-        ('Mol 39K Kind', 'moles_k39_kind'),
-        ('Signal 39K Kind', 'signal_k39_kind'),
-        # ('mol 39K', 'k39'),
     ]
 
     subgroup_text = Property
     record_id_width = Int(60)
-    tag_width = Int(40)
-    group_id_width = Int(60)
     subgroup_width = Int(100)
 
-    age_kind_text = Property
-    age_error_kind_text = Property
-
-    kca_kind_text = Property
-    kca_error_kind_text = Property
-    kcl_kind_text = Property
-    kcl_error_kind_text = Property
-    rad40_percent_kind_text = Property
-    rad40_percent_error_kind_text = Property
-    moles_k39_kind_text = Property
-    moles_k39_error_kind_text = Property
-    signal_k39_kind_text = Property
-    signal_k39_error_kind_text = Property
+    def _get_tag_text(self):
+        return self.item.tag
 
     def _get_subgroup_text(self):
         return self._get_subgroup_attr('name')
-
-    def _get_age_kind_text(self):
-        return self._get_subgroup_attr('age_kind')
-
-    def _get_age_error_kind_text(self):
-        return self._get_subgroup_attr('age_error_kind')
-
-    def _get_kca_kind_text(self):
-        return self._get_subgroup_attr('kca_kind')
-
-    def _get_kca_error_kind_text(self):
-        return self._get_subgroup_attr('kca_error_kind')
-
-    def _get_kcl_kind_text(self):
-        return self._get_subgroup_attr('kcl_kind')
-
-    def _get_kcl_error_kind_text(self):
-        return self._get_subgroup_attr('kcl_error_kind')
-
-    def _get_rad40_percent_kind_text(self):
-        return self._get_subgroup_attr('rad40_percent_kind')
-
-    def _get_rad40_percent_error_kind_text(self):
-        return self._get_subgroup_attr('rad40_percent_error_kind')
-
-    def _get_moles_k39_kind_text(self):
-        return self._get_subgroup_attr('moles_k39_kind')
-
-    def _get_moles_k39_error_kind_text(self):
-        return self._get_subgroup_attr('moles_k39_error_kind')
-
-    def _get_signal_k39_kind_text(self):
-        return self._get_subgroup_attr('signal_k39_kind')
-
-    def _get_signal_k39_error_kind_text(self):
-        return self._get_subgroup_attr('signal_k39_error_kind')
 
     def _get_subgroup_attr(self, attr):
         ret = ''
@@ -155,9 +134,6 @@ class THandler(Handler):
     def group_as_integrated(self, info, obj):
         obj.group(INTEGRATED)
 
-    def clear_grouping(self, info, obj):
-        obj.clear_grouping()
-
     def group_sd(self, info, obj):
         obj.group_sd()
 
@@ -167,19 +143,53 @@ class THandler(Handler):
     def group_msem(self, info, obj):
         obj.group_msem()
 
-
-class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
-    adapter_klass = GroupAgeAdapter
-
-    help_str = Str('Right-click to subgroup analyses and calculate an age')
-
-    def clear_grouping(self):
-        if self.selected:
-            for s in self.selected:
+    def clear_grouping(self, info, obj):
+        if obj.selected:
+            for s in obj.selected:
                 s.subgroup = None
 
-            compress_groups(self.items)
+            compress_groups(obj.items)
 
+    def toggle_omit(self, info, obj):
+        for sg in obj.selected_subgroup:
+            sg.set_temp_status('ok' if sg.temp_selected else 'omit')
+
+
+def gchange(obj, gs):
+    for g in gs[1:]:
+        g.set_preferred_kind(obj.attr, obj.kind, obj.error_kind)
+
+
+class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
+    help_str = Str('Right-click to subgroup analyses and calculate an age')
+    groups = List
+    subgroups = List
+    selected_group = List
+    selected_subgroup = List
+    selected_group_item = Property(depends_on='selected_group')
+    selected_subgroup_item = Property(depends_on='selected_subgroup')
+    skip_meaning = Str
+
+    def make_groups(self):
+        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+
+        key = attrgetter('group_id')
+        sgs = []
+        gs = []
+        for gid, ans in groupby(sorted(self.items, key=key), key=key):
+            if self.skip_meaning:
+                if 'Human Table' in self.skip_meaning:
+                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+
+            groups, analyses = make_interpreted_age_groups(ans)
+            sgs.extend(groups)
+
+            gs.append(make_interpreted_age_group(groups + analyses, gid))
+
+        self.groups = gs
+        self.subgroups = sgs
+
+    # action handlers
     def group_sd(self):
         self._group_error(SD)
 
@@ -193,6 +203,15 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         self._group(kind)
         self.refresh_needed = True
 
+    # private
+    @on_trait_change('selected_subgroup_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        gchange(obj, self.selected_subgroup)
+
+    @on_trait_change('selected_group_item:preferred_values:[+]')
+    def _group_change(self, obj, name, old, new):
+        gchange(obj, self.selected_group)
+
     def _group_error(self, tag):
         if self.selected:
             set_subgrouping_error(tag, self.selected, self.items)
@@ -204,21 +223,59 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
             apply_subgrouping(d, self.selected, items=self.items)
             self.refresh_needed = True
 
+    def _get_selected_group_item(self):
+        if self.selected_group:
+            ret = self.selected_group[0]
+            return ret
+
+    def _get_selected_subgroup_item(self):
+        if self.selected_subgroup:
+            ret = self.selected_subgroup[0]
+            return ret
+
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(UItem('help_str', style='readonly'),
-                   show_border=True, label='Info'),
+        agrp = VGroup(
+            # HGroup(UItem('help_str', style='readonly'),
+            #        show_border=True, label='Info'),
 
             UItem('items',
-                  editor=myTabularEditor(adapter=self.adapter_klass(),
+                  editor=myTabularEditor(adapter=AnalysesAdapter(),
                                          # col_widths='col_widths',
                                          selected='selected',
                                          multi_select=True,
                                          auto_update=False,
                                          refresh='refresh_needed',
                                          operations=['delete', 'move'],
-                                         column_clicked='column_clicked'))),
-            handler=THandler())
+                                         column_clicked='column_clicked')),
+            label='Analyses',
+            show_border=True)
+
+        sgrp = VGroup(UItem('subgroups',
+                            height=-100,
+                            editor=myTabularEditor(adapter=SubGroupAdapter(),
+                                                   multi_select=True,
+                                                   editable=False,
+                                                   auto_update=True,
+                                                   selected='selected_subgroup')),
+                      UItem('selected_subgroup_item',
+                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                      label='SubGroups',
+                      show_border=True)
+
+        ggrp = VGroup(UItem('groups',
+                            height=-100,
+                            style='custom', editor=myTabularEditor(adapter=GroupAdapter(),
+                                                                   multi_select=True,
+                                                                   editable=False,
+                                                                   selected='selected_group')),
+                      UItem('selected_group_item',
+                            style='custom', editor=InstanceEditor(view=View(get_preferred_grp()))),
+                      label='Groups',
+                      show_border=True)
+
+        v = View(VGroup(agrp, sgrp, ggrp),
+
+                 handler=THandler())
         return v
 
 # ============= EOF =============================================

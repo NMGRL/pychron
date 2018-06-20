@@ -16,18 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import time
 
+import time
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
+from six.moves import range
 from traits.api import Float, Str, Int, List, Enum, HasTraits
 
-from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
-from six.moves import range
+from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 
 
 class PeakCenterResult:

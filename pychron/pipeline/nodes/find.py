@@ -19,6 +19,8 @@ from __future__ import absolute_import
 
 from itertools import groupby
 
+from pyface.confirmation_dialog import confirm
+from pyface.constant import YES
 from six.moves import map
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
@@ -296,18 +298,35 @@ class FindReferencesNode(FindNode):
                   mass_spectrometers=self.mass_spectrometer,
                   make_records=False)
 
-        if self.load_name and self.load_name != NULL_STR:
-            refs = self.dvc.find_references_by_load(self.load_name, atypes, **kw)
-            if refs:
-                times = sorted([ai.rundate for ai in refs])
-        else:
-            times = sorted([ai.rundate for ai in unknowns])
-            refs = self.dvc.find_references(times, atypes, hours=self.threshold, **kw)
+        while 1:
+            if self.load_name and self.load_name != NULL_STR:
+                refs = self.dvc.find_references_by_load(self.load_name, atypes, **kw)
+                if refs:
+                    times = sorted([ai.rundate for ai in refs])
+            else:
+                times = sorted([ai.rundate for ai in unknowns])
+                refs = self.dvc.find_references(times, atypes, hours=self.threshold, **kw)
+
+            if not refs:
+                if confirm(None, 'No References Found. Would you like to try different search criteria?') == YES:
+                    if self.configure():
+                        continue
+                    else:
+                        state.canceled = True
+                        return True
+                else:
+                    if not confirm(None, 'Would you like to search manually?') == YES:
+                        state.canceled = True
+                    return True
+            else:
+                break
 
         if refs:
             unknowns.extend(refs)
             model = GraphicalFilterModel(analyses=unknowns,
                                          dvc=self.dvc,
+                                         extract_device=self.extract_device,
+                                         mass_spectrometer=self.mass_spectrometer,
                                          low_post=times[0],
                                          high_post=times[-1],
                                          threshold=self.threshold,
@@ -330,7 +349,7 @@ class FindReferencesNode(FindNode):
 
                 # if unks is not None:
                 #     state.unknowns.extend( unks)
-                state.has_references = True
+                # state.has_references = True
             else:
                 state.veto = self
                 return True

@@ -15,6 +15,7 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import math
 from datetime import timedelta
 from itertools import groupby
@@ -33,10 +34,6 @@ from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
-from six.moves import filter
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
 
@@ -225,6 +222,8 @@ class GraphicalFilterModel(HasTraits):
     always_exclude_unknowns = Bool(False)
     threshold = Float(1)
 
+    mass_spectrometer = Str
+    extract_device = Str
     gid = Int
 
     # is_append = True
@@ -296,6 +295,8 @@ class GraphicalFilterModel(HasTraits):
             records = self.dvc.find_references([self.low_post, self.high_post],
                                                [x.lower().replace(' ', '_') for x in self.analysis_types],
                                                self.threshold,
+                                               mass_spectrometers=[self.mass_spectrometer],
+                                               extract_devices=[self.extract_device],
                                                exclude=uuids)
             func()
             if records:
@@ -328,9 +329,10 @@ class GraphicalFilterModel(HasTraits):
             only use analyses with analysis_type in self.analyses_types
         """
 
-        ats = [x.lower().replace(' ', '_') for x in list(map(str, self.analysis_types))]
-        f = lambda x: x.analysis_type.lower() in ats
-        ans = list(filter(f, ans))
+        ats = [str(x).lower().replace(' ', '_') for x in self.analysis_types]
+        # f = lambda x: x.analysis_type.lower() in ats
+        # ans = list(filter(f, ans))
+        ans = [a for a in ans if a.analysis_type.lower() in ats]
         return ans
 
     def _toggle_analysis_types_changed(self):

@@ -111,7 +111,10 @@ class DVCInterpretedAge(InterpretedAge):
         for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
                   'name', 'project', 'uuid', 'age_error_kind'):
-            setattr(self, a, obj.get(a, NULL_STR))
+            try:
+                setattr(self, a, obj.get(a, NULL_STR))
+            except BaseException as a:
+                print('excception DVCInterpretdAge.from_json', a)
 
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
@@ -1365,15 +1368,11 @@ class DVC(Loggable):
                 a.load_holder = record.load_holder
                 # get repository branch
                 a.branch = branches.get(expid, '')
-                # a.branch = get_repository_branch(os.path.join(paths.repository_dataset_dir, expid))
-                # print 'asdfdffff {}'.format(time.time() - st)
-                # a.set_tag(record.tag)
+
                 # load irradiation
                 if sens:
                     sens = sens.get(a.mass_spectrometer.lower(), [])
                     a.set_sensitivity(sens)
-
-                a.set_sensitivity(sens)
 
                 if a.irradiation and a.irradiation not in ('NoIrradiation',):
                     # self.debug('Irradiation {}'.format(a.irradiation))

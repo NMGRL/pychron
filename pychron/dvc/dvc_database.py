@@ -1159,7 +1159,9 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(ProjectTbl)
             q = q.filter(AnalysisGroupTbl.name == name)
 
-            if not isinstance(project, six.text_type):
+            # if not isinstance(project, six.text_type):
+            #     project = project.name
+            if hasattr(project, 'name'):
                 project = project.name
 
             q = q.filter(ProjectTbl.name == project)

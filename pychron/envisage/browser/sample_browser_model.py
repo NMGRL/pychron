@@ -189,8 +189,8 @@ class SampleBrowserModel(BrowserModel):
 
         info = agv.edit_traits(kind='livemodal')
         if info.result:
-            agv.save(ans, self.db)
-            self.load_associated_groups(projects)
+            if agv.save(ans, self.db):
+                self.load_associated_groups(projects)
 
     def set_tags(self, tagname):
         items = self.get_analysis_records()

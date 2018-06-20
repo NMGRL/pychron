@@ -17,10 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import uuid
 from datetime import datetime
 
+import six
+from six.moves import map
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits, Instance
 
@@ -32,8 +35,6 @@ from pychron.experiment.utilities.identifier import get_analysis_type, make_rid,
 from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.experiment.utilities.repository_identifier import make_references_repository_identifier
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS, DETECTOR_IC
-import six
-from six.moves import map
 
 logger = new_logger('AutomatedRunSpec')
 
@@ -120,6 +121,8 @@ class AutomatedRunSpec(HasTraits):
 
     lab_temperature = 0
     lab_humidity = 0
+    sensitivity = 0
+    sensitivity_units = 'mol/fA'
 
     # ===========================================================================
     # info

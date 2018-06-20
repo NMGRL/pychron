@@ -253,7 +253,7 @@ class XLSXAnalysisTablePersistNode(BaseNode):
 
     def run(self, state):
         writer = XLSXAnalysisTableWriter()
-        writer.build(state.groups, options=self.options)
+        writer.build(state.run_groups, options=self.options)
 
 
 class InterpretedAgePersistNode(BaseDVCNode):

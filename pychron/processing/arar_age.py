@@ -65,11 +65,6 @@ class ArArAge(IsotopeGroup):
     total40 = 0
     k39 = 0
 
-
-    # non_ar_isotopes = Dict
-    # computed = Dict
-    # corrected_intensities = Dict
-
     uF = None
     F = None
     F_err = None
@@ -123,20 +118,27 @@ class ArArAge(IsotopeGroup):
     @property
     def k2o(self):
         """
-            MolKTot=Mol39*F39K*9.54/(JVal*KAbund40*.01) // moles of K40; = 39ArK*( (lambda*J/(lambda epsilon + lambda epsion prime)); McDougall  H. p. 19 eq. 2.17
+            MolKTot=Mol39*F39K*9.54/(JVal*KAbund40*.01)
+            // moles of K40; = 39ArK*( (lambda*J/(lambda epsilon + lambda epsion prime)); McDougall  H. p. 19 eq. 2.17
             a=MolKTot*94.2*100/(2*Weight)
 
         weight should be in milligrams
         @return:
         """
-        k2o = ''
+        k2o = 0
         if self.weight:
             k40_k = 0.0001167
-            k40 = self.non_ar_isotopes['k40']
-            moles_k = k40 / k40_k * self.sensitivity
             mw_k2o = 94.2
+            klambda = 9.54
+            moles_39k = self.computed['k39'] * self.sensitivity
+            moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
             k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+
         return k2o
+
+    @property
+    def display_k2o(self):
+        return '' if not self.weight else self.k2o
 
     @property
     def isochron3940(self):
@@ -332,6 +334,8 @@ class ArArAge(IsotopeGroup):
 
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')
+
+        # print('{} k39={} ca37={}'.format(self, k, ca))
         prs = self.production_ratios
         k_ca_pr = 1
         if prs:
