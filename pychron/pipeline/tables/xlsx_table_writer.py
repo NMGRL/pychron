@@ -598,10 +598,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             w = c.width
             if w is None:
                 w = c.calculated_width
-            print('ccc', c.attr, w)
             if w > 0:
                 worksheet.set_column(i, i, w)
 
+        self._hide_columns(worksheet, cols)
         return ngroups
 
     #     nsubgroups = len({subgrouping_key(i) for i in ans})
@@ -693,18 +693,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _format_worksheet(self, sh, cols, freeze):
         self._format_generic_worksheet(sh)
-        # for i, c in enumerate(cols):
-        #     if c.width is not None:
-        #         sh.set_column(i, i, c.width)
-
-        # if self._options.include_rundate:
-        #     idx = next((i for i, c in enumerate(cols) if c.label == 'RunDate'))
-        #     sh.set_column(idx, idx, 30)
-
-        # sh.set_column(0, 0, 2)
         if not self._options.repeat_header:
             sh.freeze_panes(*freeze)
-        self._hide_columns(sh, cols)
 
     def _hide_columns(self, sh, cols):
         for i, c in enumerate(cols):
