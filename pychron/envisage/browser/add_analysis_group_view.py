@@ -16,6 +16,7 @@
 
 from __future__ import absolute_import
 
+from pyface.message_dialog import warning
 from traits.api import Str, HasTraits, Dict, Any
 from traitsui.api import View, Item, EnumEditor
 
@@ -31,6 +32,13 @@ class AddAnalysisGroupView(HasTraits):
 
     def save(self, ans, db):
         append = False
+        if not self.name:
+            warning(None, 'Please specify a name for the analysis group')
+            return
+
+        if not self.project:
+            warning(None, 'Please specify an associated project for the analysis group')
+            return
 
         gdb = db.get_analysis_groups_by_name(self.name, self.project)
         ok = True
@@ -45,6 +53,8 @@ class AddAnalysisGroupView(HasTraits):
             db.append_analysis_group(gdb, ans)
         elif ok:
             db.add_analysis_group(ans, self.name, self.project)
+
+        return True
 
     def traits_view(self):
         v = View(Item('name'),
