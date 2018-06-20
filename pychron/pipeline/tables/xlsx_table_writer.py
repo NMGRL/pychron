@@ -559,15 +559,14 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     sn = len(items) - 1
 
                     pv = a.get_preferred_obj('age')
+                    label = pv.computed_kind.lower()
 
-                    label = pv.computed_kind
                     for ii, item in enumerate(items):
                         # ounits = item.arar_constants.age_units
                         item.arar_constants.age_units = options.age_units
                         is_plateau_step = None
-                        if a:
-                            if label == 'plateau' and options.highlight_non_plateau:
-                                is_plateau_step = a.get_is_plateau_step(ii)
+                        if label == 'plateau':
+                            is_plateau_step = a.get_is_plateau_step(ii)
 
                         self._make_analysis(worksheet, cols, item,
                                             ii == sn and nsubgroups == 1,
@@ -575,11 +574,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                                             is_plateau_step=is_plateau_step,
                                             cum=a.cumulative_ar39(ii) if a else '')
 
-                    if nsubgroups > 1:
-                        self._make_intermediate_summary(worksheet, a, cols, label)
+                    # if nsubgroups > 1:
+                    self._make_intermediate_summary(worksheet, a, cols, label)
                     self._current_row += 1
                 else:
-                    self._make_analysis(worksheet, cols, a, j == n - 1)
+                    pv = group.get_preferred_obj('age')
+                    label = pv.computed_kind.lower()
+                    is_plateau_step = None
+                    if label == 'plateau':
+                        is_plateau_step = a.get_is_plateau_step(j)
+                    self._make_analysis(worksheet, cols, a, j == n - 1, is_plateau_step=is_plateau_step)
 
             if nsubgroups == 1 and isinstance(a, InterpretedAgeGroup):
                 ngroups.append(a)
