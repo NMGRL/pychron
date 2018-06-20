@@ -26,7 +26,7 @@ from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.binpack import encode_blob, pack
-from pychron.dvc import dvc_dump, analysis_path
+from pychron.dvc import dvc_dump, analysis_path2
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
@@ -582,8 +582,9 @@ class DVCPersister(BasePersister):
 
     def _make_path(self, modifier=None, extension='.json'):
         runid = self.per_spec.run_spec.runid
+        uuid = self.per_spec.run_spec.uuid
         repository_identifier = self.per_spec.run_spec.repository_identifier
-        return analysis_path(runid, repository_identifier, modifier, extension, mode='w')
+        return analysis_path2((uuid, runid), repository_identifier, modifier, extension, mode='w')
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

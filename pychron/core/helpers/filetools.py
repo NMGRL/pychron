@@ -16,6 +16,7 @@
 
 # ========== standard library imports ==========
 from __future__ import absolute_import
+
 import glob
 import os
 import re
@@ -29,11 +30,11 @@ from six.moves import map
 from six.moves import range
 
 
-def subdirize(root, name, n=1, l=2, mode='r'):
+def subdirize(root, name, n=1, sublen=2, mode='r'):
     for i in range(n):
 
-        n, name = name[:l], name[l:]
-        path = os.path.join(root, n)
+        d, name = name[:sublen], name[sublen:]
+        path = os.path.join(root, d)
         if not os.path.isdir(path):
             if mode == 'r':
                 return

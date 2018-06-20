@@ -17,27 +17,27 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import datetime
 import os
-import time
 
+import six
+import time
+from six.moves import map
+from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses
+from pychron.dvc import dvc_dump, dvc_load, make_ref_list, get_spec_sha, get_masses, analysis_path2
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis, EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
-import six
-from six.moves import map
-from six.moves import zip
-
 
 PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
                   'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
@@ -73,10 +73,11 @@ class DVCAnalysis(Analysis):
     chronology_obj = None
     use_repository_suffix = False
 
-    def __init__(self, record_id, repository_identifier, *args, **kw):
+    def __init__(self, uuid, record_id, repository_identifier, *args, **kw):
+    # def __init__(self, uuid, repository_identifier, *args, **kw):
         super(DVCAnalysis, self).__init__(*args, **kw)
         self.record_id = record_id
-        path = analysis_path(record_id, repository_identifier)
+        path = analysis_path2((uuid, record_id), repository_identifier)
         self.repository_identifier = repository_identifier
         self.rundate = datetime.datetime.now()
 
@@ -525,6 +526,6 @@ class DVCAnalysis(Analysis):
         if repository_identifier is None:
             repository_identifier = self.repository_identifier
 
-        return analysis_path(self.record_id, repository_identifier, **kw)
+        return analysis_path2((self.uuid, self.record_id), repository_identifier, **kw)
 
 # ============= EOF ============================================

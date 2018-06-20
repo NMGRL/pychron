@@ -17,25 +17,26 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
 from git import Repo
 from pyface.message_dialog import information
-from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change, Property, cached_property
+from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
 from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.dvc import analysis_path
+from pychron.dvc import analysis_path2
 from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, get_log, from_gitlog
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
-from pychron import json
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -281,12 +282,14 @@ class DVCCommitView(HasTraits):
     commits_func = Str
     modifier = Str
     record_id = Str
+    uuid = Str
 
     def __init__(self, an, *args, **kw):
         super(DVCCommitView, self).__init__(*args, **kw)
 
         self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.record_id = an.record_id
+        self.uuid = an.uuid
         self.repository_identifier = an.repository_identifier
 
     def initialize(self, an):
@@ -366,7 +369,7 @@ class DVCCommitView(HasTraits):
 
             diffs = []
             for a in ('blanks', 'icfactors', 'intercepts'):
-                p = analysis_path(self.record_id, self.repository_identifier, modifier=a)
+                p = analysis_path2((self.uuid, self.record_id), self.repository_identifier, modifier=a)
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
                     diffs.append((a, dd))

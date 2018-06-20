@@ -37,7 +37,7 @@ from pychron.core.helpers.filetools import remove_extension, list_subdirectories
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, repository_path, AnalysisNotAnvailableError, analysis_path2
 from pychron.dvc.defaults import TRIGA, HOLDER_24_SPOKES, LASER221, LASER65
 from pychron.dvc.dvc_analysis import DVCAnalysis, PATH_MODIFIERS
 from pychron.dvc.dvc_database import DVCDatabase
@@ -72,6 +72,8 @@ class Tag(object):
     path = None
     note = ''
     subgroup = ''
+    uuid = ''
+    record_id = ''
 
     @classmethod
     def from_analysis(cls, an, **kw):
@@ -79,8 +81,10 @@ class Tag(object):
         tag.name = an.tag
         tag.note = an.tag_note
         tag.record_id = an.record_id
+        tag.uuid = an.uuid
         tag.repository_identifier = an.repository_identifier
-        tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
+        # tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
+        tag.path = analysis_path2(an, an.repository_identifier, modifier='tags')
         tag.subgroup = an.subgroup
 
         for k, v in kw.items():
@@ -93,7 +97,7 @@ class Tag(object):
                'note': self.note,
                'subgroup': self.subgroup}
         if not self.path:
-            self.path = analysis_path(self.record_id, self.repository_identifier, modifier='tags', mode='w')
+            self.path = analysis_path(self.uuid, self.repository_identifier, modifier='tags', mode='w')
 
         dvc_dump(obj, self.path)
 
@@ -320,7 +324,7 @@ class DVC(Loggable):
                 level = dblevel.name
                 pos = ip.position
                 for ai in ans:
-                    p = analysis_path(ai.record_id, reponame)
+                    p = analysis_path2(ai, reponame)
 
                     try:
                         obj = dvc_load(p)
@@ -356,50 +360,50 @@ class DVC(Loggable):
             repo.push()
         self.info('finished db-repo sync for {}'.format(reponame))
 
-    def repository_transfer(self, ans, dest):
-        def key(x):
-            return x.repository_identifier
-
-        destrepo = self._get_repository(dest, as_current=False)
-        for src, ais in groupby(sorted(ans, key=key), key=key):
-            repo = self._get_repository(src, as_current=False)
-            for ai in ais:
-                ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
-                repo.add_paths(ops)
-                destrepo.add_paths(nps)
-
-                # update database
-                dbai = self.db.get_analysis_uuid(ai.uuid)
-                for ri in dbai.repository_associations:
-                    if ri.repository == src:
-                        ri.repository = dest
-
-            # commit src changes
-            repo.commit('Transferred analyses to {}'.format(dest))
-            dest.commit('Transferred analyses from {}'.format(src))
-
-    def _transfer_analysis_to(self, dest, src, rid):
-        p = analysis_path(rid, src)
-        np = analysis_path(rid, dest)
-
-        obj = dvc_load(p)
-        obj['repository_identifier'] = dest
-        dvc_dump(obj, p)
-
-        ops = [p]
-        nps = [np]
-
-        shutil.move(p, np)
-
-        for modifier in ('baselines', 'blanks', 'extraction',
-                         'intercepts', 'icfactors', 'peakcenter', '.data'):
-            p = analysis_path(rid, src, modifier=modifier)
-            np = analysis_path(rid, dest, modifier=modifier)
-            shutil.move(p, np)
-            ops.append(p)
-            nps.append(np)
-
-        return ops, nps
+    # def repository_transfer(self, ans, dest):
+    #     def key(x):
+    #         return x.repository_identifier
+    #
+    #     destrepo = self._get_repository(dest, as_current=False)
+    #     for src, ais in groupby(sorted(ans, key=key), key=key):
+    #         repo = self._get_repository(src, as_current=False)
+    #         for ai in ais:
+    #             ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
+    #             repo.add_paths(ops)
+    #             destrepo.add_paths(nps)
+    #
+    #             # update database
+    #             dbai = self.db.get_analysis_uuid(ai.uuid)
+    #             for ri in dbai.repository_associations:
+    #                 if ri.repository == src:
+    #                     ri.repository = dest
+    #
+    #         # commit src changes
+    #         repo.commit('Transferred analyses to {}'.format(dest))
+    #         dest.commit('Transferred analyses from {}'.format(src))
+    #
+    # def _transfer_analysis_to(self, dest, src, rid):
+    #     p = analysis_path(rid, src)
+    #     np = analysis_path(rid, dest)
+    #
+    #     obj = dvc_load(p)
+    #     obj['repository_identifier'] = dest
+    #     dvc_dump(obj, p)
+    #
+    #     ops = [p]
+    #     nps = [np]
+    #
+    #     shutil.move(p, np)
+    #
+    #     for modifier in ('baselines', 'blanks', 'extraction',
+    #                      'intercepts', 'icfactors', 'peakcenter', '.data'):
+    #         p = analysis_path(rid, src, modifier=modifier)
+    #         np = analysis_path(rid, dest, modifier=modifier)
+    #         shutil.move(p, np)
+    #         ops.append(p)
+    #         nps.append(np)
+    #
+    #     return ops, nps
 
     def get_flux(self, irrad, level, pos):
         fd = self.meta_repo.get_flux(irrad, level, pos)
@@ -467,7 +471,7 @@ class DVC(Loggable):
             if prog:
                 prog.change_message('Freezing Production {}'.format(ai.runid))
 
-            p = analysis_path(ai.runid, ai.repository_identifier, 'productions', mode='w')
+            p = analysis_path2(ai, ai.repository_identifier, 'productions', mode='w')
             pr.dump(path=p)
             added.append((ai.repository_identifier, p))
 
@@ -568,13 +572,12 @@ class DVC(Loggable):
         dvc_dump(obj, path)
         return path
 
-    def revert_manual_edits(self, runid, repository_identifier):
+    def revert_manual_edits(self, analysis, repository_identifier):
         ps = []
         for mod in ('intercepts', 'blanks', 'baselines', 'icfactors'):
-            path = analysis_path(runid, repository_identifier, modifier=mod)
+            path = analysis_path(analysis, repository_identifier, modifier=mod)
             with open(path, 'r') as rfile:
                 obj = json.load(rfile)
-                # for item in six.itervalues(obj):
                 for item in obj.values():
                     if isinstance(item, dict):
                         item['use_manual_value'] = False
@@ -621,7 +624,7 @@ class DVC(Loggable):
         ans = sorted(ans, key=key)
         mod_repositories = []
         for expid, ais in groupby(ans, key=key):
-            paths = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
+            paths = [analysis_path2(x, x.repository_identifier, modifier=modifier) for x in ais]
             # print expid, modifier, paths
             if self.repository_add_paths(expid, paths):
                 self.repository_commit(expid, msg)
@@ -722,7 +725,7 @@ class DVC(Loggable):
             ia.from_json(obj)
 
             try:
-                ta = analysis_path(ia.record_id, ia.repository_identifier, modifier='tags')
+                ta = analysis_path2(ia, ia.repository_identifier, modifier='tags')
                 if ta is not None:
                     ia.load_tag(dvc_load(ta))
             except AnalysisNotAnvailableError:
@@ -1060,8 +1063,8 @@ class DVC(Loggable):
                 repo = self._get_repository(expid)
 
                 for m in PATH_MODIFIERS:
-                    src = analysis_path(runspec.record_id, src_expid, modifier=m)
-                    dest = analysis_path(runspec.record_id, expid, modifier=m, mode='w')
+                    src = analysis_path2(runspec, src_expid, modifier=m)
+                    dest = analysis_path2(runspec, expid, modifier=m, mode='w')
 
                     shutil.copyfile(src, dest)
                     repo.add(dest, commit=False)
@@ -1342,12 +1345,12 @@ class DVC(Loggable):
             a = record
         else:
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
+            rid = record.record_id
+            uuid = record.uuid
+            if record.use_repository_suffix:
+                rid = '-'.join(rid.split('-')[:-1])
             try:
-                rid = record.record_id
-                if record.use_repository_suffix:
-                    rid = '-'.join(rid.split('-')[:-1])
-                a = DVCAnalysis(rid, expid)
-                a.group_id = record.group_id
+                a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
                 self.info('Analysis {} not available. Trying to clone repository "{}"'.format(rid, expid))
                 try:
@@ -1357,11 +1360,13 @@ class DVC(Loggable):
                     return
 
                 try:
-                    a = DVCAnalysis(rid, expid)
+                    a = DVCAnalysis(uuid, rid, expid)
 
                 except AnalysisNotAnvailableError:
                     self.warning_dialog('Analysis {} not in repository {}'.format(rid, expid))
                     return
+
+            a.group_id = record.group_id
 
             if not quick:
                 a.load_name = record.load_name
@@ -1379,10 +1384,10 @@ class DVC(Loggable):
                     if chronos:
                         chronology = chronos[a.irradiation]
                     else:
-                        chronology = meta_repo.get_chronology(a.irradiation)
+                        chronology = meta_repo.get_chronology(a.irradiation )
                     a.set_chronology(chronology)
 
-                    frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                    frozen_production = self._get_frozen_production(a, a.repository_identifier)
                     if frozen_production:
                         pname, prod = frozen_production.name, frozen_production
                     else:
@@ -1422,8 +1427,8 @@ class DVC(Loggable):
                         a.calculate_age()
         return a
 
-    def _get_frozen_production(self, rid, repo):
-        path = analysis_path(rid, repo, 'productions')
+    def _get_frozen_production(self, analysis, repo):
+        path = analysis_path2(analysis, repo, 'productions')
         if path:
             return Production(path)
 
