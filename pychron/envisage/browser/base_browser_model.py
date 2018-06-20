@@ -272,7 +272,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return
 
     def configure_sample_table(self):
-        self.table_configurer.edit_traits()
+        self.table_configurer.edit_traits(kind='livemodal')
 
     def set_projects(self, ps, sel=None):
         if sel is None:
