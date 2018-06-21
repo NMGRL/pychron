@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
@@ -328,8 +329,8 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             Item('_'),
             HGroup(
                 Item('ar37_ar39_mode', label='(37Ar/39Ar)K'),
-                Item('ar37_ar39', show_label=False),
-                Item('ar37_ar39_error', show_label=False)),
+                Item('ar37_ar39', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"'),
+                Item('ar37_ar39_error', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"')),
             label='Ratios')
         return ratios
 
