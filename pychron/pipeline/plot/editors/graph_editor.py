@@ -111,7 +111,12 @@ class GraphEditor(BaseEditor):
             model = self._figure_model_factory()
             if not self.figure_container:
                 self.figure_container = FigureContainer()
+
+            omodel = self.figure_container.model
             self.figure_container.model = model
+            if model == omodel:
+                self.figure_container.model_changed()
+
             return self.figure_container.component
 
         else:
