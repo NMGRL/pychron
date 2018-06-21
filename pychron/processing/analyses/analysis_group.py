@@ -718,6 +718,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return pv.uvalue
 
     @property
+    def k39(self):
+        return self.signal_k39
+
+    @property
     def signal_k39(self):
         pv = self._get_pv('signal_k39')
         return pv.uvalue
