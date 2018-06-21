@@ -169,6 +169,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     selected_group_item = Property(depends_on='selected_group')
     selected_subgroup_item = Property(depends_on='selected_subgroup')
     skip_meaning = Str
+    unknowns = List
 
     def make_groups(self):
         bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
@@ -176,6 +177,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         key = attrgetter('group_id')
         sgs = []
         gs = []
+        unks = []
         for gid, ans in groupby(sorted(self.items, key=key), key=key):
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
@@ -183,11 +185,14 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
 
             groups, analyses = make_interpreted_age_groups(ans)
             sgs.extend(groups)
+            unks.extend(groups)
+            unks.extend(analyses)
 
             gs.append(make_interpreted_age_group(groups + analyses, gid))
 
         self.groups = gs
         self.subgroups = sgs
+        self.unknowns = unks
 
     # action handlers
     def group_sd(self):
