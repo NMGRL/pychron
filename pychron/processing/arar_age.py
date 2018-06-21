@@ -63,7 +63,7 @@ class ArArAge(IsotopeGroup):
     rad40_percent = 0
     rad40 = 0
     total40 = 0
-    k39 = 0
+    k39 = None
 
     uF = None
     F = None
@@ -557,10 +557,14 @@ class ArArAge(IsotopeGroup):
 
     @property
     def moles_k39(self):
+        if self.k39 is None:
+            self.calculate_age(force=True)
         return self.sensitivity * self.k39
 
     @property
     def signal_k39(self):
+        if self.k39 is None:
+            self.calculate_age(force=True)
         return self.k39
 
     @property

@@ -30,8 +30,6 @@ class GroupAgeNode(BaseDVCNode):
 
         editor = self.editor_klass(dvc=self.dvc)
         editor.items = unknowns
-
-
         editor.make_groups()
         state.editors.append(editor)
         self.editor = editor

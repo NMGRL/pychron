@@ -156,7 +156,6 @@ class AnalysisGroup(IdeogramPlotable):
         m = 0
         if values is None:
             values = self._get_values(attr)
-        # print('asd', values)
         if values:
             vs, es = values
             m = calculate_mswd(vs, es)
@@ -308,11 +307,11 @@ class AnalysisGroup(IdeogramPlotable):
 
     def _get_values(self, attr):
         vs = (ai.get_value(attr) for ai in self.clean_analyses())
-        vs = [vi for vi in vs if vi is not None]
-        if vs:
-            vs, es = list(zip(*[(nominal_value(v), std_dev(v)) for v in vs]))
-            vs, es = array(vs), array(es)
-            return vs, es
+        ans = [vi for vi in vs if vi is not None]
+        if ans:
+            vs = [nominal_value(v) for v in ans]
+            es = [std_dev(v) for v in ans]
+            return array(vs), array(es)
 
     def _calculate_mean(self, attr, use_weights=True, error_kind=None):
         def sd(a, v, e):
@@ -377,7 +376,6 @@ class AnalysisGroup(IdeogramPlotable):
                     pr = 1 / pr
 
                 try:
-                    # print(k, sum(n), sum(d))
                     v = sum(n) / sum(d) * pr
                 except ZeroDivisionError:
                     v = 0
@@ -399,7 +397,9 @@ class AnalysisGroup(IdeogramPlotable):
             elif attr == 'moles_k39':
                 uv = sum([ai.moles_k39 for ai in ans])
             elif attr == 'signal_k39':
-                uv = sum([ai.k39 for ai in ans])
+                vv = [ai.get_computed_value('k39') for ai in ans]
+                # vv = [ai.signal_k39 for ai in ans]
+                uv = sum(vv)
 
         return uv
 
@@ -718,7 +718,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return pv.uvalue
 
     @property
-    def k39(self):
+    def signal_k39(self):
         pv = self._get_pv('signal_k39')
         return pv.uvalue
 
@@ -767,7 +767,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         obj.value = nominal_value(v)
         obj.error = std_dev(v)
         obj.computed_kind = k
-        # print('change', name, obj.attr, obj.value)
 
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
