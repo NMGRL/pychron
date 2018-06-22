@@ -569,7 +569,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                             is_plateau_step = a.get_is_plateau_step(ii)
 
                         self._make_analysis(worksheet, cols, item,
-                                            ii == sn and nsubgroups == 1,
+                                            False,
+                                            # ii == sn and nsubgroups == 1,
                                             # False,
                                             is_plateau_step=is_plateau_step,
                                             cum=a.cumulative_ar39(ii) if a else '')
