@@ -149,7 +149,7 @@ class Spectrum(BaseArArFigure):
 
         ag = self.analysis_group
         ag.include_j_error_in_plateau = opt.include_j_error_in_plateau
-        ag.plateau_age_error_kind = opt.plateau_age_error_kind
+        ag.age_error_kind = opt.plateau_age_error_kind
         ag.plateau_nsteps = opt.pc_nsteps
         ag.plateau_gas_fraction = opt.pc_gas_fraction
         ag.weighted_age_error_kind = opt.weighted_age_error_kind
