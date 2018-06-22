@@ -73,7 +73,7 @@ cols = [ObjectColumn(name='name', label='Name', editable=False),
         ObjectColumn(name='value', label='Value', editable=False,
                      format_func=lambda x: floatfmt(x, use_scientific=True)),
         ObjectColumn(name='error', label='Error', editable=False,
-                     format_func=lambda x: floatfmt(x, use_scientific=True))]
+                     format_func=lambda x: floatfmt(x, n=7, use_scientific=True))]
 
 preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, columns=cols))
 

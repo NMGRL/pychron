@@ -350,9 +350,9 @@ class AnalysisGroup(IdeogramPlotable):
             return av, werr
 
     def _calculate_integrated(self, attr, kind='total'):
-        if attr == 'age':
-            return self.integrated_age
-
+        # if attr == 'age':
+        #
+        #     return self.integrated_age
         uv = ufloat(0, 0)
         if kind == 'total':
             ans = self.analyses
@@ -400,6 +400,8 @@ class AnalysisGroup(IdeogramPlotable):
                 vv = [ai.get_computed_value('k39') for ai in ans]
                 # vv = [ai.signal_k39 for ai in ans]
                 uv = sum(vv)
+            elif attr == 'age':
+                uv = self._calculate_integrated_age(ans)
 
         return uv
 
@@ -432,6 +434,22 @@ class AnalysisGroup(IdeogramPlotable):
 
             return ufloat(v, e)
 
+    def _calculate_integrated_age(self, ans):
+        ret = ufloat(0, 0)
+        if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
+
+            rad40 = sum([a.get_computed_value('rad40') for a in ans])
+            k39 = sum([a.get_computed_value('k39') for a in ans])
+
+            a = ans[0]
+            j = a.j
+            try:
+                ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
+            except ZeroDivisionError:
+                pass
+
+        return ret
+
 
 class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
@@ -444,6 +462,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     nsteps = Int
     fixed_step_low = Str
     fixed_step_high = Str
+    plateau_age_error_kind = Str
 
     plateau_nsteps = Int(3)
     plateau_gas_fraction = Float(50)
@@ -536,22 +555,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     @cached_property
     def _get_integrated_age(self):
-        ret = ufloat(0, 0)
         ans = list(self.clean_analyses())
-
-        if ans and all((not isinstance(a, InterpretedAgeGroup) for a in ans)):
-
-            rad40 = sum([a.get_computed_value('rad40') for a in ans])
-            k39 = sum([a.get_computed_value('k39') for a in ans])
-
-            a = ans[0]
-            j = a.j
-            try:
-                ret = age_equation(rad40 / k39, j, a.arar_constants)  # / self.age_scalar
-            except ZeroDivisionError:
-                pass
-
-        return ret
+        return self._calculate_integrated_age(ans)
 
     # def _get_steps(self):
     #     d = [(ai.age,
@@ -610,11 +615,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                     mswd = calculate_mswd(pages, perrs)
                     self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
                     self.plateau_mswd = mswd
-                    if self.age_error_kind == SD:
+                    if self.plateau_age_error_kind == SD:
                         e = array(pages).std()
                     else:
                         e = self._modify_error(v, e,
-                                               self.age_error_kind,
+                                               self.plateau_age_error_kind,
                                                mswd=mswd,
                                                include_j_error=self.include_j_error_in_plateau)
                     if math.isnan(e):
@@ -768,10 +773,22 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty]')
     def _preferred_kind_changd(self, obj, name, old, new):
-        v, k = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
-        obj.value = nominal_value(v)
-        obj.error = std_dev(v)
-        obj.computed_kind = k
+        if obj.attr == 'age':
+            if 'Plateau' in obj.kind:
+                self.plateau_age_error_kind = obj.error_kind
+            else:
+                self.age_error_kind = obj.error_kind
+
+            self.dirty = True
+            v = self._get_preferred_age()
+            obj.value = nominal_value(v)
+            obj.error = std_dev(v)
+            self.dirty = True
+        else:
+            v, k = self._get_preferred_(obj.attr, obj.kind, obj.error_kind)
+            obj.value = nominal_value(v)
+            obj.error = std_dev(v)
+            obj.computed_kind = k
 
     def preferred_values_to_dict(self):
         return [pv.to_dict() for pv in self.preferred_values]
@@ -846,6 +863,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             pa = self.integrated_age
         elif pak == 'plateau':
             pa = self.plateau_age
+        elif pak == 'valid_integrated':
+            pa = self._calculate_integrated('age', 'valid')
+        elif pak == 'total_integrated':
+            pa = self._calculate_integrated('age', 'total')
+        elif pak == 'plateau_integrated':
+            pa = self._calculate_integrated('age', 'plateau')
         elif pak == 'plateau_else_weighted_mean':
             pa = self.plateau_age
             pv.computed_kind = 'Plateau'
@@ -858,34 +881,30 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def _get_preferred_(self, attr, kind, error_kind):
         setattr(self, '{}_error_kind'.format(attr), error_kind)
         self.dirty = True
-        if attr == 'age':
-            pa = self._get_preferred_age()
-            pv = self._get_pv('age')
-            kind = pv.computed_kind
-        else:
-            pk = kind.lower().replace(' ', '_')
-            if pk == 'weighted_mean':
-                pa = self._get_weighted_mean(attr)
-            # elif pk == 'integrated':
-            #     pa = self._calculate_integrated(attr)
-            elif pk == 'valid_integrated':
-                pa = self._calculate_integrated(attr, 'valid')
-            elif pk == 'total_integrated':
-                pa = self._calculate_integrated(attr, 'total')
-            elif pk == 'plateau_integrated':
-                pa = self._calculate_integrated(attr, 'plateau')
-            elif pk == 'plateau_else_valid_integrated':
-                if self.plateau_age:
-                    kind = 'Plateau'
-                    pa = self._calculate_integrated(attr, 'plateau')
-                else:
-                    kind = 'Valid'
-                    pa = self._calculate_integrated(attr, 'valid')
-            else:
-                pa = self._calculate_arithmetic_mean(attr)
 
-            if isinstance(pa, tuple):
-                pa = ufloat(*pa)
+        pk = kind.lower().replace(' ', '_')
+        if pk == 'weighted_mean':
+            pa = self._get_weighted_mean(attr)
+        # elif pk == 'integrated':
+        #     pa = self._calculate_integrated(attr)
+        elif pk == 'valid_integrated':
+            pa = self._calculate_integrated(attr, 'valid')
+        elif pk == 'total_integrated':
+            pa = self._calculate_integrated(attr, 'total')
+        elif pk == 'plateau_integrated':
+            pa = self._calculate_integrated(attr, 'plateau')
+        elif pk == 'plateau_else_valid_integrated':
+            if self.plateau_age:
+                kind = 'Plateau'
+                pa = self._calculate_integrated(attr, 'plateau')
+            else:
+                kind = 'Valid'
+                pa = self._calculate_integrated(attr, 'valid')
+        else:
+            pa = self._calculate_arithmetic_mean(attr)
+
+        if isinstance(pa, tuple):
+            pa = ufloat(*pa)
         return pa, kind
 
 # ============= EOF =============================================
