@@ -782,10 +782,12 @@ class DVC(Loggable):
                         flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
                     if level not in prod_levels:
                         prod_levels[level] = meta_repo.get_production(irrad, level)
+
                     if irrad not in chronos:
                         chronos[irrad] = meta_repo.get_chronology(irrad)
-                    fluxes[irrad] = flux_levels
-                    productions[irrad] = prod_levels
+                    if irrad not in productions:
+                        fluxes[irrad] = flux_levels
+                        productions[irrad] = prod_levels
 
             sens = meta_repo.get_sensitivities()
         make_record = self._make_record
@@ -1386,9 +1388,9 @@ class DVC(Loggable):
                     if frozen_production:
                         pname, prod = frozen_production.name, frozen_production
                     else:
-                        if productions:
+                        try:
                             pname, prod = productions[a.irradiation][a.irradiation_level]
-                        else:
+                        except KeyError:
                             pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
 
                     a.set_production(pname, prod)
