@@ -780,14 +780,13 @@ class DVC(Loggable):
 
                     if level not in flux_levels:
                         flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
-                    if level not in prod_levels:
                         prod_levels[level] = meta_repo.get_production(irrad, level)
 
                     if irrad not in chronos:
                         chronos[irrad] = meta_repo.get_chronology(irrad)
-                    if irrad not in productions:
-                        fluxes[irrad] = flux_levels
-                        productions[irrad] = prod_levels
+
+                    fluxes[irrad] = flux_levels
+                    productions[irrad] = prod_levels
 
             sens = meta_repo.get_sensitivities()
         make_record = self._make_record
