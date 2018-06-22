@@ -776,6 +776,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         if obj.attr == 'age':
             if 'Plateau' in obj.kind:
                 self.plateau_age_error_kind = obj.error_kind
+                if obj.kind != 'Plateau':
+                    self.age_error_kind = obj.error_kind
             else:
                 self.age_error_kind = obj.error_kind
 
