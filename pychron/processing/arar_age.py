@@ -131,8 +131,11 @@ class ArArAge(IsotopeGroup):
             mw_k2o = 94.2
             klambda = 9.54
             moles_39k = self.computed['k39'] * self.sensitivity
-            moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
-            k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+            try:
+                moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
+                k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+            except ZeroDivisionError:
+                pass
 
         return k2o
 
