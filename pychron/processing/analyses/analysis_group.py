@@ -331,8 +331,6 @@ class AnalysisGroup(IdeogramPlotable):
 
                 if error_kind == 'both':
                     sem = werr
-                    # n = len(vs)
-                    # werr = (sum((av - vs) ** 2) / (n - 1)) ** 0.5
                     werr = sd(av, vs, es)
 
                 elif error_kind == SD:

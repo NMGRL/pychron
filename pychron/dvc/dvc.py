@@ -775,8 +775,14 @@ class DVC(Loggable):
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
                     level = r.irradiation_level
-                    flux_levels = fluxes.get(irrad, {})
-                    prod_levels = productions.get(irrad, {})
+                    if irrad in fluxes:
+                        flux_levels = fluxes[irrad]
+                        prod_levels = productions[irrad]
+                    else:
+                        flux_levels = {}
+                        prod_levels = {}
+                    # flux_levels = fluxes.get(irrad, {})
+                    # prod_levels = productions.get(irrad, {})
 
                     if level not in flux_levels:
                         flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
@@ -785,8 +791,9 @@ class DVC(Loggable):
                     if irrad not in chronos:
                         chronos[irrad] = meta_repo.get_chronology(irrad)
 
-                    fluxes[irrad] = flux_levels
-                    productions[irrad] = prod_levels
+                    if irrad not in fluxes:
+                        fluxes[irrad] = flux_levels
+                        productions[irrad] = prod_levels
 
             sens = meta_repo.get_sensitivities()
         make_record = self._make_record
@@ -1376,7 +1383,6 @@ class DVC(Loggable):
                     a.set_sensitivity(sens)
 
                 if a.irradiation and a.irradiation not in ('NoIrradiation',):
-                    # self.debug('Irradiation {}'.format(a.irradiation))
                     if chronos:
                         chronology = chronos[a.irradiation]
                     else:
@@ -1391,6 +1397,7 @@ class DVC(Loggable):
                             pname, prod = productions[a.irradiation][a.irradiation_level]
                         except KeyError:
                             pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                            self.warning('production key error name={}, productions={}'.format(pname, productions))
 
                     a.set_production(pname, prod)
 
@@ -1402,6 +1409,7 @@ class DVC(Loggable):
                                                 record.irradiation_level,
                                                 record.irradiation_position_position)
                     a.j = fd['j']
+
                     if fd['lambda_k']:
                         a.arar_constants.lambda_k = fd['lambda_k']
 
