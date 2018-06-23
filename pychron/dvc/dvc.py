@@ -1403,13 +1403,13 @@ class DVC(Loggable):
 
                     if fluxes:
                         level_flux = fluxes[a.irradiation][a.irradiation_level]
-                        fd = meta_repo.get_flux_from_positions(record.irradiation_position_position, level_flux)
+                        fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
                     else:
                         fd = meta_repo.get_flux(record.irradiation,
                                                 record.irradiation_level,
                                                 record.irradiation_position_position)
-                    a.j = fd['j']
 
+                    a.j = fd['j']
                     if fd['lambda_k']:
                         a.arar_constants.lambda_k = fd['lambda_k']
 
