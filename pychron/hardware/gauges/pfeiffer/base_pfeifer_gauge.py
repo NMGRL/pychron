@@ -95,4 +95,4 @@ class BasePfeifferGauge(BaseGauge):
         elif type_ in ('filament', 'setpoint_enable'):
             return value[si:] == 'ON'
 
-# ============= EOF ====================================s
+# ============= EOF ====================================

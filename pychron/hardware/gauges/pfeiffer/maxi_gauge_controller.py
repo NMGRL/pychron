@@ -89,4 +89,4 @@ class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
                        label=self.display_name))
         return v
 
-# ============= EOF =============================================s
+# ============= EOF =============================================

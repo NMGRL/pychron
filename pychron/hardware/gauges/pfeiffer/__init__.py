@@ -22,4 +22,3 @@ Gauges Package contains
 G{packagetree }
 
 '''
-s
