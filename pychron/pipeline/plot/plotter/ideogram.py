@@ -225,7 +225,6 @@ class Ideogram(BaseArArFigure):
         scatter = self._add_aux_plot(ys, title, po, pid, es=es)
 
         nsigma = self.options.error_bar_nsigma
-
         self._add_error_bars(scatter, self.xes, 'x', nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)

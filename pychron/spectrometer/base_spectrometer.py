@@ -484,7 +484,7 @@ class BaseSpectrometer(SpectrometerDevice):
             det.set_intensity(v)
             gsignals.append(v*det.gain)
 
-        return keys, gsignals
+        return keys, array(gsignals)
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:

@@ -1234,7 +1234,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         for k in ('signal_color', 'sniff_color', 'baseline_color',
                   'ms_pumptime_start', 'datahub', 'console_display', 'experiment_queue',
-                  'spectrometer_manager', 'extraction_line_manager', 'ion_options_manager',
+                  'spectrometer_manager', 'extraction_line_manager', 'ion_optics_manager',
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
 
             setattr(arun, k, getattr(self, k))
