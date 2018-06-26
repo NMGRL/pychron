@@ -61,7 +61,7 @@ class BaseDetector(HasTraits):
         try:
             v = float(v)
         except (TypeError, ValueError):
-            v = 0
+            v = 1
         self.gain = v
         return v
 

@@ -83,6 +83,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     refresh_blocks_needed = Event
 
     default_attr = 'identifier'
+    patterns = List
 
     _auto_save_time = 0
     _temp_analysis = None

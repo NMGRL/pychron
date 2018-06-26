@@ -25,7 +25,6 @@ from git import GitCommandError
 
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.loggable import Loggable
-from pychron.paths import build_repo
 from pychron.paths import r_mkdir
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
 
@@ -277,7 +276,7 @@ class Updater(Loggable):
         if not self._repo:
             from git import Repo
 
-            p = build_repo
+            p = self.build_repo
             if not os.path.isdir(p):
                 r_mkdir(p)
                 if self.remote:

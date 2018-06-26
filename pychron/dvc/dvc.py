@@ -1167,7 +1167,7 @@ class DVC(Loggable):
                 for i, gi in enumerate(gs):
                     self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                    if gi.create_repo(identifier, organization=self.organization):
                         ret = True
                         if self.default_team:
                             gi.set_team(self.default_team, self.organization, identifier,
