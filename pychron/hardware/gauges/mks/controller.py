@@ -25,6 +25,8 @@ import six
 ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
 LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
 NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
+OFF_RE = re.compile(r'@\d\d\dACKOFF;FF')
+PROTOFF_RE = re.compile(r'@\d\d\dACKPROT_OFF;FF')
 
 
 class Gauge(BaseGauge):
@@ -82,10 +84,19 @@ class MKSController(BaseGaugeController, CoreDevice):
                 v = float(match.group('value'))
                 return v
 
-            for reg in (NO_GAUGE_RE, LO_RE):
-                match = reg.match(r)
-                if match:
-                    return 0
+            match = NO_GAUGE_RE.match(r)
+            if match:
+                return 0
+            match = LO_RE.match(r)
+            if match:
+                return 1e-12
+            match = PROTOFF_RE.match(r)
+            if match:
+                return 760
+            match = OFF_RE.match(r)
+            if match:
+                return 1000
+
 
         # r = r.split('ACK')
         # r = r[1]
