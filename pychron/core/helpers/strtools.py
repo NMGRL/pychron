@@ -66,4 +66,6 @@ def to_bool(a):
         return True
     elif a in fks:
         return False
+    else:
+        return False
 # ============= EOF =============================================

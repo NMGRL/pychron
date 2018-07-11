@@ -32,7 +32,6 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve, Switch, ManualSwitch
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.paths import paths
-from six.moves import map
 
 KLASS_MAP = {'turbo': Turbo, 'laser': Laser}
 

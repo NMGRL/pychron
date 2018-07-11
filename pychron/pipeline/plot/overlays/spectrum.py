@@ -174,9 +174,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
             # sels = comp.index.metadata['selections']
             sels = self.selections
             n = len(xs)
-            xs = xs.reshape(n / 2, 2)
-            ys = ys.reshape(n / 2, 2)
-            es = es.reshape(n / 2, 2)
+            xs = xs.reshape(n // 2, 2)
+            ys = ys.reshape(n // 2, 2)
+            es = es.reshape(n // 2, 2)
 
             if self.use_fill:
                 alpha = self.alpha * 0.01

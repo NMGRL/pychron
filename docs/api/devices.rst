@@ -24,25 +24,25 @@ Core
 
 Communicators
 ---------------
-.. autoclass:: pychron.hardware.core.communicators.communicator.BaseCommunicator
+.. autoclass:: pychron.hardware.core.communicators.communicator.Communicator
    :members:
 
 .. autoclass:: pychron.hardware.core.communicators.serial_communicator.SerialCommunicator
    :members:
 
-.. autoclass:: pychron.hardware.core.communicators.gpib_communicator.GPIBCommunicator
+.. autoclass:: pychron.hardware.core.communicators.gpib_communicator.GpibCommunicator
    :members:
 
 .. autoclass:: pychron.hardware.core.communicators.ethernet_communicator.EthernetCommunicator
    :members:
 
-.. autoclass:: pychron.hardware.core.communicators.mcode_communicator.MCodeCommunicator
+.. autoclass:: pychron.hardware.core.communicators.mcode_communicator.MDriveCommunicator
    :members:
 
 .. autoclass:: pychron.hardware.core.communicators.modbus_communicator.ModbusCommunicator
    :members:
 
-.. autoclass:: pychron.hardware.core.communicators.scheduler.SchedulerCommunicator
+.. autoclass:: pychron.hardware.core.communicators.scheduler.CommunicationScheduler
    :members:
 
 Actuators

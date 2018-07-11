@@ -289,10 +289,11 @@ class Graph(ContextMenuMixin):
         else:
             is_equal = lambda x: x.__eq__(txt)
 
-        # print 'plot titles {}'.format([po.y_axis.title for po in self.plots])
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
+        else:
+            print('plot titles txt={} {}'.format(txt, [po.y_axis.title for po in self.plots]))
 
     def get_num_plots(self):
         """
@@ -1456,9 +1457,51 @@ class Graph(ContextMenuMixin):
             return
 
         plot = self.plots[plotid]
-        ra = getattr(plot, '%s_range' % axis)
+        ra = getattr(plot, '{}_range'.format(axis))
+        scale = getattr(plot, '{}_scale'.format(axis))
 
-        scale = getattr(plot, '%s_scale' % axis)
+        if isinstance(pad, str):
+            # interpret pad as a percentage of the range
+            # ie '0.1' => 0.1*(ma-mi)
+            if ma is None:
+                ma = ra.high
+            if mi is None:
+                mi = ra.low
+
+            if mi == -Inf:
+                mi = 0
+            if ma == Inf:
+                ma = 100
+
+            if ma is not None and mi is not None:
+                dev = ma - mi
+
+                def convert(p):
+                    p = float(p) * dev
+                    if abs(p) < 1e-10:
+                        p = 1
+                    return p
+
+                if ',' in pad:
+                    pad = [convert(p) for p in pad.split(',')]
+                else:
+                    pad = convert(pad)
+
+            if not pad:
+                pad = 0
+
+            if isinstance(mi, (int, float)):
+                if isinstance(pad, list):
+                    mi -= pad[0]
+                elif pad_style in ('symmetric', 'lower'):
+                    mi -= pad
+
+            if isinstance(ma, (int, float)):
+                if isinstance(pad, list):
+                    ma += pad[1]
+                elif pad_style in ('symmetric', 'upper'):
+                    ma += pad
+
         if scale == 'log':
             try:
                 if mi <= 0:
@@ -1483,48 +1526,6 @@ class Graph(ContextMenuMixin):
                 ma = 10 ** math.ceil(math.log(ma, 10))
             except ValueError:
                 return
-        else:
-            if isinstance(pad, str):
-                # interpret pad as a percentage of the range
-                # ie '0.1' => 0.1*(ma-mi)
-                if ma is None:
-                    ma = ra.high
-                if mi is None:
-                    mi = ra.low
-
-                if mi == -Inf:
-                    mi = 0
-                if ma == Inf:
-                    ma = 100
-
-                if ma is not None and mi is not None:
-                    dev = ma - mi
-
-                    def convert(p):
-                        p = float(p) * dev
-                        if abs(p) < 1e-10:
-                            p = 1
-                        return p
-
-                    if ',' in pad:
-                        pad = [convert(p) for p in pad.split(',')]
-                    else:
-                        pad = convert(pad)
-
-            if not pad:
-                pad = 0
-
-            if isinstance(mi, (int, float)):
-                if isinstance(pad, list):
-                    mi -= pad[0]
-                elif pad_style in ('symmetric', 'lower'):
-                    mi -= pad
-
-            if isinstance(ma, (int, float)):
-                if isinstance(pad, list):
-                    ma += pad[1]
-                elif pad_style in ('symmetric', 'upper'):
-                    ma += pad
 
         change = False
         if mi is not None:

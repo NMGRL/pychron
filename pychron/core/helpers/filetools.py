@@ -192,14 +192,15 @@ def remove_extension(p):
     return h
 
 
-def unique_dir(root, base):
+def unique_dir(root, base, make=True):
     p = os.path.join(root, '{}001'.format(base))
     i = 2
     while os.path.exists(p):
         p = os.path.join(root, '{}{:03d}'.format(base, i))
         i += 1
 
-    os.mkdir(p)
+    if make:
+        os.mkdir(p)
 
     return p
 

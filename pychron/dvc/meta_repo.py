@@ -16,14 +16,19 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import shutil
-import time
 from datetime import datetime
-from uncertainties import ufloat, std_dev
+
+import six
+import time
+from six.moves import map
 # ============= enthought library imports =======================
 from traits.api import Bool
+from uncertainties import ufloat, std_dev
 
+from pychron import json
 from pychron.canvas.utils import iter_geom
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.helpers.filetools import list_directory2, add_extension, \
@@ -31,10 +36,7 @@ from pychron.core.helpers.filetools import list_directory2, add_extension, \
 from pychron.dvc import dvc_dump, dvc_load
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths, r_mkdir
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME
-from pychron import json
-import six
-from six.moves import map
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DEFAULT_MONITOR_NAME, DATE_FORMAT
 
 
 class MetaObject(object):
@@ -225,7 +227,7 @@ class Production(MetaObject):
         obj = json.load(rfile)
 
         attrs = []
-        for k, v in six.iteritems(obj):
+        for k, v in obj.items():
             if k == 'reactor':
                 self.reactor = v
             else:
@@ -362,14 +364,14 @@ class MetaRepo(GitRepoManager):
     def update_experiment_queue(self, rootname, name, path_or_blob):
         self._update_text(os.path.join('experiments', rootname.lower()), name, path_or_blob)
 
-    def update_level_production(self, irrad, name, prname):
+    def update_level_production(self, irrad, name, prname, note=None):
         prname = prname.replace(' ', '_')
 
         pathname = add_extension(prname, '.json')
 
         src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
         if os.path.isfile(src):
-            self.update_productions(irrad, name, prname)
+            self.update_productions(irrad, name, prname, note=note)
         # elif prname.startswith('Global'):
         #     prname = prname[7:]
         #     pathname = add_extension(prname, '.json')
@@ -429,14 +431,15 @@ class MetaRepo(GitRepoManager):
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
-    def update_productions(self, irrad, level, production, add=True):
+    def update_productions(self, irrad, level, production, note=None, add=True):
         p = os.path.join(paths.meta_root, irrad, 'productions.json')
 
         obj = dvc_load(p)
+        obj['note'] = str(note) or ''
+
         if level in obj:
             if obj[level] != production:
-                self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level,
-                                                                                      production))
+                self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level, production))
                 obj[level] = production
                 dvc_dump(obj, p)
 
@@ -452,9 +455,11 @@ class MetaRepo(GitRepoManager):
         p = self.get_level_path(irradiation, level)
         jd = dvc_load(p)
         positions = self._get_level_positions(irradiation, level)
-        d = next((p for p in positions if p['position'] != pos), None)
+
+        d = next((p for p in positions if p['position'] == pos), None)
         if d:
             d['identifier'] = identifier
+            jd['positions'] = positions
 
         dvc_dump(jd, p)
         self.add(p, commit=False)
@@ -591,7 +596,12 @@ class MetaRepo(GitRepoManager):
             if add:
                 self.add(p, commit=False)
 
-    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None, analyses=None, add=True):
+    def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
+                    analyses=None, options=None, add=True):
+
+        if options is None:
+            options = {}
+
         if decay is None:
             decay = {}
         if analyses is None:
@@ -610,6 +620,7 @@ class MetaRepo(GitRepoManager):
                 'mean_j': mj, 'mean_j_err': me,
                 'decay_constants': decay,
                 'identifier': identifier,
+                'options': options,
                 'analyses': [{'uuid': ai.uuid,
                               'record_id': ai.record_id,
                               'status': ai.is_omitted()}
@@ -669,14 +680,14 @@ class MetaRepo(GitRepoManager):
         return positions
 
     def get_flux(self, irradiation, level, position):
-        positions = self.get_flux_from_positions(irradiation, level)
+        positions = self.get_flux_positions(irradiation, level)
         return self.get_flux_from_positions(position, positions)
 
     def get_flux_from_positions(self, position, positions):
 
         # path = os.path.join(paths.meta_root, irradiation, add_extension(level, '.json'))
         j, je, lambda_k = 0, 0, None
-        standard_name, standard_material, standard_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
+        monitor_name, monitor_material, monitor_age = DEFAULT_MONITOR_NAME, 'sanidine', ufloat(28.201, 0)
         # positions = self._get_level_positions(irradiation, level)
         if positions:
             pos = next((p for p in positions if p['position'] == position), None)
@@ -692,16 +703,16 @@ class MetaRepo(GitRepoManager):
                     lambda_k = ufloat(v, e)
                 mon = pos.get('monitor')
                 if mon:
-                    standard_name = mon.get('name', DEFAULT_MONITOR_NAME)
+                    monitor_name = mon.get('name', DEFAULT_MONITOR_NAME)
                     sa = mon.get('age', 28.201)
                     se = mon.get('error', 0)
-                    standard_age = ufloat(sa, se, tag='standard_age')
-                    standard_material = mon.get('material', 'sanidine')
+                    monitor_age = ufloat(sa, se, tag='monitor_age')
+                    monitor_material = mon.get('material', 'sanidine')
 
         fd = {'j': ufloat(j, je, tag='J'), 'lambda_k': lambda_k,
-              'standard_name': standard_name,
-              'standard_material': standard_material,
-              'standard_age': standard_age}
+              'monitor_name': monitor_name,
+              'monitor_material': monitor_material,
+              'monitor_age': monitor_age}
         return fd
 
     def get_gains(self, name):
@@ -716,6 +727,43 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(root, add_extension('{}.gain'.format(name), '.json'))
         return p
 
+    def save_sensitivities(self, sens):
+        ps = []
+        for k, v in sens.items():
+            root = os.path.join(paths.meta_root, 'spectrometers')
+            p = os.path.join(root, add_extension('{}.sens'.format(k), '.json'))
+            dvc_dump(v, p)
+            ps.append(p)
+
+        if self.add_paths(ps):
+            self.commit('Updated sensitivity')
+
+    def get_sensitivities(self):
+        specs = {}
+        root = os.path.join(paths.meta_root, 'spectrometers')
+        for p in list_directory(root):
+            if p.endswith('.sens.json'):
+                name = p.split('.')[0]
+                p = os.path.join(root, p)
+                obj = dvc_load(p)
+                # cd = self.get_modification_date(p)
+                # obj['modification_date'] = cd
+                # obj['create_date'] = cd
+                specs[name] = obj
+                for r in obj:
+                    if r['create_date']:
+                        r['create_date'] = datetime.strptime(r['create_date'], DATE_FORMAT)
+
+        return specs
+
+    def get_sensitivity(self, name):
+        sens = self.get_sensitivities()
+        spec = sens.get(name)
+        v = 1
+        if spec:
+            v = spec.get('sensitivity', 1)
+        return v
+
     @cached('clear_cache')
     def get_gain_obj(self, name, **kw):
         p = self._gain_path(name)
@@ -725,7 +773,8 @@ class MetaRepo(GitRepoManager):
     def get_production(self, irrad, level, **kw):
         path = os.path.join(paths.meta_root, irrad, 'productions.json')
         obj = dvc_load(path)
-        pname = obj[level]
+
+        pname = obj.get(level, '')
         p = os.path.join(paths.meta_root, irrad, 'productions', add_extension(pname, ext='.json'))
 
         ip = Production(p)
@@ -745,6 +794,10 @@ class MetaRepo(GitRepoManager):
         p = os.path.join(paths.meta_root, 'load_holders', add_extension(name))
         holder = LoadHolder(p)
         return holder.holes
+
+    @property
+    def sensitivity_path(self):
+        return os.path.join(paths.meta_root, 'sensitivity.json')
 
     # private
     def _get_level_positions(self, irrad, level):

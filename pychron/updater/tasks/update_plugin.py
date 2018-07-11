@@ -72,11 +72,11 @@ class UpdatePlugin(BaseTaskPlugin):
         super(UpdatePlugin, self).start()
 
         updater = self.application.get_service('pychron.updater.updater.Updater')
-        if updater.check_on_startup:
-            updater.check_for_updates()
         try:
+            if updater.check_on_startup:
+                updater.check_for_updates()
             globalv.active_branch = updater.active_branch
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, AttributeError):
             pass
 
     # BaseTaskPlugin interface

@@ -15,20 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
-
-from apptools import sweet_pickle as pickle
-from traits.api import HasTraits, Str, Bool, Float, List, Enum, Int, Any, Button
+import pickle
+# from apptools import sweet_pickle as pickle
+from traits.api import HasTraits, Str, Bool, Float, Either, List, Enum, Int, Any, Button
 from traitsui.api import View, Item, HGroup, EnumEditor, UItem, VGroup, InstanceEditor
 
 from pychron.core.helpers.filetools import add_extension, list_directory2
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 from pychron.saveable import SaveButton, Saveable, SaveableHandler
-from six.moves import range
 
 
 class PeakCenterConfigHandler(SaveableHandler):
@@ -57,7 +54,7 @@ class PeakCenterConfig(HasTraits):
     dac = Float
     use_current_dac = Bool(True)
     # integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
-    integration_time = Float
+    integration_time = Either(Float, Int)
     integration_times = List(transient=True)
 
     directions = Enum('Increase', 'Decrease', 'Oscillate')
@@ -202,7 +199,7 @@ class ItemConfigurer(Saveable):
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, add_extension('config', '.p'))
-        with open(p, 'wfile') as wfile:
+        with open(p, 'wb') as wfile:
             obj = {'name': self.active_name}
             pickle.dump(obj, wfile)
 

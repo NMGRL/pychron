@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
+import math
+
 from chaco.array_data_source import ArrayDataSource
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
 from traits.api import HasTraits, Any, Int, Str, Property, \
-    Event, Bool, cached_property, List, Float
+    Event, Bool, cached_property, List, Float, Instance
 from uncertainties import std_dev, nominal_value, ufloat
 
 from pychron.core.filtering import filter_ufloats, sigma_filter
@@ -40,8 +41,6 @@ from pychron.pipeline.plot.flow_label import FlowDataLabel
 from pychron.pipeline.plot.overlays.points_label_overlay import PointsLabelOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.pychron_constants import PLUSMINUS
-import six
-from six.moves import map
 
 
 # PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
@@ -96,7 +95,9 @@ class BaseArArFigure(SelectionFigure):
     inspector_event = Event
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
-    analysis_group = Property(depends_on='analyses')
+
+    analysis_group = Property(depends_on='analyses, _analysis_group')
+    _analysis_group = Instance(AnalysisGroup)
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
@@ -183,7 +184,7 @@ class BaseArArFigure(SelectionFigure):
             # self._add_legend()
 
     def post_make(self):
-        pass
+        self._fix_log_axes()
 
     def plot(self, *args, **kw):
         pass
@@ -202,6 +203,14 @@ class BaseArArFigure(SelectionFigure):
         return 0
 
     # private
+    def _fix_log_axes(self):
+        for i, p in enumerate(self.graph.plots):
+            if p.value_scale == 'log':
+                if p.value_mapper.range.low < 0:
+                    ys = self.graph.get_data(plotid=i, axis=1)
+                    m = 10 ** math.floor(math.log10(min(ys)))
+                    p.value_mapper.range.low = m
+
     def _setup_plot(self, i, pp, po):
 
         # add limit tools
@@ -227,11 +236,14 @@ class BaseArArFigure(SelectionFigure):
                 pp.y_axis.orientation = 'right'
                 pp.y_axis.axis_line_visible = False
 
-        if self.use_sparse_ticks:
-            if pp.value_scale == 'log':
-                pp.value_axis.tick_generator = SparseLogTicks()
-            else:
-                pp.value_axis.tick_generator = SparseTicks()
+            pp.value_scale = po.scale
+            if self.use_sparse_ticks:
+                if po.scale == 'log':
+                    st = SparseLogTicks()
+                    pp.value_axis.tick_generator = st
+                    pp.value_grid.tick_generator = st
+                else:
+                    pp.value_axis.tick_generator = SparseTicks()
 
     def _set_options_format(self, pp):
         # print 'using options format'
@@ -261,7 +273,7 @@ class BaseArArFigure(SelectionFigure):
     def _cmp_analyses(self, x):
         return x.timestamp
 
-    def _unpack_attr(self, attr, exclude_omit=False, nonsorted=False):
+    def _unpack_attr(self, attr, scalar=1, exclude_omit=False, nonsorted=False):
         def gen():
             ans = self.sorted_analyses
             if nonsorted:
@@ -271,7 +283,7 @@ class BaseArArFigure(SelectionFigure):
                     continue
 
                 v = ai.get_value(attr)
-                yield v or ufloat(0, 0)
+                yield v * scalar or ufloat(0, 0)
 
         return gen()
 
@@ -297,16 +309,30 @@ class BaseArArFigure(SelectionFigure):
         if not self.suppress_xlimits_update:
             if hasattr(self.options, 'aux_plots'):
                 # n = len(self.options.aux_plots)
-                limits = self.graph.get_x_limits(pid)
+                xlimits = self.graph.get_x_limits(pid)
                 for ap in self.options.aux_plots:
-                    ap.xlimits = limits
-                    # ap = self.options.aux_plots[n - pid - 1]
-                    # if not self.suppress_ylimits_update:
-                    #     ap.ylimits = self.graph.get_y_limits(pid)
+                    ap.xlimits = xlimits
 
-                    # if not self.suppress_xlimits_update:
-                    #     ap.xlimits = self.graph.get_x_limits(pid)
-                    #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
+        if not self.suppress_ylimits_update:
+            if hasattr(self.options, 'aux_plots'):
+                # n = len(self.options.aux_plots)
+                ylimits = self.graph.get_y_limits(pid)
+
+                for i, ap in enumerate(self.options.get_plotable_aux_plots()):
+                    if i == pid:
+                        ap.ylimits = ylimits
+                        break
+
+                # for ap in self.options.aux_plots:
+                #     ap.ylimits = ylimits
+
+                # ap = self.options.aux_plots[n - pid - 1]
+                # if not self.suppress_ylimits_update:
+                #     ap.ylimits = self.graph.get_y_limits(pid)
+
+                # if not self.suppress_xlimits_update:
+                #     ap.xlimits = self.graph.get_x_limits(pid)
+                #     print('asdfpasdf', id(self.options), id(ap), ap.xlimits)
 
     def get_valid_xbounds(self):
         pass
@@ -394,9 +420,13 @@ class BaseArArFigure(SelectionFigure):
         k = 'kca'
         return self._plot_aux('K/Ca', k, po, pid)
 
-    def _plot_moles_k39(self, po, pobj, pid):
+    def _plot_signal_k39(self, po, pobj, pid):
         k = 'k39'
         return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+
+    def _plot_moles_k39(self, po, pobj, pid):
+        k = 'moles_k39'
+        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(mol)', k, po, pid)
 
     def _plot_moles_ar40(self, po, pobj, pid):
         k = 'Ar40'
@@ -410,8 +440,8 @@ class BaseArArFigure(SelectionFigure):
         k = 'extract_value'
         return self._plot_aux('Extract Value', k, po, pid)
 
-    def _get_aux_plot_data(self, k):
-        vs = self._unpack_attr(k)
+    def _get_aux_plot_data(self, k, scalar=1):
+        vs = list(self._unpack_attr(k, scalar=scalar))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
     def _set_ml_title(self, text, plotid, ax):
@@ -462,7 +492,8 @@ class BaseArArFigure(SelectionFigure):
             ctx = {'aliquot': si.aliquot,
                    'step': si.step,
                    'sample': si.sample,
-                   'name': si.name}
+                   'name': si.name,
+                   'label_name': si.label_name}
 
             x = f.format(**ctx)
             labels.append(x)
@@ -477,7 +508,6 @@ class BaseArArFigure(SelectionFigure):
     def _add_error_bars(self, scatter, errors, axis, nsigma,
                         end_caps,
                         visible=True):
-
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
@@ -680,6 +710,12 @@ class BaseArArFigure(SelectionFigure):
 
     @cached_property
     def _get_analysis_group(self):
-        return self._analysis_group_klass(analyses=self.sorted_analyses)
+        ag = self._analysis_group
+        if ag is None:
+            ag = self._analysis_group_klass(analyses=self.sorted_analyses)
+        return ag
+
+    def _set_analysis_group(self, v):
+        self._analysis_group = v
 
 # ============= EOF =============================================

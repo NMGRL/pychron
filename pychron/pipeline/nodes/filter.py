@@ -26,7 +26,6 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.pipeline.nodes.base import BaseNode
-from six.moves import filter
 
 COMP_RE = re.compile(r'<=|>=|>|<|==|between|not between')
 
@@ -37,7 +36,7 @@ class PipelineFilter(HasTraits):
     criterion = Str
     attributes = ('age', 'age error', 'kca', 'kca error',
                   'aliquot', 'step', 'run date',
-                  'extract_value', 'duration', 'cleanup')
+                  'extract_value', 'duration', 'cleanup', 'tag')
 
     chain_operator = Enum('and', 'or')
     show_chain = Bool
@@ -100,7 +99,8 @@ class PipelineFilter(HasTraits):
 
             try:
                 result = eval(test, edict)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, TypeError) as e:
+                print('filter evaluation failed e={} test={}, dict={}'.format(e, test, edict))
                 result = False
 
             return result
@@ -109,10 +109,16 @@ class PipelineFilter(HasTraits):
 
     def evaluate(self, item):
         attr = self.attribute
-        val = self._get_value(item, attr)
-        attr = attr.replace(' ', '_')
-        edict = {attr: val}
-        return self._eval_func(edict)
+        comp = self.comparator
+        crit = self.criterion
+        ret = True
+        if attr and comp and crit:
+            val = self._get_value(item, attr)
+            attr = attr.replace(' ', '_')
+            edict = {attr: val}
+            ret = self._eval_func(edict)
+
+        return ret
 
     def _convert_date(self, d):
         for s in ('%B', '%b', '%m',
@@ -140,7 +146,7 @@ class PipelineFilter(HasTraits):
         return val
 
     def traits_view(self):
-        v = View(HGroup(icon_button_editor('remove_button', 'remove'),
+        v = View(HGroup(icon_button_editor('remove_button', 'delete'),
                         UItem('chain_operator', visible_when='show_chain'),
                         UItem('attribute',
                               editor=EnumEditor(name='attributes')),
@@ -184,14 +190,19 @@ class FilterNode(BaseNode):
             fi.show_chain = i != 0
 
     def traits_view(self):
-        v = View(VGroup(icon_button_editor('add_filter_button', 'add'),
-                        UItem('filters', editor=ListEditor(mutable=False,
-                                                           style='custom',
-                                                           editor=InstanceEditor())),
-                        Item('remove', label='Remove Analyses',
-                             tooltip='Remove Analyses from the list if checked  otherwise '
-                                     'set temporary tag to "omit"'),
+        v = View(VGroup(VGroup(icon_button_editor('add_filter_button', 'add'),
+                               UItem('filters', editor=ListEditor(mutable=False,
+                                                                  style='custom',
+                                                                  editor=InstanceEditor())),
+                               show_border=True,
+                               label='Filters'),
+                        VGroup(Item('remove', label='Remove Analyses',
+                                    tooltip='Remove Analyses from the list if checked  otherwise '
+                                            'set temporary tag to "omit"'),
+                               show_border=True),
                         VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
+                 height=400,
+                 width=600,
                  kind='livemodal',
                  title='Edit Filter',
                  resizable=True,
@@ -226,12 +237,12 @@ class FilterNode(BaseNode):
                 else:
                     flag = flag or b
             return flag
-
+        ans = getattr(state, self.analysis_kind)
         if self.remove:
-            vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            # vs = list(filter(filterfunc, getattr(state, self.analysis_kind)))
+            vs = [a for a in ans if filterfunc(a)]
             setattr(state, self.analysis_kind, vs)
         else:
-            ans = getattr(state, self.analysis_kind)
             for a in ans:
                 if not filterfunc(a):
                     a.tag = 'omit'
@@ -248,6 +259,6 @@ class FilterNode(BaseNode):
 
 
 if __name__ == '__main__':
-    a=FilterNode()
+    a = FilterNode()
     a.configure_traits()
 # ============= EOF =============================================

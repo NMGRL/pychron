@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import inspect
 import re
 import time
@@ -195,15 +193,16 @@ class ExtractionPyScript(ValvePyScript):
         cm = super(ExtractionPyScript, self).get_command_register()
         return list(command_register.commands.items()) + cm
 
-    def set_default_context(self):
+    def set_default_context(self, **kw):
         """
         provide default values for all the properties exposed in the script
         """
+        for attr in ('analysis_type', 'extract_device'):
+            if attr not in kw:
+                kw[attr] = ''
 
-        self.setup_context(analysis_type='',
-                           position='',
+        self.setup_context(position='',
                            pattern='',
-                           extract_device='',
                            extract_value=0,
                            extract_units='',
                            tray='',
@@ -212,23 +211,28 @@ class ExtractionPyScript(ValvePyScript):
                            duration=0,
                            cleanup=0,
                            beam_diameter=None,
-                           load_identifier = 'default_load',
-                           run_identifier='default_runid')
+                           load_identifier='default_load',
+                           run_identifier='default_runid', **kw)
 
     # ==========================================================================
     # commands
     # ==========================================================================
     @verbose_skip
     @command_register
+    def get_pressure(self, controller, gauge):
+        result = self._extraction_action([('get_pressure', (controller, gauge))])
+        return result
+
+    @verbose_skip
+    @command_register
     def set_cryo(self, value):
         result = self._manager_action([('set_cryo', (value, ), {})], protocol=ELPROTOCOL)
-        print('asfdasdf', result)
         return result
 
     @verbose_skip
     @command_register
     def get_cryo_temp(self, value):
-        result = self._manager_action([('get_cryo_temp', (value, ), {})], protocol=ELPROTOCOL)
+        result = self._manager_action([('get_cryo_temp', (value,), {})], protocol=ELPROTOCOL)
         return result
 
     @calculate_duration
@@ -672,7 +676,7 @@ class ExtractionPyScript(ValvePyScript):
         msg = '{} ON! {}({})'.format(ed, power, units)
         self._set_extraction_state(msg)
         self.console_info('extract sample to {} ({})'.format(power, units))
-        self._extraction_action([('extract', (power,), {'units': units,})])
+        self._extraction_action([('extract', (power,), {'units': units, })])
 
     @verbose_skip
     @command_register
@@ -936,6 +940,7 @@ class ExtractionPyScript(ValvePyScript):
     @property
     def load_identifier(self):
         return self._get_property('load_identifier')
+
     # ===============================================================================
     # private
     # ===============================================================================

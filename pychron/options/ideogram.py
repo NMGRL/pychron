@@ -16,21 +16,23 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from chaco.default_colormaps import color_map_name_dict
 from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
-from pychron.options.views.ideogram_views import VIEWS
 from pychron.options.options import AgeOptions
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES
+from pychron.options.views.ideogram_views import VIEWS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS
 
 
 class IdeogramAuxPlot(AuxPlot):
     names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
+                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Signal K39', 'Ideogram'],
+                 transient=True)
     _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl', 'moles_k39', 'relative_probability'])
+                        'kca', 'kcl', 'moles_k39', 'signal_k39', 'relative_probability'])
 
 
 class IdeogramOptions(AgeOptions):
@@ -79,7 +81,7 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
-    mean_sig_figs = Int
+    mean_sig_figs = Enum(*SIG_FIGS)
 
     use_cmap_analysis_number = Bool(False)
     cmap_analysis_number = Enum(list(color_map_name_dict.keys()))
@@ -109,23 +111,31 @@ class IdeogramOptions(AgeOptions):
     def to_dict_test(self, k):
         return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
 
-    def get_plot_dict(self, group_id):
-        # return {}
+    def get_plot_dict(self, group_id, subgroup_id):
 
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]
-        d = {'color': fg.line_color,
-             'edge_color': fg.line_color,
+
+        line_color = fg.line_color
+        color = fg.color
+        # if subgroup_id:
+        #     rgb = color.red(), color.blue(), color.green()
+        #     rgb = [c*0.9*subgroup_id for c in rgb]
+        #     color.setRgb(*rgb)
+
+        d = {'color': color,
+             'edge_color': line_color,
              'edge_width': fg.line_width,
              'line_width': fg.line_width,
-             'line_color': fg.line_color}
+             'line_color': line_color}
 
         if fg.use_fill:
-            color = fg.color
+            color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
-            d['fill_color'] = fg.color
+            d['fill_color'] = color
             d['type'] = 'filled_line'
+
         return d
 
     # private

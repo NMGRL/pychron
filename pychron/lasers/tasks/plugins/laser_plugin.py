@@ -33,7 +33,7 @@ from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigu
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction, \
     LaserScriptExecuteAction
-from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
+# from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
 from pychron.paths import paths
 
 
@@ -174,15 +174,16 @@ class FusionsPlugin(BaseLaserPlugin):
                             name=self.task_name,
                             image='laser',
                             accelerator=self.accelerator),
-                TaskFactory(id='pychron.laser.calibration',
-                            task_group='hardware',
-                            factory=self._calibration_task_factory,
-                            name='Laser Calibration',
-                            accelerator='Ctrl+Shift+2')]
+                # TaskFactory(id='pychron.laser.calibration',
+                #             task_group='hardware',
+                #             factory=self._calibration_task_factory,
+                #             name='Laser Calibration',
+                #             accelerator='Ctrl+Shift+2')
+                ]
 
-    def _calibration_task_factory(self):
-        t = LaserCalibrationTask(manager=self._get_manager())
-        return t
+    # def _calibration_task_factory(self):
+    #     t = LaserCalibrationTask(manager=self._get_manager())
+    #     return t
 
     sources = List(contributes_to='pychron.video.sources')
 

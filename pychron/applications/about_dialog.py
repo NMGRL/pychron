@@ -22,7 +22,6 @@ from traits.api import List, Str
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit
 import sys
-from six.moves import range
 # ============= local library imports  ==========================
 
 _ABOUT_TEXT = '''

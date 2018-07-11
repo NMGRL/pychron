@@ -18,7 +18,7 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from numpy import asarray, average, vectorize, ones_like, count_nonzero
+from numpy import asarray, average, vectorize, ones_like, count_nonzero, where
 
 
 # ============= local library imports  ==========================
@@ -52,13 +52,20 @@ def calculate_mswd(x, errs, k=1, wm=None):
 def calculate_weighted_mean(x, errs):
     x = asarray(x)
     errs = asarray(errs)
-    if not count_nonzero(errs):
-        weights = ones_like(x)
-    else:
-        weights = 1 / errs ** 2
 
-    wmean, sum_weights = average(x, weights=weights, returned=True)
-    werr = sum_weights ** -0.5
+    idx = where(errs.astype(bool))[0]
+
+    errs = errs[idx]
+    x = x[idx]
+
+    weights = 1 / errs ** 2
+    try:
+        wmean, sum_weights = average(x, weights=weights, returned=True)
+        werr = sum_weights ** -0.5
+    except ZeroDivisionError:
+        wmean = average(x)
+        werr = 0
+
     return wmean, werr
 
 

@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from threading import _Event, Lock, Timer, Thread, Event
+from threading import Event, Lock, Timer, Thread
 
 import time
 from traits.api import Any, Dict, List, provides
@@ -27,7 +27,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.loggable import Loggable
 
 
-class LocalResource(_Event):
+class LocalResource(Event):
     def read(self, *args, **kw):
         return self.is_set()
 

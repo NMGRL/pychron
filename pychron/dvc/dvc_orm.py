@@ -17,10 +17,11 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, BLOB, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
+
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
     DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import object_session
+from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
 
 from pychron.core.helpers.datetime_tools import make_timef
@@ -122,7 +123,7 @@ class AnalysisTbl(Base, BaseMixin):
     increment = Column(Integer)
 
     irradiation_positionID = Column(Integer, ForeignKey('IrradiationPositionTbl.id'))
-    simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
+    # simple_identifier = Column(Integer, ForeignKey('SimpleIdentifier.identifier'))
     measurementName = stringcolumn(45)
     extractionName = stringcolumn(45)
     postEqName = stringcolumn(45)
@@ -248,6 +249,22 @@ class AnalysisTbl(Base, BaseMixin):
             return es[0]
 
     @property
+    def load_name(self):
+        ln = ''
+        if self.measured_positions:
+            ln = self.measured_positions[0].loadName or ''
+        return ln
+
+    @property
+    def load_holder(self):
+        lh = ''
+        if self.measured_positions:
+            load = self.measured_positions[0].load
+            if load:
+                lh = load.holderName
+        return lh
+
+    @property
     def record_views(self):
         repos = self.repository_associations
         if len(repos) == 1:
@@ -333,13 +350,14 @@ class SampleTbl(Base, NameMixin):
     igsn = stringcolumn(140)
     lat = Column(Float)
     lon = Column(Float)
-    storage_location = stringcolumn(140)
-    lithology = stringcolumn(140)
-    location = stringcolumn(140)
-    approximate_age = Column(Float)
-    elevation = Column(Float)
-    create_date = Column(DateTime, default=func.now())
-    update_date = Column(DateTime, onupdate=func.now(), default=func.now())
+
+    storage_location = deferred(stringcolumn(140))
+    lithology = deferred(stringcolumn(140))
+    location = deferred(stringcolumn(140))
+    approximate_age = deferred(Column(Float))
+    elevation = deferred(Column(Float))
+    create_date = deferred(Column(DateTime, default=func.now()))
+    update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
 
     positions = relationship('IrradiationPositionTbl', backref='sample')
 

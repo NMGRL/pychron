@@ -4,127 +4,127 @@ Pipeline
 
 Nodes
 -----------
-.. autoclass:: pychron.pipeline.UnknownNode
+.. autoclass:: pychron.pipeline.nodes.UnknownNode
    :members:
 
-.. autoclass:: pychron.pipeline.ReferenceNode
+.. autoclass:: pychron.pipeline.nodes.ReferenceNode
    :members:
 
-.. autoclass:: pychron.pipeline.FluxMonitorsNode
+.. autoclass:: pychron.pipeline.nodes.FluxMonitorsNode
    :members:
 
-.. autoclass:: pychron.pipeline.ListenUnknownNode
+.. autoclass:: pychron.pipeline.nodes.ListenUnknownNode
    :members:
 
-.. autoclass:: pychron.pipeline.CSVNode,
+.. autoclass:: pychron.pipeline.nodes.CSVNode
    :members:
 
-.. autoclass:: pychron.pipeline.InterpretedAgeNode
+.. autoclass:: pychron.pipeline.nodes.InterpretedAgeNode
    :members:
 
-.. autoclass:: pychron.pipeline.YieldNode
+.. autoclass:: pychron.pipeline.nodes.YieldNode
    :members:
 
-.. autoclass:: pychron.pipeline.DiffNode
+.. autoclass:: pychron.pipeline.nodes.DiffNode
    :members:
 
-.. autoclass:: pychron.pipeline.IdeogramNode
+.. autoclass:: pychron.pipeline.nodes.IdeogramNode
    :members:
 
-.. autoclass:: pychron.pipeline.SpectrumNode
+.. autoclass:: pychron.pipeline.nodes.SpectrumNode
    :members:
 
-.. autoclass:: pychron.pipeline.SeriesNode
+.. autoclass:: pychron.pipeline.nodes.SeriesNode
    :members:
 
-.. autoclass:: pychron.pipeline.InverseIsochronNode
+.. autoclass:: pychron.pipeline.nodes.InverseIsochronNode
    :members:
 
-.. autoclass:: pychron.pipeline.VerticalFluxNode
+.. autoclass:: pychron.pipeline.nodes.VerticalFluxNode
    :members:
 
-.. autoclass:: pychron.pipeline.XYScatterNode
+.. autoclass:: pychron.pipeline.nodes.XYScatterNode
    :members:
 
-.. autoclass:: pychron.pipeline.RadialNode
+.. autoclass:: pychron.pipeline.nodes.RadialNode
    :members:
 
-.. autoclass:: pychron.pipeline.FilterNode
+.. autoclass:: pychron.pipeline.nodes.FilterNode
    :members:
 
-.. autoclass:: pychron.pipeline.FindReferencesNode
+.. autoclass:: pychron.pipeline.nodes.FindReferencesNode
    :members:
 
-.. autoclass:: pychron.pipeline.FindFluxMonitorsNode
+.. autoclass:: pychron.pipeline.nodes.FindFluxMonitorsNode
    :members:
 
-.. autoclass:: pychron.pipeline.FindVerticalFluxNode
+.. autoclass:: pychron.pipeline.nodes.FindVerticalFluxNode
    :members:
 
-.. autoclass:: pychron.pipeline.FitIsotopeEvolutionNode
+.. autoclass:: pychron.pipeline.nodes.FitIsotopeEvolutionNode
    :members:
 
-.. autoclass:: pychron.pipeline.FitBlanksNode
+.. autoclass:: pychron.pipeline.nodes.FitBlanksNode
    :members:
 
-.. autoclass:: pychron.pipeline.FitICFactorNode
+.. autoclass:: pychron.pipeline.nodes.FitICFactorNode
    :members:
 
-.. autoclass:: pychron.pipeline.FitFluxNode
+.. autoclass:: pychron.pipeline.nodes.FitFluxNode
    :members:
 
-.. autoclass:: pychron.pipeline.GainCalibrationNode
+.. autoclass:: pychron.pipeline.nodes.GainCalibrationNode
    :members:
 
-.. autoclass:: pychron.pipeline.GeochronNode
+.. autoclass:: pychron.pipeline.nodes.GeochronNode
    :members:
 
-.. autoclass:: pychron.pipeline.GroupingNode
+.. autoclass:: pychron.pipeline.nodes.GroupingNode
    :members:
 
-.. autoclass:: pychron.pipeline.GraphGroupingNode
+.. autoclass:: pychron.pipeline.nodes.GraphGroupingNode
    :members:
 
-.. autoclass:: pychron.pipeline.CSVAnalysesExportNode
+.. autoclass:: pychron.pipeline.nodes.CSVAnalysesExportNode
    :members:
 
-.. autoclass:: pychron.pipeline.InterpretedAgeTablePersistNode
+.. autoclass:: pychron.pipeline.nodes.InterpretedAgeTablePersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.SetInterpretedAgeNode
+.. autoclass:: pychron.pipeline.nodes.SetInterpretedAgeNode
    :members:
 
-.. autoclass:: pychron.pipeline.DVCPersistNode
+.. autoclass:: pychron.pipeline.nodes.DVCPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.PDFFigureNode
+.. autoclass:: pychron.pipeline.nodes.PDFFigureNode
    :members:
 
-.. autoclass:: pychron.pipeline.BlanksPersistNode
+.. autoclass:: pychron.pipeline.nodes.BlanksPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.IsotopeEvolutionPersistNode
+.. autoclass:: pychron.pipeline.nodes.IsotopeEvolutionPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.ICFactorPersistNode
+.. autoclass:: pychron.pipeline.nodes.ICFactorPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.FluxPersistNode
+.. autoclass:: pychron.pipeline.nodes.FluxPersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.XLSXTablePersistNode
+.. autoclass:: pychron.pipeline.nodes.XLSXTablePersistNode
    :members:
 
-.. autoclass:: pychron.pipeline.PushNode
+.. autoclass:: pychron.pipeline.nodes.PushNode
    :members:
 
-.. autoclass:: pychron.pipeline.ReviewNode
+.. autoclass:: pychron.pipeline.nodes.ReviewNode
    :members:
 
-.. autoclass:: pychron.pipeline.XLSXAnalysisTableNode
+.. autoclass:: pychron.pipeline.nodes.XLSXAnalysisTableNode
    :members:
 
-.. autoclass:: pychron.pipeline.InterpretedAgeTableNode
+.. autoclass:: pychron.pipeline.nodes.InterpretedAgeTableNode
    :members:
 
 

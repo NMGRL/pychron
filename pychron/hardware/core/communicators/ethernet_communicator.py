@@ -63,7 +63,7 @@ class Handler(object):
         if f:
             self.message_frame.set_str(f)
 
-    def get_packet(self, cmd):
+    def get_packet(self):
         raise NotImplementedError
 
     def send_packet(self, p):
@@ -73,11 +73,11 @@ class Handler(object):
         pass
 
     # private
-    def _recvall(self, recv, frame=None):
+    def _recvall(self, recv, datasize=None, frame=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
-        ss = []
+        # ss = []
         sum = 0
 
         # disable message len checking
@@ -95,8 +95,12 @@ class Handler(object):
             msg_len = 0
             nm = frame.nmessage_len
 
+        if datasize is None:
+            datasize = self.datasize
+
+        data = b''
         while 1:
-            s = recv(self.datasize)  # self._sock.recv(2048)
+            s = recv(datasize)
             if not s:
                 break
 
@@ -104,12 +108,10 @@ class Handler(object):
                 msg_len = int(s[:nm], 16)
 
             sum += len(s)
-            ss.append(s)
+            data += s
             if sum >= msg_len:
                 break
 
-        data = ''.join(ss)
-        data = data.strip()
         if frame.message_len:
             # trim off header
             data = data[nm:]
@@ -123,7 +125,7 @@ class Handler(object):
                 print('checksum fail computed={}, expected={}'.format(comp, checksum))
                 return
 
-        return data
+        return data.decode('utf-8')
 
 
 class TCPHandler(Handler):
@@ -136,11 +138,11 @@ class TCPHandler(Handler):
         self.sock.settimeout(timeout)
         self.sock.connect(addr)
 
-    def get_packet(self, cmd, message_frame=None):
-        return self._recvall(self.sock.recv, frame=message_frame)
+    def get_packet(self, datasize=None, message_frame=None):
+        return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
 
     def send_packet(self, p):
-        self.sock.send(p)
+        self.sock.send(p.encode('utf-8'))
 
     def end(self):
         self.sock.close()
@@ -154,7 +156,7 @@ class UDPHandler(Handler):
             timeout = 0.01
         self.sock.settimeout(timeout)
 
-    def get_packet(self, cmd, **kw):
+    def get_packet(self, **kw):
         def recv(ds):
             rx, _ = self.sock.recvfrom(ds)
             return rx
@@ -162,7 +164,7 @@ class UDPHandler(Handler):
         return self._recvall(recv)
 
     def send_packet(self, p):
-        self.sock.sendto(p, self.address)
+        self.sock.sendto(p.encode('utf-8'), self.address)
 
 
 class EthernetCommunicator(Communicator):
@@ -243,7 +245,7 @@ class EthernetCommunicator(Communicator):
         ret = not self.simulation and handler is not None
         return ret
 
-    def get_handler(self, cmd=None, timeout=None):
+    def get_handler(self, timeout=None):
         if timeout is None:
             timeout = self.timeout
 
@@ -330,15 +332,15 @@ class EthernetCommunicator(Communicator):
             self.handler.end()
         self._reset_connection()
 
-    def read(self, *args, **kw):
+    def read(self, datasize=None, *args, **kw):
         with self._lock:
             handler = self.get_handler()
             if handler:
-                return handler.get_packet('')
+                return handler.get_packet(datasize=datasize)
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:
-            handler = self.get_handler(cmd, timeout)
+            handler = self.get_handler()
             try:
                 cmd = '{}{}'.format(cmd, self.write_terminator)
                 handler.send_packet(cmd)
@@ -363,7 +365,7 @@ class EthernetCommunicator(Communicator):
             timeout = self.default_timeout
 
         self.error_mode = False
-        handler = self.get_handler(cmd, timeout)
+        handler = self.get_handler(timeout=timeout)
         if not handler:
             return
 
@@ -374,7 +376,7 @@ class EthernetCommunicator(Communicator):
                 time.sleep(delay)
 
             try:
-                return handler.get_packet(cmd, message_frame=message_frame)
+                return handler.get_packet(message_frame=message_frame)
             except socket.error as e:
                 self.warning('ask. get packet. error: {} address: {}'.format(e, self.address))
                 self.error_mode = True

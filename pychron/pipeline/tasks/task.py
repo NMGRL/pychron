@@ -14,28 +14,26 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
-from itertools import groupby
 
 from pyface.tasks.action.schema import SToolBar, SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
-from traits.api import Instance, Bool, on_trait_change
+# ============= enthought library imports =======================
+from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
-from pychron.database.interpreted_age import InterpretedAge
 from pychron.dvc import dvc_dump
+from pychron.dvc.dvc import DVCInterpretedAge
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import BrowserView
 from pychron.globals import globalv
 from pychron.paths import paths
-from pychron.pipeline.engine import PipelineEngine
+from pychron.pipeline.engine import PipelineEngine, Pipeline, NodeGroup
+from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.interpreted_age_editor import InterpretedAgeEditor
 from pychron.pipeline.save_figure import SaveFigureView, SaveFigureModel
@@ -44,13 +42,10 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, IdeogramAction, PipelineRecallAction, SpectrumAction, \
-    InverseIsochronAction, LoadReviewStatusAction, DiffViewAction
-from pychron.pipeline.tasks.interpreted_age_factory import InterpretedAgeFactoryView, \
-    InterpretedAgeFactoryModel, set_interpreted_age
-from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction
+from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
+from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pipeline.tasks.select_repo import SelectExperimentIDView
-import six
 
 
 class DataMenu(SMenu):
@@ -105,6 +100,7 @@ class PipelineTask(BaseBrowserTask):
     # resume_enabled = Bool(False)
     # run_enabled = Bool(True)
     set_interpreted_enabled = Bool(False)
+    active_editor_options = Any
     # run_to = None
 
     modified = False
@@ -113,6 +109,7 @@ class PipelineTask(BaseBrowserTask):
     diff_enabled = Bool
 
     def activated(self):
+        # 2=a
         self.debug('activating pipeline')
         super(PipelineTask, self).activated()
 
@@ -123,15 +120,15 @@ class PipelineTask(BaseBrowserTask):
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
 
-    def _debug(self):
-        self.engine.add_data()
-        if globalv.select_default_data:
-            self.engine.select_default()
-
-        if globalv.pipeline_template:
-            self.engine.set_template(globalv.pipeline_template)
-            if globalv.run_pipeline:
-                self.run()
+    # def _debug(self):
+    #     self.engine.add_data()
+    #     if globalv.select_default_data:
+    #         self.engine.select_default()
+    #
+    #     if globalv.pipeline_template:
+    #         self.engine.set_template(globalv.pipeline_template)
+    #         if globalv.run_pipeline:
+    #             self.run()
 
     def prepare_destroy(self):
         self.interpreted_age_browser_model.dump_browser()
@@ -142,8 +139,9 @@ class PipelineTask(BaseBrowserTask):
     def create_dock_panes(self):
         panes = [PipelinePane(model=self.engine),
                  AnalysesPane(model=self.engine),
-                 RepositoryPane(model=self.engine)
+                 RepositoryPane(model=self.engine),
                  # InspectorPane(model=self.engine)
+                 EditorOptionsPane(model=self)
                  ]
         return panes
 
@@ -256,44 +254,29 @@ class PipelineTask(BaseBrowserTask):
                 # tags stored as lowercase
                 tag = tag.lower()
 
-                dvc = self.dvc
-                db = dvc.db
-                key = lambda x: x.repository_identifier
-
-                for expid, ans in groupby(sorted(items, key=key), key=key):
-                    cs = []
-                    for it in ans:
-                        self.debug('setting {} tag= {}'.format(it.record_id, tag))
-                        if not isinstance(it, InterpretedAge):
-                            db.set_analysis_tag(it.uuid, tag)
-
-                        it.set_tag({'name': tag, 'note': note or ''})
-                        if dvc.update_tag(it):
-                            cs.append(it)
-                            # it.refresh_view()
-
-                    if cs:
-                        cc = [c.record_id for c in cs]
-                        if len(cc) > 1:
-                            cstr = '{} - {}'.format(cc[0], cc[-1])
-                        else:
-                            cstr = cc[0]
-                        dvc.repository_commit(expid, '<TAG> {:<6s} {}'.format(tag, cstr))
-                        for ci in cs:
-                            ci.refresh_view()
-
+                self.dvc.tag_items(tag, items, note)
                 if use_filter:
                     for e in self.editor_area.editors:
-                        if isinstance(e, FigureEditor):
-                            e.set_items([ai for ai in e.analyses if ai.tag != 'invalid'])
+                        if hasattr(e, 'set_items'):
+                            try:
+                                ans = e.items
+                            except AttributeError:
+                                ans = e.analyses
+
+                            if ans:
+                                fans = [ai for ai in ans if ai.tag.lower() != 'invalid']
+                                e.set_items(fans)
 
                 if self.active_editor:
+                    self.active_editor.figure_model = None
                     self.active_editor.refresh_needed = True
+                    # self.active_editor.figure_model.refresh()
 
                 self.browser_model.analysis_table.set_tags(tag, items)
                 self.browser_model.analysis_table.remove_invalid()
-                self.browser_model.analysis_table.refresh_needed = True
-                self.engine.refresh_table_needed = True
+                # self.browser_model.analysis_table.refresh_needed = True
+                # self.engine.refresh_table_needed = True
+                self.engine.remove_invalid()
 
     def set_invalid(self):
         items = self._get_selection()
@@ -316,16 +299,17 @@ class PipelineTask(BaseBrowserTask):
             return
 
         ed = self.active_editor
-        sfm = SaveFigureModel(ed.analyses)
-        sfv = SaveFigureView(model=sfm)
-        info = sfv.edit_traits()
-        if info.result:
-            path = sfm.prepare_path(make=True)
-            save_pdf(ed.component,
-                     path=path,
-                     options=sfm.pdf_options,
-                     # path='/Users/ross/Documents/test.pdf',
-                     view=True)
+        if isinstance(ed, FigureEditor):
+            sfm = SaveFigureModel(ed.analyses)
+            sfv = SaveFigureView(model=sfm)
+            info = sfv.edit_traits()
+            if info.result:
+                path = sfm.prepare_path(make=True)
+                save_pdf(ed.component,
+                         path=path,
+                         options=sfm.pdf_options,
+                         # path='/Users/ross/Documents/test.pdf',
+                         view=True)
 
     def run(self):
         self._run_pipeline()
@@ -380,7 +364,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Iso Evo')
 
     def set_icfactor_template(self):
-        self._set_action_template('ICFactor')
+        self._set_action_template('IC Factor')
 
     def set_blanks_template(self):
         self._set_action_template('Blanks')
@@ -398,7 +382,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Isochron')
 
     def set_inverse_isochron_template(self):
-        self._set_action_template('Inverse Isochron')
+        self._set_action_template('InverseIsochron')
 
     def set_series_template(self):
         self._set_action_template('Series')
@@ -408,6 +392,15 @@ class PipelineTask(BaseBrowserTask):
 
     def set_xy_scatter_template(self):
         self._set_action_template('XYScatter')
+
+    def set_subgroup_ideogram_template(self):
+        self._set_action_template('SubGroup Ideogram')
+
+    def set_hybrid_ideogram_template(self):
+        self._set_action_template('Hybrid Ideogram')
+
+    def set_history_ideogram_template(self):
+        self._set_action_template('History Ideogram')
 
     def set_last_n_analyses_template(self):
         self.engine.selected_pipeline_template = 'Series'
@@ -442,7 +435,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_last_nhours(24 * 7 * 30.5)
 
     def set_analysis_table_template(self):
-        self.engine.selected_pipeline_template = 'Analysis Table'
+        self.engine.selected_pipeline_template = 'Analysis'
         self.run()
 
     # private
@@ -478,26 +471,29 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-        self.debug('{} started'.format(message))
-        if close_all:
-            self.close_all()
 
-        self.dvc.db.session = None
-        self.dvc.create_session()
+        if self.engine.pre_run_check(func):
 
-        if not getattr(self.engine, func)():
-            self.engine.resume_enabled = True
-            self.engine.run_enabled = False
-            self.debug('false {} {}'.format(message, func))
-        else:
-            self.engine.run_enabled = True
-            self.engine.resume_enabled = False
-            self.debug('true {} {}'.format(message, func))
+            self.debug('{} started'.format(message))
+            if close_all:
+                self.close_all()
 
-        for editor in self.engine.state.editors:
-            self._open_editor(editor)
+            self.dvc.db.session = None
+            self.dvc.create_session()
 
-        self.debug('{} finished'.format(message))
+            if not getattr(self.engine, func)():
+                self.engine.resume_enabled = True
+                self.engine.run_enabled = False
+                self.debug('false {} {}'.format(message, func))
+            else:
+                self.engine.run_enabled = True
+                self.engine.resume_enabled = False
+                self.debug('true {} {}'.format(message, func))
+
+            for editor in self.engine.state.editors:
+                self._open_editor(editor)
+
+            self.debug('{} finished'.format(message))
 
     def _run_from_pipeline(self):
         self._run('run from', 'run_from_pipeline')
@@ -558,21 +554,56 @@ class PipelineTask(BaseBrowserTask):
             self.engine.select_node_by_editor(new)
 
         self.set_interpreted_enabled = isinstance(new, InterpretedAgeEditor)
+        if hasattr(new, 'editor_options'):
+            self.active_editor_options = new.editor_options
+        else:
+            self.active_editor_options = None
 
     # @on_trait_change('active_editor:save_needed')
     # def _handle_save_needed(self):
     #     self.engine.run_persist(self._temp_state)
 
-    @on_trait_change('engine:[tag_event, invalid_event, recall_event, omit_event]')
-    def _handle_analysis_tagging(self, name, new):
-        if name == 'tag_event':
-            self.set_tag(items=new)
-        elif name == 'invalid_event':
-            self._set_invalid(new)
-        elif name == 'omit_event':
-            self._set_omit(new)
-        elif name == 'recall_event':
-            self.recall(new)
+    @on_trait_change('engine:selected')
+    def _handle_engine_selected(self, obj, name, old, new):
+        if isinstance(new, Pipeline):
+            self.engine.pipeline = new
+        elif isinstance(new, NodeGroup):
+            pass
+        else:
+            self.engine.selected_node = new
+            if old:
+                old.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event', remove=True)
+                old.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event',
+                                    remove=True)
+                old.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event', remove=True)
+                old.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event', remove=True)
+                old.on_trait_change(self.engine.handle_len_unknowns, 'unknowns_items', remove=True)
+                old.on_trait_change(self.engine.handle_len_references, 'references_items', remove=True)
+                old.on_trait_change(self.engine.handle_status, 'unknowns:temp_status,references:temp_status', remove=True)
+
+            if new:
+                new.on_trait_change(self._handle_tag, 'unknowns:tag_event,references:tag_event')
+                new.on_trait_change(self._handle_invalid, 'unknowns:invalid_event,references:invalid_event')
+                new.on_trait_change(self._handle_omit, 'unknowns:omit_event,references:omit_event')
+                new.on_trait_change(self._handle_recall, 'unknowns:recall_event,references:recall_event')
+                new.on_trait_change(self.engine.handle_status, 'unknowns:temp_status,references:temp_status')
+                new.on_trait_change(self.engine.handle_len_unknowns, 'unknowns_items')
+                new.on_trait_change(self.engine.handle_len_references, 'references_items')
+
+            if isinstance(new, FigureNode):
+                if new.editor:
+                    editor = new.editor
+                    self.engine.selected_editor = editor
+                    self.engine.active_editor = editor
+
+    def _handle_tag(self, name, new):
+        self.set_tag(items=new)
+
+    def _handle_invalid(self, name, new):
+        self._set_invalid(new)
+
+    def _handle_omit(self, name, new):
+        self._set_omit(new)
 
     @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
@@ -581,7 +612,8 @@ class PipelineTask(BaseBrowserTask):
 
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
-        self.recall(new)
+        if not isinstance(new, DVCInterpretedAge):
+            self.recall(new)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:
@@ -601,27 +633,28 @@ class PipelineTask(BaseBrowserTask):
 
         return ret
 
-    def _opened_hook(self):
-        super(PipelineTask, self)._opened_hook()
-        if globalv.pipeline_debug:
-            self._debug()
+    # def _opened_hook(self):
+    #     super(PipelineTask, self)._opened_hook()
+    #     if globalv.pipeline_debug:
+    #         self._debug()
 
     def _get_selection(self):
-        items = self.engine.selected.unknowns
-        items.extend(self.engine.selected.references)
-        items = [i for i in items if i.temp_selected]
+        if self.engine.selected:
+            items = self.engine.selected.unknowns
+            items.extend(self.engine.selected.references)
+            items = [i for i in items if i.temp_selected]
 
-        uuids = [i.uuid for i in items]
-        for ans in (self.engine.selected_unknowns,
-                    self.engine.selected_references):
-            for i in ans:
-                if i.uuid not in uuids:
-                    items.append(i)
+            uuids = [i.uuid for i in items]
+            for ans in (self.engine.selected_unknowns,
+                        self.engine.selected_references):
+                for i in ans:
+                    if i.uuid not in uuids:
+                        items.append(i)
 
-        # items.extend(self.engine.selected_unknowns)
-        # items.extend(self.engine.selected_references)
+            # items.extend(self.engine.selected_unknowns)
+            # items.extend(self.engine.selected_references)
 
-        return items
+            return items
 
     def _get_tagname(self, items):
         from pychron.pipeline.tagging.analysis_tags import AnalysisTagModel
@@ -634,7 +667,7 @@ class PipelineTask(BaseBrowserTask):
 
         info = tv.edit_traits()
         if info.result:
-            return model.tag, model.items, model.use_filter, model.note
+            return model.tag, model.get_items(), model.use_filter, model.note
 
     # def _get_dr_tagname(self, items):
     #     from pychron.pipeline.tagging.data_reduction_tags import DataReductionTagModel

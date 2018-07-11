@@ -25,7 +25,7 @@ from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool
 class NamedValue(HasTraits):
     name = Str
     value = Either(Str, Float, Int, None)
-
+    units = Str
 
 class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
@@ -48,7 +48,7 @@ class DetectorRatio(ComputedValue):
 
 
 class ExtractionValue(NamedValue):
-    units = Str
+    pass
 
 
 class MeasurementValue(NamedValue):

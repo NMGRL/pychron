@@ -248,6 +248,7 @@ class ReferencesSeries(BaseSeries):
         return asarray(p_uys), asarray(p_ues)
 
     def post_make(self):
+        self._fix_log_axes()
         do_later(self.graph.refresh)
 
     def plot(self, plots, legend=None):

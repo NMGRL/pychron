@@ -16,13 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import on_trait_change
+
 # ============= standard library imports ========================
 from numpy import Inf
+from six.moves import zip
 
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.ideogram import Ideogram
-from six.moves import zip
 
 
 # ============= local library imports  ==========================
@@ -37,6 +37,30 @@ class IdeogramPanel(FigurePanel):
     # def _handle_limits(self, obj, name, new):
     #     for f in self.figures:
     #         f.replot()
+    # def _make_figures(self, **kw):
+    #     key = attrgetter('group_id')
+    #     skey = attrgetter('subgroup')
+    #     ans = sorted(self.analyses, key=key)
+    #
+    #     sg = list({skey(ai) for ai in ans})
+    #
+    #     nsubgroups = len(sg)
+    #     if nsubgroups > 1 or bool(sg[0]):
+    #         gs = []
+    #         cnt = 0
+    #         for gid, ais in groupby(ans, key=key):
+    #             for j, (sgid, aais) in enumerate(groupby(sorted(ais, key=skey), key=skey)):
+    #                 aais = list(aais)
+    #                 f = self._figure_klass(analyses=aais, group_id=cnt, subgroup_id=j, subgroup=sgid, **kw)
+    #                 for a in aais:
+    #                     a.group_id = cnt
+    #
+    #                 gs.append(f)
+    #                 cnt += 1
+    #     else:
+    #         gs = [self._figure_klass(analyses=list(ais), group_id=gid, **kw)
+    #               for gid, ais in groupby(ans, key=key)]
+    #     return gs
 
     def _handle_rescale(self, obj, name, new):
         if new == 'y':
@@ -74,7 +98,7 @@ class IdeogramPanel(FigurePanel):
                 mi, ma = po.xlow, po.xhigh
             else:
                 xmas, xmis = list(zip(*[(i.max_x(attr), i.min_x(attr))
-                                   for i in self.figures]))
+                                        for i in self.figures]))
                 mi, ma = min(xmis), max(xmas)
 
                 cs = [i.mean_x(attr) for i in self.figures]

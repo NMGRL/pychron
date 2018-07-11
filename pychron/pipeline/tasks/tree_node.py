@@ -58,11 +58,13 @@ class PipelineTreeNode(TreeNode):
         c = QColor(Qt.white)
         if not isinstance(obj, Pipeline):
             c = QColor(Qt.lightGray)
-
-            if obj.visited:
+            if not obj.enabled:
+                c = QColor('lightblue')
+            elif obj.visited:
                 c = QColor(Qt.green)
             elif obj.active:
                 c = QColor('orange')
+
         # if obj.status == 'ran':
         #     c = QColor('green')
         # elif obj.status == 'paused':

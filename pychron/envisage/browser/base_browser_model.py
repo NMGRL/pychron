@@ -17,11 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
-import six.moves.cPickle as pickle
+
 import os
 import re
 from datetime import timedelta, datetime
 
+import six.moves.cPickle as pickle
+from six.moves import filter
+from six.moves import map
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits, Event, Float
 from traits.trait_types import BaseStr
@@ -33,14 +36,11 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.progress import progress_loader
 from pychron.core.ui.table_configurer import SampleTableConfigurer
 from pychron.envisage.browser.adapters import LabnumberAdapter
-from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, \
     PrincipalInvestigatorRecordView, LoadRecordView
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import DVC_PROTOCOL
-from six.moves import filter
-from six.moves import map
 
 
 class IdentifierStr(BaseStr):
@@ -85,7 +85,6 @@ def filter_func(new, attr=None, comp=None):
 
 
 class SearchCriteria(HasTraits):
-    recent_hours = Float
     reference_hours_padding = Float
     graphical_filtering_max_days = Int
 
@@ -159,6 +158,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     mass_spectrometer_includes = List
     available_mass_spectrometers = List
 
+    auto_load_database = Bool(True)
+    load_selection_enabled = Bool(True)
+
     named_date_range = Enum('this month', 'this week', 'yesterday')
     low_post = Property(Date, depends_on='date_enabled, _low_post, use_low_post, use_named_date_range, '
                                          'named_date_range')
@@ -182,11 +184,12 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     sample_view_active = Bool(True)
 
-    use_workspace = False
-    workspace = None
-    manager = Any
+    # use_workspace = False
+    # workspace = None
+    # manager = Any
 
     db = Property
+
     use_fuzzy = True
     pattributes = ('project_enabled',
                    'repository_enabled',
@@ -203,6 +206,9 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     _suppress_load_labnumbers = False
 
     def reattach(self):
+        pass
+
+    def activate_browser(self, force=False):
         pass
 
     def make_records(self, ans):
@@ -266,7 +272,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return
 
     def configure_sample_table(self):
-        self.table_configurer.edit_traits()
+        self.table_configurer.edit_traits(kind='livemodal')
 
     def set_projects(self, ps, sel=None):
         if sel is None:
@@ -305,8 +311,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.oprojects = ad
 
     def load_principal_investigators(self):
+        self.debug('load principal investigators')
         db = self.db
         ps = db.get_principal_investigators(order='asc', verbose_query=True)
+        self.debug('n pis={}'.format(len(ps)))
         if ps:
             self.principal_investigators = [PrincipalInvestigatorRecordView(p) for p in ps]
             self.principal_investigator_names = [p.name for p in ps]
@@ -378,46 +386,14 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
     def _load_associated_labnumbers(self):
         """
         """
+
         if self._suppress_load_labnumbers:
+            print('skiping load associated')
             return
 
-        sams = []
-        self._recent_mass_spectrometers = []
-        warned = False
-
-        if self.selected_projects:
-            if any((p.name.startswith('RECENT') for p in self.selected_projects)):
-                if not self.search_criteria.recent_hours:
-                    if not warned:
-                        self.warning_dialog('Set "RECENT (hrs)" in Preferences.\n'
-                                            '"RECENT (hrs)" is located in the "Browser" category')
-
-        sams.extend(self._make_labnumbers())
-
+        sams = self._make_labnumbers()
         self.samples = sams
         self.osamples = sams
-
-    # def _retrieve_recent_labnumbers(self, recent_name):
-    #     ms = extract_mass_spectrometer_name(recent_name)
-    #     db = self.db
-    #     hpost = datetime.now()
-    #     lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
-    #     self._low_post = lpost
-    #
-    #     self.use_high_post = False
-    #     self.use_low_post = True
-    #
-    #     self.trait_property_changed('low_post', self._low_post)
-    #     self._recent_mass_spectrometers.append(ms)
-    #
-    #     # es = [e.name for e in self.selected_repositories] if self.selected_repositories else []
-    #     ls = db.get_labnumbers(mass_spectrometers=(ms,),
-    #                            # repositories=es,
-    #                            low_post=lpost)
-    #
-    #     sams = self._load_sample_record_views(ls)
-    #
-    #     return sams
 
     def _populate_samples(self, lns=None):
         db = self.db
@@ -568,29 +544,64 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         return p.lower()
 
+    def _make_project(self, record):
+        return ProjectRecordView(record)
+
+    def _make_principal_investigator(self, record):
+        return PrincipalInvestigatorRecordView(record)
+
+    def _make_load(self, record):
+        return LoadRecordView(record)
+
+    def _make_sample(self, record):
+        return LabnumberRecordView(record)
+
     def _load_browser_selection(self, selection):
-        def load(attr, values):
-            def get(n):
+        if not self.auto_load_database:
+            for attr in ('load', 'project', 'principal_investigator', 'sample'):
+                pattr = '{}s'.format(attr)
                 try:
-                    return next((p for p in values if p.id == n), None)
-                except AttributeError as e:
-                    print(e)
+                    sel = selection[pattr]
+                except KeyError:
+                    return
+                vs = []
+                if sel:
+                    if attr == 'sample':
+                        func = self.db.get_identifier
+                    else:
+                        func = getattr(self.db, 'get_{}'.format(attr))
+
+                    make = getattr(self, '_make_{}'.format(attr))
+                    for si in sel:
+                        v = func(si)
+                        vs.append(make(v))
+
+                    setattr(self, pattr, vs)
+                    setattr(self, 'selected_{}'.format(pattr), vs)
+
+        else:
+            def load(attr, values):
+                def get(n):
+                    try:
+                        return next((p for p in values if p.id == n), None)
+                    except AttributeError as e:
+                        print(e)
+                        return
+
+                try:
+                    sel = selection[attr]
+                except KeyError:
                     return
 
-            try:
-                sel = selection[attr]
-            except KeyError:
-                return
+                vs = [get(pp) for pp in sel]
+                vs = [pp for pp in vs if pp is not None]
+                setattr(self, 'selected_{}'.format(attr), vs)
 
-            vs = [get(pp) for pp in sel]
-            vs = [pp for pp in vs if pp is not None]
-            setattr(self, 'selected_{}'.format(attr), vs)
-
-        load('principal_investigators', self.principal_investigators)
-        load('projects', self.projects)
-        # load('experiments', self.repositories)
-        load('samples', self.samples)
-        load('loads', self.loads)
+            load('principal_investigators', self.principal_investigators)
+            load('projects', self.projects)
+            # load('experiments', self.repositories)
+            load('samples', self.samples)
+            load('loads', self.loads)
 
     def _load_projects_for_principal_investigators(self, pis=None):
         ms = None
@@ -704,8 +715,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
         self.osamples = []
 
     def _labnumber_tabular_adapter_changed(self):
-        self.table_configurer.adapter = self.labnumber_tabular_adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(self.labnumber_tabular_adapter)
 
     def _clear_selection_button_fired(self):
         self.selected_projects = []
@@ -804,13 +814,16 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             ats = self._analysis_include_types
             return list(map(str.lower, ats))
 
+    def _handle_source_change(self, new):
+        self.activate_browser(force=True)
+
     _warned = False
 
     @cached_property
     def _get_db(self):
-        if self.use_workspace:
-            db = self.workspace.index_db
-        elif self.dvc:
+        # if self.use_workspace:
+        #     db = self.workspace.index_db
+        if self.dvc:
             db = self.dvc
         else:
             db = self.application.get_service(DVC_PROTOCOL)
@@ -820,11 +833,8 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                 self.warning_dialog('You need to enable the DVC plugin')
             self._warned = True
         else:
+            db.on_trait_change(self._handle_source_change, 'data_source')
             return db
-            # if to_bool(self.application.preferences.get('pychron.dvc.enabled')):
-            # return
-            # else:
-            #     return self.manager.db
 
     # persistence
     @property
@@ -844,7 +854,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             try:
                 with open(p, 'rb') as rfile:
                     return pickle.load(rfile)
-            except (pickle.PickleError, EOFError, OSError) as e:
+            except (pickle.PickleError, EOFError, OSError, UnicodeDecodeError) as e:
                 self.debug('Failed loaded previous browser selection. {}'.format(e))
                 pass
         else:
@@ -856,8 +866,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
     def _labnumber_tabular_adapter_default(self):
         adapter = LabnumberAdapter()
-        self.table_configurer.adapter = adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(adapter)
         return adapter
 
 # ============= EOF =============================================

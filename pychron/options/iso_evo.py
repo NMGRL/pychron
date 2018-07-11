@@ -15,20 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import List, Float, Bool, Int, on_trait_change
+from traits.api import List, Float, Bool, Int, Range, Enum, cached_property
 
+from pychron.core.fits.fit import IsoFilterFit
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
-from pychron.core.fits.fit import IsoFilterFit
-from traits.api import HasTraits, Enum, cached_property
-
 from pychron.pychron_constants import FIT_TYPES
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
-    names = List
     height = 0
     ofit = None
     goodness_threshold = Float  # in percent
@@ -37,6 +33,8 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     outlier_goodness = Int
     curvature_goodness = Float
     curvature_goodness_at = Float
+    rsquared_goodness = Range(0.0, 1.0, 0.95)
+
     n_threshold = Int
     n_true = Enum(FIT_TYPES)
     n_false = Enum(FIT_TYPES)

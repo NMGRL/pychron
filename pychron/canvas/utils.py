@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 import struct
-import six
-from six.moves import range
 
 
 def load_holder_canvas(canvas, geom, **kw):
     if geom:
-        if isinstance(geom, (str, six.text_type)):
+        if isinstance(geom, str):
 
             holes = [(x, y, r, str(c + 1))
                      for c, (x, y, r) in iter_geom(geom)]
@@ -22,4 +20,4 @@ def iter_geom(geom, fmt='>fff', width=12):
 
 
 def make_geom(xyr, fmt='>fff'):
-    return ''.join((struct.pack(fmt, *args)) for args in xyr)
+    return b''.join((struct.pack(fmt, *args)) for args in xyr).decode('utf-8')

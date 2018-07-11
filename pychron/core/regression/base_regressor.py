@@ -17,19 +17,21 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 import logging
 import math
 import re
 
-from numpy import where, delete
+from numpy import where, delete, polyfit
+from six.moves import range
+from six.moves import zip
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property, HasTraits
 
 from pychron.core.stats.core import calculate_mswd, validate_mswd
+from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.pychron_constants import ALPHAS, PLUSMINUS
 from .tinv import tinv
-from six.moves import range
-from six.moves import zip
 
 logger = logging.getLogger('BaseRegressor')
 
@@ -63,7 +65,7 @@ class BaseRegressor(HasTraits):
     filter_ys = Array
     # _filtering = Bool(False)
 
-    error_calc_type = 'SD'
+    error_calc_type = 'CI'
 
     mswd = Property(depends_on='dirty, xs, ys')
     valid_mswd = Bool
@@ -99,6 +101,26 @@ class BaseRegressor(HasTraits):
     @property
     def sem(self):
         return self.std / self.n ** 0.5
+
+    @property
+    def rsquared(self):
+        return self._get_rsquared()
+
+    def _get_rsquared(self):
+        return 0
+
+    @property
+    def rsquared_adj(self):
+        return self._get_rsquared_adj()
+
+    def _get_rsquared_adj(self):
+        return 0
+
+    def get_xsquared_coefficient(self):
+        x = self.clean_xs
+        y = self.clean_ys
+        a, b, c = polyfit(x, y, 2)
+        return b
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -207,27 +229,43 @@ class BaseRegressor(HasTraits):
         if error_calc is None:
             error_calc = self.error_calc_type
 
-        func = self.calculate_ci
-        if error_calc == 'SEM':
-            func = self.calculate_sem_error_envelope
-        elif error_calc == 'SD':
-            func = self.calculate_sd_error_envelope
+        # func = self.calculate_ci
+        # if error_calc == 'SEM':
+        #     func = self.calculate_sem_error_envelope
+        # elif error_calc == 'SD':
+        #     func = self.calculate_sd_error_envelope
+        # elif error_calc == 'MC':
+        #     func = self.calculate_mc_error_envelope
 
-        return func(rx, rmodel)
+        es = self.predict_error(rx, error_calc=error_calc)
+        return rmodel-es, rmodel+es
+        # return func(rx, rmodel)
 
-    def calculate_sd_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SD')
-        return rmodel - es, rmodel + es
+    # def calculate_sd_error_envelope(self, rx, rmodel):
+    #     es = self.predict_error(rx, error_calc='MC')
+    #     return rmodel-es, rmodel+es
+    #
+    # def calculate_sd_error_envelope(self, rx, rmodel):
+    #     es = self.predict_error(rx, error_calc='SD')
+    #     return rmodel - es, rmodel + es
+    #
+    # def calculate_sem_error_envelope(self, rx, rmodel):
+    #     es = self.predict_error(rx, error_calc='SEM')
+    #     return rmodel - es, rmodel + es
 
-    def calculate_sem_error_envelope(self, rx, rmodel):
-        es = self.predict_error(rx, error_calc='SEM')
-        return rmodel - es, rmodel + es
+    # def calculate_ci(self, rx, rmodel):
+    #     cors = self.calculate_ci_error(rx)
+    #     if rmodel is not None and cors is not None:
+    #         if rmodel.shape[0] and cors.shape[0]:
+    #             return rmodel - cors, rmodel + cors
 
-    def calculate_ci(self, rx, rmodel):
-        cors = self.calculate_ci_error(rx)
-        if rmodel is not None and cors is not None:
-            if rmodel.shape[0] and cors.shape[0]:
-                return rmodel - cors, rmodel + cors
+    def calculate_mc_error(self, rx):
+        if isinstance(rx, (float, int)):
+            rx = [rx]
+
+        estimator = RegressionEstimator(10000, self)
+        _,es = estimator.estimate(rx)
+        return es
 
     def calculate_ci_error(self, rx):
         cors = self._calculate_ci(rx)

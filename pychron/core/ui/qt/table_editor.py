@@ -73,5 +73,7 @@ class myTableEditor(TableEditor):
         if self.on_command_key:
             self.on_command_key(new)
 
+    def _get_custom_editor_class(self):
+        return self.simple_editor_class
 
 # ============= EOF =============================================

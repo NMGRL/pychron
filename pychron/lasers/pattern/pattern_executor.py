@@ -34,7 +34,6 @@ from pychron.envisage.view_util import open_view
 from pychron.hardware.motion_controller import PositionError, TargetPositionError
 from pychron.lasers.pattern.patternable import Patternable
 from pychron.paths import paths
-from six.moves import range
 
 
 class PatternExecutor(Patternable):
@@ -147,7 +146,7 @@ class PatternExecutor(Patternable):
         self.pattern.window_y = 50
         open_view(self.pattern, view='graph_view')
 
-    def execute(self, block=False, duration=None):
+    def execute(self, block=False, duration=None, thread_safe=True):
         """
             if block is true wait for patterning to finish
             before returning
@@ -158,7 +157,7 @@ class PatternExecutor(Patternable):
         self.start(show=self.show_patterning)
         evt = None
         # if current_thread().name != 'MainThread':
-        if currentThreadName() != 'MainThread':
+        if thread_safe:
             evt = Event()
             invoke_in_main_thread(self._pre_execute, evt)
             while not evt.is_set():
@@ -259,7 +258,7 @@ class PatternExecutor(Patternable):
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
-        except (TargetPositionError,PositionError) as e:
+        except (TargetPositionError, PositionError) as e:
             self.finish()
             self.controller.stop()
             self.laser_manager.emergency_shutoff(str(e))
@@ -331,7 +330,10 @@ class PatternExecutor(Patternable):
         self.debug('dwell duration {}'.format(duration))
 
         if pattern.kind == 'DragonFlyPeakPattern':
-            self._dragonfly_peak(st, pattern, lm, controller)
+            try:
+                self._dragonfly_peak(st, pattern, lm, controller)
+            except BaseException as e:
+                self.critical('Dragonfly exception. {}'.format(e))
         else:
             self._hill_climber(st, controller, pattern)
 
@@ -344,7 +346,7 @@ class PatternExecutor(Patternable):
 
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
-        imgplot = pattern.setup_execution_graph(nplots=1)[0]
+        imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)
         cx, cy = pattern.cx, pattern.cy
 
         sm = lm.stage_manager
@@ -353,7 +355,7 @@ class PatternExecutor(Patternable):
         in_motion = controller.in_motion
         find_lum_peak = sm.find_lum_peak
         set_data = imgplot.data.set_data
-        # set_data2 = imgplot2.data.set_data
+        set_data2 = imgplot2.data.set_data
 
         duration = pattern.duration
         sat_threshold = pattern.saturation_threshold
@@ -362,11 +364,13 @@ class PatternExecutor(Patternable):
         aggressiveness = pattern.aggressiveness
         update_period = pattern.update_period / 1000.
         move_threshold = pattern.move_threshold
+        blur = pattern.blur
         px, py = cx, cy
 
         point_gen = None
         cnt = 0
         peak = None
+
         while time.time() - st < total_duration:
             if not self._alive:
                 break
@@ -377,7 +381,11 @@ class PatternExecutor(Patternable):
             npt = None
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
             while time.time() - ist < duration or in_motion():
-                pt, peakcol, peakrow, peak_img, sat = find_lum_peak(min_distance)
+                args = find_lum_peak(min_distance, blur)
+                if args is None:
+                    continue
+
+                pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
                 if peak is None:
@@ -386,15 +394,15 @@ class PatternExecutor(Patternable):
                     peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
 
                 img = gray2rgb(peak).astype(uint8)
-
+                src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
                     c = circle(peakrow, peakcol, min_distance / 2)
                     img[c] = (255, 0, 0)
-                    # src[c] = (255, 0, 0)
+                    src[c] = (255, 0, 0)
 
                 # set_data('imagedata', src)
-                # set_data2('imagedata', img)
+                set_data2('imagedata', src)
                 set_data('imagedata', img)
                 sleep(update_period)
 
@@ -418,16 +426,24 @@ class PatternExecutor(Patternable):
                 else:
                     continue
 
+            # if npt is None:
+            #     if not point_gen:
+            #         point_gen = pattern.point_generator()
+            #     # wait = False
+            #     npt = next(point_gen)
+            #     self.debug('generating new point={}'.format(npt))
+            #
+            # else:
+            #     point_gen = None
+            # wait = True
             if npt is None:
-                if not point_gen:
-                    point_gen = pattern.point_generator()
-                # wait = False
-                npt = next(point_gen)
-                self.debug('generating new point={}'.format(npt))
+                block = total_duration - (time.time() - st) < duration
+                linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
+                            use_calibration=False)
+                pattern.position_str = 'Return to Center'
+                px, py = cx, cy
+                continue
 
-            else:
-                point_gen = None
-                # wait = True
             try:
                 scalar = npt[2]
             except IndexError:
@@ -438,6 +454,7 @@ class PatternExecutor(Patternable):
             dy = npt[1] / sm.pxpermm * ascalar
             if abs(dx) < move_threshold or abs(dy) < move_threshold:
                 self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
+                pattern.position_str = 'Deviation too small'
                 continue
             px += dx
             py -= dy

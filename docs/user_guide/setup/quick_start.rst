@@ -7,7 +7,7 @@ Step 0. Downloads
     A. (Optional) Download and install the excellent python IDE, PyCharm. A free community edition is available at
        https://www.jetbrains.com/pycharm/
     #. Install Git. https://git-scm.com/downloads
-    #. Download the Anaconda Python 2.7 Distribution from https://store.continuum.io/cshop/anaconda/. This download
+    #. Download the Anaconda Python 3.6 Distribution from https://store.continuum.io/cshop/anaconda/. This download
        includes the Python standard library and numerous open
        source packages for science, engineering and application development. The excellent package manager ``conda`` is
        also included to install any additional dependencies
@@ -50,12 +50,30 @@ Create the file ``pychron_launcher.sh`` in a convenient place
     export GITHUB_PASSWORD=
     export GITHUB_ORGANIZATION=
     export MassSpecDBVersion=16
-    export CONDA_DISTRO=~/anaconda2
+    export CONDA_DISTRO=~/anaconda3
     export CONDA_ENV=pychron
     export QT_API=pyqt
 
-    $CONDA_DISTRO/envs/$CONDA_ENV/bin/python $ENTRY_POINT
+    $CONDA_DISTRO/envs/$CONDA_ENV/bin/pythonw $ENTRY_POINT
 
+
+Setup Environment
+========================================
+Install command line developer tools
+::
+    xcode-select --install
+
+Setup the conda environment
+::
+
+    conda create -n pychron3 python=3.5 python.app
+    source activate pychron3
+    conda install pymysql gitpython sqlalchemy reportlab lxml pyyaml yaml
+    conda install envisage pyqt=4 statsmodels
+    conda install xlrd xlwrt xlsxwriter
+    conda install requests certifi
+    conda install swig cython
+    pip install chaco uncertainties peakutils qimage2ndarray
 
 Manual
 ===========================

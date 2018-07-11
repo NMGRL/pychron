@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import re
 import traceback
+import json
 
 from twisted.internet import defer
 from twisted.internet.protocol import Protocol
@@ -27,7 +28,6 @@ from twisted.protocols.basic import LineReceiver
 
 from pychron.tx.errors import InvalidArgumentsErrorCode
 from pychron.tx.exceptions import ServiceNameError, ResponseError
-from pychron import json
 
 
 def default_err(failure):
@@ -82,6 +82,7 @@ class ServiceProtocol(LineReceiver):
 
     def dataReceived(self, data):
         self.debug('Received n={n}: {data!r}', n=len(data), data=data)
+        data = data.decode('utf-8')
         data = data.strip()
         args = self._get_service(data)
         if args:
@@ -129,7 +130,7 @@ class ServiceProtocol(LineReceiver):
     def _send_response(self, resp):
         resp = str(resp)
         self.debug('Response {data!r}', data=resp)
-        self.transport.write(resp)
+        self.transport.write(resp.encode('utf-8'))
         self.transport.loseConnection()
 
     def _get_service(self, data):

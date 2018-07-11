@@ -28,7 +28,7 @@ from pychron.pychron_constants import LIGHT_YELLOW
 class Consoleable(Loggable):
     use_message_colormapping = Bool
     console_display = Instance('pychron.displays.display.DisplayController')
-    console_updated = Event
+    # console_updated = Event
     console_bgcolor = LIGHT_YELLOW
     console_fontsize = Int(11)
     console_default_color = Color('black')
@@ -57,7 +57,7 @@ class Consoleable(Loggable):
         if self.console_display:
             self.console_display.add_text(msg, color=color)
 
-        self.console_updated = '{}|{}'.format(color, msg)
+        # self.console_updated = '{}|{}'.format(color, msg)
 
     def heading(self, msg, decorate_chr='*', *args, **kw):
         d = decorate_chr * 7
@@ -77,7 +77,7 @@ class Consoleable(Loggable):
         if log:
             super(Consoleable, self).info(msg, *args, **kw)
 
-        self.console_updated = '{}|{}'.format(color, msg)
+        # self.console_updated = '{}|{}'.format(color, msg)
 
     def info_marker(self, char='=', color=None):
         if color is None:

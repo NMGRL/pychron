@@ -47,8 +47,9 @@ class PeakCenterEditor(ScanEditor):
     model = Instance('pychron.spectrometer.jobs.peak_center.PeakCenter')
 
     def traits_view(self):
-        v = View(VSplit(UItem('graph', style='custom', editor=InstanceEditor()),
+        v = View(VSplit(UItem('graph', style='custom', height=0.8, editor=InstanceEditor()),
                         UItem('results',
+                              height=0.2,
                               editor=TabularEditor(adapter=PeakCenterResultsAdapter()))))
         return v
 

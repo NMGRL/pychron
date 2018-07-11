@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from chaco.plot_containers import GridPlotContainer
+from chaco.plot_containers import GridPlotContainer, VPlotContainer
 from traits.api import HasTraits, Any, Int
 # from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 # ============= standard library imports ========================
@@ -72,5 +72,8 @@ class FigureContainer(HasTraits):
                                use_backbuffer=True,
                                padding_top=0)
         return op, r, c
+
+    def _component_default(self):
+        return VPlotContainer()
 
 # ============= EOF =============================================

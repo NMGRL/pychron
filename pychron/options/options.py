@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 from itertools import groupby
-import yaml
 
+import yaml
 from enable.markers import marker_names
+from six.moves import range
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -31,12 +33,12 @@ from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
-from six.moves import range
 
 
 def _table_column(klass, *args, **kw):
@@ -93,11 +95,16 @@ class GroupSubOptions(SubOptions):
 
 class AppearanceSubOptions(SubOptions):
     def _get_layout_group(self):
-        rc_grp = VGroup(HGroup(Item('object.layout.rows', enabled_when='object.layout.fixed!="square"'),
-                               Item('object.layout.columns', enabled_when='object.layout.fixed!="square"'),
-                               Item('object.layout.fixed')),
-                        label='Layout', show_border=True)
-        return rc_grp
+        # rc_grp = VGroup(HGroup(Item('object.layout.rows',
+        #                             enabled_when='object.layout.row_enabled'),
+        #                        Item('object.layout.columns',
+        #                             enabled_when='object.layout.column_enabled'
+        #                             ),
+        #                        Item('object.layout.fixed')),
+        #                 label='Layout', show_border=True)
+        # return rc_grp
+        return VGroup(UItem('layout', style='custom'))
+
 
     def _get_xfont_group(self):
         v = VGroup(self._create_axis_group('x', 'title'),
@@ -174,7 +181,8 @@ class MainOptions(SubOptions):
                 checkbox_column(name='ytick_visible', label='Y Tick'),
                 checkbox_column(name='ytitle_visible', label='Y Title'),
                 checkbox_column(name='y_axis_right', label='Y Right'),
-
+                object_column(name='scalar', label='Multiplier',
+                              format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
                 # object_column(name='filter_str', label='Filter')
                 ]
@@ -391,6 +399,8 @@ class FigureOptions(BaseOptions):
                     v = n
                 elif ai == '<space>':
                     v = ' '
+                elif ai == 'runid':
+                    v = ref.record_id
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':

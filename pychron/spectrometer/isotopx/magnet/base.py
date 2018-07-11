@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traits.api import Float
-from traitsui.api import View, Item, VGroup, HGroup, Spring
 from pychron.spectrometer.base_magnet import BaseMagnet
 from pychron.spectrometer.isotopx import IsotopxMixin
 
@@ -28,6 +26,7 @@ class IsotopxMagnet(BaseMagnet, IsotopxMixin):
         pass
 
     def traits_view(self):
+        from traitsui.api import View, Item, VGroup
         v = View(VGroup(Item('mass'), show_border=True, label='Control'))
         return v
         

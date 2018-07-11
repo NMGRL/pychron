@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import Instance
 
 # ============= standard library imports ========================
@@ -41,24 +42,7 @@ class InterpretedAgeBrowserModel(BrowserModel):
         ias = []
         if new:
             ias = self._retrieve_interpreted_ages(new)
-            # uuids = [ai.uuid for ai in self.analysis_table.analyses]
-            #
-            # kw = dict(limit=lim,
-            #           include_invalid=not at.omit_invalid,
-            #           mass_spectrometers=self._recent_mass_spectrometers,
-            #           exclude_uuids=uuids,
-            #           experiments=[e.name for e in self.selected_experiments] if self.selected_experiments else None)
-            #
-            # lp, hp = self.low_post, self.high_post
-            # ans = self._retrieve_sample_analyses(new,
-            #                                      low_post=lp,
-            #                                      high_post=hp,
-            #                                      **kw)
-            #
-            # self.debug('selected samples changed. loading analyses. '
-            #            'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
 
-        # self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
         self.interpreted_age_table.set_interpreted_ages(ias)
 
     def _retrieve_interpreted_ages(self, identifiers):
@@ -75,6 +59,6 @@ class InterpretedAgeBrowserModel(BrowserModel):
         return ias
 
     def _interpreted_age_table_default(self):
-        return InterpretedAgeTable()
+        return InterpretedAgeTable(dvc=self.dvc)
 
 # ============= EOF =============================================

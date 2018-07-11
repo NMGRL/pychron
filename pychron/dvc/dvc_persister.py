@@ -14,9 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-import base64
 import hashlib
 import os
 import shutil
@@ -24,12 +21,13 @@ import struct
 from datetime import datetime
 
 from git.exc import GitCommandError
+# ============= enthought library imports =======================
 from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
+from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.dvc import dvc_dump, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
-# from pychron.experiment.classifier.isotope_classifier import IsotopeClassifier
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
@@ -44,8 +42,8 @@ def spectrometer_sha(src, defl, gains):
     sha = hashlib.sha1()
     for d in (src, defl, gains):
         for k, v in sorted(d.items()):
-            sha.update(k)
-            sha.update(str(v))
+            sha.update(k.encode('utf-8'))
+            sha.update(str(v).encode('utf-8'))
 
     return sha.hexdigest()
 
@@ -59,7 +57,6 @@ class DVCPersister(BasePersister):
     default_principal_investigator = Str
     _positions = None
 
-    macrochron_enabled = Bool(True)
     save_log_enabled = Bool(False)
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
@@ -101,18 +98,21 @@ class DVCPersister(BasePersister):
         pass
 
     def post_extraction_save(self):
-
+        self.info('================= post extraction save started =================')
         per_spec = self.per_spec
         rblob = per_spec.response_blob  # time vs measured response
         oblob = per_spec.output_blob  # time vs %output
         sblob = per_spec.setpoint_blob  # time vs requested
 
         if rblob:
-            rblob = base64.b64encode(rblob)
+            # rblob = base64.b64encode(rblob.encode('utf-8')).decode('utf-8')
+            rblob = encode_blob(rblob)
         if oblob:
-            oblob = base64.b64encode(oblob)
+            # oblob = base64.b64encode(oblob.encode('utf-8')).decode('utf-8')
+            oblob = encode_blob(oblob)
         if sblob:
-            sblob = base64.b64encode(sblob)
+            # sblob = base64.b64encode(sblob.encode('utf-8')).decode('utf-8')
+            sblob = encode_blob(sblob)
 
         obj = {'measured_response': rblob,  # time vs
                'requested_output': oblob,
@@ -158,6 +158,7 @@ class DVCPersister(BasePersister):
 
         path = self._make_path(modifier='extraction')
         dvc_dump(obj, path)
+        self.info('================= post extraction save finished =================')
 
     def pre_measurement_save(self):
         pass
@@ -173,7 +174,7 @@ class DVCPersister(BasePersister):
         push changes
         :return:
         """
-        self.debug('================= post measurement started')
+        self.info('================= post measurement save started =================')
         ret = True
 
         ar = self.active_repository
@@ -270,7 +271,7 @@ class DVCPersister(BasePersister):
 
         with dvc.session_ctx():
             self._save_analysis_db(timestamp)
-        self.debug('================= post measurement finished')
+        self.info('================= post measurement save finished =================')
         return ret
 
     def save_run_log_file(self, path):
@@ -333,8 +334,8 @@ class DVCPersister(BasePersister):
 
         if self._positions:
             db = self.dvc.db
-            load_name = self.per_spec.load_name
-            load_holder = self.per_spec.load_holder
+            load_name = rs.load_name
+            load_holder = rs.load_holder
 
             db.add_load(load_name, load_holder)
             db.flush()
@@ -342,7 +343,10 @@ class DVCPersister(BasePersister):
 
             for position in self._positions:
                 dbpos = db.add_measured_position(load=load_name, **position)
-                an.measured_positions.append(dbpos)
+                if dbpos:
+                    an.measured_positions.append(dbpos)
+                else:
+                    self.warning('failed adding position {}, load={}'.format(position, load_name))
 
                 # an.measured_position = pos
         # all associations are handled by the ExperimentExecutor._retroactive_experiment_identifiers
@@ -389,14 +393,17 @@ class DVCPersister(BasePersister):
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
         for iso in per_spec.isotope_group.values():
+            sblob = encode_blob(iso.pack(endianness, as_hex=False))
+            snblob = encode_blob(iso.sniff.pack(endianness, as_hex=False))
 
-            sblob = base64.b64encode(iso.pack(endianness, as_hex=False))
-            snblob = base64.b64encode(iso.sniff.pack(endianness, as_hex=False))
             for ss, blob in ((signals, sblob), (sniffs, snblob)):
                 d = {'isotope': iso.name, 'detector': iso.detector, 'blob': blob}
                 ss.append(d)
 
-            isod = {'detector': iso.detector, 'name': iso.name}
+            detector = next((d for d in per_spec.active_detectors if d.name == iso.detector), None)
+
+            isod = {'detector': iso.detector, 'name': iso.name,
+                    'serial_id': detector.serial_id if detector else '00000'}
 
             if clf is not None:
                 klass, prob = clf.predict_isotope(iso)
@@ -409,18 +416,16 @@ class DVCPersister(BasePersister):
                     nkey = '{}{}'.format(nd['name'], nd['detector'])
                     isos[nkey] = nd
 
-                    nd = intercepts.pop(key)
-                    intercepts[nkey] = nd
-
-                    nd = blanks.pop(key)
-                    blanks[nkey] = nd
+                    intercepts[nkey] = intercepts.pop(key)
+                    blanks[nkey] = blanks.pop(key)
 
                 key = '{}{}'.format(key, iso.detector)
 
             isos[key] = isod
 
             if iso.detector not in dets:
-                bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
+                # bblob = base64.b64encode(iso.baseline.pack(endianness, as_hex=False))
+                bblob = encode_blob(iso.baseline.pack(endianness, as_hex=False))
                 baselines.append({'detector': iso.detector, 'blob': bblob})
                 dets[iso.detector] = {'deflection': per_spec.defl_dict.get(iso.detector),
                                       'gain': per_spec.gains.get(iso.detector)}
@@ -452,15 +457,15 @@ class DVCPersister(BasePersister):
 
         obj = self._make_analysis_dict()
 
-        # from pychron.version import __version__ as pversion
-        # from pychron.experiment import __version__ as eversion
-        # from pychron.dvc import __version__ as dversion
+        from pychron.version import __version__ as pversion
+        from pychron.experiment import __version__ as eversion
+        from pychron.dvc import __version__ as dversion
 
         obj['timestamp'] = timestamp.isoformat()
 
-        # obj['collection_version'] = '{}:{}'.format(eversion, dversion)
-        # obj['acquisition_software'] = 'pychron version={}'.format(pversion)
-        # obj['data_reduction_software'] = 'pychron version={}'.format(pversion)
+        obj['collection_version'] = '{}:{}'.format(eversion, dversion)
+        obj['acquisition_software'] = 'pychron {}'.format(pversion)
+        obj['data_reduction_software'] = 'pychron {}'.format(pversion)
 
         obj['environmental'] = {'lab_temperatures': per_spec.lab_temperatures,
                                 'lab_humiditys': per_spec.lab_humiditys,
@@ -494,8 +499,7 @@ class DVCPersister(BasePersister):
         # self.dvc.update_experiment_queue(ms, self.per_spec.experiment_queue_name,
         #                                  self.per_spec.experiment_queue_blob)
 
-        if self.macrochron_enabled:
-            self._save_macrochron(obj)
+        self._save_macrochron(obj)
 
         hexsha = str(self.dvc.get_meta_head())
         obj['commit'] = hexsha
@@ -533,7 +537,7 @@ class DVCPersister(BasePersister):
             p = self._make_path(modifier='monitor')
             checks = []
             for ci in self.per_spec.monitor.checks:
-                data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                data = b''.join([struct.pack('>ff', x, y) for x, y in ci.data])
                 params = dict(name=ci.name,
                               parameter=ci.parameter, criterion=ci.criterion,
                               comparator=ci.comparator, tripped=ci.tripped,
@@ -564,14 +568,15 @@ class DVCPersister(BasePersister):
             results = pc.get_results()
             if results:
                 for result in results:
+                    points = encode_blob(pack(fmt, result.points))
+
                     obj[result.detector] = {'low_dac': result.low_dac,
                                             'center_dac': result.center_dac,
                                             'high_dac': result.high_dac,
                                             'low_signal': result.low_signal,
                                             'center_signal': result.center_signal,
                                             'high_signal': result.high_signal,
-                                            'points': base64.b64encode(''.join([struct.pack(fmt, *di)
-                                                                                for di in result.points]))}
+                                            'points': points}
 
             dvc_dump(obj, p)
 

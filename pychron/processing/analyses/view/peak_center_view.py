@@ -72,46 +72,48 @@ class PeakCenterView(HasTraits):
             maR = max(ref_ys)
             R = maR - miR
 
-            idx = where(ref_xs < an.peak_center)[0][-1]
-            kw = {'padding_left': 70, 'padding_right': 5, 'show_legend': True,
-                  'bounds': (1, 100)}
+            if an.peak_center:
+                idx = where(ref_xs < an.peak_center)[0][-1]
 
-            if an.additional_peak_center_data:
-                # add peak centering ratios
-                p = g.new_plot(ytitle='Ratios', **kw)
-                g.add_axis_tool(p, p.x_axis)
-                g.add_axis_tool(p, p.y_axis)
+                kw = {'padding_left': 70, 'padding_right': 5, 'show_legend': True,
+                      'bounds': (1, 100)}
 
-                p = g.new_plot(ytitle='Delta Ratios (%)', **kw)
-                g.add_axis_tool(p, p.x_axis)
-                g.add_axis_tool(p, p.y_axis)
+                if an.additional_peak_center_data:
+                    # add peak centering ratios
+                    p = g.new_plot(ytitle='Ratios', **kw)
+                    g.add_axis_tool(p, p.x_axis)
+                    g.add_axis_tool(p, p.y_axis)
 
-                for k, (xs, ys) in an.additional_peak_center_data.items():
-                    ys = array(ys)
-                    mir = ys.min()
-                    r = ys.max() - mir
+                    p = g.new_plot(ytitle='Delta Ratios (%)', **kw)
+                    g.add_axis_tool(p, p.x_axis)
+                    g.add_axis_tool(p, p.y_axis)
 
-                    ys1 = (ys - mir) * R / r + miR
+                    for k, (xs, ys) in an.additional_peak_center_data.items():
+                        ys = array(ys)
+                        mir = ys.min()
+                        r = ys.max() - mir
 
-                    g.new_series(xs, ys1, plotid=0)
+                        ys1 = (ys - mir) * R / r + miR
 
-                    zid = ys != 0
+                        g.new_series(xs, ys1, plotid=0)
 
-                    ys2 = ref_ys[zid] / ys[zid]
-                    xs = array(xs)[zid]
+                        zid = ys != 0
 
-                    # plot ratios
-                    g.new_series(xs, ys2, plotid=1)
-                    # g.set_y_limits(0, 10, plotid=1)
-                    g.set_series_label('{}/{}'.format(ref_k, k), plotid=1)
+                        ys2 = ref_ys[zid] / ys[zid]
+                        xs = array(xs)[zid]
 
-                    ref = ref_ys[idx] / ys[idx]
-                    ys3 = (ys2 - ref) / ref * 100
+                        # plot ratios
+                        g.new_series(xs, ys2, plotid=1)
+                        # g.set_y_limits(0, 10, plotid=1)
+                        g.set_series_label('{}/{}'.format(ref_k, k), plotid=1)
 
-                    # plot delta ratios
-                    g.new_series(xs, ys3, plotid=2)
-                    g.set_series_label('{}/{}'.format(ref_k, k), plotid=2)
-                    g.set_y_limits(-200, 200, plotid=2)
+                        ref = ref_ys[idx] / ys[idx]
+                        ys3 = (ys2 - ref) / ref * 100
+
+                        # plot delta ratios
+                        g.new_series(xs, ys3, plotid=2)
+                        g.set_series_label('{}/{}'.format(ref_k, k), plotid=2)
+                        g.set_y_limits(-200, 200, plotid=2)
 
             return True
 

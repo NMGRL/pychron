@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 import time
 from math import pi
@@ -23,7 +22,6 @@ from math import pi
 import yaml
 from numpy import arange, sin
 from traits.api import Property, Float, Event, Instance
-from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 
 from pychron.paths import paths
 from pychron.spectrometer.fieldmixin import FieldMixin
@@ -329,6 +327,8 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
     # views
     # ===============================================================================
     def traits_view(self):
+        from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
+
         v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
                                                               high_name='dacmax',
                                                               format='%0.5f')),

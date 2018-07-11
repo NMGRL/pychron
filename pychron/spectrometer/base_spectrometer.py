@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 import os
 from random import random
 
@@ -28,8 +27,6 @@ from pychron.spectrometer import get_spectrometer_config_path, get_spectrometer_
     set_spectrometer_config_name
 from pychron.spectrometer.base_detector import BaseDetector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
-import six
-from six.moves import zip
 
 
 class NoIntensityChange(BaseException):
@@ -99,9 +96,6 @@ class BaseSpectrometer(SpectrometerDevice):
         self.magnet.finish_loading()
 
         self.test_connection()
-        # if self.send_config_on_startup:
-        # write configuration to spectrometer
-        # self._send_configuration()
 
     def test_connection(self, force=True):
         """
@@ -137,8 +131,7 @@ class BaseSpectrometer(SpectrometerDevice):
             if resp:
                 try:
                     self.integration_time = float(resp)
-                    self.info(
-                        'Integration Time {}'.format(self.integration_time))
+                    self.info('Integration Time {}'.format(self.integration_time))
 
                 except (TypeError, ValueError, TraitError):
                     self.warning(
@@ -166,7 +159,6 @@ class BaseSpectrometer(SpectrometerDevice):
             dac += dev
 
         # correct for hv
-        # dac *= self.get_hv_correction(current=current)
         if self.use_hv_correction:
             dac = self.get_hv_correction(dac, current=current)
         return dac
@@ -254,16 +246,10 @@ class BaseSpectrometer(SpectrometerDevice):
         @return:
         """
         molweights = self.molecular_weights
-        # for k, v in molweights.iteritems():
-        #     print '\t',k,v,mass, v-mass
-        #     if abs(v-mass) < 0.05:
-        #         print 'found'
-        #         break
-        # print molweights, mass
 
         found = None
         mi = 1
-        for k, v in six.iteritems(molweights):
+        for k, v in molweights.items():
             d = abs(v - mass)
             if d < 0.15 and d < mi:
                 found = k
@@ -272,7 +258,6 @@ class BaseSpectrometer(SpectrometerDevice):
             found = 'Iso{:0.4f}'.format(mass)
 
         return found
-        # return next((k for k, v in molweights.iteritems() if abs(v - mass) < 0.15), 'Iso{:0.4f}'.format(mass))
 
     def map_mass(self, isotope):
         """
@@ -305,13 +290,9 @@ class BaseSpectrometer(SpectrometerDevice):
                 self.debug('molweights={}'.format(self.molecular_weights))
                 index = det.index
                 try:
-                    # nmass = int(isotope[2:])
                     nmass = self.map_mass(isotope)
                     for di in self.detectors:
                         mass = nmass - di.index + index
-
-                        # mass = nmass - (di.index + index)
-
                         isotope = self.map_isotope(mass)
                         self.debug('setting detector {} to {} ({})'.format(di.name, isotope, mass))
                         di.isotope = isotope
@@ -325,6 +306,9 @@ class BaseSpectrometer(SpectrometerDevice):
             send the configuration values to the device
         """
         self._send_configuration(**kw)
+
+    def trigger_acq(self):
+        pass
 
     def _send_configuration(self, **kw):
         raise NotImplementedError
@@ -401,7 +385,7 @@ class BaseSpectrometer(SpectrometerDevice):
             with open(p, 'r') as f:
                 reader = csv.reader(f, delimiter='\t')
                 mws = {l[0]: float(l[1]) for l in reader}
-        elif os.path.isfille(yp):
+        elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
             with open(p, 'r') as f:
                 mws = yaml.load(f)
@@ -431,6 +415,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         for i, name in enumerate(config.sections()):
             relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            gain = self.config_get(config, name, 'gain', cast='float', default=1.0)
 
             color = self.config_get(config, name, 'color', default='black')
             default_state = self.config_get(config, name, 'default_state',
@@ -440,6 +425,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                    optional=True)
             pt = self.config_get(config, name, 'protection_threshold',
                                  default=None, optional=True, cast='float')
+            serial_id = self.config_get(config, name, 'serial_id', default='00000')
 
             index = self.config_get(config, name, 'index', cast='float')
             if index is None:
@@ -457,6 +443,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
             self._add_detector(name=name,
                                index=index,
+                               gain=gain,
+                               serial_id=serial_id,
                                relative_position=relative_position,
                                use_deflection=use_deflection,
                                protection_threshold=pt,
@@ -467,18 +455,8 @@ class BaseSpectrometer(SpectrometerDevice):
                                isotope=isotope,
                                kind=kind)
 
-    # def set_microcontroller(self):
-    #     m = self.microcontroller
-    #     self.debug('set microcontroller {}'.format(m))
-    #     self.magnet.microcontroller = m
-    #     self.source.microcontroller = m
-    #     for d in self.detectors:
-    #         d.microcontroller = m
-    #         d.load()
-    def get_intensities(self, tagged=True):
+    def get_intensities(self, tagged=True, trigger=False):
         """
-        issue a GetData command to Qtegra.
-
         keys, list of strings
         signals, list of floats::
 
@@ -491,7 +469,7 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals = self.read_intensities()
+            keys, signals = self.read_intensities(trigger=trigger)
 
         if not keys and globalv.communication_simulation:
             keys, signals = self._get_simulation_data()
@@ -500,21 +478,19 @@ class BaseSpectrometer(SpectrometerDevice):
 
         self._check_intensity_no_change(signals)
 
+        gsignals = []
         for k, v in zip(keys, signals):
             det = self.get_detector(k)
             det.set_intensity(v)
+            gsignals.append(v*det.gain)
 
-        return keys, signals
+        return keys, array(gsignals)
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
             return
 
         if self._no_intensity_change_cnt > 25:
-            # self.warning_dialog('Something appears to be wrong.\n\n'
-            #                     'The detector intensities have not changed in 5 iterations. '
-            #                     'Check Qtegra and RemoteControlServer.\n\n'
-            #                     'Scan is stopped! Close and reopen window to restart')
             self._no_intensity_change_cnt = 0
             self._prev_signals = None
             raise NoIntensityChange()
@@ -525,8 +501,6 @@ class BaseSpectrometer(SpectrometerDevice):
             try:
                 test = (signals == self._prev_signals).all()
             except (AttributeError, TypeError):
-                # print 'signals', signals
-                # print 'prev_signals', self._prev_signals
                 test = True
 
             if test:
@@ -546,12 +520,16 @@ class BaseSpectrometer(SpectrometerDevice):
 
         self._prev_signals = signals
 
-    def get_intensity(self, dkeys):
+    def settle(self):
+        import time
+        time.sleep(self.integration_time)
+
+    def get_intensity(self, dkeys, **kw):
         """
             dkeys: str or tuple of strs
 
         """
-        data = self.get_intensities()
+        data = self.get_intensities(**kw)
         if data is not None:
 
             keys, signals = data
@@ -563,7 +541,6 @@ class BaseSpectrometer(SpectrometerDevice):
                 return [func(key) for key in dkeys]
             else:
                 return func(dkeys)
-                # return signals[keys.index(dkeys)] if dkeys in keys else 0
 
     def get_detector(self, name):
         """

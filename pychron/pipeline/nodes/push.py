@@ -20,10 +20,10 @@ from traits.api import Instance
 
 from pychron.dvc.func import repository_has_staged
 from pychron.pipeline.nodes.base import BaseNode
+from pychron.pipeline.nodes.data import BaseDVCNode
 
 
-class PushNode(BaseNode):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+class PushNode(BaseDVCNode):
 
     def run(self, state):
         ps = {ai.repository_identifier for ans in (state.unknowns, state.references) for ai in ans}

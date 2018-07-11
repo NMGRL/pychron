@@ -20,27 +20,27 @@ import os
 from datetime import datetime
 
 import re
+
+import six
 from git import Repo, Blob, Diff
 from gitdb.util import hex_to_bin
-from traits.api import HasTraits, Str, Bool, Date
-import six
-
 
 # ============= local library imports  ==========================
+from pychron.git_archive.git_objects import GitSha, GitTag
 
 TAG_RE = re.compile(r'^\<\w+\>')
 
 
-class GitShaObject(HasTraits):
-    message = Str
-    date = Date
-    blob = Str
-    name = Str
-    hexsha = Str
-    author = Str
-    email = Str
-    active = Bool
-    tag = Str
+# class GitShaObject(HasTraits):
+# message = Str
+# date = Date
+# blob = Str
+# name = Str
+# hexsha = Str
+# author = Str
+# email = Str
+# active = Bool
+# tag = Str
 
 
 def from_gitlog(obj, path, tag=None):
@@ -54,13 +54,13 @@ def from_gitlog(obj, path, tag=None):
         else:
             tag = 'NULL'
 
-    g = GitShaObject(hexsha=hexsha,
-                     message=message,
-                     date=date,
-                     author=author,
-                     email=email,
-                     path=path,
-                     tag=tag)
+    g = GitSha(hexsha=hexsha,
+               message=message,
+               date=date,
+               author=author,
+               email=email,
+               path=path,
+               tag=tag)
     return g
 
 
@@ -86,32 +86,20 @@ def get_head_commit(repo):
 
 
 def get_commits(repo, branch, path, tag, *args):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
+    repo = get_repo(repo)
     txt = gitlog(repo, branch=branch, args=args, path=path)
 
     return [from_gitlog(l.strip(), path, tag) for l in txt.split('\n')] if txt else []
 
 
+def get_tags(repo):
+    repo = get_repo(repo)
+    return [GitTag(t) for t in repo.tags]
+
+
 def get_log(repo, branch, path):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
+    repo = get_repo(repo)
     return gitlog(repo, branch=branch, path=path)
-
-
-def get_repo(repo):
-    if isinstance(repo, (str, six.text_type)):
-        if not os.path.isdir(repo):
-            return
-        repo = Repo(repo)
-
-    return repo
 
 
 def get_diff(repo, a, b, path, change_type='M'):
@@ -130,19 +118,29 @@ def ahead_behind(repo, fetch=True, remote='origin'):
 
     ahead = 0
     behind = 0
-    if fetch:
-        repo.git.fetch(remote)
+    if repo:
+        if fetch:
+            repo.git.fetch(remote)
 
-    status = repo.git.status('-sb')
+        status = repo.git.status('-sb')
 
-    ma = aregex.search(status)
-    mb = bregex.search(status)
-    if ma:
-        ahead = int(ma.group('count'))
-    if mb:
-        behind = int(mb.group('count'))
+        ma = aregex.search(status)
+        mb = bregex.search(status)
+        if ma:
+            ahead = int(ma.group('count'))
+        if mb:
+            behind = int(mb.group('count'))
 
     return ahead, behind
+
+
+def get_repo(repo):
+    if isinstance(repo, (str, six.text_type)):
+        if not os.path.isdir(repo):
+            return
+        repo = Repo(repo)
+
+    return repo
 
 
 def fu(repo, text):

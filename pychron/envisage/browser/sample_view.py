@@ -15,11 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
+from pyface.action.menu_manager import MenuManager
 from traits.api import Button
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
     HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -35,6 +35,11 @@ class AnalysisGroupsAdapter(TabularAdapter):
                ('Date', 'create_date')]
 
     font = 'Arial 10'
+
+    def get_menu(self, obj, trait, row, column):
+        actions = [Action(name='Delete', action='delete_analysis_group')]
+
+        return MenuManager(*actions)
 
 
 class BaseBrowserSampleView(PaneModelView):
@@ -255,6 +260,7 @@ class BaseBrowserSampleView(PaneModelView):
                                    # height=100,
                                    editor=myTabularEditor(adapter=AnalysisGroupsAdapter(),
                                                           multi_select=True,
+                                                          editable=False,
                                                           selected='selected_analysis_groups'))
 
         sample_table = VGroup(sample_tools,
@@ -333,6 +339,15 @@ class BrowserSampleView(BaseBrowserSampleView):
     def review_status_details(self, info, obj):
         obj.review_status_details()
 
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def group_selected(self, info, obj):
+        obj.group_selected()
+
+    def clear_selection(self, info, obj):
+        obj.clear_selection()
+
     def toggle_freeze(self, info, obj):
         obj.toggle_freeze()
 
@@ -348,10 +363,32 @@ class BrowserSampleView(BaseBrowserSampleView):
     def load_chrono_view(self, info, obj):
         obj.load_chrono_view()
 
+    def delete_analysis_group(self, info, obj):
+        obj.delete_analysis_group()
+
+    def tag_ok(self, info, obj):
+        self._set_tags(info.object, 'ok')
+
+    def tag_omit(self, info, obj):
+        self._set_tags(info.object, 'omit')
+
+    def tag_invalid(self, info, obj):
+        self._set_tags(info.object, 'invalid')
+
+    def tag_skip(self, info, obj):
+        self._set_tags(info.object, 'skip')
+
+    def _set_tags(self, obj, tag):
+        items = obj.set_tags(tag)
+        if items:
+            obj.analysis_table.set_tags(tag, items)
+            obj.analysis_table.remove_invalid()
+            obj.analysis_table.refresh_needed = True
+
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def delete(self, info, obj):
-        print('asfdasfdasdfasdf', info, obj)
+        obj.delete()
 
     def trait_context(self):
         ctx = super(BrowserInterpretedAgeView, self).trait_context()
@@ -361,7 +398,6 @@ class BrowserInterpretedAgeView(BaseBrowserSampleView):
     def _get_interpreted_age_group(self):
         grp = VGroup(
             UItem('interpreted_table.interpreted_ages',
-                  # width=0.4,
                   editor=myTabularEditor(
                       auto_resize=True,
                       adapter=self.model.interpreted_age_table.tabular_adapter,

@@ -16,16 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from traits.api import HasTraits, Str, List, Event, Instance, Any, Property, cached_property, Unicode
 from traitsui.api import View, UItem, VGroup, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 
-from pychron.core.helpers.formatting import floatfmt, format_percent_error, uformat_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.analyses.view.adapters import ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-
 # class MainViewHandler(Handler):
 #     def show_isotope_evolution(self, uiinfo, obj):
 #         isos = obj.selected
@@ -117,7 +117,8 @@ class MainView(HasTraits):
             MeasurementValue(name='J',
                              value=jf),
             MeasurementValue(name='Lambda K',
-                             value=nominal_value(ar.arar_constants.lambda_k)),
+                             value=nominal_value(ar.arar_constants.lambda_k),
+                             units='1/a'),
             MeasurementValue(name='Project',
                              value=an.project),
             MeasurementValue(name='Sample',
@@ -131,7 +132,8 @@ class MainView(HasTraits):
             MeasurementValue(name='Ar37Decay',
                              value=floatfmt(a37)),
             MeasurementValue(name='Sens.',
-                             value=floatfmt(an.sensitivity))]
+                             value=floatfmt(an.sensitivity, use_scientific=True),
+                             units=an.sensitivity_units)]
 
         self.measurement_values = ms
 
@@ -144,6 +146,9 @@ class MainView(HasTraits):
                             value=an.measurement_script_name),
             ExtractionValue(name='Device',
                             value=an.extract_device),
+            ExtractionValue(name='Load',
+                            value=an.load_name,
+                            units=an.load_holder),
             ExtractionValue(name='Position',
                             value=an.position, ),
             ExtractionValue(name='XYZ',

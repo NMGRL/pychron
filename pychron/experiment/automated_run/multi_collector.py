@@ -31,10 +31,5 @@ class MultiCollector(DataCollector):
 
     """
 
-    def _iter_hook(self, i):
-        if i % 25 == 0:
-            self.info('collecting point {}'.format(i))
-
-        return self._iteration(i)
-
+    pass
 # ============= EOF =============================================

@@ -18,7 +18,10 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
+
 import os
+
+from git import Repo
 
 from pychron.paths import paths
 
@@ -34,7 +37,9 @@ def list_local_repos():
         if os.path.isdir(d):
             gd = os.path.join(d, '.git')
             if os.path.isdir(gd):
-                yield i
+                r = Repo(d)
+
+                yield i, r.active_branch.name
 # ============= EOF =============================================
 
 

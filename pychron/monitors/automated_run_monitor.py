@@ -53,7 +53,6 @@ class Check(HasTraits):
 
 class AutomatedRunMonitor(Monitor):
     checks = List
-    automated_run = Any
 
     pneumatics = Float
     ctemp = Float
@@ -136,7 +135,7 @@ class AutomatedRunMonitor(Monitor):
         pass
 
     def get_pressure(self, controller, name):
-        elm = self.automated_run.extraction_line_manager
+        elm = self.extraction_line_manager
         p = elm.get_pressure(controller, name)
         return p
 
@@ -144,7 +143,7 @@ class AutomatedRunMonitor(Monitor):
         pass
 
     def _get_value(self, q):
-        elm = self.automated_run.extraction_line_manager
+        elm = self.extraction_line_manager
         dev = elm.get_device(q)
         if dev:
             return dev.get()

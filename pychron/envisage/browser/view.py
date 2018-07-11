@@ -15,28 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import HasTraits, Str, Instance, Button, Bool
-from traitsui.api import View, UItem, HGroup, VGroup, Group, spring
-from traitsui.handler import Handler
+from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, Handler, EnumEditor
 
-from pychron.core.ui.button_editor import ButtonEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.adapters import BrowserAdapter
 from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
 from pychron.envisage.browser.time_view import TimeViewModel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
-class AnalysisGroupAdapter(BrowserAdapter):
-    all_columns = [('Name', 'name'),
-                   ('Created', 'create_date'),
-                   ('Modified', 'last_modified')]
-
-    columns = [('Name', 'name'),
-               ('Create Date', 'create_date'),
-               ('Modified', 'last_modified')]
-
+# class AnalysisGroupAdapter(BrowserAdapter):
+#     all_columns = [('Name', 'name'),
+#                    ('Created', 'create_date'),
+#                    ('Modified', 'last_modified')]
+#
+#     columns = [('Name', 'name'),
+#                ('Create Date', 'create_date'),
+#                ('Modified', 'last_modified')]
+#
 
 class BrowserViewHandler(Handler):
     def pane_append_button_changed(self, info):
@@ -79,6 +75,9 @@ class BaseBrowserView(HasTraits):
                       # icon_button_editor('toggle_view',
                       #                    'arrow_switch',
                       #                    tooltip='Toggle between Sample and Time views'),
+                      icon_button_editor('refresh_selectors_button', 'arrow_refresh',
+                                         tooltip='Refresh the database selectors e.g PI, Project, Load, Irradiation, etc'),
+                      UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
                       spring,
                       CustomLabel('datasource_url', color='maroon'),
                       show_border=True)

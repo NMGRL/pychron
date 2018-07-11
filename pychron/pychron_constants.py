@@ -17,7 +17,12 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
+import os
+
+import yaml
+
+from pychron.paths import paths
+
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
@@ -25,29 +30,31 @@ EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineMan
 DVC_PROTOCOL = 'pychron.dvc.dvc.DVC'
 FURNACE_PROTOCOL = 'pychron.furnace.furnace_manager.BaseFurnaceManager'
 
-FONTS = ['Andale Mono', 'Arial',
-         'Calibri', 'Cambria', 'Consolas', 'Courier New',
-         'Georgia',
-         'Impact',
-         'Helvetica',
-         'Trebuchet MS',
-         'Verdana']
+# FONTS = ['Andale Mono', 'Arial',
+#          'Calibri', 'Cambria', 'Consolas', 'Courier New',
+#          'Georgia',
+#          'Impact',
+#          'Helvetica',
+#          'Trebuchet MS',
+#          'Verdana']
+# FONTS = ['Helvetica',
+#          'Arial',
+#          #'Courier New', 'Consolas'
+#          ]
+TTF_FONTS = ['Courier New', 'Arial', 'Georgia', 'Impact', 'Verdana']
+# FONTS = pdfmetrics.standardFonts
+FONTS = ['Helvetica'] + TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-PLUSMINUS = u'\u00b1'
-try:
-    # PLUSMINUS_ERR = PLUSMINUS + 'Err.'
-    PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)
-except UnicodeEncodeError:
-    PLUSMINUS = '+/-'
-    PLUSMINUS_ERR = '{}Err.'.format(PLUSMINUS)
+PLUSMINUS = '\N{Plus-minus sign}'
+SIGMA = '\N{Greek Small Letter Sigma}'
+# LAMBDA = '\N{Greek Small Letter Lambda}'
+LAMBDA = '\u03BB'
 
-SIGMA = u'\u03c3'
-
-PLUSMINUS_NSIGMA = u'{}{{}}{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_NSIGMA = '{}{{}}{}'.format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
-# PLUSMINUS_ONE_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
-PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
+PLUSMINUS_TWO_SIGMA = PLUSMINUS_NSIGMA.format(2)
+PLUSMINUS_PERCENT = '{}%  '.format(PLUSMINUS)
 
 SPECIAL_IDENTIFIER = 'Special Identifier'
 NULL_STR = '---'
@@ -55,21 +62,43 @@ LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
-FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Weighted Mean']
-FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
-
 SD = 'SD'
 SEM = 'SEM'
 MSEM = 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
+SIG_FIGS = range(0, 15)
+
+WEIGHTED_MEAN = 'Weighted Mean'
+INTEGRATED = 'Total Integrated'
+DEFAULT_INTEGRATED = 'Plateau else Valid Integrated'
+VALID_INTEGRATED = 'Valid Integrated'
+PLATEAU_INTEGRATED = 'Plateau Integrated'
+
+FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
+             'Average', WEIGHTED_MEAN]
+
+FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
+
+ARITHMETIC_MEAN = 'Arithmetic Mean'
+PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
+
+AGE_SUBGROUPINGS = (PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTED_MEAN,
+                    INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
+                    ARITHMETIC_MEAN, 'Plateau', 'Isochron')
+SUBGROUPINGS = [WEIGHTED_MEAN,
+                INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
+                ARITHMETIC_MEAN]
+
+SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ga': 1e9, 'Ma': 1e6, 'ka': 1e3, 'a': 1}
 AGE_MA_SCALARS = {'Ma': 1, 'ka': 1e-3, 'a': 1e-6, 'Ga': 1e3}
-
+DESCENDING = 'Descending'
+ASCENDING = 'Ascending'
+AGE_SORT_KEYS = (NULL_STR, ASCENDING, DESCENDING)
 OMIT_KEYS = ('omit_ideo', 'omit_spec', 'omit_iso', 'omit_series')
 
 UNKNOWN = 'unknown'
@@ -163,15 +192,26 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 DEFAULT_INTEGRATION_TIME = 1
 
-ISOTOPX_INTEGRATION_TIMES = [1, 2, 3]
+ISOTOPX_INTEGRATION_TIMES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 10.0]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 DEFAULT_INTEGRATION_TIME = 1
 
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0),
                      'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0)}
 
-FLUX_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0, 4.884e-10, 0, 28.201),
-                  'Steiger & Jager 1977': (5.81e-11, 0, 4.962e-10, 0, 28.02)}
+FLUX_CONSTANTS = {'Min et al., 2000': {'lambda_ec': [5.80e-11, 0], 'lambda_b': [4.884e-10, 0], 'monitor_age': 28.201},
+                  'Steiger & Jager 1977': {'lambda_ec': [5.81e-11, 0], 'lambda_b': [4.962e-10, 0],
+                                           'monitor_age': 28.02}}
+
+if paths.setup_dir:
+    flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
+    if os.path.isfile(flux_constants):
+        with open(flux_constants, 'r') as rf:
+            obj = yaml.load(rf)
+            try:
+                FLUX_CONSTANTS.update(obj)
+            except BaseException:
+                pass
 
 AR_AR = 'Ar/Ar'
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
@@ -187,4 +227,9 @@ QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
 ANALYSIS_TYPES = ['Unknown', 'Air', 'Cocktail', 'Blank Unknown', 'Blank Air', 'Blank Cocktail', 'Blank']
 
 DEFAULT_MONITOR_NAME = 'FC-2'
+
+ELLIPSE_KINDS = ('1' + SIGMA, '2' + SIGMA, '95%')
+ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
+
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 # ============= EOF =============================================

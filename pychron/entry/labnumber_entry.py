@@ -16,12 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 from itertools import groupby
 
 import yaml
 from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import YES, CANCEL
+from six.moves import zip
 from traits.api import Property, Str, cached_property, List, Event, Button, Instance, Bool, on_trait_change, \
     Float, HasTraits, Any
 from uncertainties import nominal_value
@@ -41,7 +43,6 @@ from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPD
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.paths import paths
 from pychron.pychron_constants import PLUSMINUS
-from six.moves import zip
 
 
 class NeutronDose(HasTraits):
@@ -149,8 +150,9 @@ class LabnumberEntry(DVCIrradiationable):
         self.updated = True
 
     def sync_metadata(self):
-        if self.irradiation and self.level:
-            self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
+        self.warning_dialog('Sync db not available')
+        # if self.irradiation and self.level:
+        #     self.dvc.repository_db_sync(self.irradiation, self.level, dry_run=False)
 
     def generate_status_report(self):
         irradname = self.irradiation
@@ -361,6 +363,7 @@ class LabnumberEntry(DVCIrradiationable):
                 if lg.setup():
                     lg.generate_identifiers()
                     for level in self.levels:
+                        self._update_level(level)
                         self._save_to_db(level, update=False)
 
                     self._update_level()
@@ -642,17 +645,24 @@ THIS CHANGE CANNOT BE UNDONE')
 
         self.debug('update level= "{}"'.format(name))
         db = self.dvc.db
-        level = db.get_irradiation_level(self.irradiation, name)
-        self.debug('retrieved level {}'.format(level))
-        if not level:
-            self.debug('no level for {}'.format(name))
-            return
+        meta_repo = self.dvc.meta_repo
 
-        self.level_note = level.note or ''
-        self.level_production_name = level.production.name if level.production else ''
+        level = db.get_irradiation_level(self.irradiation, name)
+        # self.debug('retrieved level {}'.format(level))
+        # if not level:
+        #     self.debug('no level for {}'.format(name))
+        #     return
+
+        # self.level_note = level.note.decode('utf-8') or ''
+        # self.level_production_name = level.production.name if level.production else ''
+
+        pname, prod = meta_repo.get_production(self.irradiation, name)
+        self.level_production_name = prod.name
+        self.level_note = prod.note
+
         if level.holder:
             self.irradiation_tray = level.holder
-            holes = self.dvc.meta_repo.get_irradiation_holder_holes(level.holder)
+            holes = meta_repo.get_irradiation_holder_holes(level.holder)
             self._load_holder_positions(holes)
             self._load_holder_canvas(holes)
 

@@ -16,18 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import time
 
+import time
 from numpy import max, argmax, vstack, linspace
 from scipy import interpolate
+from six.moves import range
 from traits.api import Float, Str, Int, List, Enum, HasTraits
 
-from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
-from six.moves import range
+from .magnet_sweep import MagnetSweep, AccelVoltageSweep
 
 
 class PeakCenterResult:
@@ -166,7 +166,7 @@ class BasePeakCenter(HasTraits):
                            max_=max([start, end]))
 
         def get_reference_intensity():
-            keys, signals = spec.get_intensities()
+            keys, signals = spec.get_intensities(trigger=True)
             idx = keys.index(self.reference_detector.name)
             return signals[idx]
 
@@ -176,18 +176,17 @@ class BasePeakCenter(HasTraits):
         # move to start position
         self.info('Moving to starting dac {}'.format(start))
         spec.magnet.set_dac(start)
-        time.sleep(1)
+        time.sleep(spec.integration_time)
 
-        tol = cur_intensity * (1 - self.percent / 100.)
+        tol = min(0, cur_intensity * (1 - self.percent / 100.))
         timeout = 1 if spec.simulation else 10
         self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
-        # spec.save_integration()
-        # spec.set_integration_time(0.5)
 
         st = time.time()
         while 1:
             signal = get_reference_intensity()
-            if signal < tol:
+            time.sleep(spec.integration_time)
+            if signal <= tol:
                 self.info('Peak center baseline intensity achieved')
                 break
 
@@ -195,23 +194,11 @@ class BasePeakCenter(HasTraits):
             if et > timeout:
                 self.warning('Peak center failed to move to a baseline position')
                 break
-            time.sleep(0.5)
-
-        # spec.restore_integration()
 
         center, smart_shift, success = None, False, False
-        # cdd has been tripping during the previous move on obama when moving H1 from 34.5 to 39.7
-        # check if cdd is still active
-        # if not spec.get_detector_active('CDD'):
-        #     self.warning('CDD has tripped!')
-        #     self.cancel()
-        # else:
 
         ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
         self.debug('result of _do_sweep={}'.format(ok))
-
-        # wait for graph to fully update
-        time.sleep(0.1)
 
         if ok and self.directions != 'Oscillate':
             if not self.canceled:

@@ -52,7 +52,7 @@ class PatternAction(ListAction):
     def perform(self, event):
         app = event.task.application
         man = app.get_service(ILaserManager, 'name=="{}"'.format(self.manager_name))
-        man.execute_pattern(self.pattern_path, lase=self.lase)
+        man.execute_pattern(self.pattern_path, lase=self.lase, thread_safe=False)
 
 
 from traits.api import HasTraits, Int

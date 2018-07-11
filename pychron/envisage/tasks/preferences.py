@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int, Str, Property
+from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -91,9 +92,15 @@ class GeneralPreferencesPane(PreferencesPane):
 
 class BrowserPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.browser'
-    recent_hours = Float
     reference_hours_padding = Float
+    auto_load_database = Bool
+    load_selection_enabled = Bool
+
     max_history = Int
+    unknown_color = Color
+    blank_color = Color
+    air_color = Color
+    use_analysis_colors = Bool
 
 
 class BrowserPreferencesPane(PreferencesPane):
@@ -101,15 +108,21 @@ class BrowserPreferencesPane(PreferencesPane):
     category = 'Browser'
 
     def traits_view(self):
-        v = View(Item('recent_hours',
-                      label='RECENT (hrs)',
-                      tooltip='Number of hours to use for RECENT_... filtering'),
-                 Item('reference_hours_padding',
+        acgrp = VGroup(Item('use_analysis_colors', label='Use Analysis Colors',
+                            tooltip='Color analyses based on type in the Browser window'),
+                       VGroup(Item('unknown_color'),
+                              Item('blank_color'),
+                              Item('air_color'), enabled_when='use_analysis_colors'),
+                       show_border=True, label='Analysis Colors')
+        load_grp = VGroup(Item('auto_load_database'),
+                          Item('load_selection_enabled'),
+                          show_border=True, label='Browser Loading')
+        v = View(Item('reference_hours_padding',
                       label='References Padding (hrs)',
                       tooltip='Padding in hours when finding associated references'),
                  Item('max_history', label='Max. Analysis Sets',
-                      tooltip='Maximum number of analysis sets to maintain')
-                 )
+                      tooltip='Maximum number of analysis sets to maintain'),
+                 acgrp, load_grp)
         return v
 
 # ============= EOF =============================================

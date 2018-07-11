@@ -15,11 +15,12 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
+import json
 import os
 from collections import OrderedDict
 from datetime import datetime
 from hashlib import md5
-import json
 # ============= enthought library imports =======================
 from itertools import groupby
 from operator import attrgetter
@@ -34,11 +35,10 @@ from pychron.core.ui.table_configurer import AnalysisTableConfigurer
 from pychron.dvc.func import get_review_status
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
-import six
 
 
 def sort_items(ans):
-    return sorted(ans, key=lambda x: x.timestampf)
+    return sorted(ans, key=attrgetter('timestampf'))
 
 
 class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
@@ -82,21 +82,37 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         self._analysis_sets = OrderedDict()
 
+    def _sorted_hook(self, vs):
+        self.oanalyses = vs
+
     def load(self):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):
             with open(p, 'r') as rfile:
                 try:
                     jd = json.load(rfile, object_pairs_hook=OrderedDict)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    print('load sanlaysis set exception', e)
+                    return
+
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
+        p = paths.hidden_path('selected_analysis_set')
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                self.analysis_set = rfile.read().strip()
+
     def dump(self):
         p = paths.hidden_path('analysis_sets')
-        with open(p, 'w') as wfile:
-            json.dump(self._analysis_sets, wfile)
+        if self._analysis_sets:
+            with open(p, 'w') as wfile:
+                json.dump(self._analysis_sets, wfile)
+
+        p = paths.hidden_path('selected_analysis_set')
+        if self.analysis_set:
+            with open(p, 'w') as wfile:
+                wfile.write(self.analysis_set)
 
     def get_selected_analyses(self):
         if self.analyses:
@@ -135,7 +151,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 ai.tag = tag
 
         self._analysis_filter_changed(self.analysis_filter)
-
+        self.selected = []
+        
     def remove_invalid(self):
         self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
         self._analysis_filter_changed(self.analysis_filter)
@@ -177,6 +194,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             self._python_dt(ans)
 
     def _python_dt(self, ans):
+        ans = sorted(ans, key=attrgetter('timestampf'))
+
         ref = ans[0]
         prev = ref.timestampf
         ref.delta_time = 0
@@ -188,6 +207,23 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def configure_table(self):
         self.table_configurer.edit_traits(kind='livemodal')
+
+    def group_selected(self):
+        max_gid = max([si.group_id for si in self.analyses]) + 1
+        for s in self.get_selected_analyses():
+            s.group_id = max_gid
+
+        self.clear_selection()
+
+    def clear_grouping(self):
+        for s in self.get_selected_analyses():
+            s.group_id = 0
+
+        self.clear_selection()
+
+    def clear_selection(self):
+        self.selected = []
+        self.refresh_needed = True
 
     def review_status_details(self):
         from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
@@ -281,8 +317,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     def _tabular_adapter_default(self):
         adapter = AnalysisAdapter()
-        self.table_configurer.adapter = adapter
-        self.table_configurer.load()
+        self.table_configurer.set_adapter(adapter)
         return adapter
 
 # ============= EOF =============================================

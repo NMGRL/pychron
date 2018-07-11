@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Float
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 # ============= standard library imports ========================
@@ -24,7 +23,6 @@ from numpy.core.umath import exp
 import random
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.sweep import BaseSweep
-from six.moves import range
 
 
 def multi_peak_generator(values):
@@ -75,8 +73,11 @@ class MagnetSweep(BaseSweep):
 
     def _step(self, v):
         self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
-                                         settling_time=self.integration_time * 2,
+                                         settling_time=0,
+                                         # settling_time=self.integration_time * 2,
                                          use_dac_changed=False)
+        self.spectrometer.trigger_acq()
+        self.spectrometer.settle()
 
     def _do_sweep(self, sm, em, stm, directions=None, map_mass=True):
         if map_mass:

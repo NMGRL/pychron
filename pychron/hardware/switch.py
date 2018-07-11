@@ -68,7 +68,7 @@ class ManualSwitch(BaseSwitch):
     prefix_name = 'MANUAL_SWITCH'
 
     def state_str(self):
-        return '{}{}{}'.format(self.name, self.state)
+        return '{}{}'.format(self.name, self.state)
 
     def set_open(self, *args, **kw):
         self.state = True

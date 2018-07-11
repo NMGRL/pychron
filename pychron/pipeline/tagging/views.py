@@ -94,6 +94,7 @@ class AnalysisTagView(Controller):
                         note_grp,
                         UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
                                                             multi_select=True,
+                                                            selected='selected',
                                                             operations=['delete'])),
                         HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure'),
                                defined_when='items')),

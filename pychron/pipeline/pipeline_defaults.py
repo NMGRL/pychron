@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+ML = """
+required:
+nodes:
+  - klass: MLDataNode
+  - klass: MLRegressionNode
+"""
 
 REGRESSION_SERIES = """
 required:
@@ -75,10 +81,8 @@ BLANKS = """
 required:
 nodes:
   - klass: UnknownNode
-  - klass: FindReferencesNode
+  - klass: FindBlanksNode
     threshold: 10
-    analysis_types: 
-      - Blank Unknown
   - klass: ReferenceNode
   - klass: FitBlanksNode
   - klass: ReviewNode
@@ -133,8 +137,25 @@ required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
-  - klass: XLSXAnalysisTableNode
-  - klass: XLSXTablePersistNode
+  - klass: SubGroupingNode
+  - klass: AnalysisTableNode
+  - klass: ReviewNode
+  - klass: XLSXAnalysisTablePersistNode
+"""
+
+ANALYSIS_TABLE_W_IA = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: AnalysisTableNode
+  - klass: ReviewNode
+  - klass: SetInterpretedAgeNode
+  - klass: ReviewNode
+  - klass: InterpretedAgePersistNode
+  - klass: XLSXAnalysisTablePersistNode
+  
 """
 
 INTERPRETED_AGE_TABLE = """
@@ -153,6 +174,26 @@ nodes:
   - klass: IdeogramNode
 """
 
+HYBRID_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: InterpretedAgeNode
+  - klass: IdeogramNode
+"""
+
+SUBGROUP_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: GroupingNode
+  - klass: SubGroupingNode
+  - klass: GroupAgeNode
+  - klass: ReviewNode
+  - klass: IdeogramNode
+"""
+
 AUTO_IDEOGRAM = """
 required:
 nodes:
@@ -165,6 +206,23 @@ nodes:
   - klass: IdeogramNode
     no_analyses_warning: False
 """
+
+HISTORY_IDEOGRAM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: HistoryIdeogramNode
+"""
+
+HISTORY_SPECTRUM = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: DVCHistoryNode
+  - klass: SpectrumNode
+"""
+
 REPORT = """
 required:
 nodes:
@@ -231,5 +289,18 @@ nodes:
   - klass: UnknownNode
   - klass: AnalysisMetadataNode
 
+"""
+
+BULK_EDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: BulkEditNode"""
+
+AUDIT = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: AuditNode
 """
 # ============= EOF =============================================
