@@ -185,18 +185,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
-        self._load_names()
 
-    def _load_names(self):
-        if self.username and self.password and self.host:
-            if self.host:
-                def func():
-                    self._progress_state = True
-
-                do_after(50, func)
-
-                self._names = show_databases(self.kind, self.host, self.username, self.password,
-                                             self._schema_identifier)
     def _add_favorite_path_fired(self):
         dlg = FileDialog(action='open')
         if dlg.open() == OK:
