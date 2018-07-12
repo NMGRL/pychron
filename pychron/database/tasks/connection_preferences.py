@@ -163,7 +163,7 @@ class ConnectionFavoriteItem(HasTraits):
     def load_names(self):
         if self.username and self.host and self.password:
             if self.schema_identifier:
-                names = show_databases(self.host, self.username, self.password, self.schema_identifier)
+                names = show_databases(self.kind, self.host, self.username, self.password, self.schema_identifier)
                 self.names = names
 
     def to_string(self):
