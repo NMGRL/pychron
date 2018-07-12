@@ -37,29 +37,34 @@ from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesH
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
-def show_databases(host, user, password, schema_identifier='AnalysisTbl', exclude=None):
-    import pymysql
-    if exclude is None:
-        exclude = ('information_schema', 'performance_schema', 'mysql')
+def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
     names = []
-    try:
-        conn = pymysql.connect(host=host, port=3306, user=user,
-                               connect_timeout=0.25,
-                               passwd=password, db='information_schema')
+    if kind == 'mysql':
+        import pymysql
+        if exclude is None:
+            exclude = ('information_schema', 'performance_schema', 'mysql')
+        try:
+            conn = pymysql.connect(host=host, port=3306, user=user,
+                                   connect_timeout=0.25,
+                                   passwd=password, db='information_schema')
+            cur = conn.cursor()
+            if schema_identifier:
+                sql = '''select TABLE_SCHEMA from TABLES where TABLE_NAME="{}"'''.format(schema_identifier)
+            else:
+                sql = 'SHOW TABLES'
+
+            cur.execute(sql)
+
+            names = [di[0] for di in cur if di[0] not in exclude]
+
+        except BaseException:
+            pass
+    elif kind == 'mssql':
+        import mssql
+        conn = mssql.connect(host, user, password)
         cur = conn.cursor()
-        if schema_identifier:
-            sql = '''select TABLE_SCHEMA from
-TABLES
-where TABLE_NAME="{}"'''.format(schema_identifier)
-        else:
-            sql = 'SHOW TABLES'
-
-        cur.execute(sql)
-
-        names = [di[0] for di in cur if di[0] not in exclude]
-    except BaseException as e:
-        print('exception show names', e)
-        pass
+        sql = 'SELECT * FROM sys.schemas'
+        print(cur.execute(sql))
 
     return names
 
