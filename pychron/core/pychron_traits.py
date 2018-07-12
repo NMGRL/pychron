@@ -16,9 +16,11 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import BaseStr, Int, String
+
 # ============= standard library imports ========================
 import re
+
+from traits.api import BaseStr, Int, String
 # ============= local library imports  ==========================
 from traitsui.group import VGroup, HGroup
 

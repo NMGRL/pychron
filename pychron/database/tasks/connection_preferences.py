@@ -25,46 +25,41 @@ from traitsui.api import View, VGroup, HGroup, spring, Label, Spring, \
 from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.extras.checkbox_column import CheckboxColumn
+
+from pychron.core.helpers.strtools import to_bool
 from pychron.core.pychron_traits import HostStr
-from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper, FavoritesAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
 
 
-
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
-def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
+def show_databases(host, user, password, schema_identifier='AnalysisTbl', exclude=None):
+    import pymysql
+    if exclude is None:
+        exclude = ('information_schema', 'performance_schema', 'mysql')
     names = []
-    if kind == 'mysql':
-        import pymysql
-        if exclude is None:
-            exclude = ('information_schema', 'performance_schema', 'mysql')
-        try:
-            conn = pymysql.connect(host=host, port=3306, user=user,
-                                   connect_timeout=0.25,
-                                   passwd=password, db='information_schema')
-            cur = conn.cursor()
-            if schema_identifier:
-                sql = '''select TABLE_SCHEMA from TABLES where TABLE_NAME="{}"'''.format(schema_identifier)
-            else:
-                sql = 'SHOW TABLES'
-
-            cur.execute(sql)
-
-            names = [di[0] for di in cur if di[0] not in exclude]
-
-        except BaseException:
-            pass
-    elif kind == 'mssql':
-        import mssql
-        conn = mssql.connect(host, user, password)
+    try:
+        conn = pymysql.connect(host=host, port=3306, user=user,
+                               connect_timeout=0.25,
+                               passwd=password, db='information_schema')
         cur = conn.cursor()
-        sql = 'SELECT * FROM sys.schemas'
-        print(cur.execute(sql))
+        if schema_identifier:
+            sql = '''select TABLE_SCHEMA from
+TABLES
+where TABLE_NAME="{}"'''.format(schema_identifier)
+        else:
+            sql = 'SHOW TABLES'
+
+        cur.execute(sql)
+
+        names = [di[0] for di in cur if di[0] not in exclude]
+    except BaseException as e:
+        print('exception show names', e)
+        pass
 
     return names
 
@@ -123,13 +118,12 @@ class ConnectionFavoriteItem(HasTraits):
     enabled = Bool
     name = Str
     dbname = Str
-    host = Str
+    host = HostStr
     kind = Enum('mysql', 'sqlite')
     username = Str
     names = List
     password = Password
-    host = HostStr
-    kind = Enum('---', 'mysql', 'sqlite', 'mssql')
+    schema_identifier = Str
     path = File
     default = Bool
 
@@ -164,9 +158,8 @@ class ConnectionFavoriteItem(HasTraits):
     def load_names(self):
         if self.username and self.host and self.password:
             if self.schema_identifier:
-                if IPREGEX.match(self.host) or self.host == 'localhost':
-                    names = show_databases(self.host, self.username, self.password, self.schema_identifier)
-                    self.names = names
+                names = show_databases(self.host, self.username, self.password, self.schema_identifier)
+                self.names = names
 
     def to_string(self):
         return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
