@@ -26,7 +26,7 @@ from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
-
+from pychron.pychron_constants import NULL_STR
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -124,7 +124,7 @@ class ConnectionFavoriteItem(HasTraits):
     name = Str
     dbname = Str
     host = HostStr
-    kind = Enum('mysql', 'sqlite')
+    kind = Enum('mysql', 'sqlite', 'mssql', NULL_STR)
     username = Str
     names = List
     password = Password
