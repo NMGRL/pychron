@@ -60,8 +60,8 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
         except BaseException:
             pass
     elif kind == 'mssql':
-        import mssql
-        conn = mssql.connect(host, user, password)
+        import pymssql
+        conn = pymssql.connect(host, user, password)
         cur = conn.cursor()
         sql = 'SELECT * FROM sys.schemas'
         print(cur.execute(sql))
@@ -180,6 +180,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     _fav_klass = ConnectionFavoriteItem
     _schema_identifier = None
+    load_names_button = Button
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
@@ -209,6 +210,11 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def __selected_changed(self):
         self._reset_connection_label(True)
+
+    def _load_names_button_fired(self):
+        obj = self._selected
+        if obj:
+            obj.load_names()
 
     @on_trait_change('_fav_items:+')
     def fav_item_changed(self, obj, name, old, new):
@@ -273,6 +279,8 @@ class ConnectionPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection'),
                              icon_button_editor('test_connection_button', 'database_connect',
                                                 tooltip='Test connection'),
+                             icon_button_editor('load_names_button', '',
+                                                tooltip='Load avaliable database schemas on the selected server'),
                              Spring(width=10, springy=False),
                              Label('Status:'),
                              CustomLabel('_connected_label',
