@@ -39,6 +39,7 @@ from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesH
 
 def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
     names = []
+    records = []
     if kind == 'mysql':
         import pymysql
         if exclude is None:
@@ -54,18 +55,24 @@ def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', 
                 sql = 'SHOW TABLES'
 
             cur.execute(sql)
-
-            names = [di[0] for di in cur if di[0] not in exclude]
+            records = cur.fetchall()
 
         except BaseException:
             pass
     elif kind == 'mssql':
         import pymssql
-        conn = pymssql.connect(host, user, password)
-        cur = conn.cursor()
-        sql = 'SELECT * FROM sys.schemas'
-        print(cur.execute(sql))
-
+        if exclude is None:
+            exclude = ('master', 'tempdb', 'model', 'msdb')
+        try:
+            conn = pymssql.connect(host, user, password, timeout=1)
+            cur = conn.cursor()
+            sql = 'SELECT * FROM sys.databases'
+            cur.execute(sql)
+            records = cur.fetchall()
+        except pymssql.OperationalError:
+            pass
+        
+    names = [di[0] for di in records if di[0] not in exclude]
     return names
 
 
