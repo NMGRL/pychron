@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import socket
-
+from datetime import datetime
 import paramiko
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
@@ -256,6 +256,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _load_steps_for_sample(self, asample):
         def factory(s):
+            ts = s.timestamp
+            if not isinstance(ts, datetime):
+                ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
             pstep = PrepStepRecord(id=s.id,
                                    crush=s.crush or '',
                                    sieve=s.sieve or '',
@@ -264,7 +267,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
                                    frantz=s.frantz or '',
                                    pick=s.pick or '',
                                    heavy_liquid=s.heavy_liquid or '',
-                                   timestamp=s.timestamp,
+                                   timestamp=ts,
                                    nimages=len(s.images))
             return pstep
 
