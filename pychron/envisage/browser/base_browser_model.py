@@ -574,7 +574,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     make = getattr(self, '_make_{}'.format(attr))
                     for si in sel:
                         v = func(si)
-                        vs.append(make(v))
+                        try:
+                            vs.append(make(v))
+                        except AttributeError:
+                            pass
 
                     setattr(self, pattr, vs)
                     setattr(self, 'selected_{}'.format(pattr), vs)

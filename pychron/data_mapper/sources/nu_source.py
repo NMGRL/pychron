@@ -14,18 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-import os
-from traits.api import File
 
+import os
 from datetime import datetime
+
 from numpy import array
+from six.moves import map
+from six.moves import range
+from traits.api import File
 
 from pychron.data_mapper.sources.file_source import FileSource, get_next, get_int
 from pychron.data_mapper.sources.nice_parser import NiceParser
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
-from six.moves import map
-from six.moves import range
 
 
 class NuFileSource(FileSource):
@@ -37,9 +38,17 @@ class NuFileSource(FileSource):
 
         ident = os.path.splitext(os.path.basename(self.path))[0]
         pspec.run_spec.uuid = ident
-        pspec.run_spec.runid = ident
 
-        rspec = pspec.run_spec
+        # labnumber = '100000'
+        # irradiation_level = 'A'
+        # irradiation_position = 1
+
+        aliquot = int(ident[-4:])
+        # pspec.run_spec.labnumber = labnumber
+        pspec.run_spec.aliquot = aliquot
+
+        # pspec.run_spec.irradiation_level = irradiation_level
+        # pspec.run_spec.irradiation_position = irradiation_position
 
         version = next(f)
         ncycles = next(f)
