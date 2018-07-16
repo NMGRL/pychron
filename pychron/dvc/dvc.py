@@ -960,8 +960,14 @@ class DVC(Loggable):
     def update_flux(self, *args, **kw):
         self.meta_repo.update_flux(*args, **kw)
 
-    def set_identifier(self, *args):
-        self.meta_repo.set_identifier(*args)
+    def set_identifier(self, irradiation, level, position, identifier):
+
+        dbpos = self.db.get_irradiation_position(irradiation, level, position)
+        if dbpos:
+            dbpos.identifier = identifier
+            self.db.commit()
+
+        self.meta_repo.set_identifier(irradiation, level, position, identifier)
 
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
@@ -1397,7 +1403,11 @@ class DVC(Loggable):
                             pname, prod = productions[a.irradiation][a.irradiation_level]
                         except KeyError:
                             pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
-                            self.warning('production key error name={}, productions={}'.format(pname, productions))
+                            self.warning('production key error name={} '
+                                         'irrad={}, level={}, productions={}'.format(pname,
+                                                                                     a.irradiation,
+                                                                                     a.irradiation_level,
+                                                                                     productions))
 
                     a.set_production(pname, prod)
 

@@ -36,6 +36,7 @@ class HostStr(BaseStr):
         else:
             self.error(obj, name, value)
 
+
 class IPAddress(BaseStr):
     def validate(self, obj, name, value):
         if not value or value == 'localhost' or IPREGEX.match(value):

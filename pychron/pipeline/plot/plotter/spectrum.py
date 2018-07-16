@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= standard library imports ========================
-from __future__ import absolute_import
-
 from math import isnan
 
 from numpy import hstack, array
-from six.moves import zip
+# ============= standard library imports ========================
 from traits.api import Array, List, Instance
 from uncertainties import nominal_value, std_dev
 
@@ -64,8 +61,6 @@ class Spectrum(BaseArArFigure):
 
                 legend.plots[key] = plot
 
-        # self.graph.set_x_title('Cumulative %39ArK', plotid=0)
-        # self.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>')
         self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
 
     def max_x(self, attr):
@@ -84,7 +79,7 @@ class Spectrum(BaseArArFigure):
 
         # filter ys,es if 39Ar < 1% of total
         try:
-            vs, es = list(zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs]))
+            vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
             vs, es = array(vs), array(es)
             nes = es * self.options.step_nsigma
             yl = vs - nes
