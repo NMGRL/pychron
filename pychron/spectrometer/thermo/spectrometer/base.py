@@ -336,18 +336,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
                     signals = data
 
-            signals = list(map(float, signals))
-
-        # if not keys and globalv.communication_simulation:
-        #     keys, signals = self._get_simulation_data()
-
-        # for k, v in zip(keys, signals):
-        #     det = self.get_detector(k)
-        #     det.set_intensity(v)
-
-        # signals = array(signals)
-
-        # self._check_intensity_no_change(signals)
+            signals = [float(s) for s in signals]
 
         return keys, signals
 

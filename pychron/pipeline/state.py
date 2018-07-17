@@ -16,10 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, List, Bool, Any, Property, cached_property, Set, Str, Dict
 
-from pychron.core.helpers.isotope_utils import sort_isotopes
-import six
+from traits.api import HasTraits, List, Bool, Any, Set, Str, Dict
 
 
 def get_detector_set(ans):
@@ -41,7 +39,7 @@ class EngineState(HasTraits):
     tables = List
     editors = List
     append_references = Bool
-    has_references = Bool
+    # has_references = Bool
     has_flux_monitors = Bool
     saveable_keys = List
     saveable_fits = List
@@ -49,6 +47,7 @@ class EngineState(HasTraits):
     # user_review = Bool
     veto = Any
     canceled = Bool
+    run_groups = Dict
     # udetectors = Property(depends_on='unknowns[]')
     # rdetectors = Property(depends_on='references[]')
     # union_detectors = Property(depends_on='udetectors, rdetectors')

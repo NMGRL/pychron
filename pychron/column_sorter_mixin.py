@@ -14,10 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from traits.api import HasTraits, Any
 # ============= standard library imports ========================
 from operator import attrgetter
+
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Any
+
+
 # ============= local library imports  ==========================
 
 
@@ -59,8 +62,11 @@ class ColumnSorterMixin(HasTraits):
         try:
             vs = sorted(values, key=key, reverse=self._reverse_sort)
             self._sort_field = field
+            self._sorted_hook(vs)
             return vs
         except AttributeError:
             pass
 
+    def _sorted_hook(self, vs):
+        pass
 # ============= EOF =============================================

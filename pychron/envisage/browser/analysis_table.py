@@ -82,6 +82,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         self._analysis_sets = OrderedDict()
 
+    def _sorted_hook(self, vs):
+        self.oanalyses = vs
+
     def load(self):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):
@@ -191,6 +194,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             self._python_dt(ans)
 
     def _python_dt(self, ans):
+        ans = sorted(ans, key=attrgetter('timestampf'))
+
         ref = ans[0]
         prev = ref.timestampf
         ref.delta_time = 0

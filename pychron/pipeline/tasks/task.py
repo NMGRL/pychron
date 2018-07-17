@@ -25,6 +25,7 @@ from traits.api import Instance, Bool, on_trait_change, Any
 from pychron.core.helpers.filetools import list_gits
 from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.dvc import dvc_dump
+from pychron.dvc.dvc import DVCInterpretedAge
 from pychron.dvc.func import repository_has_staged
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
@@ -363,7 +364,7 @@ class PipelineTask(BaseBrowserTask):
         self._set_action_template('Iso Evo')
 
     def set_icfactor_template(self):
-        self._set_action_template('ICFactor')
+        self._set_action_template('IC Factor')
 
     def set_blanks_template(self):
         self._set_action_template('Blanks')
@@ -604,19 +605,6 @@ class PipelineTask(BaseBrowserTask):
     def _handle_omit(self, name, new):
         self._set_omit(new)
 
-    def _handle_recall(self, name, new):
-        self.recall(new)
-    # @on_trait_change('engine:[tag_event, invalid_event, recall_event, omit_event]')
-    #     # def _handle_analysis_tagging(self, name, new):
-    #     #     if name == 'tag_event':
-    #     #         self.set_tag(items=new)
-    #     #     elif name == 'invalid_event':
-    #     #         self._set_invalid(new)
-    #     #     elif name == 'omit_event':
-    #     #         self._set_omit(new)
-    #     #     elif name == 'recall_event':
-    #     #         self.recall(new)
-
     @on_trait_change('engine:run_needed')
     def _handle_run_needed(self, new):
         self.debug('run needed for {}'.format(new))
@@ -624,7 +612,8 @@ class PipelineTask(BaseBrowserTask):
 
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
-        self.recall(new)
+        if not isinstance(new, DVCInterpretedAge):
+            self.recall(new)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:

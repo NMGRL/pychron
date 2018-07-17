@@ -272,7 +272,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             return
 
     def configure_sample_table(self):
-        self.table_configurer.edit_traits()
+        self.table_configurer.edit_traits(kind='livemodal')
 
     def set_projects(self, ps, sel=None):
         if sel is None:
@@ -574,7 +574,10 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
                     make = getattr(self, '_make_{}'.format(attr))
                     for si in sel:
                         v = func(si)
-                        vs.append(make(v))
+                        try:
+                            vs.append(make(v))
+                        except AttributeError:
+                            pass
 
                     setattr(self, pattr, vs)
                     setattr(self, 'selected_{}'.format(pattr), vs)

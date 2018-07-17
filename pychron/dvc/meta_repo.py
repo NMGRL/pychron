@@ -364,14 +364,14 @@ class MetaRepo(GitRepoManager):
     def update_experiment_queue(self, rootname, name, path_or_blob):
         self._update_text(os.path.join('experiments', rootname.lower()), name, path_or_blob)
 
-    def update_level_production(self, irrad, name, prname):
+    def update_level_production(self, irrad, name, prname, note=None):
         prname = prname.replace(' ', '_')
 
         pathname = add_extension(prname, '.json')
 
         src = os.path.join(paths.meta_root, irrad, 'productions', pathname)
         if os.path.isfile(src):
-            self.update_productions(irrad, name, prname)
+            self.update_productions(irrad, name, prname, note=note)
         # elif prname.startswith('Global'):
         #     prname = prname[7:]
         #     pathname = add_extension(prname, '.json')
@@ -431,14 +431,15 @@ class MetaRepo(GitRepoManager):
         self.add(ip.path, commit=False)
         self.commit('updated production {}'.format(prod.name))
 
-    def update_productions(self, irrad, level, production, add=True):
+    def update_productions(self, irrad, level, production, note=None, add=True):
         p = os.path.join(paths.meta_root, irrad, 'productions.json')
 
         obj = dvc_load(p)
+        obj['note'] = str(note) or ''
+
         if level in obj:
             if obj[level] != production:
-                self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level,
-                                                                                      production))
+                self.debug('setting production to irrad={}, level={}, prod={}'.format(irrad, level, production))
                 obj[level] = production
                 dvc_dump(obj, p)
 

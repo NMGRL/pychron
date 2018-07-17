@@ -45,7 +45,7 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     def _load_names(self):
         if self.username and self.password and self.host:
             if self.host:
-                self._names = show_databases(self.host, self.username, self.password, self._schema_identifier)
+                self._names = show_databases('mysql', self.host, self.username, self.password, self._schema_identifier)
 
     def _anytrait_changed(self, name, old, new):
         if name not in ('_connected_label', '_connected_color',

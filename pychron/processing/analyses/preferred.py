@@ -14,19 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import HasTraits, Str, List, Enum, Float, Event
+from traits.api import HasTraits, Str, List, Float, Event
 from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup
 from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
-from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS
+from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS, WEIGHTED_MEAN, \
+    PLATEAU_ELSE_WEIGHTED_MEAN
 
 
 class PreferredValue(HasTraits):
     attr = Str
     error_kind = Str(MSEM)
     error_kinds = List(ERROR_TYPES)
-    kind = Enum(*SUBGROUPINGS)
+    kind = Str(WEIGHTED_MEAN)
+    kinds = List(SUBGROUPINGS)
+    computed_kind = Str
     value = Float
     error = Float
     dirty = Event
@@ -39,7 +42,7 @@ class PreferredValue(HasTraits):
         return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error')}
 
     def _kind_changed(self, new):
-        if new in ('Integrated', 'Arithmetic Mean'):
+        if new in ('Plateau Integrated', 'Valid Integrated', 'Total Integrated', 'Arithmetic Mean'):
             self.error_kinds = [SD, ]
             self.error_kind = SD
         else:
@@ -47,7 +50,8 @@ class PreferredValue(HasTraits):
 
 
 class AgePreferredValue(PreferredValue):
-    kind = Enum(*AGE_SUBGROUPINGS)
+    kind = Str(PLATEAU_ELSE_WEIGHTED_MEAN)
+    kinds = List(AGE_SUBGROUPINGS)
 
 
 def make_preferred_values():
@@ -62,14 +66,14 @@ def make_preferred_values():
 
 
 cols = [ObjectColumn(name='name', label='Name', editable=False),
-        ObjectColumn(name='kind', label='Kind'),
+        ObjectColumn(name='kind', label='Kind', editor=EnumEditor(name='kinds')),
         ObjectColumn(name='error_kind',
                      editor=EnumEditor(name='error_kinds'),
                      label='Error Kind'),
         ObjectColumn(name='value', label='Value', editable=False,
                      format_func=lambda x: floatfmt(x, use_scientific=True)),
         ObjectColumn(name='error', label='Error', editable=False,
-                     format_func=lambda x: floatfmt(x, use_scientific=True))]
+                     format_func=lambda x: floatfmt(x, n=7, use_scientific=True))]
 
 preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, columns=cols))
 

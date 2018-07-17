@@ -70,18 +70,25 @@ SIG_FIGS = range(0, 15)
 
 WEIGHTED_MEAN = 'Weighted Mean'
 INTEGRATED = 'Total Integrated'
+DEFAULT_INTEGRATED = 'Plateau else Valid Integrated'
+VALID_INTEGRATED = 'Valid Integrated'
+PLATEAU_INTEGRATED = 'Plateau Integrated'
 
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
              'Average', WEIGHTED_MEAN]
 
 FIT_ERROR_TYPES = [SD, SEM, 'CI', 'MonteCarlo']
 
-AGE_SUBGROUPINGS = ('Plateau else Weighted Mean', 'Weighted Mean',
-                    'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
-                    'Arithmetic Mean', 'Plateau', 'Isochron')
-SUBGROUPINGS = ('Weighted Mean',
-                'Total Integrated', 'Valid Integrated', 'Plateau Integrated',
-                'Arithmetic Mean')
+ARITHMETIC_MEAN = 'Arithmetic Mean'
+PLATEAU_ELSE_WEIGHTED_MEAN = 'Plateau else Weighted Mean'
+
+AGE_SUBGROUPINGS = (PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTED_MEAN,
+                    INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
+                    ARITHMETIC_MEAN, 'Plateau', 'Isochron')
+SUBGROUPINGS = [WEIGHTED_MEAN,
+                INTEGRATED, VALID_INTEGRATED, PLATEAU_INTEGRATED, DEFAULT_INTEGRATED,
+                ARITHMETIC_MEAN]
+
 SUBGROUPING_ATTRS = ('age', 'kca', 'kcl', 'rad40_percent', 'moles_k39', 'signal_k39')
 
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average']

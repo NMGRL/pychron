@@ -308,7 +308,7 @@ class ExtractionLineManager(Manager, Consoleable):
                         vc.state = v.state
 
     def update_switch_state(self, name, state, *args, **kw):
-        self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
+        #self.debug('update switch state {} {} args={} kw={}'.format(name, state, args, kw))
 
         if self.use_network:
             self.network.set_valve_state(name, state)

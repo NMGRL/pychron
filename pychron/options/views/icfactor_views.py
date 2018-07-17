@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from enable.markers import marker_names
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, Label
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import SubOptions, AppearanceSubOptions, MainOptions, object_column, checkbox_column
@@ -46,13 +48,14 @@ class ICFactorMainOptions(MainOptions):
             object_column(name='denominator', editor=EnumEditor(name='detectors')),
             checkbox_column(name='plot_enabled', label='Plot'),
             checkbox_column(name='save_enabled', label='Save'),
-
+            object_column(name='standard_ratio', label='Standard Ratio'),
             object_column(name='fit',
                           editor=EnumEditor(name='fit_types'),
                           width=75),
             object_column(name='error_type',
                           editor=EnumEditor(name='error_types'),
                           width=75, label='Error'),
+
             # checkbox_column(name='filter_outliers', label='Out.'),
             # object_column(name='filter_outlier_iterations', label='Iter.'),
             # object_column(name='filter_outlier_std_devs', label='SD'),

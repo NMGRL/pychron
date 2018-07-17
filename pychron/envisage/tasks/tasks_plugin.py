@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import hashlib
 import random
 from threading import Thread
@@ -111,7 +112,7 @@ class PychronTasksPlugin(BasePlugin):
                 '<b>2.</b> Set the flag <i>random_tip_enabled</i> to False in the initialization file',
                 'Use <b>Window/Reset Layout</b> to change the current window back to its default "Look"',
                 'Submit bugs or issues to the developers manually using <b>Help/Add Request/Report Bug</b>',
-                'The current version of Pychron contains over 151K lines of code',
+                'The current version of Pychron contains over 154K lines of code',
                 'If menu actions are missing first check that the desired "Plugin" is enabled using <b>Help/Edit '
                 'Initialization</b>. If "Plugin" is enabled, check that the desired action is enabled using '
                 '<b>Help/Edit UI</b>.']

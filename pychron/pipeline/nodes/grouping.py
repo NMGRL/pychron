@@ -27,7 +27,7 @@ from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
 from pychron.processing.analyses.preferred import get_preferred_grp, Preferred
 from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
-    INTEGRATED, MSEM, SD
+    MSEM, SD, DEFAULT_INTEGRATED
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
@@ -147,7 +147,7 @@ class SubGroupingNode(GroupingNode, Preferred):
             if attr == 'age':
                 kind, error = WEIGHTED_MEAN, MSEM
             else:
-                kind = WEIGHTED_MEAN if naliquots > 1 else INTEGRATED
+                kind = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
                 error = MSEM if naliquots > 1 else SD
 
             pv.kind = kind

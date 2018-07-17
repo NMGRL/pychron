@@ -17,22 +17,25 @@
 # # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import ast
 import os
 import re
-import time
 import weakref
 from itertools import groupby
 from pprint import pformat
 from threading import Thread, Event as TEvent
 
+import six
+import time
 import yaml
-from numpy import Inf, polyfit, linspace, polyval, array
+from numpy import Inf, polyfit, linspace, polyval
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
-from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.core.helpers.color_generators import colornames, colorname_generator
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.strtools import to_bool
@@ -53,10 +56,6 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 DEBUG = False
 
@@ -1170,9 +1169,7 @@ class AutomatedRun(Loggable):
                                     baseline_fods=bsfods,
                                     intensity_scalar=self.intensity_scalar,
                                     laboratory=self.laboratory,
-                                    instrument_name=self.instrument_name,
-                                    load_name=queue.load_name,
-                                    load_holder=queue.tray)
+                                    instrument_name=self.instrument_name)
 
     # ===============================================================================
     # doers

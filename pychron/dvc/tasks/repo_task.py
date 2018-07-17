@@ -54,11 +54,15 @@ class RepoItem(HasTraits):
     def update(self, fetch=True):
         name = self.name
         p = os.path.join(paths.repository_dataset_dir, name)
-        a, b = ahead_behind(p, fetch=fetch)
-        self.ahead = a
-        self.behind = b
-        self.status = '{},{}'.format(a, b)
-        self.refresh_needed = True
+        try:
+            a, b = ahead_behind(p, fetch=fetch)
+
+            self.ahead = a
+            self.behind = b
+            self.status = '{},{}'.format(a, b)
+            self.refresh_needed = True
+        except GitCommandError:
+            pass
 
 
 class ExperimentRepoTask(BaseTask):
