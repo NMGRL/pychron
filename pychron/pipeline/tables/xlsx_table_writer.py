@@ -243,7 +243,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (('Ar', 40), ('Ar', 39), ('Ar', 38), ('Ar', 37), ('Ar', 36))
-        for bit, tag in ((ibit, 'intercept'), (True, 'disc_ic_corrected'), (bkbit, 'blank')):
+        for bit, tag in ((True, 'disc_ic_corrected'), (ibit, 'intercept'), (bkbit, 'blank')):
             cols = [c for iso, mass in isos
                     for c in (Column(enabled=bit, attr='{}{}'.format(iso, mass),
                                      label=('<sup>{}</sup>'.format(mass), iso),
