@@ -816,16 +816,20 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
     def set_preferred_kinds(self, sg=None):
         naliquots = len({a.aliquot for a in self.analyses})
+        default_ek = MSEM if naliquots > 1 else SD
+        default_vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
+
         for k in SUBGROUPING_ATTRS:
             if sg is None:
                 if k == 'age':
                     vk, ek = WEIGHTED_MEAN, MSEM
                 else:
-                    vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
-                    ek = MSEM if naliquots > 1 else SD
+                    vk = default_vk
+                    ek = default_ek
             else:
-                vk = sg['{}_kind'.format(k)]
-                ek = sg['{}_error_kind'.format(k)]
+                vk = sg.get('{}_kind'.format(k), default_vk)
+                ek = sg.get('{}_error_kind'.format(k), default_ek)
+
             self.set_preferred_kind(k, vk, ek)
 
     def set_preferred_kind(self, attr, k, ek):

@@ -463,12 +463,15 @@ class Spectrum(BaseArArFigure):
 
     def _make_weighted_mean_text(self):
         ag = self.analysis_group
+        op = self.options
+
         a = ag.weighted_age
         n = ag.nanalyses
-        op = self.options
+        mswd_args = ag.get_mswd_tuple()
 
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a)*op.nsigma, n,
+                                      mswd_args=mswd_args,
                                       sig_figs=op.weighted_mean_sig_figs,
                                       total_n=ag.total_n)
         text = u'Weighted Mean= {}'.format(text)
