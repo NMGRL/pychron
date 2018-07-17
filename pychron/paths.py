@@ -328,6 +328,7 @@ class Paths(object):
         if not path.isdir(sd):
             mkdir(sd)
 
+        root = os.path.normpath(root)
         self.root_dir = root
         self.log_dir = join(root, 'logs')
 
