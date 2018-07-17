@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 from traits.api import on_trait_change, Button, Float, Str, Int, Bool, Event, HasTraits
 from traitsui.api import View, Item, VGroup, UItem, HGroup
 
+from pychron.core.pychron_traits import PacketStr
 from pychron.entry.graphic_generator import GraphicModel, GraphicGeneratorController
 from pychron.entry.labnumber_entry import LabnumberEntry
 from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
@@ -32,6 +34,7 @@ from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
 from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.regex import PACKETREGEX
 
 ATTRS = (('sample', ''),
          ('material', ''),
@@ -111,7 +114,10 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     note = Str
     weight = Float
     sample_search_str = Str
+    packet = PacketStr
 
+    set_packet_event = Event
+    use_increment_packet = Bool
     include_recent = False
     _suppress_load_labnumbers = True
 
@@ -354,6 +360,17 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def save_to_db(self):
         self.manager.save()
 
+    # private
+    def _increment_packet(self):
+        m = PACKETREGEX.search(self.packet)
+        if m:
+            v = m.group('prefix')
+            if not v:
+                v = ''
+            a = m.group('number')
+            self.packet = '{}{:02n}'.format(v, int(a)+1)
+
+    # handlers
     def _estimate_j_button_fired(self):
         self.manager.estimate_j()
 
@@ -366,6 +383,19 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _handle_j(self, obj, name, old, new):
         if new:
             self.manager.set_selected_attr(new, name)
+
+    @on_trait_change('set_packet_event')
+    def _handle_packet(self):
+        if not self.manager.selected:
+            self.warning_dialog('Please select an Irradiation Position before trying to set the Packet')
+            return
+
+        for s in self.manager.selected:
+            s.packet = self.packet
+
+        self.manager.refresh_table = True
+        if self.use_increment_packet:
+            self._increment_packet()
 
     def _sample_search_str_changed(self, new):
         if len(new) >= 3:
@@ -394,7 +424,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.samples = sams
         self.osamples = sams
 
-    # handlers
     def _dclicked_fired(self):
         self.selected_samples = []
 

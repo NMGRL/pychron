@@ -1275,7 +1275,7 @@ class DVC(Loggable):
 
                     self.debug('setting {} tag= {}'.format(it.record_id, tag))
                     if not isinstance(it, InterpretedAge):
-                        self.set_analysis_tag(it.uuid, tag)
+                        self.set_analysis_tag(it, tag)
 
                     it.set_tag({'name': tag, 'note': note or ''})
 

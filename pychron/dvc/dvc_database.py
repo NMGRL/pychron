@@ -342,9 +342,12 @@ class DVCDatabase(DatabaseAdapter):
 
             return project, pi, sample, material, irradiation, level, pos
 
-    def set_analysis_tag(self, uuid, tagname):
+    def set_analysis_tag(self, item, tagname):
         with self.session_ctx() as sess:
-            an = self.get_analysis_uuid(uuid)
+            an = self.get_analysis_uuid(item.uuid)
+            if an is None:
+                an = self.get_analysis_runid(item.identifier, item.aliquot, item.step)
+
             change = an.change
             # print 'asdfasdf', change, an.id, change.idanalysischangeTbl, tagname, self.save_username
             change.tag = tagname

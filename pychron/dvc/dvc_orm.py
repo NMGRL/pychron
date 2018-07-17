@@ -409,7 +409,7 @@ class IrradiationPositionTbl(Base, BaseMixin):
     weight = Column(Float)
     j = Column(Float)
     j_err = Column(Float)
-
+    packet = stringcolumn(40)
     analyses = relationship('AnalysisTbl', backref='irradiation_position')
 
     @property

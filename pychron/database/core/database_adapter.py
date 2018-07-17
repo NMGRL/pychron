@@ -18,11 +18,15 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import sys
 from datetime import datetime, timedelta
 from threading import Lock
 
+import six
+from six.moves import range
+from six.moves import zip
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
@@ -31,13 +35,9 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
 from pychron import version
-from pychron.core.codetools.inspection import caller
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-import six
-from six.moves import range
-from six.moves import zip
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -476,7 +476,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = self._import_mysql_driver()
                 if driver is None:
                     return
-            elif kind=='mssql':
+            elif kind == 'mssql':
                 driver = self._import_mssql_driver()
                 if driver is None:
                     return
@@ -488,13 +488,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             else:
                 url = '{}+{}://{}@{}/{}'.format(kind, driver, user, host, name)
 
-            if kind=='mysql':
-                url='{}?connect_timeout=5'.format(url)
-            #elif kind == 'mssql':
+            if kind == 'mysql':
+                url = '{}?connect_timeout=5'.format(url)
+            # elif kind == 'mssql':
             #    url='{}?timeout=5'.format(url)
         else:
             url = 'sqlite:///{}'.format(self.path)
-        print('fffasdfasdf', url)
+
         return url
 
     def _import_mssql_driver(self):
@@ -503,23 +503,29 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             return 'pymssql'
         except ImportError:
             pass
+
     def _import_mysql_driver(self):
         try:
-            '''
-                pymysql
-                https://github.com/petehunt/PyMySQL/
-            '''
-            import pymysql
+            import pyodbc
+            driver = 'pyodbc'
 
-            driver = 'pymysql'
         except ImportError:
             try:
-                import _mysql
+                '''
+                    pymysql
+                    https://github.com/petehunt/PyMySQL/
+                '''
+                import pymysql
 
-                driver = 'mysqldb'
+                driver = 'pymysql'
             except ImportError:
-                self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
-                return
+                try:
+                    import _mysql
+
+                    driver = 'mysqldb'
+                except ImportError:
+                    self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
+                    return
 
         self.info('using {}'.format(driver))
         return driver

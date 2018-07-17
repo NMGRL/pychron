@@ -7,9 +7,9 @@ PI: Singer, B
  
 
 Irradiation info: UW133
-Labnumber: 100001
+Labnumber: 100002
 Irradiation level: A
-Irradiation Position: 1
+Irradiation Position: 2
 Date:     10/7/2016 19:50
 Duration (hours):              3
 39/37(ca)             %1s        38/37(ca)             %1s        36/37(ca)             %1s        40/39(k)               %1s               38/39(k)               %1s        36/38(cl)              %1s
