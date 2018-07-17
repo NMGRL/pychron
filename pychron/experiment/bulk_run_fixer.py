@@ -96,7 +96,7 @@ class BulkRunFixer(Loggable):
         for r in ris:
             for tag in ('extraction', 'measurement'):
                 tag = '{}_script'.format(tag)
-                if getattr('enabled_{}'.format(tag)):
+                if getattr(self, '{}_enabled'.format(tag)):
                     setattr(r, tag, getattr(self, tag))
 
             if self.unknown_enabled:
