@@ -115,6 +115,7 @@ class AnalysisChangeTbl(Base, BaseMixin):
 
 class AnalysisTbl(Base, BaseMixin):
     id = primary_key()
+    experiment_type = stringcolumn(32)
     timestamp = Column(TIMESTAMP)
     # tag = stringcolumn(45)
     uuid = stringcolumn(32)
@@ -545,8 +546,17 @@ class SamplePrepStepTbl(Base, BaseMixin):
     acid = Column(String(140))
     heavy_liquid = Column(String(140))
     pick = Column(String(140))
+    mount = stringcolumn(140)
+    gold_table = stringcolumn(140)
+    us_wand = stringcolumn(140)
+    eds = stringcolumn(140)
+    cl = stringcolumn(140)
+    bse = stringcolumn(140)
+    se = stringcolumn(140)
+
     status = Column(String(32))
     comment = Column(String(300))
+
     timestamp = Column(DATETIME, default=func.now())
     added = Column(Boolean)
 
