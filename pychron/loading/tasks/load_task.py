@@ -16,19 +16,22 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Any, List
+
+from apptools.preferences.preference_binding import bind_preference
+from pyface.tasks.action.schema import SToolBar
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout
-from pyface.tasks.action.schema import SToolBar
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+from traits.api import Any, List
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
-from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
 from pychron.loading.tasks.actions import SaveLoadingPDFAction, ConfigurePDFAction, EntryAction, InfoAction, EditAction, \
     SaveLoadingDBAction, GenerateResultsAction
-from apptools.preferences.preference_binding import bind_preference
+from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
+
+
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 
 
 class LoadingTask(BaseManagerTask):
@@ -66,7 +69,7 @@ class LoadingTask(BaseManagerTask):
             right=PaneItem('pychron.loading.positions'))
 
     def prepare_destroy(self):
-        pass
+        self.manager.dvc.close_session()
 
     def create_dock_panes(self):
 
