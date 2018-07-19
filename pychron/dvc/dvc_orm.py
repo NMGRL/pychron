@@ -198,6 +198,10 @@ class AnalysisTbl(Base, IDMixin):
         return self.irradiation_position.level.name
 
     @property
+    def packet(self):
+        return self.irradiation_position.packet
+
+    @property
     def project(self):
         return self.irradiation_position.sample.project.name
 

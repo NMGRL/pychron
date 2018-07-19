@@ -125,6 +125,7 @@ class LabnumberRecordView(RecordView):
     irradiation = ''
     irradiation_level = ''
     irradiation_pos = ''
+    packet = ''
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ''
@@ -133,6 +134,7 @@ class LabnumberRecordView(RecordView):
         # pos = dbrecord.irradiation_position
         if pos:
             self.irradiation_pos = str(pos.position)
+            self.packet = str(pos.packet)
             level = pos.level
             if level:
                 irrad = level.irradiation
