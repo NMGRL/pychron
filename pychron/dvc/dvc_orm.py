@@ -116,7 +116,7 @@ class AnalysisChangeTbl(Base, BaseMixin):
 class AnalysisTbl(Base, BaseMixin):
     id = primary_key()
     experiment_type = stringcolumn(32)
-    timestamp = Column(TIMESTAMP)
+    timestamp = Column(DATETIME)
     # tag = stringcolumn(45)
     uuid = stringcolumn(32)
     analysis_type = stringcolumn(45)
