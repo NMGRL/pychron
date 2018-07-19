@@ -484,50 +484,58 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = 'pg8000'
 
             if password:
-                url = '{}+{}://{}:{}@{}/{}'.format(kind, driver, user, password, host, name)
-            else:
-                url = '{}+{}://{}@{}/{}'.format(kind, driver, user, host, name)
+                user = '{}:{}'.format(user, password)
 
-            if kind == 'mysql':
-                url = '{}?connect_timeout=5'.format(url)
-            # elif kind == 'mssql':
-            #    url='{}?timeout=5'.format(url)
+            prefix = '{}+{}://{}@'.format(kind, driver, user)
+
+            if driver == 'pyodbc':
+                url = '{}{}'.format(prefix, name)
+            else:
+                url = '{}{}/{}'.format(prefix, host, name)
+                if kind == 'mysql':
+                    url = '{}?connect_timeout=5'.format(url)
+
         else:
             url = 'sqlite:///{}'.format(self.path)
 
         return url
 
     def _import_mssql_driver(self):
-        try:
-            import pymssql
-            return 'pymssql'
-        except ImportError:
-            pass
-
-    def _import_mysql_driver(self):
+        driver = None
         try:
             import pyodbc
             driver = 'pyodbc'
 
         except ImportError:
             try:
-                '''
-                    pymysql
-                    https://github.com/petehunt/PyMySQL/
-                '''
-                import pymysql
-
-                driver = 'pymysql'
+                import pymssql
+                driver = 'pymssql'
             except ImportError:
-                try:
-                    import _mysql
+                pass
 
-                    driver = 'mysqldb'
-                except ImportError:
-                    self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
-                    return
+        self.info('using mssql driver="{}"'.format(driver))
+        return driver
 
-        self.info('using {}'.format(driver))
+    def _import_mysql_driver(self):
+
+        try:
+            '''
+                pymysql
+                https://github.com/petehunt/PyMySQL/
+            '''
+            import pymysql
+
+            driver = 'pymysql'
+        except ImportError:
+            try:
+                import _mysql
+
+                driver = 'mysqldb'
+            except ImportError:
+                self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
+                return
+
+        self.info('using mysql driver="{}"'.format(driver))
         return driver
 
     def _test_db_connection(self, version_warn):
@@ -735,13 +743,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         try:
             return f()
         except SQLAlchemyError as e:
+            if self.verbose:
+                self.debug('_query exception {}'.format(e))
             if reraise:
                 raise e
-                # if self.verbose:
-                #     self.debug('_query exception {}'.format(e))
-                # import traceback
-                # traceback.print_exc()
-                # self.sess.rollback()
 
     def _append_filters(self, f, kw):
 
