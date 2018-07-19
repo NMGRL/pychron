@@ -486,7 +486,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             if password:
                 user = '{}:{}'.format(user, password)
 
-            prefix = '{}:{}://{}@'.format(kind, driver, user)
+            prefix = '{}+{}://{}@'.format(kind, driver, user)
 
             if driver == 'pyodbc':
                 url = '{}{}'.format(prefix, name)
