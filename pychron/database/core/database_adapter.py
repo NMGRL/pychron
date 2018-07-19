@@ -498,36 +498,41 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         return url
 
     def _import_mssql_driver(self):
-        try:
-            import pymssql
-            return 'pymssql'
-        except ImportError:
-            pass
-
-    def _import_mysql_driver(self):
+        driver = None
         try:
             import pyodbc
             driver = 'pyodbc'
 
         except ImportError:
             try:
-                '''
-                    pymysql
-                    https://github.com/petehunt/PyMySQL/
-                '''
-                import pymysql
-
-                driver = 'pymysql'
+                import pymssql
+                driver = 'pymssql'
             except ImportError:
-                try:
-                    import _mysql
+                pass
 
-                    driver = 'mysqldb'
-                except ImportError:
-                    self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
-                    return
+        self.info('using mssql driver="{}"'.format(driver))
+        return driver
 
-        self.info('using {}'.format(driver))
+    def _import_mysql_driver(self):
+
+        try:
+            '''
+                pymysql
+                https://github.com/petehunt/PyMySQL/
+            '''
+            import pymysql
+
+            driver = 'pymysql'
+        except ImportError:
+            try:
+                import _mysql
+
+                driver = 'mysqldb'
+            except ImportError:
+                self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
+                return
+
+        self.info('using mysql driver="{}"'.format(driver))
         return driver
 
     def _test_db_connection(self, version_warn):
