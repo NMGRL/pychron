@@ -41,9 +41,10 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
     InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
-    AnalysisIntensitiesTbl, SimpleIdentifierTbl
+    AnalysisIntensitiesTbl, SimpleIdentifierTbl, SamplePrepChoicesTbl
 from pychron.globals import globalv
-from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR, EXTRACT_DEVICE, NO_EXTRACT_DEVICE, \
+    SAMPLE_PREP_STEPS
 
 
 def make_filter(qq, table, col='value'):
@@ -1401,9 +1402,8 @@ class DVCDatabase(DatabaseAdapter):
         self.debug('------------------------------')
 
         with self.session_ctx() as sess:
-            #q = sess.query(IrradiationPositionTbl)
-            #q = q.distinct(IrradiationPositionTbl.id)
             q = sess.query(distinct(IrradiationPositionTbl.id))
+
             # joins
             at = False
             if repositories:
@@ -2168,6 +2168,12 @@ class DVCDatabase(DatabaseAdapter):
             obj.sessionID = session.id
             self._add_item(obj)
 
+            # add choice
+            for k, v in kw.items():
+                if v and v is not 'X':
+                    if k in SAMPLE_PREP_STEPS:
+                        self.add_sample_prep_choice(k, v)
+
     def add_sample_prep_image(self, stepid, host, path, note):
         with self.session_ctx():
             obj = SamplePrepImageTbl(host=host,
@@ -2189,7 +2195,7 @@ class DVCDatabase(DatabaseAdapter):
             q = q.join(SamplePrepSessionTbl)
             q = q.filter(SamplePrepSessionTbl.name == session)
             q = q.filter(SamplePrepSessionTbl.worker_name == worker)
-            return self._query_all(q, verbose_query=True)
+            return self._query_all(q, verbose_query=False)
 
     def get_sample_prep_step_by_id(self, id):
         return self._retrieve_item(SamplePrepStepTbl, id, 'id')
@@ -2235,6 +2241,24 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MaterialTbl.grainsize == grainsize)
 
             return self._query_all(q)
+
+    def get_sample_prep_choice_names(self, tag):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepChoicesTbl)
+            q = q.filter(SamplePrepChoicesTbl.tag == tag)
+            return [v.value for v in self._query_all(q, verbose_query=False)]
+
+    def add_sample_prep_choice(self, tag, value):
+        with self.session_ctx() as sess:
+            q = sess.query(SamplePrepChoicesTbl)
+            q = q.filter(SamplePrepChoicesTbl.tag == tag)
+            q = q.filter(SamplePrepChoicesTbl.value == value)
+
+            if not self._query_one(q):
+                obj = SamplePrepChoicesTbl()
+                obj.value = value
+                obj.tag = tag
+                self._add_item(obj)
 
     # private
     def _get_table_names(self, tbl, order='asc', use_distinct=False, **kw):

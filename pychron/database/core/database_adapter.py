@@ -743,13 +743,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         try:
             return f()
         except SQLAlchemyError as e:
-            if reraise:
-                raise e
             if self.verbose:
                 self.debug('_query exception {}'.format(e))
-                # import traceback
-                # traceback.print_exc()
-                # self.sess.rollback()
+            if reraise:
+                raise e
 
     def _append_filters(self, f, kw):
 

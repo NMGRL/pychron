@@ -25,6 +25,7 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, EnumE
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 from pychron.pychron_constants import INITIAL_STEPS, IMAGE_STEPS, HIGH_GRADE_STEPS
@@ -130,7 +131,8 @@ class SamplePrepPane(TraitsTaskPane):
             for step in steps:
                 fstep = 'object.prep_step.flag_{}'.format(step)
                 g = HGroup(Item('object.prep_step.{}'.format(step),
-                                enabled_when='not {}'.format(fstep)),
+                                enabled_when='not {}'.format(fstep),
+                                editor=ComboboxEditor(name='object.prep_step.choices_{}'.format(step))),
                            spring,
                            UItem(fstep))
                 gs.append(g)
@@ -148,6 +150,9 @@ class SamplePrepPane(TraitsTaskPane):
         agrp = VGroup(HGroup(icon_button_editor('add_step_button', 'add',
                                                 enabled_when='object.active_sample.name',
                                                 tooltip='Add a sample prep step'),
+                             icon_button_editor('clear_step_button', 'clear',
+                                                enabled_when='object.active_sample.name',
+                                                tooltip='Clear values entered in "New"'),
                              icon_button_editor('upload_image_button', 'image_add',
                                                 tooltip='Add image'),
                              icon_button_editor('view_camera_button', 'camera',

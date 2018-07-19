@@ -38,7 +38,11 @@ class BaseMixin(object):
         return self.__name__
 
 
-class NameMixin(BaseMixin):
+class IDMixin(BaseMixin):
+    id = Column(Integer, primary_key=True)
+
+
+class NameMixin(IDMixin):
     name = stringcolumn(80)
 
     def __repr__(self):
@@ -113,8 +117,7 @@ class AnalysisChangeTbl(Base, BaseMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
 
 
-class AnalysisTbl(Base, BaseMixin):
-    id = primary_key()
+class AnalysisTbl(Base, IDMixin):
     experiment_type = stringcolumn(32)
     timestamp = Column(DATETIME)
     # tag = stringcolumn(45)
@@ -291,8 +294,7 @@ class AnalysisTbl(Base, BaseMixin):
         return iv
 
 
-class AnalysisIntensitiesTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class AnalysisIntensitiesTbl(Base, IDMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     value = Column(Float)
     error = Column(Float)
@@ -317,7 +319,6 @@ class AnalysisIntensitiesTbl(Base, BaseMixin):
 
 
 class ProjectTbl(Base, NameMixin):
-    id = primary_key()
     principal_investigatorID = Column(Integer, ForeignKey('PrincipalInvestigatorTbl.id'))
 
     samples = relationship('SampleTbl', backref='project')
@@ -334,7 +335,6 @@ class ProjectTbl(Base, NameMixin):
 
 
 class MaterialTbl(Base, NameMixin):
-    id = primary_key()
     samples = relationship('SampleTbl', backref='material')
     grainsize = stringcolumn(80)
 
@@ -344,7 +344,6 @@ class MaterialTbl(Base, NameMixin):
 
 
 class SampleTbl(Base, NameMixin):
-    id = primary_key()
     materialID = Column(Integer, ForeignKey('MaterialTbl.id'))
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
     note = stringcolumn(140)
@@ -364,12 +363,10 @@ class SampleTbl(Base, NameMixin):
 
 
 class ProductionTbl(Base, NameMixin):
-    id = primary_key()
     levels = relationship('LevelTbl', backref='production')
 
 
 class LevelTbl(Base, NameMixin):
-    id = primary_key()
     irradiationID = Column(Integer, ForeignKey('IrradiationTbl.id'))
     productionID = Column(Integer, ForeignKey('ProductionTbl.id'))
     holder = stringcolumn(45)
@@ -395,13 +392,11 @@ class LevelTbl(Base, NameMixin):
 
 
 class IrradiationTbl(Base, NameMixin):
-    id = primary_key()
     levels = relationship('LevelTbl', backref='irradiation')
     create_date = Column(TIMESTAMP, default=func.now())
 
 
-class IrradiationPositionTbl(Base, BaseMixin):
-    id = primary_key()
+class IrradiationPositionTbl(Base, IDMixin):
     identifier = stringcolumn(80)
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
     levelID = Column(Integer, ForeignKey('LevelTbl.id'))
@@ -446,8 +441,7 @@ class ExtractDeviceTbl(Base, BaseMixin):
     name = Column(String(45), primary_key=True)
 
 
-class PrincipalInvestigatorTbl(Base, BaseMixin):
-    id = primary_key()
+class PrincipalInvestigatorTbl(Base, IDMixin):
     affiliation = stringcolumn(140)
     email = stringcolumn(140)
     last_name = Column(String(140))
@@ -492,8 +486,7 @@ class LoadHolderTbl(Base, BaseMixin):
     loads = relationship('LoadTbl', backref='holder')
 
 
-class LoadPositionTbl(Base, BaseMixin):
-    id = primary_key()
+class LoadPositionTbl(Base, IDMixin):
     identifier = Column(String(80), ForeignKey('IrradiationPositionTbl.identifier'))
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
@@ -501,8 +494,7 @@ class LoadPositionTbl(Base, BaseMixin):
     note = Column(TEXT)
 
 
-class MeasuredPositionTbl(Base, BaseMixin):
-    id = primary_key()
+class MeasuredPositionTbl(Base, IDMixin):
     position = Column(Integer)
     x = Column(Float)
     y = Column(Float)
@@ -526,8 +518,7 @@ class SamplePrepWorkerTbl(Base, BaseMixin):
     comment = Column(String(140))
 
 
-class SamplePrepSessionTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class SamplePrepSessionTbl(Base, IDMixin):
     name = Column(String(32))
     comment = Column(String(140))
     worker_name = Column(String(32), ForeignKey('SamplePrepWorkerTbl.name'))
@@ -535,8 +526,7 @@ class SamplePrepSessionTbl(Base, BaseMixin):
     end_date = Column(DATE)
 
 
-class SamplePrepStepTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class SamplePrepStepTbl(Base, IDMixin):
     sampleID = Column(Integer, ForeignKey('SampleTbl.id'))
     sessionID = Column(Integer, ForeignKey('SamplePrepSessionTbl.id'))
     crush = Column(String(140))
@@ -563,17 +553,20 @@ class SamplePrepStepTbl(Base, BaseMixin):
     images = relationship('SamplePrepImageTbl', backref='step')
 
 
-class SamplePrepImageTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class SamplePrepImageTbl(Base, IDMixin):
     stepID = Column(Integer, ForeignKey('SamplePrepStepTbl.id'))
-    host = Column(String(45))
-    path = Column(String(45))
+    host = stringcolumn(45)
+    path = stringcolumn(45)
     timestamp = Column(DATETIME, default=func.now())
     note = Column(TEXT)
 
 
-class RestrictedNameTbl(Base, BaseMixin):
-    id = primary_key()
+class SamplePrepChoicesTbl(Base, IDMixin):
+    tag = stringcolumn(140)
+    value = stringcolumn(140)
+
+
+class RestrictedNameTbl(Base, IDMixin):
     name = stringcolumn()
     category = stringcolumn()
 
@@ -596,8 +589,7 @@ class IRTbl(Base, BaseMixin):
 
 
 # ======================== Analysis Groups ========================
-class AnalysisGroupTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class AnalysisGroupTbl(Base, IDMixin):
     name = Column(String(140))
     create_date = Column(TIMESTAMP, default=func.now())
     projectID = Column(Integer, ForeignKey('ProjectTbl.id'))
@@ -606,14 +598,12 @@ class AnalysisGroupTbl(Base, BaseMixin):
     sets = relationship('AnalysisGroupSetTbl', backref='group')
 
 
-class AnalysisGroupSetTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class AnalysisGroupSetTbl(Base, IDMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     groupID = Column(Integer, ForeignKey('AnalysisGroupTbl.id'))
 
 
-class MediaTbl(Base, BaseMixin):
-    id = Column(Integer, primary_key=True)
+class MediaTbl(Base, IDMixin):
     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
     url = Column(TEXT)
 
