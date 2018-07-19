@@ -484,14 +484,17 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 driver = 'pg8000'
 
             if password:
-                url = '{}+{}://{}:{}@{}/{}'.format(kind, driver, user, password, host, name)
-            else:
-                url = '{}+{}://{}@{}/{}'.format(kind, driver, user, host, name)
+                user = '{}:{}'.format(user, password)
 
-            if kind == 'mysql':
-                url = '{}?connect_timeout=5'.format(url)
-            # elif kind == 'mssql':
-            #    url='{}?timeout=5'.format(url)
+            prefix = '{}:{}://{}@'.format(kind, driver, user)
+
+            if driver == 'pyodbc':
+                url = '{}{}'.format(prefix, name)
+            else:
+                url = '{}{}/{}'.format(prefix, host, name)
+                if kind == 'mysql':
+                    url = '{}?connect_timeout=5'.format(url)
+
         else:
             url = 'sqlite:///{}'.format(self.path)
 
