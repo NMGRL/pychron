@@ -119,10 +119,6 @@ class DVCAnalysis(Analysis):
         if self.increment is not None:
             self.step = make_step(self.increment)
 
-        print('asdf', jd)
-        for k,v in jd.items():
-            print(k, v)
-
         ts = jd['timestamp']
         try:
             self.rundate = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S')
