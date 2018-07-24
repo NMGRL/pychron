@@ -608,20 +608,21 @@ class LoadingManager(DVCIrradiationable):
     def _save_load(self):
         db = self.dvc.db
         nln = self.new_load_name
+        ntn = self.tray
         if nln:
-            lln = self._get_last_load(set_tray=False)
+            lln = self._get_last_load()
             if nln == lln:
                 return 'duplicate name'
             else:
                 self.info(
-                    'adding load {} {} to database'.format(nln, self.tray))
+                    'adding load {} {} to database'.format(nln, ntn))
 
-                dbtray = db.get_load_holder(self.tray)
+                dbtray = db.get_load_holder(ntn)
                 if dbtray is None:
-                    db.add_load_holder(self.tray)
+                    db.add_load_holder(ntn)
                     db.flush()
 
-                db.add_load(nln, holder=self.tray)
+                db.add_load(nln, holder=ntn)
                 db.flush()
                 ls = self._get_load_names()
                 self.loads = ls
