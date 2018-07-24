@@ -19,7 +19,7 @@
 from __future__ import absolute_import
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float, func, Boolean, ForeignKey, DATE, DATETIME, TEXT, \
-    DateTime
+    DateTime, BLOB
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import object_session, deferred
 from sqlalchemy.orm import relationship
@@ -495,7 +495,7 @@ class LoadPositionTbl(Base, IDMixin):
     position = Column(Integer)
     loadName = Column(String(45), ForeignKey('LoadTbl.name'))
     weight = Column(Float)
-    note = Column(TEXT)
+    note = Column(BLOB)
 
 
 class MeasuredPositionTbl(Base, IDMixin):
