@@ -643,11 +643,14 @@ class LoadingManager(DVCIrradiationable):
             for pp in pi.positions:
                 ip = scene.get_item(str(pp))
                 self.debug('weight: {} note: {}'.format(ip.weight, ip.note))
+                note = ip.note
+                if not isinstance(note, bytes):
+                    note = note.encode('utf8')
 
                 i = db.add_load_position(ln,
                                          position=pp,
                                          weight=ip.weight,
-                                         note=ip.note.encode('utf8'),
+                                         note=note,
                                          loadtable=lt)
                 # lt.loaded_positions.append(i)
         db.commit()
