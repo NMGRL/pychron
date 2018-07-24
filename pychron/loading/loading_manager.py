@@ -647,8 +647,9 @@ class LoadingManager(DVCIrradiationable):
                 i = db.add_load_position(ln,
                                          position=pp,
                                          weight=ip.weight,
-                                         note=ip.note)
-                lt.loaded_positions.append(i)
+                                         note=ip.note,
+                                         loadtable=lt)
+                # lt.loaded_positions.append(i)
         db.commit()
 
     @cached_property
