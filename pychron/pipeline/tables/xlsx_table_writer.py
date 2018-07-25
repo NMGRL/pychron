@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 
 import six
 import xlsxwriter
@@ -25,7 +26,7 @@ from uncertainties.core import Variable
 from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.isotope_utils import sort_detectors
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.pipeline.tables.base_table_writer import BaseTableWriter
 from pychron.pipeline.tables.column import Column, EColumn, VColumn
 from pychron.pipeline.tables.util import iso_value, icf_value, icf_error, correction_value, age_value, supreg, \
@@ -59,7 +60,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._options = options
         if path is None:
             path = options.path
+
         self.debug('saving table to {}'.format(path))
+        r_mkdir(os.path.dirname(path))
 
         self._new_workbook(path)
 

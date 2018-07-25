@@ -123,7 +123,6 @@ def ahead_behind(repo, fetch=True, remote='origin'):
             repo.git.fetch(remote)
 
         status = repo.git.status('-sb')
-        print('asdf', status)
         ma = aregex.search(status)
         mb = bregex.search(status)
         if ma:

@@ -18,12 +18,13 @@
 import os
 
 import yaml
-from traits.api import Enum, Bool, Str, Int, Float, Color, List
+from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
 from traitsui.api import VGroup, HGroup, Tabbed, View, Item, UItem, Label, EnumEditor
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, AGE_SORT_KEYS
@@ -81,6 +82,9 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     highlight_non_plateau = Bool(True)
     highlight_color = dumpable(Color)
 
+    root_name = Str
+    root_names = List
+    root_directory = Directory
     name = dumpable(Str('Untitled'))
     auto_view = dumpable(Bool(False))
 
@@ -196,10 +200,18 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     @property
     def path(self):
         name = self.name
+        root = paths.table_dir
+
+        if self.root_directory:
+            root = self.root_directory
+        elif self.root_name:
+            root = os.path.join(root, self.root_name)
+
         if not name or name == 'Untitled':
-            path, _ = unique_path2(paths.table_dir, 'Untitled', extension='.xlsx')
+            path, _ = unique_path2(root, 'Untitled', extension='.xlsx')
         else:
-            path = os.path.join(paths.table_dir, add_extension(name, ext='.xlsx'))
+            path = os.path.join(root, add_extension(name, ext='.xlsx'))
+
         return path
 
     # def load_notes(self):
@@ -238,6 +250,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                     label='Notes'), label='Monitors')
 
         grp = VGroup(Item('name', label='Filename'),
+                     Item('root_directory'),
+                     Item('root_name', editor=ComboboxEditor(name='root_names'),
+                          enabled_when='not root_directory'),
                      Item('auto_view', label='Open in Excel'),
                      show_border=True)
 
