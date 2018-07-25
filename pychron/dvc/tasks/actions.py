@@ -94,7 +94,7 @@ class ArchiveRepositoryAction(LocalRepositoryAction):
 
 
 class LoadOriginAction(TaskAction):
-    name = 'Load Remote'
+    name = 'Load Origin'
     method = 'load_origin'
     image = icon('arrow_refresh')
     tooltip = 'Update the list of available repositories'

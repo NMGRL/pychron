@@ -17,12 +17,14 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import base64
-from datetime import datetime
+
 import requests
 
 # ============= local library imports  ==========================
 from pychron import json
+from pychron.core.helpers.datetime_tools import format_iso_datetime
 
 GITHUB_API_URL = 'https://api.github.com'
 
@@ -164,8 +166,7 @@ class Organization(GithubObject):
         for ai in attributes:
             v = ri[ai]
             if ai in date_attrs:
-                date = datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
-                v = date.strftime('%m-%d-%Y %H:%M')
+                v = format_iso_datetime(ai)
             setattr(repo, ai, v)
         return repo
 
