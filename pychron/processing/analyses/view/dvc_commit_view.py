@@ -17,14 +17,16 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 
 from git import Repo
 from pyface.message_dialog import information
-from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change, Property, cached_property
+from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
 from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item
 from traitsui.tabular_adapter import TabularAdapter
 
+from pychron import json
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.dvc import analysis_path
@@ -32,10 +34,9 @@ from pychron.dvc.tasks.panes import CommitAdapter
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
-from pychron.git_archive.utils import get_commits, get_diff, get_head_commit, get_log, from_gitlog
+from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
 from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
-from pychron import json
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -408,6 +409,7 @@ class HistoryView(DVCCommitView):
                          ('BLANKS', 'blanks'),
                          ('ICFactor', 'icfactors')):
                 path = an.make_path(b)
+                print('made path', path)
                 if path:
                     css = get_commits(repo, repo.active_branch.name, path, a, '--grep=^<{}>'.format(a))
                     for ci in css:

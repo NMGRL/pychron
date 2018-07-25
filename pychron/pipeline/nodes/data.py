@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 import time
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
+from pyface.message_dialog import warning
 from pyface.timer.do_later import do_after
 from traits.api import Instance, Bool, Int, Str, List, Enum, Float, Time
 from traitsui.api import View, Item, EnumEditor, CheckListEditor
@@ -166,23 +167,28 @@ class CSVNode(BaseNode):
 
         par = CSVColumnParser(delimiter=',')
         par.load(self.path)
-        return self._get_items_from_file(par)
+        if par.check(('runid', 'age', 'age_err')):
+            return self._get_items_from_file(par)
+        else:
+            warning(None, 'Invalid file format. Minimum columns required are "runid", "age", "age_err"')
 
     def _get_items_from_file(self, parser):
         from pychron.processing.analyses.file_analysis import FileAnalysis
 
         def gen():
-            for d in parser.itervalues():
-                if d['age'] is not None:
-                    f = FileAnalysis(age=float(d['age']),
-                                     age_err=float(d['age_err']),
-                                     record_id=d['runid'],
-                                     sample=d.get('sample', ''),
-                                     aliquot=int(d.get('aliquot', 0)),
-                                     group_id=int(d.get('group', 0)))
-                    yield f
+            for d in parser.values():
+                f = FileAnalysis(age=float(d['age']),
+                                 age_err=float(d['age_err']),
+                                 record_id=d['runid'],
+                                 sample=d.get('sample', ''),
+                                 aliquot=int(d.get('aliquot', 0)),
+                                 group_id=int(d.get('group', 0)))
+                yield f
 
-        return tuple(gen())
+        try:
+            return tuple(gen())
+        except ValueError as e:
+            warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
 
 class UnknownNode(DataNode):

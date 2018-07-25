@@ -17,16 +17,15 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import csv
 
+from six.moves import range
 from traits.api import HasTraits, provides
-
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.i_column_parser import IColumnParser
-from six.moves import map
-from six.moves import range
 
 
 @provides(IColumnParser)
@@ -104,7 +103,7 @@ class CSVColumnParser(BaseColumnParser):
         with open(p, 'U') as rfile:
             reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
-            self._header = list(map(str.strip, self._lines[header_idx]))
+            self._header = [l.strip() for l in self._lines[header_idx]]
             self._nrows = len(self._lines)
 
     def get_value(self, ri, ci):
@@ -115,6 +114,14 @@ class CSVColumnParser(BaseColumnParser):
             return self._lines[ri][ci]
         except IndexError:
             pass
+
+    def check(self, keys):
+        """
+        check  header matches keys
+        :param keys:
+        :return:
+        """
+        return all(k in self._header for k in keys)
 
     @property
     def nrows(self):
