@@ -36,7 +36,7 @@ class LocalRepositoryAction(TaskAction):
 
 
 class RemoteRepositoryAction(TaskAction):
-    enabled_name = 'selected_repository_name'
+    enabled_name = 'selected_repository'
 
 
 class CloneAction(RemoteRepositoryAction):

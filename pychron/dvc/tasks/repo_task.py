@@ -135,6 +135,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def refresh_local_names(self):
         self.local_names = [RepoItem(name=i, active_branch=branch) for i, branch in sorted(list_local_repos())]
+        self.o_local_repos = None
 
     def find_changes(self, remote='origin', branch='master'):
         self.debug('find changes')
@@ -197,6 +198,11 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             service = self.dvc.application.get_service(IGitHost)
             service.clone_from(name, path, self.dvc.organization)
             self.refresh_local_names()
+            msg = 'Repository "{}" successfully cloned'.format(name)
+        else:
+            msg = 'Repository "{}" already exists locally. Clone aborted '.format(name)
+
+        self.information_dialog(msg)
 
     def add_branch(self):
         self.info('add branch')
@@ -216,6 +222,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                                           push_date=format_iso_datetime(r['pushed_at'], as_str=False),
                                           create_date=format_iso_datetime(r['created_at'], as_str=False))
                                  for r in self.dvc.remote_repositories()]
+        self.o_origin_repos = None
 
     def delete_local_changes(self):
         self.info('delete local changes')
