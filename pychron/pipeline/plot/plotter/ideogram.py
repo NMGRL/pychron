@@ -286,7 +286,7 @@ class Ideogram(BaseArArFigure):
             ys = arange(startidx + n - 1, startidx - 1, -1)
 
         ans = self.sorted_analyses
-        ts = array([ai.timestamp for ai in ans])
+        ts = array([ai.timestamp or 0 for ai in ans])
         ts -= ts[0]
 
         kw = {}
