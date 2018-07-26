@@ -19,7 +19,7 @@ from operator import attrgetter
 
 from numpy import array, array_split
 # ============= enthought library imports =======================
-from traits.api import Str, Bool
+from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
@@ -112,8 +112,8 @@ class SubGroupingNode(GroupingNode, Preferred):
     by_key = 'Aliquot'
     _attr = 'subgroup'
 
-    include_j_error_in_individual_analyses = Bool(False)
-    include_j_error_in_mean = Bool(True)
+    # include_j_error_in_individual_analyses = Bool(False)
+    # include_j_error_in_mean = Bool(True)
 
     sorting_enabled = False
 
@@ -139,8 +139,6 @@ class SubGroupingNode(GroupingNode, Preferred):
 
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
-        grouping['include_j_error_in_mean'] = self.include_j_error_in_mean
-        grouping['include_j_error_in_individual_analyses'] = self.include_j_error_in_individual_analyses
 
         apply_subgrouping(grouping, analyses, gid=gid)
 

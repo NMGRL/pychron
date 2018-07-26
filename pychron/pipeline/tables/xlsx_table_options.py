@@ -27,10 +27,11 @@ from pychron.core.pychron_traits import SingleStr
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
+from pychron.processing.j_error_mixin import JErrorMixin, J_ERROR_GROUP
 from pychron.pychron_constants import AGE_MA_SCALARS, SIGMA, AGE_SORT_KEYS
 
 
-class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
+class XLSXAnalysisTableWriterOptions(BasePersistenceOptions, JErrorMixin):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
@@ -150,6 +151,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
 
     _persistence_name = 'xlsx_table_options'
+    # include_j_error_in_individual_analyses = dumpable(Bool(False))
+    # include_j_error_in_mean = dumpable(Bool(True))
+    # _suppress = False
 
     def __init__(self, *args, **kw):
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
@@ -360,7 +364,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                           show_border=True,
                           label='Plateau')
 
-        calc_grp = VGroup(plat_grp, label='Calc.')
+        calc_grp = VGroup(J_ERROR_GROUP, label='Calc.')
 
         v = View(Tabbed(g1, unknown_grp, calc_grp, blank_grp, air_grp, monitor_grp, summary_grp),
                  resizable=True,

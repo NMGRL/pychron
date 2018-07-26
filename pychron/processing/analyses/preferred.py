@@ -15,7 +15,7 @@
 # ===============================================================================
 
 from traits.api import HasTraits, Str, List, Float, Event
-from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup, HGroup, Item
+from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup
 from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
@@ -79,9 +79,8 @@ preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, co
 
 
 def get_preferred_grp(**kw):
-    j_err_grp = HGroup(Item('include_j_error_in_individual_analyses'),
-                       Item('include_j_error_in_mean'))
-    return VGroup(j_err_grp, preferred_item, **kw)
+
+    return VGroup(preferred_item, **kw)
 
 
 class Preferred(HasTraits):

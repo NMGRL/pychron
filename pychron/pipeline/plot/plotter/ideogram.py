@@ -133,7 +133,7 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         index_attr = opt.index_attr
         if index_attr:
-            if index_attr == 'uage' and opt.include_j_error:
+            if index_attr == 'uage' and opt.include_j_error_in_individual_analyses:
                 index_attr = 'uage_w_j_err'
         else:
             warning(None, 'X Value not set. Defaulting to Age')
@@ -262,7 +262,7 @@ class Ideogram(BaseArArFigure):
             opt = self.options
 
             index_attr = opt.index_attr
-            if index_attr == 'uage' and opt.include_j_error:
+            if index_attr == 'uage' and opt.include_j_error_in_individual_analyses:
                 index_attr = 'uage_w_j_err'
 
             xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
@@ -342,7 +342,7 @@ class Ideogram(BaseArArFigure):
         if ia.startswith('uage'):
             name = 'Age'
             ia = 'uage'
-            if self.options.include_j_error:
+            if self.options.include_j_error_in_individual_analyses:
                 ia = 'uage_w_j_err'
         else:
             name = ia
@@ -848,15 +848,15 @@ class Ideogram(BaseArArFigure):
 
     def _calculate_stats(self, xs, ys):
         ag = self.analysis_group
-        ag.attribute = self.options.index_attr
-        ag.weighted_age_error_kind = self.options.error_calc_method
-        ag.include_j_error_in_mean = self.options.include_j_error_in_mean
-        ag.include_j_error_in_individual_analyses = self.options.include_j_error
-        ag.dirty = True
+        options = self.options
+        ag.attribute = options.index_attr
+        ag.weighted_age_error_kind = options.error_calc_method
+
+        ag.set_j_error(options.include_j_error_in_individual_analyses, options.include_j_error_in_mean, dirty=True)
 
         mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
-        if self.options.mean_calculation_kind == 'kernel':
+        if options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
             peak_xs, peak_ys = fast_find_peaks(ys, xs)
             wm = peak_xs[0]

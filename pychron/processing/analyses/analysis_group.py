@@ -129,6 +129,17 @@ class AnalysisGroup(IdeogramPlotable):
         self._age_units = a
         self.dirty = True
 
+    def set_j_error(self, individual, mean, dirty=False):
+        if individual:
+            self.include_j_error_in_individual_analyses = individual
+            self.include_j_error_in_mean = False
+        else:
+            self.include_j_error_in_individual_analyses = False
+            self.include_j_error_in_mean = mean
+
+        if dirty:
+            self.dirty = True
+
     def _get_age_units(self):
         if self._age_units:
             return self._age_units
@@ -830,9 +841,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         naliquots = len({a.aliquot for a in self.analyses})
         default_ek = MSEM if naliquots > 1 else SD
         default_vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
-        if sg:
-            self.include_j_error_in_individual_analyses = sg.get('include_j_error_in_individual_analyses', False)
-            self.include_j_error_in_mean = sg.get('include_j_error_in_mean', True)
+
+        # if sg:
+        #     self.include_j_error_in_individual_analyses = sg.get('include_j_error_in_individual_analyses', False)
+        #     self.include_j_error_in_mean = sg.get('include_j_error_in_mean', True)
 
         for k in SUBGROUPING_ATTRS:
             if sg is None:

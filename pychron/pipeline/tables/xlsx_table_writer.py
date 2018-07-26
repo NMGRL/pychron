@@ -546,8 +546,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         groups = self._sort_groups(groups)
         ngroups = []
         for i, group in enumerate(groups):
-            group.set_temporary_age_units(options.age_units)
 
+            group.set_j_error(options.include_j_error_in_individual_analyses, options.include_j_error_in_mean)
+
+            group.set_temporary_age_units(options.age_units)
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:
                 self._make_column_header(worksheet, cols, i)
