@@ -553,7 +553,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             idx = self.analyses.index(an)
 
         plateau_step = False
-        if self.plateau_age:
+        if self.plateau_steps:
             if not an.is_omitted():
                 ps, pe = self.plateau_steps
                 plateau_step = ps <= idx <= pe
@@ -627,12 +627,15 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                     else:
                         e = self._modify_error(v, e,
                                                self.plateau_age_error_kind,
-                                               mswd=mswd,
-                                               include_j_error=self.include_j_error_in_plateau)
+                                               mswd=mswd)
                     if math.isnan(e):
                         e = 0
 
-        return ufloat(v, max(0, e))  # / self.age_scalar
+        a = ufloat(v, max(0, e))
+        if self.include_j_error_in_mean or self.include_j_error_in_plateau:
+            a += ufloat(0, self.j_err)
+
+        return a
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
@@ -827,6 +830,9 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         naliquots = len({a.aliquot for a in self.analyses})
         default_ek = MSEM if naliquots > 1 else SD
         default_vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
+        if sg:
+            self.include_j_error_in_individual_analyses = sg.get('include_j_error_in_individual_analyses', False)
+            self.include_j_error_in_mean = sg.get('include_j_error_in_mean', True)
 
         for k in SUBGROUPING_ATTRS:
             if sg is None:

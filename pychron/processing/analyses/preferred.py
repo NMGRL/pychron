@@ -15,7 +15,7 @@
 # ===============================================================================
 
 from traits.api import HasTraits, Str, List, Float, Event
-from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup
+from traitsui.api import EnumEditor, TableEditor, ObjectColumn, UItem, VGroup, HGroup, Item
 from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
@@ -79,11 +79,18 @@ preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, co
 
 
 def get_preferred_grp(**kw):
-    return VGroup(preferred_item, **kw)
+    j_err_grp = HGroup(Item('include_j_error_in_individual_analyses'),
+                       Item('include_j_error_in_mean'))
+    return VGroup(j_err_grp, preferred_item, **kw)
 
 
 class Preferred(HasTraits):
     preferred_values = List
+
+    # due to a potential? MRO issue include... must be defined by subclasses
+    # AnalysisGroup defines include... but InterpretedAgeGroup inherits StepHeatAnalysisGroup and Preferred
+#    include_j_err_in_individual_analyses = Bool(False)
+#    include_j_err_in_mean = Bool(True)
 
     def __init__(self, *args, **kw):
         super(Preferred, self).__init__(*args, **kw)

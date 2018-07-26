@@ -19,7 +19,7 @@ from operator import attrgetter
 
 from numpy import array, array_split
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Bool
 from traitsui.api import View, UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
@@ -112,26 +112,10 @@ class SubGroupingNode(GroupingNode, Preferred):
     by_key = 'Aliquot'
     _attr = 'subgroup'
 
-    # age_kind = Enum(*AGE_SUBGROUPINGS)
-    # kca_kind = Enum(*SUBGROUPINGS)
-    # kcl_kind = Enum(*SUBGROUPINGS)
-    # rad40_percent_kind = Enum(*SUBGROUPINGS)
-    # moles_k39_kind = Enum(*SUBGROUPINGS)
-    # signal_k39_kind = Enum(*SUBGROUPINGS)
-    #
-    # age_error_kind = Enum(*ERROR_TYPES)
-    # kca_error_kind = Enum(*ERROR_TYPES)
-    # kcl_error_kind = Enum(*ERROR_TYPES)
-    # rad40_percent_error_kind = Enum(*ERROR_TYPES)
-    # moles_k39_error_kind = Enum(*ERROR_TYPES)
-    # signal_k39_error_kind = Enum(*ERROR_TYPES)
+    include_j_error_in_individual_analyses = Bool(False)
+    include_j_error_in_mean = Bool(True)
 
     sorting_enabled = False
-    # preferred_values = List
-
-    # def __init__(self, *args, **kw):
-    #     super(SubGroupingNode, self).__init__(*args, **kw)
-    #     self.preferred_values = make_preferred_values()
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Aliquot')
@@ -155,6 +139,8 @@ class SubGroupingNode(GroupingNode, Preferred):
 
         grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
         grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
+        grouping['include_j_error_in_mean'] = self.include_j_error_in_mean
+        grouping['include_j_error_in_individual_analyses'] = self.include_j_error_in_individual_analyses
 
         apply_subgrouping(grouping, analyses, gid=gid)
 
