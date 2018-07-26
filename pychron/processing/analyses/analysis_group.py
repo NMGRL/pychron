@@ -236,27 +236,36 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_arith_age(self):
-        if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_arithmetic_mean('uage')
-        else:
-            v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
+        v, e = self._calculate_arithmetic_mean(self.age_attr)
         e = self._modify_error(v, e, self.age_error_kind)
-        return ufloat(v, e)  # / self.age_scalar
+        aa = ufloat(v, e)
+        return self._apply_j_err(aa)
+
+    @property
+    def age_attr(self):
+        return 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
 
     @cached_property
     def _get_weighted_age(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
+            attr = self.age_attr
 
         v, e = self._calculate_weighted_mean(attr, self.age_error_kind)
         me = self._modify_error(v, e, self.age_error_kind)
         try:
-            return ufloat(v, max(0, me))  # / self.age_scalar
+            wa = ufloat(v, max(0, me))
+            return self._apply_j_err(wa)
+
         except AttributeError:
             return ufloat(0, 0)
 
-    def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
+    def _apply_j_err(self, wa):
+        if self.include_j_error_in_mean:
+            wa = wa + ufloat(0, self.j_err)
+        return wa
+
+    def _modify_error(self, v, e, kind, mswd=None):
 
         if mswd is None:
             mswd = self.mswd
