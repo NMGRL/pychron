@@ -184,7 +184,9 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_j(self):
-        j = self.analyses[0].j
+        j = ufloat(0, 0)
+        if self.analyses:
+            j = self.analyses[0].j
         return j
 
     @cached_property
@@ -278,7 +280,7 @@ class AnalysisGroup(IdeogramPlotable):
             pj = self.j_err
 
             ne = (pa ** 2 + pj ** 2) ** 0.5
-            wa = ufloat(v, ne*v)
+            wa = ufloat(v, ne * v)
 
         return wa
 
