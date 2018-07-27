@@ -271,9 +271,15 @@ class AnalysisGroup(IdeogramPlotable):
         except AttributeError:
             return ufloat(0, 0)
 
-    def _apply_j_err(self, wa):
-        if self.include_j_error_in_mean:
-            wa = wa + ufloat(0, self.j_err)
+    def _apply_j_err(self, wa, force=False):
+        if self.include_j_error_in_mean or force:
+            v, e = nominal_value(wa), std_dev(wa)
+            pa = e / v
+            pj = self.j_err
+
+            ne = (pa ** 2 + pj ** 2) ** 0.5
+            wa = ufloat(v, ne*v)
+
         return wa
 
     def _modify_error(self, v, e, kind, mswd=None):
@@ -643,8 +649,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                         e = 0
 
         a = ufloat(v, max(0, e))
-        if self.include_j_error_in_mean or self.include_j_error_in_plateau:
-            a += ufloat(0, self.j_err)
+        # if self.include_j_error_in_mean or self.include_j_error_in_plateau:
+        #     a += ufloat(0, self.j_err)
+        self._apply_j_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
 
         return a
 
@@ -723,6 +730,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     @property
     def uage(self):
         return self.age
+
+    @property
+    def uage_w_j_err(self):
+        # print('afsd', self.age, self.j_err)
+        return self.age  # + ufloat(0, self.j_err)
 
     @property
     def kca(self):
