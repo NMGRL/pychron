@@ -277,13 +277,17 @@ class Updater(Loggable):
             from git import Repo
 
             p = self.build_repo
+            if not p:
+                self.information_dialog('Please set "build repo" in Updater Preferences')
+                return
+
             if not os.path.isdir(p):
                 r_mkdir(p)
                 if self.remote:
                     url = 'https://github.com/{}.git'.format(self.remote)
                     repo = Repo.clone_from(url, p)
                 else:
-                    self.information_dialog('Please set "remote" in Updater preferences')
+                    self.information_dialog('Please set "remote" in Updater Preferences')
                     return
             else:
                 repo = Repo(p)
