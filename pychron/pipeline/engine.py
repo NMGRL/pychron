@@ -862,7 +862,8 @@ class PipelineEngine(Loggable):
 
     def _update_repository_status(self):
         for r in self.repositories:
-            r.update()
+            if not r.update():
+                self.warning('Failed to update repo="{}"'.format(r.name))
 
     def _set_grouping(self, items, gid, attr='group_id'):
         for si in items:

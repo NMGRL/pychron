@@ -137,6 +137,10 @@ class CSVNode(BaseNode):
     path = Str
     name = 'CSV Data'
 
+    def reset(self):
+        super(CSVNode, self).reset()
+        self.path = ''
+
     def configure(self, pre_run=False, **kw):
         if not pre_run:
             self._manual_configured = True
