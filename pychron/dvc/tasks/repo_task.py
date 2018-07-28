@@ -65,6 +65,7 @@ class RepoItem(HasTraits):
             self.behind = b
             self.status = '{},{}'.format(a, b)
             self.refresh_needed = True
+            return True
         except GitCommandError:
             pass
 
