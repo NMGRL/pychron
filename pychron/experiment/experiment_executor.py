@@ -997,7 +997,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         pv = PushExperimentsView(model=pm)
                         open_view(pv)
 
-    def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
+    def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
         try:
             # if self._cv_info:
             #     if self._cv_info.control:
@@ -1050,6 +1050,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
+            self.debug('open view _cv_info={}'.format(self._cv_info))
 
         except BaseException:
             import traceback
