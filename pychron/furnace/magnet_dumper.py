@@ -27,6 +27,7 @@ from pychron.hardware.core.data_helper import make_bitarray
 
 class BaseDumper(CoreDevice):
     _dump_in_progress = False
+    _dump_state_cnt = 0
 
     def energize(self):
         self._dump_in_progress = True
@@ -49,12 +50,16 @@ class BaseDumper(CoreDevice):
         raise NotImplementedError
 
     def dump_in_progress(self):
-        state = False
         if self._dump_in_progress:
             state = self._get_dump_state()
             if not state:
-                self._dump_in_progress = False
-        return state
+                self._dump_state_cnt += 1
+                if self._dump_state_cnt > 3:
+                    self._dump_in_progress = False
+            else:
+                self._dump_state_cnt = 0
+
+        return self._dump_in_progress
 
 
 class NMGRLRotaryDumper(BaseDumper):
@@ -64,20 +69,30 @@ class NMGRLRotaryDumper(BaseDumper):
     def load_additional_args(self, config):
         self.set_attribute(config, 'nsteps', 'Motion', 'nsteps', cast='int')
         self.set_attribute(config, 'rpm', 'Motion', 'rpm', cast='int')
-        super(NMGRLRotaryDumper, self).load_additional_args(config)
+        return super(NMGRLRotaryDumper, self).load_additional_args(config)
 
     def energize(self):
         d = json.dumps({'command': 'EnergizeMagnets', 'nsteps': self.nsteps, 'rpm': self.rpm})
         self.ask(d)
+        self._dump_in_progress = True
 
     def denergize(self):
         d = json.dumps({'command': 'DenergizeMagnets', 'nsteps': self.nsteps})
         self.ask(d)
+        self._dump_in_progress = False
 
     def is_energized(self):
-        ret = self.ask('IsEnergized', verbose=True) == 'OK'
-        self._dump_in_progress = ret
+        d = json.dumps({'command': 'IsEnergized'})
+        ret = self.ask(d, verbose=True) == 'OK'
         return ret
+
+    def is_moving(self):
+        d = json.dumps({'command': 'RotaryDumperMoving'})
+        ret = self.ask(d, verbose=True, retries=1) == 'OK'
+        return ret
+
+    def _get_dump_state(self):
+        return self.is_moving()
 
 
 class NMGRLMagnetDumper(BaseDumper):

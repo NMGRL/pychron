@@ -387,7 +387,8 @@ class PychronLaserManager(EthernetLaserManager):
         self.info('sending {}'.format(cmd))
         self._ask(cmd)
         time.sleep(0.5)
-        r = self._block()
+        r = self._block(nsuccess=3, period=0.5)
+        time.sleep(0.5)
         if autocenter:
             r = self._block(cmd='GetAutoCorrecting', period=0.5)
 

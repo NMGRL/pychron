@@ -1695,7 +1695,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
-        with mainstore.session_ctx(use_parent_session=False):
+        with mainstore.session_ctx(use_parent_session=True):
             an = self._get_preceding_blank_or_background(inform=inform)
             if an is not True:
                 if an is None:

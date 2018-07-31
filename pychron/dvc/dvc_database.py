@@ -329,6 +329,7 @@ class DVCDatabase(DatabaseAdapter):
         sess = self.session
         q = sess.query(AnalysisTbl)
 
+        repository = None
         if repository:
             q = q.join(RepositoryAssociationTbl)
             q = q.join(RepositoryTbl)
