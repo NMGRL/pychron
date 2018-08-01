@@ -26,10 +26,8 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
-from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups, set_subgrouping_error, \
-    make_interpreted_age_groups, make_interpreted_age_group
+from pychron.pipeline.subgrouping import compress_groups, make_interpreted_age_groups, make_interpreted_age_group
 from pychron.processing.analyses.preferred import get_preferred_grp
-from pychron.pychron_constants import MSEM, SEM, SD, WEIGHTED_MEAN, INTEGRATED
 
 
 # ============= standard library imports ========================
@@ -101,47 +99,53 @@ class AnalysesAdapter(SubGroupAdapter):
         return ret
 
     def get_menu(self, obj, trait, row, column):
-        age = MenuManager(Action(name='Calculate Wt. Mean', action='group_as_weighted_mean'),
-                          Action(name='Calculate Plateau', action='group_as_plateau'),
-                          Action(name='Calculate Plateau else Wt. Mean', action='group_as_plateau_else_weighted_mean'),
-                          Action(name='Calculate Isochron', action='group_as_isochron'),
-                          Action(name='Calculate Integrated', action='group_as_integrated'),
-                          name='Age')
-
-        error = MenuManager(Action(name=SD, action='group_sd'),
-                            Action(name=SEM, action='group_sem'),
-                            Action(name=MSEM, action='group_msem'),
-                            name='Error')
-        m = MenuManager(age,
-                        error,
-                        Action(name='Clear Grouping', action='clear_grouping'))
+        # age = MenuManager(Action(name='Calculate Wt. Mean', action='group_as_weighted_mean'),
+        #                   Action(name='Calculate Plateau', action='group_as_plateau'),
+        #                   Action(name='Calculate Plateau else Wt. Mean', action='group_as_plateau_else_weighted_mean'),
+        #                   Action(name='Calculate Isochron', action='group_as_isochron'),
+        #                   Action(name='Calculate Integrated', action='group_as_integrated'),
+        #                   name='Age')
+        #
+        # error = MenuManager(Action(name=SD, action='group_sd'),
+        #                     Action(name=SEM, action='group_sem'),
+        #                     Action(name=MSEM, action='group_msem'),
+        #                     name='Error')
+        m = MenuManager(Action(name='Clear Grouping', action='clear_grouping'),
+                        Action(name='Group Selected', action='group_selected'),
+                        Action(name='SubGroup Selected', action='subgroup_selected'))
         return m
 
 
 class THandler(Handler):
-    def group_as_plateau_else_weighted_mean(self, info, obj):
-        obj.group('Plateau else Weighted Mean')
+    # def group_as_plateau_else_weighted_mean(self, info, obj):
+    #     obj.group('Plateau else Weighted Mean')
+    #
+    # def group_as_weighted_mean(self, info, obj):
+    #     obj.group(WEIGHTED_MEAN)
+    #
+    # def group_as_plateau(self, info, obj):
+    #     obj.group('Plateau')
+    #
+    # def group_as_isochron(self, info, obj):
+    #     obj.group('Isochron')
+    #
+    # def group_as_integrated(self, info, obj):
+    #     obj.group(INTEGRATED)
+    #
+    # def group_sd(self, info, obj):
+    #     obj.group_sd()
+    #
+    # def group_sem(self, info, obj):
+    #     obj.group_sem()
+    #
+    # def group_msem(self, info, obj):
+    #     obj.group_msem()
 
-    def group_as_weighted_mean(self, info, obj):
-        obj.group(WEIGHTED_MEAN)
+    def group_selected(self, info, obj):
+        obj.group_selected()
 
-    def group_as_plateau(self, info, obj):
-        obj.group('Plateau')
-
-    def group_as_isochron(self, info, obj):
-        obj.group('Isochron')
-
-    def group_as_integrated(self, info, obj):
-        obj.group(INTEGRATED)
-
-    def group_sd(self, info, obj):
-        obj.group_sd()
-
-    def group_sem(self, info, obj):
-        obj.group_sem()
-
-    def group_msem(self, info, obj):
-        obj.group_msem()
+    def subgroup_selected(self, info, obj):
+        obj.subgroup_selected()
 
     def clear_grouping(self, info, obj):
         if obj.selected:
@@ -169,13 +173,16 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     selected_group_item = Property(depends_on='selected_group')
     selected_subgroup_item = Property(depends_on='selected_subgroup')
     skip_meaning = Str
+    unknowns = List
 
-    def make_groups(self):
-        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+    def make_groups(self, bind=True):
+        if bind:
+            bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
         key = attrgetter('group_id')
         sgs = []
         gs = []
+        unks = []
         for gid, ans in groupby(sorted(self.items, key=key), key=key):
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
@@ -183,25 +190,52 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
 
             groups, analyses = make_interpreted_age_groups(ans)
             sgs.extend(groups)
+            unks.extend(groups)
+            unks.extend(analyses)
 
             gs.append(make_interpreted_age_group(groups + analyses, gid))
 
         self.groups = gs
         self.subgroups = sgs
+        self.unknowns = unks
 
     # action handlers
-    def group_sd(self):
-        self._group_error(SD)
+    def group_selected(self):
+        gid = max({a.group_id for a in self.items}) + 1
+        for a in self.selected:
+            a.group_id = gid
 
-    def group_sem(self):
-        self._group_error(SEM)
+        self.make_groups(False)
 
-    def group_msem(self):
-        self._group_error(MSEM)
+    def subgroup_selected(self):
+        r = self.selected[0]
+        gid = r.group_id
 
-    def group(self, kind: object) -> object:
-        self._group(kind)
-        self.refresh_needed = True
+        sgid = max({int(a.subgroup['name']) if a.subgroup else 0 for a in self.items if a.group_id == gid}) + 1
+        for a in self.selected:
+            a.subgroup = {'name': sgid}
+
+        self.make_groups(False)
+
+    def clear_grouping(self):
+        for a in self.selected:
+            a.group_id = 0
+            a.subgroup = None
+
+        self.make_groups(False)
+
+    # def group_sd(self):
+    #     self._group_error(SD)
+    #
+    # def group_sem(self):
+    #     self._group_error(SEM)
+    #
+    # def group_msem(self):
+    #     self._group_error(MSEM)
+    #
+    # def group(self, kind: object) -> object:
+    #     self._group(kind)
+    #     self.refresh_needed = True
 
     # private
     @on_trait_change('selected_subgroup_item:preferred_values:[+]')
@@ -212,16 +246,16 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
     def _group_change(self, obj, name, old, new):
         gchange(obj, self.selected_group)
 
-    def _group_error(self, tag):
-        if self.selected:
-            set_subgrouping_error(tag, self.selected, self.items)
-            self.refresh_needed = True
-
-    def _group(self, tag):
-        if self.selected:
-            d = {'age_kind': tag, 'age_error_kind': MSEM}
-            apply_subgrouping(d, self.selected, items=self.items)
-            self.refresh_needed = True
+    # def _group_error(self, tag):
+    #     if self.selected:
+    #         set_subgrouping_error(tag, self.selected, self.items)
+    #         self.refresh_needed = True
+    #
+    # def _group(self, tag):
+    #     if self.selected:
+    #         d = {'age_kind': tag, 'age_error_kind': MSEM}
+    #         apply_subgrouping(d, self.selected, items=self.items)
+    #         self.refresh_needed = True
 
     def _get_selected_group_item(self):
         if self.selected_group:

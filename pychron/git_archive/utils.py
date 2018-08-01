@@ -16,10 +16,10 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import os
-from datetime import datetime
 
+import os
 import re
+from datetime import datetime
 
 import six
 from git import Repo, Blob, Diff
@@ -123,7 +123,6 @@ def ahead_behind(repo, fetch=True, remote='origin'):
             repo.git.fetch(remote)
 
         status = repo.git.status('-sb')
-
         ma = aregex.search(status)
         mb = bregex.search(status)
         if ma:

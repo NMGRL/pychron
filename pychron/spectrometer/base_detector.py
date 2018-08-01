@@ -41,6 +41,7 @@ class BaseDetector(HasTraits):
     isotopes = Property
 
     index = Float
+    ypadding = Str
 
     def set_intensity(self, v):
         if v is not None:
@@ -61,7 +62,7 @@ class BaseDetector(HasTraits):
         try:
             v = float(v)
         except (TypeError, ValueError):
-            v = 0
+            v = 1
         self.gain = v
         return v
 

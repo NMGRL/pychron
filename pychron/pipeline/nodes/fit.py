@@ -197,14 +197,16 @@ class FitICFactorNode(FitReferencesNode):
                 raise RefitException()
 
     def load(self, nodedict):
-        try:
-            fits = nodedict['fits']
-        except KeyError as e:
-            return
 
         pom = self.plotter_options_manager
-        self.plotter_options = pom.selected_options
-        self.plotter_options.set_aux_plots(fits)
+        if pom.selected_options.name == 'Default':
+            try:
+                fits = nodedict['fits']
+            except KeyError as e:
+                return
+
+            self.plotter_options = pom.selected_options
+            self.plotter_options.set_aux_plots(fits)
 
     def _to_template(self, d):
         d['fits'] = [{'numerator': a.numerator,

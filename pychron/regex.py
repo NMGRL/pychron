@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import re
 
 # ============= local library imports  ==========================
@@ -33,4 +34,8 @@ def make_image_regex(ext):
 
 ISOREGEX = re.compile('[A-Za-z]{1,2}\d+$')
 ALT_ISOREGEX = re.compile('\d+[A-Za-z]{1,2}$')
+
+PACKETREGEX = re.compile(r'(?P<prefix>[a-zA-Z]+)?(?P<number>\d+)')
+IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+
 # ============= EOF =============================================

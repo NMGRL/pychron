@@ -82,6 +82,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
         self._analysis_sets = OrderedDict()
 
+    def _sorted_hook(self, vs):
+        self.oanalyses = vs
+
     def load(self):
         p = paths.hidden_path('analysis_sets')
         if os.path.isfile(p):

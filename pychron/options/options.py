@@ -38,6 +38,7 @@ from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
+from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, ALPHAS
 
 
@@ -534,10 +535,11 @@ class AuxPlotFigureOptions(FigureOptions):
         return [self.aux_plot_klass() for _ in range(12)]
 
 
-class AgeOptions(AuxPlotFigureOptions):
+class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     error_calc_method = Enum(*ERROR_TYPES)
-    include_j_error = Bool(False)
-    include_j_error_in_mean = Bool(True)
+    # include_j_error = Bool(False)
+    # include_j_error_in_mean = Bool(True)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
 
@@ -567,12 +569,9 @@ class AgeOptions(AuxPlotFigureOptions):
             key = '{}({})'.format(sample, ident)
         return key
 
-    def _include_j_error_changed(self, new):
-        if new:
-            self.include_j_error_in_mean = False
-
     def _get_label_font(self):
         return '{} {}'.format(self.label_fontname, self.label_fontsize)
+
 
 
 # ============= EOF =============================================

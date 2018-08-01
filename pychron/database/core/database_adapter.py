@@ -18,11 +18,15 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
 import sys
 from datetime import datetime, timedelta
 from threading import Lock
 
+import six
+from six.moves import range
+from six.moves import zip
 from sqlalchemy import create_engine, distinct, MetaData
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError, OperationalError
@@ -31,13 +35,9 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 
 from pychron import version
-from pychron.core.codetools.inspection import caller
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
 from pychron.loggable import Loggable
-import six
-from six.moves import range
-from six.moves import zip
 
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
@@ -293,7 +293,7 @@ class DatabaseAdapter(Loggable):
 
     @property
     def enabled(self):
-        return self.kind in ['mysql', 'sqlite', 'postgresql']
+        return self.kind in ['mysql', 'sqlite', 'postgresql', 'mssql']
 
     @property
     def save_username(self):
@@ -470,25 +470,54 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         user = self.username
         host = self.host
         name = self.name
-        if kind in ('mysql', 'postgresql'):
+        if kind in ('mysql', 'postgresql', 'mssql'):
             if kind == 'mysql':
                 # add support for different mysql drivers
                 driver = self._import_mysql_driver()
+                if driver is None:
+                    return
+            elif kind == 'mssql':
+                driver = self._import_mssql_driver()
                 if driver is None:
                     return
             else:
                 driver = 'pg8000'
 
             if password:
-                url = '{}+{}://{}:{}@{}/{}?connect_timeout=5'.format(kind, driver, user, password, host, name)
+                user = '{}:{}'.format(user, password)
+
+            prefix = '{}+{}://{}@'.format(kind, driver, user)
+
+            if driver == 'pyodbc':
+                url = '{}{}'.format(prefix, name)
             else:
-                url = '{}+{}://{}@{}/{}?connect_timeout=5'.format(kind, driver, user, host, name)
+                url = '{}{}/{}'.format(prefix, host, name)
+                if kind == 'mysql':
+                    url = '{}?connect_timeout=5'.format(url)
+
         else:
             url = 'sqlite:///{}'.format(self.path)
 
         return url
 
+    def _import_mssql_driver(self):
+        driver = None
+        try:
+            import pyodbc
+            driver = 'pyodbc'
+
+        except ImportError:
+            try:
+                import pymssql
+                driver = 'pymssql'
+            except ImportError:
+                pass
+
+        self.info('using mssql driver="{}"'.format(driver))
+        return driver
+
     def _import_mysql_driver(self):
+
         try:
             '''
                 pymysql
@@ -506,7 +535,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
                 return
 
-        self.info('using {}'.format(driver))
+        self.info('using mysql driver="{}"'.format(driver))
         return driver
 
     def _test_db_connection(self, version_warn):
@@ -714,13 +743,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         try:
             return f()
         except SQLAlchemyError as e:
+            if self.verbose:
+                self.debug('_query exception {}'.format(e))
             if reraise:
                 raise e
-                # if self.verbose:
-                #     self.debug('_query exception {}'.format(e))
-                # import traceback
-                # traceback.print_exc()
-                # self.sess.rollback()
 
     def _append_filters(self, f, kw):
 

@@ -14,14 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 from datetime import datetime
 from itertools import groupby
+# ============= enthought library imports =======================
+from operator import attrgetter
 
+from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
+from numpy import linspace
 from traits.api import HasTraits, cached_property, List, Str, Instance, \
     Property, Int, Event, Any, Bool, Button, Float, on_trait_change, Enum, \
     RGBColor
@@ -38,10 +39,6 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
-from pychron.pychron_constants import DVC_PROTOCOL
-from six.moves import map
-import six
-from six.moves import range
 
 
 def make_bound(st):
@@ -101,9 +98,6 @@ class LoadPosition(HasTraits):
                                 self.irrad_position)
 
 
-maps = list(color_map_name_dict.keys())
-
-
 class LoadingManager(DVCIrradiationable):
     _pdf_writer = Instance(LoadingPDFWriter, ())
     dirty = Bool(False)
@@ -156,6 +150,7 @@ class LoadingManager(DVCIrradiationable):
     sample = Property(depends_on='labnumber')
     project = Property(depends_on='labnumber')
     irradiation_hole = Property(depends_on='labnumber')
+    packet = Property(depends_on='labnumber')
 
     retain_weight = Bool(False)
     retain_note = Bool(False)
@@ -163,7 +158,7 @@ class LoadingManager(DVCIrradiationable):
     show_labnumbers = Bool(False)
     show_weights = Bool(False)
     show_hole_numbers = Bool(False)
-    cmap_name = Enum(maps)
+    cmap_name = Enum(sorted(list(color_map_name_dict.keys())))
     use_cmap = Bool(True)
     interaction_mode = Enum('Entry', 'Info', 'Edit')
     suppress_update = False
@@ -172,9 +167,13 @@ class LoadingManager(DVCIrradiationable):
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
-        self.dvc = self.application.get_service(DVC_PROTOCOL)
+        # self.dvc = self.application.get_service(DVC_PROTOCOL)
+        self.dvc.create_session()
 
     def load(self):
+        # self.debug('asdfasdfasdfasadsadsasdadsddddddd')
+        # self.dvc.create_session()
+
         if self.canvas:
             self.canvas.editable = True
             self.clear()
@@ -208,15 +207,16 @@ class LoadingManager(DVCIrradiationable):
 
         self.canvas = self.make_canvas(loadtable)
 
-        if isinstance(loadtable, (str, six.text_type)):
+        if isinstance(loadtable, str):
             loadtable = self.dvc.db.get_loadtable(loadtable)
 
         self.positions = []
         if not loadtable:
             return
 
-        for ln, poss in groupby(loadtable.loaded_positions,
-                                key=lambda x: x.identifier):
+        k = attrgetter('identifier')
+
+        for ln, poss in groupby(sorted(loadtable.loaded_positions, key=k), key=k):
             dbpos = self.dvc.db.get_identifier(ln)
             sample = ''
             project = ''
@@ -270,10 +270,10 @@ class LoadingManager(DVCIrradiationable):
         lt = db.get_loadtable(new)
         c = self.canvas
         if not c:
-            c = LoadingCanvas(
-                view_x_range=(-2, 2),
-                view_y_range=(-2, 2),
-                editable=editable)
+            c = LoadingCanvas(view_x_range=(-2, 2),
+                              view_y_range=(-2, 2),
+                              bgcolor='lightgray',
+                              editable=editable)
 
         if lt and lt.holderName:
             self.tray = lt.holderName
@@ -482,8 +482,8 @@ class LoadingManager(DVCIrradiationable):
         lt = self.dvc.db.get_loadtable()
         if lt:
             self.load_name = lt.name
-                #                 if set_tray and lt.holder_:
-                #                     self.load_load(lt, set_tray=set_tray)
+            #                 if set_tray and lt.holder_:
+            #                     self.load_load(lt, set_tray=set_tray)
 
         return self.load_name
 
@@ -595,7 +595,7 @@ class LoadingManager(DVCIrradiationable):
 
     def _add_position(self, pos, identifier, sample, project, irradiation,
                       level, ipos):
-        pos = list(map(int, pos))
+        pos = [int(p) for p in pos]
         lp = LoadPosition(labnumber=identifier,
                           sample=sample,
                           project=project,
@@ -655,6 +655,7 @@ class LoadingManager(DVCIrradiationable):
         db = self.dvc.db
         r = []
         if db.connected:
+            # with db.session_ctx():
             level = db.get_irradiation_level(self.irradiation,
                                              self.level)
             if level:
@@ -693,6 +694,17 @@ class LoadingManager(DVCIrradiationable):
             except AttributeError:
                 pass
         return sample
+
+    @cached_property
+    def _get_packet(self):
+        packet = ''
+        if self.dvc.db.connected:
+            pos = self._get_irradiation_position_record()
+            try:
+                packet = pos.packet
+            except AttributeError:
+                pass
+        return packet
 
     @cached_property
     def _get_sample_info(self):
@@ -906,29 +918,26 @@ class LoadingManager(DVCIrradiationable):
         if canvas is None:
             canvas = self.canvas
 
-        if self.use_cmap:
-            c = color_map_dict[self.cmap_name]
-        else:
-            c = lambda x: (1, 1, 0, 1)
-
-        # n = len(self.positions)
-        nl = len({p.labnumber for p in self.positions})
-
-        scene = canvas.scene
         cs = {}
-        cnt = 0
-        for i, p in enumerate(self.positions):
-            if p.labnumber in cs:
-                color = cs[p.labnumber]
-            else:
-                color = c(cnt / float(nl))
-                color = color[:-1]
-                cs[p.labnumber] = color
-                cnt += 1
+        if self.use_cmap:
+            c = next((k for k, v in color_map_dict.items() if v == self.cmap_name), None)
+            if c:
+                c = c(DataRange1D(low=0.0, high=1.0))
 
+            lns = sorted(list({p.labnumber for p in self.positions}))
+            nl = len(lns)
+
+            scene = canvas.scene
+
+            vs = c.map_screen(linspace(0, 1, nl))
+            cs = dict(zip(lns, [list(vi[:-1]) for vi in vs]))
+
+        for i, p in enumerate(self.positions):
+            color = cs.get(p.labnumber, (1, 1, 0))
+            fcolor = ','.join([str(int(x * 255)) for x in color])
             p.color = color
             for pp in p.positions:
                 pp = scene.get_item(str(pp), klass=LoadIndicator)
-                pp.fill_color = ','.join([str(int(x * 255)) for x in color])
+                pp.fill_color = fcolor
 
 # ============= EOF =============================================

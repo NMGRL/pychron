@@ -23,14 +23,13 @@ import codecs
 import glob
 import os
 import sys
-import time
 
-import binascii
 import serial
+import time
+from six.moves import range
+
 # =============local library imports  ==========================
 from .communicator import Communicator, process_response, prep_str, remove_eol_func
-from six.moves import map
-from six.moves import range
 
 
 def get_ports():
@@ -388,9 +387,11 @@ class SerialCommunicator(Communicator):
                 cmd = codecs.decode(cmd, 'hex')
                 # cmd = cmd.decode('hex')
             else:
-                if self.write_terminator is not None:
-                    if type(self.write_terminator) is str:
-                        cmd += bytes(self.write_terminator, 'utf-8')
+                wt = self.write_terminator
+                if wt is not None:
+                    if isinstance(wt, str):
+                        wt += bytes(self.write_terminator, 'utf-8')
+                    cmd += wt
 
             try:
                 self.handle.write(cmd)
@@ -478,10 +479,12 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
-                        if type(ti) is str:
-                            t = r.endswith(str.encode(ti))
-                        else:
-                            t = r.endswith(ti)
+
+                        if isinstance(ti, str):
+                            ti = ti.encode()
+
+                        t = r.endswith(ti)
+
                     if t:
                         terminated = True
                         break

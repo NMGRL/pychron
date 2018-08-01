@@ -26,9 +26,9 @@ from traitsui.editors import TextEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
-
+from pychron.pychron_constants import NULL_STR
 from pychron.core.helpers.strtools import to_bool
-from pychron.core.pychron_traits import IPREGEX
+from pychron.core.pychron_traits import HostStr
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesHelper
@@ -37,30 +37,42 @@ from pychron.envisage.tasks.base_preferences_helper import FavoritesPreferencesH
 # IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
 
-def show_databases(host, user, password, schema_identifier='AnalysisTbl', exclude=None):
-    import pymysql
-    if exclude is None:
-        exclude = ('information_schema', 'performance_schema', 'mysql')
+def show_databases(kind, host, user, password, schema_identifier='AnalysisTbl', exclude=None):
     names = []
-    try:
-        conn = pymysql.connect(host=host, port=3306, user=user,
-                               connect_timeout=0.25,
-                               passwd=password, db='information_schema')
-        cur = conn.cursor()
-        if schema_identifier:
-            sql = '''select TABLE_SCHEMA from
-TABLES
-where TABLE_NAME="{}"'''.format(schema_identifier)
-        else:
-            sql = 'SHOW TABLES'
+    records = []
+    if kind == 'mysql':
+        import pymysql
+        if exclude is None:
+            exclude = ('information_schema', 'performance_schema', 'mysql')
+        try:
+            conn = pymysql.connect(host=host, port=3306, user=user,
+                                   connect_timeout=0.25,
+                                   passwd=password, db='information_schema')
+            cur = conn.cursor()
+            if schema_identifier:
+                sql = '''select TABLE_SCHEMA from TABLES where TABLE_NAME="{}"'''.format(schema_identifier)
+            else:
+                sql = 'SHOW TABLES'
 
-        cur.execute(sql)
+            cur.execute(sql)
+            records = cur.fetchall()
 
-        names = [di[0] for di in cur if di[0] not in exclude]
-    except BaseException as e:
-        print('exception show names', e)
-        pass
-
+        except BaseException:
+            pass
+    elif kind == 'mssql':
+        import pymssql
+        if exclude is None:
+            exclude = ('master', 'tempdb', 'model', 'msdb')
+        try:
+            conn = pymssql.connect(host, user, password, timeout=1)
+            cur = conn.cursor()
+            sql = 'SELECT * FROM sys.databases'
+            cur.execute(sql)
+            records = cur.fetchall()
+        except pymssql.OperationalError:
+            pass
+        
+    names = [di[0] for di in records if di[0] not in exclude]
     return names
 
 
@@ -118,8 +130,8 @@ class ConnectionFavoriteItem(HasTraits):
     enabled = Bool
     name = Str
     dbname = Str
-    host = Str
-    kind = Enum('mysql', 'sqlite')
+    host = HostStr
+    kind = Enum('mysql', 'sqlite', 'mssql', NULL_STR)
     username = Str
     names = List
     password = Password
@@ -158,9 +170,8 @@ class ConnectionFavoriteItem(HasTraits):
     def load_names(self):
         if self.username and self.host and self.password:
             if self.schema_identifier:
-                if IPREGEX.match(self.host) or self.host == 'localhost':
-                    names = show_databases(self.host, self.username, self.password, self.schema_identifier)
-                    self.names = names
+                names = show_databases(self.kind, self.host, self.username, self.password, self.schema_identifier)
+                self.names = names
 
     def to_string(self):
         return ','.join([str(getattr(self, attr)) for attr in ('name', 'kind', 'username', 'host',
@@ -176,6 +187,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     _fav_klass = ConnectionFavoriteItem
     _schema_identifier = None
+    load_names_button = Button
 
     def __init__(self, *args, **kw):
         super(ConnectionPreferences, self).__init__(*args, **kw)
@@ -205,6 +217,11 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     def __selected_changed(self):
         self._reset_connection_label(True)
+
+    def _load_names_button_fired(self):
+        obj = self._selected
+        if obj:
+            obj.load_names()
 
     @on_trait_change('_fav_items:+')
     def fav_item_changed(self, obj, name, old, new):
@@ -269,6 +286,8 @@ class ConnectionPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection'),
                              icon_button_editor('test_connection_button', 'database_connect',
                                                 tooltip='Test connection'),
+                             icon_button_editor('load_names_button', '',
+                                                tooltip='Load avaliable database schemas on the selected server'),
                              Spring(width=10, springy=False),
                              Label('Status:'),
                              CustomLabel('_connected_label',

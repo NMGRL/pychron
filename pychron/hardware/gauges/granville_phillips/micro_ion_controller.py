@@ -14,42 +14,20 @@
 # limitations under the License.
 # ===============================================================================
 # =============enthought library imports=======================
-from __future__ import absolute_import
-from traits.api import List, Str, HasTraits, Float, Int
-from traitsui.api import View, HGroup, Item, ListEditor, InstanceEditor, Group
-# =============standard library imports ========================
-from numpy import random, char
-import time
+from traitsui.api import View, Item, ListEditor, InstanceEditor, Group
 
 # =============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.gauges.base_controller import BaseGauge
 from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import BaseMicroIonController
 
 
-class Gauge(BaseGauge):
-    def traits_view(self):
-        v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-30, ),
-                        Item('pressure',
-                             format_str='%0.2e',
-                             show_label=False,
-                             style='readonly'),
-                        Item('pressure',
-                             show_label=False,
-                             width=self.width,
-                             editor=BarGaugeEditor(low=self.low,
-                                                   high=self.high,
-                                                   scale='power',
-                                                   color_scalar=self.color_scalar,
-                                                   width=self.width))))
-        return v
+# =============standard library imports ========================
 
 
 class MicroIonController(BaseMicroIonController, CoreDevice):
     scan_func = 'get_pressures'
-    gauge_klass = Gauge
+    gauge_klass = BaseGauge
 
     def gauge_view(self):
         v = View(Group(Item('gauges', style='custom',

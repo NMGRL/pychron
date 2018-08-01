@@ -13,35 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
+import six
+from traitsui.api import View, Item, Group, ListEditor, InstanceEditor
 
-from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
-import six
-
-
-class Gauge(BaseGauge):
-    def traits_view(self):
-        v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-50, ),
-                        Item('pressure',
-                             format_str='%0.2e',
-                             show_label=False,
-                             style='readonly'),
-                        Item('pressure',
-                             show_label=False,
-                             width=self.width,
-                             editor=BarGaugeEditor(low=self.low,
-                                                   high=self.high,
-                                                   scale='power',
-                                                   color_scalar=self.color_scalar,
-                                                   width=self.width))))
-        return v
 
 
 class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
-    gauge_klass = Gauge
+    gauge_klass = BaseGauge
     scan_func = 'update_pressures'
 
     def initialize(self, *args, **kw):
@@ -62,12 +42,15 @@ class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
             channel = 'Z'
 
         key = 'PR'
-        cmd = '%s%s\r' % (key, channel)
+        # cmd = '%s%s\r' % (key, channel)
+
+        cmd = '{}{}'.format(key, channel)
         r = self.ask(cmd, verbose=verbose)
         if chr(6) in r:
-            r = self.ask('\x05\r', verbose=verbose)
-            pressure = r.split(',')[1].rstrip('\r\n')
-        # pressure = self._parse_response(r)
+            cmd = '\x05'
+            r = self.ask(cmd, verbose=verbose)
+            # pressure = r.split(',')[1].rstrip('\r\n')
+            pressure = r.split(',')[1].rstrip()
         else:
             pressure = 'err'
         return pressure

@@ -639,9 +639,10 @@ class PipelineTask(BaseBrowserTask):
     #         self._debug()
 
     def _get_selection(self):
-        if self.engine.selected:
-            items = self.engine.selected.unknowns
-            items.extend(self.engine.selected.references)
+        selected = self.engine.selected
+        if selected and not isinstance(selected, Pipeline):
+            items = selected.unknowns
+            items.extend(selected.references)
             items = [i for i in items if i.temp_selected]
 
             uuids = [i.uuid for i in items]
@@ -650,9 +651,6 @@ class PipelineTask(BaseBrowserTask):
                 for i in ans:
                     if i.uuid not in uuids:
                         items.append(i)
-
-            # items.extend(self.engine.selected_unknowns)
-            # items.extend(self.engine.selected_references)
 
             return items
 

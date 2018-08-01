@@ -232,4 +232,16 @@ ELLIPSE_KINDS = ('1' + SIGMA, '2' + SIGMA, '95%')
 ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
+# SAMPLE PREP ===================================================
+INITIAL_STEPS = ('crush', 'sieve', 'wash')
+HIGH_GRADE_STEPS = ('frantz', 'heavy_liquid', 'gold_table', 'acid', 'pick')
+IMAGE_STEPS = ('mount', 'us_wand', 'eds', 'cl', 'bse', 'se')
+
+SAMPLE_PREP_STEPS = INITIAL_STEPS+HIGH_GRADE_STEPS+IMAGE_STEPS
+
+    # ('crush', 'sieve', 'wash', 'frantz', 'heavy_liquid', 'acid',
+    #                  'mount', 'gold_table', 'us_wand', 'eds', 'cl', 'bse', 'se', 'pick')
+
 # ============= EOF =============================================

@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from enable.markers import marker_names
 from traitsui.api import UItem, Item, HGroup, VGroup, Group, EnumEditor, spring, View
 
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
+from pychron.processing.j_error_mixin import J_ERROR_GROUP
 
 
 class DisplaySubOptions(TitleSubOptions):
@@ -108,16 +110,11 @@ class CalculationSubOptions(SubOptions):
                  width=-150,
                  label='Error Calculation Method'),
             Item('nsigma', label='Age Error NSigma'),
-            HGroup(
-                Item('include_j_error',
-                     label='Include in Analyses'),
-                Item('include_j_error_in_mean',
-                     label='Include in Mean',
-                     enabled_when='not include_j_error'),
-                show_border=True, label='J Error'),
 
-            Item('include_irradiation_error'),
-            Item('include_decay_error'),
+            VGroup(J_ERROR_GROUP,
+                   HGroup(Item('include_irradiation_error'),
+                          Item('include_decay_error'), show_border=True),
+                   label='Uncertainty', show_border=True),
             show_border=True,
             label='Calculations')
 

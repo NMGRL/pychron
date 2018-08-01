@@ -477,6 +477,7 @@ class LevelEditor(Loggable):
         info = self.edit_traits(v)
         if info.result:
             self._save_production(name=self.new_production_name)
+            self._load_productions()
 
     def _update_reactor_default_button_fired(self):
         self._update_reactor()
