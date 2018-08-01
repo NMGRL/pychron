@@ -248,6 +248,10 @@ class XLSXAnalysisTablePersistNode(BaseNode):
 
     options_klass = XLSXAnalysisTableWriterOptions
 
+    def _pre_run_hook(self, state):
+        ri = tuple({ai.repository_identifier for ai in state.unknowns})
+        self.options.root_name = ri[0]
+
     def _finish_configure(self):
         self.options.dump()
 

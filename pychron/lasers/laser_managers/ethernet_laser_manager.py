@@ -31,7 +31,8 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
 
     stage_stop_button = Button('Stage Stop')
     move_enabled_button = Button('Enable Move')
-    _move_enabled = False
+    move_enabled_label = Property(depends_on='_move_enabled')
+    _move_enabled = Bool(False)
 
     def open(self, *args, **kw):
         return EthernetDeviceMixin.open(self)
@@ -77,6 +78,9 @@ class EthernetLaserManager(BaseLaserManager, EthernetDeviceMixin):
         else:
             if self.enable_laser():
                 self.enabled = True
+
+    def _get_move_enabled_label(self):
+        return 'Enable Axis Moves' if not self._move_enabled else 'Disable Axis Moves'
 
     def _get_fire_label(self):
         return 'Fire' if not self._firing else 'Stop'

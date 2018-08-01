@@ -92,6 +92,7 @@ class LabnumberEntry(DVCIrradiationable):
     total_irradiation_hours = Str
 
     default_principal_investigator = Str
+
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -527,6 +528,7 @@ class LabnumberEntry(DVCIrradiationable):
 
             dbpos.weight = float(ir.weight or 0)
             dbpos.note = ir.note
+            dbpos.packet = ir.packet
 
             proj = ir.project
             mat = ir.material
@@ -747,6 +749,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                 ir.weight = dbpos.weight or 0
                 ir.nanalyses = dbpos.analysis_count
                 ir.analyzed = dbpos.analyzed
+                ir.packet = dbpos.packet or ''
 
     def _get_irradiation_editor(self, **kw):
         ie = self._irradiation_editor

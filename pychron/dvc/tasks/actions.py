@@ -36,7 +36,7 @@ class LocalRepositoryAction(TaskAction):
 
 
 class RemoteRepositoryAction(TaskAction):
-    enabled_name = 'selected_repository_name'
+    enabled_name = 'selected_repository'
 
 
 class CloneAction(RemoteRepositoryAction):
@@ -94,7 +94,7 @@ class ArchiveRepositoryAction(LocalRepositoryAction):
 
 
 class LoadOriginAction(TaskAction):
-    name = 'Load Remote'
+    name = 'Load Origin'
     method = 'load_origin'
     image = icon('arrow_refresh')
     tooltip = 'Update the list of available repositories'

@@ -775,17 +775,25 @@ class DVC(Loggable):
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
                     level = r.irradiation_level
-                    flux_levels = fluxes.get(irrad, {})
-                    prod_levels = productions.get(irrad, {})
+                    if irrad in fluxes:
+                        flux_levels = fluxes[irrad]
+                        prod_levels = productions[irrad]
+                    else:
+                        flux_levels = {}
+                        prod_levels = {}
+                    # flux_levels = fluxes.get(irrad, {})
+                    # prod_levels = productions.get(irrad, {})
 
                     if level not in flux_levels:
                         flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
-                    if level not in prod_levels:
                         prod_levels[level] = meta_repo.get_production(irrad, level)
+
                     if irrad not in chronos:
                         chronos[irrad] = meta_repo.get_chronology(irrad)
-                    fluxes[irrad] = flux_levels
-                    productions[irrad] = prod_levels
+
+                    if irrad not in fluxes:
+                        fluxes[irrad] = flux_levels
+                        productions[irrad] = prod_levels
 
             sens = meta_repo.get_sensitivities()
         make_record = self._make_record
@@ -952,8 +960,14 @@ class DVC(Loggable):
     def update_flux(self, *args, **kw):
         self.meta_repo.update_flux(*args, **kw)
 
-    def set_identifier(self, *args):
-        self.meta_repo.set_identifier(*args)
+    def set_identifier(self, irradiation, level, position, identifier):
+
+        dbpos = self.db.get_irradiation_position(irradiation, level, position)
+        if dbpos:
+            dbpos.identifier = identifier
+            self.db.commit()
+
+        self.meta_repo.set_identifier(irradiation, level, position, identifier)
 
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
@@ -1159,7 +1173,7 @@ class DVC(Loggable):
                 for i, gi in enumerate(gs):
                     self.info('Creating repository at {}. {}'.format(gi.name, identifier))
 
-                    if gi.create_repo(identifier, organization=self.organization, auto_init=True):
+                    if gi.create_repo(identifier, organization=self.organization):
                         ret = True
                         if self.default_team:
                             gi.set_team(self.default_team, self.organization, identifier,
@@ -1261,7 +1275,7 @@ class DVC(Loggable):
 
                     self.debug('setting {} tag= {}'.format(it.record_id, tag))
                     if not isinstance(it, InterpretedAge):
-                        self.set_analysis_tag(it.uuid, tag)
+                        self.set_analysis_tag(it, tag)
 
                     it.set_tag({'name': tag, 'note': note or ''})
 
@@ -1375,7 +1389,6 @@ class DVC(Loggable):
                     a.set_sensitivity(sens)
 
                 if a.irradiation and a.irradiation not in ('NoIrradiation',):
-                    # self.debug('Irradiation {}'.format(a.irradiation))
                     if chronos:
                         chronology = chronos[a.irradiation]
                     else:
@@ -1386,20 +1399,26 @@ class DVC(Loggable):
                     if frozen_production:
                         pname, prod = frozen_production.name, frozen_production
                     else:
-                        if productions:
+                        try:
                             pname, prod = productions[a.irradiation][a.irradiation_level]
-                        else:
+                        except KeyError:
                             pname, prod = meta_repo.get_production(a.irradiation, a.irradiation_level)
+                            self.warning('production key error name={} '
+                                         'irrad={}, level={}, productions={}'.format(pname,
+                                                                                     a.irradiation,
+                                                                                     a.irradiation_level,
+                                                                                     productions))
 
                     a.set_production(pname, prod)
 
                     if fluxes:
                         level_flux = fluxes[a.irradiation][a.irradiation_level]
-                        fd = meta_repo.get_flux_from_positions(record.irradiation_position_position, level_flux)
+                        fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
                     else:
                         fd = meta_repo.get_flux(record.irradiation,
                                                 record.irradiation_level,
                                                 record.irradiation_position_position)
+
                     a.j = fd['j']
                     if fd['lambda_k']:
                         a.arar_constants.lambda_k = fd['lambda_k']

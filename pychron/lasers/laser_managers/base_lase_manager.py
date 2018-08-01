@@ -206,14 +206,13 @@ class BaseLaserManager(Manager):
     def _move_to_position(self, *args, **kw):
         pass
 
-    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None):
+    def _block(self, cmd='GetDriveMoving', cmpfunc=None, period=0.25, position_callback=None, nsuccess=2):
 
         ask = self._ask
 
         cnt = 0
         tries = 0
-        maxtries = int(5 / float(period))  # timeout after 50 s
-        nsuccess = 2
+        maxtries = int(50 / float(period))  # timeout after 50 s
         self._cancel_blocking = False
         if cmpfunc is None:
             cmpfunc = to_bool

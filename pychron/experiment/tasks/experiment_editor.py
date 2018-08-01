@@ -268,8 +268,8 @@ class ExperimentEditor(BaseTraitsEditor):
         qi.executable = True
         qi.initialized = True
 
-        self.bulk_run_fixer.patterns = qi.patterns
-        self.bulk_run_fixer.fix(runs)
+        # self.bulk_run_fixer.patterns = qi.patterns
+        # self.bulk_run_fixer.fix(runs)
 
         hec = qi.human_error_checker
         info = hec.check_runs_non_fatal(runs)

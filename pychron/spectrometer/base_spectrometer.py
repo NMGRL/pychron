@@ -415,6 +415,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         for i, name in enumerate(config.sections()):
             relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            gain = self.config_get(config, name, 'gain', cast='float', default=1.0)
 
             color = self.config_get(config, name, 'color', default='black')
             default_state = self.config_get(config, name, 'default_state',
@@ -442,6 +443,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
             self._add_detector(name=name,
                                index=index,
+                               gain=gain,
                                serial_id=serial_id,
                                relative_position=relative_position,
                                use_deflection=use_deflection,
@@ -476,11 +478,13 @@ class BaseSpectrometer(SpectrometerDevice):
 
         self._check_intensity_no_change(signals)
 
+        gsignals = []
         for k, v in zip(keys, signals):
             det = self.get_detector(k)
             det.set_intensity(v)
+            gsignals.append(v*det.gain)
 
-        return keys, signals
+        return keys, array(gsignals)
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:

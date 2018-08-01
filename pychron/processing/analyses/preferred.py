@@ -73,17 +73,23 @@ cols = [ObjectColumn(name='name', label='Name', editable=False),
         ObjectColumn(name='value', label='Value', editable=False,
                      format_func=lambda x: floatfmt(x, use_scientific=True)),
         ObjectColumn(name='error', label='Error', editable=False,
-                     format_func=lambda x: floatfmt(x, use_scientific=True))]
+                     format_func=lambda x: floatfmt(x, n=7, use_scientific=True))]
 
 preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, columns=cols))
 
 
 def get_preferred_grp(**kw):
+
     return VGroup(preferred_item, **kw)
 
 
 class Preferred(HasTraits):
     preferred_values = List
+
+    # due to a potential? MRO issue include... must be defined by subclasses
+    # AnalysisGroup defines include... but InterpretedAgeGroup inherits StepHeatAnalysisGroup and Preferred
+#    include_j_err_in_individual_analyses = Bool(False)
+#    include_j_err_in_mean = Bool(True)
 
     def __init__(self, *args, **kw):
         super(Preferred, self).__init__(*args, **kw)

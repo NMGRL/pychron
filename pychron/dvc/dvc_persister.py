@@ -59,7 +59,7 @@ class DVCPersister(BasePersister):
 
     save_log_enabled = Bool(False)
 
-    def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None):
+    def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
 
         if repository_identifier:
@@ -68,7 +68,13 @@ class DVCPersister(BasePersister):
         self.pre_extraction_save()
         self.pre_measurement_save()
         self.post_extraction_save()
-        self.post_measurement_save(commit=commit, commit_tag=commit_tag)
+        self.post_measurement_save(commit=commit, commit_tag=commit_tag, push=push)
+
+    def push(self):
+        # push changes
+        self.dvc.push_repository(self.active_repository)
+        # push commit
+        self.dvc.meta_push()
 
     def initialize(self, repository, pull=True):
         """
@@ -163,7 +169,7 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, commit_tag='COLLECTION'):
+    def post_measurement_save(self, commit=True, commit_tag='COLLECTION', push=True):
         """
         save
             - analysis.json
@@ -249,17 +255,18 @@ class DVCPersister(BasePersister):
                         if os.path.isfile(p):
                             ar.add(p, commit=False)
                             ar.commit('<{}> {}'.format(tag, msg))
-
-                    # push changes
-                    dvc.push_repository(ar)
+                    if push:
+                        # push changes
+                        dvc.push_repository(ar)
 
                     # update meta
                     dvc.meta_pull(accept_our=True)
 
                     dvc.meta_commit('repo updated for analysis {}'.format(self.per_spec.run_spec.runid))
 
-                    # push commit
-                    dvc.meta_push()
+                    if push:
+                        # push commit
+                        dvc.meta_push()
                 except GitCommandError as e:
                     self.warning(e)
                     if self.confirmation_dialog('NON FATAL\n\n'

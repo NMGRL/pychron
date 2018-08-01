@@ -15,11 +15,14 @@
 # ===============================================================================
 
 from __future__ import absolute_import
+
 import datetime
 import os
 
 # ============= standard library imports ========================
 import yaml
+from six.moves import map
+from six.moves import zip
 # ============= enthought library imports =======================
 from traits.api import Instance, Str, Property, Event, Bool, String, List, CInt
 
@@ -28,10 +31,7 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.experiment.queue.run_block import RunBlock
 from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
-from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, LINE_STR
-from six.moves import map
-from six.moves import zip
 
 
 def extract_meta(line_gen):
@@ -427,5 +427,9 @@ class BaseExperimentQueue(RunBlock):
             return os.path.splitext(os.path.basename(self.path))[0]
         else:
             return ''
+
+    @property
+    def load_holder(self):
+        return self.tray
 
 # ============= EOF =============================================

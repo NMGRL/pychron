@@ -17,10 +17,14 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
 import datetime
 import os
-import time
 
+import six
+import time
+from six.moves import map
+from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.binpack import unpack, format_blob
@@ -34,10 +38,6 @@ from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis, EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
-import six
-from six.moves import map
-from six.moves import zip
-
 
 PATH_MODIFIERS = (None, '.data', 'blanks', 'intercepts', 'icfactors',
                   'baselines', 'tags', 'peakcenter', 'extraction', 'monitor')
@@ -84,15 +84,23 @@ class DVCAnalysis(Analysis):
         bname = os.path.basename(path)
         head, ext = os.path.splitext(bname)
 
-        jd = dvc_load(os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext)))
-        self.load_extraction(jd)
+        ep = os.path.join(root, 'extraction', '{}.extr{}'.format(head, ext))
+        if os.path.isfile(ep):
+            jd = dvc_load(ep)
 
-        jd = dvc_load(path)
-        self.load_meta(jd)
+            self.load_extraction(jd)
+            self.load_spectrometer_parameters(jd.get('spec_sha'))
+            self.load_environmentals(jd.get('environmental'))
+        else:
+            self.warning('Invalid analysis. RunID="{}". No extraction file'.format(record_id))
+
+        if os.path.isfile(path):
+            jd = dvc_load(path)
+            self.load_meta(jd)
+        else:
+            self.warning('Invalid analysis. RunID="{}". No meta file'.format(record_id))
 
         self.load_paths()
-        self.load_spectrometer_parameters(jd['spec_sha'])
-        self.load_environmentals(jd.get('environmental'))
 
     @property
     def irradiation_position_position(self):
@@ -182,12 +190,13 @@ class DVCAnalysis(Analysis):
                     self.warning('Failed loading {}. error={}'.format(modifier, e))
 
     def load_spectrometer_parameters(self, spec_sha):
-        name = add_extension(spec_sha, '.json')
-        p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, name)
-        sd = get_spec_sha(p)
-        self.source_parameters = sd['spectrometer']
-        self.gains = sd['gains']
-        self.deflections = sd['deflections']
+        if spec_sha:
+            name = add_extension(spec_sha, '.json')
+            p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, name)
+            sd = get_spec_sha(p)
+            self.source_parameters = sd['spectrometer']
+            self.gains = sd['gains']
+            self.deflections = sd['deflections']
 
     def check_has_n(self):
         return any((i._n is not None for i in self.iter_isotopes()))

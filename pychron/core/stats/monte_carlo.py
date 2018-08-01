@@ -97,8 +97,8 @@ class FluxEstimator(MonteCarloEstimator):
 
         yp = ys + yserr * ga
         if self.mean_position_error:
-            pgax = ndist.rvs((ntrials, n))
-            pgay = ndist.rvs((ntrials, n))
+            pgax = ndist.rvs((ntrials, npts))
+            pgay = ndist.rvs((ntrials, npts))
 
             xs = reg.clean_xs
 
@@ -109,10 +109,11 @@ class FluxEstimator(MonteCarloEstimator):
                 x = reg.get_exog(column_stack((x, y)))
                 ps[i] = pred(yp[i], pexog, exog=x)
         elif self.position_error:
-            pgax = ndist.rvs((ntrials, n))
-            pgay = ndist.rvs((ntrials, n))
 
             ox, oy = pts.T
+            pgax = ndist.rvs((ntrials, npts))
+            pgay = ndist.rvs((ntrials, npts))
+
             for i in range(ntrials):
                 x = ox + self.position_error * pgax[i]
                 y = oy + self.position_error * pgay[i]

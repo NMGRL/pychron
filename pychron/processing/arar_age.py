@@ -63,7 +63,7 @@ class ArArAge(IsotopeGroup):
     rad40_percent = 0
     rad40 = 0
     total40 = 0
-    k39 = 0
+    k39 = None
 
     uF = None
     F = None
@@ -131,8 +131,11 @@ class ArArAge(IsotopeGroup):
             mw_k2o = 94.2
             klambda = 9.54
             moles_39k = self.computed['k39'] * self.sensitivity
-            moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
-            k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+            try:
+                moles_k = moles_39k * klambda / (k40_k*nominal_value(self.j))
+                k2o = (moles_k * mw_k2o * 100) / (2 * self.weight * 0.001)
+            except ZeroDivisionError:
+                pass
 
         return k2o
 
@@ -557,10 +560,14 @@ class ArArAge(IsotopeGroup):
 
     @property
     def moles_k39(self):
+        if self.k39 is None:
+            self.calculate_age(force=True)
         return self.sensitivity * self.k39
 
     @property
     def signal_k39(self):
+        if self.k39 is None:
+            self.calculate_age(force=True)
         return self.k39
 
     @property

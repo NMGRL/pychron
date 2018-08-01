@@ -74,6 +74,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     automated_runs_scroll_to_row = Int
     start_timestamp = Date
     auto_save_detector_ic = Bool
+    patterns = List
 
     executed = Bool(False)
 
@@ -83,6 +84,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     refresh_blocks_needed = Event
 
     default_attr = 'identifier'
+    patterns = List
 
     _auto_save_time = 0
     _temp_analysis = None
@@ -156,6 +158,16 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             for si in self.selected:
                 self.automated_runs.remove(si)
             self.automated_runs.extend(self.selected)
+
+    def move(self, step):
+        if self.selected:
+            with no_update(self):
+
+                run = self.selected[0]
+                idx = self.automated_runs.index(run)
+
+                idx = max(min(0, idx+step), len(self.automated_runs)-1)
+                self._move_selected(idx+step)
 
     def copy_selected_first(self):
         self._copy_selected(0)

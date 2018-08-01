@@ -108,7 +108,6 @@ def make_interpreted_age_groups(ans):
             ag = InterpretedAgeGroup(analyses=items,
                                      group=sg)
             ag.set_preferred_kinds(sg)
-
             kind = ag.get_preferred_kind('age')
             ag.label_name = '{:02n}{}'.format(ag.aliquot, kind[:2])
             ag.record_id = '{:02n}{}'.format(ag.aliquot, kind[:2])

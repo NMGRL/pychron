@@ -91,7 +91,8 @@ class LabnumberAdapter(BrowserAdapter):
                    ('Project', 'project'),
                    ('Irradiation', 'irradiation'),
                    ('Level', 'irradiation_and_level'),
-                   ('Irrad. Pos.', 'irradiation_pos')]
+                   ('Irrad. Pos.', 'irradiation_pos'),
+                   ('Packet', 'packet')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 
@@ -124,6 +125,8 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Run ID', 'record_id'),
                    ('Sample', 'sample'),
                    ('Project', 'project'),
+                   ('Packet', 'packet'),
+                   ('Irradiation', 'irradiation_info'),
                    ('Tag', 'tag'),
                    ('RunDate', 'rundate'),
                    ('Dt', 'delta_time'),

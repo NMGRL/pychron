@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
@@ -151,10 +152,20 @@ class IrradiationEditorPane(TraitsDockPane):
                        show_border=True,
                        label='Sample')
 
-        v = View(VSplit(VGroup(HGroup(pi_grp, sagrp),
-                               project_grp),
-                        sample_grp,
-                        HGroup(jgrp, ngrp)))
+        g1 = VGroup(HGroup(pi_grp, sagrp),
+                    project_grp)
+
+        g2 = VGroup(sample_grp,
+                    HGroup(UItem('packet', tooltip='Packet label. Must be in the form '
+                                                   '<prefix><number>. e.g. p1 or packet01'),
+                           icon_button_editor('set_packet_event', 'arrow_right',
+                                              enabled_when='packet',
+                                              tooltip='Apply the Packet to current selection'),
+                           Item('use_increment_packet', label='Auto-increment'),
+                           show_border=True, label='Packet'),
+                    HGroup(jgrp, ngrp))
+
+        v = View(VSplit(g1, g2))
         return v
 
 

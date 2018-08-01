@@ -16,6 +16,7 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
+
 import logging
 
 from envisage.core_plugin import CorePlugin
@@ -51,7 +52,7 @@ PACKAGE_DICT = dict(
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',
-    WiscArDataPlugin='pychron.data_mapper.tasks.wisc_ar.plugin',
+    WiscArDataPlugin='pychron.data_mapper.tasks.wiscar.plugin',
 
     # experiment
     EntryPlugin='pychron.entry.tasks.entry_plugin',

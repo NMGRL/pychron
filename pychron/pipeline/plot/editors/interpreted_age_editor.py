@@ -43,7 +43,7 @@ class InterpretedAgeEditor(FigureEditor):
         else:
             ek = po.error_calc_method
             pk = 'Weighted Mean'
-            additional['include_j_error_in_individual_analyses'] = po.include_j_error
+            additional['include_j_error_in_individual_analyses'] = po.include_j_error_in_individual_analyses
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         def func(aa):

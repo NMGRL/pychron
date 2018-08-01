@@ -126,7 +126,7 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
-    crosshairs_line_width = Float(1.0)
+
 
     show_hole_label = Bool(True)
     hole_label_color = Color

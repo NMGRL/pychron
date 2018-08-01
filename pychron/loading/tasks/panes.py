@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
@@ -27,7 +28,6 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.combobox_editor import ComboboxEditor
-from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -92,7 +92,7 @@ class LoadTablePane(BaseLoadPane):
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
         v = View(VGroup(
-            CustomLabel('interaction_mode'),
+            # CustomLabel('interaction_mode'),
             UItem('canvas',
                   style='custom',
                   editor=ComponentEditor())))
@@ -158,6 +158,7 @@ class LoadControlPane(TraitsDockPane):
             # Item('level'),
             Item('labnumber', editor=ComboboxEditor(name='labnumbers', refresh='refresh_labnumber')),
             Item('sample_info', style='readonly'),
+            Item('packet', style='readonly'),
             HGroup(
                 Item('weight', label='Weight (mg)'),
                 Item('retain_weight', label='Lock',
@@ -168,12 +169,10 @@ class LoadControlPane(TraitsDockPane):
             show_border=True,
             label='Sample')
 
-        v = View(
-            VGroup(
-                load_grp,
-                samplegrp,
-                notegrp,
-                viewgrp))
+        v = View(VGroup(load_grp,
+                        samplegrp,
+                        notegrp,
+                        viewgrp))
         return v
 
 # ============= EOF =============================================

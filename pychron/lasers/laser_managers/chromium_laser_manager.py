@@ -87,6 +87,7 @@ class ChromiumLaserManager(EthernetLaserManager):
     def get_position(self):
         x, y, z = self._x, self._y, self._z
         xyz_microns = self.ask('stage.pos?\n')
+        print('fsad', xyz_microns, type(xyz_microns))
         if xyz_microns:
             x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
         return x, y, z
@@ -137,7 +138,9 @@ class ChromiumLaserManager(EthernetLaserManager):
                 if not self._alive:
                     return True
 
-                pos = map(float, xyz.split(','))[axis]
+                # pos =[float(p) for p in xyz.split(','))[axis]
+                pos = float(xyz.split(',')[axis])
+
                 return abs(pos - v) > 2
                 # print map(lambda ab: abs(ab[0] - ab[1]) <= 2,
                 #           zip(map(float, xyz.split(',')),
@@ -186,8 +189,12 @@ class ChromiumLaserManager(EthernetLaserManager):
                 if not self._alive:
                     return True
 
-                return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
-                                       (xm, ym, zm))])
+                ps = [float(p) for p in xyz.split(',')]
+
+                # return not all([abs(ab[0] - ab[1]) <= 2 for ab in zip(list(map(float, xyz.split(','))),
+                #                        (xm, ym, zm))])
+
+                return not all(abs(a - b) <= 10 for a, b in zip(ps, (xm, ym, zm)))
             except ValueError as e:
                 print('_moving exception {}'.format(e))
 
@@ -223,4 +230,5 @@ class ChromiumCO2Manager(ChromiumLaserManager):
 
 class ChromiumDiodeManager(ChromiumLaserManager):
     pass
+
 # ============= EOF =============================================

@@ -51,7 +51,6 @@ class BaseNode(ColumnSorterMixin):
         pass
 
     def clear_data(self):
-        print('clearing data')
         self.unknowns = []
         self.references = []
 

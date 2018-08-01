@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= standard library imports ========================
-from __future__ import absolute_import
-
 from math import isnan
 
 from numpy import hstack, array
-from six.moves import zip
+# ============= standard library imports ========================
 from traits.api import Array, List, Instance
 from uncertainties import nominal_value, std_dev
 
@@ -64,8 +61,6 @@ class Spectrum(BaseArArFigure):
 
                 legend.plots[key] = plot
 
-        # self.graph.set_x_title('Cumulative %39ArK', plotid=0)
-        # self.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>')
         self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
 
     def max_x(self, attr):
@@ -84,7 +79,7 @@ class Spectrum(BaseArArFigure):
 
         # filter ys,es if 39Ar < 1% of total
         try:
-            vs, es = list(zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs]))
+            vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
             vs, es = array(vs), array(es)
             nes = es * self.options.step_nsigma
             yl = vs - nes
@@ -99,7 +94,7 @@ class Spectrum(BaseArArFigure):
             _ma = 1
 
         if not po.has_ylimits():
-            if po.calculated_ymin is None:
+            if po.ccalculated_ymin is None:
                 po.calculated_ymin = _mi
             else:
                 po.calculated_ymin = min(po.calculated_ymin, _mi)
@@ -152,7 +147,8 @@ class Spectrum(BaseArArFigure):
         ag.plateau_age_error_kind = opt.plateau_age_error_kind
         ag.plateau_nsteps = opt.pc_nsteps
         ag.plateau_gas_fraction = opt.pc_gas_fraction
-        ag.weighted_age_error_kind = opt.weighted_age_error_kind
+        ag.age_error_kind = opt.weighted_age_error_kind
+        ag.dirty = True
 
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end
@@ -468,12 +464,15 @@ class Spectrum(BaseArArFigure):
 
     def _make_weighted_mean_text(self):
         ag = self.analysis_group
+        op = self.options
+
         a = ag.weighted_age
         n = ag.nanalyses
-        op = self.options
+        mswd_args = ag.get_mswd_tuple()
 
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a)*op.nsigma, n,
+                                      mswd_args=mswd_args,
                                       sig_figs=op.weighted_mean_sig_figs,
                                       total_n=ag.total_n)
         text = u'Weighted Mean= {}'.format(text)
