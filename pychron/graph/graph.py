@@ -17,10 +17,12 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import csv
 import math
 import os
 
+import six
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
     BasePlotContainer, Plot, ArrayPlotData
@@ -29,6 +31,9 @@ from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from numpy import array, hstack, Inf, column_stack
 from pyface.timer.api import do_after as do_after_timer
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
 from traitsui.api import View, Item, UItem
 
@@ -37,10 +42,6 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.graph.context_menu_mixin import ContextMenuMixin
 from pychron.graph.offset_plot_label import OffsetPlotLabel
 from .tools.contextual_menu_tool import ContextualMenuTool
-import six
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 VALID_FONTS = [
     # 'Helvetica',
@@ -1018,7 +1019,7 @@ class Graph(ContextMenuMixin):
 
         if update_y_limits:
             if isinstance(ypadding, str):
-                ypad = max(0.1, abs(mi - ma)) * float(ypadding)
+                ypad = abs(ma-mi)*float(ypadding)
             else:
                 ypad = ypadding
             mi -= ypad
