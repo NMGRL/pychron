@@ -466,6 +466,7 @@ class PyScript(Loggable):
             self._wait_control.stop()
         self._abort_hook()
 
+    @command_register
     def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:

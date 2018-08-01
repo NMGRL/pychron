@@ -389,7 +389,8 @@ class SerialCommunicator(Communicator):
                 # cmd = cmd.decode('hex')
             else:
                 if self.write_terminator is not None:
-                    cmd += bytes(self.write_terminator,'utf-8')
+                    if type(self.write_terminator) is str:
+                        cmd += bytes(self.write_terminator, 'utf-8')
 
             try:
                 self.handle.write(cmd)
@@ -477,8 +478,10 @@ class SerialCommunicator(Communicator):
                     if pos:
                         t = r[pos] == ti
                     else:
-                        t = r.endswith(ti)
-
+                        if type(ti) is str:
+                            t = r.endswith(str.encode(ti))
+                        else:
+                            t = r.endswith(ti)
                     if t:
                         terminated = True
                         break

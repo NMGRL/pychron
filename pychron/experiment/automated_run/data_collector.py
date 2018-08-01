@@ -305,7 +305,7 @@ class DataCollector(Consoleable):
                         series=series,
                         plotid=pid,
                         update_y_limits=True,
-                        ypadding='0.1')
+                        ypadding='0.0001')
             if fit:
                 g.set_fit(fit, plotid=pid, series=fit_series)
 

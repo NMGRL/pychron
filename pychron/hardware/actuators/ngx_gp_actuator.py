@@ -16,10 +16,9 @@
 
 # ========== standard library imports ==========
 import time
-
-from pychron.globals import globalv
 # ========== local library imports =============
 from pychron.hardware.actuators.gp_actuator import GPActuator
+from pychron.globals import globalv
 
 
 class NGXGPActuator(GPActuator):

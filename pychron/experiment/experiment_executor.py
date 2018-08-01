@@ -1197,7 +1197,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run = None
 
         spec.load_name = exp.load_name
-        spec.load_holder = exp.load_holder
+        spec.load_holder = exp.tray
 
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)

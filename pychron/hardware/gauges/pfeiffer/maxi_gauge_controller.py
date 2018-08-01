@@ -13,20 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
-import re
 import six
-
-ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
-LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
-NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
-OFF_RE = re.compile(r'@\d\d\dACKOFF;FF')
-PROTOFF_RE = re.compile(r'@\d\d\dACKPROT_OFF;FF')
 
 
 class Gauge(BaseGauge):
@@ -48,24 +40,17 @@ class Gauge(BaseGauge):
         return v
 
 
-class MKSController(BaseGaugeController, CoreDevice):
+class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
     gauge_klass = Gauge
     scan_func = 'update_pressures'
 
     def initialize(self, *args, **kw):
-        for g in self.gauges:
-            if int(g.channel) in (1, 3, 5):
-                self._power_onoff(g.channel, True, verbose=True)
         return True
 
     def get_pressures(self, verbose=False):
-        r = self._read_pressure(verbose=verbose)
-        return r
-
-    def _power_onoff(self, ch, state, verbose=False):
-        cmd = 'CP{}!{}'.format(ch, 'ON' if state else 'OFF')
-        cmd = self._build_command(cmd)
-        self.ask(cmd, verbose=verbose)
+        # this could be moved to BaseGaugeController
+        self.update_pressures()
+        return [g.pressure for g in self.gauges]
 
     def _read_pressure(self, name=None, verbose=False):
         if name is not None:
@@ -76,50 +61,16 @@ class MKSController(BaseGaugeController, CoreDevice):
         else:
             channel = 'Z'
 
-        cmd = self._build_query('PR{}'.format(channel))
+        key = 'PR'
+        cmd = '%s%s\r' % (key, channel)
         r = self.ask(cmd, verbose=verbose)
-        if r is not None:
-            match = ACK_RE.match(r)
-            if match:
-                v = float(match.group('value'))
-                return v
-
-            match = NO_GAUGE_RE.match(r)
-            if match:
-                return 0
-            match = LO_RE.match(r)
-            if match:
-                return 1e-12
-            match = PROTOFF_RE.match(r)
-            if match:
-                return 760
-            match = OFF_RE.match(r)
-            if match:
-                return 1000
-
-
-        # r = r.split('ACK')
-        # r = r[1]
-        # r = r.split(';')
-        # r = r[0]
-        #
-        # if ' ' in r:
-        #     try:
-        #         return map(float, r.split(' '))
-        #     except ValueError:
-        #         pass
-        # else:
-        #     try:
-        #         return float(r)
-        #         print(float(r))
-        #     except ValueError:
-        #         pass
-
-    def _build_query(self, cmd):
-        return self._build_command('{}?'.format(cmd))
-
-    def _build_command(self, cmd):
-        return '@{}{};FF'.format(self.address, cmd)
+        if chr(6) in r:
+            r = self.ask('\x05\r', verbose=verbose)
+            pressure = r.split(',')[1].rstrip('\r\n')
+        # pressure = self._parse_response(r)
+        else:
+            pressure = 'err'
+        return pressure
 
     def load_additional_args(self, config, *args, **kw):
         self.address = self.config_get(config, 'General', 'address', optional=False)
