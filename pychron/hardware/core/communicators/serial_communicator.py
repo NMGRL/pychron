@@ -390,7 +390,7 @@ class SerialCommunicator(Communicator):
                 wt = self.write_terminator
                 if wt is not None:
                     if isinstance(wt, str):
-                        wt += bytes(self.write_terminator, 'utf-8')
+                        wt = bytes(wt, 'utf-8')
                     cmd += wt
 
             try:
