@@ -780,8 +780,11 @@ class PyScript(Loggable):
             for f, a, k in func:
 
                 r = None
+                self.debug('man={}, func={}, hasattr={}'.format(man, f, hasattr(man, f)))
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)
+                    self.debug('result={}'.format(r))
+
                 rs.append(r)
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
