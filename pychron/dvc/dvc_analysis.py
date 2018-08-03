@@ -92,13 +92,13 @@ class DVCAnalysis(Analysis):
             self.load_spectrometer_parameters(jd.get('spec_sha'))
             self.load_environmentals(jd.get('environmental'))
         else:
-            self.warning('Invalid analysis. RunID="{}". No extraction file'.format(record_id))
+            self.warning('Invalid analysis. RunID="{}". No extraction file {}'.format(record_id, ep))
 
         if os.path.isfile(path):
             jd = dvc_load(path)
             self.load_meta(jd)
         else:
-            self.warning('Invalid analysis. RunID="{}". No meta file'.format(record_id))
+            self.warning('Invalid analysis. RunID="{}". No meta file {}'.format(record_id, path))
 
         self.load_paths()
 

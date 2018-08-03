@@ -74,6 +74,13 @@ class PullAction(LocalRepositoryAction):
     tooltip = 'Pull changes from remote. git pull'
 
 
+class RebaseAction(LocalRepositoryAction):
+    name = 'Rebase'
+    method = 'rebase'
+    image = icon('arrow_down')
+    tooltip = 'Rebase commits from [master] onto current branch. git rebase'
+
+
 class FindChangesAction(LocalRepositoryAction):
     name = 'Find Changes'
     method = 'find_changes'
