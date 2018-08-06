@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-from itertools import groupby
 from operator import attrgetter
 
 from numpy import array, array_split
@@ -23,34 +22,12 @@ from traits.api import Str
 from traitsui.api import View, UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
+from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
 from pychron.processing.analyses.preferred import get_preferred_grp, Preferred
 from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
     MSEM, SD, DEFAULT_INTEGRATED
-
-
-def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
-    if isinstance(key, str):
-        keyfunc = lambda x: getattr(x, key)
-    else:
-        keyfunc = key
-
-    ids = []
-    for it in items:
-        v = keyfunc(it)
-        if v not in ids:
-            ids.append(v)
-
-    if sorting_enabled:
-        items = sorted(items, key=keyfunc)
-
-    for k, analyses in groupby(items, key=keyfunc):
-        gid = ids.index(k)
-        if id_func:
-            gid = id_func(gid, analyses)
-        for it in analyses:
-            setattr(it, attr, gid)
 
 
 class GroupingNode(BaseNode):
@@ -77,17 +54,22 @@ class GroupingNode(BaseNode):
             return attrgetter(self.by_key.lower())
 
     def run(self, state):
-        unks = getattr(state, self.analysis_kind)
-        self._run(unks)
+        # unks = getattr(state, self.analysis_kind)
+        self._run(state)
 
-    def _run(self, unks):
+    def _run(self, state):
+        unks = getattr(state, self.analysis_kind)
         if self.by_key != 'No Grouping':
             for unk in unks:
                 setattr(unk, self._attr, 0)
 
             self._cached_items = unks
-            group_analyses_by_key(unks, key=self._generate_key(), attr=self._attr, id_func=self._id_func,
+            key = self._generate_key()
+            group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
                                   sorting_enabled=self.sorting_enabled)
+
+            setattr(state, self.analysis_kind, sorted(unks, key=key))
+
     def traits_view(self):
         v = View(UItem('by_key',
                        style='custom',
@@ -151,8 +133,9 @@ class SubGroupingNode(GroupingNode, Preferred):
             self._run(self._cached_items)
 
     def run(self, state):
+        self._run(state)
+
         ans = getattr(state, self.analysis_kind)
-        self._run(ans)
         compress_groups(ans)
 
     def traits_view(self):

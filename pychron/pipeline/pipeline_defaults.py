@@ -115,6 +115,7 @@ SPEC = """
 required:
 nodes:
   - klass: UnknownNode
+  - klass: GroupingNode
   - klass: SpectrumNode
 """
 

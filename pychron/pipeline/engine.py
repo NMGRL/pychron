@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import os
+from operator import attrgetter
 
 import time
 import yaml
@@ -27,6 +28,7 @@ from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
@@ -272,6 +274,7 @@ class PipelineEngine(Loggable):
 
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
+
     # def update_detectors(self):
     #     """
     #     set valid detectors for FitICFactorNodes
@@ -325,6 +328,16 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
+
+    def unknowns_group_by(self, attr):
+        items = self.selected_unknowns
+        if not items or len(items) == 1:
+            items = self.selected.unknowns
+        group_analyses_by_key(items, attr)
+
+        sunks = sorted(self.selected.unknowns, key=attrgetter(attr))
+        self.selected.unknowns = sunks
+        self.refresh_figure_editors()
 
     def unknowns_graph_group_by_selected(self):
         items = self.selected.unknowns
@@ -455,6 +468,7 @@ class PipelineEngine(Loggable):
         unks = self.selected_node.unknowns
         self.selected_node.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
         self.refresh_table_needed = True
+
     # ============================================================================================================
     # nodes
     # ============================================================================================================
