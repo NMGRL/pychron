@@ -597,6 +597,7 @@ class MetaRepo(GitRepoManager):
                 self.add(p, commit=False)
 
     def update_flux(self, irradiation, level, pos, identifier, j, e, mj, me, decay=None,
+                    position_jerr=None,
                     analyses=None, options=None, add=True):
 
         if options is None:
@@ -618,6 +619,7 @@ class MetaRepo(GitRepoManager):
 
         npos = {'position': pos, 'j': j, 'j_err': e,
                 'mean_j': mj, 'mean_j_err': me,
+                'position_jerr': position_jerr,
                 'decay_constants': decay,
                 'identifier': identifier,
                 'options': options,

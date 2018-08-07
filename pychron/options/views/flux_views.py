@@ -44,18 +44,20 @@ class FluxSubOptions(SubOptions):
                           Item('error_kind', label='Mean J Error'),
                           Item('predicted_j_error_type', label='Predicted J Error'),
                           Item('use_weighted_fit'),
-                          Item('position_error', label='Position Error (Beta)',
-                               tooltip='Set this value to the radius (same units as hole XY positions) of the '
-                                       'irradiation hole. '
-                                       'This is to test "monte carloing" the irradiation geometry'),
-                          Item('position_only', label='Position Only (Beta)',
-                               enabled_when='position_error',
-                               tooltip='Monte carlo only the position error, not J error. '
-                                       'used to see affect of position error'
-                               ),
+                          # Item('position_error', label='Position Error (Beta)',
+                          #      tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                          #              'irradiation hole. '
+                          #              'This is to test "monte carloing" the irradiation geometry'),
+                          # Item('position_only', label='Position Only (Beta)',
+                          #      enabled_when='position_error',
+                          #      tooltip='Monte carlo only the position error, not J error. '
+                          #              'used to see affect of position error'
+                          #      ),
 
-                          Item('monte_carlo_ntrials'),
-                          Item('use_monte_carlo'),
+                          HGroup(Item('use_monte_carlo', label='Use'),
+                                 Item('monte_carlo_ntrials', label='N. Trials',
+                                      tooltip='Number of trials to perform monte carlo simulation'),
+                                 label='Monte Carlo'),
                           show_border=True,
                           label='Calculations')
 

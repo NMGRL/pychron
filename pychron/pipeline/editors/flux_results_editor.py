@@ -171,6 +171,8 @@ class FluxPosition(HasTraits):
 
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
+    position_jerr = Float
+
     use = Bool(True)
     save = Bool(True)
     dev = Float
@@ -345,11 +347,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         options = self.plotter_options
         if options.use_monte_carlo:
             # from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
-            fe = FluxEstimator(options.monte_carlo_ntrials, reg, options.position_only, options.position_error)
+            fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
             for positions in (self.unknown_positions, self.monitor_positions):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals, errors = fe.estimate(pts)
+                pos_errors = fe.estimate_position_err(pts)
                 # nominals = reg.predict(pts)
                 # errors = monte_carlo_error_estimation(reg, nominals, pts,
                 #                                       position_only=self.plotter_options.position_only,
@@ -359,12 +362,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 #                                       # mean_position_error=self.plotter_options.position_error,
                 #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
-                for p, j, je in zip(positions, nominals, errors):
+                for p, j, je, pe in zip(positions, nominals, errors, pos_errors):
                     oj = p.saved_j
 
                     p.j = j
                     p.jerr = je
-
+                    p.position_jerr = pe
                     p.dev = (oj - j) / j * 100
         else:
             for positions in (self.unknown_positions, self.monitor_positions):

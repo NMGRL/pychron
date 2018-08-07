@@ -671,15 +671,45 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options=None, add=True):
+    def save_j(self, flux_position, options, add=False):
+        # rp.irradiation, irp.level, irp.hole_id, irp.identifier,
+        #                 irp.j, irp.jerr,
+        #                 irp.mean_j, irp.mean_jerr,irp.
+        #                 decay_constants,
+        #                 analyses=irp.analyses,
+        #                 options=options,
+        #                 add=False)
+
+        irradiation = flux_position.irradiation
+        level = flux_position.level
+        pos = flux_position.hole_id
+        identifier = flux_position.identifier
+        j = flux_position.j
+        e = flux_position.jerr
+        mj = flux_position.mean_j
+        me = flux_position.mean_j_err
+        decay = flux_position.decay_constatns
+        analyses = flux_position.analyses
+
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add,
+                                   position_jerr=flux_position.position_j_err)
 
-        with self.session_ctx(use_parent_session=False):
+        with self.session_ctx():
             ip = self.get_identifier(identifier)
             ip.j = j
             ip.j_err = e
+
+    # def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options=None, add=True):
+    #     self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
+    #                                                            pos, identifier, j, e))
+    #     self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add)
+    #
+    #     with self.session_ctx(use_parent_session=False):
+    #         ip = self.get_identifier(identifier)
+    #         ip.j = j
+    #         ip.j_err = e
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db
@@ -1029,7 +1059,7 @@ class DVC(Loggable):
                                                   'irradiation',
                                                   'name', 'uuid', 'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
-                                                  'include_j_error_in_individual_analyses')}
+                                                  'include_j_position_error')}
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
@@ -1420,6 +1450,8 @@ class DVC(Loggable):
                                                 record.irradiation_position_position)
 
                     a.j = fd['j']
+                    a.position_jerr = fd.get('position_jerr', 0)
+
                     if fd['lambda_k']:
                         a.arar_constants.lambda_k = fd['lambda_k']
 

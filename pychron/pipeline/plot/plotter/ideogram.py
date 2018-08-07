@@ -133,8 +133,9 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         index_attr = opt.index_attr
         if index_attr:
-            if index_attr == 'uage' and opt.include_j_error_in_individual_analyses:
+            if index_attr == 'uage' and opt.include_j_position_error:
                 index_attr = 'uage_w_j_err'
+
         else:
             warning(None, 'X Value not set. Defaulting to Age')
             index_attr = 'uage'
@@ -262,7 +263,7 @@ class Ideogram(BaseArArFigure):
             opt = self.options
 
             index_attr = opt.index_attr
-            if index_attr == 'uage' and opt.include_j_error_in_individual_analyses:
+            if index_attr == 'uage' and opt.include_j_position_error:
                 index_attr = 'uage_w_j_err'
 
             xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
@@ -342,7 +343,7 @@ class Ideogram(BaseArArFigure):
         if ia.startswith('uage'):
             name = 'Age'
             ia = 'uage'
-            if self.options.include_j_error_in_individual_analyses:
+            if self.options.include_j_position_error:
                 ia = 'uage_w_j_err'
         else:
             name = ia
@@ -852,7 +853,7 @@ class Ideogram(BaseArArFigure):
         ag.attribute = options.index_attr
         ag.weighted_age_error_kind = options.error_calc_method
 
-        ag.set_j_error(options.include_j_error_in_individual_analyses, options.include_j_error_in_mean, dirty=True)
+        ag.set_j_error(options.include_j_position_error, options.include_j_error_in_mean, dirty=True)
 
         mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
