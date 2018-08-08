@@ -79,11 +79,17 @@ preferred_item = UItem('preferred_values', editor=TableEditor(sortable=False, co
 
 
 def get_preferred_grp(**kw):
+
     return VGroup(preferred_item, **kw)
 
 
 class Preferred(HasTraits):
     preferred_values = List
+
+    # due to a potential? MRO issue include... must be defined by subclasses
+    # AnalysisGroup defines include... but InterpretedAgeGroup inherits StepHeatAnalysisGroup and Preferred
+#    include_j_err_in_individual_analyses = Bool(False)
+#    include_j_err_in_mean = Bool(True)
 
     def __init__(self, *args, **kw):
         super(Preferred, self).__init__(*args, **kw)

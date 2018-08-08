@@ -14,17 +14,21 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
+import re
+
+import six
 from traitsui.api import View, Item, HGroup, Group, ListEditor, InstanceEditor
 
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
-import re
-import six
 
 ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
 LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
 NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
+OFF_RE = re.compile(r'@\d\d\dACKOFF;FF')
+PROTOFF_RE = re.compile(r'@\d\d\dACKPROT_OFF;FF')
 
 
 class Gauge(BaseGauge):
@@ -82,27 +86,10 @@ class MKSController(BaseGaugeController, CoreDevice):
                 v = float(match.group('value'))
                 return v
 
-            for reg in (NO_GAUGE_RE, LO_RE):
+            for reg, ret in ((NO_GAUGE_RE, 0), (LO_RE, 1e-12), (PROTOFF_RE, 760), (OFF_RE, 1000)):
                 match = reg.match(r)
                 if match:
-                    return 0
-
-        # r = r.split('ACK')
-        # r = r[1]
-        # r = r.split(';')
-        # r = r[0]
-        #
-        # if ' ' in r:
-        #     try:
-        #         return map(float, r.split(' '))
-        #     except ValueError:
-        #         pass
-        # else:
-        #     try:
-        #         return float(r)
-        #         print(float(r))
-        #     except ValueError:
-        #         pass
+                    return ret
 
     def _build_query(self, cmd):
         return self._build_command('{}?'.format(cmd))

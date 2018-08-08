@@ -29,6 +29,7 @@ DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),
 class StageCanvas(MapCanvas):
     crosshairs_overlay = Instance(SimpleCrosshairsOverlay)
     crosshairs_color = Color('black')
+    crosshairs_line_width = Float(1.0)
 
     stage_position = Property(depends_on='_stage_position')
     _stage_position = Tuple(Float, Float)

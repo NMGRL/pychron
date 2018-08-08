@@ -367,12 +367,17 @@ class UnknownsAdapter(TabularAdapter):
         self._ncolors = len(colornames)
 
     def get_menu(self, obj, trait, row, column):
+        grp = MenuManager(Action(name='Group Selected', action='unknowns_group_by_selected'),
+                          Action(name='Group by Sample', action='unknowns_group_by_sample'),
+                          Action(name='Group by Aliquot', action='unknowns_group_by_aliquot'),
+                          Action(name='Group by Identifier', action='unknowns_group_by_identifier'),
+                          Action(name='Clear Group', action='unknowns_clear_grouping'),
+                          Action(name='Clear All Group', action='unknowns_clear_all_grouping'), name='Plot Grouping')
+
         return MenuManager(Action(name='Recall', action='recall_unknowns'),
                            Action(name='Graph Group Selected', action='unknowns_graph_group_by_selected'),
-                           Action(name='Group Selected', action='unknowns_group_by_selected'),
-                           Action(name='Clear Group', action='unknowns_clear_grouping'),
-                           Action(name='Clear All Group', action='unknowns_clear_all_grouping'),
-                           Action(name='Save Analysis Group', action='save_analysis_group'))
+                           Action(name='Save Analysis Group', action='save_analysis_group'),
+                           grp)
 
     def get_bg_color(self, obj, trait, row, column=0):
         if self.item.tag == 'invalid':
@@ -414,6 +419,17 @@ class ReferencesAdapter(TabularAdapter):
 
 
 class AnalysesPaneHandler(Handler):
+    def unknowns_group_by_sample(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('sample')
+
+    def unknowns_group_by_identifier(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('identifier')
+
+    def unknowns_group_by_aliquot(self, info, obj):
+        obj = info.ui.context['object']
+        obj.unknowns_group_by('aliquot')
 
     def unknowns_graph_group_by_selected(self, info, obj):
         obj = info.ui.context['object']

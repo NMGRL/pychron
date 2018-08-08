@@ -137,6 +137,10 @@ class CSVNode(BaseNode):
     path = Str
     name = 'CSV Data'
 
+    def reset(self):
+        super(CSVNode, self).reset()
+        self.path = ''
+
     def configure(self, pre_run=False, **kw):
         if not pre_run:
             self._manual_configured = True
@@ -177,13 +181,16 @@ class CSVNode(BaseNode):
 
         def gen():
             for d in parser.values():
-                f = FileAnalysis(age=float(d['age']),
-                                 age_err=float(d['age_err']),
-                                 record_id=d['runid'],
-                                 sample=d.get('sample', ''),
-                                 aliquot=int(d.get('aliquot', 0)),
-                                 group_id=int(d.get('group', 0)))
-                yield f
+                try:
+                    f = FileAnalysis(age=float(d['age']),
+                                     age_err=float(d['age_err']),
+                                     record_id=d['runid'],
+                                     sample=d.get('sample', ''),
+                                     aliquot=int(d.get('aliquot', 0)),
+                                     group_id=int(d.get('group', 0)))
+                    yield f
+                except TypeError:
+                    pass
 
         try:
             return tuple(gen())

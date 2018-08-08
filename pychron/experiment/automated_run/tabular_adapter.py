@@ -51,6 +51,8 @@ jump = MenuManager(Action(name='Jump to Start', action='jump_to_start'),
 
 move = MenuManager(Action(name='Move to Start', action='move_to_start'),
                    Action(name='Move to End', action='move_to_end'),
+                   Action(name='Move Up', action='move_up'),
+                   Action(name='Move Down', action='move_down'),
                    Action(name='Move to ...', action='move_to_row'),
                    name='Move')
 

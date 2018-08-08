@@ -148,6 +148,7 @@ class Spectrum(BaseArArFigure):
         ag.plateau_nsteps = opt.pc_nsteps
         ag.plateau_gas_fraction = opt.pc_gas_fraction
         ag.age_error_kind = opt.weighted_age_error_kind
+        ag.dirty = True
 
         if grp.calculate_fixed_plateau:
             ag.calculate_fixed_plateau_steps = grp.calculate_fixed_plateau_start, grp.calculate_fixed_plateau_end

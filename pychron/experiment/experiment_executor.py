@@ -997,7 +997,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         pv = PushExperimentsView(model=pm)
                         open_view(pv)
 
-    def _show_conditionals(self, active_run=None, tripped=None, kind='livemodal'):
+    def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
         try:
             # if self._cv_info:
             #     if self._cv_info.control:
@@ -1050,6 +1050,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self._close_cv()
 
             self._cv_info = open_view(v, kind=kind)
+            self.debug('open view _cv_info={}'.format(self._cv_info))
 
         except BaseException:
             import traceback
@@ -1196,7 +1197,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         run = None
 
         spec.load_name = exp.load_name
-        spec.load_holder = exp.load_holder
+        spec.load_holder = exp.tray
 
         arun = spec.make_run(run=run)
         arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
@@ -1701,7 +1702,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
-        with mainstore.session_ctx(use_parent_session=False):
+        with mainstore.session_ctx(use_parent_session=True):
             an = self._get_preceding_blank_or_background(inform=inform)
             if an is not True:
                 if an is None:

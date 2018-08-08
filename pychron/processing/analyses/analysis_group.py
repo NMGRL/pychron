@@ -129,6 +129,17 @@ class AnalysisGroup(IdeogramPlotable):
         self._age_units = a
         self.dirty = True
 
+    def set_j_error(self, individual, mean, dirty=False):
+        if individual:
+            self.include_j_error_in_individual_analyses = individual
+            self.include_j_error_in_mean = False
+        else:
+            self.include_j_error_in_individual_analyses = False
+            self.include_j_error_in_mean = mean
+
+        if dirty:
+            self.dirty = True
+
     def _get_age_units(self):
         if self._age_units:
             return self._age_units
@@ -173,7 +184,9 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_j(self):
-        j = self.analyses[0].j
+        j = ufloat(0, 0)
+        if self.analyses:
+            j = self.analyses[0].j
         return j
 
     @cached_property
@@ -236,27 +249,46 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_arith_age(self):
-        if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_arithmetic_mean('uage')
-        else:
-            v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
+        v, e = self._calculate_arithmetic_mean(self.age_attr)
         e = self._modify_error(v, e, self.age_error_kind)
-        return ufloat(v, e)  # / self.age_scalar
+        aa = ufloat(v, e)
+        return self._apply_j_err(aa)
+
+    @property
+    def age_attr(self):
+        return 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
 
     @cached_property
     def _get_weighted_age(self):
         attr = self.attribute
         if attr.startswith('uage'):
-            attr = 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
+            attr = self.age_attr
 
         v, e = self._calculate_weighted_mean(attr, self.age_error_kind)
         me = self._modify_error(v, e, self.age_error_kind)
         try:
-            return ufloat(v, max(0, me))  # / self.age_scalar
+            wa = ufloat(v, max(0, me))
+            return self._apply_j_err(wa)
+
         except AttributeError:
             return ufloat(0, 0)
 
-    def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
+    def _apply_j_err(self, wa, force=False):
+        if self.include_j_error_in_mean or force:
+            v, e = nominal_value(wa), std_dev(wa)
+            try:
+                pa = e / v
+            except ZeroDivisionError:
+                pa = 0
+
+            pj = self.j_err
+
+            ne = (pa ** 2 + pj ** 2) ** 0.5
+            wa = ufloat(v, ne * v)
+
+        return wa
+
+    def _modify_error(self, v, e, kind, mswd=None):
 
         if mswd is None:
             mswd = self.mswd
@@ -544,7 +576,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             idx = self.analyses.index(an)
 
         plateau_step = False
-        if self.plateau_age:
+        if self.plateau_steps:
             if not an.is_omitted():
                 ps, pe = self.plateau_steps
                 plateau_step = ps <= idx <= pe
@@ -618,12 +650,16 @@ class StepHeatAnalysisGroup(AnalysisGroup):
                     else:
                         e = self._modify_error(v, e,
                                                self.plateau_age_error_kind,
-                                               mswd=mswd,
-                                               include_j_error=self.include_j_error_in_plateau)
+                                               mswd=mswd)
                     if math.isnan(e):
                         e = 0
 
-        return ufloat(v, max(0, e))  # / self.age_scalar
+        a = ufloat(v, max(0, e))
+        # if self.include_j_error_in_mean or self.include_j_error_in_plateau:
+        #     a += ufloat(0, self.j_err)
+        self._apply_j_err(a, force=self.include_j_error_in_mean or self.include_j_error_in_plateau)
+
+        return a
 
 
 class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
@@ -700,6 +736,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     @property
     def uage(self):
         return self.age
+
+    @property
+    def uage_w_j_err(self):
+        # print('afsd', self.age, self.j_err)
+        return self.age  # + ufloat(0, self.j_err)
 
     @property
     def kca(self):
@@ -818,6 +859,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         naliquots = len({a.aliquot for a in self.analyses})
         default_ek = MSEM if naliquots > 1 else SD
         default_vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
+
+        # if sg:
+        #     self.include_j_error_in_individual_analyses = sg.get('include_j_error_in_individual_analyses', False)
+        #     self.include_j_error_in_mean = sg.get('include_j_error_in_mean', True)
 
         for k in SUBGROUPING_ATTRS:
             if sg is None:

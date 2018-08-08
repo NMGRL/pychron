@@ -156,6 +156,13 @@ class ControlPane(TraitsDockPane):
                               UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
                               spring, icon_button_editor('pane.disable_button', 'cancel')),
                        VGroup(UItem('temperature_readback', editor=LCDEditor())),
+                       icon_button_editor('start_record_button', 'media-record',
+                                          tooltip='Start recording',
+                                          enabled_when='not _recording'),
+                       icon_button_editor('stop_record_button',
+                                          'media-playback-stop',
+                                          tooltip='Stop recording',
+                                          enabled_when='_recording'),
                        label='Controller', show_border=True)
 
         feeder_grp = VGroup(HGroup(Item('stage_manager.calibrated_position_entry', label='Hole'),

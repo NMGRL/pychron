@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from traits.api import HasTraits, List, Str, Float, Int
-from six.moves import map
+
 import six
-from six.moves import zip
+from traits.api import HasTraits, List, Str, Float, Int
+from traitsui.api import View, HGroup, Item
+
+from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
 
 class BaseGauge(HasTraits):
@@ -29,6 +30,23 @@ class BaseGauge(HasTraits):
     color_scalar = 1
     width = Int(100)
     channel = Str
+
+    def traits_view(self):
+        v = View(HGroup(Item('display_name', show_label=False, style='readonly',
+                             width=-30, ),
+                        Item('pressure',
+                             format_str='%0.2e',
+                             show_label=False,
+                             style='readonly'),
+                        Item('pressure',
+                             show_label=False,
+                             width=self.width,
+                             editor=BarGaugeEditor(low=self.low,
+                                                   high=self.high,
+                                                   scale='power',
+                                                   color_scalar=self.color_scalar,
+                                                   width=self.width))))
+        return v
 
 
 class BaseGaugeController(HasTraits):
@@ -112,7 +130,8 @@ class BaseGaugeController(HasTraits):
             chs = self.config_get(config, 'Gauges', 'channels', optional=True, default='1, 2, 3')
 
             for gi in zip(*[x.split(',') for x in (ns, ans, lows, highs, cs, chs)]):
-                ni, ai, li, hi, ci, cn = list(map(str.strip, gi))
+                # ni, ai, li, hi, ci, cn = list(map(str.strip, gi))
+                ni, ai, li, hi, ci, cn = [gg.strip() for gg in gi]
 
                 g = self.gauge_klass(name=ni, display_name=ai, channel=cn)
                 try:

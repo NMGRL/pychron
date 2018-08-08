@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
+from queue import Queue
+from threading import Event, Thread
+
+import time
 # ============= enthought library imports =======================
 from traits.api import Any, List, CInt, Int, Bool, Enum, Str, Instance
 
-import time
-from threading import Event, Thread
-from queue import Queue
 from pychron.envisage.consoleable import Consoleable
 from pychron.pychron_constants import AR_AR, SIGNAL, BASELINE, WHIFF, SNIFF
 
@@ -298,6 +299,9 @@ class DataCollector(Consoleable):
             fit = iso.get_fit(cnt)
             gs = [(self.plot_panel.isotope_graph, iso.name, fit, self.series_idx, self.fit_series_idx)]
 
+        dd = self._get_detector(det)
+        ypadding = dd.ypadding
+
         for g, name, fit, series, fit_series in gs:
 
             pid = g.get_plotid_by_ytitle(name)
@@ -305,7 +309,7 @@ class DataCollector(Consoleable):
                         series=series,
                         plotid=pid,
                         update_y_limits=True,
-                        ypadding='0.1')
+                        ypadding=ypadding)
             if fit:
                 g.set_fit(fit, plotid=pid, series=fit_series)
 

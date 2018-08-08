@@ -440,6 +440,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 deflection_correction_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
             deflection_name = self.config_get(config, name, 'deflection_name', optional=True, default=name)
+            ypadding = self.config_get(config, name, 'ypadding', optional=True, default='0.1')
 
             self._add_detector(name=name,
                                index=index,
@@ -453,7 +454,8 @@ class BaseSpectrometer(SpectrometerDevice):
                                color=color,
                                active=default_state,
                                isotope=isotope,
-                               kind=kind)
+                               kind=kind,
+                               ypadding=ypadding)
 
     def get_intensities(self, tagged=True, trigger=False):
         """

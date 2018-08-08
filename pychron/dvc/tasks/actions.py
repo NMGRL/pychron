@@ -36,7 +36,7 @@ class LocalRepositoryAction(TaskAction):
 
 
 class RemoteRepositoryAction(TaskAction):
-    enabled_name = 'selected_repository_name'
+    enabled_name = 'selected_repository'
 
 
 class CloneAction(RemoteRepositoryAction):
@@ -72,6 +72,13 @@ class PullAction(LocalRepositoryAction):
     method = 'pull'
     image = icon('arrow_down')
     tooltip = 'Pull changes from remote. git pull'
+
+
+class RebaseAction(LocalRepositoryAction):
+    name = 'Rebase'
+    method = 'rebase'
+    image = icon('arrow_down')
+    tooltip = 'Rebase commits from [master] onto current branch. git rebase'
 
 
 class FindChangesAction(LocalRepositoryAction):
