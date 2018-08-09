@@ -141,9 +141,10 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
 
             ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
 
+            fluxes = dvc.get_flux_positions(self.irradiation, self.level)
             state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                        ip.identifier, ip.sample.name, ip.position,
-                                                        ip.j, ip.j_err) for ip in ips if ip.identifier]
+                                                        ip.identifier, ip.sample.name, ip.position, fluxes)
+                                       for ip in ips if ip.identifier]
 
             if self.use_browser:
                 is_append, monitors = self.get_browser_analyses(irradiation=self.irradiation,
@@ -159,7 +160,15 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
             state.irradiation = self.irradiation
             state.level = self.level
 
-    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, j, j_err):
+    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, fluxes):
+
+        pp = next((p for p in fluxes if p['identifier'] == identifier))
+
+        j, j_err = 0, 0
+        if pp:
+            j = pp.get('j', 0)
+            j_err = pp.get('j_err', 0)
+
         x, y, r, idx = geom[hole_id - 1]
         fp = FluxPosition(identifier=identifier,
                           irradiation=irradiation,
@@ -167,8 +176,6 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                           sample=sample, hole_id=hole_id,
                           saved_j=j or 0,
                           saved_jerr=j_err or 0,
-                          # mean_j=nominal_value(mj),/
-                          # mean_jerr=std_dev(mj),
                           x=x, y=y)
         return fp
 

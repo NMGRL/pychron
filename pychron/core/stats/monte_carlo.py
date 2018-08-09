@@ -108,7 +108,7 @@ class FluxEstimator(MonteCarloEstimator):
     # self.mean_position_error = mean_position_error
     # self.mean_position_only = mean_position_only
 
-    def estimate_position_err(self, pts):
+    def estimate_position_err(self, pts, error):
         # reg = self.regressor
         # nominal_ys = reg.predict(pts)
         # ys = reg.ys
@@ -144,9 +144,8 @@ class FluxEstimator(MonteCarloEstimator):
         pgax = ndist.rvs((ntrials, npts))
         pgay = ndist.rvs((ntrials, npts))
 
-        pe = self.position_error
-        pgax *= pe
-        pgay *= pe
+        pgax *= error
+        pgay *= error
 
         def get_pexog(i):
             return reg.get_exog(column_stack((ox + pgax[i], oy + pgay[i])))

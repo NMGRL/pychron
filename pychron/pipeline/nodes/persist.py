@@ -225,7 +225,7 @@ class FluxPersistNode(DVCPersistNode):
                        use_monte_carlo=po.use_monte_carlo,
                        monitor_sample_name=po.monitor_sample_name)
 
-        self.dvc.save_j(irp, options, add=False)
+        self.dvc.save_j(irp, options, decay_constants, add=False)
         # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
         #                 irp.j, irp.jerr,
         #                 irp.mean_j, irp.mean_jerr,irp.

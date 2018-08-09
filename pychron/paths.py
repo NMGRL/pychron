@@ -61,6 +61,7 @@ arrows = os.path.join(icons, 'arrows')
 document = os.path.join(icons, 'document')
 table = os.path.join(icons, 'table')
 balls = os.path.join(icons, 'balls')
+octicons = os.path.join(icons, 'octicons')
 
 images = os.path.join(resources, 'images')
 splashes = os.path.join(resources, 'splashes')
@@ -69,7 +70,7 @@ abouts = os.path.join(resources, 'abouts')
 sounds = os.path.join(resources, 'sounds')
 
 image_search_path = [images]
-icon_search_path = [icons, dbicons, arrows, document, table, balls]
+icon_search_path = [icons, dbicons, arrows, document, table, balls, octicons]
 splash_search_path = [splashes]
 about_search_path = [abouts]
 sounds_search_path = [sounds]

@@ -565,6 +565,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self._test_connection_enabled = False
 
         except Exception as e:
+            self.debug_exception()
             self.warning('connection failed to {} exception={}'.format(self.public_url, e))
             connected = False
 

@@ -666,20 +666,14 @@ class DVC(Loggable):
             if irp:
                 level = irp.level
                 irradiation = level.irradiation
+                # self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
+                self._save_j(irradiation.name, level.name, irp.position, identifier,
+                             j, e, 0, 0, 0, None, None, None, False)
 
-                self.save_j(irradiation.name, level.name, irp.position, identifier, j, e, 0, 0, None, None)
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_j(self, flux_position, options, add=False):
-        # rp.irradiation, irp.level, irp.hole_id, irp.identifier,
-        #                 irp.j, irp.jerr,
-        #                 irp.mean_j, irp.mean_jerr,irp.
-        #                 decay_constants,
-        #                 analyses=irp.analyses,
-        #                 options=options,
-        #                 add=False)
-
+    def save_j(self, flux_position, options, decay_constants, add=False):
         irradiation = flux_position.irradiation
         level = flux_position.level
         pos = flux_position.hole_id
@@ -687,29 +681,27 @@ class DVC(Loggable):
         j = flux_position.j
         e = flux_position.jerr
         mj = flux_position.mean_j
-        me = flux_position.mean_j_err
-        decay = flux_position.decay_constatns
+        me = flux_position.mean_jerr
         analyses = flux_position.analyses
+        position_jerr = flux_position.position_jerr
 
+        self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+                     options, add)
+
+    def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+                options, add):
         self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
                                                                pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add,
-                                   position_jerr=flux_position.position_j_err)
+        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+                                   decay=decay_constants,
+                                   analyses=analyses,
+                                   options=options, add=add,
+                                   position_jerr=position_jerr)
 
         with self.session_ctx():
             ip = self.get_identifier(identifier)
-            ip.j = j
-            ip.j_err = e
-
-    # def save_j(self, irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options=None, add=True):
-    #     self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
-    #                                                            pos, identifier, j, e))
-    #     self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, decay, analyses, options, add)
-    #
-    #     with self.session_ctx(use_parent_session=False):
-    #         ip = self.get_identifier(identifier)
-    #         ip.j = j
-    #         ip.j_err = e
+            ip.j = float(j)
+            ip.j_err = float(e)
 
     def remove_irradiation_position(self, irradiation, level, hole):
         db = self.db

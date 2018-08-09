@@ -25,6 +25,39 @@ from pychron.options.options import SubOptions, AppearanceSubOptions
 
 class FluxSubOptions(SubOptions):
     def traits_view(self):
+        calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
+                          Readonly('lambda_k', label=u'Total \u03BB K'),
+                          Readonly('monitor_age'),
+                          Item('error_kind', label='Mean J Error'),
+                          Item('predicted_j_error_type', label='Predicted J Error'),
+                          Item('use_weighted_fit'),
+
+                          Item('position_error', label='Position Error (Beta)',
+                               tooltip='Set this value to the radius (same units as hole XY positions) of the '
+                                       'irradiation hole. '
+                                       'This is to test "monte carloing" the irradiation geometry'),
+                          # Item('position_only', label='Position Only (Beta)',
+                          #      enabled_when='position_error',
+                          #      tooltip='Monte carlo only the position error, not J error. '
+                          #              'used to see affect of position error'
+                          #      ),
+
+                          HGroup(Item('use_monte_carlo', label='Use'),
+                                 Item('monte_carlo_ntrials', label='N. Trials',
+                                      tooltip='Number of trials to perform monte carlo simulation'),
+                                 show_border=True,
+                                 label='Monte Carlo'),
+                          show_border=True,
+                          label='Calculations')
+
+        grp = VGroup(Item('plot_kind'),
+                     calc_grp)
+
+        return self._make_view(grp)
+
+
+class FluxAppearanceSubOptions(AppearanceSubOptions):
+    def traits_view(self):
         twodgrp = VGroup(HGroup(Item('color_map_name',
                                      label='Color Map',
                                      editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
@@ -37,40 +70,7 @@ class FluxSubOptions(SubOptions):
                          visible_when='plot_kind=="1D"',
                          label='Options',
                          show_border=True)
-
-        calc_grp = VGroup(Item('selected_decay', label='Decay Const.'),
-                          Readonly('lambda_k', label=u'Total \u03BB K'),
-                          Readonly('monitor_age'),
-                          Item('error_kind', label='Mean J Error'),
-                          Item('predicted_j_error_type', label='Predicted J Error'),
-                          Item('use_weighted_fit'),
-                          # Item('position_error', label='Position Error (Beta)',
-                          #      tooltip='Set this value to the radius (same units as hole XY positions) of the '
-                          #              'irradiation hole. '
-                          #              'This is to test "monte carloing" the irradiation geometry'),
-                          # Item('position_only', label='Position Only (Beta)',
-                          #      enabled_when='position_error',
-                          #      tooltip='Monte carlo only the position error, not J error. '
-                          #              'used to see affect of position error'
-                          #      ),
-
-                          HGroup(Item('use_monte_carlo', label='Use'),
-                                 Item('monte_carlo_ntrials', label='N. Trials',
-                                      tooltip='Number of trials to perform monte carlo simulation'),
-                                 label='Monte Carlo'),
-                          show_border=True,
-                          label='Calculations')
-
-        grp = VGroup(Item('plot_kind'),
-                     twodgrp,
-                     onedgrp,
-                     calc_grp)
-
-        return self._make_view(grp)
-
-
-class FluxAppearanceSubOptions(AppearanceSubOptions):
-    pass
+        return self._make_view(VGroup(twodgrp, onedgrp))
 
 
 VIEWS = {'main': FluxSubOptions,

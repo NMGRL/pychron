@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+from functools import partial
 from itertools import groupby
 from operator import attrgetter
 
@@ -180,6 +180,7 @@ class FluxPosition(HasTraits):
     percent_saved_error = Property
     percent_mean_error = Property
     percent_pred_error = Property
+    percent_position_jerr = Property
 
     analyses = List
     error_kind = Str
@@ -208,6 +209,10 @@ class FluxPosition(HasTraits):
     def _get_percent_pred_error(self):
         if self.j and self.jerr:
             return calc_percent_error(self.j, self.jerr)
+
+    def _get_percent_position_jerr(self):
+        if self.j and self.position_jerr:
+            return calc_percent_error(self.j, self.position_jerr)
 
 
 class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
@@ -352,7 +357,7 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
             for positions in (self.unknown_positions, self.monitor_positions):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals, errors = fe.estimate(pts)
-                pos_errors = fe.estimate_position_err(pts)
+                _, pos_errors = fe.estimate_position_err(pts, options.position_error)
                 # nominals = reg.predict(pts)
                 # errors = monte_carlo_error_estimation(reg, nominals, pts,
                 #                                       position_only=self.plotter_options.position_only,
@@ -659,6 +664,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         def sciformat(x):
             return '{:0.6E}'.format(x) if x else ''
 
+        ff2 = partial(floatfmt, n=2)
+
+        def ff(x):
+            return ff2(x) if x else ''
+
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
             column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
@@ -677,17 +687,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format_func=sciformat),
             column(name='percent_saved_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2)),
+                   format_func=ff2),
             column(name='mean_j', label='Mean J',
                    format_func=sciformat),
             column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
                    format_func=sciformat),
             column(name='percent_mean_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                   format_func=ff),
             column(name='mean_j_mswd',
                    label='MSWD',
-                   format_func=lambda x: floatfmt(x, n=2)),
+                   format_func=ff2),
             column(name='j', label='Pred. J',
                    format_func=sciformat,
                    width=75),
@@ -697,10 +707,15 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    width=75),
             column(name='percent_pred_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                   format_func=ff),
             column(name='dev', label='dev',
                    format='%0.2f',
-                   width=70)]
+                   width=70),
+            column(name='position_jerr',
+                   format_func=sciformat),
+            column(name='percent_position_jerr',
+                   format_func=ff2),
+        ]
 
         unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),

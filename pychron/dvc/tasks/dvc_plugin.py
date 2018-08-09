@@ -16,16 +16,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-import time
 
 import os
-from git import Repo, GitCommandError
-from traits.api import List
+
+import time
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+from git import Repo, GitCommandError
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List
 
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
@@ -139,7 +140,8 @@ class DVCPlugin(BaseTaskPlugin):
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment_repo.task',
                             name='Experiment Repositories',
-                            factory=self._repo_factory)]
+                            factory=self._repo_factory,
+                            image='repo')]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=WorkOfflineAction,
