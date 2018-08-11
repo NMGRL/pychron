@@ -341,36 +341,28 @@ class MainView(HasTraits):
             ratios = []
             refs = {'40Ar/38Ar': nominal_value(c.atm4038),
                     '40Ar/36Ar': nominal_value(c.atm4036)}
-            detmapping = {'40Ar': 'Ar40',
-                          '39Ar': 'Ar39',
-                          '38Ar': 'Ar38',
-                          '37Ar': 'Ar37',
-                          '36Ar': 'Ar36'}
 
             if self.recall_options:
                 for r in self.recall_options.cocktail_options.ratios:
                     name = r.tagname
                     if name:
-                        n = detmapping.get(r.numerator)
-                        d = detmapping.get(r.denominator)
                         ref = refs.get(name, 1)
                         ratios.append((name, name, ref))
 
-            # print 'ratios a', ratios
-            # ratios = [('40Ar/38Ar', 'Ar40/Ar38', nominal_value(c.atm4038)),
-            #           ('40Ar/37Ar', 'Ar40/Ar37', 1),
-            #           ('40Ar/36Ar', 'Ar40/Ar36', nominal_value(c.atm4036)),
-            #           ('40Ar/39Ar', 'Ar40/Ar39', 1),
-            #           ('38Ar/39Ar', 'Ar38/Ar39', 1),
-            #           ('37Ar/39Ar', 'Ar37/Ar39', 1),
-            #           ]
-            # print 'asdf', ratios
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
             cv.append(ComputedValue(name='F', tag='uf',
                                     value=nominal_value(an.uF),
                                     error=std_dev(an.uF)))
+
+            cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
+                                    value=nominal_value(an.rad40_percent),
+                                    error=std_dev(an.rad40_percent)))
+
+            cv.append(ComputedValue(name='40Ar*/39Ar', tag='rad40_39',
+                                    value=nominal_value(an.rad40)/nominal_value(an.k39),
+                                    error=std_dev(an.rad40))) 
 
             cv.append(ComputedValue(name='Age',
                                     tag='uage',
