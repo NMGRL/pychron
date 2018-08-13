@@ -294,6 +294,7 @@ class ControlsPane(TraitsDockPane):
                                           tooltip='set selected spectrometer configuration'),
                        spacer(10),
                        Item('integration_time',
+                            editor=EnumEditor(name='integration_times'),
                             label='Integration Time(s)')),
                 control_grp))
         return v

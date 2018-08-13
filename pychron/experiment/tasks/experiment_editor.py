@@ -49,6 +49,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def repeat_block(self, info, obj):
         obj.repeat_block()
 
+    def group_extractions(self, info, obj):
+        obj.group_extractions()
+
     def toggle_end_after(self, info, obj):
         obj.toggle_end_after()
 

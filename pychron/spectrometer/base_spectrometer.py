@@ -252,7 +252,9 @@ class BaseSpectrometer(SpectrometerDevice):
         for k, v in molweights.items():
             d = abs(v - mass)
             if d < 0.15 and d < mi:
+                mi = d
                 found = k
+            # self.debug('map isotope {:0.3f} {} {:0.3f} {:0.3f} {} {}'.format(mass, k, v, d, mi, found))
 
         if found is None:
             found = 'Iso{:0.4f}'.format(mass)
@@ -387,7 +389,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 mws = {l[0]: float(l[1]) for l in reader}
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
-            with open(p, 'r') as f:
+            with open(yp, 'r') as f:
                 mws = yaml.load(f)
         else:
             self.info('writing a default "molecular_weights.csv" file')
