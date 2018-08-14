@@ -32,7 +32,7 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'SubGroup', 'No Grouping')
+    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup', 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
