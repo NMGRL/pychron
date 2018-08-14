@@ -235,13 +235,14 @@ class BaseExperimentQueue(RunBlock):
             run = runspecs[0]
             rtype = run.analysis_type
             incrementable_types = ('unknown',)
-            if rtype.startswith('blank'):
-                incrementable_types = ('unknown', 'air', 'cocktail')
-            elif rtype.startswith('air') or rtype.startswith('cocktail'):
-                incrementable_types = ('unknown',)
 
-        for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                     freq_before, freq_after, sidx=sidx))):
+            if len(runspecs) == 1:
+                if rtype.startswith('blank'):
+                    t = '_'.join(rtype.split('_')[1:])
+                    incrementable_types = (t, )
+
+        for idx in reversed(frequency_index_gen(runblock, freq, incrementable_types,
+                                                freq_before, freq_after, sidx=sidx)):
             for ri in reversed(runspecs):
                 run = ri.clone_traits()
                 run.frequency_group = fcnt
