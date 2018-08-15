@@ -16,15 +16,15 @@
 
 # ============= enthought library imports =======================
 
+import os
+from itertools import groupby
+
+import time
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
-
-import os
-import time
-from itertools import groupby
 
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.select_same import SelectSameMixin
@@ -129,7 +129,33 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.selected = []
         self.refresh_table_needed = True
 
+    def group_extractions2(self):
+        """
+        group using ABC, ABC, ABC
+        :return:
+        """
+        sel = self.selected
+        evs = sorted({s.extract_value for s in sel})
+        n = len(evs)
+
+        with no_update(self):
+            gs = []
+            for i, a in enumerate(self.automated_runs):
+                if a.extract_value == evs[0]:
+                    gs.extend(self.automated_runs[i:i+n])
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
     def group_extractions(self):
+        """
+        group using AAA, BBB, CCC
+        :return:
+        """
         sel = self.selected
 
         evs = {s.extract_value for s in sel}
