@@ -18,33 +18,35 @@ from traitsui.api import HGroup, Item
 
 from pychron.persistence_loggable import dumpable
 
-J_ERROR_GROUP = HGroup(Item('include_j_error_in_individual_analyses', label='Include in individual Analyses'),
-                       Item('include_j_error_in_mean', label='Include in Mean'),
+J_ERROR_GROUP = HGroup(Item('include_j_position_error', label='Include Position Error',
+                            tooltip='Include J position error in the analytical error for each individual analysis.'),
+                       Item('include_j_error_in_mean', label='Include in Mean',
+                            tooltip='Include J error in the mean age error'),
                        show_border=True,
                        label='J Uncertainty')
 
 
 class JErrorMixin(HasTraits):
-    include_j_error_in_individual_analyses = dumpable(Bool(False))
+    include_j_position_error = dumpable(Bool(False))
     include_j_error_in_mean = dumpable(Bool(True))
-    _suppress = False
-
-    def _include_j_error_in_individual_analyses_changed(self, new):
-        if self._suppress:
-            return
-
-        if new:
-            self._suppress = True
-            self.include_j_error_in_mean = False
-            self._suppress = False
-
-    def _include_j_error_in_mean_changed(self, new):
-        if self._suppress:
-            return
-
-        if new:
-            self._suppress = True
-            self.include_j_error_in_individual_analyses = False
-            self._suppress = False
+    # _suppress = False
+    #
+    # def _include_j_position_error_analyses_changed(self, new):
+    #     if self._suppress:
+    #         return
+    #
+    #     if new:
+    #         self._suppress = True
+    #         self.include_j_error_in_mean = False
+    #         self._suppress = False
+    #
+    # def _include_j_error_in_mean_changed(self, new):
+    #     if self._suppress:
+    #         return
+    #
+    #     if new:
+    #         self._suppress = True
+    #         self.include_j_error_in_individual_analyses = False
+    #         self._suppress = False
 
 # ============= EOF =============================================

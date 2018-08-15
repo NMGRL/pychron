@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from numpy import array, array_split
 # ============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, Enum
 from traitsui.api import View, UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
@@ -32,12 +32,13 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'SubGroup', 'No Grouping')
+    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup', 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'
 
-    _attr = 'group_id'
+    attribute = Enum('Group', 'Graph', 'Tab')
+    # _attr = 'group_id'
     _id_func = None
 
     sorting_enabled = True
@@ -70,10 +71,22 @@ class GroupingNode(BaseNode):
 
             setattr(state, self.analysis_kind, sorted(unks, key=key))
 
+    @property
+    def _attr(self):
+        return '{}_id'.format(self.attribute.lower())
+
     def traits_view(self):
-        v = View(UItem('by_key',
-                       style='custom',
-                       editor=EnumEditor(name='keys')),
+        kgrp = VGroup(UItem('by_key',
+                            style='custom',
+                            editor=EnumEditor(name='keys')),
+                      show_border=True,
+                      label='Key')
+
+        agrp = VGroup(UItem('attribute',
+                            tooltip='Group=Display all groups on a single graph\n'
+                                    'Graph=Display groups on separate graphs\n'
+                                    'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
+        v = View(VGroup(agrp, kgrp),
                  width=300,
                  title=self.title,
                  buttons=['OK', 'Cancel'],

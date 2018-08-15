@@ -28,14 +28,13 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
 from pychron.core.helpers.filetools import pathtolist
 from pychron.core.progress import open_progress
-from pychron.core.ui.led_editor import LED
 from pychron.experiment import ExtractionException
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.furnace_controller import FurnaceController
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.loader_logic import LoaderLogic
-from pychron.furnace.magnet_dumper import NMGRLMagnetDumper, NMGRLRotaryDumper, BaseDumper
+from pychron.furnace.magnet_dumper import NMGRLRotaryDumper, BaseDumper
 from pychron.furnace.stage_manager import NMGRLFurnaceStageManager, BaseFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.hardware.furnace.nmgrl.camera import NMGRLCamera

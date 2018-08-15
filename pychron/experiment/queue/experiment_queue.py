@@ -129,6 +129,36 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.selected = []
         self.refresh_table_needed = True
 
+    def group_extractions(self):
+        sel = self.selected
+
+        evs = {s.extract_value for s in sel}
+
+        with no_update(self):
+            gs = []
+            for ev in sorted(evs):
+                for a in self.automated_runs:
+                    if a.extract_value == ev:
+                        gs.append(a)
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
+                # for _, ans in groupby(sorted(self.automated_runs, key=key), key=key):
+
+
+        # key = attrgetter('extract_value')
+        #     for si in s:
+        #         self.automated_runs.remove(si)
+        #
+        #     for e, rs in groupby(sorted(s, key=key, reverse=True), key=key):
+        #         for ri in reversed(rs):
+        #             self.automated_runs.insert(0, ri)
+
     def repeat_block(self):
         rbv = RepeatRunBlockView()
         info = rbv.edit_traits()

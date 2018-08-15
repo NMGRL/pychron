@@ -20,10 +20,10 @@ from __future__ import print_function
 
 import os
 from itertools import groupby
+from operator import attrgetter
 
 import yaml
 from enable.markers import marker_names
-from six.moves import range
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -390,7 +390,8 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
+        key = attrgetter('group_id')
+        for gid, ais in groupby(sorted(analyses, key=key), key=key):
             ref = next(ais)
             d = {}
             for ai in attrs:

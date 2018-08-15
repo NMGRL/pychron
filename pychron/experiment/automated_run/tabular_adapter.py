@@ -70,6 +70,7 @@ selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
                       name='Select')
 
 EDIT_MENU = MenuManager(move, copy, jump, blocks, selects,
+                        Action(name='Group Extractions', action='group_extractions'),
                         Action(name='Unselect', action='unselect'),
                         Action(name='Toggle End After', action='toggle_end_after'),
                         Action(name='Toggle Skip', action='toggle_skip'))
@@ -229,10 +230,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_position_text(self):
         at = self.item.analysis_type
         p = self.item.position
-        if at not in ('unknown', 'degas'):
-            p = ''
-            if at == 'blank_unknown' and ',' not in p:
+
+        if at == 'blank_unknown':
+            if ',' not in p:
                 p = ''
+
+        elif at not in ('unknown', 'degas'):
+            p = ''
+
         return p
 
     # ============================================

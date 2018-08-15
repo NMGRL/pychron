@@ -48,37 +48,38 @@ class NameMixin(IDMixin):
     def __repr__(self):
         return '{}<{}>'.format(self.__class__.__name__, self.name)
 
-
-class InterpretedAgeTbl(Base, BaseMixin):
-    idinterpretedagetbl = Column(Integer, primary_key=True)
-    age_kind = stringcolumn(32)
-    kca_kind = stringcolumn(32)
-
-    age = Column(Float)
-    age_err = Column(Float)
-    display_age_units = stringcolumn(2)
-
-    kca = Column(Float)
-    kca_err = Column(Float)
-    mswd = Column(Float)
-
-    age_error_kind = stringcolumn(80)
-    include_j_error_in_mean = Column(Boolean)
-    include_j_error_in_plateau = Column(Boolean)
-    include_j_error_in_individual_analyses = Column(Boolean)
-
-    analyses = relationship('InterpretedAgeSetTbl', backref='interpreted_age')
-
-
-class InterpretedAgeSetTbl(Base, BaseMixin):
-    idinterpretedagesettbl = Column(Integer, primary_key=True)
-    interpreted_ageID = Column(Integer, ForeignKey('InterpretedAgeTbl.idinterpretedagetbl'))
-    analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
-    forced_plateau_step = Column(Boolean)
-    plateau_step = Column(Boolean)
-    tag = stringcolumn(80)
-
-    analysis = relationship('AnalysisTbl', uselist=False)
+#
+#
+# class InterpretedAgeTbl(Base, BaseMixin):
+#     idinterpretedagetbl = Column(Integer, primary_key=True)
+#     age_kind = stringcolumn(32)
+#     kca_kind = stringcolumn(32)
+#
+#     age = Column(Float)
+#     age_err = Column(Float)
+#     display_age_units = stringcolumn(2)
+#
+#     kca = Column(Float)
+#     kca_err = Column(Float)
+#     mswd = Column(Float)
+#
+#     age_error_kind = stringcolumn(80)
+#     include_j_error_in_mean = Column(Boolean)
+#     include_j_error_in_plateau = Column(Boolean)
+#     include_j_error_in_individual_analyses = Column(Boolean)
+#
+#     analyses = relationship('InterpretedAgeSetTbl', backref='interpreted_age')
+#
+#
+# class InterpretedAgeSetTbl(Base, BaseMixin):
+#     idinterpretedagesettbl = Column(Integer, primary_key=True)
+#     interpreted_ageID = Column(Integer, ForeignKey('InterpretedAgeTbl.idinterpretedagetbl'))
+#     analysisID = Column(Integer, ForeignKey('AnalysisTbl.id'))
+#     forced_plateau_step = Column(Boolean)
+#     plateau_step = Column(Boolean)
+#     tag = stringcolumn(80)
+#
+#     analysis = relationship('AnalysisTbl', uselist=False)
 
 
 class RepositoryTbl(Base, BaseMixin):

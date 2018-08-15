@@ -52,6 +52,7 @@ class ScanManager(StreamGraphManager):
     readout_view = Instance(ReadoutView)
 
     integration_time = DelegatesTo('spectrometer')
+    integration_times = DelegatesTo('spectrometer')
     spectrometer_configurations = DelegatesTo('spectrometer')
     spectrometer_configuration = DelegatesTo('spectrometer')
     set_spectrometer_configuration = Button
