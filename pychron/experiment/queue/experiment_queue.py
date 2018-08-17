@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 
 import os
-from itertools import groupby
 
 import time
 from pyface.timer.do_later import do_later
@@ -27,6 +26,7 @@ from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
@@ -258,11 +258,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
         i = 0
 
-        def key(x):
-            return x.user_defined_aliquot
-
-        ans = sorted(ans, key=key)
-        for _ in groupby(ans, key=key):
+        for _ in groupby_key(ans, 'user_defined_aliquot'):
             i += 1
         return i
 

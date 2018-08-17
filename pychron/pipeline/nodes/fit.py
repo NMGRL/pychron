@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 
 from numpy import inf
 from pyface.confirmation_dialog import confirm
@@ -23,6 +22,7 @@ from pyface.constant import YES
 from six.moves import zip
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
@@ -92,8 +92,8 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-            key = lambda x: x.group_id
-            for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
+
+            for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
                 else:

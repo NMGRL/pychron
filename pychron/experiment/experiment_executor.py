@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 import os
 from datetime import datetime
-from itertools import groupby
+from operator import itemgetter
 from threading import Thread, Lock, currentThread
 
 import time
@@ -33,6 +33,7 @@ from traits.trait_errors import TraitError
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -706,6 +707,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         def finvert(func):
             def wrapper(x):
                 return not func(x)
+
             return wrapper
 
         if invert:
@@ -1237,7 +1239,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                   'ms_pumptime_start', 'datahub', 'console_display', 'experiment_queue',
                   'spectrometer_manager', 'extraction_line_manager', 'ion_optics_manager',
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
-
             setattr(arun, k, getattr(self, k))
 
         arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
@@ -1964,7 +1965,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                 repositories = {}
                 eas = db.get_associated_repositories(identifiers)
-                for idn, exps in groupby(eas, key=lambda x: x[1]):
+                for idn, exps in groupby_key(eas, itemgetter(1)):
+                    # for idn, exps in groupby(eas, key=lambda x: x[1]):
                     repositories[idn] = [e[0] for e in exps]
 
                 conflicts = []

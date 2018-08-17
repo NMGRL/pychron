@@ -20,9 +20,8 @@ from __future__ import print_function
 import os
 import shutil
 from datetime import datetime
-from itertools import groupby
 from math import isnan
-from operator import attrgetter
+from operator import itemgetter
 
 import six
 import time
@@ -34,6 +33,7 @@ from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron import json
 from pychron.core.helpers.filetools import remove_extension, list_subdirectories
+from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, progress_iterator
 from pychron.database.interpreted_age import InterpretedAge
@@ -310,10 +310,7 @@ class DVC(Loggable):
         with db.session_ctx():
             ans = db.get_repository_analyses(reponame)
 
-            def key(ai):
-                return ai.identifier
-
-            for ln, ans in groupby(sorted(ans, key=key), key=key):
+            for ln, ans in groupby_key(ans, 'identifier'):
                 ip = db.get_identifier(ln)
                 dblevel = ip.level
                 irrad = dblevel.irradiation.name
@@ -357,11 +354,9 @@ class DVC(Loggable):
         self.info('finished db-repo sync for {}'.format(reponame))
 
     def repository_transfer(self, ans, dest):
-        def key(x):
-            return x.repository_identifier
 
         destrepo = self._get_repository(dest, as_current=False)
-        for src, ais in groupby(sorted(ans, key=key), key=key):
+        for src, ais in groupby_repo(ans):
             repo = self._get_repository(src, as_current=False)
             for ai in ais:
                 ops, nps = self._transfer_analysis_to(dest, src, ai.runid)
@@ -409,12 +404,8 @@ class DVC(Loggable):
         self.info('freeze flux')
 
         def ai_gen():
-            key = lambda x: x.irradiation
-            lkey = lambda x: x.level
-            rkey = lambda x: x.repository_identifier
-
-            for irrad, ais in groupby(sorted(ans, key=key), key=key):
-                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+            for irrad, ais in groupby_key(ans, 'irradiation'):
+                for level, ais in groupby_key(ais, 'level'):
                     p = self.get_level_path(irrad, level)
                     obj = dvc_load(p)
                     if isinstance(obj, list):
@@ -422,7 +413,7 @@ class DVC(Loggable):
                     else:
                         positions = obj['positions']
 
-                    for repo, ais in groupby(sorted(ais, key=rkey), key=rkey):
+                    for repo, ais in groupby_repo(ais):
                         yield repo, irrad, level, {ai.irradiation_position: positions[ai.irradiation_position] for ai in
                                                    ais}
 
@@ -452,10 +443,8 @@ class DVC(Loggable):
         self.info('freeze production ratios')
 
         def ai_gen():
-            key = lambda x: x.irradiation
-            lkey = lambda x: x.level
-            for irrad, ais in groupby(sorted(ans, key=key), key=key):
-                for level, ais in groupby(sorted(ais, key=lkey), key=lkey):
+            for irrad, ais in groupby_key(ans, 'irradiation'):
+                for level, ais in groupby_key(ais, 'level'):
                     pr = self.meta_repo.get_production(irrad, level)
                     for ai in ais:
                         yield pr, ai
@@ -475,9 +464,9 @@ class DVC(Loggable):
         self._commit_freeze(added, '<PR_FREEZE>')
 
     def _commit_freeze(self, added, msg):
-        key = lambda x: x[0]
-        rr = sorted(added, key=key)
-        for repo, ps in groupby(rr, key=key):
+        # key = lambda x: x[0]
+        # rr = sorted(added, key=key)
+        for repo, ps in groupby_key(added, key=itemgetter(0)):
             rm = GitRepoManager()
             rm.open_repo(repo, paths.repository_dataset_dir)
             rm.add_paths(ps)
@@ -617,10 +606,8 @@ class DVC(Loggable):
         #     self.debug('{} {} not reviewed'.format(ai, attr))
 
     def update_analyses(self, ans, modifier, msg):
-        key = lambda x: x.repository_identifier
-        ans = sorted(ans, key=key)
         mod_repositories = []
-        for expid, ais in groupby(ans, key=key):
+        for expid, ais in groupby_repo(ans):
             paths = [analysis_path(x.record_id, x.repository_identifier, modifier=modifier) for x in ais]
             # print expid, modifier, paths
             if self.repository_add_paths(expid, paths):
@@ -791,11 +778,15 @@ class DVC(Loggable):
         productions = {}
         chronos = {}
         sens = {}
+        frozen_fluxes = {}
         meta_repo = self.meta_repo
         if not quick:
             for r in records:
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
+                    if irrad not in frozen_fluxes:
+                        frozen_fluxes[irrad] = self._get_frozen_flux(r.repository_identifier, r.irradiation)
+
                     level = r.irradiation_level
                     if irrad in fluxes:
                         flux_levels = fluxes[irrad]
@@ -803,8 +794,6 @@ class DVC(Loggable):
                     else:
                         flux_levels = {}
                         prod_levels = {}
-                    # flux_levels = fluxes.get(irrad, {})
-                    # prod_levels = productions.get(irrad, {})
 
                     if level not in flux_levels:
                         flux_levels[level] = meta_repo.get_flux_positions(irrad, level)
@@ -824,6 +813,7 @@ class DVC(Loggable):
             try:
                 r = make_record(branches=branches, chronos=chronos, productions=productions,
                                 fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
+                                frozen_fluxes=frozen_fluxes,
                                 quick=quick,
                                 reload=reload, *args)
                 return r
@@ -1256,9 +1246,8 @@ class DVC(Loggable):
             dvc_dump(obj, path)
 
     def save_tag_subgroup_items(self, items):
-        key = attrgetter('repository_identifier')
 
-        for expid, ans in groupby(sorted(items, key=key), key=key):
+        for expid, ans in groupby_repo(items):
             self.sync_repo(expid)
             ps = []
             for it in ans:
@@ -1284,9 +1273,8 @@ class DVC(Loggable):
                     ci.refresh_view()
 
     def tag_items(self, tag, items, note=''):
-        key = attrgetter('repository_identifier')
         with self.db.session_ctx() as sess:
-            for expid, ans in groupby(sorted(items, key=key), key=key):
+            for expid, ans in groupby_repo(items):
                 self.sync_repo(expid)
 
                 cs = []
@@ -1351,6 +1339,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
+                     frozen_fluxes=None, frozen_productions=None,
                      calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
@@ -1417,9 +1406,11 @@ class DVC(Loggable):
                         chronology = meta_repo.get_chronology(a.irradiation)
                     a.set_chronology(chronology)
 
-                    frozen_production = self._get_frozen_production(rid, a.repository_identifier)
-                    if frozen_production:
-                        pname, prod = frozen_production.name, frozen_production
+                    # frozen_production = self._get_frozen_production(rid, a.repository_identifier)
+                    # frozen_flux = self._get_frozen_flux(a.repository_identifier, a.irradiation)
+                    if frozen_productions:
+                        pass
+                        # pname, prod = frozen_production.name, frozen_production
                     else:
                         try:
                             pname, prod = productions[a.irradiation][a.irradiation_level]
@@ -1432,8 +1423,9 @@ class DVC(Loggable):
                                                                                      productions))
 
                     a.set_production(pname, prod)
-
-                    if fluxes:
+                    if frozen_fluxes:
+                        fd = frozen_fluxes[a.irradiation][a.identifier]
+                    elif fluxes:
                         level_flux = fluxes[a.irradiation][a.irradiation_level]
                         fd = meta_repo.get_flux_from_positions(a.irradiation_position, level_flux)
                     else:
@@ -1469,6 +1461,14 @@ class DVC(Loggable):
         path = analysis_path(rid, repo, 'productions')
         if path:
             return Production(path)
+
+    def _get_frozen_flux(self, repo, irradiation):
+        path = os.path.join(repo, '{}.json'.format(irradiation))
+
+        fd = {}
+        if path:
+            fd = dvc_load(path)
+        return fd
 
     def get_repository(self, repo):
         return self._get_repository(repo, as_current=False)

@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from functools import partial
-from itertools import groupby
-from operator import attrgetter
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 # ============= enthought library imports =======================
@@ -26,6 +24,7 @@ from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import FluxEstimator
@@ -267,13 +266,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         lk = opt.lambda_k
         ek = opt.error_kind
 
-        key = attrgetter('identifier')
         geom = self.geometry
         poss = []
         ans = []
         slope = True
         prev = None
-        for identifier, ais in groupby(sorted(monitors, key=key), key=key):
+        for identifier, ais in groupby_key(monitors, 'identifier'):
 
             ais = list(ais)
             n = len(ais)

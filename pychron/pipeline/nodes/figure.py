@@ -15,13 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
-from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Any, Bool, Instance
 from traitsui.api import View
 
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
@@ -74,8 +73,8 @@ class FigureNode(SortableNode):
         # oname = ''
         if use_plotting and self.use_plotting:
             # editor = self.editor
-            key = attrgetter('tab_id')
-            for _, unks in groupby(sorted(state.unknowns, key=key), key=key):
+
+            for _, unks in groupby_key(state.unknowns, 'tab_id'):
                 # editors = self.editors
                 # if not editor:
                     # key = lambda x: x.graph_id
@@ -95,8 +94,7 @@ class FigureNode(SortableNode):
                         editor.component.invalidate_and_redraw()
             self.editor = editor
 
-            key = attrgetter('name')
-            for name, es in groupby(sorted(state.editors, key=key), key=key):
+            for name, es in groupby_key(state.editors, 'name'):
                 for i, ei in enumerate(es):
                     ei.name = '{} {:02n}'.format(ei.name, i + 1)
 

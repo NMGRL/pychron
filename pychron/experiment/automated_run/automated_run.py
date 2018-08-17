@@ -23,6 +23,7 @@ import os
 import re
 import weakref
 from itertools import groupby
+from operator import itemgetter
 from pprint import pformat
 from threading import Thread, Event as TEvent
 
@@ -38,6 +39,7 @@ from traits.api import Any, Str, List, Property, \
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.experiment import ExtractionException
@@ -491,12 +493,13 @@ class AutomatedRun(Loggable):
         # correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
         #                      not self.spec.analysis_type.startswith('background'))
 
-        key = lambda x: x[0]
+        # key = lambda x: x[0]
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
 
         map_mass = self.spectrometer_manager.spectrometer.map_mass
         hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
 
+        key = itemgetter(0)
         hops = sorted(hops, key=key, reverse=True)
         for mass, dets in groupby(hops, key=key):
             dets = list(dets)
@@ -2114,10 +2117,11 @@ anaylsis_type={}
             def key2(v):
                 return v[1].detector
 
-            for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
+            # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
+            for name, items in groupby_key(self.isotope_group.items, key):
                 items = list(items)
                 if len(items) > 1:
-                    for det, items in groupby(sorted(items, key=key2), key=key2):
+                    for det, items in groupby_key(items, key2):
 
                         items = list(items)
                         if len(items) > 1:

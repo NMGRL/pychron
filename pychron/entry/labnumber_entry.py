@@ -18,7 +18,6 @@
 from __future__ import absolute_import
 
 import os
-from itertools import groupby
 
 import yaml
 from apptools.preferences.preference_binding import bind_preference
@@ -32,6 +31,7 @@ from uncertainties import std_dev
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.progress import open_progress
 from pychron.database.core.defaults import load_irradiation_map
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
@@ -192,12 +192,12 @@ class LabnumberEntry(DVCIrradiationable):
             items = self.irradiated_positions
 
         def key(x):
-            return (x.sample, x.material, x.project)
+            return x.sample, x.material, x.project
 
         items = [x for x in items if not x.igsn]
 
         no_save = False
-        for (sample, material, project), poss in groupby(sorted(items, key=key), key=key):
+        for (sample, material, project), poss in groupby_key(items):
             if not sample:
                 continue
 

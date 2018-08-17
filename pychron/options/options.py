@@ -19,8 +19,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-from itertools import groupby
-from operator import attrgetter
 
 import yaml
 from enable.markers import marker_names
@@ -34,6 +32,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
@@ -390,8 +389,7 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        key = attrgetter('group_id')
-        for gid, ais in groupby(sorted(analyses, key=key), key=key):
+        for gid, ais in groupby_group_id(analyses):
             ref = next(ais)
             d = {}
             for ai in attrs:

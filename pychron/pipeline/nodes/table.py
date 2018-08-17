@@ -15,15 +15,13 @@
 # ===============================================================================
 
 import os
-from itertools import groupby
-# ============= enthought library imports =======================
-from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, List, Enum, Bool, Str
 from traitsui.api import View, UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
@@ -31,6 +29,9 @@ from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
+
+
+# ============= enthought library imports =======================
 
 
 class TableNode(BaseDVCNode):
@@ -53,12 +54,10 @@ class AnalysisTableNode(GroupAgeNode):
         blanks = (a for a in state.unknowns if a.analysis_type == 'blank_unknown')
         airs = (a for a in state.unknowns if a.analysis_type == 'air')
 
-        key = attrgetter('group_id')
-    #
         # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
-        blank_group = [factory(analyses) for _, analyses in groupby(sorted(blanks, key=key), key=key)]
-        air_group = [factory(analyses) for _, analyses in groupby(sorted(airs, key=key), key=key)]
-        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
+        blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
+        air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
+        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
 
         groups = {
             # 'unknowns': unk_group,

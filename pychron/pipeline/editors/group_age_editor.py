@@ -14,7 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 from itertools import groupby
-from operator import attrgetter
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
@@ -179,11 +178,10 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         if bind:
             bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
 
-        key = attrgetter('group_id')
         sgs = []
         gs = []
         unks = []
-        for gid, ans in groupby(sorted(self.items, key=key), key=key):
+        for gid, ans in groupby(self.items, 'group_id'):
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
                     ans = (ai for ai in ans if ai.tag.lower() != 'skip')
