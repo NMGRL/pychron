@@ -138,8 +138,8 @@ class SubGroupingNode(GroupingNode, Preferred):
         apply_subgrouping(grouping, analyses, gid=gid)
 
     def _pre_run_hook(self, state):
-        unks = getattr(state, self.analysis_kind)
-        self._run(unks)
+        # unks = getattr(state, self.analysis_kind)
+        self._run(state)
 
     def _by_key_changed(self):
         if self._cached_items:
