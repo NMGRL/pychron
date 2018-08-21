@@ -13,26 +13,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from operator import attrgetter
+import os
 
-from traits.api import Instance
+from traits.api import Instance, Str, Bool
+from traitsui.api import View, UItem, Item, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
+from pychron.dvc import dvc_dump, dvc_load
 from pychron.dvc.dvc import DVC
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
+from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 
 
-class MassSpecReduced(BaseNode):
+class MassSpecReducedNode(BaseNode):
+    name = 'Mass Spec Reduced'
     recaller = Instance(MassSpecRecaller)
     dvc = Instance(DVC)
 
+    # configurable = False
+
+    message = Str('<MASS SPEC TRANSFER>')
+    share_changes = Bool
+
+    _paths = None
+
+    def traits_view(self):
+        v = View(VGroup(VGroup(UItem('message', style='custom'), label='Message', show_border=True),
+                        Item('share_changes', label='Share Changes')),
+
+                 buttons=['OK', 'Cancel'])
+        return v
+
     def run(self, state):
-        key = attrgetter('repository_identifier')
-        for repo, unks in groupby_repo(state.unknowns):
-            # freeze flux
-            self._freeze_flux(repo, unks)
-            self._import_reduced(repo, unks)
+        if self.recaller.connect():
+
+            for repo, unks in groupby_repo(state.unknowns):
+                self._paths = []
+
+                # freeze flux
+                unks = list(unks)
+                self._freeze_flux(repo, unks)
+                self._import_reduced(unks)
+                self._save(repo)
 
     def _freeze_flux(self, repo, unks):
         """
@@ -49,25 +72,81 @@ class MassSpecReduced(BaseNode):
         :return:
         """
         for irrad, unks in groupby_key(unks, 'irradiation'):
-            pass
+            unks = list(unks)
+            self._make_flux_file(repo, irrad, unks)
+            levels = {u.irradiation_level for u in unks}
+            for l in levels:
+                self._make_production_file(repo, irrad, l)
 
-    def _import_reduced(self, repo, unks):
+    def _make_production_file(self, repo, irrad, level):
+        prod = self.recaller.get_production(irrad, level)
+        path = os.path.join(paths.repository_dataset_dir, repo, '{}.{}.production.json'.format(irrad, level))
+        dvc_dump(prod, path)
+        self._paths.append(path)
+
+    def _make_flux_file(self, repo, irrad, unks):
+        path = os.path.join(paths.repository_dataset_dir, repo, '{}.json'.format(irrad))
+
+        # read in existing flux file
+
+        obj = {}
+        if os.path.isfile(path):
+            obj = dvc_load(path)
+
+        added = []
+        for unk in unks:
+            identifier = unk.identifier
+            if identifier not in added:
+                f = {'j': self.recaller.get_flux(identifier)}
+
+                obj[identifier] = f
+                added.append(identifier)
+
+        dvc_dump(obj, path)
+        self._paths.append(path)
+
+    def _import_reduced(self, unks):
         for unk in unks:
             ms_unk = self.recaller.find_analysis(unk.identifier, unk.aliquot, unk.step)
-            self._import_intercepts(unk, ms_unk)
+            keys = []
+            fkeys = []
+            detkeys = []
+            for k, iso in unk.isotopes.items():
+                miso = ms_unk.isotopes[k]
+                iso.set_uvalue((miso.value, miso.error))
+                det = iso.detector
+                fkeys.append(det)
+                fkeys.append(k)
 
-            # self._import_baselines()
-            # self._import_blanks()
-            # self._import_icfactors()
+                iso.baseline.set_uvalue((miso.baseline.value, miso.baseline.error))
 
-    def _import_intercepts(self, unk, ms_unk):
-        for k, iso in unk.isotopes.items():
-            miso = ms_unk.isotopes[k]
-            iso.set_uvalue(miso.value, miso.error)
-            iso.baseline.set_uvalue(miso.value, miso.error)
-            iso.blank.set_uvalue(miso.value, miso.error)
+                unk.set_temporary_blank(k, miso.blank.value, miso.blank.error, 'mass_spec_imported')
 
-    def save(self, repo, unks):
-        pass
+                unk.set_temporary_uic_factor(det, miso.ic_factor)
+                detkeys.append(det)
+                keys.append(k)
+
+            unk.dump_fits(fkeys)
+
+            self._paths.append(unk.intercepts_path)
+            self._paths.append(unk.baselines_path)
+
+            unk.dump_blanks(keys)
+
+            self._paths.append(unk.blanks_path)
+
+            icfits = ['mass_spec_imported' for _ in detkeys]
+            unk.dump_icfactors(detkeys, icfits)
+
+            self._paths.append(unk.ic_factors_path)
+
+    def _save(self, repo):
+        dvc = self.dvc
+
+        dvc.pull_repository(repo)
+        if dvc.repository_add_paths(repo, self._paths):
+            dvc.repository_commit(repo, self.message)
+            if self.share_changes:
+                dvc.push_repository(repo)
 
 # ============= EOF =============================================

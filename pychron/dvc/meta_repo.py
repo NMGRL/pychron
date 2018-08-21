@@ -19,10 +19,10 @@ from __future__ import print_function
 
 import os
 import shutil
+import time
 from datetime import datetime
 
 import six
-import time
 from six.moves import map
 # ============= enthought library imports =======================
 from traits.api import Bool
@@ -230,6 +230,8 @@ class Production(MetaObject):
         for k, v in obj.items():
             if k == 'reactor':
                 self.reactor = v
+            elif k == 'name':
+                self.name = v
             else:
                 setattr(self, k, float(v[0]))
                 setattr(self, '{}_err'.format(k), float(v[1]))

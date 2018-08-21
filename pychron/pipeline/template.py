@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
 
 import yaml
@@ -25,14 +26,13 @@ from traitsui.api import View, UItem
 
 from pychron.core.ui.strings import PascalCase
 from pychron.paths import paths
-from pychron.pipeline.nodes import PushNode
+from pychron.pipeline.nodes import MassSpecReducedNode
 from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
     BaseDVCNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.geochron import GeochronNode
-
 
 
 class PipelineTemplateSaveView(HasTraits):
@@ -141,9 +141,11 @@ class PipelineTemplate(HasTraits):
             node.trait_set(browser_model=bmodel, dvc=dvc)
         elif isinstance(node, BaseDVCNode):
             node.trait_set(dvc=dvc)
-        elif isinstance(node, DiffNode):
+        elif isinstance(node, (DiffNode, MassSpecReducedNode)):
             recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
             node.trait_set(recaller=recaller)
+            if isinstance(node, MassSpecReducedNode):
+                node.trait_set(dvc=dvc)
         elif isinstance(node, GeochronNode):
             service = application.get_service('pychron.geochron.geochron_service.GeochronService')
             node.trait_set(service=service)

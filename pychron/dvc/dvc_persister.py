@@ -29,7 +29,6 @@ from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.dvc import dvc_dump, analysis_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
-from pychron.paths import paths
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS
 from pychron.pychron_constants import DVC_PROTOCOL, LINE_STR, NULL_STR
 
@@ -92,7 +91,7 @@ class DVCPersister(BasePersister):
         repository = format_repository_identifier(repository)
         self.active_repository = repo = GitRepoManager()
 
-        root = os.path.join(paths.repository_dataset_dir, repository)
+        root = repository_path(repository)
         repo.open_repo(root)
 
         remote = 'origin'

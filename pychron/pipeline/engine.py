@@ -15,9 +15,9 @@
 # ===============================================================================
 
 import os
+import time
 from operator import attrgetter
 
-import time
 import yaml
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
@@ -46,7 +46,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
     AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA
+    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -965,7 +965,8 @@ class PipelineEngine(Loggable):
                                    ('Report', AUTO_REPORT))),
                          # ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
                          ('Share', (('Geochron', GEOCHRON),
-                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT)))
+                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT))),
+                         ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))
 
                          ):
             grp = PipelineTemplateGroup(name=name)

@@ -31,6 +31,7 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
+from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
@@ -57,7 +58,7 @@ class RepoItem(HasTraits):
 
     def update(self, fetch=True):
         name = self.name
-        p = os.path.join(paths.repository_dataset_dir, name)
+        p = repository_path(name)
         try:
             a, b = ahead_behind(p, fetch=fetch)
 
@@ -149,7 +150,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             if prog:
                 prog.change_message('Examining: {}({}/{})'.format(name, i, n))
             self.debug('examining {}'.format(name))
-            r = Repo(os.path.join(paths.repository_dataset_dir, name))
+            r = Repo(repository_path(name))
             try:
                 r.git.fetch()
                 line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
@@ -354,7 +355,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         return self.selected_local_repository_name
 
     def _get_repo(self, name):
-        root = os.path.join(paths.repository_dataset_dir, name)
+        root = repository_path(name)
         if os.path.isdir(root):
             repo = GitRepoManager()
             repo.open_repo(root)

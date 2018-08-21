@@ -18,17 +18,19 @@
 
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from io import StringIO, BytesIO
-import struct
 
+import struct
+from io import BytesIO
+
+from six.moves import range
 from uncertainties import ufloat
-# ============= local library imports  ==========================
 
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope, Baseline
 from pychron.pychron_constants import IRRADIATION_KEYS
-import six
-from six.moves import range
+
+
+# ============= local library imports  ==========================
 
 
 def get_fn(blob):
@@ -106,7 +108,6 @@ class MassSpecAnalysis(Analysis):
         for dbiso in obj.isotopes:
             r = dbiso.results[-1]
             uv, ee = self._intercept_value(r)
-
             key = dbiso.Label
             n = dbiso.NumCnts
             det = dbiso.detector
@@ -130,11 +131,17 @@ class MassSpecAnalysis(Analysis):
             iso.fit = r.fit.Label.lower() if r.fit else ''
 
             iso.baseline = Baseline(key, det.detector_type.Label)
+
             iso.baseline.fit = 'average'
             iso.baseline.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
 
             iso.baseline.n = dbiso.baseline.NumCnts
 
+            # uv = iso.baseline_corrected + iso.baseline.uvalue
+            # print('asdf',key, uv, iso.baseline_corrected, iso.baseline.uvalue)
+            # iso.value = nominal_value(uv)
+            # iso.error = std_dev(uv)
+            # iso.set_uvalue()
             blank = self._blank(r)
             if blank:
                 iso.blank.set_uvalue(blank)
@@ -206,11 +213,14 @@ class MassSpecAnalysis(Analysis):
         # fn = len(pdpblob.strip().split('\n'))
 
         v, e = self._extract_average_baseline(infoblob)
-        for iso in six.itervalues(self.isotopes):
+        for iso in self.isotopes.values():
             if iso.detector == key:
                 iso.baseline.set_uvalue((v, e))
                 if fn is not None:
                     iso.baseline.fn = iso.baseline.n - fn
+
+                v = iso.baseline_corrected+iso.baseline.uvalue
+                iso.set_uvalue(v)
 
     # private
     def _extract_average_baseline(self, blob):

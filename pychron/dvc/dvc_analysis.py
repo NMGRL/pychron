@@ -20,9 +20,9 @@ from __future__ import absolute_import
 
 import datetime
 import os
+import time
 
 import six
-import time
 from six.moves import map
 from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
@@ -31,10 +31,9 @@ from pychron.core.helpers.binpack import unpack, format_blob
 from pychron.core.helpers.datetime_tools import make_timef
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
-from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses
+from pychron.dvc import dvc_dump, dvc_load, analysis_path, make_ref_list, get_spec_sha, get_masses, repository_path
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
-from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis, EXTRACTION_ATTRS, META_ATTRS
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR
@@ -192,7 +191,7 @@ class DVCAnalysis(Analysis):
     def load_spectrometer_parameters(self, spec_sha):
         if spec_sha:
             name = add_extension(spec_sha, '.json')
-            p = os.path.join(paths.repository_dataset_dir, self.repository_identifier, name)
+            p = repository_path(self.repository_identifier, name)
             sd = get_spec_sha(p)
             self.source_parameters = sd['spectrometer']
             self.gains = sd['gains']
@@ -357,7 +356,7 @@ class DVCAnalysis(Analysis):
 
             self._dump(baselines, path)
 
-    def dump_blanks(self, keys, refs, reviewed=False):
+    def dump_blanks(self, keys, refs=None, reviewed=False):
         isos, path = self._get_json('blanks')
         sisos = self.isotopes
 
@@ -412,8 +411,8 @@ class DVCAnalysis(Analysis):
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
                                                 for k, pd in six.iteritems(jd) if k not in (refdet, 'fmt',
-                                                                                         'reference_detector',
-                                                                                         'reference_isotope')}
+                                                                                            'reference_detector',
+                                                                                            'reference_isotope')}
 
         self.peak_center = pd['center_dac']
         self.peak_center_reference_detector = refdet
@@ -536,4 +535,19 @@ class DVCAnalysis(Analysis):
 
         return analysis_path(self.record_id, repository_identifier, **kw)
 
+    @property
+    def intercepts_path(self):
+        return self._analysis_path(modifier='intercepts')
+
+    @property
+    def baselines_path(self):
+        return self._analysis_path(modifier='baselines')
+
+    @property
+    def blanks_path(self):
+        return self._analysis_path(modifier='blanks')
+
+    @property
+    def ic_factors_path(self):
+        return self._analysis_path(modifier='icfactors')
 # ============= EOF ============================================
