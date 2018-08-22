@@ -43,6 +43,7 @@ class GroupingNode(BaseNode):
 
     sorting_enabled = True
     _cached_items = None
+    _state = None
 
     def load(self, nodedict):
         self.by_key = nodedict.get('key', 'Identifier')
@@ -55,8 +56,10 @@ class GroupingNode(BaseNode):
             return attrgetter(self.by_key.lower())
 
     def run(self, state):
-        # unks = getattr(state, self.analysis_kind)
         self._run(state)
+
+    def post_run(self, engine, state):
+        self._state = None
 
     def _run(self, state):
         unks = getattr(state, self.analysis_kind)
@@ -64,7 +67,7 @@ class GroupingNode(BaseNode):
             for unk in unks:
                 setattr(unk, self._attr, 0)
 
-            self._cached_items = unks
+            self._state = state
             key = self._generate_key()
             group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
                                   sorting_enabled=self.sorting_enabled)
@@ -142,8 +145,8 @@ class SubGroupingNode(GroupingNode, Preferred):
         self._run(state)
 
     def _by_key_changed(self):
-        if self._cached_items:
-            self._run(self._cached_items)
+        if self._state:
+            self._run(self._state)
 
     def run(self, state):
         self._run(state)
