@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from itertools import groupby
 
 from apptools.preferences.preference_binding import bind_preference
 from pyface.action.menu_manager import MenuManager
@@ -22,6 +21,7 @@ from traitsui.api import View, UItem, VGroup, Handler, InstanceEditor
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.pipeline.editors.base_adapter import BaseAdapter
 from pychron.pipeline.editors.base_table_editor import BaseTableEditor
@@ -181,7 +181,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin):
         sgs = []
         gs = []
         unks = []
-        for gid, ans in groupby(self.items, 'group_id'):
+        for gid, ans in groupby_group_id(self.items):
             if self.skip_meaning:
                 if 'Human Table' in self.skip_meaning:
                     ans = (ai for ai in ans if ai.tag.lower() != 'skip')
