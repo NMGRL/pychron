@@ -200,7 +200,7 @@ class AnalysisTbl(Base, IDMixin):
 
     @property
     def packet(self):
-        return self.irradiation_position.packet
+        return self.irradiation_position.packet or ''
 
     @property
     def project(self):
