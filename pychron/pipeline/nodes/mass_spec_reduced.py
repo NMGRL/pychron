@@ -120,7 +120,7 @@ class MassSpecReducedNode(BaseNode):
 
                 iso.baseline.set_uvalue((miso.baseline.value, miso.baseline.error))
 
-                unk.set_temporary_blank(k, miso.blank.value, miso.blank.error, 'mass_spec_imported')
+                unk.set_temporary_blank(k, miso.blank.value, miso.blank.error, 'mass_spec_reduced')
 
                 unk.set_temporary_uic_factor(det, miso.ic_factor)
                 detkeys.append(det)
@@ -135,7 +135,7 @@ class MassSpecReducedNode(BaseNode):
 
             self._paths.append(unk.blanks_path)
 
-            icfits = ['mass_spec_imported' for _ in detkeys]
+            icfits = ['mass_spec_reduced' for _ in detkeys]
             unk.dump_icfactors(detkeys, icfits)
 
             self._paths.append(unk.ic_factors_path)
@@ -145,7 +145,7 @@ class MassSpecReducedNode(BaseNode):
 
         dvc.pull_repository(repo)
         if dvc.repository_add_paths(repo, self._paths):
-            dvc.repository_commit(repo, self.message)
+            dvc.repository_commit(repo, '<{}> {}'.format(MASS_SPEC_REDUCED, self.message))
             if self.share_changes:
                 dvc.push_repository(repo)
 
