@@ -1498,19 +1498,22 @@ class DVC(Loggable):
         return self._get_repository(repo, as_current=False)
 
     def _get_repository(self, repository_identifier, as_current=True):
-        repo = None
-        if as_current:
-            repo = self.current_repository
-
-        path = repository_path(repository_identifier)
-
-        if repo is None or repo.path != path:
-            self.debug('make new repomanager for {}'.format(path))
-            repo = GitRepoManager()
-            repo.path = path
-            repo.open_repo(path)
+        if isinstance(repository_identifier, GitRepoManager):
+            repo = repository_identifier
+        else:
+            repo = None
             if as_current:
-                self.current_repository = repo
+                repo = self.current_repository
+            path = repository_path(repository_identifier)
+
+            if repo is None or repo.path != path:
+                self.debug('make new repomanager for {}'.format(path))
+                repo = GitRepoManager()
+                repo.path = path
+                repo.open_repo(path)
+
+        if as_current:
+            self.current_repository = repo
 
         return repo
 

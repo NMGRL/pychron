@@ -26,7 +26,7 @@ from traits.api import Instance, Bool, Str
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.binpack import encode_blob, pack
-from pychron.dvc import dvc_dump, analysis_path
+from pychron.dvc import dvc_dump, analysis_path, repository_path
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.processing.analyses.analysis import EXTRACTION_ATTRS, META_ATTRS

@@ -68,6 +68,10 @@ class PushExperimentsModel(HasTraits):
 
         self.shareables = ss
 
+    @property
+    def names(self):
+        return [s.name for s in self.shareables]
+
     def create_remotes(self):
         cmd = lambda x: ['git', 'remote', 'add', x.remote_name, x.remote_url]
         for si in self.shareables:

@@ -2118,7 +2118,7 @@ anaylsis_type={}
                 return v[1].detector
 
             # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
-            for name, items in groupby_key(self.isotope_group.items, key):
+            for name, items in groupby_key(self.isotope_group.items(), key):
                 items = list(items)
                 if len(items) > 1:
                     for det, items in groupby_key(items, key2):

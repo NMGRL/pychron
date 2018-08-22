@@ -979,25 +979,26 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-        invoke_in_main_thread(self._show_shareables)
-
-    def _show_shareables(self):
-        if self.use_dvc_persistence:
-            from pychron.dvc.share import PushExperimentsModel
-            from pychron.dvc.share import PushExperimentsView
-            # dvc = self.datahub.stores['dvc']
-            from pychron.git.hosts import IGitHost
-            gs = self.application.get_services(IGitHost)
-            org = self.application.preferences.get('pychron.dvc.organization')
-            for gi in gs:
-                pm = PushExperimentsModel(org,
-                                          gi.username,
-                                          gi.password,
-                                          gi.oauth_token)
-                if pm.shareables:
-                    if self.confirmation_dialog('You have shareable Experiments. Would you like to examine them?'):
-                        pv = PushExperimentsView(model=pm)
-                        open_view(pv)
+    #     invoke_in_main_thread(self._show_shareables)
+    #
+    # def _show_shareables(self):
+    #     if self.use_dvc_persistence:
+    #         from pychron.dvc.share import PushExperimentsModel
+    #         from pychron.dvc.share import PushExperimentsView
+    #         # dvc = self.datahub.stores['dvc']
+    #         from pychron.git.hosts import IGitHost
+    #         gs = self.application.get_services(IGitHost)
+    #         org = self.application.preferences.get('pychron.dvc.organization')
+    #         for gi in gs:
+    #             pm = PushExperimentsModel(org,
+    #                                       gi.username,
+    #                                       gi.password,
+    #                                       gi.oauth_token)
+    #             if pm.shareables:
+    #                 self.info('shareable repositories: {}'.format(pm.names))
+    #                 if self.confirmation_dialog('You have shareable Repositories. Would you like to examine them?'):
+    #                     pv = PushExperimentsView(model=pm)
+    #                     open_view(pv)
 
     def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
         try:
