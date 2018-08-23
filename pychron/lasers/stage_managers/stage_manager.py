@@ -58,8 +58,6 @@ class StageManager(BaseStageManager):
     """
     """
 
-    autocenter_button = Button
-
     stage_controller_klass = String('Newport')
 
     stage_controller = Instance(MotionController)
@@ -82,6 +80,8 @@ class StageManager(BaseStageManager):
     home_option = String('Home All')
     home_options = List
 
+    manual_override_position_button = Event
+
     ejoystick = Event
     joystick_label = String('Enable Joystick')
     joystick = Bool(False)
@@ -89,9 +89,6 @@ class StageManager(BaseStageManager):
 
     back_button = Button
     stop_button = Button('Stop')
-
-    use_autocenter = Bool
-    keep_images_open = Bool(False)
 
     _default_z = 0
     _cached_position = None
@@ -876,40 +873,6 @@ class StageManager(BaseStageManager):
         else:
             self.warning('invalid calibrated position. incorrect number of arguments "{}"'.format(args))
 
-    # def _set_hole(self, v):
-    #        if v is None:
-    #            return
-    #
-    #        if self.canvas.calibrate:
-    #            self.warning_dialog('Cannot move while calibrating')
-    #            return
-    #
-    #        if self.canvas.markup:
-    #            self.warning_dialog('Cannot move while adding/editing points')
-    #            return
-    #
-    #        v = str(v)
-    #
-    #        if self.move_thread is not None:
-    #            self.stage_controller.stop()
-    #
-    # #        if self.move_thread is None:
-    #
-    #        pos = self._stage_map.get_hole_pos(v)
-    #        if pos is not None:
-    #            self.visualizer.set_current_hole(v)
-    # #            self._hole = v
-    #            self.move_thread = Thread(name='stage.move_to_hole',
-    #                                      target=self._move_to_hole, args=(v,))
-    #            self.move_thread.start()
-    #        else:
-    #            err = 'Invalid hole {}'.format(v)
-    #            self.warning(err)
-    #            return  err
-
-    #    def _get_hole(self):
-    #        return self._hole
-
     def _set_point(self, v):
         if self.canvas.calibrate:
             self.warning_dialog('Cannot move while calibrating')
@@ -936,6 +899,16 @@ class StageManager(BaseStageManager):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _manual_override_position_button_fired(self):
+        sm = self.stage_map
+        pos = self.calibrated_position_entry
+        hole = self.stage_map.get_hole(pos)
+        if hole is not None:
+            x, y = self.stage_controller.x, self.stage_controller.y
+            sm.set_hole_correction(pos, x, y)
+            sm.dump_correction_file()
+            self.info('updated {} correction file. Saved {}:  {},{}'.format(sm.name, pos, x, y))
+
     def _stop_button_fired(self):
         self._stop()
 

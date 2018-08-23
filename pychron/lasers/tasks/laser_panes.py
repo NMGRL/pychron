@@ -184,6 +184,9 @@ class StageControlPane(TraitsDockPane):
                       icon_button_editor('stage_manager.autocenter_button', 'find',
                                          tooltip='Do an autocenter at the current location',
                                          enabled_when='stage_manager.autocenter_manager.use_autocenter'),
+                      icon_button_editor('stage_manager.manual_override_position_button', 'edit-move',
+                                         tooltip='Manual define the X,Y coordinates for current position',
+                                         enabled_when='stage_manager.calibrated_position_entry'),
                       label='Calibrated Position',
                       show_border=True)
         hgrp = HGroup(UItem('stage_manager.stop_button'),

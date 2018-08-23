@@ -15,18 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, cached_property, Property, Tuple, Any, Float
-
+import math
 
 # ============= standard library imports ========================
-# from numpy import array
 # ============= local library imports  ==========================
-# from pychron.core.geometry.convex_hull import convex_hull_area
-# from pychron.core.geometry.centroid import calculate_centroid
-# from pychron.core.codetools.simple_timeit import timethis
-# from pychron.core.geometry.convex_hull import convex_hull_area
-# from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
+
 
 class Target:
     poly_points = None
@@ -59,6 +52,9 @@ class Target:
     def perimeter_convexity(self):
         return self.pconvex_hull / self.pactual
 
+    @property
+    def compactness(self):
+        return 4 * math.pi * self.area / self.pactual ** 2
         #        return self.
         #        r = timethis(convex_hull_area, args=(self.poly_points,))
 
