@@ -38,4 +38,5 @@ ALT_ISOREGEX = re.compile('\d+[A-Za-z]{1,2}$')
 PACKETREGEX = re.compile(r'(?P<prefix>[a-zA-Z]+)?(?P<number>\d+)')
 IPREGEX = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 
+GITREFREGEX = re.compile(r'^[\w]{40}')
 # ============= EOF =============================================

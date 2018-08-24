@@ -512,9 +512,9 @@ class AuxPlotFigureOptions(FigureOptions):
         except IndexError:
             self.aux_plots.append(plt)
 
-    def get_loadable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    # def get_loadable_aux_plots(self):
+    #     return reversed([pi for pi in self.aux_plots
+    #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
         # for a in self.aux_plots:

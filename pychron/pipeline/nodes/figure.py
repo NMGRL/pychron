@@ -233,7 +233,7 @@ class RegressionSeriesNode(SeriesNode):
     def run(self, state):
         po = self.plotter_options
 
-        keys = [fi.name for fi in list(reversed([pi for pi in po.get_loadable_aux_plots()]))]
+        keys = [fi.name for fi in list(reversed([pi for pi in po.get_plotable_aux_plots()]))]
 
         def load_raw(x, prog, i, n):
             x.load_raw_data(keys)

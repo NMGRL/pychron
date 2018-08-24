@@ -13,19 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from __future__ import absolute_import
 import base64
-import requests
+import subprocess
 
+import requests
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, Interface, Password, provides
 
+from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.globals import globalv
 from pychron.loggable import Loggable
-from pychron import json
+from pychron.regex import GITREFREGEX
 
 
 class IGitHost(Interface):
@@ -59,6 +59,9 @@ class IGitHost(Interface):
     def get_info(self, organization):
         pass
 
+    def remote_exists(self, name):
+        pass
+
 
 class CredentialException(BaseException):
     def __init__(self, d):
@@ -72,7 +75,7 @@ def authorization(username, password, oauth_token):
     if oauth_token:
         auth = oauth_token
     else:
-        auth = base64.encodestring('{}:{}'.format(username, password)).replace('\n', '')
+        auth = base64.encodebytes('{}:{}'.format(username, password).encode('utf-8')).replace('\n', '')
         auth = 'Basic {}'.format(auth)
 
     return {"Authorization": auth}
@@ -92,6 +95,11 @@ class GitHostService(Loggable):
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
+
+    def remote_exists(self, organization, name):
+        text = subprocess.call(['git', 'ls-remote',
+                         'https://{}/{}/{}'.format(self.remote_url, organization, name)])
+        return GITREFREGEX.match(text)
 
     def test_api(self):
         raise NotImplementedError
