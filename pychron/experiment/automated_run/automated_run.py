@@ -486,42 +486,70 @@ class AutomatedRun(Loggable):
 
         hops = parse_hops(hopstr, ret='iso,det,is_baseline')
 
-        map_mass = self.spectrometer_manager.spectrometer.map_mass
-        hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
-
-        for mass, dets in groupby_key(hops, key=itemgetter(0), reverse=True):
-            dets = list(dets)
-            iso = dets[0][1]
-            if dets[0][3]:
+        for iso, det, is_baseline in hops:
+            if is_baseline:
                 continue
 
-            for _, _, di, _ in dets:
-                self._add_active_detector(di)
-                name = iso
-                if iso in a.isotopes:
-                    ii = a.isotopes[iso]
-                    if ii.detector != di:
-                        name = '{}{}'.format(iso, di)
-                        ii = a.isotope_factory(name=name, detector=di)
-                else:
-                    ii = a.isotope_factory(name=iso, detector=di)
+            name = iso
+            if name in a.isotopes:
+                ii = a.isotopes[name]
+                if ii.detector != det:
+                    name = '{}{}'.format(iso, det)
+                    ii = a.isotope_factory(name=name, detector=det)
+            else:
+                ii = a.isotope_factory(name=name, detector=det)
 
-                pid = self._get_plot_id_by_ytitle(g, ii, di)
-                if pid is None:
-                    plots = self.plot_panel.new_isotope_plot()
-                    plot = plots['isotope']
-                    pid = g.plots.index(plot)
+            pid = self._get_plot_id_by_ytitle(g, ii, det)
+            if pid is None:
+                plot = self.plot_panel.new_isotope_plot()
+                pid = g.plots.index(plot)
+            else:
+                plot = g.plots[pid]
 
-                    # this line causes and issue when trying to plot the sniff on the isotope graph
-                    # g.new_series(type='scatter', fit='linear', plotid=pid)
+            plot.y_axis.title = name
 
-                g.set_regressor(ii.regressor, pid)
-                a.isotopes[name] = ii
-                plot.y_axis.title = name
+            g.set_regressor(ii.regressor, pid)
+            a.isotopes[name] = ii
 
         self._load_previous()
-
         self.plot_panel.analysis_view.load(self)
+
+        # map_mass = self.spectrometer_manager.spectrometer.map_mass
+        # hops = [(map_mass(hi[0]),) + tuple(hi) for hi in hops]
+        #
+        # for mass, dets in groupby_key(hops, key=itemgetter(0), reverse=True):
+        #     dets = list(dets)
+        #     iso = dets[0][1]
+        #     if dets[0][3]:
+        #         continue
+        #
+        #     for _, _, di, _ in dets:
+        #         self._add_active_detector(di)
+        #         name = iso
+        #         if iso in a.isotopes:
+        #             ii = a.isotopes[iso]
+        #             if ii.detector != di:
+        #                 name = '{}{}'.format(iso, di)
+        #                 ii = a.isotope_factory(name=name, detector=di)
+        #         else:
+        #             ii = a.isotope_factory(name=iso, detector=di)
+        #
+        #         pid = self._get_plot_id_by_ytitle(g, ii, di)
+        #         if pid is None:
+        #             plots = self.plot_panel.new_isotope_plot()
+        #             plot = plots['isotope']
+        #             pid = g.plots.index(plot)
+        #
+        #             # this line causes and issue when trying to plot the sniff on the isotope graph
+        #             # g.new_series(type='scatter', fit='linear', plotid=pid)
+        #
+        #         g.set_regressor(ii.regressor, pid)
+        #         a.isotopes[name] = ii
+        #         plot.y_axis.title = name
+        #
+        # self._load_previous()
+        #
+        # self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, mftable, starttime, starttime_offset,
                     series=0, fit_series=0, group='signal'):
