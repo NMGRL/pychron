@@ -551,7 +551,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if not n:
                 continue
 
-            group.set_j_error(options.include_j_error_in_individual_analyses, options.include_j_error_in_mean)
+            group.set_j_error(options.include_j_position_error, options.include_j_error_in_mean)
             group.set_temporary_age_units(options.age_units)
             self._make_meta(worksheet, group)
             if repeat_header or i == 0:

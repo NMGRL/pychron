@@ -231,14 +231,20 @@ class ItemConfigurer(Saveable):
     def dump_item(self, item):
         name = item.name
         p = os.path.join(self.root, add_extension(name, '.p'))
+        print('dump itme')
         with open(p, 'wb') as wfile:
             pickle.dump(item, wfile)
+            print('sdfasdf')
 
     def get(self, name):
         p = os.path.join(self.root, add_extension(name, '.p'))
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                obj = pickle.load(rfile)
+            try:
+                with open(p, 'rb') as rfile:
+                    obj = pickle.load(rfile, encoding='latin1')
+            except BaseException as e:
+                obj = self.item_klass()
+
         else:
             obj = self.item_klass()
 

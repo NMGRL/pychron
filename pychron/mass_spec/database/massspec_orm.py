@@ -20,6 +20,7 @@
 # =============standard library imports ========================
 
 from __future__ import absolute_import
+
 import os
 
 from sqlalchemy import Column, Integer, Float, String, \
@@ -293,6 +294,10 @@ class IrradiationProductionTable(Base):
     @property
     def Cl3638(self):
         return self.P36Cl38Cl
+
+    @property
+    def Cl3638Er(self):
+        return self.P36Cl38ClEr
 
 
 class IrradiationChronologyTable(Base):

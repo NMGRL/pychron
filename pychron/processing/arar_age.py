@@ -39,7 +39,7 @@ class ArArAge(IsotopeGroup):
     """
     High level representation of the ArAr attributes of an analysis.
     """
-
+    position_jerr = 0
     j = None
     irradiation = None
     irradiation_level = None
@@ -199,6 +199,9 @@ class ArArAge(IsotopeGroup):
                 self.sensitivity = si['sensitivity']
                 self.sensitivity_units = si['units']
                 break
+
+    def set_temporary_uic_factor(self, k, uv):
+        self.temporary_ic_factors[k] = uv
 
     def set_temporary_ic_factor(self, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
@@ -476,6 +479,9 @@ class ArArAge(IsotopeGroup):
             j = ufloat(1e-4, 1e-7)
 
         arc = self.arar_constants
+
+        j.std_dev = self.position_jerr
+
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            # lambda_k=self.lambda_k,
                            arar_constants=arc)

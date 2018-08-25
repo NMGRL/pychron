@@ -360,10 +360,6 @@ class MainView(HasTraits):
                                     value=nominal_value(an.rad40_percent),
                                     error=std_dev(an.rad40_percent)))
 
-            cv.append(ComputedValue(name='40Ar*/39Ar', tag='rad40_39',
-                                    value=nominal_value(an.rad40)/nominal_value(an.k39),
-                                    error=std_dev(an.rad40))) 
-
             cv.append(ComputedValue(name='Age',
                                     tag='uage',
                                     value=nominal_value(an.uage),

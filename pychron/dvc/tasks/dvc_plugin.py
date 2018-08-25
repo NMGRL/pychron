@@ -16,17 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 
-import os
-from git import Repo, GitCommandError
-from traits.api import List
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_extension import TaskExtension
 from envisage.ui.tasks.task_factory import TaskFactory
+from git import Repo, GitCommandError
 from pyface.tasks.action.schema_addition import SchemaAddition
+from traits.api import List
 
+from pychron.dvc import repository_path
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks import list_local_repos
@@ -36,7 +37,6 @@ from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCE
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
-from pychron.paths import paths
 
 
 class DVCPlugin(BaseTaskPlugin):
@@ -105,7 +105,7 @@ class DVCPlugin(BaseTaskPlugin):
         period = 60
         while 1:
             for name in list_local_repos():
-                r = Repo(os.path.join(paths.repository_dataset_dir, name))
+                r = Repo(repository_path(name))
                 try:
                     r.git.fetch()
                 except GitCommandError as e:
@@ -139,7 +139,8 @@ class DVCPlugin(BaseTaskPlugin):
     def _tasks_default(self):
         return [TaskFactory(id='pychron.experiment_repo.task',
                             name='Experiment Repositories',
-                            factory=self._repo_factory)]
+                            factory=self._repo_factory,
+                            image='repo')]
 
     def _task_extensions_default(self):
         actions = [SchemaAddition(factory=WorkOfflineAction,

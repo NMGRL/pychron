@@ -36,7 +36,7 @@ from pychron.envisage.view_util import open_view
 from pychron.git_archive.repo_manager import isoformat_date
 from pychron.git_archive.utils import get_commits, get_diff, get_head_commit
 from pychron.paths import paths
-from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW
+from pychron.pychron_constants import LIGHT_RED, PLUSMINUS_ONE_SIGMA, LIGHT_YELLOW, MASS_SPEC_REDUCED
 
 TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor'
 TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
@@ -409,14 +409,14 @@ class HistoryView(DVCCommitView):
                          ('BLANKS', 'blanks'),
                          ('ICFactor', 'icfactors')):
                 path = an.make_path(b)
-                print('made path', path)
                 if path:
-                    css = get_commits(repo, repo.active_branch.name, path, a, '--grep=^<{}>'.format(a))
-                    for ci in css:
-                        if ci.hexsha not in hexshas:
-                            ci.path = path
-                            hexshas.append(ci.hexsha)
-                            cs.append(ci)
+                    for aa in (a, MASS_SPEC_REDUCED):
+                        css = get_commits(repo, repo.active_branch.name, path, aa, '--grep=^<{}>'.format(aa))
+                        for ci in css:
+                            if ci.hexsha not in hexshas:
+                                ci.path = path
+                                hexshas.append(ci.hexsha)
+                                cs.append(ci)
 
                             # css = [c for c]
                             # cs.extend(css)

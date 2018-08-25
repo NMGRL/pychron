@@ -15,13 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 
 from datetime import timedelta, datetime
 
 import six
-from six.moves import map
 from sqlalchemy import not_, func, distinct, or_, select, and_, join
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
@@ -39,7 +36,7 @@ from pychron.dvc.dvc_orm import AnalysisTbl, ProjectTbl, MassSpectrometerTbl, \
     LoadHolderTbl, LoadPositionTbl, \
     MeasuredPositionTbl, ProductionTbl, VersionTbl, RepositoryAssociationTbl, \
     RepositoryTbl, AnalysisChangeTbl, \
-    InterpretedAgeTbl, InterpretedAgeSetTbl, PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
+    PrincipalInvestigatorTbl, SamplePrepWorkerTbl, SamplePrepSessionTbl, \
     SamplePrepStepTbl, SamplePrepImageTbl, RestrictedNameTbl, AnalysisGroupTbl, AnalysisGroupSetTbl, \
     AnalysisIntensitiesTbl, SimpleIdentifierTbl, SamplePrepChoicesTbl
 from pychron.globals import globalv
@@ -111,7 +108,8 @@ def principal_investigator_filter(q, principal_investigator):
 
 def make_at_filter(analysis_types):
     if hasattr(analysis_types, '__iter__'):
-        analysis_types = list(map(str.lower, analysis_types))
+        # analysis_types = list(map(str.lower, analysis_types))
+        analysis_types = [at.lower() for at in analysis_types]
     else:
         analysis_types = (analysis_types.lower(),)
 
@@ -132,7 +130,8 @@ def make_at_filter(analysis_types):
 
 def analysis_type_filter(q, analysis_types):
     if hasattr(analysis_types, '__iter__'):
-        analysis_types = list(map(str.lower, analysis_types))
+        # analysis_types = list(map(str.lower, analysis_types))
+        analysis_types = [at.lower() for at in analysis_types]
     else:
         analysis_types = (analysis_types.lower(),)
 
@@ -856,17 +855,17 @@ class DVCDatabase(DatabaseAdapter):
             a.principal_investigator = principal_investigator
             return self._add_item(a)
 
-    def add_interpreted_age(self, **kw):
-        with self.session_ctx():
-            a = InterpretedAgeTbl(**kw)
-            return self._add_item(a)
-
-    def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
-        with self.session_ctx():
-            a = InterpretedAgeSetTbl(**kw)
-            a.interpreted_age = interpreted_age
-            a.analysis = analysis
-            return self._add_item(a)
+    # def add_interpreted_age(self, **kw):
+    #     with self.session_ctx():
+    #         a = InterpretedAgeTbl(**kw)
+    #         return self._add_item(a)
+    #
+    # def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
+    #     with self.session_ctx():
+    #         a = InterpretedAgeSetTbl(**kw)
+    #         a.interpreted_age = interpreted_age
+    #         a.analysis = analysis
+    #         return self._add_item(a)
 
     # fuzzy getters
     def get_fuzzy_projects(self, search_str):

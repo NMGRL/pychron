@@ -16,11 +16,9 @@
 from traits.api import Instance, Bool, Str, List, Float
 from traitsui.api import View, UItem, VGroup, Item, HGroup, EnumEditor
 
-from itertools import groupby
-from operator import attrgetter
-
-from pychron.loggable import Loggable
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.experiment.script.script import Script
+from pychron.loggable import Loggable
 
 ATTRS = ('pattern', 'duration', 'cleanup', 'extract_value', 'beam_diameter', 'ramp_duration')
 
@@ -59,10 +57,7 @@ class BulkRunFixer(Loggable):
         if not self.confirmation_dialog('Would you like to run the Bulk Run Fixer?'):
             return
 
-        key = attrgetter('analysis_type')
-        runs = sorted(runs, key=key)
-
-        for atype, ris in groupby(runs, key=key):
+        for atype, ris in groupby_key(runs, 'analysis_type'):
             ris = list(ris)
             self.unknown_enabled = atype == 'unknown'
             es, ms = zip(*[(r.extraction_script, r.measurement_script) for r in ris])

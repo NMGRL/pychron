@@ -15,8 +15,9 @@
 # ===============================================================================
 
 import os
-
 import time
+from operator import attrgetter
+
 import yaml
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool
@@ -27,6 +28,7 @@ from pychron.dvc.tasks.repo_task import RepoItem
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes import FindReferencesNode
 from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
@@ -44,7 +46,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, AUTO_IDEOGRAM, AUTO_SERIES, \
     AUTO_REPORT, REPORT, CORRECTION_FACTORS, REGRESSION_SERIES, GEOCHRON, VERTICAL_FLUX, \
     CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    ANALYSIS_TABLE_W_IA
+    ANALYSIS_TABLE_W_IA, MASSSPEC_REDUCED
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
@@ -272,6 +274,7 @@ class PipelineEngine(Loggable):
 
         self.pipeline.reset(clear_data=True)
         self.update_needed = True
+
     # def update_detectors(self):
     #     """
     #     set valid detectors for FitICFactorNodes
@@ -325,6 +328,16 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
+
+    def unknowns_group_by(self, attr):
+        items = self.selected_unknowns
+        if not items or len(items) == 1:
+            items = self.selected.unknowns
+        group_analyses_by_key(items, attr)
+
+        sunks = sorted(self.selected.unknowns, key=attrgetter(attr))
+        self.selected.unknowns = sunks
+        self.refresh_figure_editors()
 
     def unknowns_graph_group_by_selected(self):
         items = self.selected.unknowns
@@ -455,6 +468,7 @@ class PipelineEngine(Loggable):
         unks = self.selected_node.unknowns
         self.selected_node.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
         self.refresh_table_needed = True
+
     # ============================================================================================================
     # nodes
     # ============================================================================================================
@@ -951,7 +965,8 @@ class PipelineEngine(Loggable):
                                    ('Report', AUTO_REPORT))),
                          # ('Edit', (('Analysis Metadata', ANALYSIS_METADATA),)),
                          ('Share', (('Geochron', GEOCHRON),
-                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT)))
+                                    ('CSV Analyses Export', CSV_ANALYSES_EXPORT))),
+                         ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),))
 
                          ):
             grp = PipelineTemplateGroup(name=name)

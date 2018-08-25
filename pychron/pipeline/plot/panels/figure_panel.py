@@ -15,15 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 from math import isinf
-from operator import attrgetter
 
 from chaco.legend import Legend
 from numpy import inf
 from traits.api import HasTraits, Any, List, Str
 
 from pychron.core.codetools.inspection import caller
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
@@ -53,10 +52,8 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _make_figures(self, **kw):
-        key = attrgetter('group_id')
-        ans = sorted(self.analyses, key=key)
         gs = [self._figure_klass(analyses=list(ais), group_id=gid, **kw)
-              for gid, ais in groupby(ans, key=key)]
+              for gid, ais in groupby_group_id(self.analyses)]
         return gs
 
     # def dump_metadata(self):

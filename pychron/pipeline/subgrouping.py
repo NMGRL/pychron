@@ -64,7 +64,7 @@ def apply_subgrouping(sg, selected, items=None, gid=None):
 
 def compress_groups(items):
     def key(x):
-        return x.subgroup['name'] if x.subgroup else ''
+        return x.subgroup['name'] if hasattr(x, 'subgroup') and x.subgroup else ''
 
     cnt = 0
     for kind, ans in groupby(items, key=key):

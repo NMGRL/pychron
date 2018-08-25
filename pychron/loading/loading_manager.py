@@ -16,9 +16,6 @@
 
 import os
 from datetime import datetime
-from itertools import groupby
-# ============= enthought library imports =======================
-from operator import attrgetter
 
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
@@ -33,12 +30,16 @@ from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.filetools import view_file, unique_path
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
+
+
+# ============= enthought library imports =======================
 
 
 def make_bound(st):
@@ -214,9 +215,7 @@ class LoadingManager(DVCIrradiationable):
         if not loadtable:
             return
 
-        k = attrgetter('identifier')
-
-        for ln, poss in groupby(sorted(loadtable.loaded_positions, key=k), key=k):
+        for ln, poss in groupby_key(loadtable.loaded_positions, 'identifier'):
             dbpos = self.dvc.db.get_identifier(ln)
             sample = ''
             project = ''

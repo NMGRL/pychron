@@ -395,8 +395,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
+            self.labnumber = v
             # invoke_in_main_thread(self.trait_set, _labnumber=v)
-            invoke_in_main_thread(self.trait_set, labnumber=v)
+            # invoke_in_main_thread(self.trait_set, labnumber=v)
 
         if auto_increment_position:
             pos = self.position

@@ -16,9 +16,11 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
 import binascii
 import math
 
+import six
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.sql.expression import func, distinct
 from traits.api import provides
@@ -37,7 +39,6 @@ from pychron.mass_spec.database.massspec_orm import IsotopeResultsTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
     IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable, ProjectTable, MaterialTable, PDPTable
 from pychron.pychron_constants import INTERFERENCE_KEYS
-import six
 
 
 class MissingAliquotPychronException(BaseException):
@@ -323,6 +324,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, **kw)
+
+    def get_flux(self, labnumber):
+        with self.session_ctx():
+            obj = self.get_irradiation_position(labnumber)
+            return obj.J, obj.JEr
 
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,

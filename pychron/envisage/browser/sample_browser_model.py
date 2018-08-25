@@ -316,13 +316,14 @@ class SampleBrowserModel(BrowserModel):
                                         high_post=now,
                                         low_post=lp,
                                         filter_non_run=self.filter_non_run_samples)
-            sams = self._load_sample_record_views(ls)
+            if ls:
+                sams = self._load_sample_record_views(ls)
 
-            self.samples = sams
-            self.osamples = sams
+                self.samples = sams
+                self.osamples = sams
 
-            xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
-            self.analysis_table.set_analyses(xx)
+                xx = self._get_analysis_series(lp, now, v.mass_spectrometer, analysis_types=v.analysis_types)
+                self.analysis_table.set_analyses(xx)
 
     def _find_references_hook(self):
         ans = self.analysis_table.analyses

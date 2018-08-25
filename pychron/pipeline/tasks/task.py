@@ -346,6 +346,9 @@ class PipelineTask(BaseBrowserTask):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def mass_spec_reduced_transfer(self):
+        self._set_action_template('Mass Spec Reduced')
+        
     def freeze_flux(self):
         ans = self._get_active_analyses()
         if ans:

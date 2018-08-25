@@ -16,17 +16,17 @@
 
 # ============= enthought library imports =======================
 
+import os
+
+import time
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event, Long
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
-import os
-import time
-from itertools import groupby
-
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.select_same import SelectSameMixin
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.qt.tabular_editor import MoveToRow
@@ -129,6 +129,62 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self.selected = []
         self.refresh_table_needed = True
 
+    def group_extractions2(self):
+        """
+        group using ABC, ABC, ABC
+        :return:
+        """
+        sel = self.selected
+        evs = sorted({s.extract_value for s in sel})
+        n = len(evs)
+
+        with no_update(self):
+            gs = []
+            for i, a in enumerate(self.automated_runs):
+                if a.extract_value == evs[0]:
+                    gs.extend(self.automated_runs[i:i+n])
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
+    def group_extractions(self):
+        """
+        group using AAA, BBB, CCC
+        :return:
+        """
+        sel = self.selected
+
+        evs = {s.extract_value for s in sel}
+
+        with no_update(self):
+            gs = []
+            for ev in sorted(evs):
+                for a in self.automated_runs:
+                    if a.extract_value == ev:
+                        gs.append(a)
+
+            if gs:
+                for gi in gs:
+                    self.automated_runs.remove(gi)
+
+                for gi in reversed(gs):
+                    self.automated_runs.insert(0, gi)
+
+                # for _, ans in groupby(sorted(self.automated_runs, key=key), key=key):
+
+
+        # key = attrgetter('extract_value')
+        #     for si in s:
+        #         self.automated_runs.remove(si)
+        #
+        #     for e, rs in groupby(sorted(s, key=key, reverse=True), key=key):
+        #         for ri in reversed(rs):
+        #             self.automated_runs.insert(0, ri)
+
     def repeat_block(self):
         rbv = RepeatRunBlockView()
         info = rbv.edit_traits()
@@ -202,11 +258,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
         i = 0
 
-        def key(x):
-            return x.user_defined_aliquot
-
-        ans = sorted(ans, key=key)
-        for _ in groupby(ans, key=key):
+        for _ in groupby_key(ans, 'user_defined_aliquot'):
             i += 1
         return i
 

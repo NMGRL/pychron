@@ -546,14 +546,15 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
-    def checkout_branch(self, name):
+    def checkout_branch(self, name, inform=True):
         repo = self._repo
         branch = getattr(repo.heads, name)
         try:
             branch.checkout()
             self.selected_branch = name
             self._load_branch_history()
-            self.information_dialog('Repository now on branch "{}"'.format(name))
+            if inform:
+                self.information_dialog('Repository now on branch "{}"'.format(name))
 
         except BaseException as e:
             self.warning_dialog('There was an issue trying to checkout branch "{}"'.format(name))
@@ -569,7 +570,6 @@ class GitRepoManager(Loggable):
         repo = self._repo
 
         if name is None:
-            print(repo.branches, type(repo.branches))
             nb = NewBranchView(branches=repo.branches)
             info = nb.edit_traits()
             if info.result:
@@ -582,7 +582,7 @@ class GitRepoManager(Loggable):
             branch.checkout()
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
-            return True
+            return name
 
     def create_remote(self, url, name='origin', force=False):
         repo = self._repo
@@ -670,6 +670,16 @@ class GitRepoManager(Loggable):
             return func()
         except GitCommandError as e:
             self.warning('Git command failed. {}, {}'.format(e, tag))
+
+    def rebase(self, onto_branch='master'):
+        if self._repo:
+            repo = self._repo
+
+            branch = self.get_current_branch()
+            self.checkout_branch(onto_branch)
+            self.pull()
+
+            repo.git.rebase(onto_branch, branch)
 
     def smart_pull(self, branch='master', remote='origin',
                    quiet=True,

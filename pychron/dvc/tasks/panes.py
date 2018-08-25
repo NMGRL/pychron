@@ -95,8 +95,9 @@ class SelectionPane(TraitsDockPane):
                            UItem('local_names',
                                  editor=TabularEditor(adapter=RepoAdapter(),
                                                       column_clicked='column_clicked',
-                                                      selected='selected_local_repository_name',
-                                                      editable=False
+                                                      selected='selected_local_repositories',
+                                                      editable=False,
+                                                      multi_select=True,
                                                       )),
                            show_border=True, label='Local')
 

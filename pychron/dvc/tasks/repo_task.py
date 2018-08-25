@@ -23,7 +23,7 @@ from apptools.preferences.preference_binding import bind_preference
 from git import Repo, GitCommandError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date
+from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
 
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -31,10 +31,11 @@ from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
 from pychron.core.progress import progress_loader
+from pychron.dvc import repository_path
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -57,7 +58,7 @@ class RepoItem(HasTraits):
 
     def update(self, fetch=True):
         name = self.name
-        p = os.path.join(paths.repository_dataset_dir, name)
+        p = repository_path(name)
         try:
             a, b = ahead_behind(p, fetch=fetch)
 
@@ -76,7 +77,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     filter_repository_value = Str
     filter_origin_value = Str
     selected_repository = Instance(RepoItem)
-    selected_local_repository_name = Instance(RepoItem)
+
+    selected_local_repositories = List
+    selected_local_repository_name = Property(depends_on='selected_local_repositories')#Instance(RepoItem)
 
     repository_names = List
 
@@ -88,6 +91,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           SyncRepoAction(),
                           PushAction(),
                           PullAction(),
+                          RebaseAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
@@ -146,7 +150,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             if prog:
                 prog.change_message('Examining: {}({}/{})'.format(name, i, n))
             self.debug('examining {}'.format(name))
-            r = Repo(os.path.join(paths.repository_dataset_dir, name))
+            r = Repo(repository_path(name))
             try:
                 r.git.fetch()
                 line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
@@ -155,13 +159,15 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             except GitCommandError as e:
                 self.warning('error examining {}. {}'.format(name, e))
 
-        if self.selected_local_repository_name:
-            names = (self.selected_local_repository_name,)
-        else:
+        names = self.selected_local_repositories
+        if not names:
             names = self.local_names
 
         progress_loader(names, func)
         self.local_names = sorted(self.local_names, key=lambda k: k.dirty, reverse=True)
+
+    def rebase(self):
+        self._repo.rebase()
 
     def pull(self):
         self._repo.smart_pull(quiet=False)
@@ -207,15 +213,41 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def add_branch(self):
         self.info('add branch')
-        commit = self.selected_commit
 
-        if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+        refresh = False
+        commit = self.selected_commit
+        if commit:
+            if self._repo.create_branch(commit=commit.hexsha if commit else 'HEAD'):
+                refresh = True
+        else:
+            name = None
+            for r in self.selected_local_repositories:
+                repo = self._get_repo(r.name)
+                name = repo.create_branch(commit='HEAD', name=name, inform=False)
+                if name is not None:
+                    r.active_branch = repo.get_active_branch()
+                    refresh = True
+
+        if refresh:
+            rs = ','.join((r.name for r in self.selected_local_repositories))
+            self.information_dialog('Repositories "{}" now on branch "{}"'.format(rs, name))
             self._refresh_branches()
 
     def checkout_branch(self):
-        self.info('checkout branch {}'.format(self.branch))
-        self._repo.checkout_branch(self.branch)
-        self.selected_local_repository_name.active_branch = self.branch
+        branch = self.branch
+        self.info('checkout branch {}'.format(branch))
+
+        names = []
+        for r in self.selected_local_repositories:
+            r = self._get_repo(r.name)
+            try:
+                r.checkout_branch(branch, inform=False)
+                r.active_branch = branch
+                names.append(r.name)
+            except BaseException:
+                pass
+
+        self.information_dialog('{} now on branch "{}'.format(names, branch))
 
     def load_origin(self):
         self.debug('load origin')
@@ -322,13 +354,22 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
         return self.selected_local_repository_name
 
-    def _selected_local_repository_name_changed(self, new):
+    def _get_repo(self, name):
+        root = repository_path(name)
+        if os.path.isdir(root):
+            repo = GitRepoManager()
+            repo.open_repo(root)
+
+            return repo
+
+    def _get_selected_local_repository_name(self):
+        if self.selected_local_repositories:
+            return self.selected_local_repositories[0]
+
+    def _selected_local_repositories_changed(self, new):
         if new:
-            root = os.path.join(paths.repository_dataset_dir, new.name)
-            # print root, new, os.path.isdir(root)
-            if os.path.isdir(root):
-                repo = GitRepoManager()
-                repo.open_repo(root)
+            repo = self._get_repo(new[0].name)
+            if repo:
                 self._repo = repo
                 self._refresh_branches()
                 self._refresh_tags()

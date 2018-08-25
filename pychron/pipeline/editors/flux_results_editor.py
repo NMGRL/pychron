@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-from itertools import groupby
-from operator import attrgetter
+from functools import partial
 
 from numpy import array, zeros, vstack, linspace, meshgrid, arctan2, sin, cos
 # ============= enthought library imports =======================
@@ -26,6 +24,7 @@ from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.regression.flux_regressor import PlaneFluxRegressor, BowlFluxRegressor
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.stats.monte_carlo import FluxEstimator
@@ -171,6 +170,8 @@ class FluxPosition(HasTraits):
 
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
+    position_jerr = Float
+
     use = Bool(True)
     save = Bool(True)
     dev = Float
@@ -178,6 +179,7 @@ class FluxPosition(HasTraits):
     percent_saved_error = Property
     percent_mean_error = Property
     percent_pred_error = Property
+    percent_position_jerr = Property
 
     analyses = List
     error_kind = Str
@@ -206,6 +208,10 @@ class FluxPosition(HasTraits):
     def _get_percent_pred_error(self):
         if self.j and self.jerr:
             return calc_percent_error(self.j, self.jerr)
+
+    def _get_percent_position_jerr(self):
+        if self.j and self.position_jerr:
+            return calc_percent_error(self.j, self.position_jerr)
 
 
 class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
@@ -260,13 +266,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         lk = opt.lambda_k
         ek = opt.error_kind
 
-        key = attrgetter('identifier')
         geom = self.geometry
         poss = []
         ans = []
         slope = True
         prev = None
-        for identifier, ais in groupby(sorted(monitors, key=key), key=key):
+        for identifier, ais in groupby_key(monitors, 'identifier'):
 
             ais = list(ais)
             n = len(ais)
@@ -345,11 +350,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         options = self.plotter_options
         if options.use_monte_carlo:
             # from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
-            fe = FluxEstimator(options.monte_carlo_ntrials, reg, options.position_only, options.position_error)
+            fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
             for positions in (self.unknown_positions, self.monitor_positions):
                 pts = array([[p.x, p.y] for p in positions])
                 nominals, errors = fe.estimate(pts)
+                _, pos_errors = fe.estimate_position_err(pts, options.position_error)
                 # nominals = reg.predict(pts)
                 # errors = monte_carlo_error_estimation(reg, nominals, pts,
                 #                                       position_only=self.plotter_options.position_only,
@@ -359,12 +365,12 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                 #                                       # mean_position_error=self.plotter_options.position_error,
                 #                                       ntrials=self.plotter_options.monte_carlo_ntrials)
 
-                for p, j, je in zip(positions, nominals, errors):
+                for p, j, je, pe in zip(positions, nominals, errors, pos_errors):
                     oj = p.saved_j
 
                     p.j = j
                     p.jerr = je
-
+                    p.position_jerr = pe
                     p.dev = (oj - j) / j * 100
         else:
             for positions in (self.unknown_positions, self.monitor_positions):
@@ -656,6 +662,11 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
         def sciformat(x):
             return '{:0.6E}'.format(x) if x else ''
 
+        ff2 = partial(floatfmt, n=2)
+
+        def ff(x):
+            return ff2(x) if x else ''
+
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
             column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
@@ -674,17 +685,17 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    format_func=sciformat),
             column(name='percent_saved_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2)),
+                   format_func=ff2),
             column(name='mean_j', label='Mean J',
                    format_func=sciformat),
             column(name='mean_jerr', label=PLUSMINUS_ONE_SIGMA,
                    format_func=sciformat),
             column(name='percent_mean_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                   format_func=ff),
             column(name='mean_j_mswd',
                    label='MSWD',
-                   format_func=lambda x: floatfmt(x, n=2)),
+                   format_func=ff2),
             column(name='j', label='Pred. J',
                    format_func=sciformat,
                    width=75),
@@ -694,10 +705,15 @@ class FluxResultsEditor(BaseTraitsEditor, SelectionFigure):
                    width=75),
             column(name='percent_pred_error',
                    label='%',
-                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
+                   format_func=ff),
             column(name='dev', label='dev',
                    format='%0.2f',
-                   width=70)]
+                   width=70),
+            column(name='position_jerr',
+                   format_func=sciformat),
+            column(name='percent_position_jerr',
+                   format_func=ff2),
+        ]
 
         unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),

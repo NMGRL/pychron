@@ -19,11 +19,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-from itertools import groupby
 
 import yaml
 from enable.markers import marker_names
-from six.moves import range
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
@@ -34,6 +32,7 @@ from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
@@ -390,7 +389,7 @@ class FigureOptions(BaseOptions):
                         'Plagioclase': 'Plag',
                         'Sanidine': 'San'}
 
-        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
+        for gid, ais in groupby_group_id(analyses):
             ref = next(ais)
             d = {}
             for ai in attrs:
@@ -513,9 +512,9 @@ class AuxPlotFigureOptions(FigureOptions):
         except IndexError:
             self.aux_plots.append(plt)
 
-    def get_loadable_aux_plots(self):
-        return reversed([pi for pi in self.aux_plots
-                         if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    # def get_loadable_aux_plots(self):
+    #     return reversed([pi for pi in self.aux_plots
+    #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
 
     def get_saveable_aux_plots(self):
         # for a in self.aux_plots:

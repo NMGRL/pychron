@@ -83,7 +83,7 @@ class AnalysisGroup(IdeogramPlotable):
     j_err = AGProperty()
     j = AGProperty()
     include_j_error_in_mean = Bool(True)
-    include_j_error_in_individual_analyses = Bool(False)
+    include_j_position_error = Bool(False)
 
     # percent_39Ar = AGProperty()
     dirty = Event
@@ -130,12 +130,8 @@ class AnalysisGroup(IdeogramPlotable):
         self.dirty = True
 
     def set_j_error(self, individual, mean, dirty=False):
-        if individual:
-            self.include_j_error_in_individual_analyses = individual
-            self.include_j_error_in_mean = False
-        else:
-            self.include_j_error_in_individual_analyses = False
-            self.include_j_error_in_mean = mean
+        self.include_j_position_error = individual
+        self.include_j_error_in_mean = mean
 
         if dirty:
             self.dirty = True
@@ -158,7 +154,7 @@ class AnalysisGroup(IdeogramPlotable):
         attr = self.attribute
         if attr.startswith('uage'):
             attr = 'uage'
-            if self.include_j_error_in_individual_analyses:
+            if self.include_j_position_error:
                 attr = 'uage_w_j_err'
 
         return self._calculate_mswd(attr)
@@ -256,7 +252,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     @property
     def age_attr(self):
-        return 'uage_w_j_err' if self.include_j_error_in_individual_analyses else 'uage'
+        return 'uage_w_j_err' if self.include_j_position_error else 'uage'
 
     @cached_property
     def _get_weighted_age(self):
@@ -277,7 +273,7 @@ class AnalysisGroup(IdeogramPlotable):
         if self.include_j_error_in_mean or force:
             v, e = nominal_value(wa), std_dev(wa)
             try:
-                pa = e / v
+                pa = e / abs(v)
             except ZeroDivisionError:
                 pa = 0
 

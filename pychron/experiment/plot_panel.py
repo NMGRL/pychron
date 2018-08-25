@@ -211,7 +211,8 @@ class PlotPanel(Loggable):
             self.figure.replot()
 
     def new_isotope_plot(self, **kw):
-        return self._new_plot(isotope_only=True, **kw)
+        plots = self._new_plot(isotope_only=True, **kw)
+        return plots['isotope']
 
     def set_analysis_view(self, experiment_type, **kw):
         if experiment_type == AR_AR:

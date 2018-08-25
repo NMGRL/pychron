@@ -94,7 +94,7 @@ class Spectrum(BaseArArFigure):
             _ma = 1
 
         if not po.has_ylimits():
-            if po.ccalculated_ymin is None:
+            if po.calculated_ymin is None:
                 po.calculated_ymin = _mi
             else:
                 po.calculated_ymin = min(po.calculated_ymin, _mi)

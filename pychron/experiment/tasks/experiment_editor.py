@@ -24,9 +24,9 @@ from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
     ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
+from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.utilities.repository_identifier import get_curtag, populate_repository_identifiers
 
@@ -48,6 +48,12 @@ class ExperimentEditorHandler(TabularEditorHandler):
 
     def repeat_block(self, info, obj):
         obj.repeat_block()
+
+    def group_extractions(self, info, obj):
+        obj.group_extractions()
+
+    def group_extractions2(self, info, obj):
+        obj.group_extractions2()
 
     def toggle_end_after(self, info, obj):
         obj.toggle_end_after()
