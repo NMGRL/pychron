@@ -296,6 +296,7 @@ class DataCollector(Consoleable):
             gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
             title = self.isotope_group.get_isotope_title(name=iso, detector=det)
+            iso = self.isotope_group.get_isotope(name=iso, detector=det)
             fit = iso.get_fit(cnt)
             gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
 
