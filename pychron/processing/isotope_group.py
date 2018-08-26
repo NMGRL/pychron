@@ -342,9 +342,10 @@ class IsotopeGroup(HasTraits):
                 iso = self.isotopes[name]
                 if detector:
                     if iso.detector != detector:
-
-                        return
-
+                        iso = next((i for i in self.isotopes.values()
+                                    if i.name == name and i.detector == detector), None)
+                        if not iso:
+                            return
             except KeyError:
                 if detector:
                     try:
