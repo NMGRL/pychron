@@ -335,7 +335,7 @@ class IsotopeGroup(HasTraits):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')
 
-        # print('get istop, name={}  keys={}'.format(name, self.isotopes.keys()))
+        self.debug('isotopes keys: {}'.format(self.keys()))
         iso = None
         if name:
             try:

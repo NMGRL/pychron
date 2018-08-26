@@ -284,10 +284,8 @@ class DataCollector(Consoleable):
     def _set_plot_data(self, cnt, iso, det, x, signal):
 
         if self.collection_kind == SNIFF:
-            isok = iso
-            iso = self.isotope_group.get_isotope(name=iso, detector=det)
-            gs = [(self.plot_panel.sniff_graph, isok, None, 0, 0),
-                  (self.plot_panel.isotope_graph, iso.name, None, 0, 0)]
+            gs = [(self.plot_panel.sniff_graph, iso, None, 0, 0),
+                  (self.plot_panel.isotope_graph, iso, None, 0, 0)]
 
         elif self.collection_kind == BASELINE:
             iso = self.isotope_group.get_isotope(detector=det, kind='baseline')
