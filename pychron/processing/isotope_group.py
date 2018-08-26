@@ -331,11 +331,18 @@ class IsotopeGroup(HasTraits):
             if iso.detector == det:
                 yield iso
 
+    def get_isotope_title(self, name, detector):
+        iso = self.isotopes[name]
+        title = name
+        if iso.detector != detector:
+            title = '{}{}'.format(name, detector)
+        return title
+
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')
 
-        self.debug('isotopes keys: {}'.format(self.keys()))
+        self.debug('isotopes keys: {}, {}, {}'.format(name, detector, self.keys()))
         iso = None
         if name:
             try:

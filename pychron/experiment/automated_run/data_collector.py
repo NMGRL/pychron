@@ -295,9 +295,9 @@ class DataCollector(Consoleable):
                 fit = 'average'
             gs = [(self.plot_panel.baseline_graph, det, fit, 0, 0)]
         else:
-            iso = self.isotope_group.get_isotope(name=iso, detector=det)
+            title = self.isotope_group.get_isotope_title(name=iso, detector=det)
             fit = iso.get_fit(cnt)
-            gs = [(self.plot_panel.isotope_graph, iso.name, fit, self.series_idx, self.fit_series_idx)]
+            gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
 
         dd = self._get_detector(det)
         ypadding = dd.ypadding

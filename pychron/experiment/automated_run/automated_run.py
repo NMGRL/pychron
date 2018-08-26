@@ -495,7 +495,7 @@ class AutomatedRun(Loggable):
                 ii = a.isotopes[name]
                 if ii.detector != det:
                     name = '{}{}'.format(iso, det)
-                    ii = a.isotope_factory(name=name, detector=det)
+                    ii = a.isotope_factory(name=iso, detector=det)
             else:
                 ii = a.isotope_factory(name=name, detector=det)
 
