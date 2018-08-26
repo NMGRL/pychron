@@ -342,6 +342,7 @@ class IsotopeGroup(HasTraits):
                 iso = self.isotopes[name]
                 if detector:
                     if iso.detector != detector:
+
                         return
 
             except KeyError:
