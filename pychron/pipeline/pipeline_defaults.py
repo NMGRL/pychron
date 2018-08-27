@@ -304,4 +304,11 @@ nodes:
   - klass: UnknownNode
   - klass: AuditNode
 """
+
+MASSSPEC_REDUCED = """
+required:
+nodes:
+  - klass: UnknownNode
+  - klass: MassSpecReducedNode
+"""
 # ============= EOF =============================================

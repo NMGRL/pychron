@@ -305,6 +305,11 @@ class ExtractionAction(Action):
                     break
 
 
+class MassSpecReducedAction(PipelineAction):
+    name = 'Mass Spec Reduced Transfer'
+    dname = 'Mass Spec Reduced Transfer'
+    action = 'mass_spec_reduced_transfer'
+
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):
 #     name = 'Last N...'

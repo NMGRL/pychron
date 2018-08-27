@@ -30,7 +30,8 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     SeriesAction, BlanksAction, ICFactorAction, ResetFactoryDefaultsAction, \
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
-    AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction
+    AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction, \
+    MassSpecReducedAction
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -185,7 +186,10 @@ class PipelinePlugin(BaseTaskPlugin):
                              SchemaAddition(factory=AnalysisTableAction,
                                             path=rg),
                              SchemaAddition(factory=FreezeProductionRatios,
-                                            path=rg)]
+                                            path=rg),
+                             SchemaAddition(factory=MassSpecReducedAction,
+                                            path=rg),
+                             ]
 
         help_actions = [SchemaAddition(factory=ResetFactoryDefaultsAction,
                                        path='MenuBar/help.menu'),

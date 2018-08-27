@@ -16,13 +16,14 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import os
-from itertools import groupby
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
 from pychron.core.geometry.affine import transform_point, \
     itransform_point
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
 
 
@@ -234,11 +235,12 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
 
     # private
     def _grouped_rows(self, reverse=True):
-        def func(x):
-            return x.y
+        # def func(x):
+        #     return x.y
 
-        holes = sorted(self.sample_holes, key=func, reverse=reverse)
-        return groupby(holes, key=func)
+        # holes = sorted(self.sample_holes, key=func, reverse=reverse)
+        # return groupby(holes, key=func)
+        return groupby_key(self.sample_holes, 'y', reverse=reverse)
 
     def _load_hook(self):
         pass

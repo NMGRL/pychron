@@ -18,14 +18,13 @@
 from __future__ import absolute_import
 
 from datetime import datetime
-from itertools import groupby
-from operator import attrgetter
 
 from traits.api import HasTraits, List, Str, Float, \
     Date, Any, TraitError
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.paths import paths
 from pychron.pychron_constants import DATE_FORMAT
@@ -149,8 +148,7 @@ class SensitivityEntry(DVCAble):
     # @database_enabled()
     def save(self):
         sens = {}
-        key = attrgetter('mass_spectrometer')
-        for ms, ss in groupby(sorted(self.records, key=key), key=key):
+        for ms, ss in groupby_key(self.records, 'mass_spectrometer'):
 
             sens[ms] = [ri.to_dict() for ri in ss]
 

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from itertools import groupby
 
 from numpy import inf
 from pyface.confirmation_dialog import confirm
@@ -23,6 +22,7 @@ from pyface.constant import YES
 from six.moves import zip
 from traits.api import Bool, List, HasTraits, Str, Float, Instance
 
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
 from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
     IsotopeEvolutionOptionsManager, \
@@ -80,7 +80,7 @@ class FitReferencesNode(FitNode):
     def run(self, state):
         po = self.plotter_options
 
-        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
         unks = self._get_valid_unknowns(state.unknowns)
         if self.check_refit(unks):
@@ -92,8 +92,8 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-            key = lambda x: x.group_id
-            for i, (gid, refs) in enumerate(groupby(sorted(state.references, key=key), key=key)):
+
+            for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
                 else:
@@ -333,7 +333,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
         po = self.plotter_options
 
-        self._fits = list(reversed([pi for pi in po.get_loadable_aux_plots()]))
+        self._fits = list(reversed([pi for pi in po.get_saveable_aux_plots()]))
         self._keys = [fi.name for fi in self._fits]
 
         unks = self._get_valid_unknowns(state.unknowns)
@@ -345,9 +345,6 @@ class FitIsotopeEvolutionNode(FitNode):
 
             if self.editor:
                 self.editor.analysis_groups = [(ai,) for ai in unks]
-
-            # for ai in state.unknowns:
-            #     ai.graph_id = 0
 
             self._set_saveable(state)
             if fs:
@@ -381,7 +378,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
-                    int_err_goodness = bool(e < goodness_threshold)
+                    int_err_goodness = bool(pe < goodness_threshold)
 
                 slope = None
                 slope_goodness = None
@@ -425,7 +422,7 @@ class FitIsotopeEvolutionNode(FitNode):
                                    intercept_value=i,
                                    intercept_error=e,
                                    percent_error=pe,
-                                   int_err=i,
+                                   int_err=e,
                                    int_err_threshold=goodness_threshold,
                                    int_err_goodness=int_err_goodness,
 

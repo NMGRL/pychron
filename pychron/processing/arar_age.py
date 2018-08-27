@@ -200,6 +200,9 @@ class ArArAge(IsotopeGroup):
                 self.sensitivity_units = si['units']
                 break
 
+    def set_temporary_uic_factor(self, k, uv):
+        self.temporary_ic_factors[k] = uv
+
     def set_temporary_ic_factor(self, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
         return uv

@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import glob
 import os
 from pprint import pformat
 
@@ -121,8 +122,8 @@ def analysis_path(runid, repository, modifier=None, extension='.json', mode='r',
     return os.path.join(root, name)
 
 
-def repository_path(project):
-    return os.path.join(paths.dvc_dir, 'repositories', project)
+def repository_path(*args):
+    return os.path.join(paths.repository_dataset_dir, *args)
 
 
 def make_ref_list(refs):
@@ -131,4 +132,13 @@ def make_ref_list(refs):
         ret = [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
     return ret
 
+
+def list_frozen_productions(repo):
+    ps = []
+    for prod in glob.glob(repository_path(repo, '*.*.production.json')):
+        name = os.path.basename(prod)
+        irrad, level = name.split('.')[:2]
+        name = '{}.{}'.format(irrad, level)
+        ps.append((name, prod))
+    return ps
 # ============= EOF =============================================

@@ -26,6 +26,7 @@ from pyface.tasks.action.task_action import TaskAction
 from traitsui.menu import Action
 
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.dvc import repository_path
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import restart
 from pychron.pychron_constants import DVC_PROTOCOL
@@ -162,7 +163,7 @@ class ShareChangesAction(Action):
                 continue
 
             try:
-                r = Repo(os.path.join(paths.repository_dataset_dir, d))
+                r = Repo(repository_path(d))
             except InvalidGitRepositoryError:
                 continue
             repos.append(r)

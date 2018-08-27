@@ -30,7 +30,7 @@ def fix_identifier(source_id, destination_id, root, repo, aliquots):
             continue
 
         jd = dvc_load(sp)
-        jd['identifier'] = destination_id
+        jd['identifier'] = identifier
         dvc_dump(jd, dp)
 
         print('{}>>{}'.format(sp, dp))
@@ -40,7 +40,8 @@ def fix_identifier(source_id, destination_id, root, repo, aliquots):
             dp = analysis_path(dest_id, repo, modifier=modifier, root=root)
             print('{}>>{}'.format(sp,dp))
             if os.path.isfile(sp):
-                shutil.copy(sp, dp)
+                # shutil.copy(sp, dp)
+                shutil.move(sp,dp)
 
 if __name__ == '__main__':
     fix_identifier('25943', '25938', '/Users/ross/PychronDev/data/.dvc/repositories/',

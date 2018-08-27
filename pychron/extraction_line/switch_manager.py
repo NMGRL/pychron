@@ -16,16 +16,21 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
 import binascii
 import os
 import pickle
-import time
-from itertools import groupby
+from operator import itemgetter
 from pickle import PickleError
 
+import six
+import time
+from six.moves import range
+from six.moves import zip
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.explanation.explanable_item import ExplanableValve
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
@@ -37,9 +42,6 @@ from pychron.hardware.valve import HardwareValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from .switch_parser import SwitchParser
-import six
-from six.moves import range
-from six.moves import zip
 
 
 def add_checksum(func):
@@ -184,15 +186,11 @@ class SwitchManager(Manager):
                     D,E owned by 150
                     F free
         """
-        # self.valves['C'].owner = '129.138.12.135'
-        # self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.switches.values()]
-        key = lambda x: x[1]
-        vs = sorted(vs, key=key)
 
         owners = []
-        for owner, valves in groupby(vs, key=key):
+        for owner, valves in groupby_key(vs, itemgetter(1)):
             valves, _ = list(zip(*valves))
             v = ','.join(valves)
             if owner:

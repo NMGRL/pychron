@@ -16,12 +16,12 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from itertools import groupby
 
 from traits.api import List
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 
 
@@ -31,9 +31,7 @@ class ReferencesPanel(FigurePanel):
     def _make_figures(self):
         gs = super(ReferencesPanel, self)._make_figures()
 
-        key = lambda x: x.group_id
-        refs = sorted(self.references, key=key)
-        gg = groupby(refs, key=key)
+        gg = groupby_group_id(self.references)
         for gi in gs:
             try:
                 _, refs = next(gg)

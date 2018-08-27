@@ -19,7 +19,11 @@
 # ============= local library imports  ==========================
 
 from __future__ import absolute_import
-from itertools import tee
+
+from itertools import tee, groupby
+from operator import attrgetter
+
+
 def partition(seq, predicate):
     '''
         http://stackoverflow.com/questions/949098/python-split-a-list-based-on-a-condition
@@ -31,4 +35,19 @@ def partition(seq, predicate):
 
     l1, l2 = tee((predicate(item), item) for item in seq)
     return (i for p, i in l1 if p), (i for p, i in l2 if not p)
+
+
+def groupby_key(items, key, reverse=False):
+    if isinstance(key, str):
+        key = attrgetter(key)
+
+    return groupby(sorted(items, key=key, reverse=reverse), key=key)
+
+
+def groupby_group_id(items):
+    return groupby_key(items, 'group_id')
+
+
+def groupby_repo(items):
+    return groupby_key(items, 'repository_identifier')
 # ============= EOF =============================================

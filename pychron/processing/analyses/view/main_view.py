@@ -343,27 +343,20 @@ class MainView(HasTraits):
                     '40Ar/36Ar': nominal_value(c.atm4036)}
 
             if self.recall_options:
-                for r in self.recall_options.cocktail_options.ratios:
-                    name = r.tagname
-                    if name:
-                        ref = refs.get(name, 1)
-                        ratios.append((name, name, ref))
+                names = [r.tagname for r in self.recall_options.cocktail_options.ratios]
+                ratios = [(name, name, refs.get(name, 1)) for name in names]
 
             cv = self._make_ratios(ratios)
 
             an.calculate_age()
             cv.append(ComputedValue(name='F', tag='uf',
-                                    value=nominal_value(an.uF),
-                                    error=std_dev(an.uF)))
+                                    uvalue=an.uF))
 
             cv.append(ComputedValue(name='40Ar*', tag='rad40_percent',
-                                    value=nominal_value(an.rad40_percent),
-                                    error=std_dev(an.rad40_percent)))
+                                    uvalue=an.rad40_percent))
 
-            cv.append(ComputedValue(name='Age',
-                                    tag='uage',
-                                    value=nominal_value(an.uage),
-                                    error=std_dev(an.uage)))
+            cv.append(ComputedValue(name='Age', tag='uage',
+                                    uvalue=an.uage))
 
             self.computed_values = cv
             self._update_ratios()

@@ -27,6 +27,7 @@ import os
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
+from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.extraction_line.pyscript_runner import PyScriptRunner
 from pychron.loggable import Loggable
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
@@ -41,23 +42,20 @@ from pychron.execute_mixin import ExecuteMixin
 class ScriptExecutorMixin(ExecuteMixin):
     _current_script = Any
 
-    def debug(self):
-        pass
-
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
 
-    def _start_execute(self):
-        self.debug('start execute')
-
+    # def _start_execute(self):
+    #     self.debug('start execute')
+    #     return True
         # make a script runner
-        self._runner = None
-        runner = self._runner_factory()
-        if runner is None:
-            return
-        else:
-            self._runner = runner
-            return True
+        # self._runner = None
+        # runner = self._runner_factory()
+        # if runner is None:
+        #     return
+        # else:
+        #     self._runner = runner
+        #     return True
 
     def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
         self._start_execute()
@@ -93,11 +91,12 @@ class ScriptExecutorMixin(ExecuteMixin):
             from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
             klass = SpectrometerPyScript
 
+        runner = self.application.get_service(IPyScriptRunner)
         script = klass(application=self.application,
                        manager=manager,
                        root=root,
                        name=add_extension(name, '.py'),
-                       runner=self._runner)
+                       runner=runner)
 
         if script.bootstrap():
             script.set_default_context(**context)
@@ -112,12 +111,14 @@ class ScriptExecutorMixin(ExecuteMixin):
             # if self.use_trace:
             #     self.active_editor.trace_delay = self.trace_delay
 
-            ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+            # ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
+            #                      on_completion=on_completion)
+            ret = script.execute(new_thread=new_thread, delay_start=delay_start,
                                  on_completion=on_completion)
             return not script.is_canceled() and ret
 
-    def _runner_factory(self):
-        return PyScriptRunner()
+    # def _runner_factory(self):
+    #     return PyScriptRunner()
 
 
 class ScriptExecutor(ScriptExecutorMixin, Loggable):

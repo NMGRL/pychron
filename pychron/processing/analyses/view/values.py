@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool
+from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool, Any
 
 # ============= standard library imports ========================
+from uncertainties import std_dev, nominal_value
 # ============= local library imports  ==========================
 
 
@@ -27,12 +27,18 @@ class NamedValue(HasTraits):
     value = Either(Str, Float, Int, None)
     units = Str
 
+
 class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
     tag = Str
     display_value = Bool(True)
     sig_figs = Int(5)
     value_tag = Str
+    uvalue = Any
+
+    def _uvalue_changed(self):
+        self.value = nominal_value(self.uvalue)
+        self.error = std_dev(self.uvalue)
 
 
 class DetectorRatio(ComputedValue):

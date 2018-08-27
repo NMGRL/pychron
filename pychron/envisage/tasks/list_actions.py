@@ -235,7 +235,7 @@ class ProcedureAction(ListAction):
         manager.info(info('Started Procedure "{}"'.format(name)))
 
         # task = app.get_task('pychron.pyscript.task', activate=False)
-        script_executor = ScriptExecutor()
+        script_executor = ScriptExecutor(application=app)
         context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
 
         script_executor.execute_script(name, root,

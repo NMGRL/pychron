@@ -17,15 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from itertools import groupby
-
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from six.moves import map
 from traits.api import Float, Str, List, Property, cached_property, Button, Bool
 from traitsui.api import Item, EnumEditor, UItem, VGroup, HGroup
 
-from pychron.core.helpers.iterfuncs import partition
+from pychron.core.helpers.iterfuncs import partition, groupby_group_id
 from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.experiment.utilities.identifier import SPECIAL_MAPPING
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
@@ -279,8 +277,7 @@ class FindReferencesNode(FindNode):
         return super(FindReferencesNode, self).pre_run(state, configure=configure)
 
     def run(self, state):
-        key = lambda x: x.group_id
-        for gid, ans in groupby(sorted(state.unknowns, key=key), key=key):
+        for gid, ans in groupby_group_id(state.unknowns):
             if self._run_group(state, gid, list(ans)):
                 return
 
@@ -291,11 +288,7 @@ class FindReferencesNode(FindNode):
         if not ans:
             return
 
-        key = lambda x: x.group_id
-        ans = sorted(ans, key=key)
-        groups = groupby(ans, key)
-
-        for i, (gid, analyses) in enumerate(groups):
+        for i, (gid, analyses) in enumerate(groupby_group_id(ans)):
             for ai in analyses:
                 ai.group_id = i
 

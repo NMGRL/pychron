@@ -18,7 +18,6 @@ from __future__ import absolute_import
 
 import math
 from datetime import timedelta
-from itertools import groupby
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.scales.api import CalendarScaleSystem
@@ -29,6 +28,7 @@ from numpy import array, where
 from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float, Event
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
@@ -55,9 +55,7 @@ def analysis_type_func(analyses, offset=True):
 
     """
     if offset:
-        key = lambda x: x.analysis_type
-        cans = sorted(analyses, key=key)
-        counts = {k: float(len(list(v))) for k, v in groupby(cans, key=key)}
+        counts = {k: float(len(list(v))) for k, v in groupby_key(analyses, 'analysis_type')}
 
     __cache__ = {}
 

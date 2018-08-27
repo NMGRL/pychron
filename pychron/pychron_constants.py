@@ -233,6 +233,7 @@ ELLIPSE_KIND_SCALE_FACTORS = dict(zip(ELLIPSE_KINDS, (1, 2, 2.4477)))
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
 
 # SAMPLE PREP ===================================================
 INITIAL_STEPS = ('crush', 'sieve', 'wash')

@@ -16,9 +16,6 @@
 
 import os
 from datetime import datetime
-from itertools import groupby
-# ============= enthought library imports =======================
-from operator import attrgetter
 
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
@@ -33,12 +30,16 @@ from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
 from pychron.core.helpers.filetools import view_file, unique_path
+from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.core.progress import progress_iterator
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
+
+
+# ============= enthought library imports =======================
 
 
 def make_bound(st):
@@ -138,6 +139,7 @@ class LoadingManager(DVCIrradiationable):
 
     canvas = Any
 
+    fetch_load_button = Button
     add_button = Button
     delete_button = Button
     archive_button = Button
@@ -164,6 +166,8 @@ class LoadingManager(DVCIrradiationable):
     suppress_update = False
 
     use_measured = Bool(False)
+
+    _suppress_weight = Bool(False)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -214,9 +218,7 @@ class LoadingManager(DVCIrradiationable):
         if not loadtable:
             return
 
-        k = attrgetter('identifier')
-
-        for ln, poss in groupby(sorted(loadtable.loaded_positions, key=k), key=k):
+        for ln, poss in groupby_key(loadtable.loaded_positions, 'identifier'):
             dbpos = self.dvc.db.get_identifier(ln)
             sample = ''
             project = ''
@@ -789,15 +791,21 @@ class LoadingManager(DVCIrradiationable):
 
     def _refresh_loads(self):
         self.loads = self._get_load_names()
+        print('refreshing')
         self.load_name = self.loads[0]
 
-    def _load_name_changed(self, new):
-        if self.suppress_update:
-            return
+    # def _load_name_changed(self, new):
+    #     if self.suppress_update:
+    #         return
+    #
+    #     print('loasdfasd', new)
+    #     # if new:
+    #         # self.tray = ''
+    #         # self.load_load_by_name(new)
 
-        if new:
-            self.tray = ''
-            self.load_load_by_name(new)
+    def _fetch_load_button_fired(self):
+        self.tray = ''
+        self.load_load_by_name(self.load_name)
 
     def _show_labnumbers_changed(self, new):
         if self.canvas:
@@ -841,6 +849,9 @@ class LoadingManager(DVCIrradiationable):
                 # pos.note = self.note
 
     def _weight_changed(self):
+        if self._suppress_weight:
+            return
+
         if self.canvas:
             sel = self.canvas.selected
             if sel:
@@ -885,7 +896,7 @@ class LoadingManager(DVCIrradiationable):
 
         if self.canvas.event_state in ('edit', 'info'):
             self.note = new.note
-            self.weight = new.weight
+            self.weight = new.weight or 0
 
         else:
             if new.fill:
@@ -908,7 +919,9 @@ class LoadingManager(DVCIrradiationable):
                             self.canvas.set_last_position(int(new.name))
 
                     if not self.retain_weight:
+                        self._suppress_weight = True
                         self.weight = 0
+                        self._suppress_weight = False
                     if not self.retain_note:
                         self.note = ''
 

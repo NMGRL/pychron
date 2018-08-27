@@ -14,11 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 from itertools import groupby
+from operator import attrgetter
 
 
 def group_analyses_by_key(items, key, attr='group_id', id_func=None, sorting_enabled=True):
     if isinstance(key, str):
-        keyfunc = lambda x: getattr(x, key)
+        keyfunc = attrgetter(key)
     else:
         keyfunc = key
 
