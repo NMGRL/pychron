@@ -272,8 +272,9 @@ class AnalysisGroup(IdeogramPlotable):
     def _apply_j_err(self, wa, force=False):
         if self.include_j_error_in_mean or force:
             v, e = nominal_value(wa), std_dev(wa)
+            v = abs(v)
             try:
-                pa = e / abs(v)
+                pa = e / v
             except ZeroDivisionError:
                 pa = 0
 
