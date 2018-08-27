@@ -15,17 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-from pyface.constant import YES, NO
-from traits.api import Instance
-from traitsui.api import View, Item, UItem, Group, VGroup
+import json
+import os
+
+from traits.api import Instance, Dict, List, Str
+from traitsui.api import View, Item, UItem, Group, VGroup, HGroup, EnumEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.chronology import IrradiationChronology
+from pychron.entry.editors.production import IrradiationProduction
 from pychron.loggable import Loggable
+from pychron.paths import paths
+
+vg = VGroup(Item('name'),
+            Group(UItem('chronology', style='custom'),
+                  label='Chronology', show_border=True),
+            HGroup(UItem('selected_reactor_name', editor=EnumEditor(name='reactor_names')),
+                   label='Reactor', show_border=True))
 
 
 class AddView(ModelView):
@@ -43,7 +51,7 @@ class AddView(ModelView):
 
 class EditView(ModelView):
     def traits_view(self):
-        v = View(VGroup(Item('name'),
+        v = View(VGroup(Item('name', style='readonly'),
                         Group(UItem('chronology', style='custom'),
                               label='Chronology', show_border=True)),
                  title='Edit Irradiation',
@@ -62,7 +70,14 @@ class IrradiationEditor(Loggable):
     chronology = Instance(IrradiationChronology, ())
     dvc = Instance('pychron.dvc.dvc.DVC')
 
+    reactors = Dict
+    reactor_names = List
+    selected_reactor_name = Str
+
     def add(self):
+
+        self._load_reactors()
+
         v = AddView(model=self)
         info = v.edit_traits()
 
@@ -77,6 +92,10 @@ class IrradiationEditor(Loggable):
                         break
 
                 if not self.dvc.get_irradiation(name):
+                    if not self.selected_reactor_name:
+                        self.information_dialog('Please select a reator')
+                        continue
+
                     self._add_irradiation()
                     return name
 
@@ -92,52 +111,58 @@ class IrradiationEditor(Loggable):
 
     def edit(self):
         original_name = self.name
-        # db = self.dvc.db
-        # with db.session_ctx():
-        # irrad = db.get_irradiation(original_name)
-        # print irrad, original_name
 
-        # chronology = DVCChronology(self.name)
+        self._load_reactors()
+
         chronology = self.dvc.get_chronology(self.name)
         self.chronology.set_dosages(chronology.get_doses())
         v = EditView(model=self)
         info = v.edit_traits()
         if info.result:
-            if original_name != self.name:
-                ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
-                                               'Would you like to rename "{}" to "{}" (Yes) '
-                                               'or make a new irradiation "{}" (No)'.format(original_name,
-                                                                                            self.name, self.name),
-                                               return_retval=True,
-                                               cancel=True)
-                if ret == YES:
-                    print('asdfadfasd')
-                    # irrad.name = self.name
-                elif ret == NO:
-                    self._add_irradiation()
-                else:
-                    return
+            # if original_name != self.name:
+            #     ret = self.confirmation_dialog('You have changed the irradiation name.\n\n'
+            #                                    'Would you like to rename "{}" to "{}" (Yes) '
+            #                                    'or make a new irradiation "{}" (No)'.format(original_name,
+            #                                                                                 self.name, self.name),
+            #                                    return_retval=True,
+            #                                    cancel=True)
+            #     if ret == YES:
+            #         print('asdfadfasd')
+            #         # irrad.name = self.name
+            #     elif ret == NO:
+            #         self._add_irradiation()
+            #     else:
+            #         return
 
-            # irrad.chronology.chronology = self.chronology.make_blob()
-            # print self.chronology.get_doses()
+            self._add_irradiation()
+            if self.selected_reactor_name:
+                self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
+
             self.dvc.update_chronology(self.name, self.chronology.get_doses())
-            # self.dvc.meta_repo.clear_cache = True
-            # self.dvc.meta_commit('updated chronology')
 
         return self.name
 
     def _add_irradiation(self):
         self.debug('add irradiation={}'.format(self.name))
-
         self.dvc.add_irradiation(self.name, self.chronology.get_doses())
+        if self.selected_reactor_name:
+            self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
-        # db = self.db
-        #     with db.session_ctx():
-        #         # dbchron = db.add_irradiation_chronology(self.chronology.make_blob())
-        #         # db.add_irradiation(self.name, dbchron)
-        #         db.add_irradiation(self.name)
-        #
-        #     self.repo.add_irradiation(self.name)
-        #     self.repo.add_chronology(self.name, self.chronology)
+    def _load_reactors(self):
+
+        p = os.path.join(paths.meta_root, 'reactors.json')
+        reactors = {}
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                reactors = json.load(rfile)
+                for k, v in reactors.items():
+                    reactors[k] = IrradiationProduction(k, v)
+
+        self.reactors = reactors
+        self.reactor_names = list(reactors.keys())
+
+    @property
+    def reactor(self):
+        return self.reactors[self.selected_reactor_name]
 
 # ============= EOF =============================================

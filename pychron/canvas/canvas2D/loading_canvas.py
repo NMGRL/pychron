@@ -32,15 +32,17 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
+from six.moves import zip
 from traits.api import Any
+
+from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
-from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
-from six.moves import zip
 
 
 def group_position(pos, func=None):
@@ -144,8 +146,14 @@ class LoadingCanvas(SceneCanvas):
 
     def edit_left_down(self, event):
         if self.editable:
-            self.selected = self.hittest(event)
-            self.selected.state = not self.selected.state
+            sel = self.hittest(event)
+            if sel:
+                sel.state = not sel.state
+
+            self.selected = sel
+
+            # self.selected = self.hittest(event)
+            # self.selected.state = not self.selected.state
             self.request_redraw()
 
     def normal_left_down(self, event):

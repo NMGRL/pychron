@@ -139,6 +139,7 @@ class LoadingManager(DVCIrradiationable):
 
     canvas = Any
 
+    fetch_load_button = Button
     add_button = Button
     delete_button = Button
     archive_button = Button
@@ -165,6 +166,8 @@ class LoadingManager(DVCIrradiationable):
     suppress_update = False
 
     use_measured = Bool(False)
+
+    _suppress_weight = Bool(False)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -783,15 +786,21 @@ class LoadingManager(DVCIrradiationable):
 
     def _refresh_loads(self):
         self.loads = self._get_load_names()
+        print('refreshing')
         self.load_name = self.loads[0]
 
-    def _load_name_changed(self, new):
-        if self.suppress_update:
-            return
+    # def _load_name_changed(self, new):
+    #     if self.suppress_update:
+    #         return
+    #
+    #     print('loasdfasd', new)
+    #     # if new:
+    #         # self.tray = ''
+    #         # self.load_load_by_name(new)
 
-        if new:
-            self.tray = ''
-            self.load_load_by_name(new)
+    def _fetch_load_button_fired(self):
+        self.tray = ''
+        self.load_load_by_name(self.load_name)
 
     def _show_labnumbers_changed(self, new):
         if self.canvas:
@@ -835,6 +844,9 @@ class LoadingManager(DVCIrradiationable):
                 # pos.note = self.note
 
     def _weight_changed(self):
+        if self._suppress_weight:
+            return
+
         if self.canvas:
             sel = self.canvas.selected
             if sel:
@@ -879,7 +891,7 @@ class LoadingManager(DVCIrradiationable):
 
         if self.canvas.event_state in ('edit', 'info'):
             self.note = new.note
-            self.weight = new.weight
+            self.weight = new.weight or 0
 
         else:
             if new.fill:
@@ -902,7 +914,9 @@ class LoadingManager(DVCIrradiationable):
                             self.canvas.set_last_position(int(new.name))
 
                     if not self.retain_weight:
+                        self._suppress_weight = True
                         self.weight = 0
+                        self._suppress_weight = False
                     if not self.retain_note:
                         self.note = ''
 

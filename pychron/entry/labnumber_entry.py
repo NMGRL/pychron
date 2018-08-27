@@ -92,7 +92,7 @@ class LabnumberEntry(DVCIrradiationable):
     total_irradiation_hours = Str
 
     default_principal_investigator = Str
-
+    allow_multiple_null_identifiers = Bool(True)
     # ===========================================================================
     # irradiation positions table events
     # ===========================================================================
@@ -130,6 +130,7 @@ class LabnumberEntry(DVCIrradiationable):
         for key in ('irradiation_prefix',
                     'irradiation_project_prefix',
                     'monitor_name',
+                     # 'allow_multiple_null_identifiers',
                     'monitor_material', 'j_multiplier'):
             bind_preference(self, key, 'pychron.entry.{}'.format(key))
 
@@ -506,8 +507,13 @@ class LabnumberEntry(DVCIrradiationable):
                 self.dvc.remove_irradiation_position(irradiation, level, ir.hole)
                 continue
 
-            ln = ir.identifier
+            # mssql will not allow multiple null identifiers
+            # so need to use placeholder
 
+            if not ir.identifier and (db.kind == 'mssql' or not self.allow_multiple_null_identifiers):
+                ir.identifier = '{}:{}{:02n}'.format(irradiation, level, ir.hole)
+
+            ln = ir.identifier
             dbpos = db.get_irradiation_position(irradiation, level, ir.hole)
             if not dbpos:
                 dbpos = db.add_irradiation_position(irradiation, level, ir.hole)
@@ -533,7 +539,6 @@ class LabnumberEntry(DVCIrradiationable):
             proj = ir.project
             mat = ir.material
             grainsize = ir.grainsize
-            principal_investigator = ir.principal_investigator
             if proj:
                 proj = db.add_project(proj, pi=ir.principal_investigator)
 
@@ -727,16 +732,21 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
                     set_color(item, v)
                     if dbpos.sample.project.principal_investigator:
                         ir.principal_investigator = dbpos.sample.project.principal_investigator.name
+
                 v = ''
                 if dbpos.identifier:
                     v = str(dbpos.identifier)
-
-                ir.igsn = dbpos.sample.igsn or ''
+                    # ignore if place holder value is used
+                    # level = dbpos.level
+                    # irrad = dbpos.irradiation
+                    # if v == '{}{}{}'.format(irrad.name, level.name, dbpos.position):
+                    #     v = ''
 
                 ir.identifier = v
                 if v:
                     set_color(item, v)
 
+                ir.igsn = dbpos.sample.igsn or ''
                 ir.hole = dbpos.position
 
                 fd = self.dvc.meta_repo.get_flux(self.irradiation, self.level, ir.hole)
@@ -808,6 +818,12 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             self._load_positions_from_file(p)
 
     def _add_irradiation_button_fired(self):
+        if not self.default_principal_investigator:
+            if not self.confirmation_dialog('No default principal investigator set in preferences. '
+                                            'Continuing without setting a PI in preferences '
+                                            'could cause issues. Are you sure you want to continue?'):
+                return
+
         name = self._auto_increment_irradiation()
         irrad = self._get_irradiation_editor(name=name)
         new_irrad = irrad.add()
@@ -816,9 +832,12 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             sname = self.monitor_name
 
             def add_default():
-                # add irradiation project for flux monitors
-                self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
-                self.dvc.add_sample(sname, pname, self.default_principal_investigator, self.monitor_material)
+                if self.default_principal_investigator:
+                    # add irradiation project for flux monitors
+                    self.dvc.add_project(pname, principal_investigator=self.default_principal_investigator)
+                    self.dvc.add_sample(sname, pname, self.default_principal_investigator, self.monitor_material)
+                else:
+                    self.warning_dialog('Please set the default principal investigator in preferences')
 
             if self.confirmation_dialog('Add default project ({}) and '
                                         'flux monitor sample ({}) for this irradiation?'.format(pname, sname)):

@@ -21,8 +21,7 @@ from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, Item, EnumEditor, \
-    VGroup, TabularEditor, HGroup, spring
+from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -143,8 +142,11 @@ class LoadControlPane(TraitsDockPane):
 
         load_grp = VGroup(Item('username', editor=ComboboxEditor(name='available_user_names')),
                           HGroup(Item('load_name',
-                                      editor=EnumEditor(name='loads'),
+                                      editor=ComboboxEditor(name='loads'),
                                       label='Loads'),
+                                 icon_button_editor('fetch_load_button', 'goo',
+                                                    enabled_when='load_name',
+                                                    tooltip='Fetch load from database'),
                                  icon_button_editor('add_button', 'add', tooltip='Add a load'),
                                  icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
                                  icon_button_editor('archive_button', 'application-x-archive',

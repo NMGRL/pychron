@@ -920,7 +920,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 self.debug('setting repository to {}'.format(repo))
 
                                 self.repository_identifier = repo
-                                if not db.get_repository(repo):
+                                if not self.dvc.check_remote_repository_exists(repo):
                                     self.repository_identifier = ''
                                     if self.confirmation_dialog('Repository Identifier "{}" does not exist. Would you '
                                                                 'like to add it?'.format(repo)):

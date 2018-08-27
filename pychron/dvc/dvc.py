@@ -108,7 +108,9 @@ class DVCInterpretedAge(InterpretedAge):
         self.tag_note = obj.get('note', '')
 
     def from_json(self, obj):
-        for a in ('age', 'age_err', 'kca', 'kca_err', 'age_kind', 'kca_kind', 'mswd',
+        for a in ('age', 'age_err', 'age_kind',
+                  # 'kca', 'kca_err','kca_kind',
+                  'mswd',
                   'sample', 'material', 'identifier', 'nanalyses', 'irradiation',
                   'name', 'project', 'uuid', 'age_error_kind'):
             try:
@@ -119,6 +121,11 @@ class DVCInterpretedAge(InterpretedAge):
         self.labnumber = self.identifier
         self.uage = ufloat(self.age, self.age_err)
         self._record_id = '{} {}'.format(self.identifier, self.name)
+
+        pkinds = obj.get('preferred_kinds')
+        if pkinds:
+            for k in pkinds:
+                setattr(self, k['attr'], ufloat(k['value'], k['error']))
 
     def get_value(self, attr):
         try:
@@ -983,6 +990,10 @@ class DVC(Loggable):
 
         self.meta_repo.set_identifier(irradiation, level, position, identifier)
 
+    def add_production_to_irradiation(self, irrad, reactor, params):
+        self.meta_repo.add_production_to_irradiation(irrad, reactor, params)
+        self.meta_commit('updated default production. {}'.format(reactor))
+
     def update_chronology(self, name, doses):
         self.meta_repo.update_chronology(name, doses)
         self.meta_commit('updated chronology for {}'.format(name))
@@ -1041,9 +1052,11 @@ class DVC(Loggable):
             mswd = 0
         d = {attr: getattr(ia, attr) for attr in ('sample', 'material', 'project', 'identifier', 'nanalyses',
                                                   'irradiation',
-                                                  'name', 'uuid', 'include_j_error_in_mean',
+                                                  'name', 'uuid',
+                                                  'include_j_error_in_mean',
                                                   'include_j_error_in_plateau',
-                                                  'include_j_position_error')}
+                                                  'include_j_position_error'
+                                                  )}
         d.update(age=float(nominal_value(a)),
                  age_err=float(std_dev(a)),
                  display_age_units=ia.age_units,
@@ -1159,6 +1172,12 @@ class DVC(Loggable):
         else:
             self.debug('{} already exists'.format(identifier))
 
+    def check_remote_repository_exists(self, name):
+        gs = self.application.get_services(IGitHost)
+        for gi in gs:
+            if gi.remote_exists(self.organization, name):
+                return True
+
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
 
@@ -1207,7 +1226,7 @@ class DVC(Loggable):
 
                 return ret
 
-    def add_irradiation(self, name, doses=None, add_repo=False, principal_investigator=None):
+    def add_irradiation(self, name, doses=None):
         if self.db.get_irradiation(name):
             self.warning('irradiation {} already exists'.format(name))
             return
@@ -1221,11 +1240,11 @@ class DVC(Loggable):
         p = os.path.join(root, 'productions')
         if not os.path.isdir(p):
             os.mkdir(p)
-        with open(os.path.join(root, 'productions.json'), 'w') as wfile:
-            json.dump({}, wfile)
 
-        if add_repo and principal_investigator:
-            self.add_repository('Irradiation-{}'.format(name), principal_investigator)
+        p = os.path.join(root, 'productions.json')
+        with open(p, 'w') as wfile:
+            json.dump({}, wfile)
+        self.meta_repo.add(p, commit=False)
 
         return True
 

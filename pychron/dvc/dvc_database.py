@@ -822,8 +822,17 @@ class DVCDatabase(DatabaseAdapter):
             if dbpos is None:
                 self.debug('Adding irradiation position {}{} {}'.format(irrad, level, pos))
                 a = IrradiationPositionTbl(position=pos, **kw)
-                if identifier:
+                if self.kind == 'mssql':
+                    # identifier cannot be null
+                    # mssql does not allow multiple nulls for a unique column, e.g. identifier
+                    # need a place holder value.
+
+                    if not identifier:
+                        identifier = '{}{}{}'.format(irrad, level, pos)
                     a.identifier = str(identifier)
+                else:
+                    if identifier:
+                        a.identifier = str(identifier)
 
                 print('level', self.get_irradiation_level(irrad, level))
                 a.level = self.get_irradiation_level(irrad, level)
