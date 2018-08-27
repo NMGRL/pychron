@@ -2003,7 +2003,7 @@ anaylsis_type={}
     def _update_detectors(self):
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det)
-        # print 'aaaa',self.isotope_group.keys()
+
         for det in self._active_detectors:
             self.isotope_group.set_isotope_detector(det, add=True)
 
@@ -2044,6 +2044,7 @@ anaylsis_type={}
             def key2(v):
                 return v[1].detector
 
+            self.debug('per cleaned {}'.format(list(self.isotope_group.keys())))
             # for name, items in groupby(sorted(list(self.isotope_group.items()), key=key), key=key):
             for name, items in groupby_key(self.isotope_group.items(), key):
                 items = list(items)
