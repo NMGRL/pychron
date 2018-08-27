@@ -18,14 +18,15 @@
 
 # =============enthought library imports=======================
 from __future__ import absolute_import
+
 from chaco.scatterplot import ScatterPlot
 from traits.api import Bool, on_trait_change, Event
 
-# =============standard library imports ========================
-
 # =============local library imports  ==========================
 from .graph import Graph
-import six
+
+
+# =============standard library imports ========================
 
 
 class StackedGraph(Graph):
@@ -179,7 +180,7 @@ class StackedGraph(Graph):
 
         obj.suppress_update = True
         for plot in self.plots:
-            for k, ps in six.iteritems(plot.plots):
+            for k, ps in plot.plots.items():
                 si = ps[0]
 
                 if si.index is not obj:

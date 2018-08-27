@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import logging
 import os
-from six.moves.configparser import ConfigParser
 
 from numpy import append as npappend
+from six.moves import zip
+from six.moves.configparser import ConfigParser
 from traits.api import Property, Dict, Str
 from traits.has_traits import HasTraits
 from uncertainties import ufloat
@@ -28,8 +30,6 @@ from uncertainties import ufloat
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
-import six
-from six.moves import zip
 
 logger = logging.getLogger('ISO')
 
@@ -374,7 +374,7 @@ class IsotopeGroup(HasTraits):
             niso = self.isotopes[iso]
 
         niso.set_uvalue(v)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             setattr(niso, k, v)
         # niso.trait_set(**kw)
 

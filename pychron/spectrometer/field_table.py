@@ -17,23 +17,24 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
+
 import csv
 import hashlib
 import os
 import shutil
 
+import six
 from numpy import asarray, array, nonzero, polyval
 from scipy.optimize import leastsq, brentq
-from traits.api import HasTraits, List, Str, Dict, Bool, Property, Event
+from six.moves import map
+from six.moves import zip
+from traits.api import HasTraits, List, Str, Dict, Bool, Property
 
 from pychron.core.helpers.filetools import add_extension, backup
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer import set_mftable_name, get_mftable_name
-import six
-from six.moves import map
-from six.moves import zip
 
 
 def get_detector_name(det):
@@ -194,7 +195,7 @@ class FieldTable(Loggable):
             # need to calculate all ys
             # using simple linear offset
             # ys += delta
-            for k, (isoks, mws, dacs, _) in six.iteritems(d):
+            for k, (isoks, mws, dacs, _) in d.items():
                 if not update_others and k != det:
                     continue
 

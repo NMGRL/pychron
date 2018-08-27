@@ -22,7 +22,6 @@ import shutil
 import time
 from datetime import datetime
 
-import six
 from six.moves import map
 # ============= enthought library imports =======================
 from traits.api import Bool
@@ -244,7 +243,7 @@ class Production(MetaObject):
             self.attrs = []
 
         if isinstance(d, dict):
-            for k, v in six.iteritems(d):
+            for k, v in d.items():
                 setattr(self, k, v)
                 if not k.endswith('_err') and k not in self.attrs:
                     self.attrs.append(k)
@@ -424,7 +423,7 @@ class MetaRepo(GitRepoManager):
         self.debug('saving production {}'.format(prod.name))
 
         params = prod.get_params()
-        for k, v in six.iteritems(params):
+        for k, v in params.items():
             self.debug('setting {}={}'.format(k, v))
             setattr(ip, k, v)
 

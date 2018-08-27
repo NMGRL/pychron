@@ -22,7 +22,6 @@ import hashlib
 import uuid
 from datetime import datetime
 
-import six
 from six.moves import map
 from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr, Long, HasTraits, Instance
@@ -348,11 +347,11 @@ class AutomatedRunSpec(HasTraits):
         return d
 
     def load(self, script_info, params):
-        for k, v in six.iteritems(script_info):
+        for k, v in script_info.items():
             k = k if k == 'script_options' else '{}_script'.format(k)
             setattr(self, k, v)
 
-        for k, v in six.iteritems(params):
+        for k, v in params.items():
             # print 'load', hasattr(self, k), k, v
             if hasattr(self, k):
                 setattr(self, k, v)

@@ -14,8 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
+
 from pychron.core.ui import set_qt
-import six
 
 set_qt()
 
@@ -52,7 +52,7 @@ class OptionsEditor(HasTraits):
 
                 opts = []
                 bopts = []
-                for k, v in six.iteritems(d):
+                for k, v in d.items():
                     opt = Option(name=k, value=v)
                     if isinstance(v, bool):
                         bopts.append(opt)

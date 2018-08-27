@@ -34,21 +34,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
-
-import re
-
 from traits.api import Str, Bool, Property, on_trait_change, Button, List
 
 from pychron.core.codetools.inspection import caller
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import ProjectRecordView
-
-# from pychron.processing.tasks.browser.time_view import TimeViewModel
-
-NCHARS = 60
-REG = re.compile(r'.' * NCHARS)
 
 
 class BrowserModel(BaseBrowserModel):

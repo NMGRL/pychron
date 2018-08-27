@@ -1201,7 +1201,7 @@ class Graph(ContextMenuMixin):
             for plot in self.plots:
                 line = plot.y_axis.title
                 write(line)
-                for k, pp in six.iteritems(plot.plots):
+                for k, pp in plot.plots.items():
                     pp = pp[0]
                     a = column_stack((pp.index.get_data(), pp.value.get_data()))
 

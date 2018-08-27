@@ -16,15 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
-from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
+
 # ============= standard library imports ========================
 from sqlalchemy.exc import DBAPIError
+from traits.api import HasTraits, Float, Str, List, Instance, Property, Button, Bool, Event
+from traitsui.api import View, Item, HGroup, VGroup, UItem, ListStrEditor, VSplit
+
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.loggable import Loggable
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
-import six
 
 
 class FluxMonitor(HasTraits):
@@ -87,7 +88,7 @@ class FluxMonitorEditor(Loggable):
         if self.selected_monitor:
             dbmon = db.get_flux_monitor(self.selected_monitor.name)
             if dbmon:
-                for k, v in six.iteritems(self.selected_monitor.to_dict()):
+                for k, v in self.selected_monitor.to_dict().items():
                     setattr(dbmon, k, v)
 
         self.information_dialog('Changes saved to database')

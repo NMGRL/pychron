@@ -469,7 +469,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, name, pr, ifc):
         kw = {}
-        for k, v in six.iteritems(ifc):
+        for k, v in ifc.items():
             if k == 'cl3638':
                 k = 'P36Cl38Cl'
             else:

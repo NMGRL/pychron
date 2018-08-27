@@ -14,8 +14,6 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-
 from datetime import timedelta, datetime
 
 import six
@@ -23,6 +21,7 @@ from sqlalchemy import not_, func, distinct, or_, select, and_, join
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 from sqlalchemy.util import OrderedSet
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List
 from traitsui.api import View, Item
 
@@ -1121,6 +1120,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.filter(AnalysisTbl.uuid.in_(uuids))
+            q = q.order_by(AnalysisTbl.uuid.asc())
             return self._query_all(q, verbose_query=False)
 
     def get_analysis_runid(self, idn, aliquot, step=None):
@@ -1158,7 +1158,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(MeasuredPositionTbl.position == kw['position'])
                 kw.pop('position')
 
-            for k, v in six.iteritems(kw):
+            for k, v in kw.items():
                 try:
                     q = q.filter(getattr(AnalysisTbl, k) == v)
                 except AttributeError:
@@ -2135,7 +2135,7 @@ class DVCDatabase(DatabaseAdapter):
     def update_sample_prep_session(self, oname, worker, **kw):
         s = self.get_sample_prep_session(oname, worker)
         if s:
-            for k, v in six.iteritems(kw):
+            for k, v in kw.items():
                 setattr(s, k, v)
             self.commit()
 

@@ -22,7 +22,6 @@ import datetime
 import os
 import time
 
-import six
 from six.moves import map
 from six.moves import zip
 from uncertainties import ufloat, std_dev, nominal_value
@@ -410,7 +409,7 @@ class DVCAnalysis(Analysis):
             self.peak_center_data = unpack(pd['points'], jd['fmt'], decode=True)
 
             self.additional_peak_center_data = {k: unpack(pd['points'], jd['fmt'], decode=True)
-                                                for k, pd in six.iteritems(jd) if k not in (refdet, 'fmt',
+                                                for k, pd in jd.items() if k not in (refdet, 'fmt',
                                                                                             'reference_detector',
                                                                                             'reference_isotope')}
 
