@@ -178,7 +178,10 @@ class OLSRegressor(BaseRegressor):
             e = self.predict_error_matrix(x, error_calc)
 
         if return_single:
-            e = e[0]
+            try:
+                e = e[0]
+            except TypeError:
+                e = 0
         return e
 
     def predict_error_algebraic(self, x, error_calc='SEM'):

@@ -2025,8 +2025,9 @@ anaylsis_type={}
             change = ion.position(pos, detector, use_dac=use_dac, update_isotopes=update_isotopes)
 
         if update_labels:
-            from pychron.core.ui.gui import invoke_in_main_thread
-            invoke_in_main_thread(self._update_labels)
+            self._update_labels()
+            # from pychron.core.ui.gui import invoke_in_main_thread
+            # invoke_in_main_thread(self._update_labels)
 
         if update_detectors:
             self._update_detectors()
