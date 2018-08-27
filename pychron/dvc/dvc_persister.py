@@ -392,13 +392,12 @@ class DVCPersister(BasePersister):
 
         source = {'emission': per_spec.emission,
                   'trap': per_spec.trap}
-        keys = []
 
         clf = None
         if self.use_isotope_classifier:
             clf = self.application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
 
-        for iso in per_spec.isotope_group.values():
+        for key, iso in per_spec.isotope_group.items():
             sblob = encode_blob(iso.pack(endianness, as_hex=False))
             snblob = encode_blob(iso.sniff.pack(endianness, as_hex=False))
 
@@ -415,17 +414,6 @@ class DVCPersister(BasePersister):
                 klass, prob = clf.predict_isotope(iso)
                 isod.update(classification=klass,
                             classification_probability=prob)
-            key = iso.name
-            if key in keys:
-                if key in isos:
-                    nd = isos.pop(key)
-                    nkey = '{}{}'.format(nd['name'], nd['detector'])
-                    isos[nkey] = nd
-
-                    intercepts[nkey] = intercepts.pop(key)
-                    blanks[nkey] = blanks.pop(key)
-
-                key = '{}{}'.format(key, iso.detector)
 
             isos[key] = isod
 
@@ -458,8 +446,6 @@ class DVCPersister(BasePersister):
                                            'exclude': False}],
                            'value': float(iso.blank.value),
                            'error': float(iso.blank.error)}
-
-            keys.append(iso.name)
 
         obj = self._make_analysis_dict()
 
